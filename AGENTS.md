@@ -1,7 +1,4 @@
-# AGENTS Manifest
-# Shared instructions for autonomous agents and Codex/Claude sessions
-
-# AGENTS Context
+# Agents Context
 
 ## Project Snapshot
 - Repository: ganesh47/mather
