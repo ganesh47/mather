@@ -1,0 +1,51 @@
+name: Research Task
+description: Investigate a technology, pattern, or design question
+labels: ["research"]
+body:
+  - type: input
+    id: question
+    attributes:
+      label: Research Question
+      description: What are we trying to answer?
+      placeholder: "e.g. What navigation architecture best fits our needs?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Motivation
+      description: Why do we need to answer this now? What decision does it unblock?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What's in scope and out of scope for this research?
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options to Evaluate
+      description: Known candidates or approaches to compare
+
+  - type: input
+    id: wiki_page
+    attributes:
+      label: Wiki Page
+      description: Link to the wiki page where findings will be documented
+      placeholder: "https://github.com/ganesh47/mather/wiki/Research-<Topic>"
+
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Decision Criteria
+      description: How will we evaluate options? (performance, maintainability, SwiftUI fit, etc.)
+
+  - type: input
+    id: due
+    attributes:
+      label: Needed By
+      description: Date or milestone this research must complete before

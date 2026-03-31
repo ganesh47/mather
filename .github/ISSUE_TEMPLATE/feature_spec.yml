@@ -1,0 +1,54 @@
+name: Feature Spec
+description: Specify a feature ready for implementation
+labels: ["spec", "feature"]
+body:
+  - type: input
+    id: spec_link
+    attributes:
+      label: Wiki Spec Page
+      description: Link to the full spec in the wiki
+      placeholder: "https://github.com/ganesh47/mather/wiki/Specs-<Feature>"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One paragraph description of what this feature does and why
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Checklist of conditions that must be true for this to be done
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Other issues, specs, or external factors this depends on
+
+  - type: dropdown
+    id: feature_flag
+    attributes:
+      label: Requires Feature Flag?
+      options:
+        - "No"
+        - "Yes — flag name: "
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Explicitly list what this issue does NOT cover

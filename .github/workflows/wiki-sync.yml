@@ -1,0 +1,52 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+
+jobs:
+  sync:
+    name: Sync wiki/ to GitHub Wiki
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone wiki repo
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
+
+      - name: Sync files
+        run: |
+          # Flatten wiki/ into the wiki repo root, preserving subdirectory README.md as <Dir>.md
+          find wiki -name "*.md" | while read src; do
+            # Remove leading wiki/ prefix
+            rel="${src#wiki/}"
+            # Convert subdirectory README.md -> <DirName>.md
+            if [[ "$(basename "$rel")" == "README.md" ]]; then
+              dir="$(dirname "$rel")"
+              if [[ "$dir" == "." ]]; then
+                dest="Home.md"
+              else
+                dest="${dir//\//-}.md"
+              fi
+            else
+              dest="${rel//\//-}"
+            fi
+            echo "Copying $src -> wiki-repo/$dest"
+            cp "$src" "wiki-repo/$dest"
+          done
+
+      - name: Push to wiki
+        run: |
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No wiki changes to push"
+          else
+            git commit -m "Sync wiki from main [skip ci]"
+            git push
+          fi
