@@ -2,15 +2,15 @@
 
 Technology investigations and trade-off analyses for Mather.
 
-## Active
-
-| Topic | Issue | Status |
-|---|---|---|
-| _(none yet)_ | | |
-
 ## Completed
 
 | Topic | Issue | Outcome |
+|---|---|---|
+| [Math App Vision](Research-Math-App-Vision) | [#1](https://github.com/ganesh47/mather/issues/1) | Full product vision defined — see synthesis section |
+
+## Active
+
+| Topic | Issue | Status |
 |---|---|---|
 | _(none yet)_ | | |
 
@@ -23,9 +23,8 @@ When creating a new research page, use this structure:
 ```
 # Research: <Topic>
 
-**Issue**: #<n>
+**Issue**: ganesh47/mather#<n>
 **Status**: In Progress | Completed | Deferred
-**Author**: @<handle>
 **Date**: YYYY-MM-DD
 
 ## Question
