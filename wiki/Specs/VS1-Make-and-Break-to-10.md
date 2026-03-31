@@ -45,7 +45,7 @@ Core experience: **Make & Break to 10**.
 - [ ] App runs on iPad target and iPhone simulator (for CI) without feature-privileged crash paths.
 - [ ] Feature flag guard wraps incomplete capabilities.
 - [ ] All session events are recorded locally and are exportable.
-- [ ] No network calls and no child PII are required in this vertical slice.
+- [ ] No network calls in this alpha vertical slice; local session identifiers and local-only metadata are acceptable.
 - [ ] Build compiles with scheme `Mather` and no placeholder compile-time blockers.
 
 ## Design
@@ -125,8 +125,10 @@ Core experience: **Make & Break to 10**.
 - We can later layer camera, speech, pencil, and motion into the same architecture via separate interaction adapters without rewriting core CPA logic.
 - Deferring heavy-sensor dependency keeps first build reliable and suitable for a family-pilot on a known iOS/iPadOS stack.
 
-## Telemetry (local only, no PII)
+## Telemetry (local only, alpha data policy)
 Write one JSONL file per session with schema version.
+
+For this alpha phase (personal/local testing only), local identifiers or PII labels are acceptable and stay on-device unless explicitly exported for your own analysis. No remote upload pipeline is used.
 
 ### Events
 - `session_start`
