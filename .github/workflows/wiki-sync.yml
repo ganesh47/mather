@@ -14,7 +14,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Clone wiki repo
         run: |
@@ -23,7 +23,7 @@ jobs:
       - name: Sync files
         run: |
           # Flatten wiki/ into the wiki repo root, preserving subdirectory README.md as <Dir>.md
-          find wiki -name "*.md" | while read src; do
+          find wiki -name "*.md" | while read -r src; do
             # Remove leading wiki/ prefix
             rel="${src#wiki/}"
             # Convert subdirectory README.md -> <DirName>.md

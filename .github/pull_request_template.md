@@ -18,6 +18,7 @@
 - [ ] No merge commits — rebased onto latest `main`
 - [ ] CI passes (build + tests)
 - [ ] New code has tests (or explain why not)
+- [ ] No new secrets, unsafe workflow permissions, or unpinned automation were introduced
 
 ## Testing
 <!-- How was this tested? Simulator? Device? Unit tests? -->

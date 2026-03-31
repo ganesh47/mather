@@ -1,0 +1,9 @@
+* @ganesh47
+
+# Protect automation and governance paths explicitly.
+/.github/workflows/ @ganesh47
+/.github/ISSUE_TEMPLATE/ @ganesh47
+/.github/pull_request_template.md @ganesh47
+/wiki/ @ganesh47
+/CLAUDE.md @ganesh47
+/AGENTS.md @ganesh47

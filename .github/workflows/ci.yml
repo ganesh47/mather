@@ -6,23 +6,43 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Detect buildable project
+        id: detect
+        run: |
+          if [[ -f "Package.swift" ]] || find . -maxdepth 2 \( -name "*.xcodeproj" -o -name "*.xcworkspace" \) | grep -q .; then
+            echo "buildable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "buildable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip until app project exists
+        if: steps.detect.outputs.buildable != 'true'
+        run: echo "No Xcode project, workspace, or Package.swift exists yet; skipping build/test."
 
       - name: Select Xcode
+        if: steps.detect.outputs.buildable == 'true'
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
       - name: Show Swift version
+        if: steps.detect.outputs.buildable == 'true'
         run: swift --version
 
       - name: Resolve dependencies
+        if: steps.detect.outputs.buildable == 'true'
         run: xcodebuild -resolvePackageDependencies -scheme Mather
 
       - name: Build
+        if: steps.detect.outputs.buildable == 'true'
         run: |
           xcodebuild build-for-testing \
             -scheme Mather \
@@ -30,6 +50,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Test
+        if: steps.detect.outputs.buildable == 'true'
         run: |
           xcodebuild test-without-building \
             -scheme Mather \
