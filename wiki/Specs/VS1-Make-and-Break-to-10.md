@@ -142,6 +142,86 @@ For this alpha phase (personal/local testing only), local identifiers or PII lab
 - Data sharing: export is manual only (share sheet); no background sync or API submission.
 - Review hygiene: if you later move beyond alpha/private testing, remove/obfuscate local labels and add a privacy review before any external transfer.
 
+## Implementation Plan (Build Slice)
+
+### 1) Project structure for alpha implementation
+- App module: `Mather` (single target first).
+- Suggested folders:
+  - `App/` (App entry, scene, root navigation)
+  - `Features/VerticalSlice1/` (views, state, domain models)
+  - `Shared/` (design tokens, utilities)
+  - `Domain/` (problem generation + session rules)
+  - `Persistence/` (SwiftData models/repo + JSONL exporter)
+  - `Assets/` (optional images/audio if included)
+- Keep code in one branch per milestone and behind one feature flag.
+
+### 2) Minimal implementation milestones
+- **M1 App shell**
+  - Root app scaffold, routing, one feature flag, simple settings entry.
+- **M2 CPA engine**
+  - Problem generator (`target` and decomposition rule set).
+  - Stage state machine: Concrete -> Pictorial -> Abstract -> Transfer -> Done.
+- **M3 Interaction views**
+  - Ten-frame + counters (drag or tap-add path).
+  - Split buckets for number bonds.
+  - Equation keypad input and validation view.
+- **M4 Audio + feedback**
+  - `AVSpeechSynthesizer` prompts and transitions.
+  - Non-punitive UI states + small celebratory feedback at milestones.
+- **M5 Data/observability**
+  - JSONL writer + parent summary calculation.
+  - Share export from Settings.
+
+### 3) Asset strategy for VS1 (fast, low-risk)
+- **Prefer generated UI primitives first**
+  - Counters, ten-frame, buckets, cards, separators built in SwiftUI shapes.
+  - Large buttons and chips use SF Symbols + custom palette variables.
+- **Optional character asset**
+  - One friendly guide character with 3 states (neutral, celebrate, gentle retry).
+  - Single PNG/SVG is sufficient for alpha.
+- **Audio**
+  - 4–6 short in-house/royalty-free cues (tap, place, retry, success).
+  - Text-to-speech used for all first-run instructions.
+- **Where to source**
+  - Alpha: internal placeholders + local generated assets to avoid licensing friction.
+  - After first pilot: either AI-generated custom assets (if you want unique look) or licensed set from a known package.
+
+### 4) Asset licensing + generation policy
+- For this alpha: avoid web-copied random images unless explicitly checked for reuse rights.
+- If AI-generated, keep a simple provenance note in the wiki (prompt + tool + date) for traceability.
+- Keep one consistent color/shape system from day 1 to avoid churn.
+
+### 5) Testing and iteration protocol
+- Pre-pilot checklist:
+  - Runs on iPad and iPhone simulator with `verticalSlice1Enabled = true`.
+  - No hard crash in quick drag/place sequence.
+  - Parent export creates a readable JSONL file.
+- Pilot gates:
+  - 1–3 kids for 10–15 minutes total.
+  - Compare completion rate, frustration points, and transfer-item pass.
+- Post-pilot decision:
+  - keep same content and tune thresholds **or**
+  - switch input mode (tap-first or 3-option choice) and retest quickly.
+
+### 6) Local implementation assumptions (important)
+- No auth/login, no network, no cloud sync in VS1.
+- Data stored under local app sandbox only.
+- Any future external use (analytics upload/icloud/parent accounts) requires a separate ADR and feature expansion plan.
+
+## Suggested local dependency set
+- SwiftData (local persistence and summaries)
+- AVFoundation (`AVSpeechSynthesizer`)
+- SwiftUI + Observation (`@Observable`) for state
+- OSLog for development diagnostics (non-authoritative)
+- Foundation `Codable` for JSONL event logging
+- Optional later: PencilKit, Vision, Speech, App Intents
+
+## Interaction and control choices (for this slice)
+- Input baseline: drag + tap with big targets; avoid small precision drag for 5-year-olds.
+- Pencil optional in M1 for this slice; keep fallback controls for non-Apple-Pencil sessions.
+- No live camera capture/voice-to-text in first slice.
+- Keep all math values within 0–10 initially to reduce cognitive load and reduce failure noise.
+
 ### Events
 - `session_start`
   - `timestamp`, `appVersion`, `deviceClass`, `featureFlags`, `schemaVersion`
