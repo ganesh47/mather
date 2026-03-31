@@ -1,6 +1,6 @@
 # Spec: Vertical Slice 1 — Make & Break to 10
 
-**Issue**: #TBD (to be linked to a Feature Spec issue)
+**Issue**: #10
 **Status**: draft
 **Author**: @ganesh47
 **Date**: 2026-03-31
@@ -292,3 +292,9 @@ For this alpha phase (personal/local testing only), local identifiers or PII lab
 - Related research: [[Research/Math-App-Vision]]
 - Related ADRs: [[ADRs/ADR-0001-record-architecture-decisions]], [[ADRs/ADR-0002-personal-distribution-not-app-store]]
 - Relevant issue: #1 (Research) completed, with this spec intended as next implementation artifact.
+
+## GitHub Tracking
+- Milestone: [VS1-Make-&-Break-to-10](https://github.com/ganesh47/mather/milestone/1)
+- Project: [Mather VS1: Make & Break to 10](https://github.com/users/ganesh47/projects/7)
+- Tracking issue: #10
+- Decomposed issues: #2, #3, #4, #5, #6, #7, #8, #9

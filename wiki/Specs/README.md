@@ -15,7 +15,7 @@ Specifications for features in Mather. Each spec is linked to a GitHub issue lab
 
 | Feature | Issue | Status |
 |---|---|---|
-| [VS1-Make-and-Break-to-10](VS1-Make-and-Break-to-10.md) | #TBD | draft |
+| [VS1-Make-and-Break-to-10](VS1-Make-and-Break-to-10.md) | #10 | draft |
 
 ---
 
