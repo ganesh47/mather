@@ -1,9 +1,10 @@
 # Spec: Vertical Slice 1 — Make & Break to 10
 
 **Issue**: #10
-**Status**: draft
+**Status**: execution-ready
 **Author**: @ganesh47
 **Date**: 2026-03-31
+**Execution lock**: 2026-03-31 (approved for implementation), milestone `VS1-Make-&-Break-to-10`
 
 ## Overview
 Build and validate the first complete “testable vertical slice” proving Mather’s core hypothesis: for ages 5–7, a CPA-first, concrete-to-abstract math interaction increases engagement and learning retention better than text-heavy worksheet style.
