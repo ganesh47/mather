@@ -245,11 +245,48 @@ For this alpha phase (personal/local testing only), local identifiers or PII lab
 - Multiplayer, leaderboard, social features.
 - Monetization, IAP, parental gate flows tied to App Store compliance.
 
-## Open Questions
-- [ ] Exact session length target for this slice: 4–6 minutes vs fixed 6 problems.
-- [ ] Initial problem generator seed set: fixed list vs random permutation.
-- [ ] Should transfer question be `3 + 5`, `4 + 6`, or child-picked target for phase-1 validity?
-- [ ] How strict should audio pacing be on first launch: auto-play once + tap-to-replay vs always manual?
+## Open Questions (resolved with alpha defaults + maturity gates)
+
+### Q1) Exact session length target (4–6 minutes vs fixed 6 problems)
+- **Decision**: Use **hybrid cap**: `6 problems` OR `7-minute max`, whichever comes first.
+- **Research rationale**: Slice-level attention target from current research is 10–12 minutes for ages 5–7 with a preferred shorter flow for this age; the 10-minute global guidance supports a 6-problem loop while retaining a hard timeout guard for variance.
+- **Maturity**: **M0 (implemented default)**
+- **Pilot adjustment trigger**: If median completion is consistently <3:30 and confusion is low, increase to 7–8 problems. If median completion >7:00 or visible fatigue appears, reduce to 5 problems and keep hard timeout.
+
+### Q2) Problem list strategy (fixed set vs random permutation)
+- **Decision**: Use a **two-mode generator**:
+  - **Test mode**: fixed ordered seed list for reproducibility.
+  - **Family mode**: random permutation with a per-device seed.
+- **Research rationale**: For first measurement loops, fixed sequencing reduces confounds and supports comparable telemetry; later random order supports engagement and anti-learning effects.
+- **Maturity**: **M1 (test mode first, family mode behind flag next sprint)**.
+
+### Q3) Transfer question pattern (specific fixed example vs adaptive)
+- **Decision**: Use **adaptive abstract→concrete transfer**:
+  - Build from current target range, preferably values 3–9.
+  - Keep one transfer per session using a single equation where both addends are 1–9 and sum ≤10.
+  - Prefer addends with non-round structure first (`3 + 5`, `2 + 6`, `4 + 3`) to make decomposition visible.
+- **Research rationale**: Transfer should test concept portability across representational mode, not memorization of one fixed pair.
+- **Maturity**: **M0 (algorithmic rule with fixed cap; addend set configurable by session seed)**.
+
+### Q4) Audio pacing strictness at launch
+- **Decision**: On first launch, play `intro + first stage prompt` once automatically, then switch to **tap-to-repeat + contextual spoken hints** for all later steps.
+- **Research rationale**: Children 5–7 need low-friction flow; first-run auto voice supports accessibility, while manual replay prevents cognitive overload from repetitive narration.
+- **Maturity**: **M0 (default behavior)**.
+
+## Maturity Ladder for VS1 Decisions
+- **M0 (hard defaults)**: can be implemented immediately without ambiguity.
+  - 6-problem/7-minute hybrid cap.
+  - Test mode fixed ordering.
+  - Adaptive transfer question generation with bounded operands.
+  - Auto-intro then manual replay.
+- **M1 (observability-driven evolution)**: changes only after pilot outcome review.
+  - Move to random ordering by default.
+  - Tune session cap for fatigue curves.
+  - Tighten/reduce/expand transfer complexity.
+- **M2 (post-pilot expansion)**: introduce new modes and broader pedagogy.
+  - Child-chosen targets.
+  - Voice command shortcuts.
+  - Gesture/pencil-first variants.
 
 ## References
 - Related research: [[Research/Math-App-Vision]]
