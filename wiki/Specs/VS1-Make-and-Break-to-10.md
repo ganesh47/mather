@@ -130,6 +130,18 @@ Write one JSONL file per session with schema version.
 
 For this alpha phase (personal/local testing only), local identifiers or PII labels are acceptable and stay on-device unless explicitly exported for your own analysis. No remote upload pipeline is used.
 
+## Alpha Data Policy (Personal Test Scope)
+- Scope: This slice is for local alpha testing only, personal-family devices, no App Store distribution.
+- Data location: all logs and exports are written to the app container (`Library/Application Support/` or `Documents/`) and remain device-local by default.
+- Allowed local fields:
+  - session id
+  - start/end timestamps
+  - problem id and target values
+  - touch interaction summaries (attempt count, action type, timings)
+  - optional local child labels for internal use (e.g., `childAlias`, age band) if you choose to add them later in this alpha
+- Data sharing: export is manual only (share sheet); no background sync or API submission.
+- Review hygiene: if you later move beyond alpha/private testing, remove/obfuscate local labels and add a privacy review before any external transfer.
+
 ### Events
 - `session_start`
   - `timestamp`, `appVersion`, `deviceClass`, `featureFlags`, `schemaVersion`
