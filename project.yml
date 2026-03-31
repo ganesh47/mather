@@ -1,0 +1,48 @@
+name: Mather
+options:
+  bundleIdPrefix: com.ganesh47
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    PRODUCT_NAME: Mather
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+targets:
+  Mather:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Domain
+      - path: Features
+      - path: Persistence
+      - path: Services
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.Mather
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      testTargets:
+        - MatherTests
+  MatherTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/MatherTests
+    dependencies:
+      - target: Mather
+    settings:
+      base:
+        PRODUCT_NAME: MatherTests
+        PRODUCT_MODULE_NAME: MatherTests
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.MatherTests
