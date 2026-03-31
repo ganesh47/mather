@@ -17,12 +17,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const milestoneTitle = "VS1-Make-&-Break-to-10";
             const labelEpic = "epic:vs1";
             const labelCheck = "type:checks";
+          const trackingIssueNumber = 10;
 
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
             const now = new Date();
             const utcWeekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
             utcWeekStart.setUTCDate(utcWeekStart.getUTCDate() - ((utcWeekStart.getUTCDay() + 6) % 7));
@@ -30,13 +30,14 @@ jobs:
             const weekKey = utcWeekStart.toISOString().slice(0, 10);
             const title = `${weeklyPrefix} Progress Check - ${weekKey}`;
 
-            const milestones = await github.paginate(
-              github.rest.issues.listMilestonesForRepo,
-              { owner, repo, state: "open", per_page: 100 }
-            );
-            const milestone = milestones.find((m) => m.title === milestoneTitle);
+            const trackingIssue = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: trackingIssueNumber
+            });
+            const milestone = trackingIssue.data.milestone;
             if (!milestone) {
-              throw new Error(`Milestone not found: ${milestoneTitle}`);
+              throw new Error(`Tracking issue #${trackingIssueNumber} is not attached to a milestone`);
             }
 
             const existing = await github.paginate(
