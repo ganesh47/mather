@@ -7,6 +7,7 @@ Technology investigations and trade-off analyses for Mather.
 | Topic | Issue | Outcome |
 |---|---|---|
 | [Math App Vision](Research-Math-App-Vision) | [#1](https://github.com/ganesh47/mather/issues/1) | Full product vision defined — see synthesis section |
+| [DevSecOps Baseline for Public GitHub Repository](Research-DevSecOps-Baseline) | n/a | GitHub-native and OSS security baseline established for public-repo development |
 
 ## Active
 

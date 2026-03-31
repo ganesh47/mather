@@ -38,3 +38,4 @@ Research, specifications, and architecture decisions for the Mather iOS app (Swi
 - [GitHub Issues](https://github.com/ganesh47/mather/issues)
 - [Pull Requests](https://github.com/ganesh47/mather/pulls)
 - [Actions / CI](https://github.com/ganesh47/mather/actions)
+- [Security Policy](https://github.com/ganesh47/mather/security/policy)
