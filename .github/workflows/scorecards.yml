@@ -10,13 +10,16 @@ on:
 permissions:
   actions: read
   contents: read
-  security-events: write
-  id-token: write
 
 jobs:
   scorecard:
     name: OSSF Scorecard
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      id-token: write
     steps:
       - name: Run Scorecard analysis
         uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a
