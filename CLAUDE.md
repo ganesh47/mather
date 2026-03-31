@@ -14,10 +14,16 @@
 - Use feature flags (`FeatureFlags.swift`) for incomplete features landing in main
 - No long-lived branches. No release branches. Tags mark releases.
 
+## Distribution
+- **Personal/family use only** — not publishing to App Store
+- Deploy directly to iPad via Xcode (USB or WiFi) using a personal team signing certificate
+- No parental gate, no StoreKit, no COPPA/Kids Category requirements
+- No App Store review process to worry about
+
 ## Tech Stack
-- **Platform**: iOS (SwiftUI, latest Swift)
-- **Minimum iOS target**: TBD (set in wiki: Tech Stack)
-- **Architecture**: TBD (see wiki: Architecture Decisions)
+- **Platform**: iPadOS (SwiftUI, latest Swift)
+- **Minimum iPadOS target**: TBD (see wiki: ADRs)
+- **Architecture**: TBD (see wiki: ADRs)
 - **Package manager**: Swift Package Manager
 
 ## Research & Spec Process

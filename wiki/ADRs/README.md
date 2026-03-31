@@ -7,6 +7,7 @@ Lightweight records of significant technical decisions made for Mather.
 | ADR | Title | Status | Date |
 |---|---|---|---|
 | [ADR-0001](ADR-0001-record-architecture-decisions.md) | Record architecture decisions | Accepted | 2026-03-31 |
+| [ADR-0002](ADR-0002-personal-distribution-not-app-store.md) | Personal distribution — not App Store | Accepted | 2026-03-31 |
 
 ---
 
