@@ -8,23 +8,37 @@ struct FeedbackBannerView: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: isCelebrating ? "hands.clap.fill" : "sparkles")
-                .font(.title2)
+            Image(systemName: isCelebrating ? "star.fill" : "arrow.forward.circle.fill")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(isCelebrating ? MatherTheme.warm : MatherTheme.softBlue)
                 .scaleEffect(iconScale)
             Text(message)
                 .font(.headline.weight(.semibold))
+                .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(MatherTheme.ink)
-        .padding(18)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isCelebrating ? MatherTheme.warm.opacity(0.65) : MatherTheme.softBlue.opacity(0.75))
+        .background(
+            isCelebrating
+                ? MatherTheme.warm.opacity(0.22)
+                : MatherTheme.softBlue.opacity(0.18)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .animation(.easeInOut(duration: 0.25), value: isCelebrating)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(
+                    isCelebrating ? MatherTheme.warm.opacity(0.5) : MatherTheme.softBlue.opacity(0.3),
+                    lineWidth: 1.5
+                )
+        )
+        .animation(.easeInOut(duration: 0.2), value: isCelebrating)
         .onChange(of: isCelebrating) { _, celebrating in
             guard celebrating else { return }
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { iconScale = 1.5 }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.55).delay(0.18)) { iconScale = 1.0 }
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.38)) { iconScale = 1.6 }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5).delay(0.16)) { iconScale = 1.0 }
         }
     }
 }

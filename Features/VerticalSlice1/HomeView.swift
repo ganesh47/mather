@@ -6,61 +6,134 @@ struct HomeView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Mather")
-                        .font(.system(size: 44, weight: .black, design: .rounded))
-                    Text("Make and break numbers with touch-first play.")
-                        .font(.title3.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 20) {
+                // App wordmark — large, rounded, ink coloured
+                Text("Mather")
+                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                CardSurface {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Make & Break to 10")
-                            .font(.title2.weight(.bold))
-                        Text(appModel.featureFlags.verticalSlice1Enabled ? "Practice making and breaking numbers to 10 using touch, pictures, and equations." : "Enable the activity in Settings before handing the iPad to your child.")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Button(appModel.featureFlags.verticalSlice1Enabled ? "Play" : "Open Settings") {
-                            appModel.featureFlags.verticalSlice1Enabled ? appModel.engine.showSessionConfig() : appModel.engine.showSettings()
-                        }
-                        .buttonStyle(PrimaryActionButtonStyle())
-                        .accessibilityHint("Starts the make and break to ten experience in one tap.")
-                    }
+                if appModel.featureFlags.verticalSlice1Enabled {
+                    activeActivityCard
+                } else {
+                    lockedActivityCard
                 }
 
-                ViewThatFits {
-                    HStack(spacing: 16) {
-                        Button("Parent Summary") {
-                            appModel.engine.showParentSummary()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
-
-                        Button("Settings") {
-                            appModel.engine.showSettings()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue))
+                HStack(spacing: 14) {
+                    Button("Parent Summary") {
+                        appModel.engine.showParentSummary()
                     }
-                    VStack(spacing: 12) {
-                        Button("Parent Summary") {
-                            appModel.engine.showParentSummary()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.65)))
 
-                        Button("Settings") {
-                            appModel.engine.showSettings()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue))
+                    Button("Settings") {
+                        appModel.engine.showSettings()
                     }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
                 }
 
                 Spacer()
             }
             .padding(24)
+        }
+    }
+
+    // Active state: colourful hero card — number is the visual centrepiece
+    private var activeActivityCard: some View {
+        Button {
+            appModel.engine.showSessionConfig()
+        } label: {
+            VStack(spacing: 0) {
+                // Colourful header strip — draws the child's eye immediately
+                ZStack {
+                    LinearGradient(
+                        colors: [MatherTheme.warm, MatherTheme.accent],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+
+                    HStack(spacing: 16) {
+                        // Mini ten-frame preview — the activity's visual identity
+                        VStack(spacing: 5) {
+                            ForEach(0..<2, id: \.self) { row in
+                                HStack(spacing: 5) {
+                                    ForEach(0..<5, id: \.self) { col in
+                                        let idx = row * 5 + col
+                                        Circle()
+                                            .fill(idx < 7 ? Color.white : Color.white.opacity(0.3))
+                                            .frame(width: 18, height: 18)
+                                    }
+                                }
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Make & Break")
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(.white)
+                            Text("to 10")
+                                .font(.system(size: 36, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(20)
+                }
+                .frame(height: 110)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 20, bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0, topTrailingRadius: 20,
+                        style: .continuous
+                    )
+                )
+
+                // Play CTA strip
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ready to play?")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text("Tap to start a session")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(MatherTheme.ink)
+                    }
+                    Spacer()
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(MatherTheme.accent)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(MatherTheme.card)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 0, bottomLeadingRadius: 20,
+                        bottomTrailingRadius: 20, topTrailingRadius: 0,
+                        style: .continuous
+                    )
+                )
+            }
+            .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var lockedActivityCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Make & Break to 10")
+                    .font(.title2.weight(.bold))
+                Text("Enable the activity in Settings before handing the iPad to your child.")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button("Open Settings") {
+                    appModel.engine.showSettings()
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+            }
         }
     }
 }

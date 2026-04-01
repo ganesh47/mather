@@ -4,10 +4,15 @@ enum MatherTheme {
     static let background = Color(red: 0.97, green: 0.95, blue: 0.89)
     static let card = Color.white
     static let ink = Color(red: 0.14, green: 0.16, blue: 0.18)
-    static let accent = Color(red: 0.14, green: 0.48, blue: 0.35)
-    static let warm = Color(red: 0.97, green: 0.68, blue: 0.31)
-    static let danger = Color(red: 0.79, green: 0.33, blue: 0.28)
-    static let softBlue = Color(red: 0.64, green: 0.82, blue: 0.97)
+    // Vivid emerald — was a muted forest green; children need high-contrast, saturated colours
+    static let accent = Color(red: 0.09, green: 0.71, blue: 0.44)
+    // Vivid amber — was too muted; this reads clearly on pale cream background
+    static let warm = Color(red: 1.0, green: 0.62, blue: 0.07)
+    static let danger = Color(red: 0.88, green: 0.23, blue: 0.20)
+    // Rich sky blue — was too pale (0.64/0.82/0.97 barely distinguishable from white)
+    static let softBlue = Color(red: 0.22, green: 0.67, blue: 0.97)
+    // Coral — celebration and transfer stage; distinct from green and amber
+    static let coral = Color(red: 0.98, green: 0.38, blue: 0.33)
 }
 
 struct CardSurface<Content: View>: View {
