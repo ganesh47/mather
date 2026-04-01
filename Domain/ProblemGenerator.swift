@@ -1,15 +1,20 @@
 import Foundation
 
 enum ProblemGenerator {
+    // Seed covers varied decomposition patterns:
+    // - spread pairs (large difference: 1+5, 1+6, 2+7) reveal the range of a number
+    // - mid pairs (3+4, 3+6) are the "non-round" preferred by the spec
+    // - symmetric pairs (3+3, 4+4) test understanding that a+a is valid
+    // - reversed pairs (6+2 after 2+6) expose commutativity across problems
     private static let deterministicSeed: [(Int, Int, Int)] = [
-        (6, 1, 5),
-        (7, 2, 5),
-        (8, 3, 5),
-        (9, 4, 5),
-        (10, 5, 5),
-        (6, 2, 4),
-        (7, 3, 4),
-        (8, 4, 4)
+        (6, 3, 3),  // symmetric — 6 = 3+3
+        (7, 3, 4),  // mid spread
+        (8, 2, 6),  // wider spread
+        (9, 4, 5),  // near-equal
+        (10, 4, 6), // non-round, not anchored to 5
+        (6, 1, 5),  // extreme spread
+        (8, 6, 2),  // reversed of (8,2,6) — commutativity
+        (7, 6, 1),  // high-low reversed
     ]
 
     static func generateProblems(config: SliceConfig) -> [SliceProblem] {

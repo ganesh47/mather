@@ -6,21 +6,24 @@ struct SessionSummaryView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            VStack(spacing: 20) {
-                CardSurface {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Session complete")
-                            .font(.largeTitle.weight(.black))
-                        Text(appModel.engine.feedbackMessage)
-                            .font(.title3)
-                        if let summary = appModel.engine.completedSummary {
-                            Text("Problems completed: \(summary.problemsCompleted)")
-                            Text("First try accuracy: \(Int(summary.firstAttemptAccuracy * 100))%")
-                            Text("Export file: \(summary.exportFileName)")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+            VStack(spacing: 24) {
+                Spacer()
+
+                VStack(spacing: 16) {
+                    Text("🎉")
+                        .font(.system(size: 80))
+                    Text("Amazing work!")
+                        .font(.largeTitle.weight(.black))
+                    Text("You did it!")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
+                .background(MatherTheme.warm.opacity(0.25))
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+
+                Spacer()
 
                 Button("Play again") {
                     appModel.engine.showSessionConfig()
@@ -38,8 +41,6 @@ struct SessionSummaryView: View {
                     }
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.75)))
                 }
-
-                Spacer()
             }
             .padding(24)
         }

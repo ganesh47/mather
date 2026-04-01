@@ -20,6 +20,9 @@ final class VerticalSliceEngine {
     private(set) var currentSession = SliceSession(sessionId: UUID(), startedAt: .now, endedAt: nil, problems: [], schemaVersion: TelemetryWriter.schemaVersion)
     private(set) var currentStage: SliceStage = .concrete
     private(set) var currentProblemState = ProblemState()
+    private var sessionStartedAt: Date = .now
+    private var problemStartedAt: Date = .now
+    private let sessionTimeLimitSeconds: TimeInterval = 7 * 60
 
     var concreteCount = 0
     var splitLeftCount = 0
@@ -91,8 +94,10 @@ final class VerticalSliceEngine {
         feedbackMessage = "Make the target number with the big counters."
         showCelebration = false
         completedSummary = nil
+        sessionStartedAt = .now
+        problemStartedAt = .now
         speechService.resetSession()
-        speechService.speakSessionIntroIfNeeded(enabled: featureFlags.audioEnabled)
+        speechService.speakSessionIntroIfNeeded()
 
         do {
             try telemetryWriter.beginSession(sessionId: currentSession.sessionId, featureFlags: featureFlags)
@@ -183,19 +188,26 @@ final class VerticalSliceEngine {
 
     private func validateEquation(for problem: SliceProblem) -> Bool {
         guard let left = Int(equationLeftInput), let right = Int(equationRightInput) else { return false }
-        return left + right == problem.target && left == splitLeftCount && right == (problem.target - splitLeftCount)
+        return left + right == problem.target
     }
 
     private func completeStage(successMessage: String) {
-        showCelebration = true
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
-        hapticsService.success(enabled: featureFlags.hapticsEnabled)
 
         let next = SliceStateMachine.nextStage(after: currentStage, success: true, showTransfer: config.showTransfer)
         recordStageTransition(from: currentStage, to: next)
-        if currentStage == .transfer || (!config.showTransfer && currentStage == .abstract) {
+
+        let isProblemComplete = currentStage == .transfer || (!config.showTransfer && currentStage == .abstract)
+        if isProblemComplete {
             recordProblemCompletion(transferCorrect: true)
+            // Full celebration for completing an entire problem
+            showCelebration = true
+            hapticsService.success(enabled: featureFlags.hapticsEnabled)
+        } else {
+            // Subtle signal for completing an individual CPA stage
+            showCelebration = false
+            hapticsService.stageSuccess(enabled: featureFlags.hapticsEnabled)
         }
 
         currentStage = next
@@ -226,7 +238,9 @@ final class VerticalSliceEngine {
     }
 
     private func advanceProblemOrFinishSession() {
-        if currentProblemIndex + 1 < problems.count {
+        let elapsed = Date.now.timeIntervalSince(sessionStartedAt)
+        let timeCapReached = elapsed >= sessionTimeLimitSeconds
+        if currentProblemIndex + 1 < problems.count && !timeCapReached {
             currentProblemIndex += 1
             currentStage = .concrete
             currentProblemState = ProblemState()
@@ -235,6 +249,7 @@ final class VerticalSliceEngine {
             equationLeftInput = ""
             equationRightInput = ""
             transferCount = 0
+            problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
             logProblemPresented()
         } else {
@@ -268,8 +283,13 @@ final class VerticalSliceEngine {
         let completed = currentSession.problems.count
         let firstTryCount = currentSession.problems.filter(\.firstTryCorrect).count
         let transferCorrect = currentSession.problems.filter(\.transferCorrect).count
-        let latencySource = currentSession.problems.map { max($0.events.count * 600, 600) }
-        let median = latencySource.sorted().dropFirst(latencySource.count / 2).first ?? 0
+        let latencies = currentSession.problems.compactMap { problem -> Int? in
+            guard let event = problem.events.first(where: { $0.type == .problemCompleted }),
+                  let ms = Int(event.payload["time_ms"] ?? "") else { return nil }
+            return ms
+        }
+        let sorted = latencies.sorted()
+        let median = sorted.isEmpty ? 0 : sorted[sorted.count / 2]
         let accuracy = completed == 0 ? 0 : Double(firstTryCount) / Double(completed)
 
         return ParentDigest(
@@ -278,8 +298,30 @@ final class VerticalSliceEngine {
             medianLatencyMs: median,
             problemsCompleted: completed,
             transferCorrectCount: transferCorrect,
-            nextTargetHint: accuracy < 0.7 ? "Repeat the same range with spoken prompts." : "Increase to 7 or 8 problems when the child stays relaxed."
+            nextTargetHint: nextHint(accuracy: accuracy, transferCorrect: transferCorrect, completed: completed)
         )
+    }
+
+    private func nextHint(accuracy: Double, transferCorrect: Int, completed: Int) -> String {
+        guard completed > 0 else {
+            return "Complete a session to see personalised recommendations here."
+        }
+        let transferRate = Double(transferCorrect) / Double(completed)
+        // Transfer success much lower than overall accuracy → abstract-to-concrete
+        // connection isn't formed yet; suggest home reinforcement
+        if transferRate < accuracy - 0.3 {
+            return "Your child found the reverse (equation → counters) harder. Try this at home: write '3 + 4 =' on paper and ask them to show it with grapes or blocks."
+        }
+        if accuracy < 0.5 {
+            return "The concept is still new. Keep sessions short, use physical objects at home (10 buttons, 10 pebbles), and don't rush to the written equation."
+        }
+        if accuracy < 0.7 {
+            return "Repeat the same range with spoken prompts. At home, practise splitting 6–9 objects into two groups and counting each."
+        }
+        if accuracy < 0.9 {
+            return "Solid progress! Try increasing to 7–8 problems next session when they seem relaxed."
+        }
+        return "Excellent mastery. Try the full 1–10 range or introduce writing the equation on paper first before using the app."
     }
 
     private func logProblemPresented() {
@@ -322,7 +364,9 @@ final class VerticalSliceEngine {
                     "from": from.rawValue,
                     "to": to.rawValue,
                     "decomposition_a": String(currentProblem.decompositionA),
-                    "decomposition_b": String(currentProblem.decompositionB)
+                    "decomposition_b": String(currentProblem.decompositionB),
+                    "entered_left": equationLeftInput,
+                    "entered_right": equationRightInput
                 ]
             )
         )
@@ -330,15 +374,18 @@ final class VerticalSliceEngine {
 
     private func recordProblemCompletion(transferCorrect: Bool) {
         guard let currentProblem else { return }
+        let elapsedMs = Int(Date.now.timeIntervalSince(problemStartedAt) * 1000)
+        currentProblemState.timeSpentMs = elapsedMs
         let problemSession = ProblemSession(
             problemId: currentProblem.id,
-            givenAt: .now,
+            givenAt: problemStartedAt,
             events: [
                 SliceEvent(
                     type: .problemCompleted,
                     payload: [
                         "problem_id": currentProblem.id.uuidString,
                         "attempts": String(currentProblemState.attempts),
+                        "time_ms": String(elapsedMs),
                         "transfer_correct": String(transferCorrect)
                     ]
                 )
@@ -384,15 +431,40 @@ final class VerticalSliceEngine {
     }
 
     private func feedbackMessageForFailure(stage: SliceStage, problem: SliceProblem) -> String {
+        let attempts = currentProblemState.attempts
         switch stage {
         case .concrete:
-            return "Keep counting. Make exactly \(problem.target)."
+            if attempts == 1 {
+                return "Keep counting. Make exactly \(problem.target)."
+            } else if attempts == 2 {
+                return "You have \(concreteCount). How many more do you need to make \(problem.target)?"
+            } else {
+                return "Try tapping the circles one by one until you reach \(problem.target)."
+            }
         case .pictorial:
-            return "Try another break. Both groups together should still make \(problem.target)."
+            if attempts == 1 {
+                return "Try another break. Both groups together should still make \(problem.target)."
+            } else if attempts == 2 {
+                return "You have \(splitLeftCount) on the left and \(problem.target - splitLeftCount) on the right. That makes \(splitLeftCount + (problem.target - splitLeftCount))."
+            } else {
+                return "Any split is fine — left and right just need to add up to \(problem.target)."
+            }
         case .abstract:
-            return "Use the same two parts you just built."
+            if attempts == 1 {
+                return "Use two numbers that add up to \(problem.target)."
+            } else if attempts == 2 {
+                return "Try \(problem.decompositionA) and \(problem.decompositionB). What do they add up to?"
+            } else {
+                return "Type \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
+            }
         case .transfer:
-            return "Look at the equation and rebuild the whole number."
+            if attempts == 1 {
+                return "Look at the equation and rebuild the whole number."
+            } else if attempts == 2 {
+                return "The equation shows \(problem.decompositionA) + \(problem.decompositionB). How many is that altogether?"
+            } else {
+                return "Tap until you have \(problem.target) counters — that is what \(problem.decompositionA) + \(problem.decompositionB) equals."
+            }
         case .done:
             return "Try again."
         }

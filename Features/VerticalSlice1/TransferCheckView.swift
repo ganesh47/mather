@@ -24,7 +24,7 @@ struct TransferCheckView: View {
                     ForEach(0..<problem.target, id: \.self) { index in
                         Circle()
                             .fill(index < transferCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.25))
-                            .frame(minHeight: 48)
+                            .frame(minHeight: 80)
                     }
                 }
 
