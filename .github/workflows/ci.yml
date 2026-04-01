@@ -96,7 +96,7 @@ jobs:
 
           # Record the simulator screen for the entire UI test run.
           # SIGINT (not SIGTERM) is required to finalize the MP4 container.
-          xcrun simctl io "$SIM_ID" recordVideo --codec h264 \
+          xcrun simctl io "$SIM_ID" recordVideo --codec hevc \
             ci-videos/ui-tests.mp4 &
           VIDEO_PID=$!
 

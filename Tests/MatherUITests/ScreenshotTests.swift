@@ -45,9 +45,9 @@ final class ScreenshotTests: XCTestCase {
     // MARK: - Session Config screen
 
     func testScreenshot_SessionConfig() {
-        let app = launch()
+        // Pre-enable VS1 via launch argument to skip Settings navigation.
+        let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-        enableVS1(app)
 
         let playButton = app.buttons["Play"]
         _ = playButton.waitForExistence(timeout: 5)
@@ -59,9 +59,11 @@ final class ScreenshotTests: XCTestCase {
     // MARK: - Concrete stage
 
     func testScreenshot_ConcreteBuildView() {
-        let app = launch()
+        // Pre-enable VS1 via launch argument to skip Settings navigation.
+        // This test runs first alphabetically and bears cold-start overhead;
+        // removing the enableVS1() round-trip keeps it within CI time budget.
+        let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-        enableVS1(app)
 
         let playButton = app.buttons["Play"]
         _ = playButton.waitForExistence(timeout: 5)
@@ -93,11 +95,28 @@ final class ScreenshotTests: XCTestCase {
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        // iOS maps `-key value` launch arguments directly to UserDefaults.standard.
+        // iOS maps `-key YES/NO` launch arguments to UserDefaults as NSNumber(bool:).
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES"
+        ]
+        app.launch()
+        return app
+    }
+
+    /// Launches with VS1 pre-enabled via launch argument.
+    /// Use this instead of launch() + enableVS1() when the test doesn't need
+    /// to exercise the Settings toggle flow — it removes 3 screen navigations
+    /// from the critical path, which matters for the first (cold) test in CI.
+    private func launchWithVS1() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.verticalSlice1Enabled", "YES"
         ]
         app.launch()
         return app
