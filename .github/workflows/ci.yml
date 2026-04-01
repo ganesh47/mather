@@ -95,14 +95,21 @@ jobs:
 
       - name: Extract screenshots from result bundle
         if: always()
+        continue-on-error: true
         run: |
           mkdir -p ci-screenshots
 
-          # Write the extraction script to a file to avoid pipe+heredoc conflicts (SC2259)
+          # xcresulttool get --format json returns empty in Xcode 16.4 without --id.
+          # Guard against empty output before piping to Python.
           cat > /tmp/extract_screenshots.py << 'PYEOF'
           import sys, json, subprocess, pathlib
 
-          data = json.load(sys.stdin)
+          raw = sys.stdin.read()
+          if not raw.strip():
+              print("xcresulttool returned empty output — no attachments to extract")
+              sys.exit(0)
+
+          data = json.loads(raw)
           out = pathlib.Path("ci-screenshots")
           out.mkdir(exist_ok=True)
 
@@ -138,7 +145,7 @@ jobs:
             | python3 /tmp/extract_screenshots.py
           fi
 
-          # Capture a live simulator screenshot as a final-state sanity image
+          # Always capture a live simulator screenshot as a visual sanity check
           SIM_ID=$(xcrun simctl list devices booted \
             | grep -E '\([-A-F0-9]+\)' | head -1 \
             | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
