@@ -17,14 +17,16 @@ struct TransferCheckView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: 10) {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
+                    spacing: 10
+                ) {
                     ForEach(0..<problem.target, id: \.self) { index in
                         Circle()
                             .fill(index < transferCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.25))
-                            .frame(width: 42, height: 42)
+                            .frame(minHeight: 48)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
 
                 HStack(spacing: 16) {
                     Button("Less") { onAdjust(-1) }

@@ -21,13 +21,28 @@ struct EquationResolveView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: 12) {
-                    entryCard(title: "Part 1", value: leftInput, side: .left)
-                    Text("+").font(.largeTitle.weight(.black))
-                    entryCard(title: "Part 2", value: rightInput, side: .right)
-                    Text("=").font(.largeTitle.weight(.black))
-                    Text("\(target)")
-                        .font(.system(size: 42, weight: .black, design: .rounded))
+                ViewThatFits {
+                    HStack(spacing: 12) {
+                        entryCard(title: "Part 1", value: leftInput, side: .left)
+                        Text("+").font(.largeTitle.weight(.black))
+                        entryCard(title: "Part 2", value: rightInput, side: .right)
+                        Text("=").font(.largeTitle.weight(.black))
+                        Text("\(target)")
+                            .font(.system(size: 42, weight: .black, design: .rounded))
+                    }
+                    VStack(spacing: 10) {
+                        HStack(spacing: 12) {
+                            entryCard(title: "Part 1", value: leftInput, side: .left)
+                            Text("+").font(.title.weight(.black))
+                            entryCard(title: "Part 2", value: rightInput, side: .right)
+                        }
+                        HStack(spacing: 12) {
+                            Text("=").font(.title.weight(.black))
+                            Text("\(target)")
+                                .font(.system(size: 36, weight: .black, design: .rounded))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
 
                 LazyVGrid(columns: columns, spacing: 12) {
