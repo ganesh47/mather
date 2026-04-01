@@ -182,6 +182,7 @@ final class VerticalSliceEngine {
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
         let next = SliceStateMachine.nextStage(after: currentStage, success: true, showTransfer: config.showTransfer)
+        recordStageTransition(from: currentStage, to: next)
         if currentStage == .transfer || (!config.showTransfer && currentStage == .abstract) {
             recordProblemCompletion(transferCorrect: true)
         }
@@ -295,6 +296,22 @@ final class VerticalSliceEngine {
                     "action": action,
                     "value": String(value),
                     "stage": currentStage.rawValue
+                ]
+            )
+        )
+    }
+
+    private func recordStageTransition(from: SliceStage, to: SliceStage) {
+        guard let currentProblem else { return }
+        try? telemetryWriter.append(
+            SliceEvent(
+                type: .stageTransition,
+                payload: [
+                    "problem_id": currentProblem.id.uuidString,
+                    "from": from.rawValue,
+                    "to": to.rawValue,
+                    "decomposition_a": String(currentProblem.decompositionA),
+                    "decomposition_b": String(currentProblem.decompositionB)
                 ]
             )
         )

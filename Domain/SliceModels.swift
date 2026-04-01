@@ -26,6 +26,7 @@ enum SliceEventType: String, Codable {
     case problemPresented = "problem_presented"
     case interaction
     case hintUsed = "hint_used"
+    case stageTransition = "stage_transition"
     case problemCompleted = "problem_completed"
     case sessionEnd = "session_end"
 }
