@@ -117,6 +117,7 @@ struct HomeView: View {
             .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("Play")
     }
 
     private var lockedActivityCard: some View {
