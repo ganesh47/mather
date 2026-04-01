@@ -49,7 +49,7 @@ jobs:
       - name: Resolve dependencies
         run: xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
 
-      - name: Build
+      - name: Build for testing
         run: |
           xcodebuild build-for-testing \
             -project Mather.xcodeproj \
@@ -57,10 +57,100 @@ jobs:
             -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Test
+      - name: Run unit tests
         run: |
           xcodebuild test-without-building \
             -project Mather.xcodeproj \
             -scheme Mather \
             -destination "$SIM_DESTINATION" \
+            -only-testing MatherTests \
+            -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Run UI screenshot tests
+        run: |
+          xcodebuild test-without-building \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination "$SIM_DESTINATION" \
+            -only-testing MatherUITests \
+            -resultBundlePath UITestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Extract screenshots from result bundle
+        if: always()
+        run: |
+          mkdir -p ci-screenshots
+
+          # xcresulttool: export all attachments from the UI test result bundle
+          if [[ -d UITestResults.xcresult ]]; then
+            # List test nodes to find attachment IDs
+            xcrun xcresulttool get \
+              --path UITestResults.xcresult \
+              --format json 2>/dev/null \
+            | python3 - <<'PYEOF'
+          import sys, json, subprocess, os, pathlib
+
+          data = json.load(sys.stdin)
+          out = pathlib.Path("ci-screenshots")
+          out.mkdir(exist_ok=True)
+
+          def walk(node, depth=0):
+              if isinstance(node, dict):
+                  # Pull attachment payloads
+                  if node.get("_type", {}).get("_name") == "ActionTestAttachment":
+                      name    = node.get("name", {}).get("_value", "screenshot")
+                      ref_id  = (node.get("payloadRef", {}) or {}).get("id", {}).get("_value")
+                      if ref_id:
+                          dest = out / f"{name}.png"
+                          subprocess.run(
+                              ["xcrun", "xcresulttool", "export",
+                               "--path", "UITestResults.xcresult",
+                               "--id", ref_id,
+                               "--output-path", str(dest)],
+                              check=False, capture_output=True
+                          )
+                          if dest.exists():
+                              print(f"  saved {dest}")
+                  for v in node.values():
+                      walk(v, depth+1)
+              elif isinstance(node, list):
+                  for item in node:
+                      walk(item, depth+1)
+
+          walk(data)
+          print(f"Done. Screenshots in ci-screenshots/: {list(out.iterdir())}")
+          PYEOF
+          fi
+
+          # Also capture a plain simulator screenshot as a fallback visual sanity check
+          SIM_ID=$(xcrun simctl list devices booted | grep -E '\([-A-F0-9]+\)' | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          if [[ -n "$SIM_ID" ]]; then
+            xcrun simctl io "$SIM_ID" screenshot ci-screenshots/simulator-final-state.png 2>/dev/null || true
+          fi
+
+          echo "--- Screenshot artifacts ---"
+          find ci-screenshots -name "*.png" | sort | while read f; do
+            SIZE=$(wc -c < "$f")
+            echo "  $f (${SIZE} bytes)"
+          done || echo "  (none)"
+
+      - name: Upload test result bundles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            TestResults.xcresult
+            UITestResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_number }}
+          path: ci-screenshots/
+          if-no-files-found: ignore
+          retention-days: 30

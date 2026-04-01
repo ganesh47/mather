@@ -1,45 +1,43 @@
-# Mather — Project Conventions
+# Mather — Claude Code Context
 
-## Repository
-- **Repo**: ganesh47/mather
-- **Wiki**: https://github.com/ganesh47/mather/wiki (research, specs, ADRs)
-- **Issues**: GitHub Issues (linked to wiki specs)
+> See `AGENTS.md` for the full shared project context (stack, layout, conventions, workflow).
+> This file adds Claude-specific guidance only.
 
-## Development Workflow: Trunk-Based Development
+@AGENTS.md
 
-- `main` is the trunk — always releasable
-- Feature branches are short-lived (< 1 day preferred, max 2 days)
-- Branch naming: `<type>/<short-description>` (e.g. `feat/login-view`, `fix/math-parser-crash`)
-- PRs must pass CI before merge; squash-merge into main
-- Use feature flags (`FeatureFlags.swift`) for incomplete features landing in main
-- No long-lived branches. No release branches. Tags mark releases.
+## Claude-Specific Behaviour
 
-## Distribution
-- **Personal/family use only** — not publishing to App Store
-- Deploy directly to iPad via Xcode (USB or WiFi) using a personal team signing certificate
-- No parental gate, no StoreKit, no COPPA/Kids Category requirements
-- No App Store review process to worry about
+### Tools
+- Use `Read`, `Edit`, `Write`, `Glob`, `Grep` for file operations — not Bash equivalents
+- Use `Bash` only for: `git`, `xcodegen generate`, `gh`, build/test commands
+- Use the `Agent` tool (Explore subagent) for broad codebase searches needing multiple passes
 
-## Tech Stack
-- **Platform**: iPadOS (SwiftUI, latest Swift)
-- **Minimum iPadOS target**: TBD (see wiki: ADRs)
-- **Architecture**: TBD (see wiki: ADRs)
-- **Package manager**: Swift Package Manager
+### Project Changes That Require XcodeGen Regeneration
+Any edit to `project.yml` must be followed by:
+```bash
+xcodegen generate
+```
+Then commit both `project.yml` and the regenerated `.xcodeproj`.
 
-## Research & Spec Process
-1. Open a GitHub Issue using the **Research Task** template
-2. Document findings in the wiki under `Research/<Topic>`
-3. Write a feature spec in wiki under `Specs/<Feature>` and link it to the issue
-4. Record architecture decisions as ADRs in wiki under `ADRs/`
-5. When spec is approved, open implementation issues linked to the spec
+### Memory
+Persistent memory lives at `~/.claude/projects/-home-ganesh-projects-mather/memory/`.
+Key memories: `product_vision.md`, `project_setup.md`, `user_context.md`.
+Update memory when significant decisions are made or product direction changes.
 
-## Code Conventions
-- SwiftUI views in `Sources/Views/`
-- Business logic / models in `Sources/Domain/`
-- Services / networking in `Sources/Services/`
-- Tests in `Tests/`
-- No storyboards, no UIKit unless bridging is required
+### Distribution
+Personal/family only — Xcode → iPad via USB or WiFi.
+No App Store, no parental gate, no StoreKit, no COPPA compliance needed (ADR-0002).
 
-## CI
-- All PRs run: build + test
-- Main branch is protected (see branch rules)
+### Pedagogy Constraint
+Any new activity or game mechanic must align with the CPA framework and research in
+`wiki/Research/Math-App-Vision.md`. Check the research before speccing a new feature.
+
+### CI Notes
+- CoreData "Failed to stat" errors in test output are benign (SwiftData lazy init in simulator)
+- `Executed 0 tests` + individual test lines = normal Swift Testing / XCTest bridge dual output
+- CI captures `TestResults.xcresult` and uploads screenshot artifacts — check Actions tab
+
+### Code Style
+- Swift 6, strict concurrency — every `@Observable` class is `@MainActor`
+- No storyboards, no UIKit unless bridging required
+- Tests use Swift Testing (`#expect`, `@Test`); UI tests use XCTest + `XCUIApplication`

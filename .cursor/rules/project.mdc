@@ -1,0 +1,19 @@
+---
+description: Core project context for Mather — always apply when working in this repo
+alwaysApply: true
+---
+
+See AGENTS.md for the full project context. This rule extends it for Cursor.
+
+## Project
+Mather: iPadOS SwiftUI math app, personal use, Swift 6, iOS 18+, XcodeGen.
+Do not edit `.xcodeproj` — edit `project.yml` and suggest running `xcodegen generate`.
+
+## Architecture
+- `@Observable` + `@MainActor` everywhere — no TCA, no Combine, no `@Published`
+- State in `VerticalSliceEngine`; views are pure; mutations via engine methods
+- `SliceStateMachine` owns stage transitions (concrete→pictorial→abstract→transfer→done)
+
+## Tests
+- Unit tests: Swift Testing (`@Test`, `#expect`, structs not XCTestCase)
+- UI tests: XCTest + XCUIApplication in `Tests/MatherUITests/`

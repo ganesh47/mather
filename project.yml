@@ -33,6 +33,21 @@ targets:
     scheme:
       testTargets:
         - MatherTests
+        - MatherUITests
+  MatherUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/MatherUITests
+    dependencies:
+      - target: Mather
+    settings:
+      base:
+        PRODUCT_NAME: MatherUITests
+        PRODUCT_MODULE_NAME: MatherUITests
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.MatherUITests
+        TEST_TARGET_NAME: Mather
   MatherTests:
     type: bundle.unit-test
     platform: iOS
