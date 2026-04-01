@@ -13,7 +13,7 @@ struct ConcreteBuildView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Make \(target)")
                     .font(.largeTitle.weight(.black))
-                Text("Tap the big buttons to build the target.")
+                Text("Tap a counter or use the buttons to build the target.")
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
@@ -24,6 +24,10 @@ struct ConcreteBuildView: View {
                             .frame(minHeight: 82)
                             .overlay {
                                 Circle().stroke(Color.white, lineWidth: 3)
+                            }
+                            .onTapGesture {
+                                let tapped = index + 1
+                                onAdjust(tapped - concreteCount)
                             }
                     }
                 }
