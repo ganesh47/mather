@@ -23,6 +23,7 @@ struct HomeView: View {
                         Text(appModel.featureFlags.verticalSlice1Enabled ? "Practice making and breaking numbers to 10 using touch, pictures, and equations." : "Enable the activity in Settings before handing the iPad to your child.")
                             .font(.headline)
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Button(appModel.featureFlags.verticalSlice1Enabled ? "Play" : "Open Settings") {
                             appModel.featureFlags.verticalSlice1Enabled ? appModel.engine.showSessionConfig() : appModel.engine.showSettings()

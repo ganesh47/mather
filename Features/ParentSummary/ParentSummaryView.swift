@@ -13,39 +13,107 @@ struct ParentSummaryView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     CardSurface {
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("Parent Summary")
                                 .font(.largeTitle.weight(.black))
                             Text(digest.objectiveTitle)
-                                .font(.title2.weight(.bold))
-                            Text("Problems completed: \(digest.problemsCompleted)")
-                            Text("First try accuracy: \(Int(digest.firstAttemptAccuracy * 100))%")
-                            Text("Transfer correct: \(digest.transferCorrectCount)")
-                            Text("Median pace: \(digest.medianLatencyMs) ms")
-                            Text("Next step: \(digest.nextTargetHint)")
+                                .font(.headline.weight(.semibold))
                                 .foregroundStyle(.secondary)
                         }
                     }
 
+                    if summaries.isEmpty {
+                        CardSurface {
+                            VStack(spacing: 12) {
+                                Image(systemName: "chart.bar.xaxis")
+                                    .font(.system(size: 44))
+                                    .foregroundStyle(MatherTheme.accent)
+                                Text("No sessions yet")
+                                    .font(.title3.weight(.bold))
+                                Text("Complete a session with your child and the summary will appear here.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                        }
+                    } else {
+                        LazyVGrid(
+                            columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                            spacing: 12
+                        ) {
+                            StatTile(
+                                value: "\(digest.problemsCompleted)",
+                                label: "Problems done",
+                                icon: "checkmark.circle.fill",
+                                color: MatherTheme.accent
+                            )
+                            StatTile(
+                                value: "\(Int(digest.firstAttemptAccuracy * 100))%",
+                                label: "First try",
+                                icon: "star.fill",
+                                color: MatherTheme.warm
+                            )
+                            StatTile(
+                                value: "\(digest.transferCorrectCount)",
+                                label: "Transfers",
+                                icon: "arrow.triangle.2.circlepath",
+                                color: MatherTheme.softBlue
+                            )
+                            StatTile(
+                                value: paceLabel(digest.medianLatencyMs),
+                                label: "Avg pace",
+                                icon: "clock.fill",
+                                color: Color.purple.opacity(0.7)
+                            )
+                        }
+
+                        CardSurface {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "lightbulb.fill")
+                                    .foregroundStyle(MatherTheme.warm)
+                                    .font(.title3)
+                                Text(digest.nextTargetHint)
+                                    .font(.subheadline.weight(.medium))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+
                     CardSurface {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Recent sessions")
-                                .font(.title2.weight(.bold))
+                                .font(.title3.weight(.bold))
                             if summaries.isEmpty {
-                                Text("No sessions yet. Run one child session to populate history.")
+                                Text("No history yet. Run a session to start.")
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             } else {
                                 ForEach(Array(summaries.prefix(5))) { summary in
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
-                                            .font(.headline.weight(.semibold))
-                                        Text("Completed \(summary.problemsCompleted) problems, accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
-                                            .foregroundStyle(.secondary)
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
+                                                .font(.subheadline.weight(.semibold))
+                                            Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        if summary.sessionId == summaries.first?.sessionId {
+                                            Text("Latest")
+                                                .font(.caption.weight(.bold))
+                                                .foregroundStyle(MatherTheme.accent)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(MatherTheme.accent.opacity(0.12))
+                                                .clipShape(Capsule())
+                                        }
                                     }
-                                    .padding(14)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.45) : Color.secondary.opacity(0.08))
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .padding(12)
+                                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 }
                             }
                         }
@@ -66,5 +134,36 @@ struct ParentSummaryView: View {
                 .padding(24)
             }
         }
+    }
+
+    private func paceLabel(_ ms: Int) -> String {
+        guard ms > 0 else { return "—" }
+        let seconds = ms / 1000
+        return seconds < 60 ? "\(seconds)s" : "\(seconds / 60)m \(seconds % 60)s"
+    }
+}
+
+private struct StatTile: View {
+    let value: String
+    let label: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 34, weight: .black, design: .rounded))
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }

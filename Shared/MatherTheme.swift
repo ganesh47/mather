@@ -42,7 +42,7 @@ struct SecondaryTileButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.title2.weight(.bold))
+            .font(.headline.weight(.bold))
             .foregroundStyle(MatherTheme.ink)
             .frame(maxWidth: .infinity, minHeight: 88)
             .background(configuration.isPressed ? fill.opacity(0.8) : fill)

@@ -60,6 +60,8 @@ struct SettingsView: View {
                                 .font(.largeTitle.weight(.black))
 
                             Toggle("Make & Break to 10", isOn: verticalSliceBinding)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
                             Toggle("Test mode", isOn: testModeBinding)
                             Toggle("Audio prompts", isOn: audioBinding)
                             Toggle("Haptics", isOn: hapticsBinding)
