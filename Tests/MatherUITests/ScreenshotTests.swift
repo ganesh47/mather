@@ -79,6 +79,46 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "ConcreteBuild-Initial")
     }
 
+    // MARK: - Haptics / feedback flow
+
+    /// Exercises the failure-then-success path so the screen recording captures
+    /// both the failure feedback banner and the celebration state.
+    func testScreenshot_ConcreteBuild_FailureThenSuccess() {
+        let app = launchWithVS1AndHaptics()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        let playButton = app.buttons["Play"]
+        _ = playButton.waitForExistence(timeout: 5)
+        playButton.tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+
+        let startButton = app.buttons["Start Session"]
+        _ = startButton.waitForExistence(timeout: 5)
+        startButton.tap()
+
+        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
+        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+        snapshot(app, "ConcreteBuild-BeforeInput")
+
+        // Submit with count at 0 to trigger failure feedback
+        let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
+        let submitButton = app.buttons.element(matching: submitPredicate)
+        _ = submitButton.waitForExistence(timeout: 5)
+        submitButton.tap()
+        snapshot(app, "ConcreteBuild-FailureFeedback")
+
+        // Fill to correct target (deterministic mode targets are 6–10; tapping 10 circles covers all)
+        let addButton = app.buttons["Add"]
+        _ = addButton.waitForExistence(timeout: 5)
+        for _ in 0..<10 { addButton.tap() }
+        submitButton.tap()
+
+        // After a correct answer the stage advances to pictorial — wait for it
+        let breakPredicate = NSPredicate(format: "label BEGINSWITH 'Break '")
+        _ = app.staticTexts.element(matching: breakPredicate).waitForExistence(timeout: 10)
+        snapshot(app, "Pictorial-AfterConcreteSuccess")
+    }
+
     // MARK: - Parent Summary screen
 
     func testScreenshot_ParentSummary() {
@@ -136,6 +176,20 @@ final class ScreenshotTests: XCTestCase {
         _ = homeButton.waitForExistence(timeout: 5)
         homeButton.tap()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+    }
+
+    /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
+    private func launchWithVS1AndHaptics() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "YES",
+            "-feature.testModeEnabled", "YES",
+            "-feature.verticalSlice1Enabled", "YES"
+        ]
+        app.launch()
+        return app
     }
 
     /// Attaches a full-screen screenshot to the test result with `.keepAlways` lifetime.
