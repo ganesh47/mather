@@ -13,6 +13,7 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -58,17 +59,22 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Boot simulator
+        timeout-minutes: 8
         run: |
-          # Extract raw UUID from SIM_DESTINATION (format: id=<UUID>)
           SIM_ID="${SIM_DESTINATION#id=}"
-          STATE=$(xcrun simctl list devices | grep "$SIM_ID" | grep -oE 'Booted|Shutdown' || echo "Unknown")
-          if [[ "$STATE" != "Booted" ]]; then
-            echo "Booting simulator $SIM_ID…"
-            xcrun simctl boot "$SIM_ID"
-          fi
-          # Wait until fully booted
-          xcrun simctl bootstatus "$SIM_ID" -b
-          echo "Simulator ready: $SIM_ID"
+          # boot returns exit 164 ("already booted") — ignore it
+          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+          # Poll for Booted state (bootstatus -b can hang indefinitely)
+          for i in $(seq 1 40); do
+            STATE=$(xcrun simctl list devices | grep -F "$SIM_ID" \
+              | grep -oE 'Booted|Shutdown|Booting' | head -1 || echo "Unknown")
+            echo "[$i/40] $STATE"
+            [[ "$STATE" == "Booted" ]] && { echo "Simulator ready: $SIM_ID"; exit 0; }
+            sleep 5
+          done
+          echo "Simulator did not reach Booted state after 200s" >&2
+          xcrun simctl list devices | grep -F "$SIM_ID" >&2
+          exit 1
 
       - name: Run unit tests
         timeout-minutes: 10
