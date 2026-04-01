@@ -26,5 +26,6 @@ struct RootView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
+        .background(MatherTheme.background.ignoresSafeArea())
     }
 }

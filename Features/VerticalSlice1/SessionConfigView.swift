@@ -10,10 +10,11 @@ struct SessionConfigView: View {
                 CardSurface {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Session setup")
-                            .font(.largeTitle.weight(.black))
-                        Text("Keep the first slice short, spoken, and predictable.")
+                            .font(.title.weight(.black))
+                        Text("Keep sessions short and consistent.")
                             .font(.headline)
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Stepper(value: Binding(
                             get: { appModel.engine.config.maxProblems },
