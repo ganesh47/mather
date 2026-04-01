@@ -6,14 +6,10 @@ struct ConcreteBuildView: View {
     let onAdjust: (Int) -> Void
     let onSubmit: () -> Void
 
-    @Environment(\.horizontalSizeClass) private var sizeClass
-
-    private var columns: [GridItem] {
-        let count = sizeClass == .compact ? 2 : 5
-        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
-    }
-
-    private var circleMinHeight: CGFloat { sizeClass == .compact ? 80 : 82 }
+    // Ten-frame is always 5 columns × 2 rows — this fixed 2×5 structure is
+    // what enables subitizing (e.g. "7 = full row of 5 + 2 more").
+    // Circle size scales with available space; the column count is invariant.
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
 
     var body: some View {
         CardSurface {
@@ -24,14 +20,21 @@ struct ConcreteBuildView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
-                LazyVGrid(columns: columns, spacing: 12) {
+                // Always 10 slots visible: filled slots show as accent circles,
+                // empty slots remain as faint outlines so the ten-frame structure
+                // is always clear and subitizing is always possible.
+                LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(0..<10, id: \.self) { index in
                         Circle()
-                            .fill(index < concreteCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.3))
-                            .frame(minHeight: circleMinHeight)
+                            .fill(index < concreteCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.15))
                             .overlay {
-                                Circle().stroke(Color.white, lineWidth: 3)
+                                Circle().stroke(
+                                    index < concreteCount ? Color.white : MatherTheme.softBlue.opacity(0.5),
+                                    lineWidth: 2
+                                )
                             }
+                            .aspectRatio(1, contentMode: .fit)
+                            .frame(minWidth: 44, minHeight: 44)
                             .onTapGesture {
                                 let tapped = index + 1
                                 onAdjust(tapped - concreteCount)

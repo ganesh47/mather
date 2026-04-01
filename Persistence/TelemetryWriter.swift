@@ -127,7 +127,27 @@ final class TelemetryWriter {
             medianLatencyMs: median,
             problemsCompleted: completed,
             transferCorrectCount: transferCorrect,
-            nextTargetHint: accuracy < 0.7 ? "Repeat targets 6 to 8 with audio prompts enabled." : "Try one more session and watch for faster transfer success."
+            nextTargetHint: digestHint(accuracy: accuracy, transferCorrect: transferCorrect, completed: completed)
         )
+    }
+
+    private func digestHint(accuracy: Double, transferCorrect: Int, completed: Int) -> String {
+        guard completed > 0 else {
+            return "Start with targets 6 to 8 and watch for relaxed repetition."
+        }
+        let transferRate = Double(transferCorrect) / Double(completed)
+        if transferRate < accuracy - 0.3 {
+            return "The reverse direction (equation → counters) is the gap. Practise writing '3 + 4 =' and asking your child to show it with physical objects."
+        }
+        if accuracy < 0.5 {
+            return "Repeat the current range — keep sessions short and use real objects at home (pebbles, pasta) alongside the app."
+        }
+        if accuracy < 0.7 {
+            return "Repeat targets 6 to 8 with audio prompts enabled. Physical practice at home helps consolidate the concept."
+        }
+        if accuracy < 0.9 {
+            return "Good progress. Try one more session and watch for faster, confident transfer responses."
+        }
+        return "Strong mastery. Consider expanding the range or introducing numeral writing on paper."
     }
 }
