@@ -1,0 +1,25 @@
+---
+description: Swift 6 and SwiftUI conventions for Mather
+globs: ["**/*.swift"]
+alwaysApply: false
+---
+
+## Swift 6 Strict Concurrency
+- All `@Observable` classes → `@MainActor final class`
+- Across-actor calls → `await` or `Task { @MainActor in }`
+- No `DispatchQueue` — use structured concurrency
+
+## SwiftUI Patterns
+- `@Bindable var appModel: AppModel` — never `@StateObject` or `@ObservedObject`
+- Local transient UI state only in `@State` (e.g., animation triggers, sheet visibility)
+- No domain logic in view body — call engine methods
+
+## Touch Targets (child UI)
+- Minimum 80×80 pt interactive area
+- Snap zones for drag-and-drop: 40–60 pt magnetic radius
+- No timers, no buzzers, no red X — gentle self-correcting animations only
+
+## Naming
+- Views: `<Context>View`
+- Engine actions: imperative verbs
+- VS1-scoped UI: `VS1` prefix; app-wide: `Mather` prefix

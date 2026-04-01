@@ -1,0 +1,28 @@
+---
+description: Domain layer rules — apply when editing Domain/ files
+globs: ["Domain/**/*.swift"]
+alwaysApply: false
+---
+
+## Domain Layer Rules
+
+`Domain/` contains pure business logic — no SwiftUI imports, no UIKit.
+
+### SliceModels.swift
+- All model types: `Codable`, `Equatable`, `Sendable`
+- `SliceStage` is the CPA phase enum; do not add stages without a spec and ADR
+
+### SliceStateMachine.swift
+- Pure static functions only — no state, no side effects
+- `nextStage(after:success:showTransfer:)` is the single source of truth for transitions
+- Validate transitions before acting in `VerticalSliceEngine`
+
+### VerticalSliceEngine.swift
+- `@MainActor final class` — all mutations here
+- Emit telemetry events via `telemetryWriter` on every meaningful state change
+- Call `speechService.speak()` for child-facing prompts
+- New problem types must add a `skillTag` to `SliceProblem`
+
+### ProblemGenerator.swift
+- Must be deterministic when `deterministicMode = true` (for tests)
+- All generated problems must satisfy: `decompositionA + decompositionB == target`
