@@ -57,17 +57,33 @@ jobs:
             -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Boot simulator
+        run: |
+          # Extract raw UUID from SIM_DESTINATION (format: id=<UUID>)
+          SIM_ID="${SIM_DESTINATION#id=}"
+          STATE=$(xcrun simctl list devices | grep "$SIM_ID" | grep -oE 'Booted|Shutdown' || echo "Unknown")
+          if [[ "$STATE" != "Booted" ]]; then
+            echo "Booting simulator $SIM_ID…"
+            xcrun simctl boot "$SIM_ID"
+          fi
+          # Wait until fully booted
+          xcrun simctl bootstatus "$SIM_ID" -b
+          echo "Simulator ready: $SIM_ID"
+
       - name: Run unit tests
+        timeout-minutes: 10
         run: |
           xcodebuild test-without-building \
             -project Mather.xcodeproj \
             -scheme Mather \
             -destination "$SIM_DESTINATION" \
             -only-testing MatherTests \
+            -skip-testing MatherUITests \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Run UI screenshot tests
+        timeout-minutes: 15
         run: |
           xcodebuild test-without-building \
             -project Mather.xcodeproj \
