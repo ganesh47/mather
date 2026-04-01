@@ -19,14 +19,24 @@ struct SplitView: View {
 
                 ViewThatFits {
                     HStack(spacing: 16) {
-                        bucket(title: "Left", count: leftCount, fill: MatherTheme.softBlue)
-                        bucket(title: "Right", count: rightCount, fill: MatherTheme.warm.opacity(0.9))
+                        bucket(title: "Left", count: leftCount, fill: MatherTheme.softBlue, delta: 1)
+                        bucket(title: "Right", count: rightCount, fill: MatherTheme.warm.opacity(0.9), delta: -1)
                     }
                     VStack(spacing: 16) {
-                        bucket(title: "Left", count: leftCount, fill: MatherTheme.softBlue)
-                        bucket(title: "Right", count: rightCount, fill: MatherTheme.warm.opacity(0.9))
+                        bucket(title: "Left", count: leftCount, fill: MatherTheme.softBlue, delta: 1)
+                        bucket(title: "Right", count: rightCount, fill: MatherTheme.warm.opacity(0.9), delta: -1)
                     }
                 }
+                .gesture(
+                    DragGesture(minimumDistance: 30)
+                        .onEnded { value in
+                            if value.translation.width < 0 {
+                                onAdjust(-1)
+                            } else {
+                                onAdjust(1)
+                            }
+                        }
+                )
 
                 HStack(spacing: 16) {
                     Button("Move Left") { onAdjust(1) }
@@ -43,7 +53,7 @@ struct SplitView: View {
         }
     }
 
-    private func bucket(title: String, count: Int, fill: Color) -> some View {
+    private func bucket(title: String, count: Int, fill: Color, delta: Int) -> some View {
         VStack(spacing: 12) {
             Text(title)
                 .font(.title2.weight(.bold))
@@ -57,6 +67,9 @@ struct SplitView: View {
                         .lineLimit(3)
                         .minimumScaleFactor(0.5)
                         .padding()
+                }
+                .onTapGesture {
+                    onAdjust(delta)
                 }
         }
         .frame(maxWidth: .infinity)
