@@ -8,6 +8,7 @@ import XCTest
 ///
 /// Naming convention: screenshots are named "<ScreenName>-<State>" so they
 /// sort predictably in the artifact viewer.
+@MainActor
 final class ScreenshotTests: XCTestCase {
 
     private var app: XCUIApplication!
