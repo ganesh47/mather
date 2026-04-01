@@ -47,13 +47,15 @@ struct SliceSessionView: View {
 
     private var header: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Problem \(appModel.engine.progressLabel)")
-                            .font(.headline.weight(.bold))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
                         Text(appModel.engine.currentStage.title)
-                            .font(.system(size: 30, weight: .black, design: .rounded))
+                            .font(.system(size: 28, weight: .black, design: .rounded))
+                            .foregroundStyle(stageColour(appModel.engine.currentStage))
                     }
                     Spacer()
                     Button {
@@ -61,8 +63,9 @@ struct SliceSessionView: View {
                     } label: {
                         Image(systemName: appModel.featureFlags.audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                             .font(.title2.weight(.bold))
-                            .frame(width: 56, height: 56)
-                            .background(MatherTheme.softBlue.opacity(0.45))
+                            .foregroundStyle(appModel.featureFlags.audioEnabled ? MatherTheme.softBlue : .secondary)
+                            .frame(width: 52, height: 52)
+                            .background(MatherTheme.softBlue.opacity(0.18))
                             .clipShape(Circle())
                     }
                     Button {
@@ -70,15 +73,27 @@ struct SliceSessionView: View {
                     } label: {
                         Image(systemName: "arrow.counterclockwise.circle.fill")
                             .font(.title2.weight(.bold))
-                            .frame(width: 56, height: 56)
-                            .background(MatherTheme.warm.opacity(0.55))
+                            .foregroundStyle(MatherTheme.warm)
+                            .frame(width: 52, height: 52)
+                            .background(MatherTheme.warm.opacity(0.18))
                             .clipShape(Circle())
                     }
                 }
 
                 ProgressView(value: Double(appModel.engine.currentProblemIndex + 1), total: Double(max(appModel.engine.problems.count, 1)))
-                    .tint(MatherTheme.accent)
+                    .tint(stageColour(appModel.engine.currentStage))
+                    .animation(.easeInOut(duration: 0.4), value: appModel.engine.currentProblemIndex)
             }
+        }
+    }
+
+    private func stageColour(_ stage: SliceStage) -> Color {
+        switch stage {
+        case .concrete: MatherTheme.warm
+        case .pictorial: MatherTheme.softBlue
+        case .abstract: MatherTheme.accent
+        case .transfer: MatherTheme.coral
+        case .done: .secondary
         }
     }
 }
