@@ -18,9 +18,9 @@ struct HomeView: View {
 
                 CardSurface {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Vertical Slice 1")
+                        Text("Make & Break to 10")
                             .font(.title2.weight(.bold))
-                        Text(appModel.featureFlags.verticalSlice1Enabled ? "Play the full CPA loop from counters to equation and transfer." : "Turn on the VS1 feature flag in Settings before handing this to a child.")
+                        Text(appModel.featureFlags.verticalSlice1Enabled ? "Practice making and breaking numbers to 10 using touch, pictures, and equations." : "Enable the activity in Settings before handing the iPad to your child.")
                             .font(.headline)
                             .foregroundStyle(.secondary)
 

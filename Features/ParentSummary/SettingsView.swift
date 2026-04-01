@@ -53,7 +53,7 @@ struct SettingsView: View {
                             Text("Settings")
                                 .font(.largeTitle.weight(.black))
 
-                            Toggle("Enable VS1", isOn: verticalSliceBinding)
+                            Toggle("Make & Break to 10", isOn: verticalSliceBinding)
                             Toggle("Test mode", isOn: testModeBinding)
                             Toggle("Audio prompts", isOn: audioBinding)
                             Toggle("Haptics", isOn: hapticsBinding)

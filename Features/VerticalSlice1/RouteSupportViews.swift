@@ -88,8 +88,8 @@ struct VS1SettingsPlaceholderView: View {
                 VS1Card {
                     VStack(alignment: .leading, spacing: 12) {
                         VS1ToggleRow(
-                            title: "VS1 enabled",
-                            subtitle: "Let the child flow show its current slice routes.",
+                            title: "Make & Break to 10",
+                            subtitle: "Enable the Make & Break to 10 activity for your child.",
                             isOn: verticalSliceBinding
                         )
                         VS1ToggleRow(

@@ -31,7 +31,7 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
         snapshot(app, "Settings-BeforeEnableVS1")
 
-        let vs1Toggle = app.switches["Enable VS1"]
+        let vs1Toggle = app.switches["Make & Break to 10"]
         if vs1Toggle.waitForExistence(timeout: 3) {
             vs1Toggle.tap()
         }
@@ -109,7 +109,7 @@ final class ScreenshotTests: XCTestCase {
         _ = settingsButton.waitForExistence(timeout: 5)
         settingsButton.tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
-        let toggle = app.switches["Enable VS1"]
+        let toggle = app.switches["Make & Break to 10"]
         if toggle.waitForExistence(timeout: 10), toggle.value as? String == "0" {
             toggle.tap()
         }
