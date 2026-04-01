@@ -99,51 +99,75 @@ jobs:
         run: |
           mkdir -p ci-screenshots
 
-          # xcresulttool get --format json returns empty in Xcode 16.4 without --id.
-          # Guard against empty output before piping to Python.
+          # Xcode 16.4: xcresulttool get --format json returns empty without --legacy.
+          # Strategy 1: --legacy flag restores the old _type JSON structure.
+          # Strategy 2: xcresult bundles are directories — copy PNGs from Attachments/.
           cat > /tmp/extract_screenshots.py << 'PYEOF'
-          import sys, json, subprocess, pathlib
+          import sys, json, subprocess, pathlib, shutil
 
-          raw = sys.stdin.read()
-          if not raw.strip():
-              print("xcresulttool returned empty output — no attachments to extract")
-              sys.exit(0)
-
-          data = json.loads(raw)
-          out = pathlib.Path("ci-screenshots")
+          bundle = pathlib.Path("UITestResults.xcresult")
+          out    = pathlib.Path("ci-screenshots")
           out.mkdir(exist_ok=True)
 
-          def walk(node):
-              if isinstance(node, dict):
-                  if node.get("_type", {}).get("_name") == "ActionTestAttachment":
-                      name   = node.get("name", {}).get("_value", "screenshot")
-                      ref_id = (node.get("payloadRef") or {}).get("id", {}).get("_value")
-                      if ref_id:
-                          dest = out / f"{name}.png"
-                          subprocess.run(
-                              ["xcrun", "xcresulttool", "export",
-                               "--path", "UITestResults.xcresult",
-                               "--id", ref_id,
-                               "--output-path", str(dest)],
-                              check=False, capture_output=True,
-                          )
-                          if dest.exists():
-                              print(f"  saved {dest}")
-                  for v in node.values():
-                      walk(v)
-              elif isinstance(node, list):
-                  for item in node:
-                      walk(item)
+          if not bundle.exists():
+              print("No UITestResults.xcresult — skipping")
+              sys.exit(0)
 
-          walk(data)
+          # Try --legacy first (Xcode 16+ flag that restores _type JSON format),
+          # then without it for older Xcode versions.
+          raw = ""
+          for extra in [["--legacy"], []]:
+              cmd = ["xcrun", "xcresulttool", "get",
+                     "--path", str(bundle), "--format", "json"] + extra
+              res = subprocess.run(cmd, capture_output=True, text=True)
+              raw = res.stdout.strip()
+              if raw:
+                  flag = "--legacy" if extra else "no flags"
+                  print(f"xcresulttool returned JSON ({flag})")
+                  break
+
+          if raw:
+              data = json.loads(raw)
+
+              def walk(node):
+                  if isinstance(node, dict):
+                      if node.get("_type", {}).get("_name") == "ActionTestAttachment":
+                          name   = node.get("name", {}).get("_value", "screenshot")
+                          ref_id = (node.get("payloadRef") or {}).get("id", {}).get("_value")
+                          if ref_id:
+                              dest = out / f"{name}.png"
+                              subprocess.run(
+                                  ["xcrun", "xcresulttool", "export",
+                                   "--path", str(bundle),
+                                   "--id", ref_id,
+                                   "--output-path", str(dest)],
+                                  check=False, capture_output=True,
+                              )
+                              if dest.exists():
+                                  print(f"  saved {dest}")
+                      for v in node.values():
+                          walk(v)
+                  elif isinstance(node, list):
+                      for item in node:
+                          walk(item)
+
+              walk(data)
+              extracted = list(out.glob("*.png"))
+              print(f"  {len(extracted)} named screenshot(s) extracted via xcresulttool")
+          else:
+              # Fallback: xcresult is a directory — grab PNG attachments directly.
+              print("xcresulttool returned empty — copying PNGs from bundle directory")
+              found = 0
+              for png in bundle.rglob("*.png"):
+                  dest = out / f"attachment-{found:02d}-{png.stem[:12]}.png"
+                  shutil.copy(png, dest)
+                  print(f"  copied {png.name} → {dest.name}")
+                  found += 1
+              if found == 0:
+                  print("  no PNG attachments found in bundle")
           PYEOF
 
-          if [[ -d UITestResults.xcresult ]]; then
-            xcrun xcresulttool get \
-              --path UITestResults.xcresult \
-              --format json 2>/dev/null \
-            | python3 /tmp/extract_screenshots.py
-          fi
+          python3 /tmp/extract_screenshots.py
 
           # Always capture a live simulator screenshot as a visual sanity check
           SIM_ID=$(xcrun simctl list devices booted \
