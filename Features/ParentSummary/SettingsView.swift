@@ -35,6 +35,12 @@ struct SettingsView: View {
         )
     }
 
+    private func smokeStep(_ text: String) -> some View {
+        Label(text, systemImage: "checkmark.circle")
+            .font(.subheadline)
+            .foregroundStyle(.primary)
+    }
+
     private var latestExportURL: URL? {
         if let current = appModel.telemetryWriter.currentExport?.url {
             return current
@@ -99,6 +105,23 @@ struct SettingsView: View {
                             if summaries.isEmpty {
                                 Text("No history yet.")
                                     .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    CardSurface {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Pilot smoke test")
+                                .font(.title2.weight(.bold))
+                            Text("Run this checklist before each new pilot session:")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 8) {
+                                smokeStep("1. Enable Make & Break to 10 (toggle above).")
+                                smokeStep("2. Tap Home → Play → Start Session.")
+                                smokeStep("3. Complete one full problem (Make → Break → Write → Show).")
+                                smokeStep("4. Confirm Session Complete screen appears.")
+                                smokeStep("5. Return here and tap Share latest export to verify JSONL.")
                             }
                         }
                     }

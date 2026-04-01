@@ -32,18 +32,30 @@ struct HomeView: View {
                     }
                 }
 
-                HStack(spacing: 16) {
-                    Button("Parent Summary") {
-                        appModel.engine.showParentSummary()
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
+                ViewThatFits {
+                    HStack(spacing: 16) {
+                        Button("Parent Summary") {
+                            appModel.engine.showParentSummary()
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
 
-                    Button("Settings") {
-                        appModel.engine.showSettings()
+                        Button("Settings") {
+                            appModel.engine.showSettings()
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue))
                     }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue))
+                    VStack(spacing: 12) {
+                        Button("Parent Summary") {
+                            appModel.engine.showParentSummary()
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
+
+                        Button("Settings") {
+                            appModel.engine.showSettings()
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue))
+                    }
                 }
-                .frame(maxHeight: 120)
 
                 Spacer()
             }

@@ -147,6 +147,50 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "Settings-AfterCancelClear")
     }
 
+    // MARK: - iPhone layout / pilot runbook
+
+    /// Verifies the full session flow renders without crash and screenshots the
+    /// pilot runbook in Settings — covers the M8 smoke-test acceptance criterion.
+    func testScreenshot_PilotRunbook() {
+        let app = launchWithVS1()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        snapshot(app, "iPhone-Home")
+
+        // Navigate to Settings and capture the pilot runbook
+        app.buttons["Settings"].tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        _ = app.staticTexts["Pilot smoke test"].waitForExistence(timeout: 5)
+        snapshot(app, "iPhone-Settings-PilotRunbook")
+        app.buttons["Home"].tap()
+
+        // Run one full problem to verify no crash on compact layout
+        _ = app.buttons["Play"].waitForExistence(timeout: 10)
+        app.buttons["Play"].tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        snapshot(app, "iPhone-SessionConfig")
+
+        _ = app.buttons["Start Session"].waitForExistence(timeout: 5)
+        app.buttons["Start Session"].tap()
+
+        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
+        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+        snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
+
+        // Add counters and submit to reach pictorial stage
+        let addButton = app.buttons["Add"]
+        _ = addButton.waitForExistence(timeout: 5)
+        for _ in 0..<10 { addButton.tap() }
+
+        let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
+        let submitButton = app.buttons.element(matching: submitPredicate)
+        _ = submitButton.waitForExistence(timeout: 5)
+        submitButton.tap()
+
+        let breakPredicate = NSPredicate(format: "label BEGINSWITH 'Break '")
+        _ = app.staticTexts.element(matching: breakPredicate).waitForExistence(timeout: 10)
+        snapshot(app, "iPhone-SplitView")
+    }
+
     // MARK: - Helpers
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.

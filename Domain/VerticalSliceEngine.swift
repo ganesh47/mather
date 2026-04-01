@@ -112,12 +112,18 @@ final class VerticalSliceEngine {
         guard let currentProblem else { return }
         concreteCount = min(max(concreteCount + delta, 0), currentProblem.target)
         recordInteraction(action: "place", value: concreteCount)
+        #if targetEnvironment(simulator)
+        print("[Mather][concrete] count=\(concreteCount) target=\(currentProblem.target)")
+        #endif
     }
 
     func moveSplit(delta: Int) {
         guard let currentProblem else { return }
         splitLeftCount = min(max(splitLeftCount + delta, 0), currentProblem.target)
         recordInteraction(action: "split", value: splitLeftCount)
+        #if targetEnvironment(simulator)
+        print("[Mather][split] left=\(splitLeftCount) right=\(currentProblem.target - splitLeftCount)")
+        #endif
     }
 
     func appendEquationDigit(_ digit: Int, side: EquationSide) {

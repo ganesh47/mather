@@ -6,7 +6,14 @@ struct ConcreteBuildView: View {
     let onAdjust: (Int) -> Void
     let onSubmit: () -> Void
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var columns: [GridItem] {
+        let count = sizeClass == .compact ? 2 : 5
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
+
+    private var circleMinHeight: CGFloat { sizeClass == .compact ? 80 : 82 }
 
     var body: some View {
         CardSurface {
@@ -21,7 +28,7 @@ struct ConcreteBuildView: View {
                     ForEach(0..<10, id: \.self) { index in
                         Circle()
                             .fill(index < concreteCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.3))
-                            .frame(minHeight: 82)
+                            .frame(minHeight: circleMinHeight)
                             .overlay {
                                 Circle().stroke(Color.white, lineWidth: 3)
                             }
