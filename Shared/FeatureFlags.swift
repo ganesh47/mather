@@ -30,9 +30,19 @@ final class FeatureFlagService {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        verticalSlice1Enabled = defaults.object(forKey: Keys.verticalSlice1Enabled) as? Bool ?? false
-        testModeEnabled = defaults.object(forKey: Keys.testModeEnabled) as? Bool ?? true
-        audioEnabled = defaults.object(forKey: Keys.audioEnabled) as? Bool ?? true
-        hapticsEnabled = defaults.object(forKey: Keys.hapticsEnabled) as? Bool ?? true
+        // Register fallback defaults so bool(forKey:) returns the correct value
+        // for keys that have never been persisted. bool(forKey:) also handles
+        // "YES"/"NO"/"1"/"0" string values injected via -key value launch arguments,
+        // which object(forKey:) as? Bool does not.
+        defaults.register(defaults: [
+            Keys.verticalSlice1Enabled: false,
+            Keys.testModeEnabled: true,
+            Keys.audioEnabled: true,
+            Keys.hapticsEnabled: true,
+        ])
+        verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
+        testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
+        audioEnabled = defaults.bool(forKey: Keys.audioEnabled)
+        hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
     }
 }
