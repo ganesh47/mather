@@ -125,8 +125,26 @@ final class ScreenshotTests: XCTestCase {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
         app.buttons["Parent Summary"].tap()
-        _ = app.waitForExistence(timeout: 3)
-        snapshot(app, "ParentSummary")
+        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+        snapshot(app, "ParentSummary-Empty")
+
+        // Navigate to Settings from Parent Summary
+        let settingsButton = app.buttons["Settings"]
+        _ = settingsButton.waitForExistence(timeout: 5)
+        settingsButton.tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        snapshot(app, "Settings-FromParentSummary")
+
+        // Tap clear — confirm dialog should appear
+        let clearButton = app.buttons["Clear session history"]
+        _ = clearButton.waitForExistence(timeout: 5)
+        clearButton.tap()
+        _ = app.alerts["Clear all session data?"].waitForExistence(timeout: 5)
+        snapshot(app, "Settings-ClearConfirmDialog")
+
+        // Dismiss with Cancel
+        app.alerts["Clear all session data?"].buttons["Cancel"].tap()
+        snapshot(app, "Settings-AfterCancelClear")
     }
 
     // MARK: - Helpers
