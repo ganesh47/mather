@@ -33,17 +33,20 @@ final class VerticalSliceEngine {
     private let telemetryWriter: TelemetryWriter
     private let featureFlags: FeatureFlagService
     private let speechService: SpeechService
+    private let hapticsService: HapticsService
     private let saveSummary: (SessionSummaryDraft) -> Void
 
     init(
         featureFlags: FeatureFlagService,
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
+        hapticsService: HapticsService = HapticsService(),
         saveSummary: @escaping (SessionSummaryDraft) -> Void
     ) {
         self.featureFlags = featureFlags
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
+        self.hapticsService = hapticsService
         self.saveSummary = saveSummary
     }
 
@@ -164,6 +167,7 @@ final class VerticalSliceEngine {
         } else {
             feedbackMessage = feedbackMessageForFailure(stage: currentStage, problem: currentProblem)
             speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
+            hapticsService.failure(enabled: featureFlags.hapticsEnabled)
         }
     }
 
@@ -180,6 +184,7 @@ final class VerticalSliceEngine {
         showCelebration = true
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
+        hapticsService.success(enabled: featureFlags.hapticsEnabled)
 
         let next = SliceStateMachine.nextStage(after: currentStage, success: true, showTransfer: config.showTransfer)
         recordStageTransition(from: currentStage, to: next)
