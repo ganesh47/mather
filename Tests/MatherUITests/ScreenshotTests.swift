@@ -46,11 +46,13 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_SessionConfig() {
         let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
         enableVS1(app)
 
-        app.buttons["Play"].tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 3)
+        let playButton = app.buttons["Play"]
+        _ = playButton.waitForExistence(timeout: 5)
+        playButton.tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
         snapshot(app, "SessionConfig")
     }
 
@@ -58,15 +60,20 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_ConcreteBuildView() {
         let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
         enableVS1(app)
 
-        app.buttons["Play"].tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 3)
-        app.buttons["Start Session"].tap()
+        let playButton = app.buttons["Play"]
+        _ = playButton.waitForExistence(timeout: 5)
+        playButton.tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+
+        let startButton = app.buttons["Start Session"]
+        _ = startButton.waitForExistence(timeout: 5)
+        startButton.tap()
 
         let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
-        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 5)
+        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
         snapshot(app, "ConcreteBuild-Initial")
     }
 
@@ -98,14 +105,18 @@ final class ScreenshotTests: XCTestCase {
 
     /// Navigates to Settings, enables VS1, returns to Home.
     private func enableVS1(_ app: XCUIApplication) {
-        app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
+        let settingsButton = app.buttons["Settings"]
+        _ = settingsButton.waitForExistence(timeout: 5)
+        settingsButton.tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         let toggle = app.switches["Enable VS1"]
-        if toggle.waitForExistence(timeout: 3), toggle.value as? String == "0" {
+        if toggle.waitForExistence(timeout: 10), toggle.value as? String == "0" {
             toggle.tap()
         }
-        app.buttons["Home"].tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 3)
+        let homeButton = app.buttons["Home"]
+        _ = homeButton.waitForExistence(timeout: 5)
+        homeButton.tap()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
     }
 
     /// Attaches a full-screen screenshot to the test result with `.keepAlways` lifetime.
