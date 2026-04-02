@@ -201,13 +201,15 @@ final class VerticalSliceEngine {
         let isProblemComplete = currentStage == .transfer || (!config.showTransfer && currentStage == .abstract)
         if isProblemComplete {
             recordProblemCompletion(transferCorrect: true)
-            // Full celebration for completing an entire problem
-            showCelebration = true
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
         } else {
-            // Subtle signal for completing an individual CPA stage
-            showCelebration = false
             hapticsService.stageSuccess(enabled: featureFlags.hapticsEnabled)
+        }
+        // Celebrate every correct stage answer — overlay auto-dismisses after 1.2s.
+        showCelebration = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            showCelebration = false
         }
 
         currentStage = next

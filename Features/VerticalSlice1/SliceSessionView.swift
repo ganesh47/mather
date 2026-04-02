@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SliceSessionView: View {
     @Bindable var appModel: AppModel
+    @State private var celebrationScale: CGFloat = 0.3
 
     var body: some View {
         ZStack {
@@ -24,6 +25,22 @@ struct SliceSessionView: View {
                     }
                 }
                 .padding(20)
+            }
+
+            // Fullscreen celebration overlay — appears on every correct stage answer.
+            // Auto-dismissed by the engine after 1.2s; non-interactive so it doesn't
+            // block the underlying scroll view.
+            if appModel.engine.showCelebration {
+                Text("⭐️")
+                    .font(.system(size: 120))
+                    .scaleEffect(celebrationScale)
+                    .allowsHitTesting(false)
+                    .onAppear {
+                        celebrationScale = 0.3
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                            celebrationScale = 1.0
+                        }
+                    }
             }
         }
         .navigationBarBackButtonHidden(true)
