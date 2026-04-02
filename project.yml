@@ -9,8 +9,11 @@ settings:
     PRODUCT_NAME: Mather
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
+    # MARKETING_VERSION is overridden at release time by the release workflow
+    # (.github/workflows/release.yml) from the git tag (e.g. v1.0.0 → 1.0.0).
+    # Local development builds show 0.1.0-dev. See ADR-0003 for the scheme.
     CURRENT_PROJECT_VERSION: 1
-    MARKETING_VERSION: 0.1.0
+    MARKETING_VERSION: 0.1.0-dev
 targets:
   Mather:
     type: application

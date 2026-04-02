@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Parse version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # e.g. v1.0.0
+          VERSION="${TAG#v}"                # e.g. 1.0.0
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version into Info.plist
+        run: |
+          /usr/libexec/PlistBuddy \
+            -c "Set :CFBundleShortVersionString ${{ steps.version.outputs.version }}" \
+            App/Info.plist
+          /usr/libexec/PlistBuddy \
+            -c "Set :CFBundleVersion ${{ github.run_number }}" \
+            App/Info.plist
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Resolve dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build archive
+        run: |
+          xcodebuild archive \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination 'generic/platform=iOS Simulator' \
+            -archivePath "$RUNNER_TEMP/Mather.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            SKIP_INSTALL=NO
+
+      - name: Compress archive
+        run: |
+          cd "$RUNNER_TEMP"
+          zip -r Mather-${{ steps.version.outputs.version }}.zip Mather.xcarchive
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "Mather ${{ steps.version.outputs.tag }}" \
+            --notes "$(cat <<'EOF'
+          ## Mather ${{ steps.version.outputs.tag }}
+
+          **Sideload instructions**: Clone the repo at this tag and run `xcodebuild` locally, or open in Xcode and deploy to your iPad via USB/WiFi.
+
+          This is a personal/family sideload build — not App Store distributed (see ADR-0002).
+
+          ### What's in this release
+          See the [commit history](https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}) for details.
+          EOF
+          )" \
+            "$RUNNER_TEMP/Mather-${{ steps.version.outputs.version }}.zip"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
