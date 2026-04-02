@@ -13,18 +13,25 @@ struct SliceSessionView: View {
             )
             .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 20) {
-                    header
-                    FeedbackBannerView(message: appModel.engine.feedbackMessage, isCelebrating: appModel.engine.showCelebration)
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
 
-                    if let currentProblem = appModel.engine.currentProblem {
-                        stageView(for: currentProblem)
-                    } else {
-                        CardSurface { Text("No problem loaded.") }
+                ScrollView {
+                    VStack(spacing: 20) {
+                        FeedbackBannerView(message: appModel.engine.feedbackMessage, isCelebrating: appModel.engine.showCelebration)
+
+                        if let currentProblem = appModel.engine.currentProblem {
+                            stageView(for: currentProblem)
+                        } else {
+                            CardSurface { Text("No problem loaded.") }
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 20)
                 }
-                .padding(20)
             }
 
             // Fullscreen celebration overlay — appears on every correct stage answer.
@@ -73,6 +80,8 @@ struct SliceSessionView: View {
                         Text(appModel.engine.currentStage.title)
                             .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundStyle(stageColour(appModel.engine.currentStage))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                     }
                     Spacer()
                     Button {
@@ -81,7 +90,7 @@ struct SliceSessionView: View {
                         Image(systemName: appModel.featureFlags.audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                             .font(.title2.weight(.bold))
                             .foregroundStyle(appModel.featureFlags.audioEnabled ? MatherTheme.softBlue : .secondary)
-                            .frame(width: 52, height: 52)
+                            .frame(width: 44, height: 44)
                             .background(MatherTheme.softBlue.opacity(0.18))
                             .clipShape(Circle())
                     }
@@ -91,7 +100,7 @@ struct SliceSessionView: View {
                         Image(systemName: "arrow.counterclockwise.circle.fill")
                             .font(.title2.weight(.bold))
                             .foregroundStyle(MatherTheme.warm)
-                            .frame(width: 52, height: 52)
+                            .frame(width: 44, height: 44)
                             .background(MatherTheme.warm.opacity(0.18))
                             .clipShape(Circle())
                     }
@@ -102,7 +111,7 @@ struct SliceSessionView: View {
                         Image(systemName: "house.circle.fill")
                             .font(.title2.weight(.bold))
                             .foregroundStyle(.secondary)
-                            .frame(width: 52, height: 52)
+                            .frame(width: 44, height: 44)
                             .background(Color.secondary.opacity(0.12))
                             .clipShape(Circle())
                     }

@@ -74,6 +74,7 @@ struct HomeView: View {
                                 .font(.system(size: 36, weight: .black, design: .rounded))
                                 .foregroundStyle(.white)
                         }
+                        .layoutPriority(1)
 
                         Spacer()
                     }
@@ -97,6 +98,7 @@ struct HomeView: View {
                         Text("Tap to start a session")
                             .font(.headline.weight(.bold))
                             .foregroundStyle(MatherTheme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
                     Image(systemName: "play.circle.fill")

@@ -49,7 +49,7 @@ struct ConcreteBuildView: View {
                     Text("+")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
-                    Text("\(target - concreteCount)")
+                    Text(concreteCount > 0 ? "\(target - concreteCount)" : "?")
                         .font(.system(size: 44, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.accent)
                         .contentTransition(.numericText())

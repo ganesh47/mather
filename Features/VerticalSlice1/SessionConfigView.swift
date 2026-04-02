@@ -44,8 +44,6 @@ struct SessionConfigView: View {
                     appModel.engine.showHome()
                 }
                 .font(.headline.weight(.semibold))
-
-                Spacer()
             }
             .padding(24)
         }
