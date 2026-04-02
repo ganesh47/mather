@@ -78,6 +78,18 @@ struct SliceSessionView: View {
                             .background(MatherTheme.warm.opacity(0.18))
                             .clipShape(Circle())
                     }
+                    // Adult escape hatch — secondary styling so child ignores it
+                    Button {
+                        appModel.engine.showHome()
+                    } label: {
+                        Image(systemName: "house.circle.fill")
+                            .font(.title2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 52, height: 52)
+                            .background(Color.secondary.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Go to Home")
                 }
 
                 ProgressView(value: Double(appModel.engine.currentProblemIndex + 1), total: Double(max(appModel.engine.problems.count, 1)))
