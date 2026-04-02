@@ -29,27 +29,36 @@ struct ConcreteBuildView: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(0..<10, id: \.self) { index in
                         counterCell(index: index)
+                            .accessibilityIdentifier("counter-cell-\(index)")
+                            .accessibilityLabel("Counter \(index + 1)")
                             .onTapGesture {
                                 onAdjust((index + 1) - concreteCount)
                             }
                     }
                 }
 
-                HStack(spacing: 12) {
-                    Button {
-                        onAdjust(-1)
-                    } label: {
-                        Label("Remove", systemImage: "minus.circle.fill")
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
-
-                    Button {
-                        onAdjust(1)
-                    } label: {
-                        Label("Add", systemImage: "plus.circle.fill")
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
+                // Number-bond display: live A + B = target as circles are tapped.
+                // Numerals and symbols only — no words, consistent with the no-reading principle.
+                // Connects the concrete ten-frame action to the abstract equation (CPA bridge).
+                HStack(spacing: 8) {
+                    Text("\(concreteCount)")
+                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.warm)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3), value: concreteCount)
+                    Text("+")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text("\(target - concreteCount)")
+                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.accent)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3), value: concreteCount)
+                    Text("= \(target)")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
 
                 Button("That is \(target)") {
                     onSubmit()

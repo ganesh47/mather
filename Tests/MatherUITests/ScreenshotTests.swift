@@ -107,10 +107,12 @@ final class ScreenshotTests: XCTestCase {
         submitButton.tap()
         snapshot(app, "ConcreteBuild-FailureFeedback")
 
-        // Fill to correct target (deterministic mode targets are 6–10; tapping 10 circles covers all)
-        let addButton = app.buttons["Add"]
-        _ = addButton.waitForExistence(timeout: 5)
-        for _ in 0..<10 { addButton.tap() }
+        // Fill to correct target by tapping the last counter cell (index 9).
+        // The engine clamps the count to the problem target, so tapping cell 9
+        // always reaches the target regardless of what it is (6–10).
+        let lastCell = app.otherElements["counter-cell-9"]
+        _ = lastCell.waitForExistence(timeout: 5)
+        lastCell.tap()
         submitButton.tap()
 
         // After a correct answer the stage advances to pictorial — wait for it
@@ -176,10 +178,10 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
         snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
 
-        // Add counters and submit to reach pictorial stage
-        let addButton = app.buttons["Add"]
-        _ = addButton.waitForExistence(timeout: 5)
-        for _ in 0..<10 { addButton.tap() }
+        // Fill to correct target and submit to reach pictorial stage
+        let lastCell = app.otherElements["counter-cell-9"]
+        _ = lastCell.waitForExistence(timeout: 5)
+        lastCell.tap()
 
         let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
         let submitButton = app.buttons.element(matching: submitPredicate)

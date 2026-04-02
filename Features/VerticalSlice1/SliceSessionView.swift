@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SliceSessionView: View {
     @Bindable var appModel: AppModel
+    @State private var celebrationScale: CGFloat = 0.3
 
     var body: some View {
         ZStack {
@@ -24,6 +25,22 @@ struct SliceSessionView: View {
                     }
                 }
                 .padding(20)
+            }
+
+            // Fullscreen celebration overlay — appears on every correct stage answer.
+            // Auto-dismissed by the engine after 1.2s; non-interactive so it doesn't
+            // block the underlying scroll view.
+            if appModel.engine.showCelebration {
+                Text("⭐️")
+                    .font(.system(size: 120))
+                    .scaleEffect(celebrationScale)
+                    .allowsHitTesting(false)
+                    .onAppear {
+                        celebrationScale = 0.3
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                            celebrationScale = 1.0
+                        }
+                    }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -78,6 +95,18 @@ struct SliceSessionView: View {
                             .background(MatherTheme.warm.opacity(0.18))
                             .clipShape(Circle())
                     }
+                    // Adult escape hatch — secondary styling so child ignores it
+                    Button {
+                        appModel.engine.showHome()
+                    } label: {
+                        Image(systemName: "house.circle.fill")
+                            .font(.title2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 52, height: 52)
+                            .background(Color.secondary.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Go to Home")
                 }
 
                 ProgressView(value: Double(appModel.engine.currentProblemIndex + 1), total: Double(max(appModel.engine.problems.count, 1)))
