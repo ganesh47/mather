@@ -13,6 +13,7 @@
 		23DB12FA9008167F87BA22B2 /* RouteSupportViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9C7E1D1DB31287EE04B0F8 /* RouteSupportViews.swift */; };
 		2ECF0FA6AD0E0C8B7FA96294 /* SliceStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3772D0CE080725B37A115F /* SliceStateMachine.swift */; };
 		2EEF996C071A5985EBA9646B /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */; };
+		3680E95BA21CCF38A4C1C2B7 /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12E4243979B82D1D254C7BF /* HapticsService.swift */; };
 		49CEF0D52521692DEC2038F5 /* TransferCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CF08322D6BC0124F2FD4871 /* TransferCheckView.swift */; };
 		547A424F8ABA1E591352CAA8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F5E1261557B57C9FD31842 /* SettingsView.swift */; };
 		6F5C05185F5CEFD78EBD34BF /* SplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32A026C6F2490BFE57BBD4B6 /* SplitView.swift */; };
@@ -76,11 +77,12 @@
 		AF3772D0CE080725B37A115F /* SliceStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachine.swift; sourceTree = "<group>"; };
 		B557BC960B2E1946C97F0B6A /* SliceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceModels.swift; sourceTree = "<group>"; };
 		BD8A34215EE8D8788E7185EB /* MatherTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTheme.swift; sourceTree = "<group>"; };
+		C12E4243979B82D1D254C7BF /* HapticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsService.swift; sourceTree = "<group>"; };
 		CA9C7E1D1DB31287EE04B0F8 /* RouteSupportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSupportViews.swift; sourceTree = "<group>"; };
 		D534592E2580F9BC9AF7AC2D /* TelemetryWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryWriter.swift; sourceTree = "<group>"; };
 		DBDE340757D1657A76B2F5C5 /* EquationResolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquationResolveView.swift; sourceTree = "<group>"; };
-		E1C7741AD8CC742E6F122094 /* MatherTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MatherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E8DA96C428EF71E628E7BF19 /* Mather.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Mather.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1C7741AD8CC742E6F122094 /* MatherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MatherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8DA96C428EF71E628E7BF19 /* Mather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mather.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -96,6 +98,7 @@
 		13C13543035DCDDA54D258B6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				C12E4243979B82D1D254C7BF /* HapticsService.swift */,
 				57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */,
 			);
 			path = Services;
@@ -249,14 +252,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					235ADFFD5E4B9449B3C96CC2 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					EBB21EB8D628FFE2CF3BFC62 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -312,6 +314,7 @@
 				B3671AB5F1E14FFAA4088BF5 /* EquationResolveView.swift in Sources */,
 				A5F7844025B41514A7161DE1 /* FeatureFlags.swift in Sources */,
 				0D7D0578848D8B3EFCE786DF /* FeedbackBannerView.swift in Sources */,
+				3680E95BA21CCF38A4C1C2B7 /* HapticsService.swift in Sources */,
 				7AFB5C436E9AA208870BEFE3 /* HomeView.swift in Sources */,
 				7E0E98FBA46C7A3525FA661F /* MatherApp.swift in Sources */,
 				E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */,
@@ -350,6 +353,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -386,6 +390,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -400,6 +405,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = Mather;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -411,6 +417,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = J3387FUR8X;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -448,6 +455,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = J3387FUR8X;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -465,6 +473,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -501,6 +510,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -522,6 +532,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Mather;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
