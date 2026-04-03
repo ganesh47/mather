@@ -34,12 +34,24 @@ jobs:
       - name: Choose simulator destination
         run: |
           set -euo pipefail
-          for name in "iPhone 17" "iPhone 17 Pro" "iPhone 16" "iPhone 15"; do
-            line="$(xcrun simctl list devices available | grep -F "$name (" | head -n 1 || true)"
+          # Prefer stable iOS 18.x simulators — iPhone 17 only exists on iOS 26 (beta)
+          # which hangs under test. Favour iPhone 16/15 on iOS 18 instead.
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
             if [[ -n "$line" ]]; then
               id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
               echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
               echo "Using simulator: $name ($id)"
+              exit 0
+            fi
+          done
+          # Fallback: any available iPhone simulator (beta OS acceptable as last resort)
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15" "iPhone 17"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | head -n 1 || true)"
+            if [[ -n "$line" ]]; then
+              id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
+              echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
+              echo "Using simulator (fallback): $name ($id)"
               exit 0
             fi
           done
@@ -84,7 +96,7 @@ jobs:
           exit 1
 
       - name: Run unit tests
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: |
           xcodebuild test-without-building \
             -project Mather.xcodeproj \
