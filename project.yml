@@ -7,7 +7,10 @@ settings:
   base:
     SWIFT_VERSION: 6.0
     PRODUCT_NAME: Mather
-    DEVELOPMENT_TEAM: ""
+    # Your Apple Developer Team ID — find it at:
+    # developer.apple.com → Account → Membership → Team ID
+    # Required for Xcode Cloud to analyze the project and manage signing.
+    DEVELOPMENT_TEAM: "J3387FUR8X"
     CODE_SIGN_STYLE: Automatic
     # MARKETING_VERSION is overridden at release time by the release workflow
     # (.github/workflows/release.yml) from the git tag (e.g. v1.0.0 → 1.0.0).
