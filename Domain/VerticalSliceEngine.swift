@@ -38,18 +38,22 @@ final class VerticalSliceEngine {
     private let speechService: SpeechService
     private let hapticsService: HapticsService
     private let saveSummary: (SessionSummaryDraft) -> Void
+    // Injected so unit tests can pass 0 to skip the animation delay.
+    let celebrationDuration: TimeInterval
 
     init(
         featureFlags: FeatureFlagService,
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
         hapticsService: HapticsService = HapticsService(),
+        celebrationDuration: TimeInterval = 1.5,
         saveSummary: @escaping (SessionSummaryDraft) -> Void
     ) {
         self.featureFlags = featureFlags
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
+        self.celebrationDuration = celebrationDuration
         self.saveSummary = saveSummary
     }
 
@@ -156,6 +160,9 @@ final class VerticalSliceEngine {
 
     func submitCurrentStage() {
         guard let currentProblem else { return }
+        // Guard: ignore taps while celebration is playing — stage hasn't advanced yet
+        // and a second submit would register as an erroneous attempt.
+        guard !showCelebration else { return }
         currentProblemState.attempts += 1
 
         let isCorrect: Bool
@@ -205,25 +212,25 @@ final class VerticalSliceEngine {
         } else {
             hapticsService.stageSuccess(enabled: featureFlags.hapticsEnabled)
         }
-        // Celebrate every correct stage answer — overlay auto-dismisses after 1.2s.
+        // Show the celebration overlay then advance the stage.
+        // The entire transition (showCelebration reset + stage advance + next-stage prep)
+        // is deferred into the Task so the overlay has time to render and animate.
+        // celebrationDuration is injected — unit tests pass 0 to skip the wait.
         showCelebration = true
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.2))
+            try? await Task.sleep(for: .seconds(celebrationDuration))
             showCelebration = false
-        }
-
-        currentStage = next
-        currentProblemState.stage = next
-
-        if next == .done {
-            advanceProblemOrFinishSession()
-        } else {
-            prepareForStage(next)
+            currentStage = next
+            currentProblemState.stage = next
+            if next == .done {
+                advanceProblemOrFinishSession()
+            } else {
+                prepareForStage(next)
+            }
         }
     }
 
     private func prepareForStage(_ stage: SliceStage) {
-        showCelebration = false
         switch stage {
         case .pictorial:
             splitLeftCount = currentProblem?.decompositionA ?? 0

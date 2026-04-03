@@ -35,13 +35,14 @@ struct SliceSessionView: View {
             }
 
             // Fullscreen celebration overlay — appears on every correct stage answer.
-            // Auto-dismissed by the engine after 1.2s; non-interactive so it doesn't
-            // block the underlying scroll view.
+            // The engine delays stage transition by 1.5s so the child sees the reward
+            // before the screen changes. Non-interactive so taps pass through.
             if appModel.engine.showCelebration {
                 Text("⭐️")
                     .font(.system(size: 120))
                     .scaleEffect(celebrationScale)
                     .allowsHitTesting(false)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
                     .onAppear {
                         celebrationScale = 0.3
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
@@ -51,6 +52,7 @@ struct SliceSessionView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+    .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
     }
 
     @ViewBuilder
