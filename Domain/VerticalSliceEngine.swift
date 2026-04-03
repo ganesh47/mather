@@ -156,6 +156,8 @@ final class VerticalSliceEngine {
 
     func submitCurrentStage() {
         guard let currentProblem else { return }
+        // Ignore taps during the celebration window — the stage hasn't advanced yet.
+        guard !showCelebration else { return }
         currentProblemState.attempts += 1
 
         let isCorrect: Bool
@@ -205,25 +207,25 @@ final class VerticalSliceEngine {
         } else {
             hapticsService.stageSuccess(enabled: featureFlags.hapticsEnabled)
         }
-        // Celebrate every correct stage answer — overlay auto-dismisses after 1.2s.
+        // Celebrate every correct stage answer, then advance.
+        // The stage transition is intentionally delayed until after the overlay
+        // dismisses — otherwise prepareForStage immediately resets showCelebration
+        // to false, which cancels the animation before it can render.
         showCelebration = true
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.2))
+            try? await Task.sleep(for: .seconds(1.5))
             showCelebration = false
-        }
-
-        currentStage = next
-        currentProblemState.stage = next
-
-        if next == .done {
-            advanceProblemOrFinishSession()
-        } else {
-            prepareForStage(next)
+            currentStage = next
+            currentProblemState.stage = next
+            if next == .done {
+                advanceProblemOrFinishSession()
+            } else {
+                prepareForStage(next)
+            }
         }
     }
 
     private func prepareForStage(_ stage: SliceStage) {
-        showCelebration = false
         switch stage {
         case .pictorial:
             splitLeftCount = currentProblem?.decompositionA ?? 0
