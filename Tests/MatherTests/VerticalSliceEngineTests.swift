@@ -176,6 +176,7 @@ struct VerticalSliceEngineTests {
         engine.equationLeftInput = String(altLeft)
         engine.equationRightInput = String(altRight)
         engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(10))
 
         // Should advance past abstract regardless of which valid decomposition was entered
         #expect(engine.currentStage != .abstract)
