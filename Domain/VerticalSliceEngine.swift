@@ -45,13 +45,17 @@ final class VerticalSliceEngine {
     // Frozen at startSession(); never changes mid-session.
     // Unit tests can inject any SliceTheme to verify prompt routing.
     private(set) var activeTheme: any SliceTheme
+    // When a custom theme is injected at init time, startSession() preserves it
+    // instead of resolving from featureFlags. This lets unit tests use arbitrary
+    // theme implementations (e.g. RocketTheme) without registering them in flags.
+    private let hasInjectedTheme: Bool
 
     init(
         featureFlags: FeatureFlagService,
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
         hapticsService: HapticsService = HapticsService(),
-        activeTheme: any SliceTheme = ClassicTheme(),
+        activeTheme: (any SliceTheme)? = nil,
         celebrationDuration: TimeInterval = 1.5,
         saveSummary: @escaping (SessionSummaryDraft) -> Void
     ) {
@@ -59,7 +63,8 @@ final class VerticalSliceEngine {
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
-        self.activeTheme = activeTheme
+        self.hasInjectedTheme = activeTheme != nil
+        self.activeTheme = activeTheme ?? ClassicTheme()
         self.celebrationDuration = celebrationDuration
         self.saveSummary = saveSummary
     }
@@ -86,9 +91,11 @@ final class VerticalSliceEngine {
     func showSessionConfig() { route = .sessionConfig }
 
     func startSession() {
-        // Freeze the active theme from the user's current selection.
-        // Theme cannot change mid-session — it is read once here and held immutably.
-        activeTheme = featureFlags.selectedThemeId == "vehicle" ? VehicleTheme() : ClassicTheme()
+        // Freeze the active theme from the user's current selection — unless a custom
+        // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
+        if !hasInjectedTheme {
+            activeTheme = featureFlags.selectedThemeId == "vehicle" ? VehicleTheme() : ClassicTheme()
+        }
         config.audioEnabled = featureFlags.audioEnabled
         config.deterministicMode = featureFlags.testModeEnabled
         problems = ProblemGenerator.generateProblems(config: config)
