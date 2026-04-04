@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 import time
 import urllib.error
@@ -233,7 +232,8 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
     )
     app_version = first_non_empty(attrs.get("appVersion"))
     build_uploaded_at = first_non_empty(build_attrs.get("uploadedDate"))
-    screenshot_count = len(attrs.get("screenshots") or [])
+    screenshots = attrs.get("screenshots") or []
+    screenshot_count = len(screenshots)
     asc_link = (
         f"https://appstoreconnect.apple.com/apps/{config.asc_app_id}/testflight/ios"
     )
@@ -255,13 +255,33 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         "## Feedback",
         comment or "_No tester comment included in API payload._",
         "",
+    ]
+
+    if kind == "screenshot" and screenshots:
+        lines.extend(["## Screenshots"])
+        for index, screenshot in enumerate(screenshots, start=1):
+            screenshot_url = screenshot.get("url")
+            if not screenshot_url:
+                continue
+            lines.extend(
+                [
+                    f"### Screenshot {index}",
+                    f"![TestFlight feedback screenshot {index}]({screenshot_url})",
+                    "",
+                ]
+            )
+
+    lines.extend(
+        [
         "## Privacy",
-        "Raw TestFlight payload, tester contact details, device metadata, and screenshot URLs are intentionally omitted from GitHub.",
-        "Review the linked item in App Store Connect for full details and attachments.",
+        "Raw TestFlight payload, tester contact details, and device metadata are intentionally omitted from GitHub.",
+        "Screenshots embedded here use temporary signed Apple feedback URLs and may expire.",
+        "Review the linked item in App Store Connect for the original feedback record.",
         "",
         "<!-- ASC Feedback Sync -->",
         f"<!-- ASC Feedback ID: {feedback['id']} -->",
-    ]
+        ]
+    )
     return "\n".join(lines)
 
 
