@@ -42,12 +42,16 @@ final class VerticalSliceEngine {
     private let saveSummary: (SessionSummaryDraft) -> Void
     // Injected so unit tests can pass 0 to skip the animation delay.
     let celebrationDuration: TimeInterval
+    // Frozen at startSession(); never changes mid-session.
+    // Unit tests can inject any SliceTheme to verify prompt routing.
+    private(set) var activeTheme: any SliceTheme
 
     init(
         featureFlags: FeatureFlagService,
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
         hapticsService: HapticsService = HapticsService(),
+        activeTheme: any SliceTheme = ClassicTheme(),
         celebrationDuration: TimeInterval = 1.5,
         saveSummary: @escaping (SessionSummaryDraft) -> Void
     ) {
@@ -55,6 +59,7 @@ final class VerticalSliceEngine {
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
+        self.activeTheme = activeTheme
         self.celebrationDuration = celebrationDuration
         self.saveSummary = saveSummary
     }
