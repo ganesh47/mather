@@ -2,8 +2,9 @@ import SwiftUI
 
 struct TransferCheckView: View {
     let problem: SliceProblem
-    let transferCount: Int
-    let onAdjust: (Int) -> Void
+    let leftCount: Int
+    let rightCount: Int
+    let onAdjust: (Int, TransferSide) -> Void
     let onSubmit: () -> Void
 
     var body: some View {
@@ -14,20 +15,34 @@ struct TransferCheckView: View {
                 Text("\(problem.decompositionA) + \(problem.decompositionB) = \(problem.target)")
                     .font(.title.weight(.bold))
 
-                // Each circle is directly tappable — tapping circle at index i sets
-                // the count to i+1, matching the ten-frame interaction in ConcreteBuildView.
-                // Less/More buttons removed: direct tap is simpler and more intuitive.
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
-                    spacing: 10
-                ) {
-                    ForEach(0..<problem.target, id: \.self) { index in
-                        Circle()
-                            .fill(index < transferCount ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.25))
-                            .frame(minHeight: 52)
-                            .onTapGesture {
-                                onAdjust((index + 1) - transferCount)
-                            }
+                ViewThatFits {
+                    HStack(spacing: 12) {
+                        transferBucket(
+                            targetCount: problem.decompositionA,
+                            count: leftCount,
+                            fill: MatherTheme.warm,
+                            side: .left
+                        )
+                        transferBucket(
+                            targetCount: problem.decompositionB,
+                            count: rightCount,
+                            fill: MatherTheme.accent,
+                            side: .right
+                        )
+                    }
+                    VStack(spacing: 12) {
+                        transferBucket(
+                            targetCount: problem.decompositionA,
+                            count: leftCount,
+                            fill: MatherTheme.warm,
+                            side: .left
+                        )
+                        transferBucket(
+                            targetCount: problem.decompositionB,
+                            count: rightCount,
+                            fill: MatherTheme.accent,
+                            side: .right
+                        )
                     }
                 }
 
@@ -37,5 +52,79 @@ struct TransferCheckView: View {
                 .buttonStyle(PrimaryActionButtonStyle())
             }
         }
+    }
+
+    private func transferBucket(targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
+        VStack(spacing: 10) {
+            Text("\(targetCount)")
+                .font(.system(size: 40, weight: .black, design: .rounded))
+                .foregroundStyle(fill)
+
+            let rows = dotRows(count: count, capacity: problem.target)
+            VStack(spacing: 6) {
+                ForEach(rows.indices, id: \.self) { rowIndex in
+                    HStack(spacing: 6) {
+                        ForEach(rows[rowIndex].indices, id: \.self) { dotIndex in
+                            let isFilled = rows[rowIndex][dotIndex]
+                            Circle()
+                                .fill(isFilled ? fill : fill.opacity(0.15))
+                                .overlay(
+                                    Circle().strokeBorder(fill.opacity(isFilled ? 0.2 : 0.35), lineWidth: 1.5)
+                                )
+                                .frame(minWidth: 18, minHeight: 18)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 12)
+            .background(fill.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-group")
+            .onTapGesture { onAdjust(1, side) }
+
+            HStack(spacing: 10) {
+                Button {
+                    onAdjust(-1, side)
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title.weight(.bold))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove from \(side == .left ? "left" : "right") group")
+                .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-minus")
+
+                Button {
+                    onAdjust(1, side)
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title.weight(.bold))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add to \(side == .left ? "left" : "right") group")
+                .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-plus")
+            }
+            .foregroundStyle(fill)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func dotRows(count: Int, capacity: Int) -> [[Bool]] {
+        let total = max(capacity, 1)
+        var rows: [[Bool]] = []
+        var remaining = total
+        var filled = count
+        while remaining > 0 {
+            let rowSize = min(remaining, 5)
+            let row = (0..<rowSize).map { _ -> Bool in
+                let result = filled > 0
+                if result { filled -= 1 }
+                return result
+            }
+            rows.append(row)
+            remaining -= rowSize
+        }
+        return rows
     }
 }
