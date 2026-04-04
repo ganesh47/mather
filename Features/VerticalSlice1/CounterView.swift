@@ -14,11 +14,14 @@ struct CounterView: View {
     let index: Int      // 0-based position in the ten-frame (0–9)
     let filled: Bool
     let theme: any SliceTheme
+    /// When set, overrides the default index-based warm/accent two-tone colouring.
+    /// Used by SplitView buckets where each bucket has its own fixed palette colour.
+    var overrideColor: Color? = nil
 
     private var isFirstRow: Bool { index < 5 }
 
     private var filledColor: Color {
-        isFirstRow ? MatherTheme.warm : MatherTheme.accent
+        overrideColor ?? (isFirstRow ? MatherTheme.warm : MatherTheme.accent)
     }
 
     var body: some View {
@@ -38,21 +41,19 @@ struct CounterView: View {
     }
 
     private var circleCounter: some View {
-        let fillColor: Color = filled ? filledColor : .clear
-        let bgColor: Color = isFirstRow
-            ? MatherTheme.warm.opacity(filled ? 0 : 0.12)
-            : MatherTheme.accent.opacity(filled ? 0 : 0.10)
-        let strokeColor: Color = isFirstRow
-            ? MatherTheme.warm.opacity(filled ? 0 : 0.55)
-            : MatherTheme.accent.opacity(filled ? 0 : 0.45)
+        let base = overrideColor ?? (isFirstRow ? MatherTheme.warm : MatherTheme.accent)
+        let bgOpacity: Double = isFirstRow ? 0.12 : 0.10
+        let strokeOpacity: Double = isFirstRow ? 0.55 : 0.45
+        let bgColor: Color = base.opacity(filled ? 0 : bgOpacity)
+        let strokeColor: Color = base.opacity(filled ? 0 : strokeOpacity)
 
         return Circle()
-            .fill(filled ? fillColor : bgColor)
+            .fill(filled ? base : bgColor)
             .overlay(
                 Circle()
-                    .strokeBorder(filled ? fillColor.opacity(0.3) : strokeColor, lineWidth: 2.5)
+                    .strokeBorder(filled ? base.opacity(0.3) : strokeColor, lineWidth: 2.5)
             )
-            .shadow(color: filled ? fillColor.opacity(0.35) : .clear, radius: 4, y: 2)
+            .shadow(color: filled ? base.opacity(0.35) : .clear, radius: 4, y: 2)
     }
 
     @ViewBuilder

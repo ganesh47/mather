@@ -5,6 +5,7 @@ struct SplitView: View {
     let leftCount: Int
     let onAdjust: (Int) -> Void
     let onSubmit: () -> Void
+    var theme: any SliceTheme = ClassicTheme()
 
     private var rightCount: Int { target - leftCount }
 
@@ -83,12 +84,13 @@ struct SplitView: View {
                     HStack(spacing: 6) {
                         ForEach(rows[rowIndex].indices, id: \.self) { dotIndex in
                             let isFilled = rows[rowIndex][dotIndex]
-                            Circle()
-                                .fill(isFilled ? fill : fill.opacity(0.15))
-                                .overlay(
-                                    Circle().strokeBorder(fill.opacity(isFilled ? 0.2 : 0.35), lineWidth: 1.5)
-                                )
-                                .frame(minWidth: 18, minHeight: 18)
+                            CounterView(
+                                index: dotIndex + rowIndex * 5,
+                                filled: isFilled,
+                                theme: theme,
+                                overrideColor: fill
+                            )
+                            .frame(minWidth: 18, minHeight: 18)
                         }
                     }
                 }
