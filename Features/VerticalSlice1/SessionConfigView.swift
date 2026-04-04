@@ -37,7 +37,7 @@ struct SessionConfigView: View {
                         // Tapping sets selectedThemeId; engine reads it at startSession().
                         HStack(spacing: 12) {
                             ForEach(themeOptions) { option in
-                                themeCard(option: option)
+                                themeCard(option)
                             }
                         }
 
