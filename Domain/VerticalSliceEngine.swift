@@ -29,7 +29,8 @@ final class VerticalSliceEngine {
     var splitLeftCount = 0
     var equationLeftInput = ""
     var equationRightInput = ""
-    var transferCount = 0
+    var transferLeftCount = 0
+    var transferRightCount = 0
     var feedbackMessage = "Tap Play to start."
     var showCelebration = false
     var completedSummary: SessionSummaryDraft?
@@ -98,7 +99,8 @@ final class VerticalSliceEngine {
         splitLeftCount = 0
         equationLeftInput = ""
         equationRightInput = ""
-        transferCount = 0
+        transferLeftCount = 0
+        transferRightCount = 0
         feedbackMessage = "Make the target number with the big counters."
         showCelebration = false
         completedSummary = nil
@@ -168,10 +170,18 @@ final class VerticalSliceEngine {
         }
     }
 
-    func adjustTransfer(by delta: Int) {
+    var transferCount: Int { transferLeftCount + transferRightCount }
+
+    func adjustTransfer(by delta: Int, side: TransferSide) {
         guard let currentProblem else { return }
-        transferCount = min(max(transferCount + delta, 0), currentProblem.target)
-        recordInteraction(action: "transfer_place", value: transferCount)
+        switch side {
+        case .left:
+            transferLeftCount = min(max(transferLeftCount + delta, 0), currentProblem.target)
+            recordInteraction(action: "transfer_left_place", value: transferLeftCount)
+        case .right:
+            transferRightCount = min(max(transferRightCount + delta, 0), currentProblem.target)
+            recordInteraction(action: "transfer_right_place", value: transferRightCount)
+        }
     }
 
     func submitCurrentStage() {
@@ -190,7 +200,8 @@ final class VerticalSliceEngine {
         case .abstract:
             isCorrect = validateEquation(for: currentProblem)
         case .transfer:
-            isCorrect = transferCount == currentProblem.target
+            isCorrect = transferLeftCount == currentProblem.decompositionA
+                && transferRightCount == currentProblem.decompositionB
         case .done:
             isCorrect = true
         }
@@ -254,7 +265,8 @@ final class VerticalSliceEngine {
             equationLeftInput = ""
             equationRightInput = ""
         case .transfer:
-            transferCount = 0
+            transferLeftCount = 0
+            transferRightCount = 0
         case .concrete, .done:
             break
         }
@@ -274,7 +286,8 @@ final class VerticalSliceEngine {
             splitLeftCount = 0
             equationLeftInput = ""
             equationRightInput = ""
-            transferCount = 0
+            transferLeftCount = 0
+            transferRightCount = 0
             problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
             logProblemPresented()
@@ -435,7 +448,7 @@ final class VerticalSliceEngine {
         case .abstract:
             return "Type the same split as an equation."
         case .transfer:
-            return "Use the equation to rebuild the whole number."
+            return "Use the equation to rebuild both groups."
         case .done:
             return "Nice work."
         }
@@ -485,11 +498,11 @@ final class VerticalSliceEngine {
             }
         case .transfer:
             if attempts == 1 {
-                return "Look at the equation and rebuild the whole number."
+                return "Match the two parts in the equation. Put \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
             } else if attempts == 2 {
-                return "The equation shows \(problem.decompositionA) + \(problem.decompositionB). How many is that altogether?"
+                return "The equation shows \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
             } else {
-                return "Tap until you have \(problem.target) counters — that is what \(problem.decompositionA) + \(problem.decompositionB) equals."
+                return "Keep rebuilding the exact equation: \(problem.decompositionA) in the first group and \(problem.decompositionB) in the second group."
             }
         case .done:
             return "Try again."
@@ -522,4 +535,9 @@ enum EquationSide {
 enum ConcreteGroup {
     case warm
     case accent
+}
+
+enum TransferSide {
+    case left
+    case right
 }

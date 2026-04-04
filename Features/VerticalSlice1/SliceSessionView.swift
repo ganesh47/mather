@@ -71,7 +71,13 @@ struct SliceSessionView: View {
         case .abstract:
             EquationResolveView(target: problem.target, leftInput: appModel.engine.equationLeftInput, rightInput: appModel.engine.equationRightInput, onAppend: appModel.engine.appendEquationDigit, onClear: appModel.engine.clearEquation, onSubmit: appModel.engine.submitCurrentStage)
         case .transfer:
-            TransferCheckView(problem: problem, transferCount: appModel.engine.transferCount, onAdjust: appModel.engine.adjustTransfer, onSubmit: appModel.engine.submitCurrentStage)
+            TransferCheckView(
+                problem: problem,
+                leftCount: appModel.engine.transferLeftCount,
+                rightCount: appModel.engine.transferRightCount,
+                onAdjust: appModel.engine.adjustTransfer,
+                onSubmit: appModel.engine.submitCurrentStage
+            )
         case .done:
             CardSurface { Text("Moving to the next problem...") }
         }

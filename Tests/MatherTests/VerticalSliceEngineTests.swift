@@ -86,7 +86,8 @@ struct VerticalSliceEngineTests {
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()    // abstract → transfer (stageSuccess)
         try await Task.sleep(for: .milliseconds(200))
-        engine.adjustTransfer(by: problem.target)
+        engine.adjustTransfer(by: problem.decompositionA, side: .left)
+        engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()    // transfer → done (success — problem complete)
         try await Task.sleep(for: .milliseconds(200))
 
