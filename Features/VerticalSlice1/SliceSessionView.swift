@@ -96,7 +96,8 @@ struct SliceSessionView: View {
                 leftCount: appModel.engine.transferLeftCount,
                 rightCount: appModel.engine.transferRightCount,
                 onAdjust: appModel.engine.adjustTransfer,
-                onSubmit: appModel.engine.submitCurrentStage
+                onSubmit: appModel.engine.submitCurrentStage,
+                theme: appModel.engine.activeTheme
             )
         case .done:
             CardSurface { Text("Moving to the next problem...") }
