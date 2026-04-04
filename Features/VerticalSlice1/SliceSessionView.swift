@@ -73,7 +73,13 @@ struct SliceSessionView: View {
                 theme: appModel.engine.activeTheme
             )
         case .pictorial:
-            SplitView(target: problem.target, leftCount: appModel.engine.splitLeftCount, onAdjust: appModel.engine.moveSplit, onSubmit: appModel.engine.submitCurrentStage)
+            SplitView(
+                target: problem.target,
+                leftCount: appModel.engine.splitLeftCount,
+                onAdjust: appModel.engine.moveSplit,
+                onSubmit: appModel.engine.submitCurrentStage,
+                theme: appModel.engine.activeTheme
+            )
         case .abstract:
             EquationResolveView(
                 target: problem.target,
