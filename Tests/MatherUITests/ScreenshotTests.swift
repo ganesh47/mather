@@ -325,6 +325,21 @@ final class ScreenshotTests: XCTestCase {
         return app
     }
 
+    /// Launches with VS1 pre-enabled and Vehicle theme selected via launch argument.
+    private func launchWithVehicleTheme() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.verticalSlice1Enabled", "YES",
+            "-feature.selectedThemeId", "vehicle"
+        ]
+        app.launch()
+        return app
+    }
+
     /// Attaches a full-screen screenshot to the test result with `.keepAlways` lifetime.
     private func snapshot(_ app: XCUIApplication, _ name: String) {
         let screenshot = XCUIScreen.main.screenshot()

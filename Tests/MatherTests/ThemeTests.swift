@@ -156,6 +156,65 @@ struct ThemeTests {
 
     // MARK: - Engine vocabulary routing (PR2)
 
+    // MARK: - Theme picker wiring (PR9)
+
+    @MainActor
+    @Test func startSessionWithVehicleThemeIdActivatesVehicleTheme() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.selectedThemeId = "vehicle"
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.feedbackMessage == "Park the cars in the garage.")
+        #expect(engine.activeTheme.celebrationEmoji == "🚗")
+        if case .vehicle = engine.activeTheme.counterKind { } else {
+            Issue.record("Expected .vehicle counter kind after startSession with selectedThemeId=vehicle")
+        }
+    }
+
+    @MainActor
+    @Test func startSessionWithClassicThemeIdActivatesClassicTheme() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.selectedThemeId = "classic"
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.feedbackMessage == "Make the target number with the big counters.")
+        #expect(engine.activeTheme.celebrationEmoji == "⭐️")
+        if case .circle = engine.activeTheme.counterKind { } else {
+            Issue.record("Expected .circle counter kind after startSession with selectedThemeId=classic")
+        }
+    }
+
+    @MainActor
+    @Test func unknownThemeIdDefaultsToClassic() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.selectedThemeId = "unknown_theme_xyz"
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        // Unknown IDs fall through to ClassicTheme
+        #expect(engine.activeTheme.celebrationEmoji == "⭐️")
+    }
+
     @MainActor
     @Test func engineUsesInjectedThemeSessionStartFeedback() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)

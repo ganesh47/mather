@@ -86,6 +86,9 @@ final class VerticalSliceEngine {
     func showSessionConfig() { route = .sessionConfig }
 
     func startSession() {
+        // Freeze the active theme from the user's current selection.
+        // Theme cannot change mid-session — it is read once here and held immutably.
+        activeTheme = featureFlags.selectedThemeId == "vehicle" ? VehicleTheme() : ClassicTheme()
         config.audioEnabled = featureFlags.audioEnabled
         config.deterministicMode = featureFlags.testModeEnabled
         problems = ProblemGenerator.generateProblems(config: config)

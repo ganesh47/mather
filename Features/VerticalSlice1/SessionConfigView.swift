@@ -1,5 +1,17 @@
 import SwiftUI
 
+private struct ThemeOption: Identifiable {
+    let id: String
+    let name: String
+    let iconSystemName: String
+    let color: Color
+}
+
+private let themeOptions: [ThemeOption] = [
+    ThemeOption(id: "classic", name: "Classic", iconSystemName: "circle.fill", color: MatherTheme.warm),
+    ThemeOption(id: "vehicle", name: "Vehicles", iconSystemName: "car.fill", color: MatherTheme.softBlue),
+]
+
 struct SessionConfigView: View {
     @Bindable var appModel: AppModel
 
@@ -15,6 +27,21 @@ struct SessionConfigView: View {
                             .font(.headline)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+
+                        Divider()
+
+                        Text("Theme")
+                            .font(.title3.weight(.semibold))
+
+                        // Theme picker — two cards, selected card gets accent border.
+                        // Tapping sets selectedThemeId; engine reads it at startSession().
+                        HStack(spacing: 12) {
+                            ForEach(themeOptions) { option in
+                                themeCard(option: option)
+                            }
+                        }
+
+                        Divider()
 
                         Stepper(value: Binding(
                             get: { appModel.engine.config.maxProblems },
@@ -37,6 +64,7 @@ struct SessionConfigView: View {
                             appModel.engine.startSession()
                         }
                         .buttonStyle(PrimaryActionButtonStyle())
+                        .accessibilityIdentifier("start-session-button")
                     }
                 }
 
@@ -47,5 +75,37 @@ struct SessionConfigView: View {
             }
             .padding(24)
         }
+    }
+
+    private func themeCard(_ option: ThemeOption) -> some View {
+        let isSelected = appModel.featureFlags.selectedThemeId == option.id
+        return Button {
+            appModel.featureFlags.selectedThemeId = option.id
+        } label: {
+            VStack(spacing: 10) {
+                Image(systemName: option.iconSystemName)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(option.color)
+                    .frame(width: 56, height: 56)
+                    .background(option.color.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                Text(option.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isSelected ? option.color : .secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(isSelected ? option.color.opacity(0.10) : Color.secondary.opacity(0.07))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(isSelected ? option.color : Color.clear, lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("theme-card-\(option.id)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
