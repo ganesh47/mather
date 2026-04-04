@@ -8,6 +8,7 @@ Technology investigations and trade-off analyses for Mather.
 |---|---|---|
 | [Math App Vision](Research-Math-App-Vision) | [#1](https://github.com/ganesh47/mather/issues/1) | Full product vision defined — see synthesis section |
 | [DevSecOps Baseline for Public GitHub Repository](Research-DevSecOps-Baseline) | n/a | GitHub-native and OSS security baseline established for public-repo development |
+| [Playful Themes for VS1](Research-Playful-Themes-for-VS1) | [#79](https://github.com/ganesh47/mather/issues/79) | Recommend reusable Vehicle-first structured theme framework; defer open parking-lot map to a later spec |
 
 ## Active
 
