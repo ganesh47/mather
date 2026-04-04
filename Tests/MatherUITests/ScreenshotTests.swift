@@ -107,16 +107,17 @@ final class ScreenshotTests: XCTestCase {
         submitButton.tap()
         snapshot(app, "ConcreteBuild-FailureFeedback")
 
-        // Fill to correct target by tapping the last counter cell (index 9).
-        // The engine clamps the count to the problem target, so tapping cell 9
-        // always reaches the target regardless of what it is (6–10).
-        // Scroll down first — on compact/small simulators the second grid row can be off-screen.
-        let lastCell = app.otherElements["counter-cell-9"]
-        if !lastCell.waitForExistence(timeout: 3) {
+        // Fill the deterministic target of 6 with the current two-row concrete model:
+        // five warm counters on the top row plus one accent counter on the bottom row.
+        let warmRowLastCell = app.otherElements["counter-cell-4"]
+        if !warmRowLastCell.waitForExistence(timeout: 3) {
             app.scrollViews.firstMatch.swipeUp()
         }
-        _ = lastCell.waitForExistence(timeout: 5)
-        lastCell.tap()
+        _ = warmRowLastCell.waitForExistence(timeout: 5)
+        warmRowLastCell.tap()
+        let accentRowFirstCell = app.otherElements["counter-cell-5"]
+        _ = accentRowFirstCell.waitForExistence(timeout: 5)
+        accentRowFirstCell.tap()
         submitButton.tap()
 
         // After a correct answer the stage advances to pictorial — wait for it
@@ -227,14 +228,16 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
         snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
 
-        // Fill to correct target and submit to reach pictorial stage.
-        // Scroll down first — on compact/small simulators the second grid row can be off-screen.
-        let lastCell = app.otherElements["counter-cell-9"]
-        if !lastCell.waitForExistence(timeout: 3) {
+        // Fill the deterministic target of 6 with five warm counters plus one accent counter.
+        let warmRowLastCell = app.otherElements["counter-cell-4"]
+        if !warmRowLastCell.waitForExistence(timeout: 3) {
             app.scrollViews.firstMatch.swipeUp()
         }
-        _ = lastCell.waitForExistence(timeout: 5)
-        lastCell.tap()
+        _ = warmRowLastCell.waitForExistence(timeout: 5)
+        warmRowLastCell.tap()
+        let accentRowFirstCell = app.otherElements["counter-cell-5"]
+        _ = accentRowFirstCell.waitForExistence(timeout: 5)
+        accentRowFirstCell.tap()
 
         let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
         let submitButton = app.buttons.element(matching: submitPredicate)

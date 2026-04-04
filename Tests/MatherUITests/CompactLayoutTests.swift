@@ -14,12 +14,16 @@ final class CompactLayoutTests: XCTestCase {
         let makeLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Make '"))
         _ = makeLabel.waitForExistence(timeout: 15)
 
-        let lastCell = app.otherElements["counter-cell-9"]
-        if !lastCell.waitForExistence(timeout: 3) {
+        let warmRowLastCell = app.otherElements["counter-cell-4"]
+        if !warmRowLastCell.waitForExistence(timeout: 3) {
             app.scrollViews.firstMatch.swipeUp()
         }
-        _ = lastCell.waitForExistence(timeout: 5)
-        lastCell.tap()
+        _ = warmRowLastCell.waitForExistence(timeout: 5)
+        warmRowLastCell.tap()
+
+        let accentRowFirstCell = app.otherElements["counter-cell-5"]
+        _ = accentRowFirstCell.waitForExistence(timeout: 5)
+        accentRowFirstCell.tap()
 
         let concreteSubmit = app.buttons.element(matching: NSPredicate(format: "label BEGINSWITH 'That is '"))
         _ = concreteSubmit.waitForExistence(timeout: 5)
