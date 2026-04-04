@@ -39,7 +39,8 @@ final class TelemetryWriter {
                     "schema_version": String(Self.schemaVersion),
                     "feature_verticalSlice1Enabled": String(featureFlags.verticalSlice1Enabled),
                     "feature_testModeEnabled": String(featureFlags.testModeEnabled),
-                    "feature_audioEnabled": String(featureFlags.audioEnabled)
+                    "feature_audioEnabled": String(featureFlags.audioEnabled),
+                    "theme_id": featureFlags.selectedThemeId
                 ]
             )
         )
@@ -60,7 +61,7 @@ final class TelemetryWriter {
     }
 
     @discardableResult
-    func finishSession(session: SliceSession, digest: ParentDigest) throws -> ExportArtifact? {
+    func finishSession(session: SliceSession, digest: ParentDigest, themeId: String = "classic") throws -> ExportArtifact? {
         try append(
             SliceEvent(
                 type: .sessionEnd,
@@ -69,7 +70,8 @@ final class TelemetryWriter {
                     "problems_completed": String(digest.problemsCompleted),
                     "first_attempt_accuracy": String(format: "%.2f", digest.firstAttemptAccuracy),
                     "median_latency_ms": String(digest.medianLatencyMs),
-                    "transfer_correct": String(digest.transferCorrectCount)
+                    "transfer_correct": String(digest.transferCorrectCount),
+                    "theme_id": themeId
                 ]
             )
         )

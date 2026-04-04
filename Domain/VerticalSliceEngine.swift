@@ -304,7 +304,7 @@ final class VerticalSliceEngine {
     private func endSession() {
         currentSession.endedAt = .now
         let digest = buildDigest()
-        let export = try? telemetryWriter.finishSession(session: currentSession, digest: digest)
+        let export = try? telemetryWriter.finishSession(session: currentSession, digest: digest, themeId: featureFlags.selectedThemeId)
         let summary = SessionSummaryDraft(
             sessionId: currentSession.sessionId.uuidString,
             startedAt: currentSession.startedAt,
