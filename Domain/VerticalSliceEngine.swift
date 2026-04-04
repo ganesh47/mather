@@ -24,7 +24,8 @@ final class VerticalSliceEngine {
     private var problemStartedAt: Date = .now
     private let sessionTimeLimitSeconds: TimeInterval = 7 * 60
 
-    var concreteCount = 0
+    var concreteWarmCount = 0
+    var concreteAccentCount = 0
     var splitLeftCount = 0
     var equationLeftInput = ""
     var equationRightInput = ""
@@ -71,6 +72,8 @@ final class VerticalSliceEngine {
         telemetryWriter.currentExport
     }
 
+    var concreteCount: Int { concreteWarmCount + concreteAccentCount }
+
     func showSettings() { route = .settings }
     func showHome() { route = .home }
     func showParentSummary() { route = .parentSummary }
@@ -90,7 +93,8 @@ final class VerticalSliceEngine {
             problems: [],
             schemaVersion: TelemetryWriter.schemaVersion
         )
-        concreteCount = 0
+        concreteWarmCount = 0
+        concreteAccentCount = 0
         splitLeftCount = 0
         equationLeftInput = ""
         equationRightInput = ""
@@ -118,11 +122,23 @@ final class VerticalSliceEngine {
     }
 
     func adjustConcrete(by delta: Int) {
+        setConcreteTotal(concreteCount + delta)
+    }
+
+    func adjustConcrete(by delta: Int, side: ConcreteGroup) {
         guard let currentProblem else { return }
-        concreteCount = min(max(concreteCount + delta, 0), currentProblem.target)
-        recordInteraction(action: "place", value: concreteCount)
+        switch side {
+        case .warm:
+            let maxWarm = min(5, max(currentProblem.target - concreteAccentCount, 0))
+            concreteWarmCount = min(max(concreteWarmCount + delta, 0), maxWarm)
+            recordInteraction(action: "place_warm", value: concreteWarmCount)
+        case .accent:
+            let maxAccent = min(5, max(currentProblem.target - concreteWarmCount, 0))
+            concreteAccentCount = min(max(concreteAccentCount + delta, 0), maxAccent)
+            recordInteraction(action: "place_accent", value: concreteAccentCount)
+        }
         #if targetEnvironment(simulator)
-        print("[Mather][concrete] count=\(concreteCount) target=\(currentProblem.target)")
+        print("[Mather][concrete] warm=\(concreteWarmCount) accent=\(concreteAccentCount) total=\(concreteCount) target=\(currentProblem.target)")
         #endif
     }
 
@@ -253,7 +269,8 @@ final class VerticalSliceEngine {
             currentProblemIndex += 1
             currentStage = .concrete
             currentProblemState = ProblemState()
-            concreteCount = 0
+            concreteWarmCount = 0
+            concreteAccentCount = 0
             splitLeftCount = 0
             equationLeftInput = ""
             equationRightInput = ""
@@ -484,9 +501,25 @@ final class VerticalSliceEngine {
         let numeric = Int(candidate) ?? 0
         return numeric > 10 ? string : String(candidate)
     }
+
+    private func setConcreteTotal(_ total: Int) {
+        let maxTotal = currentProblem?.target ?? 10
+        let clamped = min(max(total, 0), maxTotal)
+        concreteWarmCount = min(clamped, 5)
+        concreteAccentCount = max(clamped - concreteWarmCount, 0)
+        recordInteraction(action: "place", value: concreteCount)
+        #if targetEnvironment(simulator)
+        print("[Mather][concrete] warm=\(concreteWarmCount) accent=\(concreteAccentCount) total=\(concreteCount)")
+        #endif
+    }
 }
 
 enum EquationSide {
     case left
     case right
+}
+
+enum ConcreteGroup {
+    case warm
+    case accent
 }

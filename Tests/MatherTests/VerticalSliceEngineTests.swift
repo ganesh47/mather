@@ -203,4 +203,55 @@ struct VerticalSliceEngineTests {
 
         #expect(haptics.failureFiredCount == 0)
     }
+
+    @Test
+    func concreteGroupsTrackWarmAndAccentSeparately() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        engine.adjustConcrete(by: 3, side: .accent)
+
+        #expect(engine.concreteWarmCount == 0)
+        #expect(engine.concreteAccentCount == 3)
+        #expect(engine.concreteCount == 3)
+
+        engine.adjustConcrete(by: 2, side: .warm)
+
+        #expect(engine.concreteWarmCount == 2)
+        #expect(engine.concreteAccentCount == 3)
+        #expect(engine.concreteCount == 5)
+    }
+
+    @Test
+    func concreteStageAcceptsCombinedWarmAndAccentTotal() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        let warmTarget = min(problem.target, 2)
+        let accentTarget = problem.target - warmTarget
+        engine.adjustConcrete(by: warmTarget, side: .warm)
+        engine.adjustConcrete(by: accentTarget, side: .accent)
+        engine.submitCurrentStage()
+
+        #expect(engine.currentProblemState.isCorrect)
+    }
 }

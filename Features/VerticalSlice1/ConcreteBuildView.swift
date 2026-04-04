@@ -2,8 +2,9 @@ import SwiftUI
 
 struct ConcreteBuildView: View {
     let target: Int
-    let concreteCount: Int
-    let onAdjust: (Int) -> Void
+    let warmCount: Int
+    let accentCount: Int
+    let onAdjust: (Int, ConcreteGroup) -> Void
     let onSubmit: () -> Void
 
     // Ten-frame is always 5 columns × 2 rows — invariant across device sizes.
@@ -32,7 +33,12 @@ struct ConcreteBuildView: View {
                             .accessibilityIdentifier("counter-cell-\(index)")
                             .accessibilityLabel("Counter \(index + 1)")
                             .onTapGesture {
-                                onAdjust((index + 1) - concreteCount)
+                                let isWarm = index < 5
+                                let rowIndex = index % 5
+                                onAdjust(
+                                    (rowIndex + 1) - (isWarm ? warmCount : accentCount),
+                                    isWarm ? .warm : .accent
+                                )
                             }
                     }
                 }
@@ -41,20 +47,22 @@ struct ConcreteBuildView: View {
                 // Numerals and symbols only — no words, consistent with the no-reading principle.
                 // Connects the concrete ten-frame action to the abstract equation (CPA bridge).
                 HStack(spacing: 8) {
-                    Text("\(concreteCount)")
+                    Text("\(warmCount)")
                         .font(.system(size: 44, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.warm)
+                        .accessibilityIdentifier("warm-count-label")
                         .contentTransition(.numericText())
-                        .animation(.spring(response: 0.3), value: concreteCount)
+                        .animation(.spring(response: 0.3), value: warmCount)
                     Text("+")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
-                    Text(concreteCount > 0 ? "\(target - concreteCount)" : "?")
+                    Text("\(accentCount)")
                         .font(.system(size: 44, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.accent)
+                        .accessibilityIdentifier("accent-count-label")
                         .contentTransition(.numericText())
-                        .animation(.spring(response: 0.3), value: concreteCount)
-                    Text("= \(target)")
+                        .animation(.spring(response: 0.3), value: accentCount)
+                    Text("= \(warmCount + accentCount)")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -70,10 +78,9 @@ struct ConcreteBuildView: View {
 
     @ViewBuilder
     private func counterCell(index: Int) -> some View {
-        let filled = index < concreteCount
-        // Two-tone subitizing: first row (0–4) is warm amber, second row (5–9) is
-        // vivid green. A child sees "5 amber + 2 green" for 7 without counting.
         let isFirstRow = index < 5
+        let rowIndex = index % 5
+        let filled = isFirstRow ? rowIndex < warmCount : rowIndex < accentCount
         let fillColor: Color = filled
             ? (isFirstRow ? MatherTheme.warm : MatherTheme.accent)
             : .clear
