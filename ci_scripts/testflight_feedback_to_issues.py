@@ -159,7 +159,7 @@ def ensure_labels(config: Config, labels: list[str]) -> None:
 
 def fetch_feedback_collection(config: Config, path: str) -> list[dict[str, Any]]:
     params = {
-        "include": "build,betaTester",
+        "include": "build",
         "limit": "200",
         "sort": "-createdDate",
     }
@@ -224,8 +224,6 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
     attrs = feedback.get("attributes", {})
     build = get_related_resource(feedback, "build") or {}
     build_attrs = build.get("attributes", {})
-    tester = get_related_resource(feedback, "betaTester") or {}
-    tester_attrs = tester.get("attributes", {})
 
     submitted_at = first_non_empty(
         attrs.get("submittedDate"),
@@ -241,15 +239,6 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
     )
     app_version = first_non_empty(attrs.get("appVersion"))
     build_uploaded_at = first_non_empty(build_attrs.get("uploadedDate"))
-    tester_name = " ".join(
-        part
-        for part in [
-            first_non_empty(tester_attrs.get("firstName")) or "",
-            first_non_empty(tester_attrs.get("lastName")) or "",
-        ]
-        if part
-    ).strip()
-    tester_email = first_non_empty(tester_attrs.get("email"))
     asc_link = (
         f"https://appstoreconnect.apple.com/apps/{config.asc_app_id}/testflight/ios"
     )
@@ -265,8 +254,6 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         f"- App version: {app_version or '_unknown_'}",
         f"- Build number: {build_version or '_unknown_'}",
         f"- Build uploaded: {build_uploaded_at or '_unknown_'}",
-        f"- Tester: {tester_name or '_unknown_'}",
-        f"- Tester email: {tester_email or '_unknown_'}",
         f"- App Store Connect: {asc_link}",
         "",
         "## Feedback",
@@ -278,9 +265,6 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         "",
         "### Related build attributes",
         json_block(build_attrs),
-        "",
-        "### Related tester attributes",
-        json_block(tester_attrs),
         "",
         "<!-- ASC Feedback Sync -->",
         f"<!-- ASC Feedback ID: {feedback['id']} -->",
