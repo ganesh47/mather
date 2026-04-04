@@ -110,7 +110,11 @@ final class ScreenshotTests: XCTestCase {
         // Fill to correct target by tapping the last counter cell (index 9).
         // The engine clamps the count to the problem target, so tapping cell 9
         // always reaches the target regardless of what it is (6–10).
+        // Scroll down first — on compact/small simulators the second grid row can be off-screen.
         let lastCell = app.otherElements["counter-cell-9"]
+        if !lastCell.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
         _ = lastCell.waitForExistence(timeout: 5)
         lastCell.tap()
         submitButton.tap()
@@ -178,8 +182,12 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
         snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
 
-        // Fill to correct target and submit to reach pictorial stage
+        // Fill to correct target and submit to reach pictorial stage.
+        // Scroll down first — on compact/small simulators the second grid row can be off-screen.
         let lastCell = app.otherElements["counter-cell-9"]
+        if !lastCell.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
         _ = lastCell.waitForExistence(timeout: 5)
         lastCell.tap()
 
