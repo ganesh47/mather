@@ -52,7 +52,12 @@ struct SliceSessionView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
-    .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if showsPersistentSubmitBar {
+                persistentSubmitBar
+            }
+        }
+        .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
     }
 
     @ViewBuilder
@@ -69,7 +74,15 @@ struct SliceSessionView: View {
         case .pictorial:
             SplitView(target: problem.target, leftCount: appModel.engine.splitLeftCount, onAdjust: appModel.engine.moveSplit, onSubmit: appModel.engine.submitCurrentStage)
         case .abstract:
-            EquationResolveView(target: problem.target, leftInput: appModel.engine.equationLeftInput, rightInput: appModel.engine.equationRightInput, onAppend: appModel.engine.appendEquationDigit, onClear: appModel.engine.clearEquation, onSubmit: appModel.engine.submitCurrentStage)
+            EquationResolveView(
+                target: problem.target,
+                leftInput: appModel.engine.equationLeftInput,
+                rightInput: appModel.engine.equationRightInput,
+                onAppend: appModel.engine.appendEquationDigit,
+                onClear: appModel.engine.clearEquation,
+                onSubmit: appModel.engine.submitCurrentStage,
+                showsInlineSubmit: false
+            )
         case .transfer:
             TransferCheckView(problem: problem, transferCount: appModel.engine.transferCount, onAdjust: appModel.engine.adjustTransfer, onSubmit: appModel.engine.submitCurrentStage)
         case .done:
@@ -141,5 +154,25 @@ struct SliceSessionView: View {
         case .transfer: MatherTheme.coral
         case .done: .secondary
         }
+    }
+
+    private var showsPersistentSubmitBar: Bool {
+        appModel.engine.currentStage == .abstract && appModel.engine.currentProblem != nil
+    }
+
+    private var persistentSubmitBar: some View {
+        VStack(spacing: 0) {
+            Divider()
+                .overlay(Color.secondary.opacity(0.08))
+
+            Button("Check equation") {
+                appModel.engine.submitCurrentStage()
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+        }
+        .background(.ultraThinMaterial)
     }
 }
