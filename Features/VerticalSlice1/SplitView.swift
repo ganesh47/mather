@@ -37,12 +37,27 @@ struct SplitView: View {
                         }
                 )
 
-                HStack(spacing: 12) {
-                    Button("Move Left") { onAdjust(1) }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.55)))
-                    Button("Move Right") { onAdjust(-1) }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
+                // Live equation — shows A + B = target as the child adjusts the split.
+                // Bridges the pictorial buckets to the abstract equation (CPA framework).
+                HStack(spacing: 8) {
+                    Text("\(leftCount)")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.warm)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3), value: leftCount)
+                    Text("+")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text("\(rightCount)")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.softBlue)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3), value: rightCount)
+                    Text("= \(target)")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
 
                 Button("Use this break") {
                     onSubmit()
@@ -73,7 +88,7 @@ struct SplitView: View {
                                 .overlay(
                                     Circle().strokeBorder(fill.opacity(isFilled ? 0.2 : 0.35), lineWidth: 1.5)
                                 )
-                                .frame(minWidth: 28, minHeight: 28)
+                                .frame(minWidth: 18, minHeight: 18)
                         }
                     }
                 }
