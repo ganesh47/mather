@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 import time
@@ -203,12 +202,6 @@ def issue_exists(config: Config, feedback_id: str) -> bool:
     return result.get("total_count", 0) > 0
 
 
-def json_block(data: dict[str, Any] | None) -> str:
-    if not data:
-        return "_None_"
-    return f"```json\n{json.dumps(data, indent=2, sort_keys=True)}\n```"
-
-
 def build_issue_title(feedback: dict[str, Any], kind: str) -> str:
     feedback_id = feedback["id"]
     build = get_related_resource(feedback, "build") or {}
@@ -239,6 +232,7 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
     )
     app_version = first_non_empty(attrs.get("appVersion"))
     build_uploaded_at = first_non_empty(build_attrs.get("uploadedDate"))
+    screenshot_count = len(attrs.get("screenshots") or [])
     asc_link = (
         f"https://appstoreconnect.apple.com/apps/{config.asc_app_id}/testflight/ios"
     )
@@ -254,17 +248,15 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         f"- App version: {app_version or '_unknown_'}",
         f"- Build number: {build_version or '_unknown_'}",
         f"- Build uploaded: {build_uploaded_at or '_unknown_'}",
+        f"- Screenshot count: {screenshot_count if kind == 'screenshot' else 0}",
         f"- App Store Connect: {asc_link}",
         "",
         "## Feedback",
         comment or "_No tester comment included in API payload._",
         "",
-        "## Raw App Store Connect payload",
-        "### Feedback attributes",
-        json_block(attrs),
-        "",
-        "### Related build attributes",
-        json_block(build_attrs),
+        "## Privacy",
+        "Raw TestFlight payload, tester contact details, device metadata, and screenshot URLs are intentionally omitted from GitHub.",
+        "Review the linked item in App Store Connect for full details and attachments.",
         "",
         "<!-- ASC Feedback Sync -->",
         f"<!-- ASC Feedback ID: {feedback['id']} -->",
