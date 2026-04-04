@@ -126,7 +126,7 @@ final class VerticalSliceEngine {
     }
 
     func adjustConcrete(by delta: Int, side: ConcreteGroup) {
-        guard currentProblem != nil else { return }
+        guard let currentProblem else { return }
         switch side {
         case .warm:
             let maxWarm = min(5, max(currentProblem.target - concreteAccentCount, 0))
