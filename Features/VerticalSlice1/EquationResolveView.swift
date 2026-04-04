@@ -7,6 +7,7 @@ struct EquationResolveView: View {
     let onAppend: (Int, EquationSide) -> Void
     let onClear: (EquationSide) -> Void
     let onSubmit: () -> Void
+    var showsInlineSubmit = true
 
     @State private var selectedSide: EquationSide = .left
 
@@ -54,10 +55,12 @@ struct EquationResolveView: View {
                     }
                 }
 
-                Button("Check equation") {
-                    onSubmit()
+                if showsInlineSubmit {
+                    Button("Check equation") {
+                        onSubmit()
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
                 }
-                .buttonStyle(PrimaryActionButtonStyle())
             }
         }
     }
