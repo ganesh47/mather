@@ -38,7 +38,7 @@ struct SliceSessionView: View {
             // The engine delays stage transition by 1.5s so the child sees the reward
             // before the screen changes. Non-interactive so taps pass through.
             if appModel.engine.showCelebration {
-                Text("⭐️")
+                Text(appModel.engine.activeTheme.celebrationEmoji)
                     .font(.system(size: 120))
                     .scaleEffect(celebrationScale)
                     .allowsHitTesting(false)

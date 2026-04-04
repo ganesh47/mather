@@ -146,6 +146,14 @@ struct ThemeTests {
         #expect(prompt.contains("5"))
     }
 
+    // MARK: - Celebration emoji (PR8)
+
+    @Test func celebrationEmojiDistinctBetweenThemes() {
+        #expect(VehicleTheme().celebrationEmoji != ClassicTheme().celebrationEmoji)
+        #expect(!VehicleTheme().celebrationEmoji.isEmpty)
+        #expect(!ClassicTheme().celebrationEmoji.isEmpty)
+    }
+
     // MARK: - Engine vocabulary routing (PR2)
 
     @MainActor
