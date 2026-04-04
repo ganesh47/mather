@@ -6,6 +6,7 @@ struct ConcreteBuildView: View {
     let accentCount: Int
     let onAdjust: (Int, ConcreteGroup) -> Void
     let onSubmit: () -> Void
+    var theme: any SliceTheme = ClassicTheme()
 
     // Ten-frame is always 5 columns × 2 rows — invariant across device sizes.
     // The 2×5 structure is what enables subitizing: 7 is instantly seen as
@@ -81,26 +82,6 @@ struct ConcreteBuildView: View {
         let isFirstRow = index < 5
         let rowIndex = index % 5
         let filled = isFirstRow ? rowIndex < warmCount : rowIndex < accentCount
-        let fillColor: Color = filled
-            ? (isFirstRow ? MatherTheme.warm : MatherTheme.accent)
-            : .clear
-        let strokeColor: Color = isFirstRow
-            ? MatherTheme.warm.opacity(filled ? 0.0 : 0.55)
-            : MatherTheme.accent.opacity(filled ? 0.0 : 0.45)
-        let bgColor: Color = isFirstRow
-            ? MatherTheme.warm.opacity(filled ? 0.0 : 0.12)
-            : MatherTheme.accent.opacity(filled ? 0.0 : 0.10)
-
-        Color.clear
-            .aspectRatio(1, contentMode: .fit)
-            .overlay(
-                Circle()
-                    .fill(filled ? fillColor : bgColor)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(filled ? fillColor.opacity(0.3) : strokeColor, lineWidth: 2.5)
-                    )
-                    .shadow(color: filled ? fillColor.opacity(0.35) : .clear, radius: 4, y: 2)
-            )
+        CounterView(index: index, filled: filled, theme: theme)
     }
 }

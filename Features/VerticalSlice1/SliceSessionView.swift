@@ -69,7 +69,8 @@ struct SliceSessionView: View {
                 warmCount: appModel.engine.concreteWarmCount,
                 accentCount: appModel.engine.concreteAccentCount,
                 onAdjust: appModel.engine.adjustConcrete,
-                onSubmit: appModel.engine.submitCurrentStage
+                onSubmit: appModel.engine.submitCurrentStage,
+                theme: appModel.engine.activeTheme
             )
         case .pictorial:
             SplitView(target: problem.target, leftCount: appModel.engine.splitLeftCount, onAdjust: appModel.engine.moveSplit, onSubmit: appModel.engine.submitCurrentStage)
