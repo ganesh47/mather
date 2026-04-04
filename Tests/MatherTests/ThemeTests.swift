@@ -123,10 +123,13 @@ struct ThemeTests {
         #expect(vehicle.celebrationEmoji != classic.celebrationEmoji)
     }
 
-    @Test func vehicleThemeStageSuccessPhrasesAreDistinctFromClassic() {
+    @Test func vehicleThemeStageSuccessPhrasesAreDistinctFromClassicForCPAStages() {
         let classic = ClassicTheme()
         let vehicle = VehicleTheme()
-        for stage in SliceStage.allCases {
+        // Abstract and done phrases are intentionally theme-neutral ("Your equation matches the split",
+        // "Problem complete") — only concrete, pictorial, and transfer are theme-specific.
+        let themedStages: [SliceStage] = [.concrete, .pictorial, .transfer]
+        for stage in themedStages {
             #expect(vehicle.stageSuccessPhrase(for: stage, target: 6) != classic.stageSuccessPhrase(for: stage, target: 6))
         }
     }
