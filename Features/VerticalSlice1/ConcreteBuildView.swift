@@ -62,7 +62,7 @@ struct ConcreteBuildView: View {
                         .accessibilityIdentifier("accent-count-label")
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.3), value: accentCount)
-                    Text("= \(target)")
+                    Text("= \(warmCount + accentCount)")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
