@@ -98,6 +98,51 @@ struct ThemeTests {
         #expect(engine.activeTheme.celebrationEmoji == "⭐️")
     }
 
+    // MARK: - VehicleTheme (PR4)
+
+    @Test func vehicleThemeCounterKindIsVehicle() {
+        let theme = VehicleTheme()
+        if case .vehicle(let sym) = theme.counterKind {
+            #expect(sym == "car.fill")
+        } else {
+            Issue.record("Expected .vehicle counter kind with 'car.fill' symbol")
+        }
+    }
+
+    @Test func vehicleThemeCelebrationEmoji() {
+        #expect(VehicleTheme().celebrationEmoji == "🚗")
+    }
+
+    @Test func vehicleThemePromptsAreDistinctFromClassic() {
+        let classic = ClassicTheme()
+        let vehicle = VehicleTheme()
+        #expect(vehicle.concretePrompt(target: 7) != classic.concretePrompt(target: 7))
+        #expect(vehicle.pictorialPrompt(target: 5) != classic.pictorialPrompt(target: 5))
+        #expect(vehicle.abstractPrompt() != classic.abstractPrompt())
+        #expect(vehicle.transferPrompt(decompositionA: 3, decompositionB: 4) != classic.transferPrompt(decompositionA: 3, decompositionB: 4))
+        #expect(vehicle.celebrationEmoji != classic.celebrationEmoji)
+    }
+
+    @Test func vehicleThemeStageSuccessPhrasesAreDistinctFromClassic() {
+        let classic = ClassicTheme()
+        let vehicle = VehicleTheme()
+        for stage in SliceStage.allCases {
+            #expect(vehicle.stageSuccessPhrase(for: stage, target: 6) != classic.stageSuccessPhrase(for: stage, target: 6))
+        }
+    }
+
+    @Test func vehicleThemeSessionPhrasesDiffer() {
+        #expect(VehicleTheme().sessionIntroPhrase() != ClassicTheme().sessionIntroPhrase())
+        #expect(VehicleTheme().sessionEndPhrase() != ClassicTheme().sessionEndPhrase())
+        #expect(VehicleTheme().sessionStartFeedback() != ClassicTheme().sessionStartFeedback())
+    }
+
+    @Test func vehicleTransferPromptIncludesDecompositionNumbers() {
+        let prompt = VehicleTheme().transferPrompt(decompositionA: 2, decompositionB: 5)
+        #expect(prompt.contains("2"))
+        #expect(prompt.contains("5"))
+    }
+
     // MARK: - Engine vocabulary routing (PR2)
 
     @MainActor
