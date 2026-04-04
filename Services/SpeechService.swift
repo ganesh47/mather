@@ -21,10 +21,10 @@ final class SpeechService {
     // Always speaks the session intro regardless of the audio toggle — the child
     // should always hear a spoken start cue. The parent's mute toggle applies to
     // in-session prompts only (via speak(_:enabled:)).
-    func speakSessionIntroIfNeeded() {
+    func speakSessionIntro(_ phrase: String) {
         guard !hasSpokenSessionIntro else { return }
         hasSpokenSessionIntro = true
-        speak("Let's make and break numbers to ten.", enabled: true)
+        speak(phrase, enabled: true)
     }
 
     func resetSession() {

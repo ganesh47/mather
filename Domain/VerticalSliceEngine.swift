@@ -106,13 +106,13 @@ final class VerticalSliceEngine {
         equationRightInput = ""
         transferLeftCount = 0
         transferRightCount = 0
-        feedbackMessage = "Make the target number with the big counters."
+        feedbackMessage = activeTheme.sessionStartFeedback()
         showCelebration = false
         completedSummary = nil
         sessionStartedAt = .now
         problemStartedAt = .now
         speechService.resetSession()
-        speechService.speakSessionIntroIfNeeded()
+        speechService.speakSessionIntro(activeTheme.sessionIntroPhrase())
 
         do {
             try telemetryWriter.beginSession(sessionId: currentSession.sessionId, featureFlags: featureFlags)
@@ -319,7 +319,7 @@ final class VerticalSliceEngine {
         )
         saveSummary(summary)
         completedSummary = summary
-        feedbackMessage = "Session complete. Great job showing the same number in different ways."
+        feedbackMessage = activeTheme.sessionEndPhrase()
         route = .sessionSummary
     }
 
@@ -447,31 +447,23 @@ final class VerticalSliceEngine {
         guard let currentProblem else { return "Start a session to play." }
         switch currentStage {
         case .concrete:
-            return "Make \(currentProblem.target) with the counters."
+            return activeTheme.concretePrompt(target: currentProblem.target)
         case .pictorial:
-            return "Break \(currentProblem.target) into two groups."
+            return activeTheme.pictorialPrompt(target: currentProblem.target)
         case .abstract:
-            return "Type the same split as an equation."
+            return activeTheme.abstractPrompt()
         case .transfer:
-            return "Show the same equation with counters again. Put \(currentProblem.decompositionA) on the left and \(currentProblem.decompositionB) on the right."
+            return activeTheme.transferPrompt(
+                decompositionA: currentProblem.decompositionA,
+                decompositionB: currentProblem.decompositionB
+            )
         case .done:
             return "Nice work."
         }
     }
 
     private func successMessage(for stage: SliceStage, problem: SliceProblem) -> String {
-        switch stage {
-        case .concrete:
-            return "Yes. You made \(problem.target)."
-        case .pictorial:
-            return "That break still makes \(problem.target)."
-        case .abstract:
-            return "Your equation matches the split."
-        case .transfer:
-            return "You matched the same equation with counters."
-        case .done:
-            return "Problem complete."
-        }
+        activeTheme.stageSuccessPhrase(for: stage, target: problem.target)
     }
 
     private func feedbackMessageForFailure(stage: SliceStage, problem: SliceProblem) -> String {
