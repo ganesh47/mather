@@ -8,6 +8,7 @@ final class FeatureFlagService {
         static let testModeEnabled = "feature.testModeEnabled"
         static let audioEnabled = "feature.audioEnabled"
         static let hapticsEnabled = "feature.hapticsEnabled"
+        static let selectedThemeId = "feature.selectedThemeId"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -26,6 +27,13 @@ final class FeatureFlagService {
         didSet { defaults.set(hapticsEnabled, forKey: Keys.hapticsEnabled) }
     }
 
+    /// Identifies the active theme for the next session.
+    /// Valid values: `"classic"` (default), `"vehicle"`.
+    /// Injected via launch argument `-feature.selectedThemeId classic` in UI tests.
+    var selectedThemeId: String {
+        didSet { defaults.set(selectedThemeId, forKey: Keys.selectedThemeId) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -39,10 +47,12 @@ final class FeatureFlagService {
             Keys.testModeEnabled: true,
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
+            Keys.selectedThemeId: "classic",
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)
         hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
+        selectedThemeId = defaults.string(forKey: Keys.selectedThemeId) ?? "classic"
     }
 }
