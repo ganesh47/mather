@@ -90,9 +90,15 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Session history")
                                 .font(.title2.weight(.bold))
-                            ForEach(summaries.prefix(8)) { summary in
+                            Text("\(summaries.count) saved locally")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.secondary)
+                            ForEach(Array(summaries.prefix(8).enumerated()), id: \.element.sessionId) { index, summary in
                                 HStack {
                                     VStack(alignment: .leading) {
+                                        Text("Session \(index + 1)")
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(MatherTheme.accent)
                                         Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
                                         Text("Accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
                                             .foregroundStyle(.secondary)
@@ -103,6 +109,8 @@ struct SettingsView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 .padding(.vertical, 4)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("settings-history-session-\(index)")
                             }
                             if summaries.isEmpty {
                                 Text("No history yet.")
