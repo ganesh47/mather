@@ -125,6 +125,30 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "Pictorial-AfterConcreteSuccess")
     }
 
+    func testConcreteBuild_AccentRowDoesNotFillWarmRow() {
+        let app = launchWithVS1()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        let playButton = app.buttons["Play"]
+        _ = playButton.waitForExistence(timeout: 5)
+        playButton.tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+
+        let startButton = app.buttons["Start Session"]
+        _ = startButton.waitForExistence(timeout: 5)
+        startButton.tap()
+
+        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
+        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+
+        let greenCell = app.otherElements["counter-cell-7"]
+        _ = greenCell.waitForExistence(timeout: 5)
+        greenCell.tap()
+
+        XCTAssertEqual(app.staticTexts["warm-count-label"].label, "0")
+        XCTAssertEqual(app.staticTexts["accent-count-label"].label, "3")
+    }
+
     // MARK: - Parent Summary screen
 
     func testScreenshot_ParentSummary() {

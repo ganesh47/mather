@@ -59,7 +59,13 @@ struct SliceSessionView: View {
     private func stageView(for problem: SliceProblem) -> some View {
         switch appModel.engine.currentStage {
         case .concrete:
-            ConcreteBuildView(target: problem.target, concreteCount: appModel.engine.concreteCount, onAdjust: appModel.engine.adjustConcrete, onSubmit: appModel.engine.submitCurrentStage)
+            ConcreteBuildView(
+                target: problem.target,
+                warmCount: appModel.engine.concreteWarmCount,
+                accentCount: appModel.engine.concreteAccentCount,
+                onAdjust: appModel.engine.adjustConcrete,
+                onSubmit: appModel.engine.submitCurrentStage
+            )
         case .pictorial:
             SplitView(target: problem.target, leftCount: appModel.engine.splitLeftCount, onAdjust: appModel.engine.moveSplit, onSubmit: appModel.engine.submitCurrentStage)
         case .abstract:
