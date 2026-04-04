@@ -19,7 +19,7 @@ struct TransferExactRebuildTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(engine.currentStage != .transfer)
-        #expect(engine.feedbackMessage.contains("new direction"))
+        #expect(engine.currentSession.problems.last?.transferCorrect == true)
     }
 
     @Test
@@ -41,7 +41,7 @@ struct TransferExactRebuildTests {
         engine.submitCurrentStage()
 
         #expect(engine.currentStage == .transfer)
-        #expect(engine.feedbackMessage.contains("left") || engine.feedbackMessage.contains("right"))
+        #expect(engine.currentProblemState.isCorrect == false)
     }
 
     @Test
@@ -49,8 +49,7 @@ struct TransferExactRebuildTests {
         let engine = makeEngine()
 
         engine.startSession()
-        guard let problem = engine.currentProblem else { return }
-        #expect(problem.decompositionA != problem.decompositionB)
+        let problem = try await firstNonSymmetricProblem(in: engine)
 
         try await advanceToTransfer(engine, problem: problem)
 
@@ -88,5 +87,40 @@ struct TransferExactRebuildTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(engine.currentStage == .transfer)
+    }
+
+    private func firstNonSymmetricProblem(in engine: VerticalSliceEngine) async throws -> SliceProblem {
+        if let currentProblem = engine.currentProblem, currentProblem.decompositionA != currentProblem.decompositionB {
+            return currentProblem
+        }
+
+        guard let currentProblem = engine.currentProblem else {
+            Issue.record("No current problem to advance from.")
+            return SliceProblem(target: 0, decompositionA: 0, decompositionB: 0)
+        }
+
+        engine.adjustConcrete(by: currentProblem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(currentProblem.decompositionA)
+        engine.equationRightInput = String(currentProblem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.adjustTransfer(by: currentProblem.decompositionA, side: .left)
+        engine.adjustTransfer(by: currentProblem.decompositionB, side: .right)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+
+        guard let nextProblem = engine.currentProblem else {
+            Issue.record("Failed to advance to a non-symmetric problem.")
+            return currentProblem
+        }
+        guard nextProblem.decompositionA != nextProblem.decompositionB else {
+            Issue.record("Expected a non-symmetric follow-up problem.")
+            return currentProblem
+        }
+        return nextProblem
     }
 }
