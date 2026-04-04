@@ -54,13 +54,6 @@ struct EquationResolveView: View {
                     }
                 }
 
-                HStack(spacing: 16) {
-                    Button("Clear left") { onClear(.left) }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.6)))
-                    Button("Clear right") { onClear(.right) }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.6)))
-                }
-
                 Button("Check equation") {
                     onSubmit()
                 }
@@ -76,11 +69,25 @@ struct EquationResolveView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.headline)
-                Text(value.isEmpty ? "?" : value)
-                    .font(.system(size: 40, weight: .black, design: .rounded))
-                    .frame(maxWidth: .infinity, minHeight: 84)
-                    .background(selectedSide == side ? MatherTheme.accent.opacity(0.18) : MatherTheme.softBlue.opacity(0.25))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                ZStack(alignment: .topTrailing) {
+                    Text(value.isEmpty ? "?" : value)
+                        .font(.system(size: 40, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity, minHeight: 84)
+                        .background(selectedSide == side ? MatherTheme.accent.opacity(0.18) : MatherTheme.softBlue.opacity(0.25))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    // Inline clear — always reachable, no scrolling needed
+                    if !value.isEmpty {
+                        Button {
+                            onClear(side)
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .font(.title3)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(8)
+                    }
+                }
             }
         }
         .buttonStyle(.plain)
