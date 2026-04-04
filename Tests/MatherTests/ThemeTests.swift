@@ -2,6 +2,23 @@ import Foundation
 import Testing
 @testable import Mather
 
+// MARK: - Test helpers
+
+private struct RocketTheme: SliceTheme {
+    var counterKind: CounterKind { .circle }
+    var celebrationEmoji: String { "🚀" }
+    func concretePrompt(target: Int) -> String { "Launch \(target) rockets." }
+    func pictorialPrompt(target: Int) -> String { "Split the rockets into two pads." }
+    func abstractPrompt() -> String { "Type the rocket equation." }
+    func transferPrompt(decompositionA: Int, decompositionB: Int) -> String {
+        "Relaunch \(decompositionA) and \(decompositionB) rockets."
+    }
+    func stageSuccessPhrase(for stage: SliceStage, target: Int) -> String { "Blast off!" }
+    func sessionIntroPhrase() -> String { "Let's count rockets." }
+    func sessionEndPhrase() -> String { "Mission complete." }
+    func sessionStartFeedback() -> String { "Place the rockets on the pad." }
+}
+
 struct ThemeTests {
 
     // MARK: - ClassicTheme
@@ -79,5 +96,58 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         #expect(engine.activeTheme.celebrationEmoji == "⭐️")
+    }
+
+    // MARK: - Engine vocabulary routing (PR2)
+
+    @MainActor
+    @Test func engineUsesInjectedThemeSessionStartFeedback() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            activeTheme: RocketTheme(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.feedbackMessage == "Place the rockets on the pad.")
+    }
+
+    @MainActor
+    @Test func engineUsesClassicThemeSessionStartFeedbackByDefault() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.feedbackMessage == "Make the target number with the big counters.")
+    }
+
+    @MainActor
+    @Test func engineConcretePromptComesFromTheme() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            activeTheme: RocketTheme(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        // After advancing to pictorial, feedbackMessage should use theme pictorialPrompt
+        engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(engine.feedbackMessage == "Split the rockets into two pads.")
     }
 }
