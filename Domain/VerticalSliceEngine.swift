@@ -532,7 +532,6 @@ enum EquationSide {
     case right
 }
 
-<<<<<<< HEAD
 enum ConcreteGroup {
     case warm
     case accent
