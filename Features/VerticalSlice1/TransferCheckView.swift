@@ -12,18 +12,37 @@ struct TransferCheckView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Show it again")
                     .font(.largeTitle.weight(.black))
-                Text("\(problem.decompositionA) + \(problem.decompositionB) = \(problem.target)")
-                    .font(.title.weight(.bold))
+                Text("Show the same equation with counters again.")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("transfer-instruction")
+
+                HStack(spacing: 10) {
+                    equationPill(value: problem.decompositionA, fill: MatherTheme.warm)
+                    Text("+")
+                        .font(.title.weight(.black))
+                        .foregroundStyle(.secondary)
+                    equationPill(value: problem.decompositionB, fill: MatherTheme.accent)
+                    Text("=")
+                        .font(.title.weight(.black))
+                        .foregroundStyle(.secondary)
+                    Text("\(problem.target)")
+                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.ink)
+                }
+                .accessibilityIdentifier("transfer-equation")
 
                 ViewThatFits {
                     HStack(spacing: 12) {
                         transferBucket(
+                            title: "Left side of the equation",
                             targetCount: problem.decompositionA,
                             count: leftCount,
                             fill: MatherTheme.warm,
                             side: .left
                         )
                         transferBucket(
+                            title: "Right side of the equation",
                             targetCount: problem.decompositionB,
                             count: rightCount,
                             fill: MatherTheme.accent,
@@ -32,12 +51,14 @@ struct TransferCheckView: View {
                     }
                     VStack(spacing: 12) {
                         transferBucket(
+                            title: "Left side of the equation",
                             targetCount: problem.decompositionA,
                             count: leftCount,
                             fill: MatherTheme.warm,
                             side: .left
                         )
                         transferBucket(
+                            title: "Right side of the equation",
                             targetCount: problem.decompositionB,
                             count: rightCount,
                             fill: MatherTheme.accent,
@@ -46,7 +67,7 @@ struct TransferCheckView: View {
                     }
                 }
 
-                Button("I rebuilt it") {
+                Button("Check the same equation") {
                     onSubmit()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -54,11 +75,27 @@ struct TransferCheckView: View {
         }
     }
 
-    private func transferBucket(targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
+    private func equationPill(value: Int, fill: Color) -> some View {
+        Text("\(value)")
+            .font(.system(size: 28, weight: .black, design: .rounded))
+            .foregroundStyle(fill)
+            .frame(minWidth: 58, minHeight: 58)
+            .background(fill.opacity(0.14))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
         VStack(spacing: 10) {
+            Text(title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(MatherTheme.ink)
+                .multilineTextAlignment(.center)
             Text("\(targetCount)")
                 .font(.system(size: 40, weight: .black, design: .rounded))
                 .foregroundStyle(fill)
+            Text("Put \(targetCount) counters here.")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
 
             let rows = dotRows(count: count, capacity: problem.target)
             VStack(spacing: 6) {

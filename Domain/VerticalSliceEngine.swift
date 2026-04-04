@@ -448,7 +448,7 @@ final class VerticalSliceEngine {
         case .abstract:
             return "Type the same split as an equation."
         case .transfer:
-            return "Use the equation to rebuild both groups."
+            return "Show the same equation with counters again. Put \(currentProblem.decompositionA) on the left and \(currentProblem.decompositionB) on the right."
         case .done:
             return "Nice work."
         }
@@ -463,7 +463,7 @@ final class VerticalSliceEngine {
         case .abstract:
             return "Your equation matches the split."
         case .transfer:
-            return "You showed the same math in a new direction."
+            return "You matched the same equation with counters."
         case .done:
             return "Problem complete."
         }
@@ -498,11 +498,11 @@ final class VerticalSliceEngine {
             }
         case .transfer:
             if attempts == 1 {
-                return "Match the two parts in the equation. Put \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
+                return "Look at the same equation again. Put \(problem.decompositionA) counters on the left and \(problem.decompositionB) on the right."
             } else if attempts == 2 {
-                return "The equation shows \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
+                return "This is still the same equation: \(problem.decompositionA) on the left, \(problem.decompositionB) on the right."
             } else {
-                return "Keep rebuilding the exact equation: \(problem.decompositionA) in the first group and \(problem.decompositionB) in the second group."
+                return "Keep showing the same equation with counters: \(problem.decompositionA) in the first group and \(problem.decompositionB) in the second group."
             }
         case .done:
             return "Try again."
