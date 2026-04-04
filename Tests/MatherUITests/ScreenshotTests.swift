@@ -153,6 +153,27 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "Settings-AfterCancelClear")
     }
 
+    func testSessionHistoryShowsMultipleSavedSessionsInParentSummaryAndSettings() {
+        let app = launchWithSeededHistory(count: 2)
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Parent Summary"].tap()
+        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
+
+        let parentSecond = app.staticTexts["Session 2"].firstMatch
+        XCTAssertTrue(parentSecond.waitForExistence(timeout: 5))
+        XCTAssertTrue(parentSecond.isHittable)
+
+        app.buttons["Settings"].tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
+
+        let settingsSecond = app.staticTexts["Session 2"].firstMatch
+        XCTAssertTrue(settingsSecond.waitForExistence(timeout: 5))
+        XCTAssertTrue(settingsSecond.isHittable)
+    }
+
     // MARK: - iPhone layout / pilot runbook
 
     /// Verifies the full session flow renders without crash and screenshots the
@@ -259,6 +280,19 @@ final class ScreenshotTests: XCTestCase {
             "-feature.hapticsEnabled", "YES",
             "-feature.testModeEnabled", "YES",
             "-feature.verticalSlice1Enabled", "YES"
+        ]
+        app.launch()
+        return app
+    }
+
+    private func launchWithSeededHistory(count: Int) -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-uiTest.seedHistory", "\(count)"
         ]
         app.launch()
         return app

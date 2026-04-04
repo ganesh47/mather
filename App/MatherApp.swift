@@ -9,7 +9,9 @@ struct MatherApp: App {
     init() {
         do {
             container = try ModelContainer(for: StoredSessionSummary.self)
-            _appModel = State(initialValue: AppModel(modelContext: container.mainContext))
+            let appModel = AppModel(modelContext: container.mainContext)
+            Self.seedSessionHistoryIfRequested(using: appModel)
+            _appModel = State(initialValue: appModel)
         } catch {
             fatalError("Failed to create model container: \(error)")
         }
@@ -19,6 +21,35 @@ struct MatherApp: App {
         WindowGroup {
             RootView(appModel: appModel)
                 .modelContainer(container)
+        }
+    }
+}
+
+private extension MatherApp {
+    static func seedSessionHistoryIfRequested(using appModel: AppModel) {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-uiTest.seedHistory"),
+              arguments.indices.contains(flagIndex + 1),
+              let requestedCount = Int(arguments[flagIndex + 1]) else { return }
+
+        appModel.historyStore.clearAll()
+
+        for index in 0..<max(requestedCount, 0) {
+            let startedAt = Date.now.addingTimeInterval(TimeInterval(-index * 3_600))
+            let sessionId = "ui-test-seeded-\(index)"
+            let draft = SessionSummaryDraft(
+                sessionId: sessionId,
+                startedAt: startedAt,
+                endedAt: startedAt.addingTimeInterval(300),
+                objectiveTitle: "Make & Break to 10",
+                problemsCompleted: 4 + index,
+                firstAttemptAccuracy: index == 0 ? 0.75 : 0.5,
+                transferCorrectCount: 2 + (index % 2),
+                medianLatencyMs: 90_000 + (index * 15_000),
+                nextTargetHint: "UI test seeded session history.",
+                exportFileName: "session-\(sessionId).jsonl"
+            )
+            appModel.historyStore.save(draft)
         }
     }
 }

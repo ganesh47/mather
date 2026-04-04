@@ -7,11 +7,12 @@ struct ParentSummaryView: View {
 
     var body: some View {
         let digest = appModel.telemetryWriter.digest(from: summaries)
+        let recentSummaries = Array(summaries.prefix(5))
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     CardSurface {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Parent Summary")
@@ -71,29 +72,18 @@ struct ParentSummaryView: View {
                         }
 
                         CardSurface {
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "lightbulb.fill")
-                                    .foregroundStyle(MatherTheme.warm)
-                                    .font(.title3)
-                                Text(digest.nextTargetHint)
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Recent sessions")
+                                    .font(.title3.weight(.bold))
+                                Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
                                     .font(.subheadline.weight(.medium))
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                    }
-
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recent sessions")
-                                .font(.title3.weight(.bold))
-                            if summaries.isEmpty {
-                                Text("No history yet. Run a session to start.")
-                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                            } else {
-                                ForEach(Array(summaries.prefix(5))) { summary in
+                                ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
+                                            Text("Session \(index + 1)")
+                                                .font(.caption.weight(.bold))
+                                                .foregroundStyle(MatherTheme.accent)
                                             Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
                                                 .font(.subheadline.weight(.semibold))
                                             Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
@@ -111,10 +101,23 @@ struct ParentSummaryView: View {
                                                 .clipShape(Capsule())
                                         }
                                     }
-                                    .padding(12)
+                                    .padding(10)
                                     .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityIdentifier("parent-summary-session-\(index)")
                                 }
+                            }
+                        }
+
+                        CardSurface {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "lightbulb.fill")
+                                    .foregroundStyle(MatherTheme.warm)
+                                    .font(.title3)
+                                Text(digest.nextTargetHint)
+                                    .font(.subheadline.weight(.medium))
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
@@ -141,6 +144,14 @@ struct ParentSummaryView: View {
         let seconds = ms / 1000
         return seconds < 60 ? "\(seconds)s" : "\(seconds / 60)m \(seconds % 60)s"
     }
+
+    private func historyCaption(totalCount: Int, visibleCount: Int) -> String {
+        guard totalCount > 0 else { return "No saved sessions yet." }
+        if totalCount == visibleCount {
+            return "\(totalCount) saved locally"
+        }
+        return "Showing latest \(visibleCount) of \(totalCount) saved locally"
+    }
 }
 
 private struct StatTile: View {
@@ -162,7 +173,7 @@ private struct StatTile: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, 12)
         .background(color.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
