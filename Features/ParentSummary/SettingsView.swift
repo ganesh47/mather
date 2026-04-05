@@ -146,13 +146,13 @@ struct SettingsView: View {
                     .tint(MatherTheme.danger)
 
                     HStack(spacing: 16) {
-                        Button("Home") {
-                            appModel.engine.showHome()
+                        Button("Parent Summary") {
+                            appModel.engine.showParentSummary()
                         }
                         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
 
-                        Button("Parent Summary") {
-                            appModel.engine.showParentSummary()
+                        Button("Home") {
+                            appModel.engine.showHome()
                         }
                         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
                     }

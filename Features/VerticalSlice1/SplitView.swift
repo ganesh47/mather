@@ -38,6 +38,17 @@ struct SplitView: View {
                         }
                 )
 
+                // Swipe affordance — left/right chevrons hint at the drag gesture.
+                // Tap on each bucket also adjusts the split (no reading required).
+                HStack {
+                    Image(systemName: "chevron.left")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.secondary.opacity(0.45))
+                .padding(.horizontal, 20)
+
                 // Live equation — shows A + B = target as the child adjusts the split.
                 // Bridges the pictorial buckets to the abstract equation (CPA framework).
                 HStack(spacing: 8) {
