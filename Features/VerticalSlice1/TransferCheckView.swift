@@ -120,14 +120,18 @@ struct TransferCheckView: View {
             .background(fill.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-group")
-            .onTapGesture { onAdjust(1, side) }
 
+            // +/- buttons — primary interaction surface; bucket tap removed to avoid
+            // conflict between two mechanisms triggering the same action.
             HStack(spacing: 10) {
                 Button {
                     onAdjust(-1, side)
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.title.weight(.bold))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .background(fill.opacity(0.15))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Remove from \(side == .left ? "left" : "right") group")
@@ -138,6 +142,9 @@ struct TransferCheckView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title.weight(.bold))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .background(fill.opacity(0.15))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Add to \(side == .left ? "left" : "right") group")
