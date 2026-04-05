@@ -1,0 +1,29 @@
+name: Poll v0.1.8 Build Status
+on:
+  workflow_dispatch:
+    inputs:
+      target_version:
+        default: "0.1.8"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - run: pip3 install PyJWT cryptography
+      - name: Poll until v0.1.8 build lands in TestFlight
+        env:
+          APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          TARGET_VERSION: ${{ inputs.target_version }}
+        run: |
+          for i in $(seq 1 12); do
+            echo "=== Poll attempt $i / 12 ($(date -u)) ==="
+            python3 ci_scripts/check_build_status.py && exit 0
+            echo "Not yet — waiting 5 min..."
+            sleep 300
+          done
+          echo "Timed out after 60 min waiting for build."
+          exit 1
