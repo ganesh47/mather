@@ -11,11 +11,10 @@ struct TransferCheckView: View {
     var body: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Show it again")
-                    .font(.largeTitle.weight(.black))
-                Text("Show the same equation with counters again.")
-                    .font(.headline)
+                Text(theme.transferPrompt(decompositionA: problem.decompositionA, decompositionB: problem.decompositionB))
+                    .font(.headline.weight(.bold))
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("transfer-instruction")
 
                 HStack(spacing: 10) {

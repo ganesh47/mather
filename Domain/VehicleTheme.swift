@@ -12,6 +12,7 @@ import Foundation
 struct VehicleTheme: SliceTheme {
     var counterKind: CounterKind { .vehicle(symbolName: "car.fill") }
     var celebrationEmoji: String { "🚗" }
+    var counterNoun: String { "cars" }
 
     func concretePrompt(target: Int) -> String {
         "Park \(target) cars in the garage."

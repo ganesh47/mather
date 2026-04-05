@@ -88,7 +88,8 @@ struct SliceSessionView: View {
                 onAppend: appModel.engine.appendEquationDigit,
                 onClear: appModel.engine.clearEquation,
                 onSubmit: appModel.engine.submitCurrentStage,
-                showsInlineSubmit: false
+                showsInlineSubmit: false,
+                theme: appModel.engine.activeTheme
             )
         case .transfer:
             TransferCheckView(

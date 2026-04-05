@@ -7,6 +7,7 @@ import Testing
 private struct RocketTheme: SliceTheme {
     var counterKind: CounterKind { .circle }
     var celebrationEmoji: String { "🚀" }
+    var counterNoun: String { "rockets" }
     func concretePrompt(target: Int) -> String { "Launch \(target) rockets." }
     func pictorialPrompt(target: Int) -> String { "Split the rockets into two pads." }
     func abstractPrompt() -> String { "Type the rocket equation." }
@@ -264,5 +265,37 @@ struct ThemeTests {
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.feedbackMessage == "Split the rockets into two pads.")
+    }
+
+    // MARK: - counterNoun (UX review fix)
+
+    @Test func classicThemeCounterNounIsCounters() {
+        #expect(ClassicTheme().counterNoun == "counters")
+    }
+
+    @Test func vehicleThemeCounterNounIsCars() {
+        #expect(VehicleTheme().counterNoun == "cars")
+    }
+
+    /// After 3 concrete failures with VehicleTheme, the feedback hint must say "cars" not "circles".
+    @MainActor
+    @Test func engineConcreteFailureHintUsesThemeCounterNoun() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            activeTheme: VehicleTheme(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        // Submit wrong answer three times to reach the "tapping the X" hint
+        engine.submitCurrentStage() // attempt 1 — wrong (count is 0)
+        engine.submitCurrentStage() // attempt 2
+        engine.submitCurrentStage() // attempt 3 → counterNoun hint
+        #expect(engine.feedbackMessage.contains("cars"))
+        #expect(!engine.feedbackMessage.contains("circles"))
     }
 }

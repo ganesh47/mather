@@ -5,6 +5,7 @@ import Foundation
 struct ClassicTheme: SliceTheme {
     var counterKind: CounterKind { .circle }
     var celebrationEmoji: String { "⭐️" }
+    var counterNoun: String { "counters" }
 
     func concretePrompt(target: Int) -> String {
         "Make \(target) with the counters."
