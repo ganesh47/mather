@@ -17,6 +17,10 @@ protocol SliceTheme {
     /// Emoji shown in the fullscreen celebration overlay on a correct stage answer.
     var celebrationEmoji: String { get }
 
+    /// Noun for a single counter — used in failure hint copy so the hint matches
+    /// the active theme's vocabulary (e.g. "counters" vs "cars").
+    var counterNoun: String { get }
+
     // MARK: - Stage prompts (spoken by SpeechService)
 
     func concretePrompt(target: Int) -> String

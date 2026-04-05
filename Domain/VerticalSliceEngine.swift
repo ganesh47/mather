@@ -485,7 +485,7 @@ final class VerticalSliceEngine {
             } else if attempts == 2 {
                 return "You have \(concreteCount). How many more do you need to make \(problem.target)?"
             } else {
-                return "Try tapping the circles one by one until you reach \(problem.target)."
+                return "Try tapping the \(activeTheme.counterNoun) one by one until you reach \(problem.target)."
             }
         case .pictorial:
             if attempts == 1 {

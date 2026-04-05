@@ -8,6 +8,7 @@ struct EquationResolveView: View {
     let onClear: (EquationSide) -> Void
     let onSubmit: () -> Void
     var showsInlineSubmit = true
+    var theme: any SliceTheme = ClassicTheme()
 
     @State private var selectedSide: EquationSide = .left
 
@@ -18,7 +19,7 @@ struct EquationResolveView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Write it")
                     .font(.largeTitle.weight(.black))
-                Text("Show the same split as an equation that equals \(target).")
+                Text(theme.abstractPrompt())
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
