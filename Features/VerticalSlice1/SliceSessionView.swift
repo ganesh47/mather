@@ -129,6 +129,7 @@ struct SliceSessionView: View {
                             .background(MatherTheme.softBlue.opacity(0.18))
                             .clipShape(Circle())
                     }
+                    .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Mute audio" : "Enable audio")
                     Button {
                         appModel.engine.replayPrompt()
                     } label: {
@@ -139,6 +140,7 @@ struct SliceSessionView: View {
                             .background(MatherTheme.warm.opacity(0.18))
                             .clipShape(Circle())
                     }
+                    .accessibilityLabel("Replay prompt")
                     // Adult escape hatch — secondary styling so child ignores it
                     Button {
                         appModel.engine.showHome()
