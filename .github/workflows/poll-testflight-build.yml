@@ -4,6 +4,10 @@ on:
     inputs:
       target_version:
         default: "0.1.8"
+
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
