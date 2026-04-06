@@ -49,6 +49,9 @@ final class VerticalSliceEngine {
     // instead of resolving from featureFlags. This lets unit tests use arbitrary
     // theme implementations (e.g. RocketTheme) without registering them in flags.
     private let hasInjectedTheme: Bool
+    // Per-problem theme rotation for VehicleTheme — one spec per problem, cycling
+    // through VehicleSpec.pool. Empty for ClassicTheme or injected-theme sessions.
+    private var problemThemes: [any SliceTheme] = []
 
     init(
         featureFlags: FeatureFlagService,
@@ -94,11 +97,26 @@ final class VerticalSliceEngine {
         // Freeze the active theme from the user's current selection — unless a custom
         // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
         if !hasInjectedTheme {
-            activeTheme = featureFlags.selectedThemeId == "vehicle" ? VehicleTheme() : ClassicTheme()
+            if featureFlags.selectedThemeId == "vehicle" {
+                config.audioEnabled = featureFlags.audioEnabled
+                config.deterministicMode = featureFlags.testModeEnabled
+                problems = ProblemGenerator.generateProblems(config: config)
+                let pool = VehicleSpec.pool
+                problemThemes = problems.indices.map { i in VehicleTheme(spec: pool[i % pool.count]) }
+                activeTheme = problemThemes[0]
+            } else {
+                activeTheme = ClassicTheme()
+                problemThemes = []
+                config.audioEnabled = featureFlags.audioEnabled
+                config.deterministicMode = featureFlags.testModeEnabled
+                problems = ProblemGenerator.generateProblems(config: config)
+            }
+        } else {
+            problemThemes = []
+            config.audioEnabled = featureFlags.audioEnabled
+            config.deterministicMode = featureFlags.testModeEnabled
+            problems = ProblemGenerator.generateProblems(config: config)
         }
-        config.audioEnabled = featureFlags.audioEnabled
-        config.deterministicMode = featureFlags.testModeEnabled
-        problems = ProblemGenerator.generateProblems(config: config)
         currentProblemIndex = 0
         currentStage = .concrete
         currentProblemState = ProblemState()
@@ -294,6 +312,9 @@ final class VerticalSliceEngine {
         let timeCapReached = elapsed >= sessionTimeLimitSeconds
         if currentProblemIndex + 1 < problems.count && !timeCapReached {
             currentProblemIndex += 1
+            if !problemThemes.isEmpty {
+                activeTheme = problemThemes[currentProblemIndex % problemThemes.count]
+            }
             currentStage = .concrete
             currentProblemState = ProblemState()
             concreteWarmCount = 0
