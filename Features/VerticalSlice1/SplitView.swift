@@ -108,7 +108,8 @@ struct SplitView: View {
                             theme: theme,
                             overrideColor: fill
                         )
-                        .frame(minWidth: 18, minHeight: 18, maxWidth: 36, maxHeight: 36)
+                        .frame(minWidth: 18, minHeight: 18)
+                        .frame(maxWidth: 36, maxHeight: 36)
                     }
                 }
             }
