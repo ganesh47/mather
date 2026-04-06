@@ -80,7 +80,8 @@ struct SplitView: View {
     }
 
     private func bucket(count: Int, fill: Color, delta: Int) -> some View {
-        VStack(spacing: 10) {
+        let rows = dotRows(count: count, capacity: target)
+        return VStack(spacing: 10) {
             Text("\(count)")
                 .font(.system(size: 52, weight: .black, design: .rounded))
                 .foregroundStyle(fill)
@@ -89,31 +90,36 @@ struct SplitView: View {
 
             // Dots laid out in rows of 5 — mirrors the ten-frame structure
             // so the child can subitize each group at a glance.
-            let rows = dotRows(count: count, capacity: target)
-            VStack(spacing: 6) {
-                ForEach(rows.indices, id: \.self) { rowIndex in
-                    HStack(spacing: 6) {
-                        ForEach(rows[rowIndex].indices, id: \.self) { dotIndex in
-                            let isFilled = rows[rowIndex][dotIndex]
-                            CounterView(
-                                index: dotIndex + rowIndex * 5,
-                                filled: isFilled,
-                                theme: theme,
-                                overrideColor: fill
-                            )
-                            .frame(minWidth: 18, minHeight: 18, maxWidth: 36, maxHeight: 36)
-                        }
+            dotGrid(rows: rows, fill: fill, delta: delta)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func dotGrid(rows: [[Bool]], fill: Color, delta: Int) -> some View {
+        VStack(spacing: 6) {
+            ForEach(rows.indices, id: \.self) { rowIndex in
+                HStack(spacing: 6) {
+                    ForEach(rows[rowIndex].indices, id: \.self) { dotIndex in
+                        let isFilled = rows[rowIndex][dotIndex]
+                        CounterView(
+                            index: dotIndex + rowIndex * 5,
+                            filled: isFilled,
+                            theme: theme,
+                            overrideColor: fill
+                        )
+                        .frame(minWidth: 18, minHeight: 18)
+                        .frame(maxWidth: 36, maxHeight: 36)
                     }
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 12)
-            .background(fill.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .onTapGesture { onAdjust(delta) }
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 12)
+        .background(fill.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .onTapGesture { onAdjust(delta) }
     }
 
     // Lay out `count` filled dots and (capacity - count) empty dots in rows of 5.
