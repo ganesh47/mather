@@ -6,18 +6,18 @@ import Foundation
 /// `VehicleTheme` can delegate everything to the active spec. The engine cycles
 /// through `VehicleSpec.pool` — one spec per problem — giving children a fresh
 /// vehicle on every question without breaking CPA coherence within a problem.
-struct VehicleSpec {
+struct VehicleSpec: Sendable {
     let symbolName: String
     let counterNoun: String
     let celebrationEmoji: String
-    let concretePromptFn: (Int) -> String
-    let pictorialPromptFn: (Int) -> String
-    let abstractPromptFn: () -> String
-    let transferPromptFn: (Int, Int) -> String
-    let stageSuccessFn: (SliceStage, Int) -> String
-    let sessionIntroFn: () -> String
-    let sessionEndFn: () -> String
-    let sessionStartFeedbackFn: () -> String
+    let concretePromptFn: @Sendable (Int) -> String
+    let pictorialPromptFn: @Sendable (Int) -> String
+    let abstractPromptFn: @Sendable () -> String
+    let transferPromptFn: @Sendable (Int, Int) -> String
+    let stageSuccessFn: @Sendable (SliceStage, Int) -> String
+    let sessionIntroFn: @Sendable () -> String
+    let sessionEndFn: @Sendable () -> String
+    let sessionStartFeedbackFn: @Sendable () -> String
 }
 
 extension VehicleSpec {
