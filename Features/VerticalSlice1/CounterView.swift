@@ -58,15 +58,25 @@ struct CounterView: View {
 
     @ViewBuilder
     private func vehicleCounter(symbolName: String) -> some View {
-        let color: Color = filled ? filledColor : Color.secondary.opacity(0.25)
-        Image(systemName: symbolName)
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(color)
-            .padding(6)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(filled ? filledColor.opacity(0.12) : Color.secondary.opacity(0.07))
-            )
+        if filled {
+            Image(systemName: symbolName)
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(filledColor)
+                .padding(6)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(filledColor.opacity(0.12))
+                )
+        } else {
+            // Dashed parking-space outline — clearly signals an empty slot
+            // without the ghost-car silhouette that reads as decorative background.
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(
+                    Color.secondary.opacity(0.3),
+                    style: StrokeStyle(lineWidth: 1.5, dash: [4])
+                )
+                .padding(4)
+        }
     }
 }
