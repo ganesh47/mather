@@ -25,7 +25,7 @@ struct SessionConfigView: View {
                             .font(.title.weight(.black))
                         Text("Keep sessions short and consistent.")
                             .font(.headline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(MatherTheme.ink.opacity(0.6))
                             .fixedSize(horizontal: false, vertical: true)
 
                         Divider()
@@ -91,7 +91,7 @@ struct SessionConfigView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 Text(option.name)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(isSelected ? option.color : .secondary)
+                    .foregroundStyle(isSelected ? option.color : MatherTheme.ink.opacity(0.55))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
