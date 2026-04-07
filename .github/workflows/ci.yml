@@ -262,7 +262,7 @@ jobs:
 
       - name: Upload test result bundles
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ github.run_number }}
           path: |
@@ -273,7 +273,7 @@ jobs:
 
       - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ github.run_number }}
           path: ci-screenshots/
@@ -282,7 +282,7 @@ jobs:
 
       - name: Upload UI test video
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ui-test-video-${{ github.run_number }}
           path: ci-videos/
