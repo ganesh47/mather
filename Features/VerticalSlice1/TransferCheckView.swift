@@ -10,13 +10,7 @@ struct TransferCheckView: View {
 
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 18) {
-                Text(theme.transferPrompt(decompositionA: problem.decompositionA, decompositionB: problem.decompositionB))
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("transfer-instruction")
-
+            VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
                     equationPill(value: problem.decompositionA, fill: MatherTheme.warm)
                     Text("+")
@@ -32,39 +26,21 @@ struct TransferCheckView: View {
                 }
                 .accessibilityIdentifier("transfer-equation")
 
-                ViewThatFits {
-                    HStack(spacing: 12) {
-                        transferBucket(
-                            title: "Left side of the equation",
-                            targetCount: problem.decompositionA,
-                            count: leftCount,
-                            fill: MatherTheme.warm,
-                            side: .left
-                        )
-                        transferBucket(
-                            title: "Right side of the equation",
-                            targetCount: problem.decompositionB,
-                            count: rightCount,
-                            fill: MatherTheme.accent,
-                            side: .right
-                        )
-                    }
-                    VStack(spacing: 12) {
-                        transferBucket(
-                            title: "Left side of the equation",
-                            targetCount: problem.decompositionA,
-                            count: leftCount,
-                            fill: MatherTheme.warm,
-                            side: .left
-                        )
-                        transferBucket(
-                            title: "Right side of the equation",
-                            targetCount: problem.decompositionB,
-                            count: rightCount,
-                            fill: MatherTheme.accent,
-                            side: .right
-                        )
-                    }
+                HStack(spacing: 12) {
+                    transferBucket(
+                        title: "Left side",
+                        targetCount: problem.decompositionA,
+                        count: leftCount,
+                        fill: MatherTheme.warm,
+                        side: .left
+                    )
+                    transferBucket(
+                        title: "Right side",
+                        targetCount: problem.decompositionB,
+                        count: rightCount,
+                        fill: MatherTheme.accent,
+                        side: .right
+                    )
                 }
 
                 Button("Check the same equation") {
@@ -85,44 +61,34 @@ struct TransferCheckView: View {
     }
 
     private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
-        VStack(spacing: 10) {
-            Text(title)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(MatherTheme.ink)
-                .multilineTextAlignment(.center)
-            Text("\(targetCount)")
-                .font(.system(size: 40, weight: .black, design: .rounded))
-                .foregroundStyle(fill)
-            Text("Put \(targetCount) counters here.")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text("\(targetCount)")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(fill)
+            }
 
-            let rows = dotRows(count: count, capacity: problem.target)
-            VStack(spacing: 6) {
-                ForEach(rows.indices, id: \.self) { rowIndex in
-                    HStack(spacing: 6) {
-                        ForEach(rows[rowIndex].indices, id: \.self) { dotIndex in
-                            let isFilled = rows[rowIndex][dotIndex]
-                            CounterView(
-                                index: dotIndex + rowIndex * 5,
-                                filled: isFilled,
-                                theme: theme,
-                                overrideColor: fill
-                            )
-                            .frame(minWidth: 18, minHeight: 18)
-                        }
-                    }
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5),
+                spacing: 6
+            ) {
+                ForEach(0..<problem.target, id: \.self) { idx in
+                    CounterView(
+                        index: idx,
+                        filled: idx < count,
+                        theme: theme,
+                        overrideColor: fill
+                    )
+                    .frame(maxWidth: 44, maxHeight: 44)
+                    .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-cell-\(idx)")
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 12)
-            .background(fill.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-group")
 
-            // +/- buttons — primary interaction surface; bucket tap removed to avoid
-            // conflict between two mechanisms triggering the same action.
             HStack(spacing: 10) {
                 Button {
                     onAdjust(-1, side)
@@ -153,23 +119,5 @@ struct TransferCheckView: View {
             .foregroundStyle(fill)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private func dotRows(count: Int, capacity: Int) -> [[Bool]] {
-        let total = max(capacity, 1)
-        var rows: [[Bool]] = []
-        var remaining = total
-        var filled = count
-        while remaining > 0 {
-            let rowSize = min(remaining, 5)
-            let row = (0..<rowSize).map { _ -> Bool in
-                let result = filled > 0
-                if result { filled -= 1 }
-                return result
-            }
-            rows.append(row)
-            remaining -= rowSize
-        }
-        return rows
     }
 }
