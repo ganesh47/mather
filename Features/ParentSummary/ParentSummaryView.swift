@@ -19,7 +19,7 @@ struct ParentSummaryView: View {
                                 .font(.largeTitle.weight(.black))
                             Text(digest.objectiveTitle)
                                 .font(.headline.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
                         }
                     }
 
@@ -33,7 +33,7 @@ struct ParentSummaryView: View {
                                     .font(.title3.weight(.bold))
                                 Text("Complete a session with your child and the summary will appear here.")
                                     .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
                                     .multilineTextAlignment(.center)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -77,7 +77,7 @@ struct ParentSummaryView: View {
                                     .font(.title3.weight(.bold))
                                 Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
                                     .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
                                 ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
@@ -88,7 +88,7 @@ struct ParentSummaryView: View {
                                                 .font(.subheadline.weight(.semibold))
                                             Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
                                                 .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(MatherTheme.cardSubtitle)
                                         }
                                         Spacer()
                                         if summary.sessionId == summaries.first?.sessionId {

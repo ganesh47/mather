@@ -74,7 +74,7 @@ struct SettingsView: View {
                             Text("Export and review")
                                 .font(.title2.weight(.bold))
                             Text(latestExportURL == nil ? "Run a session to create the first JSONL export." : "The most recent session export is ready to share from this device.")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
 
                             if let latestExportURL, FileManager.default.fileExists(atPath: latestExportURL.path) {
                                 ShareLink(item: latestExportURL) {
@@ -92,7 +92,7 @@ struct SettingsView: View {
                                 .font(.title2.weight(.bold))
                             Text("\(summaries.count) saved locally")
                                 .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
                             ForEach(Array(summaries.prefix(8).enumerated()), id: \.element.sessionId) { index, summary in
                                 HStack {
                                     VStack(alignment: .leading) {
@@ -101,12 +101,12 @@ struct SettingsView: View {
                                             .foregroundStyle(MatherTheme.accent)
                                         Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
                                         Text("Accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(MatherTheme.cardSubtitle)
                                     }
                                     Spacer()
                                     Text(summary.exportFileName)
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(MatherTheme.cardSubtitle)
                                 }
                                 .padding(.vertical, 4)
                                 .accessibilityElement(children: .combine)
@@ -114,7 +114,7 @@ struct SettingsView: View {
                             }
                             if summaries.isEmpty {
                                 Text("No history yet.")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
                             }
                         }
                     }
@@ -125,7 +125,7 @@ struct SettingsView: View {
                                 .font(.title2.weight(.bold))
                             Text("Run this checklist before each new pilot session:")
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
                             VStack(alignment: .leading, spacing: 8) {
                                 smokeStep("1. Enable Make & Break to 10 (toggle above).")
                                 smokeStep("2. Tap Home → Play → Start Session.")

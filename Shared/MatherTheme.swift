@@ -4,6 +4,8 @@ enum MatherTheme {
     static let background = Color(red: 0.97, green: 0.95, blue: 0.89)
     static let card = Color.white
     static let ink = Color(red: 0.14, green: 0.16, blue: 0.18)
+    // Legible secondary text on white CardSurface (~5:1 contrast ratio — WCAG AA)
+    static let cardSubtitle = ink.opacity(0.65)
     // Vivid emerald — was a muted forest green; children need high-contrast, saturated colours
     static let accent = Color(red: 0.09, green: 0.71, blue: 0.44)
     // Vivid amber — was too muted; this reads clearly on pale cream background
