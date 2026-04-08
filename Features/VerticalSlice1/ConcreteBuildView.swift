@@ -15,22 +15,25 @@ struct ConcreteBuildView: View {
 
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("Make")
                         .font(.title.weight(.bold))
                         .foregroundStyle(.secondary)
                     Text("\(target)")
-                        .font(.system(size: 56, weight: .black, design: .rounded))
+                        .font(.system(size: 44, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.accent)
                 }
 
                 // Color.clear with aspectRatio is the reliable SwiftUI idiom for
                 // square grid cells — it constrains height = width without fighting
                 // the grid's flexible column width calculation.
+                // Cells are capped at 72pt so on wide screens (iPad) they don't grow
+                // to 130pt+ — "bigger circles" feedback and scrolling are eliminated.
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(0..<10, id: \.self) { index in
                         counterCell(index: index)
+                            .frame(maxWidth: 72, maxHeight: 72)
                             .accessibilityIdentifier("counter-cell-\(index)")
                             .accessibilityLabel("Counter \(index + 1)")
                             .onTapGesture {
@@ -43,28 +46,30 @@ struct ConcreteBuildView: View {
                             }
                     }
                 }
+                .frame(maxWidth: 400)
+                .frame(maxWidth: .infinity)
 
                 // Number-bond display: live A + B = target as circles are tapped.
                 // Numerals and symbols only — no words, consistent with the no-reading principle.
                 // Connects the concrete ten-frame action to the abstract equation (CPA bridge).
                 HStack(spacing: 8) {
                     Text("\(warmCount)")
-                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .font(.system(size: 36, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.warm)
                         .accessibilityIdentifier("warm-count-label")
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.3), value: warmCount)
                     Text("+")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                     Text("\(accentCount)")
-                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .font(.system(size: 36, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.accent)
                         .accessibilityIdentifier("accent-count-label")
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.3), value: accentCount)
                     Text("= \(warmCount + accentCount)")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
