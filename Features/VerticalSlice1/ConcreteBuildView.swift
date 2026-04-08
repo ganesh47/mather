@@ -33,6 +33,7 @@ struct ConcreteBuildView: View {
                         counterCell(index: index)
                             .accessibilityIdentifier("counter-cell-\(index)")
                             .accessibilityLabel("Counter \(index + 1)")
+                            .contentShape(Rectangle())
                             .onTapGesture {
                                 let isWarm = index < 5
                                 let rowIndex = index % 5
