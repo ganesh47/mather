@@ -12,14 +12,6 @@ import XCTest
 /// via `launch()` and takes ownership of teardown implicitly.
 @MainActor
 final class ScreenshotTests: XCTestCase {
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-
-    override func tearDownWithError() throws {
-        XCUIApplication().terminate()
-    }
-
 
     // MARK: - Home screen
 
@@ -150,12 +142,19 @@ final class ScreenshotTests: XCTestCase {
         let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
         _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
 
-        let greenCell = app.otherElements["counter-cell-7"]
-        _ = greenCell.waitForExistence(timeout: 5)
-        greenCell.tap()
+        let accentRowThirdCell = app.otherElements["counter-cell-7"]
+        if !accentRowThirdCell.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(accentRowThirdCell.waitForExistence(timeout: 5))
+        accentRowThirdCell.tap()
 
-        XCTAssertEqual(app.staticTexts["warm-count-label"].label, "0")
-        XCTAssertEqual(app.staticTexts["accent-count-label"].label, "3")
+        let warmCountLabel = app.staticTexts["warm-count-label"]
+        let accentCountLabel = app.staticTexts["accent-count-label"]
+        XCTAssertTrue(warmCountLabel.waitForExistence(timeout: 5))
+        XCTAssertTrue(accentCountLabel.waitForExistence(timeout: 5))
+        XCTAssertEqual(warmCountLabel.label, "0")
+        XCTAssertEqual(accentCountLabel.label, "3")
     }
 
     // MARK: - Parent Summary screen
@@ -261,6 +260,7 @@ final class ScreenshotTests: XCTestCase {
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.
     private func launch() -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         // iOS maps `-key YES/NO` launch arguments to UserDefaults as NSNumber(bool:).
         app.launchArguments = [
@@ -277,6 +277,7 @@ final class ScreenshotTests: XCTestCase {
     /// to exercise the Settings toggle flow — it removes 3 screen navigations
     /// from the critical path, which matters for the first (cold) test in CI.
     private func launchWithVS1() -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
@@ -306,6 +307,7 @@ final class ScreenshotTests: XCTestCase {
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
     private func launchWithVS1AndHaptics() -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
@@ -318,6 +320,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     private func launchWithSeededHistory(count: Int) -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
@@ -331,6 +334,7 @@ final class ScreenshotTests: XCTestCase {
 
     /// Launches with VS1 pre-enabled and Vehicle theme selected via launch argument.
     private func launchWithVehicleTheme() -> XCUIApplication {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
