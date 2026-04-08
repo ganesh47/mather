@@ -1,9 +1,9 @@
-name: Poll v0.1.9 Build Status
+name: Poll v0.1.10 Build Status
 on:
   workflow_dispatch:
     inputs:
       target_version:
-        default: "0.1.9"
+        default: "0.1.10"
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - run: pip3 install PyJWT cryptography
-      - name: Poll until v0.1.9 build lands in TestFlight
+      - name: Poll until v0.1.10 build lands in TestFlight
         env:
           APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
