@@ -101,7 +101,8 @@ struct TelemetryWriterDigestTests {
 
         #expect(digest.problemsCompleted == 10)
         #expect(digest.transferCorrectCount == 6)
-        #expect(digest.firstAttemptAccuracy == 0.75) // (1.0 + 0.5) / 2
+        // Problem-weighted mean: (4 × 1.0 + 6 × 0.5) / 10 = 0.70
+        #expect(abs(digest.firstAttemptAccuracy - 0.70) < 0.001)
     }
 
     @Test
@@ -138,5 +139,35 @@ struct TelemetryWriterDigestTests {
         let digest = TelemetryWriter().digest(from: summaries)
 
         #expect(digest.nextTargetHint.contains("Repeat"))
+    }
+
+    @Test
+    func digestFirstAttemptAccuracyIsWeightedByProblemCount() throws {
+        let (store, context) = try makeInMemoryStore()
+        // 1 problem at 100% first-try — contributes weight 1
+        store.save(makeDraft(problemsCompleted: 1, accuracy: 1.0))
+        // 9 problems at 0% first-try — contributes weight 9
+        store.save(makeDraft(problemsCompleted: 9, accuracy: 0.0))
+
+        let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
+        let digest = TelemetryWriter().digest(from: summaries)
+
+        // Session-average would give (1.0 + 0.0) / 2 = 0.50 — wrong.
+        // Problem-weighted: (1 × 1.0 + 9 × 0.0) / 10 = 0.10 — correct.
+        #expect(abs(digest.firstAttemptAccuracy - 0.10) < 0.001)
+    }
+
+    @Test
+    func digestFirstAttemptAccuracyIsZeroWhenNoProblemsCompleted() throws {
+        let (store, context) = try makeInMemoryStore()
+        // Legacy-style records with no problems completed (crash or early exit)
+        store.save(makeDraft(problemsCompleted: 0, accuracy: 0.0))
+        store.save(makeDraft(problemsCompleted: 0, accuracy: 0.0))
+
+        let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
+        let digest = TelemetryWriter().digest(from: summaries)
+
+        #expect(digest.firstAttemptAccuracy == 0)  // divide-by-zero guard
+        #expect(digest.problemsCompleted == 0)
     }
 }
