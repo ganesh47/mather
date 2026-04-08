@@ -117,7 +117,16 @@ final class TelemetryWriter {
         }
 
         let sorted = summaries.sorted { $0.startedAt > $1.startedAt }
-        let accuracy = sorted.map(\.firstAttemptAccuracy).reduce(0, +) / Double(sorted.count)
+        let totalProblems = sorted.map(\.problemsCompleted).reduce(0, +)
+        let accuracy: Double
+        if totalProblems == 0 {
+            accuracy = 0
+        } else {
+            let weightedSum = sorted.reduce(0.0) { acc, s in
+                acc + s.firstAttemptAccuracy * Double(s.problemsCompleted)
+            }
+            accuracy = weightedSum / Double(totalProblems)
+        }
         let latencies = sorted.map(\.medianLatencyMs).sorted()
         let median = latencies[latencies.count / 2]
         let completed = sorted.map(\.problemsCompleted).reduce(0, +)
