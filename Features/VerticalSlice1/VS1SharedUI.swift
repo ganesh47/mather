@@ -1,15 +1,5 @@
 import SwiftUI
 
-struct VS1Palette {
-    static let background = Color(red: 0.98, green: 0.96, blue: 0.91)
-    static let panel = Color(red: 0.93, green: 0.89, blue: 0.80)
-    static let panelDeep = Color(red: 0.87, green: 0.81, blue: 0.69)
-    static let accent = Color(red: 0.14, green: 0.48, blue: 0.35)
-    static let accentSoft = Color(red: 0.74, green: 0.89, blue: 0.82)
-    static let text = Color(red: 0.18, green: 0.15, blue: 0.11)
-    static let caution = Color(red: 0.61, green: 0.38, blue: 0.14)
-}
-
 struct VS1Card<Content: View>: View {
     let content: Content
 
@@ -22,7 +12,7 @@ struct VS1Card<Content: View>: View {
             .fill(.ultraThinMaterial)
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(VS1Palette.panelDeep.opacity(0.45), lineWidth: 1)
+                    .strokeBorder(MatherTheme.panelDeep.opacity(0.45), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 8)
             .overlay(content.padding(24))
@@ -38,14 +28,14 @@ struct VS1TitleBlock: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(eyebrow.uppercased())
                 .font(.caption.weight(.bold))
-                .foregroundStyle(VS1Palette.caution)
+                .foregroundStyle(MatherTheme.warm)
                 .tracking(1.5)
             Text(title)
                 .font(.system(size: 38, weight: .heavy, design: .rounded))
-                .foregroundStyle(VS1Palette.text)
+                .foregroundStyle(MatherTheme.ink)
             Text(subtitle)
                 .font(.system(size: 17, weight: .medium, design: .rounded))
-                .foregroundStyle(VS1Palette.text.opacity(0.8))
+                .foregroundStyle(MatherTheme.ink.opacity(0.8))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -72,7 +62,7 @@ struct VS1PrimaryButton: View {
             .foregroundStyle(.white)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(VS1Palette.accent)
+                    .fill(MatherTheme.accent)
             )
         }
         .buttonStyle(.plain)
@@ -96,14 +86,14 @@ struct VS1SecondaryButton: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 64)
             .padding(.horizontal, 16)
-            .foregroundStyle(VS1Palette.text)
+            .foregroundStyle(MatherTheme.ink)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(VS1Palette.panel.opacity(0.9))
+                    .fill(MatherTheme.panel.opacity(0.9))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(VS1Palette.panelDeep.opacity(0.5), lineWidth: 1)
+                    .strokeBorder(MatherTheme.panelDeep.opacity(0.5), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -125,7 +115,7 @@ struct VS1ToggleRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .tint(VS1Palette.accent)
+        .tint(MatherTheme.accent)
         .padding(.vertical, 10)
     }
 }
@@ -136,7 +126,7 @@ struct VS1CounterChip: View {
 
     var body: some View {
         Circle()
-            .fill(isFilled ? VS1Palette.accent : VS1Palette.accentSoft.opacity(0.35))
+            .fill(isFilled ? MatherTheme.accent : MatherTheme.accent.opacity(0.18))
             .overlay(
                 Text(isFilled ? "\(value)" : "")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -159,11 +149,11 @@ struct VS1MetricBadge: View {
                 .tracking(1.2)
             Text(value)
                 .font(.title3.weight(.bold))
-                .foregroundStyle(VS1Palette.text)
+                .foregroundStyle(MatherTheme.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(VS1Palette.panel.opacity(0.55)))
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(MatherTheme.panel.opacity(0.55)))
     }
 }
 
@@ -178,9 +168,9 @@ struct VS1StepPill: View {
             .padding(.horizontal, 14)
             .background(
                 Capsule(style: .continuous)
-                    .fill(isActive ? VS1Palette.accent : VS1Palette.panel.opacity(0.75))
+                    .fill(isActive ? MatherTheme.accent : MatherTheme.panel.opacity(0.75))
             )
-            .foregroundStyle(isActive ? .white : VS1Palette.text)
+            .foregroundStyle(isActive ? .white : MatherTheme.ink)
     }
 }
 
@@ -196,4 +186,3 @@ struct VS1StageRail: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
