@@ -142,12 +142,19 @@ final class ScreenshotTests: XCTestCase {
         let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
         _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
 
-        let greenCell = app.otherElements["counter-cell-7"]
-        _ = greenCell.waitForExistence(timeout: 5)
-        greenCell.tap()
+        let accentRowThirdCell = app.otherElements["counter-cell-7"]
+        if !accentRowThirdCell.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(accentRowThirdCell.waitForExistence(timeout: 5))
+        accentRowThirdCell.tap()
 
-        XCTAssertEqual(app.staticTexts["warm-count-label"].label, "0")
-        XCTAssertEqual(app.staticTexts["accent-count-label"].label, "3")
+        let warmCountLabel = app.staticTexts["warm-count-label"]
+        let accentCountLabel = app.staticTexts["accent-count-label"]
+        XCTAssertTrue(warmCountLabel.waitForExistence(timeout: 5))
+        XCTAssertTrue(accentCountLabel.waitForExistence(timeout: 5))
+        XCTAssertEqual(warmCountLabel.label, "0")
+        XCTAssertEqual(accentCountLabel.label, "3")
     }
 
     // MARK: - Parent Summary screen
