@@ -1,7 +1,7 @@
 # Spec: Vertical Slice 1 — Make & Break to 10
 
 **Issue**: #10
-**Status**: execution-ready
+**Status**: implemented
 **Author**: @ganesh47
 **Date**: 2026-03-31
 **Execution lock**: 2026-03-31 (approved for implementation), milestone `VS1-Make-&-Break-to-10`
@@ -26,28 +26,54 @@ Core experience: **Make & Break to 10**.
 
 ## Acceptance Criteria
 ### Functional
-- [ ] Child starts a session from Home in ≤1 tap with no mandatory reading.
-- [ ] Session follows CPA sequence in one coherent task: Concrete → Pictorial → Abstract.
-- [ ] At least one problem in each session includes an abstract-to-concrete transfer step.
-- [ ] Child can build target number in ten-frame using touch/drag only.
-- [ ] Child can split built number into two groups and map to an equation.
-- [ ] Final abstract answer accepts numeric input and validates correctness.
-- [ ] Session ends naturally after configured problem set (max 6–8 items) with no hard stop timer.
-- [ ] Parent summary shows objective, completion count, first-attempt accuracy, and next-step recommendation.
+- [x] Child starts a session from Home in ≤1 tap with no mandatory reading.
+- [x] Session follows CPA sequence in one coherent task: Concrete → Pictorial → Abstract.
+- [x] At least one problem in each session includes an abstract-to-concrete transfer step.
+- [x] Child can build target number in ten-frame using touch/drag only.
+- [x] Child can split built number into two groups and map to an equation.
+- [x] Final abstract answer accepts numeric input and validates correctness.
+- [x] Session ends naturally after configured problem set (max 6–8 items) with no hard stop timer.
+- [x] Parent summary shows objective, completion count, first-attempt accuracy, and next-step recommendation.
 
 ### UX/Experience
-- [ ] All interaction controls in child flow are touch targets at least 80x80 pt.
-- [ ] Child flow has no mandatory reading; all first-time instructions are spoken.
-- [ ] Wrong answer state never uses punitive language; feedback is gentle and actionable.
-- [ ] Audio feedback exists for major transitions (start, correct, retry, done).
+- [x] All interaction controls in child flow are touch targets at least 80x80 pt.
+- [x] Child flow has no mandatory reading; all first-time instructions are spoken.
+- [x] Wrong answer state never uses punitive language; feedback is gentle and actionable.
+- [x] Audio feedback exists for major transitions (start, correct, retry, done).
 - [ ] Session median duration (pilot target) is under 6 minutes.
 
 ### Engineering
-- [ ] App runs on iPad target and iPhone simulator (for CI) without feature-privileged crash paths.
-- [ ] Feature flag guard wraps incomplete capabilities.
-- [ ] All session events are recorded locally and are exportable.
-- [ ] No network calls in this alpha vertical slice; local session identifiers and local-only metadata are acceptable.
-- [ ] Build compiles with scheme `Mather` and no placeholder compile-time blockers.
+- [x] App runs on iPad target and iPhone simulator (for CI) without feature-privileged crash paths.
+- [x] Feature flag guard wraps incomplete capabilities.
+- [x] All session events are recorded locally and are exportable.
+- [x] No network calls in this alpha vertical slice; local session identifiers and local-only metadata are acceptable.
+- [x] Build compiles with scheme `Mather` and no placeholder compile-time blockers.
+
+## Implementation Audit Snapshot
+This spec is implemented in code and supported by tests, but the milestone remains intentionally open pending final pilot closeout and any remaining follow-on work.
+
+### Implemented and evidenced
+- App shell, routing, and feature flag guard are present in `App/RootView.swift`, `App/AppModel.swift`, and `Shared/FeatureFlags.swift`.
+- CPA flow is implemented in `Domain/VerticalSliceEngine.swift`, `Domain/SliceStateMachine.swift`, and `Domain/ProblemGenerator.swift`.
+- Child interaction views are implemented in:
+  - `Features/VerticalSlice1/ConcreteBuildView.swift`
+  - `Features/VerticalSlice1/SplitView.swift`
+  - `Features/VerticalSlice1/EquationResolveView.swift`
+  - `Features/VerticalSlice1/TransferCheckView.swift`
+- Parent summary and settings/export flows are implemented in:
+  - `Features/ParentSummary/ParentSummaryView.swift`
+  - `Features/ParentSummary/SettingsView.swift`
+  - `Persistence/TelemetryWriter.swift`
+- Spoken prompts and start-of-session narration are implemented via `Services/SpeechService.swift` and engine prompt routing.
+- iPhone and compact-layout hardening are covered by UI tests in:
+  - `Tests/MatherUITests/CompactLayoutTests.swift`
+  - `Tests/MatherUITests/ScreenshotTests.swift`
+- Local-only telemetry/export is implemented with JSONL session files and manual share-sheet export in `Persistence/TelemetryWriter.swift` and `SettingsView.swift`.
+
+### Still intentionally open before milestone closeout
+- Pilot validation evidence for the target median session duration under 6 minutes.
+- A short written pilot closeout note capturing smoke-test outcome and real-session findings.
+- Milestone close decision itself remains deferred by product choice.
 
 ## Design
 

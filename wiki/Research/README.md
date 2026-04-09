@@ -14,7 +14,7 @@ Technology investigations and trade-off analyses for Mather.
 
 | Topic | Issue | Status |
 |---|---|---|
-| _(none yet)_ | | |
+| [VS1 Complement Match Finale](Research-VS1-Complement-Match-Finale) | [#137](https://github.com/ganesh47/mather/issues/137) | research captured, implementation issue opened |
 
 ---
 
