@@ -31,6 +31,7 @@ enum MatherTheme {
 }
 
 struct CardSurface<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -38,26 +39,66 @@ struct CardSurface<Content: View>: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MatherTheme.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(
+                        colorScheme == .dark
+                            ? MatherTheme.panelDeep.opacity(0.75)
+                            : MatherTheme.panelDeep.opacity(0.16),
+                        lineWidth: 1
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: Color("MatherCardShadow"), radius: 10, y: 4)
+            .shadow(color: Color("MatherCardShadow"), radius: colorScheme == .dark ? 16 : 10, y: colorScheme == .dark ? 6 : 4)
+    }
+}
+
+private struct DarkModeCTAOverlay: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .strokeBorder(.white.opacity(colorScheme == .dark ? 0.16 : 0), lineWidth: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: colorScheme == .dark
+                                ? [.white.opacity(0.10), .clear]
+                                : [.white.opacity(0.12), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            )
+            .blendMode(.screen)
     }
 }
 
 struct PrimaryActionButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.title3.weight(.bold))
             .foregroundStyle(.white)
             .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
-            .background(configuration.isPressed ? MatherTheme.accent.opacity(0.8) : MatherTheme.accent)
+            .background(configuration.isPressed ? MatherTheme.accent.opacity(0.84) : MatherTheme.accent)
+            .overlay(DarkModeCTAOverlay())
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(
+                color: colorScheme == .dark ? MatherTheme.accent.opacity(0.28) : .clear,
+                radius: colorScheme == .dark ? 14 : 0,
+                y: colorScheme == .dark ? 6 : 0
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
 struct SecondaryTileButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
     var fill: Color = MatherTheme.softBlue
 
     func makeBody(configuration: Configuration) -> some View {
@@ -66,7 +107,19 @@ struct SecondaryTileButtonStyle: ButtonStyle {
             .foregroundStyle(MatherTheme.ink)
             .frame(maxWidth: .infinity, minHeight: 88)
             .background(configuration.isPressed ? fill.opacity(0.8) : fill)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(
+                        colorScheme == .dark ? .white.opacity(0.10) : .clear,
+                        lineWidth: 1
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(
+                color: colorScheme == .dark ? fill.opacity(0.16) : .clear,
+                radius: colorScheme == .dark ? 10 : 0,
+                y: colorScheme == .dark ? 4 : 0
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }

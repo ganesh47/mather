@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct VS1Card<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -9,12 +10,19 @@ struct VS1Card<Content: View>: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(.ultraThinMaterial)
+            .fill(colorScheme == .dark ? MatherTheme.panel.opacity(0.96) : .ultraThinMaterial)
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(MatherTheme.panelDeep.opacity(0.45), lineWidth: 1)
+                    .strokeBorder(
+                        colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.82) : MatherTheme.panelDeep.opacity(0.45),
+                        lineWidth: 1
+                    )
             )
-            .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.22 : 0.08), radius: colorScheme == .dark ? 22 : 18, x: 0, y: colorScheme == .dark ? 10 : 8)
             .overlay(content.padding(24))
     }
 }
@@ -42,6 +50,7 @@ struct VS1TitleBlock: View {
 }
 
 struct VS1PrimaryButton: View {
+    @Environment(\.colorScheme) private var colorScheme
     let title: String
     var systemImage: String? = nil
     var action: () -> Void
@@ -64,12 +73,15 @@ struct VS1PrimaryButton: View {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(MatherTheme.accent)
             )
+            .overlay(DarkModeCTAOverlay())
+            .shadow(color: colorScheme == .dark ? MatherTheme.accent.opacity(0.28) : .clear, radius: colorScheme == .dark ? 14 : 0, y: colorScheme == .dark ? 6 : 0)
         }
         .buttonStyle(.plain)
     }
 }
 
 struct VS1SecondaryButton: View {
+    @Environment(\.colorScheme) private var colorScheme
     let title: String
     var systemImage: String? = nil
     var action: () -> Void
@@ -89,11 +101,15 @@ struct VS1SecondaryButton: View {
             .foregroundStyle(MatherTheme.ink)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(MatherTheme.panel.opacity(0.9))
+                    .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 1 : 0.9))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(MatherTheme.panelDeep.opacity(0.5), lineWidth: 1)
+                    .strokeBorder(colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.85) : MatherTheme.panelDeep.opacity(0.5), lineWidth: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -138,6 +154,7 @@ struct VS1CounterChip: View {
 }
 
 struct VS1MetricBadge: View {
+    @Environment(\.colorScheme) private var colorScheme
     let label: String
     let value: String
 
@@ -153,11 +170,19 @@ struct VS1MetricBadge: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(MatherTheme.panel.opacity(0.55)))
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 0.98 : 0.55))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.72) : .clear, lineWidth: 1)
+        )
     }
 }
 
 struct VS1StepPill: View {
+    @Environment(\.colorScheme) private var colorScheme
     let title: String
     let isActive: Bool
 
@@ -168,7 +193,14 @@ struct VS1StepPill: View {
             .padding(.horizontal, 14)
             .background(
                 Capsule(style: .continuous)
-                    .fill(isActive ? MatherTheme.accent : MatherTheme.panel.opacity(0.75))
+                    .fill(isActive ? MatherTheme.accent : MatherTheme.panel.opacity(colorScheme == .dark ? 0.98 : 0.75))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(
+                        isActive ? .white.opacity(colorScheme == .dark ? 0.14 : 0) : MatherTheme.panelDeep.opacity(colorScheme == .dark ? 0.8 : 0.4),
+                        lineWidth: 1
+                    )
             )
             .foregroundStyle(isActive ? .white : MatherTheme.ink)
     }
