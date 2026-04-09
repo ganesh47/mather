@@ -21,11 +21,24 @@ struct MatherApp: App {
         WindowGroup {
             RootView(appModel: appModel)
                 .modelContainer(container)
+                .preferredColorScheme(Self.preferredColorSchemeForUITests())
         }
     }
 }
 
 private extension MatherApp {
+    static func preferredColorSchemeForUITests() -> ColorScheme? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-uiTest.appearance"),
+              arguments.indices.contains(flagIndex + 1) else { return nil }
+
+        switch arguments[flagIndex + 1].lowercased() {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
+
     static func seedSessionHistoryIfRequested(using appModel: AppModel) {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flagIndex = arguments.firstIndex(of: "-uiTest.seedHistory"),

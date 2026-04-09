@@ -13,12 +13,38 @@ import XCTest
 @MainActor
 final class ScreenshotTests: XCTestCase {
 
+    private enum UIAppearanceMode: String {
+        case light
+        case dark
+
+        var launchValue: String { rawValue }
+        var nameSuffix: String { rawValue.capitalized }
+    }
+
     // MARK: - Home screen
 
     func testScreenshot_Home_VS1Disabled() {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
         snapshot(app, "Home-VS1Disabled")
+    }
+
+    // MARK: - Appearance regression
+
+    func testScreenshot_AppearanceModes_HomeAndSessionConfig() {
+        let light = launchWithVS1(appearance: .light)
+        _ = light.staticTexts["Mather"].waitForExistence(timeout: 10)
+        snapshot(light, "Appearance-Light-Home")
+        light.buttons["Play"].tap()
+        _ = light.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        snapshot(light, "Appearance-Light-SessionConfig")
+
+        let dark = launchWithVS1(appearance: .dark)
+        _ = dark.staticTexts["Mather"].waitForExistence(timeout: 10)
+        snapshot(dark, "Appearance-Dark-Home")
+        dark.buttons["Play"].tap()
+        _ = dark.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        snapshot(dark, "Appearance-Dark-SessionConfig")
     }
 
     // MARK: - Settings screen
@@ -276,7 +302,7 @@ final class ScreenshotTests: XCTestCase {
     /// Use this instead of launch() + enableVS1() when the test doesn't need
     /// to exercise the Settings toggle flow — it removes 3 screen navigations
     /// from the critical path, which matters for the first (cold) test in CI.
-    private func launchWithVS1() -> XCUIApplication {
+    private func launchWithVS1(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -285,6 +311,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.testModeEnabled", "YES",
             "-feature.verticalSlice1Enabled", "YES"
         ]
+        if let appearance {
+            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
         app.launch()
         return app
     }
@@ -306,7 +335,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
-    private func launchWithVS1AndHaptics() -> XCUIApplication {
+    private func launchWithVS1AndHaptics(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -315,6 +344,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.testModeEnabled", "YES",
             "-feature.verticalSlice1Enabled", "YES"
         ]
+        if let appearance {
+            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
         app.launch()
         return app
     }
@@ -333,7 +365,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     /// Launches with VS1 pre-enabled and Vehicle theme selected via launch argument.
-    private func launchWithVehicleTheme() -> XCUIApplication {
+    private func launchWithVehicleTheme(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -343,6 +375,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.verticalSlice1Enabled", "YES",
             "-feature.selectedThemeId", "vehicle"
         ]
+        if let appearance {
+            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
         app.launch()
         return app
     }
