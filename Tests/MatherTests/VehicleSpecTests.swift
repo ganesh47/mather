@@ -115,10 +115,11 @@ struct VehicleSpecTests {
         let firstNoun = engine.activeTheme.counterNoun
         guard let problem = engine.currentProblem else { return }
 
-        // Complete all 4 CPA stages — same pattern as VerticalSliceEngineTests.
+        // Complete all 4 CPA stages.
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()                             // concrete → pictorial
         try await Task.sleep(for: .milliseconds(200))
+        engine.moveSplit(delta: 0)
         engine.submitCurrentStage()                             // pictorial → abstract
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(problem.decompositionA)
