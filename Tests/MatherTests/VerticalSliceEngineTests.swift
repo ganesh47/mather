@@ -26,6 +26,7 @@ struct VerticalSliceEngineTests {
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .pictorial)
 
+        engine.moveSplit(delta: 0)
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .abstract)
