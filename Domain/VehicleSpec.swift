@@ -36,11 +36,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) cars on the left and \($1) on the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "You filled the garage!"
-            case .pictorial: return "Both zones together make the same number."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "You parked them perfectly."
-            case .done:      return "Problem complete."
+            case .concrete:   return "You filled the garage!"
+            case .pictorial:  return "Both zones together make the same number."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "You parked them perfectly."
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's park and split cars to ten." },
@@ -58,11 +59,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) trucks on the left and \($1) on the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "All trucks loaded!"
-            case .pictorial: return "Both groups add up to the same number."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Trucks delivered perfectly."
-            case .done:      return "Problem complete."
+            case .concrete:   return "All trucks loaded!"
+            case .pictorial:  return "Both groups add up to the same number."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Trucks delivered perfectly."
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's load and split trucks to ten." },
@@ -80,11 +82,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) vans on the left and \($1) on the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "Warehouse full!"
-            case .pictorial: return "Both routes carry the same total."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Vans delivered!"
-            case .done:      return "Problem complete."
+            case .concrete:   return "Warehouse full!"
+            case .pictorial:  return "Both routes carry the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Vans delivered!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's deliver vans to ten." },
@@ -102,11 +105,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) buses at the left stop and \($1) at the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "All aboard!"
-            case .pictorial: return "Both stops total the same."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Buses on route!"
-            case .done:      return "Problem complete."
+            case .concrete:   return "All aboard!"
+            case .pictorial:  return "Both stops total the same."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Buses on route!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's fill buses to ten." },
@@ -124,11 +128,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) bulldozers on the left and \($1) on the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "Site ready!"
-            case .pictorial: return "Both zones cover the same total."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Bulldozers in position!"
-            case .done:      return "Problem complete."
+            case .concrete:   return "Site ready!"
+            case .pictorial:  return "Both zones cover the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Bulldozers in position!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's line up bulldozers to ten." },
@@ -146,11 +151,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) helicopters on the left pad and \($1) on the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "All landed!"
-            case .pictorial: return "Both pads together hold the same total."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Helicopters landed perfectly."
-            case .done:      return "Problem complete."
+            case .concrete:   return "All landed!"
+            case .pictorial:  return "Both pads together hold the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Helicopters landed perfectly."
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's land helicopters to ten." },
@@ -168,11 +174,12 @@ extension VehicleSpec {
         transferPromptFn: { "\($0) planes at the left terminal and \($1) at the right." },
         stageSuccessFn: { stage, _ in
             switch stage {
-            case .concrete:  return "All planes at the gate!"
-            case .pictorial: return "Both terminals hold the same total."
-            case .abstract:  return "Your equation matches the split."
-            case .transfer:  return "Planes ready for take-off!"
-            case .done:      return "Problem complete."
+            case .concrete:   return "All planes at the gate!"
+            case .pictorial:  return "Both terminals hold the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Planes ready for take-off!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
             }
         },
         sessionIntroFn: { "Let's park planes to ten." },

@@ -25,11 +25,12 @@ struct ClassicTheme: SliceTheme {
 
     func stageSuccessPhrase(for stage: SliceStage, target: Int) -> String {
         switch stage {
-        case .concrete:  return "Yes. You made \(target)."
-        case .pictorial: return "That break still makes \(target)."
-        case .abstract:  return "Your equation matches the split."
-        case .transfer:  return "You matched the same equation with counters."
-        case .done:      return "Problem complete."
+        case .concrete:   return "Yes. You made \(target)."
+        case .pictorial:  return "That break still makes \(target)."
+        case .abstract:   return "Your equation matches the split."
+        case .transfer:   return "You matched the same equation with counters."
+        case .bondMatch:  return "Bond Blast complete!"
+        case .done:       return "Problem complete."
         }
     }
 
