@@ -9,6 +9,9 @@ final class FeatureFlagService {
         static let audioEnabled = "feature.audioEnabled"
         static let hapticsEnabled = "feature.hapticsEnabled"
         static let selectedThemeId = "feature.selectedThemeId"
+        static let vs1BondMatchEnabled = "feature.vs1BondMatchEnabled"
+        static let motionControlsEnabled = "feature.motionControlsEnabled"
+        static let soundReactionEnabled = "feature.soundReactionEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -34,6 +37,23 @@ final class FeatureFlagService {
         didSet { defaults.set(selectedThemeId, forKey: Keys.selectedThemeId) }
     }
 
+    /// Gates the Bond Blast complement-match finale stage at the end of each VS1 session.
+    var vs1BondMatchEnabled: Bool {
+        didSet { defaults.set(vs1BondMatchEnabled, forKey: Keys.vs1BondMatchEnabled) }
+    }
+
+    /// Enables CMMotionManager tilt drift and shake-to-shuffle in Bond Blast.
+    /// Defaults to true; parent can disable in Settings.
+    var motionControlsEnabled: Bool {
+        didSet { defaults.set(motionControlsEnabled, forKey: Keys.motionControlsEnabled) }
+    }
+
+    /// Enables AVAudioEngine clap detection in Bond Blast.
+    /// Defaults to false — requires NSMicrophoneUsageDescription permission.
+    var soundReactionEnabled: Bool {
+        didSet { defaults.set(soundReactionEnabled, forKey: Keys.soundReactionEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -48,11 +68,17 @@ final class FeatureFlagService {
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
             Keys.selectedThemeId: "classic",
+            Keys.vs1BondMatchEnabled: false,
+            Keys.motionControlsEnabled: true,
+            Keys.soundReactionEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)
         hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
         selectedThemeId = defaults.string(forKey: Keys.selectedThemeId) ?? "classic"
+        vs1BondMatchEnabled = defaults.bool(forKey: Keys.vs1BondMatchEnabled)
+        motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
+        soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
     }
 }

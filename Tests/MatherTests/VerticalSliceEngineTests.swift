@@ -232,6 +232,151 @@ struct VerticalSliceEngineTests {
         #expect(engine.concreteCount == 5)
     }
 
+    // MARK: - Bond Blast engine tests
+
+    @Test
+    func bondMatchStateInitialisedWhenEnteringBondMatchStage() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1BondMatchEnabled = true
+
+        // Use a 1-problem session so the first problem IS the last problem,
+        // ensuring showBondMatch = true when transfer completes.
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 1)
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        // Advance through concrete → pictorial → abstract → transfer
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.adjustTransfer(by: problem.decompositionA, side: .left)
+        engine.adjustTransfer(by: problem.decompositionB, side: .right)
+        engine.submitCurrentStage()  // transfer → bondMatch
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(engine.currentStage == .bondMatch)
+        #expect(engine.bondMatchState != nil)
+        #expect(engine.bondMatchState?.target == problem.target)
+        // For target 6: pairs are (1,5),(2,4),(3,3) = 3 pairs
+        #expect((engine.bondMatchState?.pairs.count ?? 0) > 0)
+    }
+
+    @Test
+    func bondMatchCompletesSessionWhenAllPairsMatched() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1BondMatchEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 1)
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        // Fast-path to bondMatch stage
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.adjustTransfer(by: problem.decompositionA, side: .left)
+        engine.adjustTransfer(by: problem.decompositionB, side: .right)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(engine.currentStage == .bondMatch)
+
+        // Match all pairs
+        guard let pairs = engine.bondMatchState?.pairs else { return }
+        for pair in pairs {
+            engine.matchPair(id: pair.id)
+        }
+        try await Task.sleep(for: .milliseconds(200))
+
+        // All pairs matched → session ends → route should be .sessionSummary
+        #expect(engine.route == .sessionSummary)
+    }
+
+    @Test
+    func bondMatchPairGenerationIsCorrectForTarget6() {
+        let pairs = BondMatchState.makePairs(for: 6)
+        // Expected: (1,5), (2,4), (3,3)
+        #expect(pairs.count == 3)
+        #expect(pairs[0].left == 1 && pairs[0].right == 5)
+        #expect(pairs[1].left == 2 && pairs[1].right == 4)
+        #expect(pairs[2].left == 3 && pairs[2].right == 3)
+        // All sum to target
+        #expect(pairs.allSatisfy { $0.left + $0.right == 6 })
+    }
+
+    @Test
+    func bondMatchPairGenerationIsCorrectForTarget10() {
+        let pairs = BondMatchState.makePairs(for: 10)
+        // Expected: (1,9),(2,8),(3,7),(4,6),(5,5) = 5 pairs
+        #expect(pairs.count == 5)
+        #expect(pairs.allSatisfy { $0.left + $0.right == 10 })
+        #expect(pairs.allSatisfy { $0.left <= $0.right })
+    }
+
+    @Test
+    func bondMatchNotFiredOnIntermediateProblems() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1BondMatchEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 4)
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        // Complete first problem (not last — bondMatch should NOT fire)
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.adjustTransfer(by: problem.decompositionA, side: .left)
+        engine.adjustTransfer(by: problem.decompositionB, side: .right)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+
+        // Should have advanced to problem 2 (concrete stage), not bondMatch
+        #expect(engine.currentStage == .concrete)
+        #expect(engine.currentProblemIndex == 1)
+    }
+
     @Test
     func concreteStageAcceptsCombinedWarmAndAccentTotal() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
