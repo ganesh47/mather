@@ -16,4 +16,35 @@ struct SliceStateMachineTests {
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: true) == false)
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: false))
     }
+
+    // MARK: - Bond Blast transitions
+
+    @Test
+    func bondMatchInsertedAfterTransferOnLastProblem() {
+        // With showBondMatch: transfer → bondMatch → done
+        #expect(SliceStateMachine.nextStage(after: .transfer, success: true, showTransfer: true, showBondMatch: true) == .bondMatch)
+        #expect(SliceStateMachine.nextStage(after: .bondMatch, success: true, showTransfer: true, showBondMatch: true) == .done)
+    }
+
+    @Test
+    func bondMatchInsertedAfterAbstractWhenNoTransfer() {
+        // No transfer + showBondMatch: abstract → bondMatch → done
+        #expect(SliceStateMachine.nextStage(after: .abstract, success: true, showTransfer: false, showBondMatch: true) == .bondMatch)
+        #expect(SliceStateMachine.nextStage(after: .bondMatch, success: true, showTransfer: false, showBondMatch: false) == .done)
+    }
+
+    @Test
+    func bondMatchNotInsertedWhenFlagOff() {
+        // showBondMatch: false — existing behaviour unchanged
+        #expect(SliceStateMachine.nextStage(after: .transfer, success: true, showTransfer: true, showBondMatch: false) == .done)
+        #expect(SliceStateMachine.nextStage(after: .abstract, success: true, showTransfer: false, showBondMatch: false) == .done)
+    }
+
+    @Test
+    func bondMatchCanTransitionValidation() {
+        #expect(SliceStateMachine.canTransition(from: .transfer, to: .bondMatch, showTransfer: true, showBondMatch: true))
+        #expect(SliceStateMachine.canTransition(from: .bondMatch, to: .done, showTransfer: true, showBondMatch: true))
+        // Without showBondMatch, transfer → bondMatch is invalid
+        #expect(SliceStateMachine.canTransition(from: .transfer, to: .bondMatch, showTransfer: true, showBondMatch: false) == false)
+    }
 }

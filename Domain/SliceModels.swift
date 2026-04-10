@@ -6,17 +6,19 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
     case pictorial
     case abstract
     case transfer
+    case bondMatch
     case done
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .concrete: "Make it"
+        case .concrete:  "Make it"
         case .pictorial: "Break it"
-        case .abstract: "Write it"
-        case .transfer: "Show it again"
-        case .done: "Done"
+        case .abstract:  "Write it"
+        case .transfer:  "Show it again"
+        case .bondMatch: "Bond Blast!"
+        case .done:      "Done"
         }
     }
 }
@@ -131,6 +133,43 @@ struct SessionSummaryDraft: Equatable {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
+}
+
+// MARK: - Bond Blast models
+
+/// One complement pair in the Bond Blast finale stage.
+/// `left + right == target` for all pairs in a `BondMatchState`.
+struct ComplementPair: Identifiable, Equatable {
+    let id: UUID
+    let left: Int
+    let right: Int
+    var isMatched: Bool
+
+    init(left: Int, right: Int, isMatched: Bool = false) {
+        self.id = UUID()
+        self.left = left
+        self.right = right
+        self.isMatched = isMatched
+    }
+}
+
+/// State for the Bond Blast finale stage — held by `VerticalSliceEngine`.
+struct BondMatchState: Equatable {
+    let target: Int
+    /// Canonical pair list ordered by ascending left value.
+    var pairs: [ComplementPair]
+
+    var matchCount: Int { pairs.filter(\.isMatched).count }
+    var isComplete: Bool { pairs.allSatisfy(\.isMatched) }
+
+    /// Generate all unique complement pairs (a, b) where a ≤ b and a + b == target.
+    /// Excludes (0, target) — zero is not a meaningful addend in this context.
+    static func makePairs(for target: Int) -> [ComplementPair] {
+        guard target >= 2 else { return [] }
+        return (1...(target - 1))
+            .filter { $0 <= target - $0 }
+            .map { a in ComplementPair(left: a, right: target - a) }
+    }
 }
 
 @Model

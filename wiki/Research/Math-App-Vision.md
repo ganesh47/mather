@@ -21,6 +21,7 @@
 5. [Progress Tracking](#5-progress-tracking)
 6. [Competitive Landscape](#6-competitive-landscape)
 7. [iPad UX for Young Children](#7-ipad-ux-for-young-children)
+8. [Embodied Interaction & Sensor-Based Learning](#8-embodied-interaction--sensor-based-learning)
 
 ---
 
@@ -779,3 +780,48 @@ A 5-year-old may have zero reading ability. The app must be **fully navigable wi
 - [Fostering Early Numeracy in Preschool and Kindergarten (Child Encyclopedia)](https://www.child-encyclopedia.com/numeracy/according-experts/fostering-early-numeracy-preschool-and-kindergarten)
 - [Ten Frames and Number Bonds (TeachableMath)](https://teachablemath.com/ten-frames-number-bonds/)
 - [Developing Number Sense with Five-Frames (ResearchGate)](https://www.researchgate.net/publication/257556918_Developing_Number_Sense_in_Pre-K_with_Five-Frames)
+
+---
+
+## 8. Embodied Interaction & Sensor-Based Learning
+
+*Added: April 2026 — informing the Bond Blast sensor-powered finale stage for VS1.*
+
+### 8.1 Embodied Cognition Theory
+
+Embodied cognition holds that cognitive processes are grounded in sensorimotor experience (Wilson, 2002). Unlike classical cognitivism — which treats the brain as a disembodied symbol processor — embodied accounts argue that perception, action, and thought are tightly coupled. For mathematical learning this has direct consequences:
+
+- **Gesture promotes math learning**: Goldin-Meadow (2009) demonstrated in controlled studies that children instructed to gesture while solving equivalence problems showed significantly better learning and transfer than those who did not. Gesture externalises grouping, partitioning, and relational reasoning — the exact concepts at play in number bond decomposition.
+- **Sensorimotor trace as secondary memory**: Kinesthetic engagement (tapping, tilting, shaking) creates an additional encoding pathway alongside the symbolic one (Ping & Goldin-Meadow, 2008). Two encoding pathways improve recall over a single symbolic one alone.
+- **CPA extended through the body**: The Singapore Math CPA model's "Concrete" phase positions physical object manipulation as the essential first step before abstraction. Device tilt and shake extend this concreteness *beyond the touchscreen surface* — the child's wrist, arm, and posture become part of the mathematical act.
+
+### 8.2 Implications for Bond Blast
+
+The Bond Blast stage applies these principles as follows:
+
+| Research finding | Bond Blast design decision |
+|---|---|
+| Gesture externalises partitioning reasoning | Child selects and pairs cards with deliberate physical taps — each tap is a gestural "assertion" of the bond |
+| Kinesthetic encoding improves recall | Tilt drift gives cards a felt "weight"; the phone becomes a physical artefact, not just a screen |
+| Shake = playful agency | Shake-to-shuffle gives the child authorship over the game state — agency is a key predictor of intrinsic motivation (Ryan & Deci, 2000) |
+| Haptic confirmation bypasses reading demand | A satisfying click-pulse on a correct match confirms correctness through touch, consistent with Mather's reading-light design principle |
+| Clap = whole-body celebration | Clapping after completing all pairs recruits bilateral gross-motor movement; research links whole-body celebration to positive emotional encoding of the preceding learning event |
+
+### 8.3 Sensor Guardrails for Ages 5–7
+
+The following principles govern how sensors are used:
+
+1. **No pressure-creating timers**: Motion sensors do not introduce time pressure. Tilt drift is ambient and exploratory, not a countdown.
+2. **No harsh failure feedback**: A mismatch produces a soft "dull wobble" haptic — round, not sharp. The SpeechService prompt is redirectional ("Try again!"), not punitive ("Wrong!"). This is consistent with the failure-feedback principles in §4 (Game Mechanics).
+3. **Shake = playful, not punishing**: Shake-to-shuffle is always beneficial — it gives the child new information (different spatial arrangement), never removes progress.
+4. **Motion is optional, tap is sufficient**: If `motionControlsEnabled` is off, or the device is on a flat surface, Bond Blast works identically through tap-to-match alone. Sensors are progressive enhancement, not requirements.
+5. **Session length unchanged**: Bond Blast fires once (on the last problem), adds approximately 60–90 seconds to the session, and does not push median session time beyond the 10–12 minute age-5 attention window (§1.5).
+
+### 8.4 References
+
+- Goldin-Meadow, S. (2009). How gesture promotes learning throughout childhood. *Child Development Perspectives*, 3(2), 106–111.
+- Goldin-Meadow, S., & Beilock, S. L. (2010). Action's influence on thought: The case of gesture. *Perspectives on Psychological Science*, 5(6), 664–674.
+- Ping, R., & Goldin-Meadow, S. (2008). Hands in the air: Using ungrounded iconic gestures to teach children conservation of quantity. *Developmental Psychology*, 44(5), 1277–1287.
+- Ryan, R. M., & Deci, E. L. (2000). Self-determination theory and the facilitation of intrinsic motivation, social development, and well-being. *American Psychologist*, 55(1), 68–78.
+- Wilson, M. (2002). Six views of embodied cognition. *Psychonomic Bulletin & Review*, 9(4), 625–636.
+

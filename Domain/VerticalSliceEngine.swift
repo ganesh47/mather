@@ -31,6 +31,7 @@ final class VerticalSliceEngine {
     var equationRightInput = ""
     var transferLeftCount = 0
     var transferRightCount = 0
+    private(set) var bondMatchState: BondMatchState? = nil
     var feedbackMessage = "Tap Play to start."
     var showCelebration = false
     var completedSummary: SessionSummaryDraft?
@@ -134,6 +135,7 @@ final class VerticalSliceEngine {
         equationRightInput = ""
         transferLeftCount = 0
         transferRightCount = 0
+        bondMatchState = nil
         feedbackMessage = activeTheme.sessionStartFeedback()
         showCelebration = false
         completedSummary = nil
@@ -235,6 +237,10 @@ final class VerticalSliceEngine {
         case .transfer:
             isCorrect = transferLeftCount == currentProblem.decompositionA
                 && transferRightCount == currentProblem.decompositionB
+        case .bondMatch:
+            // Bond Blast is not submitted via submitCurrentStage — pairs are matched
+            // individually via matchPair(id:). This case is unreachable in practice.
+            isCorrect = bondMatchState?.isComplete == true
         case .done:
             isCorrect = true
         }
@@ -253,6 +259,54 @@ final class VerticalSliceEngine {
         speechService.speak(promptForCurrentStage(), enabled: featureFlags.audioEnabled)
     }
 
+    // MARK: - Bond Blast actions
+
+    /// Called by BondMatchView when the child begins dragging or taps a left card.
+    func bondDragStarted(pairId: UUID) {
+        guard currentStage == .bondMatch else { return }
+        hapticsService.cardPickup(enabled: featureFlags.hapticsEnabled)
+        logBondMatchTelemetry("pair_drag_started", extra: ["pair_id": pairId.uuidString])
+    }
+
+    /// Called by BondMatchView when a dragged card is hovering near a snap target.
+    func bondNearTarget() {
+        guard currentStage == .bondMatch else { return }
+        hapticsService.cardNearSnap(enabled: featureFlags.hapticsEnabled)
+    }
+
+    /// Called when the child successfully matches a complement pair.
+    /// Advances to `.done` when all pairs are matched.
+    func matchPair(id: UUID) {
+        guard currentStage == .bondMatch,
+              let idx = bondMatchState?.pairs.firstIndex(where: { $0.id == id }),
+              let problem = currentProblem else { return }
+
+        bondMatchState?.pairs[idx].isMatched = true
+        let pair = bondMatchState!.pairs[idx]
+
+        logBondMatchTelemetry("pair_matched", extra: [
+            "left": String(pair.left),
+            "right": String(pair.right),
+            "match_count": String(bondMatchState?.matchCount ?? 0)
+        ])
+        hapticsService.cardSnapCorrect(enabled: featureFlags.hapticsEnabled)
+
+        if bondMatchState?.isComplete == true {
+            let msg = "Amazing! You matched all the bonds for \(problem.target)!"
+            completeStage(successMessage: msg)
+        }
+    }
+
+    /// Called when the child drops a card on the wrong target.
+    func mismatchPair() {
+        guard currentStage == .bondMatch, let problem = currentProblem else { return }
+        logBondMatchTelemetry("pair_mismatch", extra: [:])
+        hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
+        let msg = "Try again! Find two numbers that make \(problem.target)."
+        feedbackMessage = msg
+        speechService.speak(msg, enabled: featureFlags.audioEnabled)
+    }
+
     private func validateEquation(for problem: SliceProblem) -> Bool {
         guard let left = Int(equationLeftInput), let right = Int(equationRightInput) else { return false }
         return left + right == problem.target
@@ -262,13 +316,29 @@ final class VerticalSliceEngine {
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
-        let next = SliceStateMachine.nextStage(after: currentStage, success: true, showTransfer: config.showTransfer)
+        // Bond Blast fires only on the last problem of the session.
+        let isLastProblem = currentProblemIndex + 1 >= problems.count
+        let showBondMatch = featureFlags.vs1BondMatchEnabled && isLastProblem
+
+        let next = SliceStateMachine.nextStage(
+            after: currentStage,
+            success: true,
+            showTransfer: config.showTransfer,
+            showBondMatch: showBondMatch
+        )
         recordStageTransition(from: currentStage, to: next)
 
-        let isProblemComplete = currentStage == .transfer || (!config.showTransfer && currentStage == .abstract)
+        // A problem is complete when the next stage is .done (the last meaningful
+        // stage has been cleared). This handles all paths: with/without transfer,
+        // with/without bond match.
+        let isProblemComplete = next == .done
         if isProblemComplete {
             recordProblemCompletion(transferCorrect: true)
-            hapticsService.success(enabled: featureFlags.hapticsEnabled)
+            if currentStage == .bondMatch {
+                hapticsService.bondMatchComplete(enabled: featureFlags.hapticsEnabled)
+            } else {
+                hapticsService.success(enabled: featureFlags.hapticsEnabled)
+            }
         } else {
             hapticsService.stageSuccess(enabled: featureFlags.hapticsEnabled)
         }
@@ -300,6 +370,17 @@ final class VerticalSliceEngine {
         case .transfer:
             transferLeftCount = 0
             transferRightCount = 0
+        case .bondMatch:
+            if let problem = currentProblem {
+                bondMatchState = BondMatchState(
+                    target: problem.target,
+                    pairs: BondMatchState.makePairs(for: problem.target)
+                )
+                logBondMatchTelemetry("bond_match_started", extra: [
+                    "target": String(problem.target),
+                    "pair_count": String(bondMatchState?.pairs.count ?? 0)
+                ])
+            }
         case .concrete, .done:
             break
         }
@@ -488,6 +569,8 @@ final class VerticalSliceEngine {
                 decompositionA: currentProblem.decompositionA,
                 decompositionB: currentProblem.decompositionB
             )
+        case .bondMatch:
+            return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
         case .done:
             return "Nice work."
         }
@@ -532,9 +615,22 @@ final class VerticalSliceEngine {
             } else {
                 return "Keep showing the same equation with counters: \(problem.decompositionA) in the first group and \(problem.decompositionB) in the second group."
             }
+        case .bondMatch:
+            return "Try another pair. Look for two numbers that add up to \(problem.target)."
         case .done:
             return "Try again."
         }
+    }
+
+    private func logBondMatchTelemetry(_ action: String, extra: [String: String]) {
+        guard let currentProblem else { return }
+        var payload = extra
+        payload["problem_id"] = currentProblem.id.uuidString
+        payload["action"] = action
+        payload["stage"] = SliceStage.bondMatch.rawValue
+        try? telemetryWriter.append(
+            SliceEvent(type: .interaction, payload: payload)
+        )
     }
 
     private func appendDigit(to string: String, digit: Int) -> String {

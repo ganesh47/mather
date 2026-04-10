@@ -109,6 +109,34 @@ struct SliceSessionView: View {
                 onSubmit: appModel.engine.submitCurrentStage,
                 theme: appModel.engine.activeTheme
             )
+        case .bondMatch:
+            if let bondState = appModel.engine.bondMatchState {
+                BondMatchView(
+                    state: bondState,
+                    tiltPitch: appModel.motionService.tiltPitch,
+                    tiltRoll: appModel.motionService.tiltRoll,
+                    shakeDetected: appModel.motionService.shakeDetected,
+                    clapDetected: appModel.soundDetectionService.clapDetected,
+                    onMatch: appModel.engine.matchPair(id:),
+                    onMismatch: appModel.engine.mismatchPair,
+                    onDragStarted: appModel.engine.bondDragStarted(pairId:),
+                    onNearTarget: appModel.engine.bondNearTarget,
+                    onShakeHandled: appModel.motionService.resetShake,
+                    onClapHandled: appModel.soundDetectionService.resetClap
+                )
+                .onAppear {
+                    if appModel.featureFlags.motionControlsEnabled {
+                        appModel.motionService.startUpdates()
+                    }
+                    if appModel.featureFlags.soundReactionEnabled {
+                        appModel.soundDetectionService.startListening()
+                    }
+                }
+                .onDisappear {
+                    appModel.motionService.stopUpdates()
+                    appModel.soundDetectionService.stopListening()
+                }
+            }
         case .done:
             CardSurface { Text("Moving to the next problem...") }
         }
@@ -177,11 +205,12 @@ struct SliceSessionView: View {
 
     private func stageColour(_ stage: SliceStage) -> Color {
         switch stage {
-        case .concrete: MatherTheme.warm
+        case .concrete:  MatherTheme.warm
         case .pictorial: MatherTheme.softBlue
-        case .abstract: MatherTheme.accent
-        case .transfer: MatherTheme.coral
-        case .done: .secondary
+        case .abstract:  MatherTheme.accent
+        case .transfer:  MatherTheme.coral
+        case .bondMatch: MatherTheme.accent
+        case .done:      .secondary
         }
     }
 
