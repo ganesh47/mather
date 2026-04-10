@@ -12,12 +12,13 @@ struct TransferCheckView: View {
     var body: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 14) {
+                // Show only the target — decomposition values are not revealed up front.
                 HStack(spacing: 10) {
-                    equationPill(value: problem.decompositionA, fill: MatherTheme.warm)
+                    questionPill(fill: MatherTheme.warm)
                     Text("+")
                         .font(.title.weight(.black))
                         .foregroundStyle(.secondary)
-                    equationPill(value: problem.decompositionB, fill: MatherTheme.accent)
+                    questionPill(fill: MatherTheme.accent)
                     Text("=")
                         .font(.title.weight(.black))
                         .foregroundStyle(.secondary)
@@ -44,7 +45,7 @@ struct TransferCheckView: View {
                     )
                 }
 
-                Button("Check the same equation") {
+                Button("Check it!") {
                     onSubmit()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -52,12 +53,12 @@ struct TransferCheckView: View {
         }
     }
 
-    private func equationPill(value: Int, fill: Color) -> some View {
-        Text("\(value)")
+    private func questionPill(fill: Color) -> some View {
+        Text("?")
             .font(.system(size: 28, weight: .black, design: .rounded))
-            .foregroundStyle(fill)
+            .foregroundStyle(fill.opacity(0.6))
             .frame(minWidth: 58, minHeight: 58)
-            .background(fill.opacity(0.14))
+            .background(fill.opacity(0.10))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
@@ -66,15 +67,10 @@ struct TransferCheckView: View {
         let bucketBorder = colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : fill.opacity(0.18)
 
         return VStack(spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(MatherTheme.ink)
-                Spacer()
-                Text("\(targetCount)")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(fill)
-            }
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5),

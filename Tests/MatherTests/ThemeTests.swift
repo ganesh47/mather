@@ -47,8 +47,10 @@ struct ThemeTests {
 
     @Test func classicThemeTransferPrompt() {
         let prompt = ClassicTheme().transferPrompt(decompositionA: 3, decompositionB: 4)
-        #expect(prompt.contains("3"))
-        #expect(prompt.contains("4"))
+        // Prompt should reference the total (7), not the individual decomposition values.
+        #expect(prompt.contains("7"))
+        #expect(!prompt.contains("on the left"))
+        #expect(!prompt.contains("on the right"))
     }
 
     @Test func classicThemeStageSuccessPhrases() {
@@ -141,10 +143,12 @@ struct ThemeTests {
         #expect(VehicleTheme().sessionStartFeedback() != ClassicTheme().sessionStartFeedback())
     }
 
-    @Test func vehicleTransferPromptIncludesDecompositionNumbers() {
+    @Test func vehicleTransferPromptShowsTargetNotDecomposition() {
         let prompt = VehicleTheme().transferPrompt(decompositionA: 2, decompositionB: 5)
-        #expect(prompt.contains("2"))
-        #expect(prompt.contains("5"))
+        // Prompt should reference the total (7), not the individual split values.
+        #expect(prompt.contains("7"))
+        #expect(!prompt.contains("on the left"))
+        #expect(!prompt.contains("on the right"))
     }
 
     // MARK: - Celebration emoji (PR8)

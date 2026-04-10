@@ -5,16 +5,19 @@ import Testing
 @MainActor
 struct TransferIntentTests {
     @Test
-    func transferPromptReferencesShowingTheSameEquationAgain() async throws {
+    func transferPromptShowsTargetWithoutRevealingDecomposition() async throws {
         let engine = makeEngine()
         engine.startSession()
 
         guard let problem = engine.currentProblem else { return }
         try await advanceToTransfer(engine, problem: problem)
 
-        #expect(engine.feedbackMessage.contains("same equation"))
-        #expect(engine.feedbackMessage.contains("\(problem.decompositionA)"))
-        #expect(engine.feedbackMessage.contains("\(problem.decompositionB)"))
+        // Prompt must mention the target so the child knows the goal.
+        #expect(engine.feedbackMessage.contains("\(problem.target)"))
+        // Prompt must not contain the phrase "on the left" or "on the right" —
+        // those phrases are the tell-tale sign of pre-revealing the split.
+        #expect(!engine.feedbackMessage.contains("on the left"))
+        #expect(!engine.feedbackMessage.contains("on the right"))
     }
 
     @Test
