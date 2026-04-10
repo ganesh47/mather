@@ -33,7 +33,7 @@ extension VehicleSpec {
         concretePromptFn: { "Park \($0) cars in the garage." },
         pictorialPromptFn: { _ in "Split the cars into two parking zones." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) cars on the left and \($1) on the right." },
+        transferPromptFn: { _, _ in "Park the cars to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "You filled the garage!"
@@ -56,7 +56,7 @@ extension VehicleSpec {
         concretePromptFn: { "Load \($0) trucks at the depot." },
         pictorialPromptFn: { _ in "Split the trucks into two groups." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) trucks on the left and \($1) on the right." },
+        transferPromptFn: { _, _ in "Park the trucks to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "All trucks loaded!"
@@ -79,7 +79,7 @@ extension VehicleSpec {
         concretePromptFn: { "Send \($0) vans to the warehouse." },
         pictorialPromptFn: { _ in "Split the vans into two routes." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) vans on the left and \($1) on the right." },
+        transferPromptFn: { _, _ in "Park the vans to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "Warehouse full!"
@@ -102,7 +102,7 @@ extension VehicleSpec {
         concretePromptFn: { "Fill \($0) buses with passengers." },
         pictorialPromptFn: { _ in "Split the buses into two stops." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) buses at the left stop and \($1) at the right." },
+        transferPromptFn: { _, _ in "Park the buses to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "All aboard!"
@@ -125,7 +125,7 @@ extension VehicleSpec {
         concretePromptFn: { "Line up \($0) bulldozers on the site." },
         pictorialPromptFn: { _ in "Split the bulldozers into two zones." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) bulldozers on the left and \($1) on the right." },
+        transferPromptFn: { _, _ in "Place the bulldozers to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "Site ready!"
@@ -148,7 +148,7 @@ extension VehicleSpec {
         concretePromptFn: { "Land \($0) helicopters on the pad." },
         pictorialPromptFn: { _ in "Split the helicopters into two pads." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) helicopters on the left pad and \($1) on the right." },
+        transferPromptFn: { _, _ in "Land the helicopters to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "All landed!"
@@ -171,7 +171,7 @@ extension VehicleSpec {
         concretePromptFn: { "Park \($0) planes at the gate." },
         pictorialPromptFn: { _ in "Split the planes into two terminals." },
         abstractPromptFn: { "Write the split as an equation." },
-        transferPromptFn: { "\($0) planes at the left terminal and \($1) at the right." },
+        transferPromptFn: { _, _ in "Park the planes to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
             case .concrete:   return "All planes at the gate!"

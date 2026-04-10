@@ -12,20 +12,30 @@ struct TransferCheckView: View {
     var body: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 10) {
-                    equationPill(value: problem.decompositionA, fill: MatherTheme.warm)
-                    Text("+")
-                        .font(.title.weight(.black))
-                        .foregroundStyle(.secondary)
-                    equationPill(value: problem.decompositionB, fill: MatherTheme.accent)
-                    Text("=")
-                        .font(.title.weight(.black))
-                        .foregroundStyle(.secondary)
-                    Text("\(problem.target)")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.ink)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Show it again")
+                        .font(.title.weight(.bold))
+                        .foregroundStyle(MatherTheme.coral)
+
+                    HStack(spacing: 10) {
+                        hiddenEquationPill(fill: MatherTheme.warm)
+                        Text("+")
+                            .font(.title.weight(.black))
+                            .foregroundStyle(.secondary)
+                        hiddenEquationPill(fill: MatherTheme.accent)
+                        Text("=")
+                            .font(.title.weight(.black))
+                            .foregroundStyle(.secondary)
+                        Text("\(problem.target)")
+                            .font(.system(size: 34, weight: .black, design: .rounded))
+                            .foregroundStyle(MatherTheme.ink)
+                    }
+                    .accessibilityIdentifier("transfer-equation")
+
+                    Text("Build the two parts from memory.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
                 }
-                .accessibilityIdentifier("transfer-equation")
 
                 HStack(spacing: 12) {
                     transferBucket(
@@ -44,7 +54,7 @@ struct TransferCheckView: View {
                     )
                 }
 
-                Button("Check the same equation") {
+                Button("Check my groups") {
                     onSubmit()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -52,13 +62,18 @@ struct TransferCheckView: View {
         }
     }
 
-    private func equationPill(value: Int, fill: Color) -> some View {
-        Text("\(value)")
+    private func hiddenEquationPill(fill: Color) -> some View {
+        Text("?")
             .font(.system(size: 28, weight: .black, design: .rounded))
             .foregroundStyle(fill)
             .frame(minWidth: 58, minHeight: 58)
             .background(fill.opacity(0.14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(fill.opacity(colorScheme == .dark ? 0.35 : 0.2), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .accessibilityLabel("Hidden part")
     }
 
     private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
