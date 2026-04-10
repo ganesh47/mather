@@ -97,7 +97,7 @@ final class RoomQuestEngine {
         ))
         roomPhaseStartedAt = .now
         phase = .spot(index: 0)
-        speechService.speak("Let's make \(p.target)! Walk to the red dot and pick up everything there.")
+        speechService.speak("Let's make \(p.target)! Walk to the red dot and pick up everything there.", enabled: featureFlags.audioEnabled)
         startRoomPhaseTimer()
     }
 
@@ -110,10 +110,10 @@ final class RoomQuestEngine {
             payload: ["spot_index": String(index), "quantity": String(quantity)]
         ))
         if index == 0 {
-            speechService.speak("Great — now walk to the blue dot.")
+            speechService.speak("Great — now walk to the blue dot.", enabled: featureFlags.audioEnabled)
             phase = .spot(index: 1)
         } else {
-            speechService.speak("Bring them all back to me!")
+            speechService.speak("Bring them all back to me!", enabled: featureFlags.audioEnabled)
             phase = .returning
         }
     }
@@ -198,7 +198,7 @@ final class RoomQuestEngine {
         splitLeftCount = p.decompositionA
         phase = .onScreenPictorial
         feedbackMessage = "Time's up — let's finish on screen!"
-        speechService.speak("Time's up! Come back to the iPad.")
+        speechService.speak("Time's up! Come back to the iPad.", enabled: featureFlags.audioEnabled)
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestAbandoned, payload: ["reason": "timeout"]
         ))
