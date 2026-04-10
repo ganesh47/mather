@@ -12,7 +12,7 @@ private struct RocketTheme: SliceTheme {
     func pictorialPrompt(target: Int) -> String { "Split the rockets into two pads." }
     func abstractPrompt() -> String { "Type the rocket equation." }
     func transferPrompt(decompositionA: Int, decompositionB: Int) -> String {
-        "Relaunch \(decompositionA) and \(decompositionB) rockets."
+        "Relaunch the same total from memory."
     }
     func stageSuccessPhrase(for stage: SliceStage, target: Int) -> String { "Blast off!" }
     func sessionIntroPhrase() -> String { "Let's count rockets." }
@@ -47,8 +47,9 @@ struct ThemeTests {
 
     @Test func classicThemeTransferPrompt() {
         let prompt = ClassicTheme().transferPrompt(decompositionA: 3, decompositionB: 4)
-        #expect(prompt.contains("3"))
-        #expect(prompt.contains("4"))
+        #expect(!prompt.contains("3"))
+        #expect(!prompt.contains("4"))
+        #expect(prompt.localizedCaseInsensitiveContains("memory"))
     }
 
     @Test func classicThemeStageSuccessPhrases() {
@@ -141,10 +142,11 @@ struct ThemeTests {
         #expect(VehicleTheme().sessionStartFeedback() != ClassicTheme().sessionStartFeedback())
     }
 
-    @Test func vehicleTransferPromptIncludesDecompositionNumbers() {
+    @Test func vehicleTransferPromptDoesNotRevealDecompositionNumbers() {
         let prompt = VehicleTheme().transferPrompt(decompositionA: 2, decompositionB: 5)
-        #expect(prompt.contains("2"))
-        #expect(prompt.contains("5"))
+        #expect(!prompt.contains("2"))
+        #expect(!prompt.contains("5"))
+        #expect(prompt.localizedCaseInsensitiveContains("memory"))
     }
 
     // MARK: - Celebration emoji (PR8)

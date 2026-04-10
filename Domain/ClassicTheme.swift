@@ -20,7 +20,7 @@ struct ClassicTheme: SliceTheme {
     }
 
     func transferPrompt(decompositionA: Int, decompositionB: Int) -> String {
-        "Show the same equation with counters again. Put \(decompositionA) on the left and \(decompositionB) on the right."
+        "Show the same equation with counters again. Build the two parts from memory."
     }
 
     func stageSuccessPhrase(for stage: SliceStage, target: Int) -> String {

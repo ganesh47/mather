@@ -13,8 +13,9 @@ struct TransferIntentTests {
         try await advanceToTransfer(engine, problem: problem)
 
         #expect(engine.feedbackMessage.contains("same equation"))
-        #expect(engine.feedbackMessage.contains("\(problem.decompositionA)"))
-        #expect(engine.feedbackMessage.contains("\(problem.decompositionB)"))
+        #expect(!engine.feedbackMessage.contains("\(problem.decompositionA)"))
+        #expect(!engine.feedbackMessage.contains("\(problem.decompositionB)"))
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("memory"))
     }
 
     @Test

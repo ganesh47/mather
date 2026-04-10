@@ -34,11 +34,12 @@ struct VehicleSpecTests {
         }
     }
 
-    @Test func vehicleSpecTransferPromptIncludesDecompositionNumbers() {
+    @Test func vehicleSpecTransferPromptDoesNotRevealDecompositionNumbers() {
         for spec in VehicleSpec.pool {
             let prompt = spec.transferPromptFn(2, 5)
-            #expect(prompt.contains("2"))
-            #expect(prompt.contains("5"))
+            #expect(!prompt.contains("2"))
+            #expect(!prompt.contains("5"))
+            #expect(prompt.localizedCaseInsensitiveContains("memory"))
         }
     }
 
