@@ -1,23 +1,37 @@
 import SwiftUI
 
 enum MatherTheme {
-    static let background = Color(red: 0.97, green: 0.95, blue: 0.89)
-    static let card = Color.white
-    static let ink = Color(red: 0.14, green: 0.16, blue: 0.18)
-    // Legible secondary text on white CardSurface (~5:1 contrast ratio — WCAG AA)
-    static let cardSubtitle = ink.opacity(0.65)
-    // Vivid emerald — was a muted forest green; children need high-contrast, saturated colours
-    static let accent = Color(red: 0.09, green: 0.71, blue: 0.44)
-    // Vivid amber — was too muted; this reads clearly on pale cream background
-    static let warm = Color(red: 1.0, green: 0.62, blue: 0.07)
-    static let danger = Color(red: 0.88, green: 0.23, blue: 0.20)
-    // Rich sky blue — was too pale (0.64/0.82/0.97 barely distinguishable from white)
-    static let softBlue = Color(red: 0.22, green: 0.67, blue: 0.97)
-    // Coral — celebration and transfer stage; distinct from green and amber
-    static let coral = Color(red: 0.98, green: 0.38, blue: 0.33)
+    // MARK: - Semantic color tokens
+    // Each name maps to a named color set in App/Assets.xcassets with both
+    // Any (light) and Dark appearance variants. SwiftUI resolves the correct
+    // variant automatically from @Environment(\.colorScheme).
+
+    /// App/screen background — cream in light, warm near-black in dark
+    static let background   = Color("MatherBackground")
+    /// CardSurface fill — white in light, warm dark grey in dark
+    static let card         = Color("MatherCard")
+    /// Primary text — near-black in light, warm off-white in dark
+    static let ink          = Color("MatherInk")
+    /// Secondary text on CardSurface — ink at 65% light / 70% dark opacity
+    static let cardSubtitle = Color("MatherCardSubtitle")
+    /// Primary action, success — vivid emerald, slightly lighter in dark
+    static let accent       = Color("MatherAccent")
+    /// Counters row 1, warm states — vivid amber, slightly lighter in dark
+    static let warm         = Color("MatherWarm")
+    /// Destructive actions — red, slightly lighter in dark
+    static let danger       = Color("MatherDanger")
+    /// Info, secondary buttons — sky blue, slightly lighter in dark
+    static let softBlue     = Color("MatherSoftBlue")
+    /// Celebration — coral, slightly lighter in dark
+    static let coral        = Color("MatherCoral")
+    /// VS1 panel surface — warm cream panel in light, warm dark panel in dark
+    static let panel        = Color("MatherPanel")
+    /// VS1 panel border/stroke — amber-cream in light, warm dark border in dark
+    static let panelDeep    = Color("MatherPanelDeep")
 }
 
 struct CardSurface<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -25,26 +39,66 @@ struct CardSurface<Content: View>: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MatherTheme.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(
+                        colorScheme == .dark
+                            ? MatherTheme.panelDeep.opacity(0.75)
+                            : MatherTheme.panelDeep.opacity(0.16),
+                        lineWidth: 1
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
+            .shadow(color: Color("MatherCardShadow"), radius: colorScheme == .dark ? 16 : 10, y: colorScheme == .dark ? 6 : 4)
+    }
+}
+
+struct DarkModeCTAOverlay: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .strokeBorder(.white.opacity(colorScheme == .dark ? 0.16 : 0), lineWidth: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: colorScheme == .dark
+                                ? [.white.opacity(0.10), .clear]
+                                : [.white.opacity(0.12), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            )
+            .blendMode(.screen)
     }
 }
 
 struct PrimaryActionButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.title3.weight(.bold))
             .foregroundStyle(.white)
             .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
-            .background(configuration.isPressed ? MatherTheme.accent.opacity(0.8) : MatherTheme.accent)
+            .background(configuration.isPressed ? MatherTheme.accent.opacity(0.84) : MatherTheme.accent)
+            .overlay(DarkModeCTAOverlay())
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(
+                color: colorScheme == .dark ? MatherTheme.accent.opacity(0.28) : .clear,
+                radius: colorScheme == .dark ? 14 : 0,
+                y: colorScheme == .dark ? 6 : 0
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
 struct SecondaryTileButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
     var fill: Color = MatherTheme.softBlue
 
     func makeBody(configuration: Configuration) -> some View {
@@ -53,7 +107,19 @@ struct SecondaryTileButtonStyle: ButtonStyle {
             .foregroundStyle(MatherTheme.ink)
             .frame(maxWidth: .infinity, minHeight: 88)
             .background(configuration.isPressed ? fill.opacity(0.8) : fill)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(
+                        colorScheme == .dark ? .white.opacity(0.10) : .clear,
+                        lineWidth: 1
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(
+                color: colorScheme == .dark ? fill.opacity(0.16) : .clear,
+                radius: colorScheme == .dark ? 10 : 0,
+                y: colorScheme == .dark ? 4 : 0
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }

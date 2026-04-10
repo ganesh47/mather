@@ -254,6 +254,11 @@ jobs:
               ci-screenshots/simulator-final-state.png 2>/dev/null || true
           fi
 
+          echo "--- Appearance coverage ---"
+          find ci-screenshots -name '*Appearance-*' | sort | while read -r f; do
+            echo "  $f"
+          done || true
+
           echo "--- Screenshot artifacts ---"
           find ci-screenshots -name "*.png" | sort | while read -r f; do
             SIZE=$(wc -c < "$f")
