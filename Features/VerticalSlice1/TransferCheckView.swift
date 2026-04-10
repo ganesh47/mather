@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TransferCheckView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let problem: SliceProblem
     let leftCount: Int
     let rightCount: Int
@@ -61,7 +62,10 @@ struct TransferCheckView: View {
     }
 
     private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
-        VStack(spacing: 8) {
+        let bucketBackground = colorScheme == .dark ? MatherTheme.panel.opacity(0.94) : MatherTheme.card
+        let bucketBorder = colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : fill.opacity(0.18)
+
+        return VStack(spacing: 8) {
             HStack {
                 Text(title)
                     .font(.caption.weight(.bold))
@@ -118,6 +122,19 @@ struct TransferCheckView: View {
             }
             .foregroundStyle(fill)
         }
+        .padding(12)
         .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(bucketBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(bucketBorder, lineWidth: 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
+        )
     }
 }

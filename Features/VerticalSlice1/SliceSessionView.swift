@@ -1,13 +1,16 @@
 import SwiftUI
 
 struct SliceSessionView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
     @State private var celebrationScale: CGFloat = 0.3
 
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [MatherTheme.background, Color.white],
+                colors: colorScheme == .dark
+                    ? [MatherTheme.background, MatherTheme.panel]
+                    : [MatherTheme.background, Color.white],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -38,17 +41,23 @@ struct SliceSessionView: View {
             // The engine delays stage transition by 1.5s so the child sees the reward
             // before the screen changes. Non-interactive so taps pass through.
             if appModel.engine.showCelebration {
-                Text(appModel.engine.activeTheme.celebrationEmoji)
-                    .font(.system(size: 120))
-                    .scaleEffect(celebrationScale)
-                    .allowsHitTesting(false)
-                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                    .onAppear {
-                        celebrationScale = 0.3
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
-                            celebrationScale = 1.0
-                        }
+                ZStack {
+                    Circle()
+                        .fill(MatherTheme.coral.opacity(colorScheme == .dark ? 0.18 : 0.12))
+                        .frame(width: 180, height: 180)
+                        .blur(radius: 6)
+                    Text(appModel.engine.activeTheme.celebrationEmoji)
+                        .font(.system(size: 120))
+                }
+                .scaleEffect(celebrationScale)
+                .allowsHitTesting(false)
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                .onAppear {
+                    celebrationScale = 0.3
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                        celebrationScale = 1.0
                     }
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -127,7 +136,8 @@ struct SliceSessionView: View {
                             .font(.title2.weight(.bold))
                             .foregroundStyle(appModel.featureFlags.audioEnabled ? MatherTheme.softBlue : .secondary)
                             .frame(width: 44, height: 44)
-                            .background(MatherTheme.softBlue.opacity(0.18))
+                            .background(MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.24 : 0.18))
+                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
                             .clipShape(Circle())
                     }
                     .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Mute audio" : "Enable audio")
@@ -138,7 +148,8 @@ struct SliceSessionView: View {
                             .font(.title2.weight(.bold))
                             .foregroundStyle(MatherTheme.warm)
                             .frame(width: 44, height: 44)
-                            .background(MatherTheme.warm.opacity(0.18))
+                            .background(MatherTheme.warm.opacity(colorScheme == .dark ? 0.24 : 0.18))
+                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Replay prompt")
@@ -150,7 +161,8 @@ struct SliceSessionView: View {
                             .font(.title2.weight(.bold))
                             .foregroundStyle(.secondary)
                             .frame(width: 44, height: 44)
-                            .background(Color.secondary.opacity(0.12))
+                            .background(Color.secondary.opacity(colorScheme == .dark ? 0.18 : 0.12))
+                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1))
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Go to Home")
@@ -190,6 +202,15 @@ struct SliceSessionView: View {
             .padding(.top, 12)
             .padding(.bottom, 8)
         }
-        .background(.ultraThinMaterial)
+        .background(persistentSubmitBarBackground)
+    }
+
+    @ViewBuilder
+    private var persistentSubmitBarBackground: some View {
+        if colorScheme == .dark {
+            MatherTheme.panel.opacity(0.98)
+        } else {
+            Rectangle().fill(.ultraThinMaterial)
+        }
     }
 }

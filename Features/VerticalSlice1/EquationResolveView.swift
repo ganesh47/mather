@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct EquationResolveView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let target: Int
     let leftInput: String
     let rightInput: String
@@ -77,7 +78,16 @@ struct EquationResolveView: View {
                     Text(value.isEmpty ? "?" : value)
                         .font(.system(size: 40, weight: .black, design: .rounded))
                         .frame(maxWidth: .infinity, minHeight: 84)
-                        .background(selectedSide == side ? MatherTheme.accent.opacity(0.18) : MatherTheme.softBlue.opacity(0.25))
+                        .background(selectedSide == side ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.28 : 0.18) : MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.32 : 0.25))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .strokeBorder(
+                                    selectedSide == side
+                                        ? .white.opacity(colorScheme == .dark ? 0.12 : 0)
+                                        : MatherTheme.panelDeep.opacity(colorScheme == .dark ? 0.65 : 0),
+                                    lineWidth: 1
+                                )
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     // Inline clear — always reachable, no scrolling needed
                     if !value.isEmpty {
