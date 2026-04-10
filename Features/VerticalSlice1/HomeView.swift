@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
 
     var body: some View {
@@ -116,7 +117,11 @@ struct HomeView: View {
                     )
                 )
             }
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1)
+            )
+            .shadow(color: colorScheme == .dark ? MatherTheme.coral.opacity(0.12) : .black.opacity(0.08), radius: colorScheme == .dark ? 18 : 12, y: colorScheme == .dark ? 8 : 5)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("Play")
