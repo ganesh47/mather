@@ -22,6 +22,8 @@ struct RootView: View {
                     ParentSummaryView(appModel: appModel, summaries: sessionSummaries)
                 case .settings:
                     SettingsView(appModel: appModel, summaries: sessionSummaries)
+                case .roomQuest:
+                    RoomSessionView(engine: appModel.roomQuestEngine, vsEngine: appModel.engine)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

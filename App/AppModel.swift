@@ -13,6 +13,7 @@ final class AppModel {
     let hapticsService: HapticsService
     let motionService: MotionService
     let soundDetectionService: SoundDetectionService
+    let roomQuestEngine: RoomQuestEngine
 
     init(modelContext: ModelContext) {
         let featureFlags = FeatureFlagService()
@@ -31,12 +32,22 @@ final class AppModel {
         self.motionService = motionService
         self.soundDetectionService = soundDetectionService
 
-        engine = VerticalSliceEngine(
+        let vsEngine = VerticalSliceEngine(
             featureFlags: featureFlags,
             telemetryWriter: telemetryWriter,
             speechService: speechService,
             hapticsService: hapticsService,
             saveSummary: historyStore.save
         )
+        engine = vsEngine
+
+        let roomQuestEngine = RoomQuestEngine(
+            featureFlags: featureFlags,
+            telemetryWriter: telemetryWriter,
+            speechService: speechService,
+            hapticsService: hapticsService
+        )
+        self.roomQuestEngine = roomQuestEngine
+        roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
     }
 }

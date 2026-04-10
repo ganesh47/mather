@@ -56,6 +56,13 @@ struct SettingsView: View {
         )
     }
 
+    private var roomQuestBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.roomQuestEnabled },
+            set: { appModel.featureFlags.roomQuestEnabled = $0 }
+        )
+    }
+
     private func smokeStep(_ text: String) -> some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
@@ -86,6 +93,7 @@ struct SettingsView: View {
                             Toggle("Bond Blast finale", isOn: bondMatchBinding)
                             Toggle("Motion controls", isOn: motionBinding)
                             Toggle("Clap reaction (mic)", isOn: soundReactionBinding)
+                            Toggle("Room Quest (beta)", isOn: roomQuestBinding)
                             Toggle("Test mode", isOn: testModeBinding)
                             Toggle("Audio prompts", isOn: audioBinding)
                             Toggle("Haptics", isOn: hapticsBinding)

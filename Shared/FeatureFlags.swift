@@ -12,6 +12,8 @@ final class FeatureFlagService {
         static let vs1BondMatchEnabled = "feature.vs1BondMatchEnabled"
         static let motionControlsEnabled = "feature.motionControlsEnabled"
         static let soundReactionEnabled = "feature.soundReactionEnabled"
+        static let roomQuestEnabled = "feature.roomQuestEnabled"
+        static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -54,6 +56,17 @@ final class FeatureFlagService {
         didSet { defaults.set(soundReactionEnabled, forKey: Keys.soundReactionEnabled) }
     }
 
+    /// Gates the Room Quest companion slice. Default false; parent enables in Settings.
+    var roomQuestEnabled: Bool {
+        didSet { defaults.set(roomQuestEnabled, forKey: Keys.roomQuestEnabled) }
+    }
+
+    /// Persists whether the parent has acknowledged the Room Quest safety checklist.
+    /// Shown once before the first Room Quest session.
+    var roomQuestSafetyAcknowledged: Bool {
+        didSet { defaults.set(roomQuestSafetyAcknowledged, forKey: Keys.roomQuestSafetyAcknowledged) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -71,6 +84,8 @@ final class FeatureFlagService {
             Keys.vs1BondMatchEnabled: false,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: false,
+            Keys.roomQuestEnabled: false,
+            Keys.roomQuestSafetyAcknowledged: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -80,5 +95,7 @@ final class FeatureFlagService {
         vs1BondMatchEnabled = defaults.bool(forKey: Keys.vs1BondMatchEnabled)
         motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
+        roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)
+        roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
     }
 }
