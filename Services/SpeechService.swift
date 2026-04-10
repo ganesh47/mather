@@ -8,6 +8,19 @@ final class SpeechService {
     private var lastUtteranceID = UUID()
     var hasSpokenSessionIntro = false
 
+    init() {
+        // Use .playback category so prompts are audible even when the hardware
+        // ringer/silent switch is off. .spokenAudio mode pauses other audio
+        // during speech; .duckOthers lowers (rather than cuts) background audio.
+        // The in-app audio toggle (speak(_:enabled:)) remains the parent's control.
+        try? AVAudioSession.sharedInstance().setCategory(
+            .playback,
+            mode: .spokenAudio,
+            options: .duckOthers
+        )
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
+
     func speak(_ text: String, enabled: Bool) {
         guard enabled, !text.isEmpty else { return }
         synthesizer.stopSpeaking(at: .immediate)
