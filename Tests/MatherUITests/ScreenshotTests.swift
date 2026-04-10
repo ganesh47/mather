@@ -229,6 +229,11 @@ final class ScreenshotTests: XCTestCase {
 
         let settingsSecond = app.staticTexts["Session 2"].firstMatch
         XCTAssertTrue(settingsSecond.waitForExistence(timeout: 5))
+        // Scroll down to bring the session history entry into the visible viewport
+        // before asserting isHittable — the settings card may push it below the fold.
+        if !settingsSecond.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
         XCTAssertTrue(settingsSecond.isHittable)
     }
 
