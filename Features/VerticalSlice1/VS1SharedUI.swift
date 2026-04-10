@@ -10,7 +10,7 @@ struct VS1Card<Content: View>: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(colorScheme == .dark ? MatherTheme.panel.opacity(0.96) : .ultraThinMaterial)
+            .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 0.96 : 0.72))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(

@@ -53,7 +53,7 @@ struct CardSurface<Content: View>: View {
     }
 }
 
-private struct DarkModeCTAOverlay: View {
+struct DarkModeCTAOverlay: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
