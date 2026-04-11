@@ -377,6 +377,44 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func matchPairGracefullyIgnoresUnknownPairId() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1BondMatchEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 1)
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        engine.adjustTransfer(by: problem.decompositionA, side: .left)
+        engine.adjustTransfer(by: problem.decompositionB, side: .right)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+
+        let before = engine.bondMatchState
+        engine.matchPair(id: UUID())
+
+        #expect(engine.currentStage == .bondMatch)
+        #expect(engine.bondMatchState?.pairs.map(\.isMatched) == before?.pairs.map(\.isMatched))
+    }
+
+    @Test
     func bondMatchNotFiredOnIntermediateProblems() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true

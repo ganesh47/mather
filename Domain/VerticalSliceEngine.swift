@@ -280,20 +280,22 @@ final class VerticalSliceEngine {
     /// Advances to `.done` when all pairs are matched.
     func matchPair(id: UUID) {
         guard currentStage == .bondMatch,
-              let idx = bondMatchState?.pairs.firstIndex(where: { $0.id == id }),
-              let problem = currentProblem else { return }
+              let problem = currentProblem,
+              var state = bondMatchState,
+              let idx = state.pairs.firstIndex(where: { $0.id == id }) else { return }
 
-        bondMatchState?.pairs[idx].isMatched = true
-        let pair = bondMatchState!.pairs[idx]
+        state.pairs[idx].isMatched = true
+        let pair = state.pairs[idx]
+        bondMatchState = state
 
         logBondMatchTelemetry("pair_matched", extra: [
             "left": String(pair.left),
             "right": String(pair.right),
-            "match_count": String(bondMatchState?.matchCount ?? 0)
+            "match_count": String(state.matchCount)
         ])
         hapticsService.cardSnapCorrect(enabled: featureFlags.hapticsEnabled)
 
-        if bondMatchState?.isComplete == true {
+        if state.isComplete {
             let msg = "Amazing! You matched all the bonds for \(problem.target)!"
             completeStage(successMessage: msg)
         }
