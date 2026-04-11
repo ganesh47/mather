@@ -30,6 +30,12 @@ struct VerticalSliceEngineTests {
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .abstract)
+
+        engine.equationLeftInput = String(engine.currentProblem?.decompositionA ?? 0)
+        engine.equationRightInput = String(engine.currentProblem?.decompositionB ?? 0)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(engine.currentStage == .transfer)
     }
 
     @Test
