@@ -363,7 +363,7 @@ final class VerticalSliceEngine {
     private func prepareForStage(_ stage: SliceStage) {
         switch stage {
         case .pictorial:
-            splitLeftCount = currentProblem?.decompositionA ?? 0
+            splitLeftCount = 0
         case .abstract:
             equationLeftInput = ""
             equationRightInput = ""
