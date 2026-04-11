@@ -20,6 +20,13 @@ struct HomeView: View {
                     lockedActivityCard
                 }
 
+                if appModel.featureFlags.roomQuestEnabled {
+                    Button("Start Room Quest") {
+                        appModel.engine.showRoomQuest()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.65)))
+                }
+
                 HStack(spacing: 14) {
                     Button("Parent Summary") {
                         appModel.engine.showParentSummary()

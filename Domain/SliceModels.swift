@@ -31,6 +31,12 @@ enum SliceEventType: String, Codable {
     case stageTransition = "stage_transition"
     case problemCompleted = "problem_completed"
     case sessionEnd = "session_end"
+    case roomQuestStarted = "room_quest_started"
+    case roomQuestSetupComplete = "room_quest_setup_complete"
+    case roomQuestSpotVisited = "room_quest_spot_visited"
+    case roomQuestPhaseComplete = "room_quest_phase_complete"
+    case roomQuestAbandoned = "room_quest_abandoned"
+    case roomQuestCompleted = "room_quest_completed"
 }
 
 struct SliceConfig: Codable, Equatable {
