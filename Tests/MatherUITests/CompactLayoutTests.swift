@@ -31,6 +31,8 @@ final class CompactLayoutTests: XCTestCase {
 
         let pictorialLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Break '"))
         _ = pictorialLabel.waitForExistence(timeout: 10)
+        let leftBucketCount = app.staticTexts["0"]
+        XCTAssertTrue(leftBucketCount.waitForExistence(timeout: 5), "Expected pictorial stage to start blank instead of prefilled")
         app.buttons["Use this break"].tap()
 
         let abstractLabel = app.staticTexts["Write it"]

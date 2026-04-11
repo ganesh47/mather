@@ -39,6 +39,36 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func pictorialStageStartsBlankInsteadOfPrefilledAnswer() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.verticalSlice1Enabled = true
+        flags.testModeEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else {
+            Issue.record("Expected deterministic problem")
+            return
+        }
+
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(engine.currentStage == .pictorial)
+        #expect(engine.splitLeftCount == 0)
+        #expect(problem.decompositionA > 0)
+        #expect(problem.decompositionA != engine.splitLeftCount)
+    }
+
+    @Test
     func hapticsStageSuccessFiredOnConcreteStageClear() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
