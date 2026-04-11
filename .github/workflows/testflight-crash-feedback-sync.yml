@@ -1,0 +1,34 @@
+name: TestFlight Crash Feedback Sync
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: testflight-crash-feedback-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-crash-feedback:
+    name: Create issues for new TestFlight crash feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Install Python dependencies
+        run: pip3 install PyJWT cryptography
+
+      - name: Sync TestFlight crash feedback into GitHub issues
+        env:
+          APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TESTFLIGHT_FEEDBACK_ONLY_KIND: crash
+        run: python3 ci_scripts/testflight_feedback_to_issues.py
