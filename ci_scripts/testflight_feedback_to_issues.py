@@ -19,9 +19,11 @@ import jwt
 APP_STORE_CONNECT_API_BASE = "https://api.appstoreconnect.apple.com"
 GITHUB_API_BASE = "https://api.github.com"
 DEFAULT_ISSUE_LABELS = ["source:testflight", "type:feedback"]
+CRASH_ISSUE_LABELS = ["source:testflight", "type:bug"]
 LABEL_COLORS = {
     "source:testflight": "0e8a16",
     "type:feedback": "1d76db",
+    "type:bug": "d73a4a",
 }
 
 
@@ -214,6 +216,70 @@ def build_issue_title(feedback: dict[str, Any], kind: str) -> str:
     return title
 
 
+def redact_for_privacy(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+    lowered = trimmed.lower()
+    if "@" in trimmed or any(token in lowered for token in ["iphone", "ipad", "ios ", "ipados", "device", "serial", "identifier", "email"]):
+        return "_redacted for privacy_"
+    return trimmed
+
+
+def extract_metadata(attrs: dict[str, Any], build_attrs: dict[str, Any]) -> dict[str, str]:
+    metadata = {
+        "iOS version": first_non_empty(
+            attrs.get("osVersion"),
+            attrs.get("operatingSystemVersion"),
+            attrs.get("deviceOsVersion"),
+        ) or "_unknown_",
+        "Device model": redact_for_privacy(
+            first_non_empty(
+                attrs.get("deviceModel"),
+                attrs.get("deviceClass"),
+                attrs.get("deviceType"),
+            )
+        ) or "_unknown_",
+        "Locale": first_non_empty(attrs.get("locale"), attrs.get("language")) or "_unknown_",
+        "App version": first_non_empty(attrs.get("appVersion"), build_attrs.get("appVersionString")) or "_unknown_",
+        "Build number": first_non_empty(build_attrs.get("version"), attrs.get("buildVersion")) or "_unknown_",
+    }
+    return metadata
+
+
+def summarize_crash_context(attrs: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+
+    crash_type = first_non_empty(
+        attrs.get("crashType"),
+        attrs.get("type"),
+        attrs.get("exceptionType"),
+    )
+    if crash_type:
+        lines.append(f"- Crash type: `{crash_type}`")
+
+    signal = first_non_empty(attrs.get("signal"), attrs.get("exceptionSignal"))
+    if signal:
+        lines.append(f"- Signal: `{signal}`")
+
+    fault_module = redact_for_privacy(
+        first_non_empty(attrs.get("faultingModule"), attrs.get("bundleIdentifier"))
+    )
+    if fault_module:
+        lines.append(f"- Faulting module: {fault_module}")
+
+    incident = redact_for_privacy(first_non_empty(attrs.get("incidentId"), attrs.get("diagnosticId")))
+    if incident:
+        lines.append(f"- Crash incident id: {incident}")
+
+    if not lines:
+        lines.append("- Apple did not expose structured crash fields in this payload beyond the submission record.")
+
+    return lines
+
+
 def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str:
     attrs = feedback.get("attributes", {})
     build = get_related_resource(feedback, "build") or {}
@@ -223,15 +289,18 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         attrs.get("submittedDate"),
         attrs.get("createdDate"),
     )
-    comment = first_non_empty(
-        attrs.get("comment"),
-        attrs.get("notes"),
+    comment = redact_for_privacy(
+        first_non_empty(
+            attrs.get("comment"),
+            attrs.get("notes"),
+        )
     )
     build_version = first_non_empty(
         build_attrs.get("version"),
         attrs.get("buildVersion"),
     )
     app_version = first_non_empty(attrs.get("appVersion"))
+    metadata = extract_metadata(attrs, build_attrs)
     build_uploaded_at = first_non_empty(build_attrs.get("uploadedDate"))
     screenshots = attrs.get("screenshots") or []
     screenshot_count = len(screenshots)
@@ -253,10 +322,38 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
         f"- Screenshot count: {screenshot_count if kind == 'screenshot' else 0}",
         f"- App Store Connect: {asc_link}",
         "",
+        "## Minimum metadata",
+        f"- iOS version: {metadata['iOS version']}",
+        f"- Device model: {metadata['Device model']}",
+        f"- Locale: {metadata['Locale']}",
+        f"- App version: {metadata['App version']}",
+        f"- Build number: {metadata['Build number']}",
+        "",
         "## Feedback",
         comment or "_No tester comment included in API payload._",
         "",
     ]
+
+    if kind == "crash":
+        lines.extend([
+            "## Crash context",
+            *summarize_crash_context(attrs),
+            "",
+            "## Triage prompts",
+            "- Confirm the minimum metadata block is populated before deeper enrichment.",
+            "- Reproduce on the same build number before code changes.",
+            "- Compare the crash time against recent telemetry or UI flow changes.",
+            "- Pull full crash details from App Store Connect locally rather than copying raw diagnostics into GitHub.",
+            "",
+        ])
+
+    if kind == "screenshot":
+        lines.extend([
+            "## Enrichment prompts",
+            "- Confirm the minimum metadata block is populated before product triage.",
+            "- Use the screenshot plus build number/iOS version to compare against current shipped UI.",
+            "",
+        ])
 
     if kind == "screenshot" and screenshots:
         lines.extend(["## Screenshots"])
@@ -275,7 +372,8 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
     lines.extend(
         [
         "## Privacy",
-        "Raw TestFlight payload, tester contact details, and device metadata are intentionally omitted from GitHub.",
+        "GitHub issues intentionally omit raw TestFlight payloads, tester identity/contact fields, exact device identifiers, and full crash diagnostics.",
+        "For crash submissions, only minimal triage-safe metadata should appear here; inspect the full Apple record inside App Store Connect when deeper debugging is required.",
         "Screenshots embedded here use temporary signed Apple feedback URLs and may expire.",
         "Review the linked item in App Store Connect for the original feedback record.",
         "",
@@ -329,24 +427,34 @@ def parse_labels() -> list[str]:
     return labels or DEFAULT_ISSUE_LABELS
 
 
+def selected_kinds() -> set[str]:
+    raw = os.environ.get("TESTFLIGHT_FEEDBACK_ONLY_KIND", "").strip()
+    if not raw:
+        return {"crash", "screenshot"}
+    return {part.strip().lower() for part in raw.split(",") if part.strip()}
+
+
 def main() -> int:
     config = load_config()
     labels = parse_labels()
-    ensure_labels(config, labels)
+    ensure_labels(config, list(dict.fromkeys(labels + CRASH_ISSUE_LABELS)))
 
+    kinds = selected_kinds()
     created = 0
-    created += sync_feedback_kind(
-        config,
-        endpoint=f"/v1/apps/{config.asc_app_id}/betaFeedbackCrashSubmissions",
-        kind="crash",
-        labels=labels,
-    )
-    created += sync_feedback_kind(
-        config,
-        endpoint=f"/v1/apps/{config.asc_app_id}/betaFeedbackScreenshotSubmissions",
-        kind="screenshot",
-        labels=labels,
-    )
+    if "crash" in kinds:
+        created += sync_feedback_kind(
+            config,
+            endpoint=f"/v1/apps/{config.asc_app_id}/betaFeedbackCrashSubmissions",
+            kind="crash",
+            labels=CRASH_ISSUE_LABELS,
+        )
+    if "screenshot" in kinds:
+        created += sync_feedback_kind(
+            config,
+            endpoint=f"/v1/apps/{config.asc_app_id}/betaFeedbackScreenshotSubmissions",
+            kind="screenshot",
+            labels=labels,
+        )
     print(f"Created {created} new GitHub issue(s)")
     return 0
 
