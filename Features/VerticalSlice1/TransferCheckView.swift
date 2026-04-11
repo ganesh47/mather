@@ -40,14 +40,12 @@ struct TransferCheckView: View {
                 HStack(spacing: 12) {
                     transferBucket(
                         title: "Left side",
-                        targetCount: problem.decompositionA,
                         count: leftCount,
                         fill: MatherTheme.warm,
                         side: .left
                     )
                     transferBucket(
                         title: "Right side",
-                        targetCount: problem.decompositionB,
                         count: rightCount,
                         fill: MatherTheme.accent,
                         side: .right
@@ -76,20 +74,15 @@ struct TransferCheckView: View {
             .accessibilityLabel("Hidden part")
     }
 
-    private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
+    private func transferBucket(title: String, count: Int, fill: Color, side: TransferSide) -> some View {
         let bucketBackground = colorScheme == .dark ? MatherTheme.panel.opacity(0.94) : MatherTheme.card
         let bucketBorder = colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : fill.opacity(0.18)
 
         return VStack(spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(MatherTheme.ink)
-                Spacer()
-                Text("\(targetCount)")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(fill)
-            }
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5),
