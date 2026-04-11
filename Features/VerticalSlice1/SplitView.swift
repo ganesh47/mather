@@ -6,6 +6,9 @@ struct SplitView: View {
     let onAdjust: (Int) -> Void
     let onSubmit: () -> Void
     var theme: any SliceTheme = ClassicTheme()
+    /// When true, the split is pre-set and not user-adjustable.
+    /// Hides the drag affordance and shows a "collected" badge.
+    var isLocked: Bool = false
 
     private var rightCount: Int { target - leftCount }
 
@@ -35,19 +38,28 @@ struct SplitView: View {
                     DragGesture(minimumDistance: 30)
                         .onEnded { value in
                             onAdjust(value.translation.width < 0 ? -1 : 1)
-                        }
+                        },
+                    including: isLocked ? .none : .all
                 )
 
-                // Swipe affordance — left/right chevrons hint at the drag gesture.
-                // Tap on each bucket also adjusts the split (no reading required).
-                HStack {
-                    Image(systemName: "chevron.left")
-                    Spacer()
-                    Image(systemName: "chevron.right")
+                if isLocked {
+                    // Show a read-only badge so it's clear tapping won't change the split.
+                    Label("From your walk", systemImage: "figure.walk")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(MatherTheme.accent.opacity(0.8))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    // Swipe affordance — left/right chevrons hint at the drag gesture.
+                    // Tap on each bucket also adjusts the split (no reading required).
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.secondary.opacity(0.45))
+                    .padding(.horizontal, 20)
                 }
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary.opacity(0.45))
-                .padding(.horizontal, 20)
 
                 // Live equation — shows A + B = target as the child adjusts the split.
                 // Bridges the pictorial buckets to the abstract equation (CPA framework).

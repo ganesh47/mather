@@ -54,12 +54,13 @@ struct RoomSessionView: View {
         if let p = engine.problem {
             ScrollView {
                 VStack(spacing: 20) {
-                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: false)
+                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
                     SplitView(
                         target: p.target,
                         leftCount: engine.splitLeftCount,
                         onAdjust: { _ in },     // read-only — split determined by room phase
-                        onSubmit: { engine.submitPictorial() }
+                        onSubmit: { engine.submitPictorial() },
+                        isLocked: true
                     )
                 }
                 .padding(.horizontal, 20)
@@ -73,7 +74,7 @@ struct RoomSessionView: View {
         if let p = engine.problem {
             ScrollView {
                 VStack(spacing: 20) {
-                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: false)
+                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
                     EquationResolveView(
                         target: p.target,
                         leftInput: engine.equationLeftInput,
@@ -106,7 +107,7 @@ struct RoomSessionView: View {
         if let p = engine.problem {
             ScrollView {
                 VStack(spacing: 20) {
-                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: false)
+                    FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
                     TransferCheckView(
                         problem: p,
                         leftCount: engine.transferLeftCount,
@@ -201,9 +202,25 @@ private struct ReturningView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
 
-                Image(systemName: "arrow.uturn.backward.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(MatherTheme.accent)
+                if let p = engine.problem {
+                    HStack(spacing: 16) {
+                        Image(systemName: "arrow.uturn.backward.circle.fill")
+                            .font(.system(size: 64))
+                            .foregroundStyle(MatherTheme.accent)
+                        VStack(spacing: 4) {
+                            Text("\(p.target)")
+                                .font(.system(size: 80, weight: .black, design: .rounded))
+                                .foregroundStyle(MatherTheme.accent)
+                            Text(p.target == 1 ? "token" : "tokens")
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(MatherTheme.ink.opacity(0.7))
+                        }
+                    }
+                } else {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .font(.system(size: 80))
+                        .foregroundStyle(MatherTheme.accent)
+                }
 
                 Spacer()
 
@@ -262,7 +279,7 @@ private struct RoomPausedView: View {
                 Button("Stop session") {
                     engine.abandonSession(reason: "parent_abort")
                 }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.danger.opacity(0.15)))
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.danger.opacity(0.45)))
                 .foregroundStyle(MatherTheme.danger)
             }
             .padding(.horizontal, 40)

@@ -6,6 +6,7 @@ struct SettingsView: View {
     let summaries: [StoredSessionSummary]
 
     @State private var showingClearConfirmation = false
+    @State private var showingSafetyRules = false
 
     private var verticalSliceBinding: Binding<Bool> {
         Binding(
@@ -87,16 +88,41 @@ struct SettingsView: View {
                             Text("Settings")
                                 .font(.largeTitle.weight(.black))
 
+                            Text("Activities")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 4)
                             Toggle("Make & Break to 10", isOn: verticalSliceBinding)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                             Toggle("Bond Blast finale", isOn: bondMatchBinding)
-                            Toggle("Motion controls", isOn: motionBinding)
-                            Toggle("Clap reaction (mic)", isOn: soundReactionBinding)
                             Toggle("Room Quest (beta)", isOn: roomQuestBinding)
-                            Toggle("Test mode", isOn: testModeBinding)
+                            if appModel.featureFlags.roomQuestEnabled {
+                                Button("Review Room Quest safety rules") {
+                                    showingSafetyRules = true
+                                }
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(MatherTheme.accent)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 4)
+                            }
+
+                            Divider()
+
+                            Text("Feedback")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
                             Toggle("Audio prompts", isOn: audioBinding)
                             Toggle("Haptics", isOn: hapticsBinding)
+
+                            Divider()
+
+                            Text("Advanced")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Toggle("Motion controls", isOn: motionBinding)
+                            Toggle("Clap reaction (mic)", isOn: soundReactionBinding)
+                            Toggle("Test mode", isOn: testModeBinding)
                         }
                         .font(.title3.weight(.semibold))
                     }
@@ -192,6 +218,9 @@ struct SettingsView: View {
                 .padding(24)
             }
         }
+        .sheet(isPresented: $showingSafetyRules) {
+            RoomSafetyRulesSheet()
+        }
         .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
@@ -201,5 +230,50 @@ struct SettingsView: View {
         } message: {
             Text("This removes saved summaries and local JSONL exports.")
         }
+    }
+}
+
+// MARK: - Room Quest safety rules sheet
+
+private struct RoomSafetyRulesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Before every Room Quest session, confirm:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    CardSurface {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("Safety checklist", systemImage: "checklist")
+                                .font(.headline.weight(.semibold))
+                            safetyItem("Both spot-cards in the same room as this iPad")
+                            safetyItem("Spots are away from stairs, windows, and balconies")
+                            safetyItem("Spots are away from the kitchen")
+                            safetyItem("A parent stays nearby during the room phase")
+                            safetyItem("Nothing in the activity rewards running or jumping")
+                        }
+                    }
+                }
+                .padding(24)
+            }
+            .background(MatherTheme.background.ignoresSafeArea())
+            .navigationTitle("Room Quest Safety")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func safetyItem(_ text: String) -> some View {
+        Label(text, systemImage: "checkmark.circle.fill")
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(MatherTheme.ink)
     }
 }

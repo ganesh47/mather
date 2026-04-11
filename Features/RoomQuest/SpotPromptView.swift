@@ -39,8 +39,10 @@ struct SpotPromptView: View {
 
                 Spacer()
 
-                Button("Got them!") {
+                Button {
                     engine.markSpotVisited(index: spotIndex)
+                } label: {
+                    Label("Got them!", systemImage: "checkmark.circle.fill")
                 }
                 .buttonStyle(RoomQuestPrimaryButtonStyle())
                 .padding(.horizontal, 40)

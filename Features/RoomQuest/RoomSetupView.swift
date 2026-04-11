@@ -72,7 +72,7 @@ struct RoomSetupView: View {
             Text("\(quantity)")
                 .font(.system(size: 48, weight: .black, design: .rounded))
             Text(label)
-                .font(.caption.weight(.semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
         }
         .frame(maxWidth: .infinity)

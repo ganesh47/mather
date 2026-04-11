@@ -23,14 +23,14 @@ struct FeedbackBannerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             isCelebrating
-                ? MatherTheme.warm.opacity(0.22)
+                ? MatherTheme.warm.opacity(0.88)
                 : MatherTheme.softBlue.opacity(0.18)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(
-                    isCelebrating ? MatherTheme.warm.opacity(0.5) : MatherTheme.softBlue.opacity(0.3),
+                    isCelebrating ? MatherTheme.warm : MatherTheme.softBlue.opacity(0.3),
                     lineWidth: 1.5
                 )
         )

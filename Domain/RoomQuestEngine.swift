@@ -22,6 +22,7 @@ final class RoomQuestEngine {
     private(set) var phase: RoomPhase = .safetyAck
     private(set) var problem: SliceProblem?
     var feedbackMessage = ""
+    var showCelebration = false
 
     // On-screen CPA state — mirrors VerticalSliceEngine's public fields
     private(set) var splitLeftCount = 0     // pre-populated from room phase decompositionA
@@ -133,6 +134,7 @@ final class RoomQuestEngine {
         hapticsService.success(enabled: featureFlags.hapticsEnabled)
         phase = .onScreenPictorial
         feedbackMessage = "You collected them! Now let's show the split."
+        flashCelebration()
     }
 
     // MARK: - On-screen CPA
@@ -144,6 +146,7 @@ final class RoomQuestEngine {
     func submitAbstract() {
         guard let p = problem else { return }
         if equationLeftInput == String(p.decompositionA) && equationRightInput == String(p.decompositionB) {
+            flashCelebration()
             phase = .onScreenTransfer
         } else {
             hapticsService.failure(enabled: featureFlags.hapticsEnabled)
@@ -163,6 +166,7 @@ final class RoomQuestEngine {
         let current = phase
         phase = .paused(resumingTo: current)
         roomPhaseTimer?.cancel()
+        showCelebration = false
         feedbackMessage = "Paused. Tap Resume when ready."
     }
 
@@ -183,6 +187,14 @@ final class RoomQuestEngine {
     }
 
     // MARK: - Private
+
+    private func flashCelebration() {
+        showCelebration = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            self?.showCelebration = false
+        }
+    }
 
     private func startRoomPhaseTimer() {
         roomPhaseTimer = Task { [weak self] in
@@ -214,6 +226,7 @@ final class RoomQuestEngine {
         feedbackMessage = abstractCorrect ? "Well done! You made \(p.target)." : "Good try!"
         if abstractCorrect {
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
+            flashCelebration()
         }
     }
 }
