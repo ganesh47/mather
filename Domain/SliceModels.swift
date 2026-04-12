@@ -14,9 +14,9 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .concrete:  "Make it"
-        case .pictorial: "Break it"
+        case .pictorial: "Bond Blast!"
         case .abstract:  "Write it"
-        case .transfer:  "Show it again"
+        case .transfer:  "Show it"
         case .bondMatch: "Bond Blast!"
         case .done:      "Done"
         }

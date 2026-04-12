@@ -2,7 +2,7 @@ import XCTest
 
 @MainActor
 final class CompactLayoutTests: XCTestCase {
-    func testAbstractStageSubmitIsReachableWithoutSwipe() {
+    func testVS1CompactFlowShowsUpdatedCopyAndKeepsCoreActionsReachableWithoutSwipe() {
         let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
 
@@ -29,11 +29,14 @@ final class CompactLayoutTests: XCTestCase {
         _ = concreteSubmit.waitForExistence(timeout: 5)
         concreteSubmit.tap()
 
-        let pictorialLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Break '"))
-        _ = pictorialLabel.waitForExistence(timeout: 10)
-        let leftBucketCount = app.staticTexts["0"]
-        XCTAssertTrue(leftBucketCount.waitForExistence(timeout: 5), "Expected pictorial stage to start blank instead of prefilled")
-        app.buttons["Use this break"].tap()
+        let bondBlastLabel = app.staticTexts["Bond Blast!"]
+        _ = bondBlastLabel.waitForExistence(timeout: 10)
+        XCTAssertFalse(app.staticTexts["Break It"].exists, "Expected Bond Blast to replace the old Break It title")
+
+        for (left, right) in [(1, 5), (2, 4), (3, 3)] {
+            app.buttons["bond-left-\(left)"].tap()
+            app.buttons["bond-right-\(right)"].tap()
+        }
 
         let abstractLabel = app.staticTexts["Write it"]
         _ = abstractLabel.waitForExistence(timeout: 10)
@@ -41,6 +44,19 @@ final class CompactLayoutTests: XCTestCase {
         let submitButton = app.buttons["Check equation"]
         _ = submitButton.waitForExistence(timeout: 5)
         XCTAssertTrue(submitButton.isHittable, "Expected abstract-stage submit to be reachable without additional scrolling")
+
+        app.buttons["equation-digit-3"].firstMatch.tap()
+        app.buttons["Part 2, ?"].tap()
+        app.buttons["equation-digit-3"].firstMatch.tap()
+        submitButton.tap()
+
+        let transferLabel = app.staticTexts["Show it"]
+        _ = transferLabel.waitForExistence(timeout: 10)
+        XCTAssertFalse(app.staticTexts["Show it again"].exists, "Expected old transfer-stage copy to be removed")
+
+        let transferSubmit = app.buttons["Check my groups"]
+        _ = transferSubmit.waitForExistence(timeout: 5)
+        XCTAssertTrue(transferSubmit.isHittable, "Expected transfer-stage submit to remain reachable without additional scrolling")
     }
 
     private func launchWithVS1() -> XCUIApplication {

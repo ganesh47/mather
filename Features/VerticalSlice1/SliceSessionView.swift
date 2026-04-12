@@ -82,13 +82,35 @@ struct SliceSessionView: View {
                 theme: appModel.engine.activeTheme
             )
         case .pictorial:
-            SplitView(
-                target: problem.target,
-                leftCount: appModel.engine.splitLeftCount,
-                onAdjust: appModel.engine.moveSplit,
-                onSubmit: appModel.engine.submitCurrentStage,
-                theme: appModel.engine.activeTheme
-            )
+            if let bondState = appModel.engine.bondMatchState {
+                BondMatchView(
+                    state: bondState,
+                    tiltPitch: appModel.motionService.tiltPitch,
+                    tiltRoll: appModel.motionService.tiltRoll,
+                    shakeDetected: appModel.motionService.shakeDetected,
+                    clapDetected: appModel.soundDetectionService.clapDetected,
+                    onMatch: appModel.engine.matchPair(id:),
+                    onMismatch: appModel.engine.mismatchPair,
+                    onDragStarted: appModel.engine.bondDragStarted(pairId:),
+                    onNearTarget: appModel.engine.bondNearTarget,
+                    onShakeHandled: appModel.motionService.resetShake,
+                    onClapHandled: appModel.soundDetectionService.resetClap
+                )
+                .onAppear {
+                    if appModel.featureFlags.motionControlsEnabled {
+                        appModel.motionService.startUpdates()
+                    }
+                    if appModel.featureFlags.soundReactionEnabled {
+                        appModel.soundDetectionService.startListening()
+                    }
+                }
+                .onDisappear {
+                    appModel.motionService.stopUpdates()
+                    appModel.soundDetectionService.stopListening()
+                }
+            } else {
+                CardSurface { Text("Loading Bond Blast...") }
+            }
         case .abstract:
             EquationResolveView(
                 target: problem.target,
@@ -136,6 +158,8 @@ struct SliceSessionView: View {
                     appModel.motionService.stopUpdates()
                     appModel.soundDetectionService.stopListening()
                 }
+            } else {
+                CardSurface { Text("Loading Bond Blast...") }
             }
         case .done:
             CardSurface { Text("Moving to the next problem...") }

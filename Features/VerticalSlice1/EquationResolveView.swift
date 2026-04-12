@@ -13,47 +13,46 @@ struct EquationResolveView: View {
 
     @State private var selectedSide: EquationSide = .left
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
 
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Write it")
-                    .font(.largeTitle.weight(.black))
+                    .font(.title.weight(.black))
                 Text(theme.abstractPrompt())
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
 
                 ViewThatFits {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         entryCard(title: "Part 1", value: leftInput, side: .left)
-                        Text("+").font(.largeTitle.weight(.black))
+                        Text("+").font(.title.weight(.black))
                         entryCard(title: "Part 2", value: rightInput, side: .right)
-                        Text("=").font(.largeTitle.weight(.black))
+                        Text("=").font(.title.weight(.black))
                         Text("\(target)")
-                            .font(.system(size: 42, weight: .black, design: .rounded))
+                            .font(.system(size: 32, weight: .black, design: .rounded))
                     }
-                    VStack(spacing: 10) {
-                        HStack(spacing: 12) {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             entryCard(title: "Part 1", value: leftInput, side: .left)
-                            Text("+").font(.title.weight(.black))
+                            Text("+").font(.title2.weight(.black))
                             entryCard(title: "Part 2", value: rightInput, side: .right)
                         }
-                        HStack(spacing: 12) {
-                            Text("=").font(.title.weight(.black))
+                        HStack(spacing: 10) {
+                            Text("=").font(.title2.weight(.black))
                             Text("\(target)")
-                                .font(.system(size: 36, weight: .black, design: .rounded))
+                                .font(.system(size: 34, weight: .black, design: .rounded))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
 
-                LazyVGrid(columns: columns, spacing: 12) {
+                LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(0...10, id: \.self) { digit in
-                        Button("\(digit)") {
-                            onAppend(digit, selectedSide)
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: selectedSide == .left ? MatherTheme.softBlue.opacity(0.75) : MatherTheme.warm.opacity(0.75)))
+                        keypadButton(digit)
                     }
                 }
 
@@ -67,20 +66,39 @@ struct EquationResolveView: View {
         }
     }
 
+    private func keypadButton(_ digit: Int) -> some View {
+        Button("\(digit)") {
+            onAppend(digit, selectedSide)
+        }
+        .font(.title3.weight(.bold))
+        .foregroundStyle(MatherTheme.ink)
+        .frame(maxWidth: .infinity, minHeight: 56)
+        .background(selectedSide == .left ? MatherTheme.softBlue.opacity(0.75) : MatherTheme.warm.opacity(0.75))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(
+                    colorScheme == .dark ? .white.opacity(0.08) : .clear,
+                    lineWidth: 1
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityIdentifier("equation-digit-\(digit)")
+    }
+
     private func entryCard(title: String, value: String, side: EquationSide) -> some View {
         Button {
             selectedSide = side
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 Text(title)
-                    .font(.headline)
+                    .font(.subheadline.weight(.bold))
                 ZStack(alignment: .topTrailing) {
                     Text(value.isEmpty ? "?" : value)
-                        .font(.system(size: 40, weight: .black, design: .rounded))
-                        .frame(maxWidth: .infinity, minHeight: 84)
+                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity, minHeight: 60)
                         .background(selectedSide == side ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.28 : 0.18) : MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.32 : 0.25))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .strokeBorder(
                                     selectedSide == side
                                         ? .white.opacity(colorScheme == .dark ? 0.12 : 0)
@@ -88,15 +106,14 @@ struct EquationResolveView: View {
                                     lineWidth: 1
                                 )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    // Inline clear — always reachable, no scrolling needed
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     if !value.isEmpty {
                         Button {
                             onClear(side)
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(.secondary)
-                                .font(.title3)
+                                .font(.footnote.weight(.bold))
                         }
                         .buttonStyle(.plain)
                         .padding(8)

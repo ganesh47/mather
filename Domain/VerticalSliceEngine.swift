@@ -265,21 +265,21 @@ final class VerticalSliceEngine {
 
     /// Called by BondMatchView when the child begins dragging or taps a left card.
     func bondDragStarted(pairId: UUID) {
-        guard currentStage == .bondMatch else { return }
+        guard currentStage == .pictorial || currentStage == .bondMatch else { return }
         hapticsService.cardPickup(enabled: featureFlags.hapticsEnabled)
         logBondMatchTelemetry("pair_drag_started", extra: ["pair_id": pairId.uuidString])
     }
 
     /// Called by BondMatchView when a dragged card is hovering near a snap target.
     func bondNearTarget() {
-        guard currentStage == .bondMatch else { return }
+        guard currentStage == .pictorial || currentStage == .bondMatch else { return }
         hapticsService.cardNearSnap(enabled: featureFlags.hapticsEnabled)
     }
 
     /// Called when the child successfully matches a complement pair.
     /// Advances to `.done` when all pairs are matched.
     func matchPair(id: UUID) {
-        guard currentStage == .bondMatch,
+        guard (currentStage == .pictorial || currentStage == .bondMatch),
               let problem = currentProblem,
               var state = bondMatchState,
               let idx = state.pairs.firstIndex(where: { $0.id == id }) else { return }
@@ -303,7 +303,7 @@ final class VerticalSliceEngine {
 
     /// Called when the child drops a card on the wrong target.
     func mismatchPair() {
-        guard currentStage == .bondMatch, let problem = currentProblem else { return }
+        guard (currentStage == .pictorial || currentStage == .bondMatch), let problem = currentProblem else { return }
         logBondMatchTelemetry("pair_mismatch", extra: [:])
         hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
         let msg = "Try again! Find two numbers that make \(problem.target)."
@@ -367,8 +367,19 @@ final class VerticalSliceEngine {
     private func prepareForStage(_ stage: SliceStage) {
         switch stage {
         case .pictorial:
-            splitLeftCount = 0
+            if let problem = currentProblem {
+                bondMatchState = BondMatchState(
+                    target: problem.target,
+                    pairs: BondMatchState.makePairs(for: problem.target)
+                )
+                logBondMatchTelemetry("bond_match_started", extra: [
+                    "target": String(problem.target),
+                    "pair_count": String(bondMatchState?.pairs.count ?? 0),
+                    "entry_stage": SliceStage.pictorial.rawValue
+                ])
+            }
         case .abstract:
+            bondMatchState = nil
             equationLeftInput = ""
             equationRightInput = ""
         case .transfer:
@@ -382,7 +393,8 @@ final class VerticalSliceEngine {
                 )
                 logBondMatchTelemetry("bond_match_started", extra: [
                     "target": String(problem.target),
-                    "pair_count": String(bondMatchState?.pairs.count ?? 0)
+                    "pair_count": String(bondMatchState?.pairs.count ?? 0),
+                    "entry_stage": SliceStage.bondMatch.rawValue
                 ])
             }
         case .concrete, .done:
@@ -564,17 +576,12 @@ final class VerticalSliceEngine {
         switch currentStage {
         case .concrete:
             return activeTheme.concretePrompt(target: currentProblem.target)
-        case .pictorial:
-            return activeTheme.pictorialPrompt(target: currentProblem.target)
+        case .pictorial, .bondMatch:
+            return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
         case .abstract:
             return activeTheme.abstractPrompt()
         case .transfer:
-            return activeTheme.transferPrompt(
-                decompositionA: currentProblem.decompositionA,
-                decompositionB: currentProblem.decompositionB
-            )
-        case .bondMatch:
-            return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
+            return "Show the same two parts with counters."
         case .done:
             return "Nice work."
         }
@@ -595,14 +602,8 @@ final class VerticalSliceEngine {
             } else {
                 return "Try tapping the \(activeTheme.counterNoun) one by one until you reach \(problem.target)."
             }
-        case .pictorial:
-            if attempts == 1 {
-                return "Try another break. Both groups together should still make \(problem.target)."
-            } else if attempts == 2 {
-                return "You have \(splitLeftCount) on the left and \(problem.target - splitLeftCount) on the right. That makes \(splitLeftCount + (problem.target - splitLeftCount))."
-            } else {
-                return "Any split is fine — left and right just need to add up to \(problem.target)."
-            }
+        case .pictorial, .bondMatch:
+            return "Try another pair. Look for two numbers that add up to \(problem.target)."
         case .abstract:
             if attempts == 1 {
                 return "Use two numbers that add up to \(problem.target)."
@@ -613,14 +614,12 @@ final class VerticalSliceEngine {
             }
         case .transfer:
             if attempts == 1 {
-                return "Look at the same equation again. Put \(problem.decompositionA) counters on the left and \(problem.decompositionB) on the right."
+                return "Show the same two parts with counters."
             } else if attempts == 2 {
-                return "This is still the same equation: \(problem.decompositionA) on the left, \(problem.decompositionB) on the right."
+                return "Use the same two numbers you wrote and build them with counters."
             } else {
-                return "Keep showing the same equation with counters: \(problem.decompositionA) in the first group and \(problem.decompositionB) in the second group."
+                return "Build the same equation again with counters, one group on each side."
             }
-        case .bondMatch:
-            return "Try another pair. Look for two numbers that add up to \(problem.target)."
         case .done:
             return "Try again."
         }
@@ -631,7 +630,7 @@ final class VerticalSliceEngine {
         var payload = extra
         payload["problem_id"] = currentProblem.id.uuidString
         payload["action"] = action
-        payload["stage"] = SliceStage.bondMatch.rawValue
+        payload["stage"] = currentStage.rawValue
         try? telemetryWriter.append(
             SliceEvent(type: .interaction, payload: payload)
         )

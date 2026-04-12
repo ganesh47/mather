@@ -146,9 +146,8 @@ final class ScreenshotTests: XCTestCase {
         accentRowFirstCell.tap()
         submitButton.tap()
 
-        // After a correct answer the stage advances to pictorial — wait for it
-        let breakPredicate = NSPredicate(format: "label BEGINSWITH 'Break '")
-        _ = app.staticTexts.element(matching: breakPredicate).waitForExistence(timeout: 10)
+        // After a correct answer the stage advances to Bond Blast in the pictorial slot.
+        _ = app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10)
         snapshot(app, "Pictorial-AfterConcreteSuccess")
     }
 
@@ -282,8 +281,7 @@ final class ScreenshotTests: XCTestCase {
         _ = submitButton.waitForExistence(timeout: 5)
         submitButton.tap()
 
-        let breakPredicate = NSPredicate(format: "label BEGINSWITH 'Break '")
-        _ = app.staticTexts.element(matching: breakPredicate).waitForExistence(timeout: 10)
+        _ = app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10)
         snapshot(app, "iPhone-SplitView")
     }
 
