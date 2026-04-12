@@ -5,7 +5,7 @@ import Testing
 @MainActor
 struct VerticalSliceEngineTests {
     @Test
-    func sessionAlwaysIncludesTransferStage() async throws {
+    func sessionIncludesTransferStageWhenRoomQuestIsNotActive() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
@@ -36,6 +36,26 @@ struct VerticalSliceEngineTests {
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .transfer)
+    }
+
+    @Test
+    func roomQuestRouteDoesNotForceTransferStageInVs1Engine() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.verticalSlice1Enabled = true
+        flags.testModeEnabled = true
+        flags.roomQuestEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.showRoomQuest()
+        #expect(engine.route == .roomQuest)
+        #expect(engine.currentStage == .concrete)
     }
 
     @Test
