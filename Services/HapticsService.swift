@@ -28,7 +28,9 @@ final class HapticsService {
         do {
             engine = try CHHapticEngine()
             engine?.resetHandler = { [weak self] in
-                try? self?.engine?.start()
+                Task { @MainActor [weak self] in
+                    try? self?.engine?.start()
+                }
             }
             engine?.stoppedHandler = { _ in }
             try engine?.start()

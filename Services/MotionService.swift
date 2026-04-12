@@ -36,7 +36,7 @@ final class MotionService {
         manager.deviceMotionUpdateInterval = 1.0 / 30.0
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
             guard let motion else { return }
-            MainActor.assumeIsolated {
+            Task { @MainActor [weak self] in
                 self?.applyMotion(motion)
             }
         }
@@ -57,19 +57,28 @@ final class MotionService {
         shakeResetTask?.cancel()
     }
 
+    // MARK: - Internal helpers (visible for testing)
+
+    /// Apply pre-computed motion values. Extracted so unit tests can drive state
+    /// without needing a real CMMotionManager or device hardware.
+    func applyMotionValues(pitch: Double, roll: Double, accelerationMagnitude: Double) {
+        tiltPitch = pitch
+        tiltRoll  = roll
+        if accelerationMagnitude > 2.5 && !shakeDetected {
+            triggerShake()
+        }
+    }
+
     // MARK: - Private helpers
 
     private func applyMotion(_ motion: CMDeviceMotion) {
-        tiltPitch = motion.attitude.pitch
-        tiltRoll  = motion.attitude.roll
-
-        // Shake detection: userAcceleration excludes gravity.
-        // A deliberate device shake exceeds 2.5g on at least one axis.
         let acc = motion.userAcceleration
         let magnitude = (acc.x * acc.x + acc.y * acc.y + acc.z * acc.z).squareRoot()
-        if magnitude > 2.5 && !shakeDetected {
-            triggerShake()
-        }
+        applyMotionValues(
+            pitch: motion.attitude.pitch,
+            roll: motion.attitude.roll,
+            accelerationMagnitude: magnitude
+        )
     }
 
     private func triggerShake() {

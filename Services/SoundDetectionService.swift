@@ -39,6 +39,9 @@ final class SoundDetectionService {
         guard !isListening else { return }
         let inputNode = audioEngine.inputNode
         let format = inputNode.inputFormat(forBus: 0)
+        // When the AVAudioSession category is .playback (set by SpeechService),
+        // inputFormat can return a zero-sample-rate format — installTap would crash.
+        guard format.sampleRate > 0 else { return }
 
         inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
             guard let channelData = buffer.floatChannelData?[0] else { return }
