@@ -52,6 +52,7 @@ final class RoomQuestUITests: XCTestCase {
         // Accept — transitions to Setup
         app.buttons["I understand — let's go"].tap()
         XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Scan or confirm"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-SetupAfterAck")
     }
 
@@ -65,11 +66,9 @@ final class RoomQuestUITests: XCTestCase {
         app.buttons["Start Room Quest"].tap()
         XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
 
-        // Spot labels (fixed subheadline font, rendered as text)
-        XCTAssertTrue(app.staticTexts["Red spot"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Blue spot"].waitForExistence(timeout: 3))
-
-        // Safety reminder is visible
+        XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Scan-friendly setup"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Safety reminder"].waitForExistence(timeout: 3))
         snapshot(app, "RoomQuest-SetupView")
     }
@@ -82,26 +81,23 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["Ready — spots are set!"].tap()
+        app.buttons["room-station-card-redRocket"].tap()
+        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons["Ready — stations are set!"].tap()
 
-        // Spot 1 (red)
-        XCTAssertTrue(app.staticTexts["Red spot"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Spot1-Red")
 
-        // Pause button is present
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
 
-        // Confirm spot 1 collected
-        let gotThem = app.buttons.element(matching: NSPredicate(format: "label CONTAINS 'Got them'"))
-        XCTAssertTrue(gotThem.waitForExistence(timeout: 5))
-        gotThem.tap()
+        let gotRed = app.buttons["I found Red Rocket"]
+        XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
+        gotRed.tap()
 
-        // Spot 2 (blue)
-        XCTAssertTrue(app.staticTexts["Blue spot"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Spot2-Blue")
-        gotThem.tap()
+        app.buttons["I found Blue Bubble"].tap()
 
-        // Returning screen
         XCTAssertTrue(app.staticTexts["Bring them back!"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Returning")
     }
@@ -114,19 +110,18 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["Ready — spots are set!"].tap()
+        app.buttons["room-station-card-redRocket"].tap()
+        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons["Ready — stations are set!"].tap()
 
-        // Spot 1
-        _ = app.staticTexts["Red spot"].waitForExistence(timeout: 5)
-        let gotThem = app.buttons.element(matching: NSPredicate(format: "label CONTAINS 'Got them'"))
-        _ = gotThem.waitForExistence(timeout: 5)
-        gotThem.tap()
+        _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
+        let gotRed = app.buttons["I found Red Rocket"]
+        _ = gotRed.waitForExistence(timeout: 5)
+        gotRed.tap()
 
-        // Spot 2
-        _ = app.staticTexts["Blue spot"].waitForExistence(timeout: 5)
-        gotThem.tap()
+        _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        app.buttons["I found Blue Bubble"].tap()
 
-        // Returning
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
         app.buttons["We're back!"].tap()
 
@@ -176,18 +171,18 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["Ready — spots are set!"].tap()
+        app.buttons["room-station-card-redRocket"].tap()
+        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons["Ready — stations are set!"].tap()
 
-        _ = app.staticTexts["Red spot"].waitForExistence(timeout: 5)
+        _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
 
-        // Tap pause
         app.buttons["room-pause-button"].tap()
         XCTAssertTrue(app.staticTexts["Paused"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Paused")
 
-        // Resume
         app.buttons["Resume"].tap()
-        XCTAssertTrue(app.staticTexts["Red spot"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-ResumedToSpot")
     }
 
@@ -197,13 +192,14 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["Ready — spots are set!"].tap()
+        app.buttons["room-station-card-redRocket"].tap()
+        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons["Ready — stations are set!"].tap()
 
-        let gotThem = app.buttons.element(matching: NSPredicate(format: "label CONTAINS 'Got them'"))
-        _ = gotThem.waitForExistence(timeout: 5)
-        gotThem.tap()
-        _ = app.staticTexts["Blue spot"].waitForExistence(timeout: 5)
-        gotThem.tap()
+        _ = app.buttons["I found Red Rocket"].waitForExistence(timeout: 5)
+        app.buttons["I found Red Rocket"].tap()
+        _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        app.buttons["I found Blue Bubble"].tap()
 
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
         app.buttons["room-pause-button-returning"].tap()
@@ -221,9 +217,11 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["Ready — spots are set!"].tap()
+        app.buttons["room-station-card-redRocket"].tap()
+        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons["Ready — stations are set!"].tap()
 
-        _ = app.staticTexts["Red spot"].waitForExistence(timeout: 5)
+        _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
         app.buttons["room-pause-button"].tap()
         _ = app.staticTexts["Paused"].waitForExistence(timeout: 5)
 
@@ -261,7 +259,9 @@ final class RoomQuestUITests: XCTestCase {
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES"
+            "-feature.testModeEnabled", "YES",
+            "-feature.roomQuestEnabled", "NO",
+            "-feature.roomQuestSafetyAcknowledged", "NO"
         ]
         app.launch()
         return app
@@ -274,7 +274,8 @@ final class RoomQuestUITests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.roomQuestEnabled", "YES"
+            "-feature.roomQuestEnabled", "YES",
+            "-feature.roomQuestSafetyAcknowledged", "NO"
         ]
         app.launch()
         return app

@@ -178,6 +178,55 @@ struct BondMatchState: Equatable {
     }
 }
 
+// MARK: - Room Quest models
+
+enum RoomQuestStationRole: String, Codable, Equatable {
+    case redRocket
+    case blueBubble
+
+    var title: String {
+        switch self {
+        case .redRocket: "Red Rocket"
+        case .blueBubble: "Blue Bubble"
+        }
+    }
+
+    var colorName: String {
+        switch self {
+        case .redRocket: "red"
+        case .blueBubble: "blue"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .redRocket: "🚀"
+        case .blueBubble: "🫧"
+        }
+    }
+
+    var scanPrompt: String {
+        switch self {
+        case .redRocket: "Find and scan the Red Rocket marker."
+        case .blueBubble: "Find and scan the Blue Bubble marker."
+        }
+    }
+
+    var fallbackButtonTitle: String {
+        switch self {
+        case .redRocket: "I found Red Rocket"
+        case .blueBubble: "I found Blue Bubble"
+        }
+    }
+}
+
+struct RoomQuestStation: Equatable, Codable, Identifiable {
+    let id: RoomQuestStationRole
+    let role: RoomQuestStationRole
+    let quantity: Int
+    var isRegistered: Bool = false
+}
+
 @Model
 final class StoredSessionSummary {
     @Attribute(.unique) var sessionId: String
