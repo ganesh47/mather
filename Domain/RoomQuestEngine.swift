@@ -3,8 +3,8 @@ import Observation
 
 enum RoomPhase: Equatable {
     case safetyAck                          // one-time parent safety acknowledgement
-    case setup                              // parent placing spot-cards, sees quantities
-    case spot(index: Int)                   // child walking to spot i
+    case setup                              // parent placing station markers, sees quantities
+    case spot(index: Int)                   // child walking to station i
     case returning                          // child walking back to iPad
     case onScreenPictorial                  // SplitView (pre-populated from room phase)
     case onScreenAbstract                   // EquationResolveView
@@ -21,11 +21,12 @@ final class RoomQuestEngine {
 
     private(set) var phase: RoomPhase = .safetyAck
     private(set) var problem: SliceProblem?
+    private(set) var stations: [RoomQuestStation] = []
     var feedbackMessage = ""
     var showCelebration = false
 
     // On-screen CPA state — mirrors VerticalSliceEngine's public fields
-    private(set) var splitLeftCount = 0     // pre-populated from room phase decompositionA
+    private(set) var splitLeftCount = 0
     var equationLeftInput = ""
     var equationRightInput = ""
     var transferLeftCount = 0
@@ -43,7 +44,6 @@ final class RoomQuestEngine {
     private let telemetryWriter: TelemetryWriter
     private let speechService: SpeechService
     private let hapticsService: HapticsService
-    /// Set by AppModel after init. Callback to navigate back to Home via VerticalSliceEngine.
     var onExitToHome: (() -> Void)?
 
     static let roomPhaseLimitSeconds: TimeInterval = 4 * 60
@@ -64,14 +64,17 @@ final class RoomQuestEngine {
 
     // MARK: - Session lifecycle
 
-    /// Called when `RoomSessionView` appears. Generates a problem and enters the first phase.
     func startSession() {
         let problems = ProblemGenerator.generateProblems(config: SliceConfig())
         guard let p = problems.first else { return }
         problem = p
+        stations = [
+            RoomQuestStation(id: .redRocket, role: .redRocket, quantity: p.decompositionA),
+            RoomQuestStation(id: .blueBubble, role: .blueBubble, quantity: p.decompositionB)
+        ]
         setupStartedAt = .now
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
-        feedbackMessage = "Set up the spots, then tap Ready."
+        feedbackMessage = "Set up the stations, then scan each one or mark it ready."
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestStarted,
             payload: [
@@ -82,15 +85,34 @@ final class RoomQuestEngine {
         ))
     }
 
-    /// Parent taps "I understand" on the one-time safety acknowledgement screen.
     func acknowledgedSafety() {
         featureFlags.roomQuestSafetyAcknowledged = true
         phase = .setup
     }
 
-    /// Parent taps "Ready — spots are set!" to begin the room phase.
+    func registerStation(_ role: RoomQuestStationRole) {
+        guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
+        stations[idx].isRegistered = true
+        feedbackMessage = stations.allSatisfy(\.isRegistered)
+            ? "Great, both stations are ready."
+            : "Nice. Now set up the other station."
+    }
+
+    var allStationsRegistered: Bool {
+        stations.count == 2 && stations.allSatisfy(\.isRegistered)
+    }
+
+    var currentStation: RoomQuestStation? {
+        guard case .spot(let index) = phase, stations.indices.contains(index) else { return nil }
+        return stations[index]
+    }
+
     func markSetupComplete() {
         guard let p = problem else { return }
+        guard allStationsRegistered else {
+            feedbackMessage = "Scan or confirm both stations before you start."
+            return
+        }
         let setupMs = setupStartedAt.map { Int(Date.now.timeIntervalSince($0) * 1000) } ?? 0
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestSetupComplete,
@@ -98,20 +120,23 @@ final class RoomQuestEngine {
         ))
         roomPhaseStartedAt = .now
         phase = .spot(index: 0)
-        speechService.speak("Let's make \(p.target)! Walk to the red dot and pick up everything there.", enabled: featureFlags.audioEnabled)
+        speechService.speak("Let's make \(p.target)! Find the Red Rocket station and pick up everything there.", enabled: featureFlags.audioEnabled)
         startRoomPhaseTimer()
     }
 
-    /// Child or parent confirms arrival at a spot.
     func markSpotVisited(index: Int) {
-        guard let p = problem else { return }
-        let quantity = index == 0 ? p.decompositionA : p.decompositionB
+        guard let station = stations[safe: index] else { return }
+        let quantity = station.quantity
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestSpotVisited,
-            payload: ["spot_index": String(index), "quantity": String(quantity)]
+            payload: [
+                "spot_index": String(index),
+                "quantity": String(quantity),
+                "station_role": station.role.rawValue
+            ]
         ))
         if index == 0 {
-            speechService.speak("Great — now walk to the blue dot.", enabled: featureFlags.audioEnabled)
+            speechService.speak("Great, now find the Blue Bubble station.", enabled: featureFlags.audioEnabled)
             phase = .spot(index: 1)
         } else {
             speechService.speak("Bring them all back to me!", enabled: featureFlags.audioEnabled)
@@ -119,7 +144,6 @@ final class RoomQuestEngine {
         }
     }
 
-    /// Parent or child taps "We're back!" — transitions to on-screen CPA.
     func markReturned() {
         guard let p = problem else { return }
         roomPhaseTimer?.cancel()
@@ -136,8 +160,6 @@ final class RoomQuestEngine {
         feedbackMessage = "You collected them! Now let's show the split."
         flashCelebration()
     }
-
-    // MARK: - On-screen CPA
 
     func submitPictorial() {
         phase = .onScreenAbstract
@@ -159,8 +181,6 @@ final class RoomQuestEngine {
         let correct = transferLeftCount == p.decompositionA && transferRightCount == p.decompositionB
         finishSession(abstractCorrect: correct)
     }
-
-    // MARK: - Pause / abort
 
     func pauseSession() {
         let current = phase
@@ -185,8 +205,6 @@ final class RoomQuestEngine {
         phase = .complete
         onExitToHome?()
     }
-
-    // MARK: - Private
 
     private func flashCelebration() {
         showCelebration = true
@@ -228,5 +246,11 @@ final class RoomQuestEngine {
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
             flashCelebration()
         }
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

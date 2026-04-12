@@ -7,12 +7,16 @@ struct SpotPromptView: View {
     @Bindable var engine: RoomQuestEngine
     let spotIndex: Int
 
+    private var station: RoomQuestStation? {
+        engine.currentStation
+    }
+
     private var spotColour: Color {
-        spotIndex == 0 ? MatherTheme.warm : MatherTheme.accent
+        station?.role == .redRocket ? MatherTheme.warm : MatherTheme.accent
     }
 
     private var spotLabel: String {
-        spotIndex == 0 ? "Red spot" : "Blue spot"
+        station?.role.title ?? (spotIndex == 0 ? "Red Rocket" : "Blue Bubble")
     }
 
     var body: some View {
@@ -27,29 +31,52 @@ struct SpotPromptView: View {
                     .font(.system(size: 48, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
-                if let p = engine.problem {
-                    let quantity = spotIndex == 0 ? p.decompositionA : p.decompositionB
-                    Text("\(quantity)")
-                        .font(.system(size: 120, weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
-                    Text(quantity == 1 ? "token" : "tokens")
+                Text(station?.role.icon ?? "✨")
+                    .font(.system(size: 72))
+
+                if let station {
+                    Text(station.role.scanPrompt)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+
+                    Text("Then collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
                         .font(.title.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.84))
                 }
 
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("Need a fallback?", systemImage: "hand.tap.fill")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("If the marker is hard to scan, the child can keep going with one big confirmation button.")
+                            .font(.subheadline)
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                }
+                .padding(.horizontal, 24)
+
                 Spacer()
+
+                Button(station?.role.fallbackButtonTitle ?? "I found it") {
+                    engine.markSpotVisited(index: spotIndex)
+                }
+                .buttonStyle(RoomQuestPrimaryButtonStyle())
+                .padding(.horizontal, 40)
 
                 Button {
                     engine.markSpotVisited(index: spotIndex)
                 } label: {
-                    Label("Got them!", systemImage: "checkmark.circle.fill")
+                    Label("Scan marker later, keep going now", systemImage: "camera.viewfinder")
                 }
-                .buttonStyle(RoomQuestPrimaryButtonStyle())
-                .padding(.horizontal, 40)
+                .buttonStyle(.plain)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white.opacity(0.9))
                 .padding(.bottom, 40)
             }
 
-            // Pause button — always accessible, no unlock required
             Button {
                 engine.pauseSession()
             } label: {

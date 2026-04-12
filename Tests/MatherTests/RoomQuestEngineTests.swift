@@ -44,9 +44,20 @@ struct RoomQuestEngineTests {
     // MARK: - Room phase state machine
 
     @Test
-    func markSetupCompleteTransitionsToFirstSpot() {
+    func markSetupCompleteRequiresBothStationsRegistered() {
         let engine = makeEngine()
         engine.startSession()
+        engine.markSetupComplete()
+        #expect(engine.phase == .setup)
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("both stations"))
+    }
+
+    @Test
+    func markSetupCompleteTransitionsToFirstSpotAfterRegistration() {
+        let engine = makeEngine()
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
     }
@@ -55,6 +66,8 @@ struct RoomQuestEngineTests {
     func markSpotVisitedZeroTransitionsToSpotOne() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         #expect(engine.phase == .spot(index: 1))
@@ -64,6 +77,8 @@ struct RoomQuestEngineTests {
     func markSpotVisitedOneTransitionsToReturning() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -75,6 +90,8 @@ struct RoomQuestEngineTests {
         let engine = makeEngine()
         engine.startSession()
         guard let p = engine.problem else { return }
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -89,6 +106,8 @@ struct RoomQuestEngineTests {
     func submitPictorialTransitionsToAbstract() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -102,6 +121,8 @@ struct RoomQuestEngineTests {
         let engine = makeEngine()
         engine.startSession()
         guard let p = engine.problem else { return }
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -117,6 +138,8 @@ struct RoomQuestEngineTests {
     func wrongAbstractInputStaysAbstractWithFeedback() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -134,6 +157,8 @@ struct RoomQuestEngineTests {
         let engine = makeEngine()
         engine.startSession()
         guard let p = engine.problem else { return }
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         engine.markSpotVisited(index: 1)
@@ -154,6 +179,8 @@ struct RoomQuestEngineTests {
     func pauseAndResumeRestoresSpotPhase() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
         engine.markSpotVisited(index: 0)
         // Phase is now .spot(index: 1)
@@ -167,6 +194,8 @@ struct RoomQuestEngineTests {
     func abandonSessionCallsExitCallback() {
         let engine = makeEngine()
         engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
 
         var exitCalled = false

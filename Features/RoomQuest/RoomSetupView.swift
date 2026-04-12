@@ -11,7 +11,7 @@ struct RoomSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Set up the room")
                         .font(.largeTitle.weight(.black))
-                    Text("Place the two spot-cards in one room, within line of sight of the iPad.")
+                    Text("Place the two station markers in one room, then scan or confirm each one.")
                         .font(.subheadline)
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
@@ -19,25 +19,32 @@ struct RoomSetupView: View {
 
                 if let p = engine.problem {
                     HStack(spacing: 16) {
-                        spotCard(
-                            colour: MatherTheme.warm,
-                            label: "Red spot",
-                            quantity: p.decompositionA
-                        )
-                        spotCard(
-                            colour: MatherTheme.accent,
-                            label: "Blue spot",
-                            quantity: p.decompositionB
-                        )
+                        ForEach(engine.stations) { station in
+                            stationCard(for: station)
+                        }
                     }
 
                     CardSurface {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Target: \(p.target)")
                                 .font(.title2.weight(.bold))
-                            Text("Place \(p.decompositionA) red tokens at the red card and \(p.decompositionB) blue tokens at the blue card.")
+                            Text("Place \(p.decompositionA) tokens at Red Rocket and \(p.decompositionB) tokens at Blue Bubble.")
                                 .font(.body)
                         }
+                    }
+                }
+
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("Scan-friendly setup", systemImage: "camera.viewfinder")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.softBlue)
+                        Text("In alpha, parent can confirm a station manually if scanning is awkward.")
+                            .font(.subheadline)
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                        Text("Both stations must stay in the same room as this iPad.")
+                            .font(.subheadline)
+                            .foregroundStyle(MatherTheme.cardSubtitle)
                     }
                 }
 
@@ -46,36 +53,51 @@ struct RoomSetupView: View {
                         Label("Safety reminder", systemImage: "exclamationmark.triangle")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.coral)
-                        Text("Place cards away from stairs, windows, balconies, and the kitchen.")
+                        Text("Place stations away from stairs, windows, balconies, and the kitchen.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
-                        Text("Both spots must be in the same room as this iPad.")
+                        Text("Keep markers easy to see, but do not make the child walk while staring at the screen.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
                 }
 
-                Button("Ready — spots are set!") {
+                Button("Ready — stations are set!") {
                     engine.markSetupComplete()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(!engine.allStationsRegistered)
+                .opacity(engine.allStationsRegistered ? 1 : 0.55)
             }
             .padding(24)
         }
     }
 
-    private func spotCard(colour: Color, label: String, quantity: Int) -> some View {
-        VStack(spacing: 12) {
+    private func stationCard(for station: RoomQuestStation) -> some View {
+        let colour = station.role == .redRocket ? MatherTheme.warm : MatherTheme.accent
+
+        return VStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 16)
                 .fill(colour)
                 .frame(height: 80)
-            Text("\(quantity)")
+                .overlay {
+                    Text(station.role.icon)
+                        .font(.system(size: 40))
+                }
+            Text("\(station.quantity)")
                 .font(.system(size: 48, weight: .black, design: .rounded))
-            Text(label)
+            Text(station.role.title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
+            Button(station.isRegistered ? "Marker ready" : "Scan or confirm") {
+                engine.registerStation(station.role)
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: colour.opacity(0.18)))
+            .foregroundStyle(colour)
+            .accessibilityIdentifier("room-station-register-\(station.role.rawValue)")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+        .accessibilityIdentifier("room-station-card-\(station.role.rawValue)")
     }
 }
