@@ -78,7 +78,9 @@ struct TransferExactRebuildTests {
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
 
-        engine.submitCurrentStage()
+        for pair in engine.bondMatchState?.pairs ?? [] {
+            engine.matchPair(id: pair.id)
+        }
         try await Task.sleep(for: .milliseconds(200))
 
         engine.equationLeftInput = String(problem.decompositionA)
@@ -102,7 +104,9 @@ struct TransferExactRebuildTests {
         engine.adjustConcrete(by: currentProblem.target)
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage()
+        for pair in engine.bondMatchState?.pairs ?? [] {
+            engine.matchPair(id: pair.id)
+        }
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(currentProblem.decompositionA)
         engine.equationRightInput = String(currentProblem.decompositionB)

@@ -11,45 +11,82 @@ struct TransferCheckView: View {
 
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Show it again")
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Show it")
                         .font(.title.weight(.bold))
                         .foregroundStyle(MatherTheme.coral)
 
-                    HStack(spacing: 10) {
-                        hiddenEquationPill(fill: MatherTheme.warm)
-                        Text("+")
-                            .font(.title.weight(.black))
-                            .foregroundStyle(.secondary)
-                        hiddenEquationPill(fill: MatherTheme.accent)
-                        Text("=")
-                            .font(.title.weight(.black))
-                            .foregroundStyle(.secondary)
-                        Text("\(problem.target)")
-                            .font(.system(size: 34, weight: .black, design: .rounded))
-                            .foregroundStyle(MatherTheme.ink)
+                    ViewThatFits {
+                        HStack(spacing: 10) {
+                            hiddenEquationPill(fill: MatherTheme.warm)
+                            Text("+")
+                                .font(.title.weight(.black))
+                                .foregroundStyle(.secondary)
+                            hiddenEquationPill(fill: MatherTheme.accent)
+                            Text("=")
+                                .font(.title.weight(.black))
+                                .foregroundStyle(.secondary)
+                            Text("\(problem.target)")
+                                .font(.system(size: 34, weight: .black, design: .rounded))
+                                .foregroundStyle(MatherTheme.ink)
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 10) {
+                                hiddenEquationPill(fill: MatherTheme.warm)
+                                Text("+")
+                                    .font(.title2.weight(.black))
+                                    .foregroundStyle(.secondary)
+                                hiddenEquationPill(fill: MatherTheme.accent)
+                            }
+                            HStack(spacing: 10) {
+                                Text("=")
+                                    .font(.title2.weight(.black))
+                                    .foregroundStyle(.secondary)
+                                Text("\(problem.target)")
+                                    .font(.system(size: 34, weight: .black, design: .rounded))
+                                    .foregroundStyle(MatherTheme.ink)
+                            }
+                        }
                     }
                     .accessibilityIdentifier("transfer-equation")
 
-                    Text("Build the two parts from memory.")
+                    Text("Build the same two parts.")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
 
-                HStack(spacing: 12) {
-                    transferBucket(
-                        title: "Left side",
-                        count: leftCount,
-                        fill: MatherTheme.warm,
-                        side: .left
-                    )
-                    transferBucket(
-                        title: "Right side",
-                        count: rightCount,
-                        fill: MatherTheme.accent,
-                        side: .right
-                    )
+                ViewThatFits {
+                    HStack(spacing: 12) {
+                        transferBucket(
+                            title: "Left side",
+                            count: leftCount,
+                            fill: MatherTheme.warm,
+                            side: .left
+                        )
+                        transferBucket(
+                            title: "Right side",
+                            count: rightCount,
+                            fill: MatherTheme.accent,
+                            side: .right
+                        )
+                    }
+
+                    VStack(spacing: 12) {
+                        transferBucket(
+                            title: "Left side",
+                            count: leftCount,
+                            fill: MatherTheme.warm,
+                            side: .left
+                        )
+                        transferBucket(
+                            title: "Right side",
+                            count: rightCount,
+                            fill: MatherTheme.accent,
+                            side: .right
+                        )
+                    }
                 }
 
                 Button("Check my groups") {

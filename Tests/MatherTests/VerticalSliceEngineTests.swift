@@ -4,8 +4,16 @@ import Testing
 
 @MainActor
 struct VerticalSliceEngineTests {
+    private func completePictorialBondBlast(_ engine: VerticalSliceEngine) {
+        let pairIds = engine.bondMatchState?.pairs.map(\.id) ?? []
+        #expect(!pairIds.isEmpty)
+        for id in pairIds {
+            engine.matchPair(id: id)
+        }
+    }
+
     @Test
-    func sessionIncludesTransferStageWhenRoomQuestIsNotActive() async throws {
+    func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
@@ -26,8 +34,8 @@ struct VerticalSliceEngineTests {
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .pictorial)
 
-        engine.moveSplit(delta: 0)
-        engine.submitCurrentStage()
+        #expect(engine.bondMatchState != nil)
+        completePictorialBondBlast(engine)
         try await Task.sleep(for: .milliseconds(200))
         #expect(engine.currentStage == .abstract)
 
@@ -59,7 +67,7 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
-    func pictorialStageStartsBlankInsteadOfPrefilledAnswer() async throws {
+    func bondBlastStartsWhenConcreteStageClears() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
@@ -83,9 +91,8 @@ struct VerticalSliceEngineTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(engine.currentStage == .pictorial)
-        #expect(engine.splitLeftCount == 0)
+        #expect(engine.bondMatchState != nil)
         #expect(problem.decompositionA > 0)
-        #expect(problem.decompositionA != engine.splitLeftCount)
     }
 
     @Test
@@ -137,7 +144,7 @@ struct VerticalSliceEngineTests {
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()    // concrete → pictorial (stageSuccess)
         try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage()    // pictorial → abstract (stageSuccess)
+        completePictorialBondBlast(engine)
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
@@ -222,7 +229,7 @@ struct VerticalSliceEngineTests {
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage() // → pictorial
         try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage() // → abstract
+        completePictorialBondBlast(engine)
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(engine.currentStage == .abstract)
@@ -313,7 +320,7 @@ struct VerticalSliceEngineTests {
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage()
+        completePictorialBondBlast(engine)
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
@@ -352,7 +359,7 @@ struct VerticalSliceEngineTests {
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage()
+        completePictorialBondBlast(engine)
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)

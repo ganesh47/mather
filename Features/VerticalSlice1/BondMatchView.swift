@@ -193,6 +193,7 @@ struct BondMatchView: View {
         .frame(width: cardSize, height: cardSize)
         .accessibilityLabel("\(pair.left)\(isMatched ? ", matched" : isSelected ? ", selected" : "")")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+        .accessibilityIdentifier("bond-left-\(pair.left)")
     }
 
     @ViewBuilder
@@ -238,6 +239,7 @@ struct BondMatchView: View {
             value: isWobbling
         )
         .accessibilityLabel("\(value)\(isMatched ? ", matched" : "")")
+        .accessibilityIdentifier("bond-right-\(value)")
     }
 
     // MARK: - Shared card fill

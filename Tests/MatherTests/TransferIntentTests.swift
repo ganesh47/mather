@@ -12,10 +12,10 @@ struct TransferIntentTests {
         guard let problem = engine.currentProblem else { return }
         try await advanceToTransfer(engine, problem: problem)
 
-        #expect(engine.feedbackMessage.contains("same equation"))
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("same two"))
         #expect(!engine.feedbackMessage.contains("\(problem.decompositionA)"))
         #expect(!engine.feedbackMessage.contains("\(problem.decompositionB)"))
-        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("memory"))
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("counters"))
     }
 
     @Test
@@ -51,7 +51,9 @@ struct TransferIntentTests {
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
 
-        engine.submitCurrentStage()
+        for pair in engine.bondMatchState?.pairs ?? [] {
+            engine.matchPair(id: pair.id)
+        }
         try await Task.sleep(for: .milliseconds(200))
 
         engine.equationLeftInput = String(problem.decompositionA)

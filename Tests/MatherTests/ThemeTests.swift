@@ -262,11 +262,11 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         engine.startSession()
-        // After advancing to pictorial, feedbackMessage should use theme pictorialPrompt
+        // The pictorial slot now uses Bond Blast copy rather than the theme-specific split prompt.
         engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
         engine.submitCurrentStage()
         try await Task.sleep(for: .milliseconds(200))
-        #expect(engine.feedbackMessage == "Split the rockets into two pads.")
+        #expect(engine.feedbackMessage == "Bond Blast! Match the pairs that make 6!")
     }
 
     // MARK: - counterNoun (UX review fix)

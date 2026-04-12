@@ -120,8 +120,9 @@ struct VehicleSpecTests {
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()                             // concrete → pictorial
         try await Task.sleep(for: .milliseconds(200))
-        engine.moveSplit(delta: 0)
-        engine.submitCurrentStage()                             // pictorial → abstract
+        for pair in engine.bondMatchState?.pairs ?? [] {
+            engine.matchPair(id: pair.id)
+        }
         try await Task.sleep(for: .milliseconds(200))
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
