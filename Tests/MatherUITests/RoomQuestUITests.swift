@@ -52,7 +52,7 @@ final class RoomQuestUITests: XCTestCase {
         // Accept — transitions to Setup
         app.buttons["I understand — let's go"].tap()
         XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Scan or confirm"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Camera verify"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-SetupAfterAck")
     }
 
@@ -81,8 +81,8 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["room-station-card-redRocket"].tap()
-        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
+        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
         app.buttons["Ready — stations are set!"].tap()
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
@@ -110,8 +110,8 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["room-station-card-redRocket"].tap()
-        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
+        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
         app.buttons["Ready — stations are set!"].tap()
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
@@ -171,8 +171,8 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["room-station-card-redRocket"].tap()
-        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
+        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
         app.buttons["Ready — stations are set!"].tap()
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
@@ -192,8 +192,8 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["room-station-card-redRocket"].tap()
-        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
+        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
         app.buttons["Ready — stations are set!"].tap()
 
         _ = app.buttons["I found Red Rocket"].waitForExistence(timeout: 5)
@@ -217,8 +217,8 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons["room-station-card-redRocket"].tap()
-        app.buttons["room-station-card-blueBubble"].tap()
+        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
+        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
         app.buttons["Ready — stations are set!"].tap()
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)

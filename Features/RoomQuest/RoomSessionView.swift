@@ -233,15 +233,26 @@ private struct ReturningView: View {
             }
 
             // Pause always accessible
-            Button {
-                engine.pauseSession()
-            } label: {
-                Label("Pause", systemImage: "pause.circle.fill")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(MatherTheme.ink)
+            HStack(spacing: 12) {
+                Button {
+                    engine.pauseSession()
+                } label: {
+                    Label("Pause", systemImage: "pause.circle.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(MatherTheme.ink)
+                }
+                .accessibilityIdentifier("room-pause-button-returning")
+
+                Button {
+                    engine.onExitToHome?()
+                } label: {
+                    Label("Home", systemImage: "house.circle.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(MatherTheme.ink)
+                }
+                .accessibilityIdentifier("room-home-button-returning")
             }
             .padding(24)
-            .accessibilityIdentifier("room-pause-button-returning")
         }
     }
 }

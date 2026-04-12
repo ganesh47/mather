@@ -56,10 +56,21 @@ struct RoomQuestEngineTests {
     func markSetupCompleteTransitionsToFirstSpotAfterRegistration() {
         let engine = makeEngine()
         engine.startSession()
-        engine.registerStation(.redRocket)
-        engine.registerStation(.blueBubble)
+        engine.verifyStationWithCamera(.redRocket)
+        engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
+    }
+
+    @Test
+    func stationVerificationTracksCameraVsManualFallback() {
+        let engine = makeEngine()
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        engine.confirmStationManually(.blueBubble)
+
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
+        #expect(engine.stations.first(where: { $0.role == .blueBubble })?.verificationMethod == .manualConfirmed)
     }
 
     @Test

@@ -1,7 +1,7 @@
 # Research: VS1 Complement Match Finale
 
 **Issue**: ganesh47/mather#137
-**Status**: Completed
+**Status**: Completed, now reflected in shipped implementation
 **Date**: 2026-04-09
 
 ## Question

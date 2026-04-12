@@ -77,15 +77,26 @@ struct SpotPromptView: View {
                 .padding(.bottom, 40)
             }
 
-            Button {
-                engine.pauseSession()
-            } label: {
-                Label("Pause", systemImage: "pause.circle.fill")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.white)
+            HStack(spacing: 12) {
+                Button {
+                    engine.pauseSession()
+                } label: {
+                    Label("Pause", systemImage: "pause.circle.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+                .accessibilityIdentifier("room-pause-button")
+
+                Button {
+                    engine.onExitToHome?()
+                } label: {
+                    Label("Home", systemImage: "house.circle.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+                .accessibilityIdentifier("room-home-button")
             }
             .padding(24)
-            .accessibilityIdentifier("room-pause-button")
         }
     }
 }
