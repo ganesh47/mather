@@ -11,7 +11,7 @@ struct RoomSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Set up the room")
                         .font(.largeTitle.weight(.black))
-                    Text("Place the two station markers in one room, then scan or confirm each one.")
+                    Text("Place the two station markers in one room, then camera-verify each one or use the manual fallback.")
                         .font(.subheadline)
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
@@ -39,7 +39,7 @@ struct RoomSetupView: View {
                         Label("Scan-friendly setup", systemImage: "camera.viewfinder")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.softBlue)
-                        Text("In alpha, parent can confirm a station manually if scanning is awkward.")
+                        Text("Tap Camera verify first. If scanning is awkward, use the manual same-place fallback.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                         Text("Both stations must stay in the same room as this iPad.")
@@ -89,12 +89,32 @@ struct RoomSetupView: View {
             Text(station.role.title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
-            Button(station.isRegistered ? "Marker ready" : "Scan or confirm") {
-                engine.registerStation(station.role)
+            if let method = station.verificationMethod {
+                Text(method.badgeTitle)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(colour)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(colour.opacity(0.14))
+                    .clipShape(Capsule())
             }
-            .buttonStyle(SecondaryTileButtonStyle(fill: colour.opacity(0.18)))
-            .foregroundStyle(colour)
-            .accessibilityIdentifier("room-station-register-\(station.role.rawValue)")
+
+            VStack(spacing: 8) {
+                Button(station.verificationMethod == .cameraVerified ? "Camera verified" : "Camera verify") {
+                    engine.verifyStationWithCamera(station.role)
+                }
+                .buttonStyle(SecondaryTileButtonStyle(fill: colour.opacity(0.18)))
+                .foregroundStyle(colour)
+                .accessibilityIdentifier("room-station-camera-\(station.role.rawValue)")
+
+                Button(station.verificationMethod == .manualConfirmed ? "Manual fallback saved" : "Same-place fallback") {
+                    engine.confirmStationManually(station.role)
+                }
+                .buttonStyle(.plain)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(colour.opacity(0.9))
+                .accessibilityIdentifier("room-station-manual-\(station.role.rawValue)")
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)

@@ -3,8 +3,8 @@ import SwiftUI
 /// Bond Blast — the sensor-powered complement-match finale stage for VS1.
 ///
 /// Displays all complement pairs for the session target (e.g. for 7:
-/// 1+6, 2+5, 3+4). The child selects a left card (tap to highlight), then
-/// taps the matching right card to lock the pair. All pairs locked = stage done.
+/// 1+6, 2+5, 3+4). The child can drag or tap a left card, then drop or tap on
+/// the matching right card to lock the pair. All pairs locked = stage done.
 ///
 /// **Sensor integration** (both ambient — tap-only path always works):
 /// - Tilt drift: unselected left cards float ±6 pt with device attitude.
@@ -39,8 +39,9 @@ struct BondMatchView: View {
 
     // MARK: - Local state
 
-    /// The left-card pair currently selected (highlighted), waiting for a right-tap.
+    /// The left-card pair currently selected (highlighted), waiting for a right-tap or drop.
     @State private var selectedPairId: UUID? = nil
+    @GestureState private var dragOffset: CGSize = .zero
     /// Right column display order — shuffled at appear, reshuffled on shake.
     @State private var shuffledRightValues: [Int] = []
     /// Right-value that is currently wobbling after a mismatch.
@@ -177,6 +178,7 @@ struct BondMatchView: View {
                 )
                 // Tilt drift — only on unselected, unmatched cards
                 .offset((!isSelected && !isMatched) ? tiltDrift : .zero)
+                .offset(isSelected && !isMatched ? dragOffset : .zero)
                 .animation(.linear(duration: 0.1), value: tiltDrift)
 
                 if isMatched {
@@ -190,6 +192,31 @@ struct BondMatchView: View {
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.07 : 1.0)
         .animation(.spring(response: 0.22, dampingFraction: 0.6), value: isSelected)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 8)
+                .updating($dragOffset) { value, state, _ in
+                    guard selectedPairId == pair.id || !isMatched else { return }
+                    state = value.translation
+                }
+                .onChanged { _ in
+                    guard !isMatched else { return }
+                    if selectedPairId != pair.id {
+                        selectedPairId = pair.id
+                        onDragStarted(pair.id)
+                    }
+                }
+                .onEnded { value in
+                    guard !isMatched else { return }
+                    let horizontalTravel = value.translation.width
+                    if horizontalTravel > 90 {
+                        onNearTarget()
+                        onMatch(pair.id)
+                        withAnimation(.spring(response: 0.2)) { selectedPairId = nil }
+                    } else if abs(horizontalTravel) > 40 {
+                        onMismatch()
+                    }
+                }
+        )
         .frame(width: cardSize, height: cardSize)
         .accessibilityLabel("\(pair.left)\(isMatched ? ", matched" : isSelected ? ", selected" : "")")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])

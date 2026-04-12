@@ -225,6 +225,19 @@ struct RoomQuestStation: Equatable, Codable, Identifiable {
     let role: RoomQuestStationRole
     let quantity: Int
     var isRegistered: Bool = false
+    var verificationMethod: RoomQuestStationVerificationMethod? = nil
+}
+
+enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
+    case cameraVerified
+    case manualConfirmed
+
+    var badgeTitle: String {
+        switch self {
+        case .cameraVerified: "Camera verified"
+        case .manualConfirmed: "Confirmed manually"
+        }
+    }
 }
 
 @Model

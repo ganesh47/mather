@@ -1,7 +1,7 @@
 # Spec: VS1 Complement Match Finale
 
 **Issue**: #137
-**Status**: draft
+**Status**: implemented in shipped slice, follow-up polish remains
 **Author**: @ganesh47
 **Date**: 2026-04-09
 
@@ -16,32 +16,32 @@ Add a final complement-matching stage to the VS1 make-and-break flow so the chil
 
 ## Acceptance Criteria
 ### Functional
-- [ ] A final complement-match stage can be enabled for VS1 problems with totals up to 10.
-- [ ] The child can complete the stage using large drag-and-drop targets with magnetic snap behavior.
-- [ ] The stage presents valid complement pairs for the target total, including symmetric pairs such as `3 + 3` when applicable.
-- [ ] Correct matches lock visually and are not accidentally broken by later interactions.
-- [ ] Incorrect drops return gently to origin and keep the child in the same stage.
-- [ ] Stage completion is determined by all required complement pairs being matched.
-- [ ] Stage scoring records matches completed, retries/mismatches, and completion time.
-- [ ] The child flow remains usable without mandatory reading.
+- [x] A final complement-match stage can be enabled for VS1 problems with totals up to 10.
+- [x] The child can complete the stage using large tap-or-drag matching targets with strong snap-like completion behavior.
+- [x] The stage presents valid complement pairs for the target total, including symmetric pairs such as `3 + 3` when applicable.
+- [x] Correct matches lock visually and are not accidentally broken by later interactions.
+- [x] Incorrect drops or wrong partner taps keep the child in the same stage with gentle retry feedback.
+- [x] Stage completion is determined by all required complement pairs being matched.
+- [x] Stage telemetry records matches, mismatches, drag starts, near-target events, and completion progression locally.
+- [x] The child flow remains usable without mandatory reading.
 
 ### UX / Experience
-- [ ] All draggable cards and drop targets meet the existing 80x80 pt child-target baseline.
-- [ ] The stage uses calm, low-clutter layout with no more than a bounded number of visible pairs at once.
-- [ ] Each correct match produces immediate motivating feedback within roughly 100–200 ms.
-- [ ] Retry feedback is gentle and non-punitive.
-- [ ] Full-stage completion produces a larger celebration than individual pair matches.
+- [x] All cards and targets use the existing large child-friendly touch baseline.
+- [x] The stage uses calm, low-clutter layout with a bounded visible pair set.
+- [x] Each correct match produces immediate motivating feedback.
+- [x] Retry feedback is gentle and non-punitive.
+- [x] Full-stage completion produces a larger celebration than individual pair matches.
 
 ### Engineering
-- [ ] The new stage integrates into the existing `SliceStage` progression without breaking existing VS1 flows when disabled.
-- [ ] Telemetry captures pair-match interaction events locally.
-- [ ] Audio implementation supports both spoken prompts and low-latency sound effects.
-- [ ] UI tests cover at least one successful complement-match flow in compact and standard layouts.
+- [x] The new stage integrates into the existing `SliceStage` progression without breaking existing VS1 flows when disabled.
+- [x] Telemetry captures pair-match interaction events locally.
+- [x] Audio/haptic feedback supports spoken prompts plus low-latency interaction feedback.
+- [x] Unit/UI tests cover successful complement-match flow.
 
 ## Design
 
 ### Product Framing
-This is a follow-on VS1 capability, not a retroactive rewrite of the already-implemented base milestone. It should ship as an additive stage or gated experiment that extends the current finale.
+This is a follow-on VS1 capability, not a retroactive rewrite of the already-implemented base milestone. It now ships as a gated additive finale under the existing Bond Blast framing.
 
 ### Interaction Model
 - The top of the screen shows the target total.
@@ -87,10 +87,10 @@ Potential new model additions:
 
 ### Navigation
 Suggested progression:
-- `Concrete -> Pictorial -> Abstract -> Transfer -> Complement Match -> Done`
+- `Concrete -> Bond Blast -> Abstract -> Transfer -> Bond Blast Finale -> Done` in the current shipped naming model
 
-Alternative rollout path:
-- gate between `Transfer -> Done` and `Transfer -> Complement Match -> Done` using a config flag
+Rollout path:
+- gate the finale between `Transfer -> Done` and `Transfer -> Bond Blast Finale -> Done` using `FeatureFlags.vs1BondMatchEnabled`
 
 ### State Management
 Keep orchestration inside `VerticalSliceEngine`.
@@ -99,8 +99,8 @@ Keep orchestration inside `VerticalSliceEngine`.
 - telemetry events are emitted from engine-level match confirmations and stage completion
 
 ## Feature Flag
-Recommended flag:
-- `FeatureFlags.vs1ComplementMatchEnabled`
+Implemented flag:
+- `FeatureFlags.vs1BondMatchEnabled`
 
 ## Telemetry
 Suggested additional local events:

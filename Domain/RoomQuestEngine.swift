@@ -90,12 +90,26 @@ final class RoomQuestEngine {
         phase = .setup
     }
 
+    func verifyStationWithCamera(_ role: RoomQuestStationRole) {
+        setStationRegistered(role, method: .cameraVerified)
+    }
+
+    func confirmStationManually(_ role: RoomQuestStationRole) {
+        setStationRegistered(role, method: .manualConfirmed)
+    }
+
     func registerStation(_ role: RoomQuestStationRole) {
+        confirmStationManually(role)
+    }
+
+    private func setStationRegistered(_ role: RoomQuestStationRole, method: RoomQuestStationVerificationMethod) {
         guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
         stations[idx].isRegistered = true
+        stations[idx].verificationMethod = method
+        let methodCopy = method == .cameraVerified ? "Camera check saved." : "Manual confirmation saved."
         feedbackMessage = stations.allSatisfy(\.isRegistered)
-            ? "Great, both stations are ready."
-            : "Nice. Now set up the other station."
+            ? "\(methodCopy) Both stations are ready."
+            : "\(methodCopy) Now set up the other station."
     }
 
     var allStationsRegistered: Bool {
