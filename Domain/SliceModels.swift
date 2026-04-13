@@ -240,6 +240,13 @@ enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
     }
 }
 
+enum RoomQuestScanState: Equatable {
+    case idle
+    case scanning(role: RoomQuestStationRole)
+    case celebrating(role: RoomQuestStationRole, usedARCelebration: Bool)
+    case failed(role: RoomQuestStationRole, message: String)
+}
+
 @Model
 final class StoredSessionSummary {
     @Attribute(.unique) var sessionId: String

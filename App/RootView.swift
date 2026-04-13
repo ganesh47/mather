@@ -24,6 +24,12 @@ struct RootView: View {
                     SettingsView(appModel: appModel, summaries: sessionSummaries)
                 case .roomQuest:
                     RoomSessionView(engine: appModel.roomQuestEngine, vsEngine: appModel.engine)
+                        .sheet(item: Binding(
+                            get: { appModel.roomQuestScanner.activeSession },
+                            set: { _ in }
+                        )) { _ in
+                            RoomQuestScannerSheet(scanner: appModel.roomQuestScanner)
+                        }
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

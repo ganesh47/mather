@@ -227,6 +227,7 @@ private struct ReturningView: View {
                 Button("We're back!") {
                     engine.markReturned()
                 }
+                .accessibilityIdentifier("room-return-confirm-button")
                 .buttonStyle(PrimaryActionButtonStyle())
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
@@ -234,23 +235,13 @@ private struct ReturningView: View {
 
             // Pause always accessible
             HStack(spacing: 12) {
-                Button {
+                roomReturningChromeButton(title: "Pause", systemImage: "pause.circle.fill", accessibilityID: "room-pause-button-returning") {
                     engine.pauseSession()
-                } label: {
-                    Label("Pause", systemImage: "pause.circle.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(MatherTheme.ink)
                 }
-                .accessibilityIdentifier("room-pause-button-returning")
 
-                Button {
+                roomReturningChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-button-returning") {
                     engine.onExitToHome?()
-                } label: {
-                    Label("Home", systemImage: "house.circle.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(MatherTheme.ink)
                 }
-                .accessibilityIdentifier("room-home-button-returning")
             }
             .padding(24)
         }
@@ -258,6 +249,20 @@ private struct ReturningView: View {
 }
 
 /// Hard pause screen — resume or abandon.
+private func roomReturningChromeButton(title: String, systemImage: String, accessibilityID: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label(title, systemImage: systemImage)
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(MatherTheme.ink)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.white.opacity(0.9), in: Capsule())
+    }
+    .accessibilityIdentifier(accessibilityID)
+    .accessibilityLabel(accessibilityID)
+    .accessibilityAddTraits(.isButton)
+}
+
 private struct RoomPausedView: View {
     @Bindable var engine: RoomQuestEngine
     let resumingTo: RoomPhase

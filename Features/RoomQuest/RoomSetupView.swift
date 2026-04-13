@@ -45,6 +45,26 @@ struct RoomSetupView: View {
                         Text("Both stations must stay in the same room as this iPad.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
+
+                        switch engine.scanState {
+                        case .idle:
+                            EmptyView()
+                        case .scanning(let role):
+                            Label("Scanning \(role.title)… point the camera at its marker.", systemImage: "camera.metering.center.weighted")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.ink)
+                                .accessibilityIdentifier("room-scan-status")
+                        case .celebrating(let role, let usedARCelebration):
+                            Label(usedARCelebration ? "\(role.title) unlocked with AR sparkle!" : "\(role.title) found!", systemImage: usedARCelebration ? "sparkles.rectangle.stack.fill" : "checkmark.seal.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.accent)
+                                .accessibilityIdentifier("room-scan-status")
+                        case .failed(_, let message):
+                            Label(message, systemImage: "exclamationmark.triangle.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.coral)
+                                .accessibilityIdentifier("room-scan-status")
+                        }
                     }
                 }
 
@@ -105,6 +125,7 @@ struct RoomSetupView: View {
                 }
                 .buttonStyle(SecondaryTileButtonStyle(fill: colour.opacity(0.18)))
                 .foregroundStyle(colour)
+                .disabled({ if case .scanning = engine.scanState { return true } else { return false } }())
                 .accessibilityIdentifier("room-station-camera-\(station.role.rawValue)")
 
                 Button(station.verificationMethod == .manualConfirmed ? "Manual fallback saved" : "Same-place fallback") {
@@ -118,6 +139,7 @@ struct RoomSetupView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("room-station-card-\(station.role.rawValue)")
     }
 }

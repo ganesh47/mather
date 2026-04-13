@@ -81,22 +81,20 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
-        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
-        app.buttons["Ready — stations are set!"].tap()
+        completeSetupViaManualFallback(app)
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Spot1-Red")
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
 
-        let gotRed = app.buttons["I found Red Rocket"]
+        let gotRed = app.buttons["room-spot-confirm-button"]
         XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
         gotRed.tap()
 
         XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Spot2-Blue")
-        app.buttons["I found Blue Bubble"].tap()
+        app.buttons["room-spot-confirm-button"].tap()
 
         XCTAssertTrue(app.staticTexts["Bring them back!"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Returning")
@@ -110,20 +108,18 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
-        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
-        app.buttons["Ready — stations are set!"].tap()
+        completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        let gotRed = app.buttons["I found Red Rocket"]
+        let gotRed = app.buttons["room-spot-confirm-button"]
         _ = gotRed.waitForExistence(timeout: 5)
         gotRed.tap()
 
         _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
-        app.buttons["I found Blue Bubble"].tap()
+        app.buttons["room-spot-confirm-button"].tap()
 
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
-        app.buttons["We're back!"].tap()
+        app.buttons["room-return-confirm-button"].tap()
 
         // Pictorial (locked SplitView — "From your walk" badge is visible)
         let fromYourWalk = app.staticTexts["From your walk"]
@@ -171,9 +167,7 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
-        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
-        app.buttons["Ready — stations are set!"].tap()
+        completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
 
@@ -192,14 +186,12 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
-        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
-        app.buttons["Ready — stations are set!"].tap()
+        completeSetupViaManualFallback(app)
 
-        _ = app.buttons["I found Red Rocket"].waitForExistence(timeout: 5)
-        app.buttons["I found Red Rocket"].tap()
+        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
+        app.buttons["room-spot-confirm-button"].tap()
         _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
-        app.buttons["I found Blue Bubble"].tap()
+        app.buttons["room-spot-confirm-button"].tap()
 
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
         app.buttons["room-pause-button-returning"].tap()
@@ -217,9 +209,7 @@ final class RoomQuestUITests: XCTestCase {
 
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        app.buttons.matching(identifier: "room-station-card-redRocket").firstMatch.tap()
-        app.buttons.matching(identifier: "room-station-card-blueBubble").element(boundBy: 1).tap()
-        app.buttons["Ready — stations are set!"].tap()
+        completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
         app.buttons["room-pause-button"].tap()
@@ -253,6 +243,24 @@ final class RoomQuestUITests: XCTestCase {
 
     // MARK: - Helpers
 
+
+    private func completeSetupViaManualFallback(_ app: XCUIApplication) {
+        let redCard = app.otherElements["room-station-card-redRocket"]
+        let blueCard = app.otherElements["room-station-card-blueBubble"]
+
+        XCTAssertTrue(redCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(blueCard.waitForExistence(timeout: 5))
+
+        redCard.buttons["Camera verify"].tap()
+        XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
+        redCard.buttons["Same-place fallback"].tap()
+
+        blueCard.buttons["Camera verify"].tap()
+        XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
+        blueCard.buttons["Same-place fallback"].tap()
+
+        app.buttons["Ready — stations are set!"].tap()
+    }
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

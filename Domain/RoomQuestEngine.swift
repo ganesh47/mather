@@ -44,7 +44,10 @@ final class RoomQuestEngine {
     private let telemetryWriter: TelemetryWriter
     private let speechService: SpeechService
     private let hapticsService: HapticsService
+    private let scanner: RoomQuestScanner
     var onExitToHome: (() -> Void)?
+
+    private(set) var scanState: RoomQuestScanState = .idle
 
     static let roomPhaseLimitSeconds: TimeInterval = 4 * 60
 
@@ -54,12 +57,14 @@ final class RoomQuestEngine {
         featureFlags: FeatureFlagService,
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
-        hapticsService: HapticsService = HapticsService()
+        hapticsService: HapticsService = HapticsService(),
+        scanner: RoomQuestScanner = NoopRoomQuestScanner()
     ) {
         self.featureFlags = featureFlags
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
+        self.scanner = scanner
     }
 
     // MARK: - Session lifecycle
@@ -91,10 +96,46 @@ final class RoomQuestEngine {
     }
 
     func verifyStationWithCamera(_ role: RoomQuestStationRole) {
-        setStationRegistered(role, method: .cameraVerified)
+        guard featureFlags.roomQuestMarkerSetupEnabled else {
+            feedbackMessage = "Camera setup is off right now. Use the same-place fallback."
+            scanState = .failed(role: role, message: feedbackMessage)
+            return
+        }
+
+        scanState = .scanning(role: role)
+        feedbackMessage = "Scan the \(role.title) marker with the camera."
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await scanner.scanMarker(for: role)
+                self.setStationRegistered(result.role, method: .cameraVerified)
+                self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
+                self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
+                self.speechService.speak("You found \(result.role.title)!", enabled: self.featureFlags.audioEnabled)
+                try? await Task.sleep(for: .seconds(1.2))
+                if case .celebrating(let currentRole, _) = self.scanState, currentRole == result.role {
+                    self.scanState = .idle
+                }
+            } catch let error as RoomQuestScannerError {
+                switch error {
+                case .cancelled:
+                    self.feedbackMessage = "Camera check cancelled. Use the same-place fallback or try again."
+                case .unavailable:
+                    self.feedbackMessage = "Camera scan is unavailable on this device right now. Use the same-place fallback."
+                case .wrongMarker(let expected, let detected):
+                    self.feedbackMessage = "That looked like \(detected.title). Scan the \(expected.title) marker instead."
+                }
+                self.scanState = .failed(role: role, message: self.feedbackMessage)
+            } catch {
+                self.feedbackMessage = "Camera check did not finish. Try again or use the same-place fallback."
+                self.scanState = .failed(role: role, message: self.feedbackMessage)
+            }
+        }
     }
 
     func confirmStationManually(_ role: RoomQuestStationRole) {
+        scanState = .idle
         setStationRegistered(role, method: .manualConfirmed)
     }
 

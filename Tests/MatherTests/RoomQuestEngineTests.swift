@@ -7,13 +7,17 @@ struct RoomQuestEngineTests {
 
     // MARK: - Helpers
 
-    private func makeEngine(safetyAcknowledged: Bool = true) -> RoomQuestEngine {
+    private func makeEngine(
+        safetyAcknowledged: Bool = true,
+        scanner: RoomQuestScanner = NoopRoomQuestScanner()
+    ) -> RoomQuestEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.roomQuestSafetyAcknowledged = safetyAcknowledged
         return RoomQuestEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
-            speechService: SpeechService()
+            speechService: SpeechService(),
+            scanner: scanner
         )
     }
 
@@ -53,24 +57,70 @@ struct RoomQuestEngineTests {
     }
 
     @Test
-    func markSetupCompleteTransitionsToFirstSpotAfterRegistration() {
-        let engine = makeEngine()
+    func markSetupCompleteTransitionsToFirstSpotAfterRegistration() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(role: role, usedARCelebration: true)
+        })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
     }
 
     @Test
-    func stationVerificationTracksCameraVsManualFallback() {
-        let engine = makeEngine()
+    func stationVerificationTracksCameraVsManualFallback() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(role: role, usedARCelebration: false)
+        })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
         engine.confirmStationManually(.blueBubble)
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
         #expect(engine.stations.first(where: { $0.role == .blueBubble })?.verificationMethod == .manualConfirmed)
+    }
+
+    @Test
+    func cameraScanSuccessMarksStationAndCelebrates() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(role: role, usedARCelebration: true)
+        })
+
+        engine.startSession()
+        engine.acknowledgedSafety()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
+        if case .celebrating(let role, let usedARCelebration) = engine.scanState {
+            #expect(role == .redRocket)
+            #expect(usedARCelebration)
+        } else {
+            Issue.record("Expected celebrating scan state after successful camera scan")
+        }
+    }
+
+    @Test
+    func wrongMarkerLeavesStationUnregisteredAndShowsError() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            throw RoomQuestScannerError.wrongMarker(expected: role, detected: .blueBubble)
+        })
+
+        engine.startSession()
+        engine.acknowledgedSafety()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == nil)
+        if case .failed(let role, let message) = engine.scanState {
+            #expect(role == .redRocket)
+            #expect(message.contains("Blue Bubble"))
+        } else {
+            Issue.record("Expected failed scan state after wrong-marker scan")
+        }
     }
 
     @Test
@@ -215,5 +265,13 @@ struct RoomQuestEngineTests {
         engine.abandonSession(reason: "parent_abort")
         #expect(engine.phase == .complete)
         #expect(exitCalled)
+    }
+}
+
+private struct FakeRoomQuestScanner: RoomQuestScanner {
+    let handler: @MainActor (RoomQuestStationRole) async throws -> RoomQuestMarkerScanResult
+
+    func scanMarker(for role: RoomQuestStationRole) async throws -> RoomQuestMarkerScanResult {
+        try await handler(role)
     }
 }
