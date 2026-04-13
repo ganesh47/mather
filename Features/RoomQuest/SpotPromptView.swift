@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Per-spot screen shown on the iPad during the room phase.
 /// Large colour fill and spoken prompt — child needs no reading ability.
@@ -63,6 +64,7 @@ struct SpotPromptView: View {
                 Button(station?.role.fallbackButtonTitle ?? "I found it") {
                     engine.markSpotVisited(index: spotIndex)
                 }
+                .accessibilityIdentifier("room-spot-confirm-button")
                 .buttonStyle(RoomQuestPrimaryButtonStyle())
                 .padding(.horizontal, 40)
 
@@ -78,30 +80,34 @@ struct SpotPromptView: View {
             }
 
             HStack(spacing: 12) {
-                Button {
+                roomChromeButton(title: "Pause", systemImage: "pause.circle.fill", accessibilityID: "room-pause-button") {
                     engine.pauseSession()
-                } label: {
-                    Label("Pause", systemImage: "pause.circle.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.white)
                 }
-                .accessibilityIdentifier("room-pause-button")
 
-                Button {
+                roomChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-button") {
                     engine.onExitToHome?()
-                } label: {
-                    Label("Home", systemImage: "house.circle.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.white)
                 }
-                .accessibilityIdentifier("room-home-button")
             }
             .padding(24)
         }
     }
 }
 
-/// Primary button style for room phase — large, white fill on coloured background.
+private func roomChromeButton(title: String, systemImage: String, accessibilityID: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label(title, systemImage: systemImage)
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.black.opacity(0.18), in: Capsule())
+    }
+    .accessibilityIdentifier(accessibilityID)
+    .accessibilityLabel(accessibilityID)
+    .accessibilityAddTraits(.isButton)
+}
+
+/// Primary button style for room phase, large, white fill on coloured background.
 private struct RoomQuestPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

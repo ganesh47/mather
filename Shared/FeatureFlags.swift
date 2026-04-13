@@ -14,6 +14,7 @@ final class FeatureFlagService {
         static let soundReactionEnabled = "feature.soundReactionEnabled"
         static let roomQuestEnabled = "feature.roomQuestEnabled"
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
+        static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -67,6 +68,11 @@ final class FeatureFlagService {
         didSet { defaults.set(roomQuestSafetyAcknowledged, forKey: Keys.roomQuestSafetyAcknowledged) }
     }
 
+    /// Enables real camera-backed marker scanning during Room Quest setup.
+    var roomQuestMarkerSetupEnabled: Bool {
+        didSet { defaults.set(roomQuestMarkerSetupEnabled, forKey: Keys.roomQuestMarkerSetupEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -86,6 +92,7 @@ final class FeatureFlagService {
             Keys.soundReactionEnabled: false,
             Keys.roomQuestEnabled: false,
             Keys.roomQuestSafetyAcknowledged: false,
+            Keys.roomQuestMarkerSetupEnabled: true,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -97,5 +104,6 @@ final class FeatureFlagService {
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
         roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
+        roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
     }
 }
