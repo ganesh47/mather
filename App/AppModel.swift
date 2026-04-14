@@ -9,6 +9,7 @@ final class AppModel {
     let speechService: SpeechService
     let telemetryWriter: TelemetryWriter
     let historyStore: SessionHistoryStore
+    let roomQuestStationStore: RoomQuestStationStore
     let engine: VerticalSliceEngine
     let hapticsService: HapticsService
     let motionService: MotionService
@@ -21,6 +22,7 @@ final class AppModel {
         let speechService = SpeechService()
         let telemetryWriter = TelemetryWriter()
         let historyStore = SessionHistoryStore(modelContext: modelContext)
+        let roomQuestStationStore = RoomQuestStationStore(modelContext: modelContext)
         let hapticsService = HapticsService()
         let motionService = MotionService()
         let soundDetectionService = SoundDetectionService()
@@ -30,6 +32,7 @@ final class AppModel {
         self.speechService = speechService
         self.telemetryWriter = telemetryWriter
         self.historyStore = historyStore
+        self.roomQuestStationStore = roomQuestStationStore
         self.hapticsService = hapticsService
         self.motionService = motionService
         self.soundDetectionService = soundDetectionService
@@ -49,7 +52,8 @@ final class AppModel {
             telemetryWriter: telemetryWriter,
             speechService: speechService,
             hapticsService: hapticsService,
-            scanner: roomQuestScanner
+            scanner: roomQuestScanner,
+            stationStore: roomQuestStationStore
         )
         self.roomQuestEngine = roomQuestEngine
         roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }

@@ -119,6 +119,23 @@ struct RoomSetupView: View {
                     .clipShape(Capsule())
             }
 
+            if station.referenceCaptureState != .notCaptured {
+                Text(station.referenceCaptureState.badgeTitle)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(MatherTheme.ink.opacity(0.08))
+                    .clipShape(Capsule())
+            }
+
+            if let referenceNote = station.referenceNote {
+                Text(referenceNote)
+                    .font(.caption)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .multilineTextAlignment(.center)
+            }
+
             VStack(spacing: 8) {
                 Button(station.verificationMethod == .cameraVerified ? "Camera verified" : "Camera verify") {
                     engine.verifyStationWithCamera(station.role)
