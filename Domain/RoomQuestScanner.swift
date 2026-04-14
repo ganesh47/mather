@@ -2,6 +2,8 @@ import Foundation
 
 struct RoomQuestMarkerScanResult: Equatable {
     let role: RoomQuestStationRole
+    let markerPayload: String?
+    let referenceImageJPEGData: Data?
     let usedARCelebration: Bool
 }
 

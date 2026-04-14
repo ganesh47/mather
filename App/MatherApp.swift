@@ -8,7 +8,7 @@ struct MatherApp: App {
 
     init() {
         do {
-            container = try ModelContainer(for: StoredSessionSummary.self)
+            container = try ModelContainer(for: StoredSessionSummary.self, StoredRoomQuestStationReference.self)
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)
             _appModel = State(initialValue: appModel)

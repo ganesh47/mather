@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import Testing
 @testable import Mather
 
@@ -13,11 +14,13 @@ struct RoomQuestEngineTests {
     ) -> RoomQuestEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.roomQuestSafetyAcknowledged = safetyAcknowledged
+        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         return RoomQuestEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
             speechService: SpeechService(),
-            scanner: scanner
+            scanner: scanner,
+            stationStore: RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
         )
     }
 
@@ -59,7 +62,7 @@ struct RoomQuestEngineTests {
     @Test
     func markSetupCompleteTransitionsToFirstSpotAfterRegistration() async throws {
         let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            RoomQuestMarkerScanResult(role: role, usedARCelebration: true)
+            RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: true)
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
@@ -72,7 +75,7 @@ struct RoomQuestEngineTests {
     @Test
     func stationVerificationTracksCameraVsManualFallback() async throws {
         let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            RoomQuestMarkerScanResult(role: role, usedARCelebration: false)
+            RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: false)
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
@@ -81,12 +84,14 @@ struct RoomQuestEngineTests {
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
         #expect(engine.stations.first(where: { $0.role == .blueBubble })?.verificationMethod == .manualConfirmed)
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.referenceCaptureState == .captured)
+        #expect(engine.stations.first(where: { $0.role == .blueBubble })?.referenceCaptureState == .manualFallback)
     }
 
     @Test
     func cameraScanSuccessMarksStationAndCelebrates() async throws {
         let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            RoomQuestMarkerScanResult(role: role, usedARCelebration: true)
+            RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: true)
         })
 
         engine.startSession()
@@ -95,6 +100,7 @@ struct RoomQuestEngineTests {
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.referenceCaptureState == .captured)
         if case .celebrating(let role, let usedARCelebration) = engine.scanState {
             #expect(role == .redRocket)
             #expect(usedARCelebration)

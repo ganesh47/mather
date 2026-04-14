@@ -15,6 +15,7 @@ final class FeatureFlagService {
         static let roomQuestEnabled = "feature.roomQuestEnabled"
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
+        static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -73,6 +74,11 @@ final class FeatureFlagService {
         didSet { defaults.set(roomQuestMarkerSetupEnabled, forKey: Keys.roomQuestMarkerSetupEnabled) }
     }
 
+    /// Enables saving a lightweight station reference during camera verification.
+    var roomQuestReferenceCaptureEnabled: Bool {
+        didSet { defaults.set(roomQuestReferenceCaptureEnabled, forKey: Keys.roomQuestReferenceCaptureEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -93,6 +99,7 @@ final class FeatureFlagService {
             Keys.roomQuestEnabled: false,
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
+            Keys.roomQuestReferenceCaptureEnabled: true,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -105,5 +112,6 @@ final class FeatureFlagService {
         roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
+        roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
     }
 }

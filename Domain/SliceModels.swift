@@ -37,6 +37,8 @@ enum SliceEventType: String, Codable {
     case roomQuestPhaseComplete = "room_quest_phase_complete"
     case roomQuestAbandoned = "room_quest_abandoned"
     case roomQuestCompleted = "room_quest_completed"
+    case roomQuestReferenceCaptureStarted = "room_quest_reference_capture_started"
+    case roomQuestReferenceCaptureCompleted = "room_quest_reference_capture_completed"
 }
 
 struct SliceConfig: Codable, Equatable {
@@ -226,6 +228,8 @@ struct RoomQuestStation: Equatable, Codable, Identifiable {
     let quantity: Int
     var isRegistered: Bool = false
     var verificationMethod: RoomQuestStationVerificationMethod? = nil
+    var referenceCaptureState: RoomQuestReferenceCaptureState = .notCaptured
+    var referenceNote: String? = nil
 }
 
 enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
@@ -240,11 +244,58 @@ enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
     }
 }
 
+enum RoomQuestReferenceCaptureState: String, Equatable, Codable {
+    case notCaptured
+    case captured
+    case manualFallback
+
+    var badgeTitle: String {
+        switch self {
+        case .notCaptured: "Reference not saved"
+        case .captured: "Reference saved"
+        case .manualFallback: "Reference skipped"
+        }
+    }
+}
+
 enum RoomQuestScanState: Equatable {
     case idle
     case scanning(role: RoomQuestStationRole)
     case celebrating(role: RoomQuestStationRole, usedARCelebration: Bool)
     case failed(role: RoomQuestStationRole, message: String)
+}
+
+struct RoomQuestStationReferenceDraft: Equatable, Codable {
+    let role: RoomQuestStationRole
+    let markerPayload: String?
+    let capturedAt: Date
+    let note: String
+    let captureState: RoomQuestReferenceCaptureState
+}
+
+@Model
+final class StoredRoomQuestStationReference {
+    var roleRawValue: String
+    var markerPayload: String?
+    var capturedAt: Date
+    var note: String
+    var captureStateRawValue: String
+
+    init(role: RoomQuestStationRole, markerPayload: String?, capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
+        self.roleRawValue = role.rawValue
+        self.markerPayload = markerPayload
+        self.capturedAt = capturedAt
+        self.note = note
+        self.captureStateRawValue = captureState.rawValue
+    }
+
+    var role: RoomQuestStationRole? {
+        RoomQuestStationRole(rawValue: roleRawValue)
+    }
+
+    var captureState: RoomQuestReferenceCaptureState? {
+        RoomQuestReferenceCaptureState(rawValue: captureStateRawValue)
+    }
 }
 
 @Model

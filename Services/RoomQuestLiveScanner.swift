@@ -34,7 +34,7 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             activeSession = nil
             return
         }
-        session.continuation.resume(returning: RoomQuestMarkerScanResult(role: detectedRole, usedARCelebration: true))
+        session.continuation.resume(returning: RoomQuestMarkerScanResult(role: detectedRole, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: true))
         activeSession = nil
     }
 

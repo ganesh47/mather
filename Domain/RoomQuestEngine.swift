@@ -45,6 +45,7 @@ final class RoomQuestEngine {
     private let speechService: SpeechService
     private let hapticsService: HapticsService
     private let scanner: RoomQuestScanner
+    private let stationStore: RoomQuestStationStore
     var onExitToHome: (() -> Void)?
 
     private(set) var scanState: RoomQuestScanState = .idle
@@ -58,13 +59,15 @@ final class RoomQuestEngine {
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
         hapticsService: HapticsService = HapticsService(),
-        scanner: RoomQuestScanner = NoopRoomQuestScanner()
+        scanner: RoomQuestScanner = NoopRoomQuestScanner(),
+        stationStore: RoomQuestStationStore
     ) {
         self.featureFlags = featureFlags
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
         self.scanner = scanner
+        self.stationStore = stationStore
     }
 
     // MARK: - Session lifecycle
@@ -77,6 +80,7 @@ final class RoomQuestEngine {
             RoomQuestStation(id: .redRocket, role: .redRocket, quantity: p.decompositionA),
             RoomQuestStation(id: .blueBubble, role: .blueBubble, quantity: p.decompositionB)
         ]
+        try? stationStore.clearAll()
         setupStartedAt = .now
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
         feedbackMessage = "Set up the stations, then scan each one or mark it ready."
@@ -104,12 +108,14 @@ final class RoomQuestEngine {
 
         scanState = .scanning(role: role)
         feedbackMessage = "Scan the \(role.title) marker with the camera."
+        try? telemetryWriter.append(SliceEvent(type: .roomQuestReferenceCaptureStarted, payload: ["station_role": role.rawValue]))
 
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
                 let result = try await scanner.scanMarker(for: role)
                 self.setStationRegistered(result.role, method: .cameraVerified)
+                self.captureReference(for: result)
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
                 self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
                 self.speechService.speak("You found \(result.role.title)!", enabled: self.featureFlags.audioEnabled)
@@ -136,6 +142,7 @@ final class RoomQuestEngine {
 
     func confirmStationManually(_ role: RoomQuestStationRole) {
         scanState = .idle
+        persistReferenceState(.manualFallback, for: role, markerPayload: nil, note: "Manual fallback saved")
         setStationRegistered(role, method: .manualConfirmed)
     }
 
@@ -301,6 +308,52 @@ final class RoomQuestEngine {
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
             flashCelebration()
         }
+    }
+
+    private func captureReference(for result: RoomQuestMarkerScanResult) {
+        guard featureFlags.roomQuestReferenceCaptureEnabled else { return }
+
+        persistReferenceState(.captured, for: result.role, markerPayload: result.markerPayload, note: "Reference saved for \(result.role.title)")
+    }
+
+    private func persistReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, markerPayload: String?, note: String) {
+        let draft = RoomQuestStationReferenceDraft(
+            role: role,
+            markerPayload: markerPayload,
+            capturedAt: .now,
+            note: note,
+            captureState: state
+        )
+
+        do {
+            try stationStore.save(draft)
+            setReferenceState(state, for: role, note: note)
+            try? telemetryWriter.append(SliceEvent(
+                type: .roomQuestReferenceCaptureCompleted,
+                payload: [
+                    "station_role": role.rawValue,
+                    "saved": String(state == .captured),
+                    "capture_state": state.rawValue,
+                    "marker_payload_present": String(markerPayload != nil)
+                ]
+            ))
+        } catch {
+            setReferenceState(.notCaptured, for: role, note: "Reference save failed")
+            try? telemetryWriter.append(SliceEvent(
+                type: .roomQuestReferenceCaptureCompleted,
+                payload: [
+                    "station_role": role.rawValue,
+                    "saved": "false",
+                    "capture_state": RoomQuestReferenceCaptureState.notCaptured.rawValue
+                ]
+            ))
+        }
+    }
+
+    private func setReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, note: String) {
+        guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
+        stations[idx].referenceCaptureState = state
+        stations[idx].referenceNote = note
     }
 }
 
