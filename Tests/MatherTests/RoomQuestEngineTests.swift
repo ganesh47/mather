@@ -20,7 +20,7 @@ struct RoomQuestEngineTests {
             telemetryWriter: TelemetryWriter(),
             speechService: SpeechService(),
             scanner: scanner,
-            stationStore: RoomQuestStationStore(modelContext: container.mainContext)
+            stationStore: RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
         )
     }
 

@@ -3,9 +3,11 @@ import SwiftData
 
 @MainActor
 final class RoomQuestStationStore {
+    private let modelContainer: ModelContainer?
     private let modelContext: ModelContext
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, modelContainer: ModelContainer? = nil) {
+        self.modelContainer = modelContainer
         self.modelContext = modelContext
     }
 
