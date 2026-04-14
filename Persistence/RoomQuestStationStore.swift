@@ -21,7 +21,7 @@ final class RoomQuestStationStore {
             existing.markerPayload = draft.markerPayload
             existing.capturedAt = draft.capturedAt
             existing.note = draft.note
-            existing.imageJPEGData = draft.imageJPEGData
+            existing.captureStateRawValue = draft.captureState.rawValue
         } else {
             modelContext.insert(
                 StoredRoomQuestStationReference(
@@ -29,7 +29,7 @@ final class RoomQuestStationStore {
                     markerPayload: draft.markerPayload,
                     capturedAt: draft.capturedAt,
                     note: draft.note,
-                    imageJPEGData: draft.imageJPEGData
+                    captureState: draft.captureState
                 )
             )
         }

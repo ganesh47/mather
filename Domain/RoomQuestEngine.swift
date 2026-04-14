@@ -142,7 +142,7 @@ final class RoomQuestEngine {
 
     func confirmStationManually(_ role: RoomQuestStationRole) {
         scanState = .idle
-        setReferenceState(.manualFallback, for: role, note: "Manual fallback saved")
+        persistReferenceState(.manualFallback, for: role, markerPayload: nil, note: "Manual fallback saved")
         setStationRegistered(role, method: .manualConfirmed)
     }
 
@@ -313,33 +313,38 @@ final class RoomQuestEngine {
     private func captureReference(for result: RoomQuestMarkerScanResult) {
         guard featureFlags.roomQuestReferenceCaptureEnabled else { return }
 
-        let note = "Reference saved for \(result.role.title)"
+        persistReferenceState(.captured, for: result.role, markerPayload: result.markerPayload, note: "Reference saved for \(result.role.title)")
+    }
+
+    private func persistReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, markerPayload: String?, note: String) {
         let draft = RoomQuestStationReferenceDraft(
-            role: result.role,
-            markerPayload: result.markerPayload,
+            role: role,
+            markerPayload: markerPayload,
             capturedAt: .now,
             note: note,
-            imageJPEGData: result.referenceImageJPEGData
+            captureState: state
         )
 
         do {
             try stationStore.save(draft)
-            setReferenceState(.captured, for: result.role, note: note)
+            setReferenceState(state, for: role, note: note)
             try? telemetryWriter.append(SliceEvent(
                 type: .roomQuestReferenceCaptureCompleted,
                 payload: [
-                    "station_role": result.role.rawValue,
-                    "saved": "true",
-                    "marker_payload_present": String(result.markerPayload != nil)
+                    "station_role": role.rawValue,
+                    "saved": String(state == .captured),
+                    "capture_state": state.rawValue,
+                    "marker_payload_present": String(markerPayload != nil)
                 ]
             ))
         } catch {
-            setReferenceState(.notCaptured, for: result.role, note: "Reference save failed")
+            setReferenceState(.notCaptured, for: role, note: "Reference save failed")
             try? telemetryWriter.append(SliceEvent(
                 type: .roomQuestReferenceCaptureCompleted,
                 payload: [
-                    "station_role": result.role.rawValue,
-                    "saved": "false"
+                    "station_role": role.rawValue,
+                    "saved": "false",
+                    "capture_state": RoomQuestReferenceCaptureState.notCaptured.rawValue
                 ]
             ))
         }

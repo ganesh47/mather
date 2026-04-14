@@ -244,7 +244,7 @@ enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
     }
 }
 
-enum RoomQuestReferenceCaptureState: Equatable, Codable {
+enum RoomQuestReferenceCaptureState: String, Equatable, Codable {
     case notCaptured
     case captured
     case manualFallback
@@ -270,7 +270,7 @@ struct RoomQuestStationReferenceDraft: Equatable, Codable {
     let markerPayload: String?
     let capturedAt: Date
     let note: String
-    let imageJPEGData: Data?
+    let captureState: RoomQuestReferenceCaptureState
 }
 
 @Model
@@ -279,18 +279,22 @@ final class StoredRoomQuestStationReference {
     var markerPayload: String?
     var capturedAt: Date
     var note: String
-    @Attribute(.externalStorage) var imageJPEGData: Data?
+    var captureStateRawValue: String
 
-    init(role: RoomQuestStationRole, markerPayload: String?, capturedAt: Date, note: String, imageJPEGData: Data?) {
+    init(role: RoomQuestStationRole, markerPayload: String?, capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
         self.roleRawValue = role.rawValue
         self.markerPayload = markerPayload
         self.capturedAt = capturedAt
         self.note = note
-        self.imageJPEGData = imageJPEGData
+        self.captureStateRawValue = captureState.rawValue
     }
 
     var role: RoomQuestStationRole? {
         RoomQuestStationRole(rawValue: roleRawValue)
+    }
+
+    var captureState: RoomQuestReferenceCaptureState? {
+        RoomQuestReferenceCaptureState(rawValue: captureStateRawValue)
     }
 }
 
