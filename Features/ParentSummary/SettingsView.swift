@@ -95,7 +95,11 @@ struct SettingsView: View {
                             Toggle("Make & Break to 10", isOn: verticalSliceBinding)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
-                            Toggle("Bond Blast finale", isOn: bondMatchBinding)
+                            VS1ToggleRow(
+                                title: "Bond Blast finale",
+                                subtitle: "Adds a free-match bonus round after all bonds for a number are found.",
+                                isOn: bondMatchBinding
+                            )
                             Toggle("Room Quest (beta)", isOn: roomQuestBinding)
                             if appModel.featureFlags.roomQuestEnabled {
                                 Button("Review Room Quest safety rules") {
@@ -120,8 +124,16 @@ struct SettingsView: View {
                             Text("Advanced")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                            Toggle("Motion controls", isOn: motionBinding)
-                            Toggle("Clap reaction (mic)", isOn: soundReactionBinding)
+                            VS1ToggleRow(
+                                title: "Motion controls",
+                                subtitle: "Lets the child wave the iPad to celebrate correct answers.",
+                                isOn: motionBinding
+                            )
+                            VS1ToggleRow(
+                                title: "Clap reaction (mic)",
+                                subtitle: "Listens for a clap to trigger celebrations (uses microphone).",
+                                isOn: soundReactionBinding
+                            )
                             Toggle("Test mode", isOn: testModeBinding)
                         }
                         .font(.title3.weight(.semibold))

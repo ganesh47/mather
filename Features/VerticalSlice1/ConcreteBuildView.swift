@@ -40,6 +40,10 @@ struct ConcreteBuildView: View {
                             .onTapGesture {
                                 let isWarm = index < 5
                                 let rowIndex = index % 5
+                                // Accent row is locked until the warm row is filled to capacity
+                                // (min(target, 5) circles). Enforces CPA warm-first pedagogy:
+                                // the first addend must be established before the complement.
+                                guard isWarm || warmCount >= min(target, 5) else { return }
                                 onAdjust(
                                     (rowIndex + 1) - (isWarm ? warmCount : accentCount),
                                     isWarm ? .warm : .accent

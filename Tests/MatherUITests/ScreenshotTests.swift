@@ -151,7 +151,7 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "Pictorial-AfterConcreteSuccess")
     }
 
-    func testConcreteBuild_AccentRowDoesNotFillWarmRow() {
+    func testConcreteBuild_AccentRowLockedUntilWarmFull() {
         let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
 
@@ -172,13 +172,27 @@ final class ScreenshotTests: XCTestCase {
             app.scrollViews.firstMatch.swipeUp()
         }
         XCTAssertTrue(accentRowThirdCell.waitForExistence(timeout: 5))
-        accentRowThirdCell.tap()
 
         let warmCountLabel = app.staticTexts["warm-count-label"]
         let accentCountLabel = app.staticTexts["accent-count-label"]
         XCTAssertTrue(warmCountLabel.waitForExistence(timeout: 5))
         XCTAssertTrue(accentCountLabel.waitForExistence(timeout: 5))
+
+        // Tapping accent row when warm is empty must be a no-op.
+        accentRowThirdCell.tap()
         XCTAssertEqual(warmCountLabel.label, "0")
+        XCTAssertEqual(accentCountLabel.label, "0")
+
+        // Fill the warm row to capacity by tapping its last cell.
+        // Tapping counter-cell-4 (last warm cell) sets warmCount = 5 in one tap.
+        let warmRowLastCell = app.otherElements["counter-cell-4"]
+        XCTAssertTrue(warmRowLastCell.waitForExistence(timeout: 5))
+        warmRowLastCell.tap()
+        XCTAssertEqual(warmCountLabel.label, "5")
+
+        // Accent row is now interactive; tapping counter-cell-7 (rowIndex 2) sets accentCount = 3.
+        accentRowThirdCell.tap()
+        XCTAssertEqual(warmCountLabel.label, "5")
         XCTAssertEqual(accentCountLabel.label, "3")
     }
 

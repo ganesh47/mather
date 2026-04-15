@@ -172,6 +172,18 @@ struct BondMatchView: View {
                     strokeWidth: isSelected ? 4 : (isMatched ? 2 : 0),
                     dashed: false
                 )
+                // Drag hint: small right-arrow shown before any match is made.
+                // Disappears once the child discovers the mechanic (first match).
+                .overlay(alignment: .bottomTrailing) {
+                    if !isMatched && state.matchCount == 0 {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.6))
+                            .padding(6)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeOut(duration: 0.2), value: state.matchCount)
                 .shadow(
                     color: isSelected ? MatherTheme.warm.opacity(0.55) : .clear,
                     radius: 12
