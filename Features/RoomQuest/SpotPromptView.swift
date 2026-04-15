@@ -36,23 +36,25 @@ struct SpotPromptView: View {
                     .font(.system(size: 72))
 
                 if let station {
-                    Text(station.role.scanPrompt)
+                    Text("Scan to find \(station.role.title).")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(.white.opacity(0.92))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 28)
 
-                    Text("Then collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
+                    Text("When the marker is recognized, the app unlocks: collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
                         .font(.title.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.84))
                 }
+
+                scanStatusCard
 
                 CardSurface {
                     VStack(alignment: .leading, spacing: 10) {
                         Label("Need a fallback?", systemImage: "hand.tap.fill")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.ink)
-                        Text("If the marker is hard to scan, the child can keep going with one big confirmation button.")
+                        Text("Scanning is the main way to unlock progress. If the marker is hard to scan, use the fallback button below.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
@@ -61,21 +63,23 @@ struct SpotPromptView: View {
 
                 Spacer()
 
+                Button {
+                    engine.verifyCurrentSpotWithCamera()
+                } label: {
+                    Label("Scan to unlock", systemImage: "camera.viewfinder")
+                }
+                .accessibilityIdentifier("room-spot-scan-button")
+                .buttonStyle(RoomQuestPrimaryButtonStyle())
+                .padding(.horizontal, 40)
+
                 Button(station?.role.fallbackButtonTitle ?? "I found it") {
                     engine.markSpotVisited(index: spotIndex)
                 }
                 .accessibilityIdentifier("room-spot-confirm-button")
-                .buttonStyle(RoomQuestPrimaryButtonStyle())
-                .padding(.horizontal, 40)
-
-                Button {
-                    engine.markSpotVisited(index: spotIndex)
-                } label: {
-                    Label("Scan marker later, keep going now", systemImage: "camera.viewfinder")
-                }
                 .buttonStyle(.plain)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(.white.opacity(0.92))
+                .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
 
@@ -89,6 +93,35 @@ struct SpotPromptView: View {
                 }
             }
             .padding(24)
+        }
+    }
+
+    @ViewBuilder
+    private var scanStatusCard: some View {
+        switch engine.scanState {
+        case .idle:
+            EmptyView()
+        case .scanning(let role):
+            CardSurface {
+                Label("Scanning for \(role.title)…", systemImage: "camera.metering.center.weighted")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+            }
+            .padding(.horizontal, 24)
+        case .celebrating(let role, _):
+            CardSurface {
+                Label("\(role.title) unlocked!", systemImage: "sparkles")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.accent)
+            }
+            .padding(.horizontal, 24)
+        case .failed(_, let message):
+            CardSurface {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.coral)
+            }
+            .padding(.horizontal, 24)
         }
     }
 }

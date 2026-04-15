@@ -206,6 +206,51 @@ final class RoomQuestEngine {
         }
     }
 
+    func verifyCurrentSpotWithCamera() {
+        guard case .spot(let index) = phase,
+              let station = stations[safe: index]
+        else { return }
+
+        scanState = .scanning(role: station.role)
+        feedbackMessage = "Scan \(station.role.title) to unlock the collect step."
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await scanner.scanMarker(for: station.role)
+
+                if let savedReference = try? stationStore.reference(for: station.role),
+                   let expectedRole = savedReference.role,
+                   expectedRole != result.role {
+                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
+                    self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+                    return
+                }
+
+                self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
+                self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
+                self.speechService.speak("\(result.role.title) found. Collect \(station.quantity).", enabled: self.featureFlags.audioEnabled)
+                self.feedbackMessage = "\(result.role.title) unlocked. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
+                try? await Task.sleep(for: .seconds(1.0))
+                self.scanState = .idle
+                self.markSpotVisited(index: index)
+            } catch let error as RoomQuestScannerError {
+                switch error {
+                case .cancelled:
+                    self.feedbackMessage = "Camera check cancelled. Use fallback if you already found \(station.role.title)."
+                case .unavailable:
+                    self.feedbackMessage = "Camera scan is unavailable right now. Use fallback if needed."
+                case .wrongMarker(let expected, let detected):
+                    self.feedbackMessage = "That looked like \(detected.title). Scan \(expected.title) to unlock this step."
+                }
+                self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+            } catch {
+                self.feedbackMessage = "Camera check did not finish. Try again or use fallback."
+                self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+            }
+        }
+    }
+
     func markReturned() {
         guard let p = problem else { return }
         roomPhaseTimer?.cancel()
