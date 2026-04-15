@@ -157,7 +157,7 @@ struct RoomQuestEngineTests {
         try await Task.sleep(for: .milliseconds(1200))
 
         #expect(engine.phase == .spot(index: 1))
-        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("Blue Bubble"))
+        #expect(engine.currentStation?.role == .blueBubble)
     }
 
     @Test
