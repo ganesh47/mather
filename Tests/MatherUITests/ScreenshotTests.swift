@@ -190,10 +190,11 @@ final class ScreenshotTests: XCTestCase {
         warmRowLastCell.tap()
         XCTAssertEqual(warmCountLabel.label, "5")
 
-        // Accent row is now interactive; tapping counter-cell-7 (rowIndex 2) sets accentCount = 3.
+        // Accent row is now interactive. counter-cell-7 has rowIndex=2, so delta=(2+1)-0=3,
+        // but the engine clamps accent to max(target - warmCount, 0) = max(6-5, 0) = 1.
         accentRowThirdCell.tap()
         XCTAssertEqual(warmCountLabel.label, "5")
-        XCTAssertEqual(accentCountLabel.label, "3")
+        XCTAssertEqual(accentCountLabel.label, "1")
     }
 
     // MARK: - Parent Summary screen
