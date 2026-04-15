@@ -15,6 +15,7 @@ Technology investigations and trade-off analyses for Mather.
 | Topic | Issue | Status |
 |---|---|---|
 | [VS1 Complement Match Finale](Research-VS1-Complement-Match-Finale) | [#137](https://github.com/ganesh47/mather/issues/137) | research captured, implementation issue opened |
+| [VS1 Gravity Split — Tilt-Powered Balance Stage](Research-VS1-Gravity-Split) | (to be opened) | research completed, awaiting spec issue |
 
 ---
 
