@@ -141,6 +141,49 @@ struct RoomQuestEngineTests {
     }
 
     @Test
+    func verifyCurrentSpotWithCameraUnlocksAndAdvances() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(role: role, markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1", referenceImageJPEGData: nil, usedARCelebration: false)
+        })
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+        engine.verifyStationWithCamera(.blueBubble)
+        try await Task.sleep(for: .milliseconds(100))
+        engine.markSetupComplete()
+
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(1200))
+
+        #expect(engine.phase == .spot(index: 1))
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("Blue Bubble"))
+    }
+
+    @Test
+    func verifyCurrentSpotWithWrongMarkerDoesNotAdvance() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            throw RoomQuestScannerError.wrongMarker(expected: role, detected: role == .redRocket ? .blueBubble : .redRocket)
+        })
+
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.phase == .spot(index: 0))
+        if case .failed(let role, let message) = engine.scanState {
+            #expect(role == .redRocket)
+            #expect(message.contains("Blue Bubble"))
+        } else {
+            Issue.record("Expected failed scan state after wrong-marker hunt scan")
+        }
+    }
+
+    @Test
     func markSpotVisitedOneTransitionsToReturning() {
         let engine = makeEngine()
         engine.startSession()
