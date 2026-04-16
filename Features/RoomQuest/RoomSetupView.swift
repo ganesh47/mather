@@ -119,7 +119,7 @@ struct RoomSetupView: View {
                     .clipShape(Capsule())
             }
 
-            if station.referenceCaptureState != .notCaptured {
+            if station.verificationMethod == nil && station.referenceCaptureState != .notCaptured {
                 Text(station.referenceCaptureState.badgeTitle)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
@@ -129,7 +129,7 @@ struct RoomSetupView: View {
                     .clipShape(Capsule())
             }
 
-            if let referenceNote = station.referenceNote {
+            if let referenceNote = station.referenceNote, station.verificationMethod == nil {
                 Text(referenceNote)
                     .font(.caption)
                     .foregroundStyle(MatherTheme.cardSubtitle)

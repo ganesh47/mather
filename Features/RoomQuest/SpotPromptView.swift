@@ -57,6 +57,7 @@ struct SpotPromptView: View {
                         Text("Scanning is the main way to unlock progress. If the marker is hard to scan, use the fallback button below.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding(.horizontal, 24)
