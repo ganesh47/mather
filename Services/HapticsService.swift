@@ -193,12 +193,118 @@ final class HapticsService {
         }
     }
 
+    // MARK: - Gravity Split haptics
+
+    /// Bright transient tick fired once per integer boundary crossed while tilting.
+    /// Gives the child discrete tactile feedback for each counter that moves.
+    func counterSettle(enabled: Bool) {
+        guard enabled else { return }
+        playTransient(intensity: 0.45, sharpness: 0.85) {
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        }
+    }
+
+    /// Very brief continuous rumble while a tilt-driven count change is in progress.
+    /// Keeps the sensation "alive" between settle ticks — no UIKit fallback (too subtle).
+    func counterSlide(enabled: Bool) {
+        guard enabled else { return }
+        guard let engine else { return }
+        do {
+            let event = CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.18),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.72)
+                ],
+                relativeTime: 0,
+                duration: 0.08
+            )
+            let pattern = try CHHapticPattern(events: [event], parameterCurves: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch { /* silent — too subtle for UIKit fallback */ }
+    }
+
+    /// Bilateral celebration pattern fired when the balance snaps to the correct split.
+    /// Two simultaneous pulses + echo + a short settling hum — distinct from Bond Blast.
+    func balanceLock(enabled: Bool) {
+        guard enabled else { return }
+        balanceLockFiredCount += 1
+        guard let engine else {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            return
+        }
+        do {
+            let events: [CHHapticEvent] = [
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.70),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.75)
+                    ],
+                    relativeTime: 0.00
+                ),
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.70),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
+                    ],
+                    relativeTime: 0.00
+                ),
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.40),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.60)
+                    ],
+                    relativeTime: 0.14
+                ),
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.45),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.40)
+                    ],
+                    relativeTime: 0.28,
+                    duration: 0.25
+                )
+            ]
+            let pattern = try CHHapticPattern(events: events, parameterCurves: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+
+    /// Whisper tick fired when the device passes through the neutral (level) position.
+    /// Very subtle — no UIKit fallback.
+    func tiltNeutral(enabled: Bool) {
+        guard enabled else { return }
+        guard let engine else { return }
+        do {
+            let event = CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.15),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.50)
+                ],
+                relativeTime: 0
+            )
+            let pattern = try CHHapticPattern(events: [event], parameterCurves: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch { /* silent */ }
+    }
+
     // MARK: - Test support
 
     func resetCounts() {
         successFiredCount = 0
         failureFiredCount = 0
         stageSuccessFiredCount = 0
+        balanceLockFiredCount = 0
     }
 
     // MARK: - Private helpers

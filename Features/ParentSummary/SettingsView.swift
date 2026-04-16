@@ -43,6 +43,13 @@ struct SettingsView: View {
         )
     }
 
+    private var gravitySplitBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.vs1GravitySplitEnabled },
+            set: { appModel.featureFlags.vs1GravitySplitEnabled = $0 }
+        )
+    }
+
     private var motionBinding: Binding<Bool> {
         Binding(
             get: { appModel.featureFlags.motionControlsEnabled },
@@ -99,6 +106,11 @@ struct SettingsView: View {
                                 title: "Bond Blast finale",
                                 subtitle: "Adds a free-match bonus round after all bonds for a number are found.",
                                 isOn: bondMatchBinding
+                            )
+                            VS1ToggleRow(
+                                title: "Gravity Split (beta)",
+                                subtitle: "Replace the Show-it step with a tilt-powered balance scale activity.",
+                                isOn: gravitySplitBinding
                             )
                             Toggle("Room Quest (beta)", isOn: roomQuestBinding)
                             if appModel.featureFlags.roomQuestEnabled {

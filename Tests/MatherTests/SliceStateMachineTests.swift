@@ -47,4 +47,28 @@ struct SliceStateMachineTests {
         // Without showBondMatch, transfer → bondMatch is invalid
         #expect(SliceStateMachine.canTransition(from: .transfer, to: .bondMatch, showTransfer: true, showBondMatch: false) == false)
     }
+
+    // MARK: - Gravity Split transitions
+
+    @Test
+    func gravitySplitInsertedAfterAbstractWhenFlagOn() {
+        // Gravity Split takes priority over Transfer when showGravitySplit is true
+        #expect(SliceStateMachine.nextStage(after: .abstract, success: true, showTransfer: true, showGravitySplit: true) == .gravitySplit)
+    }
+
+    @Test
+    func gravitySplitLeadsToBondMatchOnLastProblem() {
+        #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, showTransfer: true, showGravitySplit: true, showBondMatch: true) == .bondMatch)
+    }
+
+    @Test
+    func gravitySplitLeadsToDoneWhenBondMatchOff() {
+        #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, showTransfer: true, showGravitySplit: true, showBondMatch: false) == .done)
+    }
+
+    @Test
+    func gravitySplitSkippedWhenFlagOff() {
+        // Default: showGravitySplit omitted → falls back to Transfer
+        #expect(SliceStateMachine.nextStage(after: .abstract, success: true, showTransfer: true) == .transfer)
+    }
 }

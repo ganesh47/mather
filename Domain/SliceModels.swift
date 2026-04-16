@@ -6,6 +6,7 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
     case pictorial
     case abstract
     case transfer
+    case gravitySplit
     case bondMatch
     case done
 
@@ -13,12 +14,13 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .concrete:  "Make it"
-        case .pictorial: "Bond Blast!"
-        case .abstract:  "Write it"
-        case .transfer:  "Show it"
-        case .bondMatch: "Bond Blast!"
-        case .done:      "Done"
+        case .concrete:     "Make it"
+        case .pictorial:    "Bond Blast!"
+        case .abstract:     "Write it"
+        case .transfer:     "Show it"
+        case .gravitySplit: "Balance it!"
+        case .bondMatch:    "Bond Blast!"
+        case .done:         "Done"
         }
     }
 }
@@ -141,6 +143,38 @@ struct SessionSummaryDraft: Equatable {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
+}
+
+// MARK: - Gravity Split models
+
+/// State for the Gravity Split balance stage — held by `VerticalSliceEngine`.
+///
+/// The child tilts the device; counters slide under simulated gravity between two pans.
+/// `isLocked` becomes true when the split matches the problem's decomposition exactly.
+struct GravitySplitState: Equatable {
+    let target: Int
+    let decompositionA: Int   // expected left-pan count
+    let decompositionB: Int   // expected right-pan count
+    var leftCount: Int        // current left-pan count (starts at 0)
+    var rightCount: Int       // always target − leftCount
+
+    var isLocked: Bool {
+        leftCount == decompositionA && rightCount == decompositionB
+    }
+
+    init(problem: SliceProblem) {
+        target         = problem.target
+        decompositionA = problem.decompositionA
+        decompositionB = problem.decompositionB
+        leftCount      = 0
+        rightCount     = problem.target   // all counters start on right pan
+    }
+
+    /// Sets `leftCount` to `count` (clamped 0…target) and derives `rightCount`.
+    mutating func setLeft(_ count: Int) {
+        leftCount  = min(max(count, 0), target)
+        rightCount = target - leftCount
+    }
 }
 
 // MARK: - Bond Blast models

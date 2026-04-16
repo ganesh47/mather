@@ -131,6 +131,22 @@ struct SliceSessionView: View {
                 onSubmit: appModel.engine.submitCurrentStage,
                 theme: appModel.engine.activeTheme
             )
+        case .gravitySplit:
+            if let splitState = appModel.engine.gravitySplitState {
+                GravitySplitView(
+                    state: splitState,
+                    tiltRoll: appModel.motionService.tiltRoll,
+                    shakeDetected: appModel.motionService.shakeDetected,
+                    onAdjustTilt: appModel.engine.adjustGravitySplitByTilt,
+                    onTap: appModel.engine.adjustGravitySplitByTap,
+                    onShakeHandled: { appModel.motionService.resetShake(); appModel.engine.resetGravitySplit() },
+                    onSubmit: appModel.engine.submitCurrentStage
+                )
+                .onAppear { appModel.motionService.startUpdates() }
+                .onDisappear { appModel.motionService.stopUpdates() }
+            } else {
+                CardSurface { Text("Loading Balance...") }
+            }
         case .bondMatch:
             if let bondState = appModel.engine.bondMatchState {
                 BondMatchView(
@@ -232,9 +248,10 @@ struct SliceSessionView: View {
         case .concrete:  MatherTheme.warm
         case .pictorial: MatherTheme.softBlue
         case .abstract:  MatherTheme.accent
-        case .transfer:  MatherTheme.coral
-        case .bondMatch: MatherTheme.accent
-        case .done:      .secondary
+        case .transfer:      MatherTheme.coral
+        case .gravitySplit:  MatherTheme.coral
+        case .bondMatch:     MatherTheme.accent
+        case .done:          .secondary
         }
     }
 
