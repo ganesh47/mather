@@ -265,8 +265,14 @@ struct ThemeTests {
         // The pictorial slot now uses Bond Blast copy rather than the theme-specific split prompt.
         engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
-        #expect(engine.feedbackMessage == "Bond Blast! Match the pairs that make 6!")
+        // Yield until the engine's stage-transition Task completes (celebrationDuration=0).
+        // A fixed sleep is unreliable on CI; yielding drains the MainActor queue deterministically.
+        let expected = "Bond Blast! Match the pairs that make 6!"
+        for _ in 0..<100 {
+            if engine.feedbackMessage == expected { break }
+            await Task.yield()
+        }
+        #expect(engine.feedbackMessage == expected)
     }
 
     // MARK: - counterNoun (UX review fix)
