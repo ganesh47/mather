@@ -3,3 +3,4 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 product-os.md
+.artifacts/
