@@ -16,6 +16,8 @@ final class AppModel {
     let soundDetectionService: SoundDetectionService
     let roomQuestScanner: RoomQuestLiveScanner
     let roomQuestEngine: RoomQuestEngine
+    let factStore: FactRecordStore
+    let sumSprintEngine: SumSprintEngine
 
     init(modelContext: ModelContext) {
         let featureFlags = FeatureFlagService()
@@ -57,5 +59,17 @@ final class AppModel {
         )
         self.roomQuestEngine = roomQuestEngine
         roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
+
+        let factStore = FactRecordStore(modelContext: modelContext)
+        let sumSprintEngine = SumSprintEngine(
+            featureFlags: featureFlags,
+            telemetryWriter: telemetryWriter,
+            speechService: speechService,
+            hapticsService: hapticsService,
+            factStore: factStore
+        )
+        self.factStore = factStore
+        self.sumSprintEngine = sumSprintEngine
+        sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
     }
 }

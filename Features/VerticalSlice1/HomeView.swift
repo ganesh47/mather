@@ -20,6 +20,14 @@ struct HomeView: View {
                     lockedActivityCard
                 }
 
+                if appModel.featureFlags.sumSprintEnabled {
+                    Button("Sum Sprint") {
+                        appModel.engine.showSumSprint()
+                        appModel.sumSprintEngine.startSession()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
+                }
+
                 if appModel.featureFlags.roomQuestEnabled {
                     Button("Start Room Quest") {
                         appModel.engine.showRoomQuest()

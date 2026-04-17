@@ -17,6 +17,7 @@ final class FeatureFlagService {
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
+        static let sumSprintEnabled = "feature.sumSprintEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -86,6 +87,11 @@ final class FeatureFlagService {
         didSet { defaults.set(roomQuestReferenceCaptureEnabled, forKey: Keys.roomQuestReferenceCaptureEnabled) }
     }
 
+    /// Gates the Sum Sprint fluency activity (sums 11–20). Default false; parent enables in Settings.
+    var sumSprintEnabled: Bool {
+        didSet { defaults.set(sumSprintEnabled, forKey: Keys.sumSprintEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -108,6 +114,7 @@ final class FeatureFlagService {
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
+            Keys.sumSprintEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -122,5 +129,6 @@ final class FeatureFlagService {
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
+        sumSprintEnabled = defaults.bool(forKey: Keys.sumSprintEnabled)
     }
 }

@@ -71,6 +71,13 @@ struct SettingsView: View {
         )
     }
 
+    private var sumSprintBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.sumSprintEnabled },
+            set: { appModel.featureFlags.sumSprintEnabled = $0 }
+        )
+    }
+
     private func smokeStep(_ text: String) -> some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
@@ -112,6 +119,7 @@ struct SettingsView: View {
                                 subtitle: "Replace the Show-it step with a tilt-powered balance scale activity.",
                                 isOn: gravitySplitBinding
                             )
+                            Toggle("Sum Sprint — sums 11–20", isOn: sumSprintBinding)
                             Toggle("Room Quest (beta)", isOn: roomQuestBinding)
                             if appModel.featureFlags.roomQuestEnabled {
                                 Button("Review Room Quest safety rules") {

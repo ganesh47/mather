@@ -9,6 +9,7 @@ enum AppRoute {
     case parentSummary
     case settings
     case roomQuest
+    case sumSprint
 }
 
 @MainActor
@@ -97,6 +98,7 @@ final class VerticalSliceEngine {
     func showParentSummary() { route = .parentSummary }
     func showSessionConfig() { route = .sessionConfig }
     func showRoomQuest() { route = .roomQuest }
+    func showSumSprint() { route = .sumSprint }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom
