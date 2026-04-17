@@ -539,6 +539,42 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func gravitySplitIgnoresInitialTiltThatWouldInstantlySolveStage() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        guard let problem = engine.currentProblem else { return }
+        #expect(problem.decompositionA == problem.decompositionB)
+
+        engine.adjustGravitySplitByTilt(0)
+        #expect(engine.currentStage == .gravitySplit)
+        #expect(engine.gravitySplitState?.isLocked == false)
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.rightCount == problem.target)
+
+        engine.adjustGravitySplitByTilt(.pi / 4)
+        #expect(engine.gravitySplitState?.leftCount == 0)
+
+        engine.adjustGravitySplitByTilt(0)
+        for _ in 0..<100 {
+            if engine.currentStage != .gravitySplit { break }
+            await Task.yield()
+        }
+        #expect(engine.currentStage != .gravitySplit)
+    }
+
+    @Test
     func gravitySplitAutoAdvancesWhenLocked() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
