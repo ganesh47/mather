@@ -18,6 +18,7 @@ final class HapticsService {
     private(set) var successFiredCount = 0
     private(set) var failureFiredCount = 0
     private(set) var stageSuccessFiredCount = 0
+    private(set) var balanceLockFiredCount = 0
 
     // MARK: - Engine
 
