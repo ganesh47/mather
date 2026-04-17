@@ -227,6 +227,16 @@ final class RoomQuestEngine {
                     return
                 }
 
+                if let savedReference = try? stationStore.reference(for: station.role),
+                   savedReference.referenceCaptureState == .captured,
+                   let savedMarkerPayload = savedReference.markerPayload,
+                   let scannedMarkerPayload = result.markerPayload,
+                   savedMarkerPayload != scannedMarkerPayload {
+                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
+                    self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+                    return
+                }
+
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
                 self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
                 self.speechService.speak("\(result.role.title) found. Collect \(station.quantity).", enabled: self.featureFlags.audioEnabled)
