@@ -33,6 +33,8 @@ final class VerticalSliceEngine {
     var transferLeftCount = 0
     var transferRightCount = 0
     private(set) var bondMatchState: BondMatchState? = nil
+    private(set) var gravitySplitState: GravitySplitState? = nil
+    private var lastGravitySplitCount = -1
     var feedbackMessage = "Tap Play to start."
     var showCelebration = false
     var completedSummary: SessionSummaryDraft?
@@ -138,6 +140,8 @@ final class VerticalSliceEngine {
         transferLeftCount = 0
         transferRightCount = 0
         bondMatchState = nil
+        gravitySplitState = nil
+        lastGravitySplitCount = -1
         feedbackMessage = activeTheme.sessionStartFeedback()
         showCelebration = false
         completedSummary = nil
@@ -239,6 +243,8 @@ final class VerticalSliceEngine {
         case .transfer:
             isCorrect = transferLeftCount == currentProblem.decompositionA
                 && transferRightCount == currentProblem.decompositionB
+        case .gravitySplit:
+            isCorrect = gravitySplitState?.isLocked == true
         case .bondMatch:
             // Bond Blast is not submitted via submitCurrentStage — pairs are matched
             // individually via matchPair(id:). This case is unreachable in practice.
@@ -311,6 +317,55 @@ final class VerticalSliceEngine {
         speechService.speak(msg, enabled: featureFlags.audioEnabled)
     }
 
+    // MARK: - Gravity Split actions
+
+    /// Called each time tiltRoll updates (≈30 Hz from MotionService).
+    /// Maps device roll angle (radians) to a left-pan counter count.
+    func adjustGravitySplitByTilt(_ tiltRoll: Double) {
+        guard currentStage == .gravitySplit, let state = gravitySplitState,
+              !state.isLocked else { return }
+        let clamped = max(-Double.pi / 4, min(tiltRoll, Double.pi / 4))
+        let fraction = 0.5 - clamped / (Double.pi / 4) * 0.5
+        let newLeft = Int((Double(state.target) * fraction).rounded())
+        setGravitySplit(leftCount: newLeft)
+    }
+
+    /// Called by the ±1 tap fallback buttons in GravitySplitView.
+    func adjustGravitySplitByTap(delta: Int) {
+        guard currentStage == .gravitySplit, let state = gravitySplitState,
+              !state.isLocked else { return }
+        setGravitySplit(leftCount: state.leftCount + delta)
+    }
+
+    /// Resets all counters back to the right pan (shake gesture).
+    func resetGravitySplit() {
+        guard currentStage == .gravitySplit else { return }
+        gravitySplitState?.setLeft(0)
+        lastGravitySplitCount = -1
+    }
+
+    private func setGravitySplit(leftCount: Int) {
+        guard var state = gravitySplitState else { return }
+        let previousCount = state.leftCount
+        state.setLeft(leftCount)
+        gravitySplitState = state
+
+        if state.leftCount != previousCount {
+            hapticsService.counterSettle(enabled: featureFlags.hapticsEnabled)
+            hapticsService.counterSlide(enabled: featureFlags.hapticsEnabled)
+        }
+
+        // Whisper tick when passing through the balanced midpoint.
+        if previousCount != state.target / 2 && state.leftCount == state.target / 2 {
+            hapticsService.tiltNeutral(enabled: featureFlags.hapticsEnabled)
+        }
+
+        if state.isLocked, let problem = currentProblem {
+            hapticsService.balanceLock(enabled: featureFlags.hapticsEnabled)
+            completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
+        }
+    }
+
     private func validateEquation(for problem: SliceProblem) -> Bool {
         guard let left = Int(equationLeftInput), let right = Int(equationRightInput) else { return false }
         return left + right == problem.target
@@ -323,11 +378,13 @@ final class VerticalSliceEngine {
         // Bond Blast fires only on the last problem of the session.
         let isLastProblem = currentProblemIndex + 1 >= problems.count
         let showBondMatch = featureFlags.vs1BondMatchEnabled && isLastProblem
+        let showGravitySplit = featureFlags.vs1GravitySplitEnabled
 
         let next = SliceStateMachine.nextStage(
             after: currentStage,
             success: true,
             showTransfer: config.showTransfer,
+            showGravitySplit: showGravitySplit,
             showBondMatch: showBondMatch
         )
         recordStageTransition(from: currentStage, to: next)
@@ -385,6 +442,11 @@ final class VerticalSliceEngine {
         case .transfer:
             transferLeftCount = 0
             transferRightCount = 0
+        case .gravitySplit:
+            if let problem = currentProblem {
+                gravitySplitState = GravitySplitState(problem: problem)
+                lastGravitySplitCount = -1
+            }
         case .bondMatch:
             if let problem = currentProblem {
                 bondMatchState = BondMatchState(
@@ -421,6 +483,8 @@ final class VerticalSliceEngine {
             equationRightInput = ""
             transferLeftCount = 0
             transferRightCount = 0
+            gravitySplitState = nil
+            lastGravitySplitCount = -1
             problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
             logProblemPresented()
@@ -582,6 +646,10 @@ final class VerticalSliceEngine {
             return activeTheme.abstractPrompt()
         case .transfer:
             return "Show the same two parts with counters."
+        case .gravitySplit:
+            let a = currentProblem.decompositionA
+            let b = currentProblem.decompositionB
+            return "Tilt to put \(a) on one side and \(b) on the other!"
         case .done:
             return "Nice work."
         }
@@ -620,6 +688,8 @@ final class VerticalSliceEngine {
             } else {
                 return "Build the same equation again with counters, one group on each side."
             }
+        case .gravitySplit:
+            return "Keep tilting! Get \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
         case .done:
             return "Try again."
         }

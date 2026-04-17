@@ -478,6 +478,93 @@ struct VerticalSliceEngineTests {
         #expect(engine.currentProblemIndex == 1)
     }
 
+    // MARK: - Gravity Split engine tests
+
+    private func advanceToGravitySplit(_ engine: VerticalSliceEngine) async throws {
+        guard let problem = engine.currentProblem else { return }
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        let pairIds = engine.bondMatchState?.pairs.map(\.id) ?? []
+        for id in pairIds { engine.matchPair(id: id) }
+        try await Task.sleep(for: .milliseconds(200))
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitCurrentStage()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(engine.currentStage == .gravitySplit)
+    }
+
+    @Test
+    func gravitySplitStateInitialisedOnStageEntry() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        #expect(engine.gravitySplitState != nil)
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.rightCount == engine.currentProblem?.target)
+    }
+
+    @Test
+    func gravitySplitAdjustByTapChangesCount() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        engine.adjustGravitySplitByTap(delta: 1)
+        #expect(engine.gravitySplitState?.leftCount == 1)
+        engine.adjustGravitySplitByTap(delta: 1)
+        #expect(engine.gravitySplitState?.leftCount == 2)
+    }
+
+    @Test
+    func gravitySplitAutoAdvancesWhenLocked() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        guard let problem = engine.currentProblem else { return }
+        // Tap to exact decomposition — should auto-advance
+        engine.adjustGravitySplitByTap(delta: problem.decompositionA)
+        // Drain the MainActor queue so the completeStage Task fires
+        for _ in 0..<100 {
+            if engine.currentStage != .gravitySplit { break }
+            await Task.yield()
+        }
+        #expect(engine.currentStage != .gravitySplit)
+    }
+
     @Test
     func concreteStageAcceptsCombinedWarmAndAccentTotal() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)

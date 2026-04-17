@@ -40,6 +40,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both zones together make the same number."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "You parked them perfectly."
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -63,6 +64,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both groups add up to the same number."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Trucks delivered perfectly."
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -86,6 +88,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both routes carry the same total."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Vans delivered!"
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -109,6 +112,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both stops total the same."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Buses on route!"
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -132,6 +136,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both zones cover the same total."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Bulldozers in position!"
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -155,6 +160,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both pads together hold the same total."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Helicopters landed perfectly."
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -178,6 +184,7 @@ extension VehicleSpec {
             case .pictorial:  return "Both terminals hold the same total."
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Planes ready for take-off!"
+            case .gravitySplit: return "Perfect balance!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }

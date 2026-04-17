@@ -10,6 +10,7 @@ final class FeatureFlagService {
         static let hapticsEnabled = "feature.hapticsEnabled"
         static let selectedThemeId = "feature.selectedThemeId"
         static let vs1BondMatchEnabled = "feature.vs1BondMatchEnabled"
+        static let vs1GravitySplitEnabled = "feature.vs1GravitySplitEnabled"
         static let motionControlsEnabled = "feature.motionControlsEnabled"
         static let soundReactionEnabled = "feature.soundReactionEnabled"
         static let roomQuestEnabled = "feature.roomQuestEnabled"
@@ -44,6 +45,12 @@ final class FeatureFlagService {
     /// Gates the Bond Blast complement-match finale stage at the end of each VS1 session.
     var vs1BondMatchEnabled: Bool {
         didSet { defaults.set(vs1BondMatchEnabled, forKey: Keys.vs1BondMatchEnabled) }
+    }
+
+    /// Replaces the Transfer (Show it) stepper stage with the tilt-powered balance activity.
+    /// Default false — parent opts in via Settings.
+    var vs1GravitySplitEnabled: Bool {
+        didSet { defaults.set(vs1GravitySplitEnabled, forKey: Keys.vs1GravitySplitEnabled) }
     }
 
     /// Enables CMMotionManager tilt drift and shake-to-shuffle in Bond Blast.
@@ -94,6 +101,7 @@ final class FeatureFlagService {
             Keys.hapticsEnabled: true,
             Keys.selectedThemeId: "classic",
             Keys.vs1BondMatchEnabled: false,
+            Keys.vs1GravitySplitEnabled: false,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: false,
             Keys.roomQuestEnabled: false,
@@ -107,6 +115,7 @@ final class FeatureFlagService {
         hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
         selectedThemeId = defaults.string(forKey: Keys.selectedThemeId) ?? "classic"
         vs1BondMatchEnabled = defaults.bool(forKey: Keys.vs1BondMatchEnabled)
+        vs1GravitySplitEnabled = defaults.bool(forKey: Keys.vs1GravitySplitEnabled)
         motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
         roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)
