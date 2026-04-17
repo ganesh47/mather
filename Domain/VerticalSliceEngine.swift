@@ -327,7 +327,17 @@ final class VerticalSliceEngine {
         let clamped = max(-Double.pi / 4, min(tiltRoll, Double.pi / 4))
         let fraction = 0.5 - clamped / (Double.pi / 4) * 0.5
         let newLeft = Int((Double(state.target) * fraction).rounded())
+
+        // Ignore an initial tilt sample that would instantly solve the stage.
+        // This keeps Gravity Split starting unsolved, especially for symmetric
+        // decompositions like 6 = 3 + 3 when the device begins level.
+        if lastGravitySplitCount == -1 {
+            lastGravitySplitCount = newLeft
+            if newLeft == state.decompositionA { return }
+        }
+
         setGravitySplit(leftCount: newLeft)
+        lastGravitySplitCount = newLeft
     }
 
     /// Called by the ±1 tap fallback buttons in GravitySplitView.
