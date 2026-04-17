@@ -10,17 +10,25 @@ struct RoomQuestEngineTests {
 
     private func makeEngine(
         safetyAcknowledged: Bool = true,
-        scanner: RoomQuestScanner = NoopRoomQuestScanner()
+        scanner: RoomQuestScanner = NoopRoomQuestScanner(),
+        stationStore: RoomQuestStationStore? = nil,
+        defaultsSuiteName: String = #function
     ) -> RoomQuestEngine {
-        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: defaultsSuiteName)!)
         flags.roomQuestSafetyAcknowledged = safetyAcknowledged
-        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let resolvedStationStore: RoomQuestStationStore
+        if let stationStore {
+            resolvedStationStore = stationStore
+        } else {
+            let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            resolvedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
+        }
         return RoomQuestEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
             speechService: SpeechService(),
             scanner: scanner,
-            stationStore: RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
+            stationStore: resolvedStationStore
         )
     }
 
@@ -185,27 +193,48 @@ struct RoomQuestEngineTests {
 
     @Test
     func verifyCurrentSpotRejectsMarkerPayloadThatDoesNotMatchSavedReference() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            let payload = role == .redRocket ? "mather:roomquest:redRocket:v2" : "mather:roomquest:blueBubble:v1"
-            return RoomQuestMarkerScanResult(role: role, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: false)
-        })
+        let setupScanner = FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        }
+        let huntScanner = FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:DIFFERENT" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        }
+        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let sharedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
 
+        let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
         try await Task.sleep(for: .milliseconds(100))
-        engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(100))
+        engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
-        engine.verifyCurrentSpotWithCamera()
+        let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
+        recheckingEngine.startSession()
+        recheckingEngine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+        recheckingEngine.confirmStationManually(.blueBubble)
+        recheckingEngine.markSetupComplete()
+
+        recheckingEngine.verifyCurrentSpotWithCamera()
         try await Task.sleep(for: .milliseconds(100))
 
-        #expect(engine.phase == .spot(index: 0))
-        if case .failed(let role, let message) = engine.scanState {
+        #expect(recheckingEngine.phase == .spot(index: 0))
+        if case .failed(let role, let message) = recheckingEngine.scanState {
             #expect(role == .redRocket)
-            #expect(message.localizedCaseInsensitiveContains("doesn’t match the saved"))
+            #expect(message.localizedCaseInsensitiveContains("saved red rocket station"))
         } else {
-            Issue.record("Expected failed scan state after mismatched saved marker payload")
+            Issue.record("Expected failed scan state after saved-reference payload mismatch")
         }
     }
 
