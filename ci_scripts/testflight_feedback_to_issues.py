@@ -197,12 +197,42 @@ def first_non_empty(*values: Any) -> str | None:
     return None
 
 
-def issue_exists(config: Config, feedback_id: str) -> bool:
-    query = urllib.parse.quote(
-        f'repo:{config.github_repository} is:issue "ASC Feedback ID: {feedback_id}"'
-    )
-    result = github_request(config, f"/search/issues?q={query}")
-    return result.get("total_count", 0) > 0
+def list_existing_feedback_ids(config: Config) -> set[str]:
+    feedback_ids: set[str] = set()
+    page = 1
+
+    while True:
+        issues = github_request(
+            config,
+            (
+                f"/repos/{config.github_repository}/issues"
+                f"?state=all&per_page=100&page={page}&labels=source:testflight"
+            ),
+        )
+        if not issues:
+            break
+
+        for issue in issues:
+            if "pull_request" in issue:
+                continue
+            body = issue.get("body") or ""
+            marker = "<!-- ASC Feedback ID: "
+            start = body.find(marker)
+            if start == -1:
+                continue
+            start += len(marker)
+            end = body.find(" -->", start)
+            if end == -1:
+                continue
+            feedback_id = body[start:end].strip()
+            if feedback_id:
+                feedback_ids.add(feedback_id)
+
+        if len(issues) < 100:
+            break
+        page += 1
+
+    return feedback_ids
 
 
 def build_issue_title(feedback: dict[str, Any], kind: str) -> str:
@@ -402,17 +432,20 @@ def sync_feedback_kind(
 ) -> int:
     created_count = 0
     feedback_items = fetch_feedback_collection(config, endpoint)
+    existing_feedback_ids = list_existing_feedback_ids(config)
     print(f"Fetched {len(feedback_items)} {kind} feedback item(s)")
+    print(f"Found {len(existing_feedback_ids)} existing TestFlight issue marker(s)")
 
     for feedback in feedback_items:
         feedback_id = feedback["id"]
-        if issue_exists(config, feedback_id):
+        if feedback_id in existing_feedback_ids:
             print(f"Skipping existing issue for feedback {feedback_id}")
             continue
 
         title = build_issue_title(feedback, kind)
         body = build_issue_body(config, feedback, kind)
         issue = create_issue(config, title, body, labels)
+        existing_feedback_ids.add(feedback_id)
         created_count += 1
         print(f"Created issue #{issue['number']} for feedback {feedback_id}")
 
