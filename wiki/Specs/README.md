@@ -18,6 +18,7 @@ Specifications for features in Mather. Each spec is linked to a GitHub issue lab
 | [VS1-Make-and-Break-to-10](VS1-Make-and-Break-to-10.md) | #10 | implemented |
 | [VS1-Complement-Match-Finale](VS1-Complement-Match-Finale.md) | [#137](https://github.com/ganesh47/mather/issues/137) | draft |
 | [Sum-Sprint](Sum-Sprint.md) | [#179](https://github.com/ganesh47/mather/issues/179) | draft |
+| [Room-Quest-Reference-Capture](Room-Quest-Reference-Capture.md) | [#182](https://github.com/ganesh47/mather/issues/182) | draft |
 | [Sum-Sprint](Sum-Sprint.md) | [#179](https://github.com/ganesh47/mather/issues/179) | draft |
 
 ---
