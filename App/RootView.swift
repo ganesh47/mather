@@ -30,6 +30,21 @@ struct RootView: View {
                         )) { _ in
                             RoomQuestScannerSheet(scanner: appModel.roomQuestScanner)
                         }
+                case .sumSprint:
+                    switch appModel.sumSprintEngine.phase {
+                    case .idle:
+                        HomeView(appModel: appModel)
+                    case .session:
+                        SumSprintSessionView(appModel: appModel)
+                    case .summary:
+                        if let summary = appModel.sumSprintEngine.completedSummary {
+                            SumSprintSummaryView(
+                                summary: summary,
+                                onPlayAgain: { appModel.sumSprintEngine.startSession() },
+                                onDone: { appModel.sumSprintEngine.exitToHome() }
+                            )
+                        }
+                    }
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

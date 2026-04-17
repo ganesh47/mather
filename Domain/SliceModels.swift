@@ -41,6 +41,10 @@ enum SliceEventType: String, Codable {
     case roomQuestCompleted = "room_quest_completed"
     case roomQuestReferenceCaptureStarted = "room_quest_reference_capture_started"
     case roomQuestReferenceCaptureCompleted = "room_quest_reference_capture_completed"
+    case sumSprintStarted = "sum_sprint_started"
+    case sumSprintCardShown = "sum_sprint_card_shown"
+    case sumSprintCardAnswered = "sum_sprint_card_answered"
+    case sumSprintCompleted = "sum_sprint_completed"
 }
 
 struct SliceConfig: Codable, Equatable {
@@ -329,6 +333,27 @@ final class StoredRoomQuestStationReference {
 
     var captureState: RoomQuestReferenceCaptureState? {
         RoomQuestReferenceCaptureState(rawValue: captureStateRawValue)
+    }
+}
+
+@Model
+final class StoredFactRecord {
+    @Attribute(.unique) var factKey: String  // "\(addendA)+\(addendB)"
+    var addendA: Int
+    var addendB: Int
+    var boxRawValue: Int
+    var sessionsSinceLastSeen: Int
+    var correctStreak: Int
+    var lastSeenAt: Date?
+
+    init(factKey: String, addendA: Int, addendB: Int) {
+        self.factKey = factKey
+        self.addendA = addendA
+        self.addendB = addendB
+        self.boxRawValue = 0
+        self.sessionsSinceLastSeen = 0
+        self.correctStreak = 0
+        self.lastSeenAt = nil
     }
 }
 
