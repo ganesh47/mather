@@ -10,17 +10,25 @@ struct RoomQuestEngineTests {
 
     private func makeEngine(
         safetyAcknowledged: Bool = true,
-        scanner: RoomQuestScanner = NoopRoomQuestScanner()
+        scanner: RoomQuestScanner = NoopRoomQuestScanner(),
+        stationStore: RoomQuestStationStore? = nil,
+        defaultsSuiteName: String = #function
     ) -> RoomQuestEngine {
-        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: defaultsSuiteName)!)
         flags.roomQuestSafetyAcknowledged = safetyAcknowledged
-        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let resolvedStationStore: RoomQuestStationStore
+        if let stationStore {
+            resolvedStationStore = stationStore
+        } else {
+            let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            resolvedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
+        }
         return RoomQuestEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
             speechService: SpeechService(),
             scanner: scanner,
-            stationStore: RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
+            stationStore: resolvedStationStore
         )
     }
 
@@ -180,6 +188,48 @@ struct RoomQuestEngineTests {
             #expect(message.contains("Blue Bubble"))
         } else {
             Issue.record("Expected failed scan state after wrong-marker hunt scan")
+        }
+    }
+
+    @Test
+    func verifyCurrentSpotRejectsMarkerPayloadThatDoesNotMatchSavedReference() async throws {
+        enum ScanPhase {
+            case setup
+            case recheck
+        }
+
+        var scanPhase = ScanPhase.setup
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            let payload: String
+            switch (scanPhase, role) {
+            case (.setup, .redRocket):
+                payload = "mather:roomquest:redRocket:v1"
+            case (.setup, .blueBubble):
+                payload = "mather:roomquest:blueBubble:v1"
+            case (.recheck, .redRocket):
+                payload = "mather:roomquest:redRocket:DIFFERENT"
+            case (.recheck, .blueBubble):
+                payload = "mather:roomquest:blueBubble:v1"
+            }
+            return RoomQuestMarkerScanResult(role: role, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: false)
+        })
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+        engine.confirmStationManually(.blueBubble)
+        engine.markSetupComplete()
+
+        scanPhase = .recheck
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.phase == .spot(index: 0))
+        if case .failed(let role, let message) = engine.scanState {
+            #expect(role == .redRocket)
+            #expect(message.localizedCaseInsensitiveContains("saved red rocket station"))
+        } else {
+            Issue.record("Expected failed scan state after saved-reference payload mismatch")
         }
     }
 
