@@ -16,6 +16,8 @@ Technology investigations and trade-off analyses for Mather.
 |---|---|---|
 | [VS1 Complement Match Finale](Research-VS1-Complement-Match-Finale) | [#137](https://github.com/ganesh47/mather/issues/137) | research captured, implementation issue opened |
 | [VS1 Gravity Split — Tilt-Powered Balance Stage](Research-VS1-Gravity-Split) | (to be opened) | research completed, awaiting spec issue |
+| [Sum Sprint — Spaced-Repetition Fluency Practice](Sum-Sprint-Spaced-Repetition.md) | [#179](https://github.com/ganesh47/mather/issues/179) | research completed, draft spec added |
+| [Sum Sprint — Spaced-Repetition Fluency Practice](Sum-Sprint-Spaced-Repetition.md) | [#179](https://github.com/ganesh47/mather/issues/179) | research completed, draft spec added |
 
 ---
 
