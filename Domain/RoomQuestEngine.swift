@@ -219,22 +219,22 @@ final class RoomQuestEngine {
             do {
                 let result = try await scanner.scanMarker(for: station.role)
 
-                if let savedReference = try? stationStore.reference(for: station.role) {
-                    if let expectedRole = savedReference.role,
-                       expectedRole != result.role {
-                        self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
-                        self.scanState = .failed(role: station.role, message: self.feedbackMessage)
-                        return
-                    }
+                if let savedReference = try? stationStore.reference(for: station.role),
+                   let expectedRole = savedReference.role,
+                   expectedRole != result.role {
+                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
+                    self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+                    return
+                }
 
-                    if savedReference.captureState == .captured,
-                       let expectedPayload = savedReference.markerPayload,
-                       let scannedPayload = result.markerPayload,
-                       expectedPayload != scannedPayload {
-                        self.feedbackMessage = "That marker doesn’t match the saved \(station.role.title) station yet."
-                        self.scanState = .failed(role: station.role, message: self.feedbackMessage)
-                        return
-                    }
+                if let savedReference = try? stationStore.reference(for: station.role),
+                   savedReference.referenceCaptureState == .captured,
+                   let savedMarkerPayload = savedReference.markerPayload,
+                   let scannedMarkerPayload = result.markerPayload,
+                   savedMarkerPayload != scannedMarkerPayload {
+                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
+                    self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+                    return
                 }
 
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
