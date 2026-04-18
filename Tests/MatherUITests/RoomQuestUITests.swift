@@ -95,13 +95,13 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
         tapWhenHittable(gotRed, in: app, reveal: .up)
 
-        XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Blue Bubble", actionID: "room-spot-scan-button", timeout: 10))
         snapshot(app, "RoomQuest-Spot2-Blue")
         tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
         XCTAssertTrue(app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5))
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
-        XCTAssertTrue(app.staticTexts["Bring them back!"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Bring them back!", actionID: "room-return-confirm-button", timeout: 10))
         snapshot(app, "RoomQuest-Returning")
     }
 
@@ -123,13 +123,13 @@ final class RoomQuestUITests: XCTestCase {
         _ = gotRed.waitForExistence(timeout: 5)
         tapWhenHittable(gotRed, in: app, reveal: .up)
 
-        _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Blue Bubble", actionID: "room-spot-scan-button", timeout: 10))
         tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
         _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
-        _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
-        app.buttons["room-return-confirm-button"].tap()
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Bring them back!", actionID: "room-return-confirm-button", timeout: 10))
+        tapWhenHittable(app.buttons["room-return-confirm-button"], in: app, reveal: .up)
 
         // Pictorial (locked SplitView — "From your walk" badge is visible)
         let fromYourWalk = app.staticTexts["From your walk"]
@@ -182,10 +182,10 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
 
         tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        XCTAssertTrue(app.staticTexts["Paused"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
         snapshot(app, "RoomQuest-Paused")
 
-        app.buttons["Resume"].tap()
+        tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-ResumedToSpot")
     }
@@ -202,17 +202,17 @@ final class RoomQuestUITests: XCTestCase {
         tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
         _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
-        _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Blue Bubble", actionID: "room-spot-scan-button", timeout: 10))
         tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
         _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
-        _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Bring them back!", actionID: "room-return-confirm-button", timeout: 10))
         tapWhenHittable(app.buttons["room-pause-button-returning"], in: app, reveal: .down)
-        XCTAssertTrue(app.staticTexts["Paused"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
 
-        app.buttons["Resume"].tap()
-        XCTAssertTrue(app.staticTexts["Bring them back!"].waitForExistence(timeout: 5))
+        tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
+        XCTAssertTrue(waitForRoomQuestStage(app, title: "Bring them back!", actionID: "room-return-confirm-button", timeout: 10))
     }
 
     // MARK: - Abandon
@@ -227,9 +227,9 @@ final class RoomQuestUITests: XCTestCase {
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        _ = app.staticTexts["Paused"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
 
-        app.buttons["Stop session"].tap()
+        tapWhenHittable(app.buttons["Stop session"], in: app, reveal: .up)
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
     }
 
@@ -279,6 +279,32 @@ final class RoomQuestUITests: XCTestCase {
     private enum RevealDirection {
         case up
         case down
+    }
+
+    private func waitForRoomQuestStage(_ app: XCUIApplication, title: String, actionID: String, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let titleText = app.staticTexts[title]
+        let actionButton = app.buttons[actionID]
+        while Date() < deadline {
+            if titleText.exists && actionButton.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return titleText.exists && actionButton.exists
+    }
+
+    private func waitForPauseMenu(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let resume = app.buttons["Resume"]
+        let stop = app.buttons["Stop session"]
+        while Date() < deadline {
+            if resume.exists && stop.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return resume.exists && stop.exists
     }
 
     private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication, reveal: RevealDirection) {
