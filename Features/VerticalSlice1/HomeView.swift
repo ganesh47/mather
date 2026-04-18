@@ -20,6 +20,13 @@ struct HomeView: View {
                     lockedActivityCard
                 }
 
+                if appModel.featureFlags.rectangleFactoryEnabled {
+                    Button("Rectangle Factory") {
+                        appModel.engine.showRectangleFactory()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.55)))
+                }
+
                 if appModel.featureFlags.sumSprintEnabled {
                     Button("Sum Sprint") {
                         appModel.engine.showSumSprint()
