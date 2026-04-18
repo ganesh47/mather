@@ -223,6 +223,24 @@ struct RoomQuestEngineTests {
         recheckingEngine.startSession()
         recheckingEngine.registerStation(.redRocket)
         recheckingEngine.registerStation(.blueBubble)
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .redRocket,
+                markerPayload: "mather:roomquest:redRocket:v1",
+                capturedAt: .now,
+                note: "Reference saved for Red Rocket",
+                captureState: .captured
+            )
+        )
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .blueBubble,
+                markerPayload: nil,
+                capturedAt: .now,
+                note: "Manual fallback saved",
+                captureState: .manualFallback
+            )
+        )
         recheckingEngine.markSetupComplete()
 
         recheckingEngine.verifyCurrentSpotWithCamera()
