@@ -10,6 +10,7 @@ enum AppRoute {
     case settings
     case roomQuest
     case sumSprint
+    case symmetryFold
     case rectangleFactory
 }
 
@@ -103,6 +104,7 @@ final class VerticalSliceEngine {
     func showSessionConfig() { route = .sessionConfig }
     func showRoomQuest() { route = .roomQuest }
     func showSumSprint() { route = .sumSprint }
+    func showSymmetryFold() { route = .symmetryFold }
     func showRectangleFactory() { route = .rectangleFactory }
 
     func startSession() {

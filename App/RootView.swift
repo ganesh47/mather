@@ -47,6 +47,8 @@ struct RootView: View {
                             )
                         }
                     }
+                case .symmetryFold:
+                    SymmetryFoldView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

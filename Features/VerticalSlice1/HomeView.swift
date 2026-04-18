@@ -35,6 +35,13 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
                 }
 
+                if appModel.featureFlags.symmetryFoldEnabled {
+                    Button("Symmetry Fold") {
+                        appModel.engine.showSymmetryFold()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.coral.opacity(0.65)))
+                }
+
                 if appModel.featureFlags.roomQuestEnabled {
                     Button("Start Room Quest") {
                         appModel.engine.showRoomQuest()

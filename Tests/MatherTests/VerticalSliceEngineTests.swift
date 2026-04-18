@@ -17,6 +17,7 @@ struct VerticalSliceEngineTests {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
+        flags.vs1BondMatchEnabled = true
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
