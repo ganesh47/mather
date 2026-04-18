@@ -294,23 +294,6 @@ final class RoomQuestUITests: XCTestCase {
         return waitForReturningStage(app, timeout: 5)
     }
 
-    private func openPauseMenu(_ app: XCUIApplication, buttonID: String) -> Bool {
-        let button = app.buttons[buttonID]
-        XCTAssertTrue(button.waitForExistence(timeout: 5))
-        for _ in 0..<3 {
-            if button.isHittable {
-                button.tap()
-            } else {
-                let coordinate = button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-                coordinate.tap()
-            }
-            if waitForPauseMenu(app, timeout: 5) {
-                return true
-            }
-        }
-        return false
-    }
-
     private func waitForReturningStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -335,32 +318,6 @@ final class RoomQuestUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         return app.staticTexts["From your walk"].exists || app.buttons["Use this break"].exists
-    }
-
-    private func waitForRoomQuestAction(_ app: XCUIApplication, actionID: String, timeout: TimeInterval) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let actionButton = app.buttons[actionID]
-        while Date() < deadline {
-            if actionButton.exists {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        return actionButton.exists
-    }
-
-    private func waitForPauseMenu(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let paused = app.staticTexts["Paused"]
-        let stop = app.buttons["Stop session"]
-        let resume = app.buttons["Resume"]
-        while Date() < deadline {
-            if paused.exists || stop.exists || resume.exists {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        return paused.exists || stop.exists || resume.exists
     }
 
     private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication, reveal: RevealDirection) {
