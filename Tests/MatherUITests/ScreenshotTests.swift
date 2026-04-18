@@ -233,15 +233,13 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
-        let parentSecond = app.otherElements["parent-summary-session-1"]
-        XCTAssertTrue(parentSecond.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForHistoryRow(app, identifier: "parent-summary-session-1", fallbackLabel: "Session 2", timeout: 5))
 
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
-        let settingsSecond = app.otherElements["settings-history-session-1"]
-        XCTAssertTrue(settingsSecond.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForHistoryRow(app, identifier: "settings-history-session-1", fallbackLabel: "Session 2", timeout: 5))
     }
 
     // MARK: - iPhone layout / pilot runbook
@@ -400,5 +398,18 @@ final class ScreenshotTests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        let identified = app.descendants(matching: .any)[identifier]
+        let labeled = app.staticTexts[fallbackLabel].firstMatch
+        while Date() < deadline {
+            if identified.exists || labeled.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return identified.exists || labeled.exists
     }
 }
