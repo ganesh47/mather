@@ -78,6 +78,27 @@ struct SettingsView: View {
         )
     }
 
+    private var symmetryFoldBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.symmetryFoldEnabled },
+            set: { appModel.featureFlags.symmetryFoldEnabled = $0 }
+        )
+    }
+
+    private var rectangleFactoryBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.rectangleFactoryEnabled },
+            set: { appModel.featureFlags.rectangleFactoryEnabled = $0 }
+        )
+    }
+
+    private var angleCannonBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.angleCannonEnabled },
+            set: { appModel.featureFlags.angleCannonEnabled = $0 }
+        )
+    }
+
     private func smokeStep(_ text: String) -> some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
@@ -130,6 +151,15 @@ struct SettingsView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 4)
                             }
+
+                            Divider()
+
+                            Text("Physics & Geometry")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Toggle("Symmetry Fold — ages 5–7", isOn: symmetryFoldBinding)
+                            Toggle("Rectangle Factory — ages 7–9", isOn: rectangleFactoryBinding)
+                            Toggle("Angle Cannon — ages 7–9", isOn: angleCannonBinding)
 
                             Divider()
 
