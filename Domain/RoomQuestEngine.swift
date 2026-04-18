@@ -149,7 +149,12 @@ final class RoomQuestEngine {
     }
 
     func registerStation(_ role: RoomQuestStationRole) {
-        confirmStationManually(role)
+        scanState = .idle
+        if let station = stations.first(where: { $0.role == role }), station.referenceCaptureState == .captured {
+            setStationRegistered(role, method: .cameraVerified)
+        } else {
+            confirmStationManually(role)
+        }
     }
 
     private func setStationRegistered(_ role: RoomQuestStationRole, method: RoomQuestStationVerificationMethod) {
