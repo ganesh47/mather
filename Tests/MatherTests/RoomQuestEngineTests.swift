@@ -84,7 +84,9 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
+        await waitFor("red station setup scan completes") {
+            engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified
+        }
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
@@ -97,7 +99,9 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
+        await waitFor("red station camera verification recorded") {
+            engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified
+        }
         engine.confirmStationManually(.blueBubble)
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
@@ -115,7 +119,12 @@ struct RoomQuestEngineTests {
         engine.startSession()
         engine.acknowledgedSafety()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("camera scan enters celebrating state") {
+            if case .celebrating(let role, _) = engine.scanState {
+                return role == .redRocket
+            }
+            return false
+        }
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.referenceCaptureState == .captured)
@@ -136,7 +145,12 @@ struct RoomQuestEngineTests {
         engine.startSession()
         engine.acknowledgedSafety()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("wrong marker scan enters failed state") {
+            if case .failed(let role, _) = engine.scanState {
+                return role == .redRocket
+            }
+            return false
+        }
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == nil)
         if case .failed(let role, let message) = engine.scanState {
@@ -205,7 +219,12 @@ struct RoomQuestEngineTests {
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("wrong marker hunt scan enters failed state") {
+            if case .failed(let role, _) = engine.scanState {
+                return role == .redRocket
+            }
+            return false
+        }
 
         #expect(engine.phase == .spot(index: 0))
         if case .failed(let role, let message) = engine.scanState {
