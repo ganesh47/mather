@@ -259,7 +259,9 @@ struct RoomQuestEngineTests {
         let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
+        await waitFor("setup red station verification recorded") {
+            engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified
+        }
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
@@ -290,7 +292,12 @@ struct RoomQuestEngineTests {
         recheckingEngine.markSetupComplete()
 
         recheckingEngine.verifyCurrentSpotWithCamera()
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("hunt recheck enters almost state") {
+            if case .almost(let role, _) = recheckingEngine.scanState {
+                return role == .redRocket
+            }
+            return false
+        }
 
         #expect(recheckingEngine.phase == .spot(index: 0))
         if case .almost(let role, let message) = recheckingEngine.scanState {
