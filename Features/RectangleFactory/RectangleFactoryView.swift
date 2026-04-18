@@ -298,12 +298,12 @@ struct RectangleFactoryView: View {
     // MARK: - Helpers
 
     /// Canonical factor key: smaller dimension first so 3×4 and 4×3 hash identically.
-    static func factorKey(_ a: Int, _ b: Int) -> String {
+    nonisolated static func factorKey(_ a: Int, _ b: Int) -> String {
         "\(min(a, b))x\(max(a, b))"
     }
 
     /// All distinct canonical factor pairs for n (excluding 1×n when n is prime — included).
-    static func factorsOf(_ n: Int) -> Set<String> {
+    nonisolated static func factorsOf(_ n: Int) -> Set<String> {
         var result = Set<String>()
         for i in 1...n {
             if n % i == 0 {
