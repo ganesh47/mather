@@ -55,6 +55,8 @@ struct RootView: View {
                     TwoFingerProtractorView(appModel: appModel)
                 case .gravityArtist:
                     GravityArtistView(appModel: appModel)
+                case .compassAngles:
+                    CompassAnglesView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

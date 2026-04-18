@@ -20,6 +20,10 @@ final class MotionService {
     var tiltRoll: Double = 0
     /// Set to true for one shake event, then auto-resets after 500 ms.
     var shakeDetected: Bool = false
+    /// Body-relative yaw in degrees (0 at start, positive = turned right).
+    /// Updated only while `startRelativeYawTracking()` has been called.
+    /// Requires `startUpdates()` to already be active.
+    var relativeYaw: Double = 0
 
     // MARK: - Private
 
@@ -27,6 +31,8 @@ final class MotionService {
     // Sendable, but we only ever access it from @MainActor methods, so it is safe.
     nonisolated(unsafe) private let manager = CMMotionManager()
     private var shakeResetTask: Task<Void, Never>?
+    nonisolated(unsafe) private var referenceAttitude: CMAttitude? = nil
+    private(set) var trackingRelativeYaw = false
 
     // MARK: - Lifecycle
 
@@ -49,6 +55,29 @@ final class MotionService {
         tiltPitch = 0
         tiltRoll = 0
         shakeDetected = false
+        relativeYaw = 0
+        referenceAttitude = nil
+        trackingRelativeYaw = false
+    }
+
+    /// Begin tracking body-relative yaw. Call after `startUpdates()`.
+    /// Captures the current attitude as reference on the next motion callback.
+    func startRelativeYawTracking() {
+        referenceAttitude = nil
+        relativeYaw = 0
+        trackingRelativeYaw = true
+    }
+
+    /// Stop tracking relative yaw without stopping all device-motion updates.
+    func stopRelativeYawTracking() {
+        trackingRelativeYaw = false
+        referenceAttitude = nil
+        relativeYaw = 0
+    }
+
+    // Exposed for test injection only — do not call from production views.
+    func applyRelativeYaw(_ yaw: Double) {
+        relativeYaw = yaw
     }
 
     /// Call after the view has consumed a shake event to prevent re-triggering.
@@ -79,6 +108,16 @@ final class MotionService {
             roll: motion.attitude.roll,
             accelerationMagnitude: magnitude
         )
+
+        guard trackingRelativeYaw else { return }
+        if referenceAttitude == nil {
+            referenceAttitude = motion.attitude.copy() as? CMAttitude
+        }
+        if let ref = referenceAttitude {
+            let current = motion.attitude.copy() as! CMAttitude
+            current.multiply(byInverseOf: ref)
+            relativeYaw = current.yaw * 180 / .pi
+        }
     }
 
     private func triggerShake() {
