@@ -215,7 +215,7 @@ struct RoomQuestEngineTests {
         let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
