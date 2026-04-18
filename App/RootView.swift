@@ -51,6 +51,8 @@ struct RootView: View {
                     SymmetryFoldView(appModel: appModel)
                 case .angleCannon:
                     AngleCannonView(appModel: appModel)
+                case .gravityArtist:
+                    GravityArtistView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

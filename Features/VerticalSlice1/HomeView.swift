@@ -56,6 +56,13 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.65)))
                 }
 
+                if appModel.featureFlags.gravityArtistEnabled {
+                    Button("Gravity Artist") {
+                        appModel.engine.showGravityArtist()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.65)))
+                }
+
                 HStack(spacing: 14) {
                     Button("Parent Summary") {
                         appModel.engine.showParentSummary()
