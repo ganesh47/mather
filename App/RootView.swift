@@ -45,6 +45,8 @@ struct RootView: View {
                             )
                         }
                     }
+                case .angleCannon:
+                    AngleCannonView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

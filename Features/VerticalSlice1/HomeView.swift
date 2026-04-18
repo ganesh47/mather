@@ -35,6 +35,13 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.65)))
                 }
 
+                if appModel.featureFlags.angleCannonEnabled {
+                    Button("Angle Cannon") {
+                        appModel.engine.showAngleCannon()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.65)))
+                }
+
                 HStack(spacing: 14) {
                     Button("Parent Summary") {
                         appModel.engine.showParentSummary()
