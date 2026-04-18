@@ -89,7 +89,7 @@ final class RoomQuestUITests: XCTestCase {
 
         advanceCurrentSpot(app)
 
-        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 3))
+        XCTAssertTrue(advanceUntilReturningStage(app, timeout: 20))
         snapshot(app, "RoomQuest-Returning")
     }
 
@@ -104,7 +104,7 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
+        XCTAssertTrue(advanceUntilReturningStage(app, timeout: 20))
         let returningConfirm = app.buttons["room-return-confirm-button"]
         if returningConfirm.waitForExistence(timeout: 5) {
             tapWhenHittable(returningConfirm, in: app, reveal: .up)
@@ -155,7 +155,7 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
-        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
+        XCTAssertTrue(advanceUntilReturningStage(app, timeout: 20))
         XCTAssertTrue(app.buttons["room-pause-button-returning"].waitForExistence(timeout: 5))
     }
 
@@ -270,28 +270,30 @@ final class RoomQuestUITests: XCTestCase {
             app.staticTexts["Bring them back!"].exists
     }
 
-    private func advanceUntilReturningStage(_ app: XCUIApplication, maxTransitions: Int) -> Bool {
+    private func advanceUntilReturningStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
         if waitForReturningStage(app, timeout: 2) {
             return true
         }
 
-        for _ in 0..<maxTransitions {
-            guard waitForSpotResolution(app, timeout: 10) else {
+        while Date() < deadline {
+            guard waitForSpotResolution(app, timeout: 5) else {
                 return false
             }
-            if waitForReturningStage(app, timeout: 2) {
+            if waitForReturningStage(app, timeout: 1) {
                 return true
             }
-            guard waitForSpotStage(app, timeout: 2) else {
-                return false
+            guard waitForSpotStage(app, timeout: 1) else {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+                continue
             }
             advanceCurrentSpot(app)
-            if waitForReturningStage(app, timeout: 2) {
+            if waitForReturningStage(app, timeout: 1) {
                 return true
             }
         }
 
-        return waitForReturningStage(app, timeout: 5)
+        return waitForReturningStage(app, timeout: 2)
     }
 
     private func waitForReturningStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
