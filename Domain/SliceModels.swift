@@ -270,6 +270,11 @@ struct RoomQuestStation: Equatable, Codable, Identifiable {
     var verificationMethod: RoomQuestStationVerificationMethod? = nil
     var referenceCaptureState: RoomQuestReferenceCaptureState = .notCaptured
     var referenceNote: String? = nil
+    var referenceImageJPEGData: Data? = nil
+
+    var isReadyForRoomQuest: Bool {
+        isRegistered && referenceCaptureState != .notCaptured
+    }
 }
 
 enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
@@ -309,6 +314,7 @@ enum RoomQuestScanState: Equatable {
 struct RoomQuestStationReferenceDraft: Equatable, Codable {
     let role: RoomQuestStationRole
     let markerPayload: String?
+    let referenceImageJPEGData: Data?
     let capturedAt: Date
     let note: String
     let captureState: RoomQuestReferenceCaptureState
@@ -318,13 +324,15 @@ struct RoomQuestStationReferenceDraft: Equatable, Codable {
 final class StoredRoomQuestStationReference {
     var roleRawValue: String
     var markerPayload: String?
+    var referenceImageJPEGData: Data?
     var capturedAt: Date
     var note: String
     var captureStateRawValue: String
 
-    init(role: RoomQuestStationRole, markerPayload: String?, capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
+    init(role: RoomQuestStationRole, markerPayload: String?, referenceImageJPEGData: Data?, capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
         self.roleRawValue = role.rawValue
         self.markerPayload = markerPayload
+        self.referenceImageJPEGData = referenceImageJPEGData
         self.capturedAt = capturedAt
         self.note = note
         self.captureStateRawValue = captureState.rawValue

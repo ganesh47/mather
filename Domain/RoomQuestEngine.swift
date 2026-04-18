@@ -116,8 +116,12 @@ final class RoomQuestEngine {
             guard let self else { return }
             do {
                 let result = try await scanner.scanMarker(for: role)
+                guard self.captureReference(for: result) else {
+                    self.feedbackMessage = "We found \(result.role.title), but could not save its hiding-place reference yet. Try again."
+                    self.scanState = .failed(role: role, message: self.feedbackMessage)
+                    return
+                }
                 self.setStationRegistered(result.role, method: .cameraVerified)
-                self.captureReference(for: result)
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
                 self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
                 self.speechService.speak("You found \(result.role.title)!", enabled: self.featureFlags.audioEnabled)
@@ -168,7 +172,18 @@ final class RoomQuestEngine {
     }
 
     var allStationsRegistered: Bool {
-        stations.count == 2 && stations.allSatisfy(\.isRegistered)
+        stations.count == 2 && stations.allSatisfy(\.isReadyForRoomQuest)
+    }
+
+    var missingSetupRequirementsMessage: String {
+        let pendingRoles = stations.filter { !$0.isReadyForRoomQuest }.map { $0.role.title }
+        guard !pendingRoles.isEmpty else { return "" }
+
+        if pendingRoles.count == 1 {
+            return "Save a hiding-place reference for \(pendingRoles[0]) before you start."
+        }
+
+        return "Save a hiding-place reference for both stations before you start."
     }
 
     var currentStation: RoomQuestStation? {
@@ -299,7 +314,12 @@ final class RoomQuestEngine {
                     return
                 }
 
-                self.setReferenceState(.captured, for: station.role, note: "Saved camera reference ready for recheck")
+                self.setReferenceState(
+                    .captured,
+                    for: station.role,
+                    note: "Saved camera reference ready for recheck",
+                    referenceImageJPEGData: station.referenceImageJPEGData
+                )
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
                 self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
                 self.speechService.speak("You found the saved \(result.role.title) place. Collect \(station.quantity).", enabled: self.featureFlags.audioEnabled)
@@ -428,16 +448,26 @@ final class RoomQuestEngine {
         }
     }
 
-    private func captureReference(for result: RoomQuestMarkerScanResult) {
-        guard featureFlags.roomQuestReferenceCaptureEnabled else { return }
+    private func captureReference(for result: RoomQuestMarkerScanResult) -> Bool {
+        guard featureFlags.roomQuestReferenceCaptureEnabled else { return false }
 
-        persistReferenceState(.captured, for: result.role, markerPayload: result.markerPayload, note: "Reference saved for \(result.role.title)")
+        return persistReferenceState(
+            .captured,
+            for: result.role,
+            markerPayload: result.markerPayload,
+            referenceImageJPEGData: result.referenceImageJPEGData,
+            note: result.referenceImageJPEGData == nil
+                ? "Reference saved for \(result.role.title)"
+                : "Photo saved for \(result.role.title)"
+        )
     }
 
-    private func persistReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, markerPayload: String?, note: String) {
+    @discardableResult
+    private func persistReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, markerPayload: String?, referenceImageJPEGData: Data? = nil, note: String) -> Bool {
         let draft = RoomQuestStationReferenceDraft(
             role: role,
             markerPayload: markerPayload,
+            referenceImageJPEGData: referenceImageJPEGData,
             capturedAt: .now,
             note: note,
             captureState: state
@@ -445,18 +475,20 @@ final class RoomQuestEngine {
 
         do {
             try stationStore.save(draft)
-            setReferenceState(state, for: role, note: note)
+            setReferenceState(state, for: role, note: note, referenceImageJPEGData: referenceImageJPEGData)
             try? telemetryWriter.append(SliceEvent(
                 type: .roomQuestReferenceCaptureCompleted,
                 payload: [
                     "station_role": role.rawValue,
                     "saved": String(state == .captured),
                     "capture_state": state.rawValue,
+                    "reference_image_present": String(referenceImageJPEGData != nil),
                     "marker_payload_present": String(markerPayload != nil)
                 ]
             ))
+            return true
         } catch {
-            setReferenceState(.notCaptured, for: role, note: "Reference save failed")
+            setReferenceState(.notCaptured, for: role, note: "Reference save failed", referenceImageJPEGData: nil)
             try? telemetryWriter.append(SliceEvent(
                 type: .roomQuestReferenceCaptureCompleted,
                 payload: [
@@ -465,20 +497,22 @@ final class RoomQuestEngine {
                     "capture_state": RoomQuestReferenceCaptureState.notCaptured.rawValue
                 ]
             ))
+            return false
         }
     }
 
-    private func setReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, note: String) {
+    private func setReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, note: String, referenceImageJPEGData: Data?) {
         guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
         stations[idx].referenceCaptureState = state
         stations[idx].referenceNote = note
+        stations[idx].referenceImageJPEGData = referenceImageJPEGData
     }
 
     private func loadSavedReferenceState() {
         for role in RoomQuestStationRole.allCases {
             guard let savedReference = try? stationStore.reference(for: role),
                   let captureState = savedReference.captureState else { continue }
-            setReferenceState(captureState, for: role, note: savedReference.note)
+            setReferenceState(captureState, for: role, note: savedReference.note, referenceImageJPEGData: savedReference.referenceImageJPEGData)
         }
     }
 

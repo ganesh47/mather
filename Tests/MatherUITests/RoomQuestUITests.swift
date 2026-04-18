@@ -84,6 +84,7 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["room-spot-scan-button"].isEnabled)
         snapshot(app, "RoomQuest-Spot1-Red")
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
@@ -157,6 +158,20 @@ final class RoomQuestUITests: XCTestCase {
             doneButton.tap()
             _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
         }
+    }
+
+    func testRoomQuestSetupShowsSavedFallbackStateBeforeReady() {
+        let app = launchWithRoomQuestAndSafetyAck()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Start Room Quest"].tap()
+        _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
+
+        XCTAssertTrue(app.staticTexts["Save a hiding-place reference for both stations before you start."].waitForExistence(timeout: 5))
+
+        completeSetupViaManualFallback(app)
+
+        XCTAssertTrue(app.staticTexts["Fallback saved"].waitForExistence(timeout: 5))
     }
 
     // MARK: - Pause / Resume

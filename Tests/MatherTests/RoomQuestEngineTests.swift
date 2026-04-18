@@ -238,6 +238,7 @@ struct RoomQuestEngineTests {
             RoomQuestStationReferenceDraft(
                 role: .redRocket,
                 markerPayload: "mather:roomquest:redRocket:v1",
+                referenceImageJPEGData: nil,
                 capturedAt: .now,
                 note: "Reference saved for Red Rocket",
                 captureState: .captured
@@ -247,6 +248,7 @@ struct RoomQuestEngineTests {
             RoomQuestStationReferenceDraft(
                 role: .blueBubble,
                 markerPayload: nil,
+                referenceImageJPEGData: nil,
                 capturedAt: .now,
                 note: "Manual fallback saved",
                 captureState: .manualFallback
@@ -293,6 +295,43 @@ struct RoomQuestEngineTests {
         #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
         #expect(engine.currentSpotStatusTitle.localizedCaseInsensitiveContains("find the saved place"))
         #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
+    }
+
+    @Test
+    func cameraSetupPersistsSavedPreviewDataWhenScannerProvidesIt() async throws {
+        let expectedJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
+        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let sharedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
+        let engine = makeEngine(
+            scanner: FakeRoomQuestScanner { role in
+                RoomQuestMarkerScanResult(
+                    role: role,
+                    markerPayload: "mather:roomquest:redRocket:v1",
+                    referenceImageJPEGData: expectedJPEGData,
+                    usedARCelebration: false
+                )
+            },
+            stationStore: sharedStationStore,
+            defaultsSuiteName: #function
+        )
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(1300))
+
+        #expect(engine.stations.first(where: { $0.role == .redRocket })?.referenceImageJPEGData == expectedJPEGData)
+        #expect(try sharedStationStore.reference(for: .redRocket)?.referenceImageJPEGData == expectedJPEGData)
+    }
+
+    @Test
+    func setupRequiresSavedReferenceStateForEveryStation() {
+        var station = RoomQuestStation(id: .redRocket, role: .redRocket, quantity: 5)
+        station.isRegistered = true
+
+        #expect(!station.isReadyForRoomQuest)
+
+        station.referenceCaptureState = .manualFallback
+        #expect(station.isReadyForRoomQuest)
     }
 
     @Test
