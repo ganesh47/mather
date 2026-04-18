@@ -2,6 +2,16 @@ import Foundation
 import Testing
 @testable import Mather
 
+private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
+    let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
+    while DispatchTime.now().uptimeNanoseconds < deadline {
+        if await MainActor.run(body: condition) { return }
+        await Task.yield()
+        try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+    Issue.record("Timed out waiting for \(description)")
+}
+
 // MARK: - Test helpers
 
 private struct RocketTheme: SliceTheme {
@@ -265,12 +275,9 @@ struct ThemeTests {
         // The pictorial slot now uses Bond Blast copy rather than the theme-specific split prompt.
         engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
         engine.submitCurrentStage()
-        // Yield until the engine's stage-transition Task completes (celebrationDuration=0).
-        // A fixed sleep is unreliable on CI; yielding drains the MainActor queue deterministically.
         let expected = "Bond Blast! Match the pairs that make 6!"
-        for _ in 0..<100 {
-            if engine.feedbackMessage == expected { break }
-            await Task.yield()
+        await waitFor("bond blast prompt after concrete submit") {
+            engine.feedbackMessage == expected
         }
         #expect(engine.feedbackMessage == expected)
     }
