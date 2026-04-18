@@ -20,12 +20,26 @@ struct HomeView: View {
                     lockedActivityCard
                 }
 
+                if appModel.featureFlags.rectangleFactoryEnabled {
+                    Button("Rectangle Factory") {
+                        appModel.engine.showRectangleFactory()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.55)))
+                }
+
                 if appModel.featureFlags.sumSprintEnabled {
                     Button("Sum Sprint") {
                         appModel.engine.showSumSprint()
                         appModel.sumSprintEngine.startSession()
                     }
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
+                }
+
+                if appModel.featureFlags.symmetryFoldEnabled {
+                    Button("Symmetry Fold") {
+                        appModel.engine.showSymmetryFold()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.coral.opacity(0.65)))
                 }
 
                 if appModel.featureFlags.roomQuestEnabled {

@@ -22,6 +22,8 @@ struct GravitySplitView: View {
     // MARK: - Local animation state
 
     @State private var lockScale: CGFloat = 1.0
+    /// True until the child taps GO, keeping tilt locked while they get steady.
+    @State private var showGoScrim = true
 
     // MARK: - Constants
 
@@ -51,11 +53,16 @@ struct GravitySplitView: View {
             }
         }
         .onChange(of: tiltRoll) { _, roll in
+            guard !showGoScrim else { return }   // block tilt until GO is tapped
             onAdjustTilt(roll)
         }
         .onChange(of: shakeDetected) { _, shook in
             guard shook else { return }
             onShakeHandled()
+        }
+        .onChange(of: state.decompositionA) { _, _ in
+            // New problem arrived — show GO scrim again for the fresh stage.
+            showGoScrim = true
         }
         .onChange(of: state.isLocked) { _, locked in
             guard locked else { return }
@@ -142,10 +149,42 @@ struct GravitySplitView: View {
             .rotationEffect(.radians(beamAngle), anchor: .bottom)
             .animation(.interpolatingSpring(stiffness: 100, damping: 16), value: beamAngle)
             .offset(y: -22)
+
+            // "Hold steady — GO!" overlay. Blocks tilt until the child is ready,
+            // preventing accidental solves before they understand the mechanic.
+            if showGoScrim {
+                goScrimOverlay
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: 160)
         .padding(.vertical, 4)
+    }
+
+    private var goScrimOverlay: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.ultraThinMaterial)
+            VStack(spacing: 10) {
+                Text("Hold steady…")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showGoScrim = false
+                    }
+                } label: {
+                    Label("GO!", systemImage: "gyroscope")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 120, minHeight: 52)
+                        .background(MatherTheme.coral, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("gravity-go-button")
+            }
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 
     private var pivotTriangle: some View {

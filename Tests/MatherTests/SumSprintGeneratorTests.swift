@@ -153,4 +153,13 @@ struct SumSprintGeneratorTests {
         // Should still return 10 (5 eligible + 5 backfilled)
         #expect(facts.count == 10)
     }
+
+    @Test
+    func generateSessionAvoidsAdjacentDuplicateSumsWhenPossible() {
+        let facts = SumSprintGenerator.generateSession(allRecords: [])
+
+        for index in 1..<facts.count {
+            #expect(facts[index].sum != facts[index - 1].sum)
+        }
+    }
 }

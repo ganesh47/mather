@@ -66,7 +66,31 @@ enum SumSprintGenerator {
             selected += backfill
         }
 
-        return Array(selected.prefix(10).map(\.fact))
+        let trimmed = Array(selected.prefix(10))
+        return diversifyAdjacentSums(in: trimmed).map(\.fact)
+    }
+
+    // MARK: - Helpers
+
+    private static func diversifyAdjacentSums(in facts: [ScoredFact]) -> [ScoredFact] {
+        guard facts.count > 1 else { return facts }
+
+        var remaining = facts
+        var arranged: [ScoredFact] = []
+        var previousSum: Int?
+
+        while !remaining.isEmpty {
+            let nextIndex = remaining.firstIndex { candidate in
+                guard let previousSum else { return true }
+                return candidate.fact.sum != previousSum
+            } ?? 0
+
+            let next = remaining.remove(at: nextIndex)
+            arranged.append(next)
+            previousSum = next.fact.sum
+        }
+
+        return arranged
     }
 
     // MARK: - Helpers

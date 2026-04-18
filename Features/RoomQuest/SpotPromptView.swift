@@ -36,13 +36,13 @@ struct SpotPromptView: View {
                     .font(.system(size: 72))
 
                 if let station {
-                    Text("Scan to find \(station.role.title).")
+                    Text(station.referenceCaptureState == .captured ? "Recheck the saved \(station.role.title) place." : "Scan to find \(station.role.title).")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(.white.opacity(0.92))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 28)
 
-                    Text("When the marker is recognized, the app unlocks: collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
+                    Text("When the place matches, collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
                         .font(.title.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.84))
                 }
@@ -51,10 +51,23 @@ struct SpotPromptView: View {
 
                 CardSurface {
                     VStack(alignment: .leading, spacing: 10) {
+                        Label(engine.currentSpotReferenceLabel, systemImage: station?.referenceCaptureState == .captured ? "photo.badge.checkmark" : "photo")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(engine.currentSpotSearchGuidance)
+                            .font(.subheadline)
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.horizontal, 24)
+
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 10) {
                         Label("Need a fallback?", systemImage: "hand.tap.fill")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.ink)
-                        Text("Scanning is the main way to unlock progress. If the marker is hard to scan, use the fallback button below.")
+                        Text("Scanning is the main way to unlock progress. If the place is hard to confirm, use the fallback button below.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                             .fixedSize(horizontal: false, vertical: true)
@@ -67,10 +80,26 @@ struct SpotPromptView: View {
                 Button {
                     engine.verifyCurrentSpotWithCamera()
                 } label: {
-                    Label("Scan to unlock", systemImage: "camera.viewfinder")
+                    Label(station?.referenceCaptureState == .captured ? "Recheck this place" : "Scan to unlock", systemImage: "camera.viewfinder")
                 }
                 .accessibilityIdentifier("room-spot-scan-button")
                 .buttonStyle(RoomQuestPrimaryButtonStyle())
+                .disabled({
+                    switch engine.scanState {
+                    case .scanning, .celebrating:
+                        return true
+                    case .idle, .almost, .failed:
+                        return false
+                    }
+                }())
+                .opacity({
+                    switch engine.scanState {
+                    case .scanning, .celebrating:
+                        return 0.7
+                    case .idle, .almost, .failed:
+                        return 1
+                    }
+                }())
                 .padding(.horizontal, 40)
 
                 Button(station?.role.fallbackButtonTitle ?? "I found it") {
@@ -114,6 +143,13 @@ struct SpotPromptView: View {
                 Label("\(role.title) unlocked!", systemImage: "sparkles")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.accent)
+            }
+            .padding(.horizontal, 24)
+        case .almost(_, let message):
+            CardSurface {
+                Label(message, systemImage: "scope")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.warm)
             }
             .padding(.horizontal, 24)
         case .failed(_, let message):

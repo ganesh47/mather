@@ -170,8 +170,10 @@ struct GravitySplitState: Equatable {
         target         = problem.target
         decompositionA = problem.decompositionA
         decompositionB = problem.decompositionB
-        leftCount      = 0
-        rightCount     = problem.target   // all counters start on right pan
+        // Start with target−1 on the left pan (far-left imbalance) so the beam
+        // is visibly unbalanced and the answer is never the starting position.
+        leftCount      = max(0, problem.target - 1)
+        rightCount     = 1
     }
 
     /// Sets `leftCount` to `count` (clamped 0…target) and derives `rightCount`.
@@ -220,7 +222,7 @@ struct BondMatchState: Equatable {
 
 // MARK: - Room Quest models
 
-enum RoomQuestStationRole: String, Codable, Equatable {
+enum RoomQuestStationRole: String, Codable, Equatable, CaseIterable {
     case redRocket
     case blueBubble
 
@@ -300,6 +302,7 @@ enum RoomQuestScanState: Equatable {
     case idle
     case scanning(role: RoomQuestStationRole)
     case celebrating(role: RoomQuestStationRole, usedARCelebration: Bool)
+    case almost(role: RoomQuestStationRole, message: String)
     case failed(role: RoomQuestStationRole, message: String)
 }
 

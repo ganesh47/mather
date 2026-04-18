@@ -30,6 +30,8 @@ struct RootView: View {
                         )) { _ in
                             RoomQuestScannerSheet(scanner: appModel.roomQuestScanner)
                         }
+                case .rectangleFactory:
+                    RectangleFactoryView(appModel: appModel)
                 case .sumSprint:
                     switch appModel.sumSprintEngine.phase {
                     case .idle:
@@ -45,6 +47,8 @@ struct RootView: View {
                             )
                         }
                     }
+                case .symmetryFold:
+                    SymmetryFoldView(appModel: appModel)
                 case .angleCannon:
                     AngleCannonView(appModel: appModel)
                 }
