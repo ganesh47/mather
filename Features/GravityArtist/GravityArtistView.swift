@@ -50,7 +50,7 @@ enum GravityArtistPhysics {
     ) -> Double {
         let pts = arcPoints(angleDeg: angleDeg, velocity: velocity,
                             cannonOrigin: cannonOrigin, canvasHeight: canvasHeight)
-        return pts.last?.x ?? cannonOrigin.x
+        return Double(pts.last?.x ?? cannonOrigin.x)
     }
 
     /// True when the fired arc's landing x is within `hitRadius` of the target x.
