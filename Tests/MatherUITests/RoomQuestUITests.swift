@@ -326,8 +326,14 @@ final class RoomQuestUITests: XCTestCase {
 
     private func openPauseMenu(_ app: XCUIApplication, buttonID: String) -> Bool {
         let button = app.buttons[buttonID]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
         for _ in 0..<3 {
-            tapWhenHittable(button, in: app, reveal: .down)
+            if button.isHittable {
+                button.tap()
+            } else {
+                let coordinate = button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                coordinate.tap()
+            }
             if waitForPauseMenu(app, timeout: 5) {
                 return true
             }
@@ -338,20 +344,20 @@ final class RoomQuestUITests: XCTestCase {
     private func waitForReturningStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if app.buttons["room-return-confirm-button"].exists || app.buttons["room-return-scan-button"].exists {
+            if app.buttons["room-return-confirm-button"].exists ||
+                app.buttons["room-pause-button-returning"].exists ||
+                app.staticTexts["Bring them back!"].exists {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        return app.buttons["room-return-confirm-button"].exists || app.buttons["room-return-scan-button"].exists
+        return app.buttons["room-return-confirm-button"].exists ||
+            app.buttons["room-pause-button-returning"].exists ||
+            app.staticTexts["Bring them back!"].exists
     }
 
     private func returningPrimaryAction(_ app: XCUIApplication) -> XCUIElement {
-        let confirm = app.buttons["room-return-confirm-button"]
-        if confirm.exists {
-            return confirm
-        }
-        return app.buttons["room-return-scan-button"]
+        app.buttons["room-return-confirm-button"]
     }
 
     private func waitForRoomQuestAction(_ app: XCUIApplication, actionID: String, timeout: TimeInterval) -> Bool {
@@ -370,13 +376,14 @@ final class RoomQuestUITests: XCTestCase {
         let deadline = Date().addingTimeInterval(timeout)
         let paused = app.staticTexts["Paused"]
         let stop = app.buttons["Stop session"]
+        let resume = app.buttons["Resume"]
         while Date() < deadline {
-            if paused.exists || stop.exists {
+            if paused.exists || stop.exists || resume.exists {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        return paused.exists || stop.exists
+        return paused.exists || stop.exists || resume.exists
     }
 
     private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication, reveal: RevealDirection) {
