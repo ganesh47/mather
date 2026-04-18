@@ -221,26 +221,9 @@ struct RoomQuestEngineTests {
 
         let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
         recheckingEngine.startSession()
-        try sharedStationStore.save(
-            RoomQuestStationReferenceDraft(
-                role: .redRocket,
-                markerPayload: "mather:roomquest:redRocket:v1",
-                capturedAt: .now,
-                note: "Reference saved for Red Rocket",
-                captureState: .captured
-            )
-        )
-        try sharedStationStore.save(
-            RoomQuestStationReferenceDraft(
-                role: .blueBubble,
-                markerPayload: nil,
-                capturedAt: .now,
-                note: "Manual fallback saved",
-                captureState: .manualFallback
-            )
-        )
-        recheckingEngine.registerStation(.redRocket)
-        recheckingEngine.registerStation(.blueBubble)
+        recheckingEngine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(100))
+        recheckingEngine.confirmStationManually(.blueBubble)
         recheckingEngine.markSetupComplete()
 
         recheckingEngine.verifyCurrentSpotWithCamera()
