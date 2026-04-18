@@ -169,9 +169,10 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Save a hiding-place reference for both stations before you start."].waitForExistence(timeout: 5))
 
-        completeSetupViaManualFallback(app)
+        configureSetupViaManualFallback(app)
 
         XCTAssertTrue(app.staticTexts["Fallback saved"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Ready — stations are set!"].exists)
     }
 
     // MARK: - Pause / Resume
@@ -260,6 +261,11 @@ final class RoomQuestUITests: XCTestCase {
 
 
     private func completeSetupViaManualFallback(_ app: XCUIApplication) {
+        configureSetupViaManualFallback(app)
+        app.buttons["Ready — stations are set!"].tap()
+    }
+
+    private func configureSetupViaManualFallback(_ app: XCUIApplication) {
         let redCard = app.otherElements["room-station-card-redRocket"]
         let blueCard = app.otherElements["room-station-card-blueBubble"]
 
@@ -273,9 +279,8 @@ final class RoomQuestUITests: XCTestCase {
         blueCard.buttons["Camera verify"].tap()
         XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
         blueCard.buttons["Same-place fallback"].tap()
-
-        app.buttons["Ready — stations are set!"].tap()
     }
+
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
