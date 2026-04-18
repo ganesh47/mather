@@ -88,17 +88,12 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
 
-        let scanRed = app.buttons["room-spot-scan-button"]
-        XCTAssertTrue(scanRed.waitForExistence(timeout: 5))
-        tapWhenHittable(scanRed, in: app, reveal: .up)
         let gotRed = app.buttons["room-spot-confirm-button"]
         XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
         tapWhenHittable(gotRed, in: app, reveal: .up)
 
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-scan-button", timeout: 10))
+        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
         snapshot(app, "RoomQuest-Spot2-Blue")
-        tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
-        XCTAssertTrue(app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5))
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
@@ -116,16 +111,11 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        let scanRed = app.buttons["room-spot-scan-button"]
-        _ = scanRed.waitForExistence(timeout: 5)
-        tapWhenHittable(scanRed, in: app, reveal: .up)
         let gotRed = app.buttons["room-spot-confirm-button"]
         _ = gotRed.waitForExistence(timeout: 5)
         tapWhenHittable(gotRed, in: app, reveal: .up)
 
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-scan-button", timeout: 10))
-        tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
-        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
@@ -198,13 +188,9 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
-        _ = app.buttons["room-spot-scan-button"].waitForExistence(timeout: 5)
-        tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
         _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-scan-button", timeout: 10))
-        tapWhenHittable(app.buttons["room-spot-scan-button"], in: app, reveal: .up)
-        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
+        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
         tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
