@@ -165,7 +165,8 @@ struct RoomQuestEngineTests {
 
         engine.verifyStationWithCamera(.blueBubble)
         for _ in 0..<200 {
-            if engine.stations.first(where: { $0.role == .blueBubble })?.isRegistered == true { break }
+            let blueReady = engine.stations.first(where: { $0.role == .blueBubble })?.isRegistered == true
+            if blueReady, case .idle = engine.scanState { break }
             await Task.yield()
             try await Task.sleep(for: .milliseconds(10))
         }
