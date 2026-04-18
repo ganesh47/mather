@@ -156,9 +156,9 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
@@ -253,6 +253,41 @@ struct RoomQuestEngineTests {
         } else {
             Issue.record("Expected failed scan state after saved-reference payload mismatch")
         }
+    }
+
+    @Test
+    func verifyCurrentSpotIgnoresDuplicateScanRequestsWhileScanIsActive() async throws {
+        let tracker = ScanTracker()
+        let scanner = FakeRoomQuestScanner { role in
+            await tracker.markStarted()
+            while !(await tracker.canFinish) {
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            return RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        }
+
+        let engine = makeEngine(scanner: scanner)
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        engine.verifyCurrentSpotWithCamera()
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(await tracker.startCount == 1)
+        #expect(engine.phase == .spot(index: 0))
+
+        await tracker.allowFinish()
+        try await Task.sleep(for: .milliseconds(1200))
+
+        #expect(engine.phase == .spot(index: 1))
     }
 
     @Test
@@ -386,6 +421,19 @@ struct RoomQuestEngineTests {
         engine.abandonSession(reason: "parent_abort")
         #expect(engine.phase == .complete)
         #expect(exitCalled)
+    }
+}
+
+private actor ScanTracker {
+    private(set) var startCount = 0
+    private(set) var canFinish = false
+
+    func markStarted() {
+        startCount += 1
+    }
+
+    func allowFinish() {
+        canFinish = true
     }
 }
 

@@ -106,6 +106,8 @@ final class RoomQuestEngine {
             return
         }
 
+        guard !isScanActive else { return }
+
         scanState = .scanning(role: role)
         feedbackMessage = "Scan the \(role.title) marker with the camera."
         try? telemetryWriter.append(SliceEvent(type: .roomQuestReferenceCaptureStarted, payload: ["station_role": role.rawValue]))
@@ -210,6 +212,8 @@ final class RoomQuestEngine {
         guard case .spot(let index) = phase,
               let station = stations[safe: index]
         else { return }
+
+        guard !isScanActive else { return }
 
         scanState = .scanning(role: station.role)
         feedbackMessage = "Scan \(station.role.title) to unlock the collect step."
@@ -409,6 +413,15 @@ final class RoomQuestEngine {
         guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
         stations[idx].referenceCaptureState = state
         stations[idx].referenceNote = note
+    }
+
+    private var isScanActive: Bool {
+        switch scanState {
+        case .scanning, .celebrating:
+            return true
+        case .idle, .failed:
+            return false
+        }
     }
 }
 
