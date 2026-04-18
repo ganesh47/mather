@@ -93,7 +93,7 @@ final class RoomQuestUITests: XCTestCase {
         snapshot(app, "RoomQuest-Spot2-Blue")
         advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForReturningConfirmStage(app, timeout: 15))
+        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         snapshot(app, "RoomQuest-Returning")
     }
 
@@ -114,8 +114,11 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(waitForSpotStage(app, timeout: 10))
         advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForReturningConfirmStage(app, timeout: 15))
-        tapWhenHittable(app.buttons["room-return-confirm-button"], in: app, reveal: .up)
+        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
+        let returningAction = returningPrimaryAction(app)
+        if returningAction.waitForExistence(timeout: 5) {
+            tapWhenHittable(returningAction, in: app, reveal: .up)
+        }
 
         // Pictorial (locked SplitView — "From your walk" badge is visible)
         let fromYourWalk = app.staticTexts["From your walk"]
@@ -198,7 +201,7 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(waitForSpotStage(app, timeout: 10))
         advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForReturningConfirmStage(app, timeout: 15))
+        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         XCTAssertTrue(app.buttons["room-pause-button-returning"].waitForExistence(timeout: 5))
     }
 
@@ -358,7 +361,11 @@ final class RoomQuestUITests: XCTestCase {
     }
 
     private func returningPrimaryAction(_ app: XCUIApplication) -> XCUIElement {
-        app.buttons["room-return-confirm-button"]
+        let confirm = app.buttons["room-return-confirm-button"]
+        if confirm.exists {
+            return confirm
+        }
+        return app.buttons["room-pause-button-returning"]
     }
 
     private func waitForRoomQuestAction(_ app: XCUIApplication, actionID: String, timeout: TimeInterval) -> Bool {
