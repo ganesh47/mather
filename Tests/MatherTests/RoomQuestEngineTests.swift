@@ -5,6 +5,16 @@ import Testing
 
 @MainActor
 struct RoomQuestEngineTests {
+    private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
+        let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
+        while DispatchTime.now().uptimeNanoseconds < deadline {
+            if await MainActor.run(body: condition) { return }
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        Issue.record("Timed out waiting for \(description)")
+    }
+
 
     // MARK: - Helpers
 
@@ -156,27 +166,27 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        for _ in 0..<200 {
+        await waitFor("red station registration completes") {
             let redReady = engine.stations.first(where: { $0.role == .redRocket })?.isRegistered == true
-            if redReady, case .idle = engine.scanState { break }
-            await Task.yield()
-            try await Task.sleep(for: .milliseconds(10))
+            if case .idle = engine.scanState {
+                return redReady
+            }
+            return false
         }
 
         engine.verifyStationWithCamera(.blueBubble)
-        for _ in 0..<200 {
+        await waitFor("blue station registration completes") {
             let blueReady = engine.stations.first(where: { $0.role == .blueBubble })?.isRegistered == true
-            if blueReady, case .idle = engine.scanState { break }
-            await Task.yield()
-            try await Task.sleep(for: .milliseconds(10))
+            if case .idle = engine.scanState {
+                return blueReady
+            }
+            return false
         }
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
-        for _ in 0..<200 {
-            if engine.phase == .spot(index: 1) { break }
-            await Task.yield()
-            try await Task.sleep(for: .milliseconds(10))
+        await waitFor("camera verification advances to next spot") {
+            engine.phase == .spot(index: 1)
         }
 
         #expect(engine.phase == .spot(index: 1))
