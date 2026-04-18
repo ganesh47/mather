@@ -70,6 +70,13 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.65)))
                 }
 
+                if appModel.featureFlags.compassAnglesEnabled {
+                    Button("Compass Angles") {
+                        appModel.engine.showCompassAngles()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
+                }
+
                 HStack(spacing: 14) {
                     Button("Parent Summary") {
                         appModel.engine.showParentSummary()

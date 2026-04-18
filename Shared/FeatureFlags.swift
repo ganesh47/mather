@@ -23,6 +23,7 @@ final class FeatureFlagService {
         static let angleCannonEnabled = "feature.angleCannonEnabled"
         static let twoFingerProtractorEnabled = "feature.twoFingerProtractorEnabled"
         static let gravityArtistEnabled = "feature.gravityArtistEnabled"
+        static let compassAnglesEnabled = "feature.compassAnglesEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -122,6 +123,11 @@ final class FeatureFlagService {
         didSet { defaults.set(gravityArtistEnabled, forKey: Keys.gravityArtistEnabled) }
     }
 
+    /// Gates the Compass Angles body-rotation activity (ages 7–9). Default false; parent enables in Settings.
+    var compassAnglesEnabled: Bool {
+        didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -150,6 +156,7 @@ final class FeatureFlagService {
             Keys.angleCannonEnabled: false,
             Keys.twoFingerProtractorEnabled: false,
             Keys.gravityArtistEnabled: false,
+            Keys.compassAnglesEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -170,5 +177,6 @@ final class FeatureFlagService {
         angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
         twoFingerProtractorEnabled = defaults.bool(forKey: Keys.twoFingerProtractorEnabled)
         gravityArtistEnabled = defaults.bool(forKey: Keys.gravityArtistEnabled)
+        compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
     }
 }
