@@ -270,7 +270,7 @@ struct AngleCannonView: View {
 
     /// Parabolic arc through screen coordinates.
     /// Cannon at `cannon`; angle above horizontal in degrees.
-    static func arcPoints(
+    nonisolated static func arcPoints(
         angleDeg: Double,
         cannon: CGPoint,
         size: CGSize,
@@ -295,7 +295,7 @@ struct AngleCannonView: View {
     }
 
     /// Position of the target: on the arc at t=0.8s.
-    static func targetPosition(
+    nonisolated static func targetPosition(
         angleDeg: Double,
         cannon: CGPoint,
         canvasSize: CGSize,
@@ -313,7 +313,7 @@ struct AngleCannonView: View {
     }
 
     /// True if fired angle is within tolerance of target angle.
-    static func isHit(firedDeg: Double, targetDeg: Double, toleranceDeg: Double) -> Bool {
+    nonisolated static func isHit(firedDeg: Double, targetDeg: Double, toleranceDeg: Double) -> Bool {
         abs(firedDeg - targetDeg) <= toleranceDeg
     }
 
