@@ -18,6 +18,7 @@ final class FeatureFlagService {
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
         static let sumSprintEnabled = "feature.sumSprintEnabled"
+        static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -92,6 +93,11 @@ final class FeatureFlagService {
         didSet { defaults.set(sumSprintEnabled, forKey: Keys.sumSprintEnabled) }
     }
 
+    /// Gates the Symmetry Fold geometry activity (ages 5–7). Default false; parent enables in Settings.
+    var symmetryFoldEnabled: Bool {
+        didSet { defaults.set(symmetryFoldEnabled, forKey: Keys.symmetryFoldEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -115,6 +121,7 @@ final class FeatureFlagService {
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
             Keys.sumSprintEnabled: false,
+            Keys.symmetryFoldEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -130,5 +137,6 @@ final class FeatureFlagService {
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
         sumSprintEnabled = defaults.bool(forKey: Keys.sumSprintEnabled)
+        symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
     }
 }
