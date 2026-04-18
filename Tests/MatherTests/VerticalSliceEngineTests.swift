@@ -511,9 +511,11 @@ struct VerticalSliceEngineTests {
         engine.startSession()
         try await advanceToGravitySplit(engine)
 
+        guard let target = engine.currentProblem?.target else { return }
         #expect(engine.gravitySplitState != nil)
-        #expect(engine.gravitySplitState?.leftCount == 0)
-        #expect(engine.gravitySplitState?.rightCount == engine.currentProblem?.target)
+        // Starts far-left (target − 1) so the scale is visibly unbalanced on entry.
+        #expect(engine.gravitySplitState?.leftCount == max(0, target - 1))
+        #expect(engine.gravitySplitState?.rightCount == 1)
     }
 
     @Test
@@ -532,14 +534,52 @@ struct VerticalSliceEngineTests {
         engine.startSession()
         try await advanceToGravitySplit(engine)
 
-        engine.adjustGravitySplitByTap(delta: 1)
-        #expect(engine.gravitySplitState?.leftCount == 1)
-        engine.adjustGravitySplitByTap(delta: 1)
-        #expect(engine.gravitySplitState?.leftCount == 2)
+        // Stage starts far-left (target − 1); decrement moves counters right.
+        guard let target = engine.currentProblem?.target else { return }
+        let startLeft = max(0, target - 1)
+        #expect(engine.gravitySplitState?.leftCount == startLeft)
+
+        engine.adjustGravitySplitByTap(delta: -1)
+        #expect(engine.gravitySplitState?.leftCount == startLeft - 1)
+        engine.adjustGravitySplitByTap(delta: -1)
+        #expect(engine.gravitySplitState?.leftCount == startLeft - 2)
     }
 
+    // Neutral-relative tilt: the first tilt sample records the hold position as
+    // neutral (Δ=0). A second sample at the SAME value produces zero delta,
+    // leaving leftCount unchanged regardless of the absolute device roll.
+    // Note: for the symmetric 6=3+3 deterministic problem, the first tilt at Δ=0
+    // maps to the midpoint (3) which equals decompositionA → the stage locks.
+    // The second call then returns early via the isLocked guard, so count stays stable.
     @Test
-    func gravitySplitIgnoresInitialTiltThatWouldInstantlySolveStage() async throws {
+    func gravitySplitTiltRecordsNeutralOnFirstSample() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        // First call records neutral; Δ=0 maps to midpoint.
+        engine.adjustGravitySplitByTilt(0.3)
+        let countAfterFirst = engine.gravitySplitState?.leftCount
+
+        // Second call at the SAME value → Δ=0 → count is unchanged.
+        engine.adjustGravitySplitByTilt(0.3)
+        #expect(engine.gravitySplitState?.leftCount == countAfterFirst)
+    }
+
+    // The scale starts at target−1 (far-left, visibly unbalanced) so the child
+    // cannot accidentally win just by picking up the device without tapping GO first.
+    @Test
+    func gravitySplitSymmetricProblemCannotBeAccidentallySolvedBeforeFirstTilt() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
         flags.vs1GravitySplitEnabled = true
@@ -555,18 +595,41 @@ struct VerticalSliceEngineTests {
         try await advanceToGravitySplit(engine)
 
         guard let problem = engine.currentProblem else { return }
-        #expect(problem.decompositionA == problem.decompositionB)
 
-        engine.adjustGravitySplitByTilt(0)
-        #expect(engine.currentStage == .gravitySplit)
+        // Stage starts far-left (target−1 / 1), not at the balanced midpoint.
         #expect(engine.gravitySplitState?.isLocked == false)
-        #expect(engine.gravitySplitState?.leftCount == 0)
-        #expect(engine.gravitySplitState?.rightCount == problem.target)
+        #expect(engine.gravitySplitState?.leftCount == max(0, problem.target - 1))
+    }
 
-        engine.adjustGravitySplitByTilt(.pi / 4)
-        #expect(engine.gravitySplitState?.leftCount == 0)
+    // For a symmetric problem (6=3+3) the correct answer IS the midpoint.
+    // After GO is tapped and the first tilt sample is observed (Δ=0 from neutral),
+    // the scale snaps to the midpoint = the correct decomposition → locks.
+    // This is DELIBERATE: the child held the device steady and tapped GO.
+    @Test
+    func gravitySplitSymmetricProblemLocksWhenHeldAtNeutral() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
 
-        engine.adjustGravitySplitByTilt(0)
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        guard let problem = engine.currentProblem else { return }
+        #expect(problem.decompositionA == problem.decompositionB,
+                "Test requires a symmetric decomposition — first deterministic problem is 6=3+3")
+
+        // Tilt at any value: first call records that value as neutral, Δ=0 → midpoint = decompositionA → locked.
+        engine.adjustGravitySplitByTilt(0.3)
+        #expect(engine.gravitySplitState?.isLocked == true)
+
+        // Allow the stage-advance Task to run.
         for _ in 0..<100 {
             if engine.currentStage != .gravitySplit { break }
             await Task.yield()
