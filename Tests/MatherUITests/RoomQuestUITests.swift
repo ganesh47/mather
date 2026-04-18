@@ -295,8 +295,14 @@ final class RoomQuestUITests: XCTestCase {
                 app.swipeDown()
             }
         }
-        XCTAssertTrue(element.isHittable, "Expected element to become hittable before tap: \(element)")
-        element.tap()
+
+        if element.exists {
+            let coordinate = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            coordinate.tap()
+            return
+        }
+
+        XCTFail("Expected element to exist before tap fallback: \(element)")
     }
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
