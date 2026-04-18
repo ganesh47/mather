@@ -649,10 +649,8 @@ struct VerticalSliceEngineTests {
         engine.adjustGravitySplitByTilt(0.3)
         #expect(engine.gravitySplitState?.isLocked == true)
 
-        // Allow the stage-advance Task to run.
-        for _ in 0..<100 {
-            if engine.currentStage != .gravitySplit { break }
-            await Task.yield()
+        await waitFor("gravity split auto-advance after neutral lock") {
+            engine.currentStage != .gravitySplit
         }
         #expect(engine.currentStage != .gravitySplit)
     }
@@ -677,10 +675,8 @@ struct VerticalSliceEngineTests {
         guard let startLeft = engine.gravitySplitState?.leftCount else { return }
         // Tap from the branch's far-left start state to the exact decomposition.
         engine.adjustGravitySplitByTap(delta: problem.decompositionA - startLeft)
-        // Drain the MainActor queue so the completeStage Task fires
-        for _ in 0..<100 {
-            if engine.currentStage != .gravitySplit { break }
-            await Task.yield()
+        await waitFor("gravity split auto-advance after tap lock") {
+            engine.currentStage != .gravitySplit
         }
         #expect(engine.currentStage != .gravitySplit)
     }
