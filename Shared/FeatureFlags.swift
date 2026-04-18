@@ -23,6 +23,7 @@ final class FeatureFlagService {
         static let angleCannonEnabled = "feature.angleCannonEnabled"
         static let twoFingerProtractorEnabled = "feature.twoFingerProtractorEnabled"
         static let compassAnglesEnabled = "feature.compassAnglesEnabled"
+        static let gravityArtistEnabled = "feature.gravityArtistEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -122,6 +123,11 @@ final class FeatureFlagService {
         didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
     }
 
+    /// Gates the Gravity Artist predict-then-fire projectile activity (ages 8–10). Default false; parent enables in Settings.
+    var gravityArtistEnabled: Bool {
+        didSet { defaults.set(gravityArtistEnabled, forKey: Keys.gravityArtistEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -150,6 +156,7 @@ final class FeatureFlagService {
             Keys.angleCannonEnabled: false,
             Keys.twoFingerProtractorEnabled: false,
             Keys.compassAnglesEnabled: false,
+            Keys.gravityArtistEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -170,5 +177,6 @@ final class FeatureFlagService {
         angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
         twoFingerProtractorEnabled = defaults.bool(forKey: Keys.twoFingerProtractorEnabled)
         compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
+        gravityArtistEnabled = defaults.bool(forKey: Keys.gravityArtistEnabled)
     }
 }
