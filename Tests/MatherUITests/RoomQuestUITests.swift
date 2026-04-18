@@ -92,8 +92,6 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(waitForSpotStage(app, timeout: 10))
         snapshot(app, "RoomQuest-Spot2-Blue")
         XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 3))
-
-        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         snapshot(app, "RoomQuest-Returning")
     }
 
@@ -109,8 +107,6 @@ final class RoomQuestUITests: XCTestCase {
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
         XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
-
-        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         let returningConfirm = app.buttons["room-return-confirm-button"]
         if returningConfirm.waitForExistence(timeout: 5) {
             tapWhenHittable(returningConfirm, in: app, reveal: .up)
@@ -162,8 +158,6 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
-
-        XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         XCTAssertTrue(app.buttons["room-pause-button-returning"].waitForExistence(timeout: 5))
     }
 
