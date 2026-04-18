@@ -14,8 +14,8 @@ enum AppRoute {
     case rectangleFactory
     case angleCannon
     case twoFingerProtractor
-    case compassAngles
     case gravityArtist
+    case compassAngles
 }
 
 @MainActor
@@ -112,8 +112,8 @@ final class VerticalSliceEngine {
     func showRectangleFactory() { route = .rectangleFactory }
     func showAngleCannon() { route = .angleCannon }
     func showTwoFingerProtractor() { route = .twoFingerProtractor }
-    func showCompassAngles() { route = .compassAngles }
     func showGravityArtist() { route = .gravityArtist }
+    func showCompassAngles() { route = .compassAngles }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom

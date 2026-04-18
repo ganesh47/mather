@@ -63,18 +63,18 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
                 }
 
-                if appModel.featureFlags.compassAnglesEnabled {
-                    Button("Compass Angles") {
-                        appModel.engine.showCompassAngles()
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
-                }
-
                 if appModel.featureFlags.gravityArtistEnabled {
                     Button("Gravity Artist") {
                         appModel.engine.showGravityArtist()
                     }
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.65)))
+                }
+
+                if appModel.featureFlags.compassAnglesEnabled {
+                    Button("Compass Angles") {
+                        appModel.engine.showCompassAngles()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
                 }
 
                 HStack(spacing: 14) {
