@@ -19,6 +19,7 @@ final class FeatureFlagService {
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
         static let sumSprintEnabled = "feature.sumSprintEnabled"
         static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
+        static let rectangleFactoryEnabled = "feature.rectangleFactoryEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -98,6 +99,11 @@ final class FeatureFlagService {
         didSet { defaults.set(symmetryFoldEnabled, forKey: Keys.symmetryFoldEnabled) }
     }
 
+    /// Gates the Rectangle Factory factor-discovery activity (ages 7–9). Default false; parent enables in Settings.
+    var rectangleFactoryEnabled: Bool {
+        didSet { defaults.set(rectangleFactoryEnabled, forKey: Keys.rectangleFactoryEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -122,6 +128,7 @@ final class FeatureFlagService {
             Keys.roomQuestReferenceCaptureEnabled: true,
             Keys.sumSprintEnabled: false,
             Keys.symmetryFoldEnabled: false,
+            Keys.rectangleFactoryEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -138,5 +145,6 @@ final class FeatureFlagService {
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
         sumSprintEnabled = defaults.bool(forKey: Keys.sumSprintEnabled)
         symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
+        rectangleFactoryEnabled = defaults.bool(forKey: Keys.rectangleFactoryEnabled)
     }
 }

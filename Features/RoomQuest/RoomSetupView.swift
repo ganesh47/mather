@@ -59,6 +59,11 @@ struct RoomSetupView: View {
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(MatherTheme.accent)
                                 .accessibilityIdentifier("room-scan-status")
+                        case .almost(_, let message):
+                            Label(message, systemImage: "scope")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.warm)
+                                .accessibilityIdentifier("room-scan-status")
                         case .failed(_, let message):
                             Label(message, systemImage: "exclamationmark.triangle.fill")
                                 .font(.subheadline.weight(.semibold))
@@ -119,7 +124,7 @@ struct RoomSetupView: View {
                     .clipShape(Capsule())
             }
 
-            if station.verificationMethod == nil && station.referenceCaptureState != .notCaptured {
+            if station.referenceCaptureState != .notCaptured {
                 Text(station.referenceCaptureState.badgeTitle)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
@@ -129,7 +134,7 @@ struct RoomSetupView: View {
                     .clipShape(Capsule())
             }
 
-            if let referenceNote = station.referenceNote, station.verificationMethod == nil {
+            if let referenceNote = station.referenceNote {
                 Text(referenceNote)
                     .font(.caption)
                     .foregroundStyle(MatherTheme.cardSubtitle)
