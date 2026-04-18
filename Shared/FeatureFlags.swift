@@ -20,6 +20,7 @@ final class FeatureFlagService {
         static let sumSprintEnabled = "feature.sumSprintEnabled"
         static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
         static let rectangleFactoryEnabled = "feature.rectangleFactoryEnabled"
+        static let angleCannonEnabled = "feature.angleCannonEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -104,6 +105,11 @@ final class FeatureFlagService {
         didSet { defaults.set(rectangleFactoryEnabled, forKey: Keys.rectangleFactoryEnabled) }
     }
 
+    /// Gates the Angle Cannon geometry activity (ages 7–9). Default false; parent enables in Settings.
+    var angleCannonEnabled: Bool {
+        didSet { defaults.set(angleCannonEnabled, forKey: Keys.angleCannonEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -129,6 +135,7 @@ final class FeatureFlagService {
             Keys.sumSprintEnabled: false,
             Keys.symmetryFoldEnabled: false,
             Keys.rectangleFactoryEnabled: false,
+            Keys.angleCannonEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -146,5 +153,6 @@ final class FeatureFlagService {
         sumSprintEnabled = defaults.bool(forKey: Keys.sumSprintEnabled)
         symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
         rectangleFactoryEnabled = defaults.bool(forKey: Keys.rectangleFactoryEnabled)
+        angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
     }
 }

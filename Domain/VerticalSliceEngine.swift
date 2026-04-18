@@ -12,6 +12,7 @@ enum AppRoute {
     case sumSprint
     case symmetryFold
     case rectangleFactory
+    case angleCannon
 }
 
 @MainActor
@@ -106,6 +107,7 @@ final class VerticalSliceEngine {
     func showSumSprint() { route = .sumSprint }
     func showSymmetryFold() { route = .symmetryFold }
     func showRectangleFactory() { route = .rectangleFactory }
+    func showAngleCannon() { route = .angleCannon }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom

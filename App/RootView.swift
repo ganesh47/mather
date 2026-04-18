@@ -49,6 +49,8 @@ struct RootView: View {
                     }
                 case .symmetryFold:
                     SymmetryFoldView(appModel: appModel)
+                case .angleCannon:
+                    AngleCannonView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
