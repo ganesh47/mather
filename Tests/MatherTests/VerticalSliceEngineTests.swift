@@ -15,7 +15,7 @@ struct VerticalSliceEngineTests {
     private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
         let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
         while DispatchTime.now().uptimeNanoseconds < deadline {
-            if await condition() { return }
+            if await MainActor.run(body: condition) { return }
             await Task.yield()
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
