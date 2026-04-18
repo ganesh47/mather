@@ -84,6 +84,7 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["room-spot-scan-button"].isEnabled)
         snapshot(app, "RoomQuest-Spot1-Red")
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
@@ -153,6 +154,21 @@ final class RoomQuestUITests: XCTestCase {
             doneButton.tap()
             _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
         }
+    }
+
+    func testRoomQuestSetupShowsSavedFallbackStateBeforeReady() {
+        let app = launchWithRoomQuestAndSafetyAck()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Start Room Quest"].tap()
+        _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
+
+        XCTAssertTrue(app.staticTexts["Save a hiding-place reference for both stations before you start."].waitForExistence(timeout: 5))
+
+        configureSetupViaManualFallback(app)
+
+        XCTAssertTrue(app.staticTexts["Fallback saved"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Ready — stations are set!"].exists)
     }
 
     // MARK: - Pause / Resume
@@ -240,6 +256,11 @@ final class RoomQuestUITests: XCTestCase {
 
 
     private func completeSetupViaManualFallback(_ app: XCUIApplication) {
+        configureSetupViaManualFallback(app)
+        app.buttons["Ready — stations are set!"].tap()
+    }
+
+    private func configureSetupViaManualFallback(_ app: XCUIApplication) {
         let redCard = app.otherElements["room-station-card-redRocket"]
         let blueCard = app.otherElements["room-station-card-blueBubble"]
 
@@ -253,8 +274,6 @@ final class RoomQuestUITests: XCTestCase {
         blueCard.buttons["Camera verify"].tap()
         XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
         tapWhenHittable(blueCard.buttons["Same-place fallback"], in: app, reveal: .up)
-
-        tapWhenHittable(app.buttons["Ready — stations are set!"], in: app, reveal: .up)
     }
 
     private enum RevealDirection {
@@ -353,6 +372,7 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTFail("Expected element to exist before tap fallback: \(element)")
     }
+
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
