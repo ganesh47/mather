@@ -434,8 +434,11 @@ struct RoomQuestEngineTests {
 
         engine.verifyCurrentSpotWithCamera()
         engine.verifyCurrentSpotWithCamera()
-        await waitFor("duplicate scan request ignored while active") {
-            await tracker.startCount == 1
+        let trackerDeadline = DispatchTime.now().uptimeNanoseconds + 2_000_000_000
+        while DispatchTime.now().uptimeNanoseconds < trackerDeadline {
+            if await tracker.startCount == 1 { break }
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 20_000_000)
         }
 
         #expect(await tracker.startCount == 1)
