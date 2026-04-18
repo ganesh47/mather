@@ -240,7 +240,7 @@ struct RectangleFactoryView: View {
 
     private func checkValidity() {
         guard frameWidth * frameHeight == targetN else { return }
-        let key = factorKey(frameWidth, frameHeight)
+        let key = Self.factorKey(frameWidth, frameHeight)
         guard !foundFactors.contains(key) else { return }
         foundFactors.insert(key)
         lastEquation = "\(min(frameWidth, frameHeight)) × \(max(frameWidth, frameHeight)) = \(targetN)"
