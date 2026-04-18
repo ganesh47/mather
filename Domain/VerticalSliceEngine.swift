@@ -36,7 +36,10 @@ final class VerticalSliceEngine {
     var transferRightCount = 0
     private(set) var bondMatchState: BondMatchState? = nil
     private(set) var gravitySplitState: GravitySplitState? = nil
-    private var lastGravitySplitCount = -1
+    /// Recorded on the first tilt sample after the stage becomes active.
+    /// All subsequent tilt is computed as a delta from this neutral position,
+    /// so the puzzle cannot be accidentally solved by simply picking up the device.
+    private var gravitySplitNeutralRoll: Double? = nil
     var feedbackMessage = "Tap Play to start."
     var showCelebration = false
     var completedSummary: SessionSummaryDraft?
@@ -145,7 +148,7 @@ final class VerticalSliceEngine {
         transferRightCount = 0
         bondMatchState = nil
         gravitySplitState = nil
-        lastGravitySplitCount = -1
+        gravitySplitNeutralRoll = nil
         feedbackMessage = activeTheme.sessionStartFeedback()
         showCelebration = false
         completedSummary = nil
@@ -324,24 +327,22 @@ final class VerticalSliceEngine {
     // MARK: - Gravity Split actions
 
     /// Called each time tiltRoll updates (≈30 Hz from MotionService).
-    /// Maps device roll angle (radians) to a left-pan counter count.
+    /// Uses neutral-relative tilt: the first sample records the device's natural
+    /// hold position as neutral (Δ=0). All subsequent tilt is a delta from neutral,
+    /// so symmetric decompositions (e.g. 6=3+3) cannot be accidentally solved by
+    /// picking up the iPad in a flat/natural position.
     func adjustGravitySplitByTilt(_ tiltRoll: Double) {
         guard currentStage == .gravitySplit, let state = gravitySplitState,
               !state.isLocked else { return }
-        let clamped = max(-Double.pi / 4, min(tiltRoll, Double.pi / 4))
+        // Record neutral on the very first sample after stage entry.
+        if gravitySplitNeutralRoll == nil {
+            gravitySplitNeutralRoll = tiltRoll
+        }
+        let delta = tiltRoll - gravitySplitNeutralRoll!
+        let clamped = max(-Double.pi / 4, min(delta, Double.pi / 4))
         let fraction = 0.5 - clamped / (Double.pi / 4) * 0.5
         let newLeft = Int((Double(state.target) * fraction).rounded())
-
-        // Ignore an initial tilt sample that would instantly solve the stage.
-        // This keeps Gravity Split starting unsolved, especially for symmetric
-        // decompositions like 6 = 3 + 3 when the device begins level.
-        if lastGravitySplitCount == -1 {
-            lastGravitySplitCount = newLeft
-            if newLeft == state.decompositionA { return }
-        }
-
         setGravitySplit(leftCount: newLeft)
-        lastGravitySplitCount = newLeft
     }
 
     /// Called by the ±1 tap fallback buttons in GravitySplitView.
@@ -351,11 +352,13 @@ final class VerticalSliceEngine {
         setGravitySplit(leftCount: state.leftCount + delta)
     }
 
-    /// Resets all counters back to the right pan (shake gesture).
+    /// Resets all counters back to the starting position (shake gesture).
+    /// Also clears the neutral roll so the next tilt re-calibrates from the
+    /// current hold position.
     func resetGravitySplit() {
         guard currentStage == .gravitySplit else { return }
-        gravitySplitState?.setLeft(0)
-        lastGravitySplitCount = -1
+        gravitySplitState?.setLeft(max(0, (gravitySplitState?.target ?? 1) - 1))
+        gravitySplitNeutralRoll = nil
     }
 
     private func setGravitySplit(leftCount: Int) {
@@ -459,7 +462,7 @@ final class VerticalSliceEngine {
         case .gravitySplit:
             if let problem = currentProblem {
                 gravitySplitState = GravitySplitState(problem: problem)
-                lastGravitySplitCount = -1
+                gravitySplitNeutralRoll = nil   // re-calibrate on first tilt after stage entry
             }
         case .bondMatch:
             if let problem = currentProblem {
@@ -498,7 +501,7 @@ final class VerticalSliceEngine {
             transferLeftCount = 0
             transferRightCount = 0
             gravitySplitState = nil
-            lastGravitySplitCount = -1
+            gravitySplitNeutralRoll = nil
             problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
             logProblemPresented()

@@ -170,8 +170,10 @@ struct GravitySplitState: Equatable {
         target         = problem.target
         decompositionA = problem.decompositionA
         decompositionB = problem.decompositionB
-        leftCount      = 0
-        rightCount     = problem.target   // all counters start on right pan
+        // Start with target−1 on the left pan (far-left imbalance) so the beam
+        // is visibly unbalanced and the answer is never the starting position.
+        leftCount      = max(0, problem.target - 1)
+        rightCount     = 1
     }
 
     /// Sets `leftCount` to `count` (clamped 0…target) and derives `rightCount`.
