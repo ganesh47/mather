@@ -56,6 +56,13 @@ struct HomeView: View {
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.65)))
                 }
 
+                if appModel.featureFlags.twoFingerProtractorEnabled {
+                    Button("Two-Finger Protractor") {
+                        appModel.engine.showTwoFingerProtractor()
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
+                }
+
                 if appModel.featureFlags.gravityArtistEnabled {
                     Button("Gravity Artist") {
                         appModel.engine.showGravityArtist()
