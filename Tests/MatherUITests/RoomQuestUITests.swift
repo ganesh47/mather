@@ -111,17 +111,15 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
 
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
-        let returningAction = returningPrimaryAction(app)
-        if returningAction.waitForExistence(timeout: 5) {
-            tapWhenHittable(returningAction, in: app, reveal: .up)
+        let returningConfirm = app.buttons["room-return-confirm-button"]
+        if returningConfirm.waitForExistence(timeout: 5) {
+            tapWhenHittable(returningConfirm, in: app, reveal: .up)
         }
 
         // Post-return entry into the on-screen phase is enough here. Detailed CPA
         // progression is already covered in the engine/unit suites and is much more
         // timing-sensitive in CI when driven end to end through Room Quest UI.
-        let fromYourWalk = app.staticTexts["From your walk"]
-        let useBreak = app.buttons["Use this break"]
-        XCTAssertTrue(fromYourWalk.waitForExistence(timeout: 10) || useBreak.waitForExistence(timeout: 10))
+        XCTAssertTrue(waitForPostReturnOnScreenPhase(app, timeout: 10))
         snapshot(app, "RoomQuest-Pictorial-Locked")
     }
 
@@ -234,18 +232,6 @@ final class RoomQuestUITests: XCTestCase {
         case down
     }
 
-    private func waitForReturningConfirmStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        let confirm = app.buttons["room-return-confirm-button"]
-        while Date() < deadline {
-            if confirm.exists {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        return confirm.exists
-    }
-
     private func waitForSpotStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -348,12 +334,15 @@ final class RoomQuestUITests: XCTestCase {
             app.staticTexts["Bring them back!"].exists
     }
 
-    private func returningPrimaryAction(_ app: XCUIApplication) -> XCUIElement {
-        let confirm = app.buttons["room-return-confirm-button"]
-        if confirm.exists {
-            return confirm
+    private func waitForPostReturnOnScreenPhase(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.staticTexts["From your walk"].exists || app.buttons["Use this break"].exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        return app.buttons["room-pause-button-returning"]
+        return app.staticTexts["From your walk"].exists || app.buttons["Use this break"].exists
     }
 
     private func waitForRoomQuestAction(_ app: XCUIApplication, actionID: String, timeout: TimeInterval) -> Bool {
