@@ -276,20 +276,35 @@ struct RoomQuestEngineTests {
     }
 
     @Test
-    func verifyCurrentSpotUsesSavedReferenceCopyAfterSuccessfulSetupScan() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            RoomQuestMarkerScanResult(
-                role: role,
-                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
-                referenceImageJPEGData: nil,
-                usedARCelebration: false
-            )
-        })
+    func verifyCurrentSpotUsesSavedReferenceCopyAfterSuccessfulSetupScan() throws {
+        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let sharedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
 
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .redRocket,
+                markerPayload: "mather:roomquest:redRocket:v1",
+                referenceImageJPEGData: nil,
+                capturedAt: .now,
+                note: "Reference saved for Red Rocket",
+                captureState: .captured
+            )
+        )
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .blueBubble,
+                markerPayload: nil,
+                referenceImageJPEGData: nil,
+                capturedAt: .now,
+                note: "Manual fallback saved",
+                captureState: .manualFallback
+            )
+        )
+
+        let engine = makeEngine(stationStore: sharedStationStore, defaultsSuiteName: #function)
         engine.startSession()
-        engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
-        engine.confirmStationManually(.blueBubble)
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
         engine.markSetupComplete()
 
         #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
