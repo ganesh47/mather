@@ -74,7 +74,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
@@ -87,7 +87,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
@@ -156,9 +156,9 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
@@ -223,6 +223,24 @@ struct RoomQuestEngineTests {
         recheckingEngine.startSession()
         recheckingEngine.registerStation(.redRocket)
         recheckingEngine.registerStation(.blueBubble)
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .redRocket,
+                markerPayload: "mather:roomquest:redRocket:v1",
+                capturedAt: .now,
+                note: "Reference saved for Red Rocket",
+                captureState: .captured
+            )
+        )
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .blueBubble,
+                markerPayload: nil,
+                capturedAt: .now,
+                note: "Manual fallback saved",
+                captureState: .manualFallback
+            )
+        )
         recheckingEngine.markSetupComplete()
 
         recheckingEngine.verifyCurrentSpotWithCamera()
@@ -252,7 +270,7 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
