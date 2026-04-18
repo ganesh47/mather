@@ -80,7 +80,7 @@ final class RoomQuestEngine {
             RoomQuestStation(id: .redRocket, role: .redRocket, quantity: p.decompositionA),
             RoomQuestStation(id: .blueBubble, role: .blueBubble, quantity: p.decompositionB)
         ]
-        try? stationStore.clearAll()
+        loadSavedReferenceState()
         setupStartedAt = .now
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
         feedbackMessage = "Set up the stations, then scan each one or mark it ready."
@@ -105,6 +105,8 @@ final class RoomQuestEngine {
             scanState = .failed(role: role, message: feedbackMessage)
             return
         }
+
+        guard !isScanActive else { return }
 
         scanState = .scanning(role: role)
         feedbackMessage = "Scan the \(role.title) marker with the camera."
@@ -147,7 +149,12 @@ final class RoomQuestEngine {
     }
 
     func registerStation(_ role: RoomQuestStationRole) {
-        confirmStationManually(role)
+        scanState = .idle
+        if let station = stations.first(where: { $0.role == role }), station.referenceCaptureState == .captured {
+            setStationRegistered(role, method: .cameraVerified)
+        } else {
+            confirmStationManually(role)
+        }
     }
 
     private func setStationRegistered(_ role: RoomQuestStationRole, method: RoomQuestStationVerificationMethod) {
@@ -167,6 +174,38 @@ final class RoomQuestEngine {
     var currentStation: RoomQuestStation? {
         guard case .spot(let index) = phase, stations.indices.contains(index) else { return nil }
         return stations[index]
+    }
+
+    var currentSpotReferenceLabel: String {
+        guard let station = currentStation else { return "" }
+
+        switch station.referenceCaptureState {
+        case .captured:
+            return "Saved camera reference ready for \(station.role.title)."
+        case .manualFallback:
+            return "No camera reference was saved for \(station.role.title)."
+        case .notCaptured:
+            return "Reference still needs to be saved for \(station.role.title)."
+        }
+    }
+
+    var currentSpotSearchGuidance: String {
+        guard let station = currentStation else { return "" }
+
+        switch scanState {
+        case .almost(let role, _):
+            return "Almost. Hold still, move a little closer, and point back at the saved \(role.title) place."
+        case .failed(let role, _):
+            return "Try again. Look for the saved \(role.title) place, then ask a grown-up to use fallback if the camera keeps missing it."
+        case .celebrating(let role, _):
+            return "You found the saved \(role.title) place."
+        case .idle, .scanning:
+            if station.referenceCaptureState == .captured {
+                return "Look for the saved \(station.role.title) place, then hold the camera still for a recheck."
+            } else {
+                return "Look for \(station.role.title), then ask a grown-up to use fallback if the camera cannot help yet."
+            }
+        }
     }
 
     func markSetupComplete() {
@@ -211,8 +250,12 @@ final class RoomQuestEngine {
               let station = stations[safe: index]
         else { return }
 
+        guard !isScanActive else { return }
+
         scanState = .scanning(role: station.role)
-        feedbackMessage = "Scan \(station.role.title) to unlock the collect step."
+        feedbackMessage = station.referenceCaptureState == .captured
+            ? "Rechecking the saved \(station.role.title) place."
+            : "Scan \(station.role.title) to unlock the collect step."
 
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -222,7 +265,7 @@ final class RoomQuestEngine {
                 if let savedReference = try? stationStore.reference(for: station.role),
                    let expectedRole = savedReference.role,
                    expectedRole != result.role {
-                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
+                    self.feedbackMessage = "That is not the saved \(station.role.title) place yet. Try again."
                     self.scanState = .failed(role: station.role, message: self.feedbackMessage)
                     return
                 }
@@ -232,15 +275,16 @@ final class RoomQuestEngine {
                    let savedMarkerPayload = savedReference.markerPayload,
                    let scannedMarkerPayload = result.markerPayload,
                    savedMarkerPayload != scannedMarkerPayload {
-                    self.feedbackMessage = "That doesn’t match the saved \(station.role.title) station yet."
-                    self.scanState = .failed(role: station.role, message: self.feedbackMessage)
+                    self.feedbackMessage = "Almost. This looks close, but it is not the saved \(station.role.title) place yet."
+                    self.scanState = .almost(role: station.role, message: self.feedbackMessage)
                     return
                 }
 
+                self.setReferenceState(.captured, for: station.role, note: "Saved camera reference ready for recheck")
                 self.scanState = .celebrating(role: result.role, usedARCelebration: result.usedARCelebration)
                 self.hapticsService.success(enabled: self.featureFlags.hapticsEnabled)
-                self.speechService.speak("\(result.role.title) found. Collect \(station.quantity).", enabled: self.featureFlags.audioEnabled)
-                self.feedbackMessage = "\(result.role.title) unlocked. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
+                self.speechService.speak("You found the saved \(result.role.title) place. Collect \(station.quantity).", enabled: self.featureFlags.audioEnabled)
+                self.feedbackMessage = "Found it. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
                 try? await Task.sleep(for: .seconds(1.0))
                 self.scanState = .idle
                 self.markSpotVisited(index: index)
@@ -251,7 +295,7 @@ final class RoomQuestEngine {
                 case .unavailable:
                     self.feedbackMessage = "Camera scan is unavailable right now. Use fallback if needed."
                 case .wrongMarker(let expected, let detected):
-                    self.feedbackMessage = "That looked like \(detected.title). Scan \(expected.title) to unlock this step."
+                    self.feedbackMessage = "That looked like \(detected.title). Try again at the saved \(expected.title) place."
                 }
                 self.scanState = .failed(role: station.role, message: self.feedbackMessage)
             } catch {
@@ -409,6 +453,23 @@ final class RoomQuestEngine {
         guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
         stations[idx].referenceCaptureState = state
         stations[idx].referenceNote = note
+    }
+
+    private func loadSavedReferenceState() {
+        for role in RoomQuestStationRole.allCases {
+            guard let savedReference = try? stationStore.reference(for: role),
+                  let captureState = savedReference.captureState else { continue }
+            setReferenceState(captureState, for: role, note: savedReference.note)
+        }
+    }
+
+    private var isScanActive: Bool {
+        switch scanState {
+        case .scanning, .celebrating:
+            return true
+        case .idle, .almost, .failed:
+            return false
+        }
     }
 }
 

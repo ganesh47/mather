@@ -222,7 +222,7 @@ struct BondMatchState: Equatable {
 
 // MARK: - Room Quest models
 
-enum RoomQuestStationRole: String, Codable, Equatable {
+enum RoomQuestStationRole: String, Codable, Equatable, CaseIterable {
     case redRocket
     case blueBubble
 
@@ -302,6 +302,7 @@ enum RoomQuestScanState: Equatable {
     case idle
     case scanning(role: RoomQuestStationRole)
     case celebrating(role: RoomQuestStationRole, usedARCelebration: Bool)
+    case almost(role: RoomQuestStationRole, message: String)
     case failed(role: RoomQuestStationRole, message: String)
 }
 

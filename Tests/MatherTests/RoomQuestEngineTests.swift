@@ -74,7 +74,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
@@ -87,7 +87,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
@@ -156,9 +156,9 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
@@ -192,7 +192,7 @@ struct RoomQuestEngineTests {
     }
 
     @Test
-    func verifyCurrentSpotRejectsMarkerPayloadThatDoesNotMatchSavedReference() async throws {
+    func verifyCurrentSpotReportsAlmostWhenMarkerPayloadDoesNotMatchSavedReference() async throws {
         let setupScanner = FakeRoomQuestScanner { role in
             RoomQuestMarkerScanResult(
                 role: role,
@@ -215,10 +215,28 @@ struct RoomQuestEngineTests {
         let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .redRocket,
+                markerPayload: "mather:roomquest:redRocket:v1",
+                capturedAt: .now,
+                note: "Reference saved for Red Rocket",
+                captureState: .captured
+            )
+        )
+        try sharedStationStore.save(
+            RoomQuestStationReferenceDraft(
+                role: .blueBubble,
+                markerPayload: nil,
+                capturedAt: .now,
+                note: "Manual fallback saved",
+                captureState: .manualFallback
+            )
+        )
         let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
         recheckingEngine.startSession()
         recheckingEngine.registerStation(.redRocket)
@@ -229,12 +247,70 @@ struct RoomQuestEngineTests {
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(recheckingEngine.phase == .spot(index: 0))
-        if case .failed(let role, let message) = recheckingEngine.scanState {
+        if case .almost(let role, let message) = recheckingEngine.scanState {
             #expect(role == .redRocket)
-            #expect(message.localizedCaseInsensitiveContains("saved red rocket station"))
+            #expect(message.localizedCaseInsensitiveContains("almost"))
+            #expect(recheckingEngine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+            #expect(recheckingEngine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("move a little closer"))
         } else {
-            Issue.record("Expected failed scan state after saved-reference payload mismatch")
+            Issue.record("Expected almost scan state after saved-reference payload mismatch")
         }
+    }
+
+    @Test
+    func verifyCurrentSpotUsesSavedReferenceCopyAfterSuccessfulSetupScan() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        })
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(1300))
+        engine.confirmStationManually(.blueBubble)
+        engine.markSetupComplete()
+
+        #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
+    }
+
+    @Test
+    func verifyCurrentSpotIgnoresDuplicateScanRequestsWhileScanIsActive() async throws {
+        let tracker = ScanTracker()
+        let scanner = FakeRoomQuestScanner { role in
+            await tracker.markStarted()
+            while !(await tracker.canFinish) {
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            return RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        }
+
+        let engine = makeEngine(scanner: scanner)
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        engine.verifyCurrentSpotWithCamera()
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(await tracker.startCount == 1)
+        #expect(engine.phase == .spot(index: 0))
+
+        await tracker.allowFinish()
+        try await Task.sleep(for: .milliseconds(1200))
+
+        #expect(engine.phase == .spot(index: 1))
     }
 
     @Test
@@ -368,6 +444,19 @@ struct RoomQuestEngineTests {
         engine.abandonSession(reason: "parent_abort")
         #expect(engine.phase == .complete)
         #expect(exitCalled)
+    }
+}
+
+private actor ScanTracker {
+    private(set) var startCount = 0
+    private(set) var canFinish = false
+
+    func markStarted() {
+        startCount += 1
+    }
+
+    func allowFinish() {
+        canFinish = true
     }
 }
 
