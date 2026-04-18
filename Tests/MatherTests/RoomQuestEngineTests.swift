@@ -74,7 +74,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
@@ -87,7 +87,7 @@ struct RoomQuestEngineTests {
         })
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.verificationMethod == .cameraVerified)
@@ -192,7 +192,7 @@ struct RoomQuestEngineTests {
     }
 
     @Test
-    func verifyCurrentSpotRejectsMarkerPayloadThatDoesNotMatchSavedReference() async throws {
+    func verifyCurrentSpotReportsAlmostWhenMarkerPayloadDoesNotMatchSavedReference() async throws {
         let setupScanner = FakeRoomQuestScanner { role in
             RoomQuestMarkerScanResult(
                 role: role,
@@ -215,14 +215,10 @@ struct RoomQuestEngineTests {
         let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
-        let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
-        recheckingEngine.startSession()
-        recheckingEngine.registerStation(.redRocket)
-        recheckingEngine.registerStation(.blueBubble)
         try sharedStationStore.save(
             RoomQuestStationReferenceDraft(
                 role: .redRocket,
@@ -241,18 +237,45 @@ struct RoomQuestEngineTests {
                 captureState: .manualFallback
             )
         )
+        let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
+        recheckingEngine.startSession()
+        recheckingEngine.registerStation(.redRocket)
+        recheckingEngine.registerStation(.blueBubble)
         recheckingEngine.markSetupComplete()
 
         recheckingEngine.verifyCurrentSpotWithCamera()
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(recheckingEngine.phase == .spot(index: 0))
-        if case .failed(let role, let message) = recheckingEngine.scanState {
+        if case .almost(let role, let message) = recheckingEngine.scanState {
             #expect(role == .redRocket)
-            #expect(message.localizedCaseInsensitiveContains("saved red rocket station"))
+            #expect(message.localizedCaseInsensitiveContains("almost"))
+            #expect(recheckingEngine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+            #expect(recheckingEngine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("move a little closer"))
         } else {
-            Issue.record("Expected failed scan state after saved-reference payload mismatch")
+            Issue.record("Expected almost scan state after saved-reference payload mismatch")
         }
+    }
+
+    @Test
+    func verifyCurrentSpotUsesSavedReferenceCopyAfterSuccessfulSetupScan() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        })
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        try await Task.sleep(for: .milliseconds(1300))
+        engine.confirmStationManually(.blueBubble)
+        engine.markSetupComplete()
+
+        #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
     }
 
     @Test
