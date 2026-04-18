@@ -156,13 +156,26 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
+        for _ in 0..<200 {
+            if engine.stations.first(where: { $0.role == .redRocket })?.isRegistered == true { break }
+            await Task.yield()
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
         engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(1300))
+        for _ in 0..<200 {
+            if engine.stations.first(where: { $0.role == .blueBubble })?.isRegistered == true { break }
+            await Task.yield()
+            try await Task.sleep(for: .milliseconds(10))
+        }
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
-        try await Task.sleep(for: .milliseconds(1200))
+        for _ in 0..<200 {
+            if engine.phase == .spot(index: 1) { break }
+            await Task.yield()
+            try await Task.sleep(for: .milliseconds(10))
+        }
 
         #expect(engine.phase == .spot(index: 1))
         #expect(engine.currentStation?.role == .blueBubble)
