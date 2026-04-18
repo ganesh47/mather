@@ -21,6 +21,7 @@ final class FeatureFlagService {
         static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
         static let rectangleFactoryEnabled = "feature.rectangleFactoryEnabled"
         static let angleCannonEnabled = "feature.angleCannonEnabled"
+        static let compassAnglesEnabled = "feature.compassAnglesEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -110,6 +111,11 @@ final class FeatureFlagService {
         didSet { defaults.set(angleCannonEnabled, forKey: Keys.angleCannonEnabled) }
     }
 
+    /// Gates the Compass Angles body-rotation activity (ages 7–9). Default false; parent enables in Settings.
+    var compassAnglesEnabled: Bool {
+        didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -136,6 +142,7 @@ final class FeatureFlagService {
             Keys.symmetryFoldEnabled: false,
             Keys.rectangleFactoryEnabled: false,
             Keys.angleCannonEnabled: false,
+            Keys.compassAnglesEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -154,5 +161,6 @@ final class FeatureFlagService {
         symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
         rectangleFactoryEnabled = defaults.bool(forKey: Keys.rectangleFactoryEnabled)
         angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
+        compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
     }
 }
