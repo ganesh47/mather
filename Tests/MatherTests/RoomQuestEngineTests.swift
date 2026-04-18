@@ -363,7 +363,9 @@ struct RoomQuestEngineTests {
         #expect(!engine.shouldShowSpotManualFallback)
 
         engine.verifyCurrentSpotWithCamera()
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("spot fallback becomes visible after camera miss") {
+            engine.shouldShowSpotManualFallback
+        }
 
         #expect(engine.shouldShowSpotManualFallback)
         #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("fallback"))
@@ -389,7 +391,9 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(1300))
+        await waitFor("camera setup persists preview data") {
+            engine.stations.first(where: { $0.role == .redRocket })?.referenceImageJPEGData == expectedJPEGData
+        }
 
         #expect(engine.stations.first(where: { $0.role == .redRocket })?.referenceImageJPEGData == expectedJPEGData)
         #expect(try sharedStationStore.reference(for: .redRocket)?.referenceImageJPEGData == expectedJPEGData)
@@ -430,13 +434,17 @@ struct RoomQuestEngineTests {
 
         engine.verifyCurrentSpotWithCamera()
         engine.verifyCurrentSpotWithCamera()
-        try await Task.sleep(for: .milliseconds(100))
+        await waitFor("duplicate scan request ignored while active") {
+            await tracker.startCount == 1
+        }
 
         #expect(await tracker.startCount == 1)
         #expect(engine.phase == .spot(index: 0))
 
         await tracker.allowFinish()
-        try await Task.sleep(for: .milliseconds(1200))
+        await waitFor("active scan advances after finish allowed") {
+            engine.phase == .spot(index: 1)
+        }
 
         #expect(engine.phase == .spot(index: 1))
     }
