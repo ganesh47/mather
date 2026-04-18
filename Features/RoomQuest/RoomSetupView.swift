@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Parent setup screen shown before the room phase begins.
 /// Displays the spot quantities and safety reminder; parent taps "Ready" when spots are placed.
@@ -45,6 +46,12 @@ struct RoomSetupView: View {
                         Text("Both stations must stay in the same room as this iPad.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
+
+                        if !engine.missingSetupRequirementsMessage.isEmpty {
+                            Text(engine.missingSetupRequirementsMessage)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.coral)
+                        }
 
                         switch engine.scanState {
                         case .idle:
@@ -141,6 +148,8 @@ struct RoomSetupView: View {
                     .multilineTextAlignment(.center)
             }
 
+            referencePreview(for: station)
+
             VStack(spacing: 8) {
                 Button(station.verificationMethod == .cameraVerified ? "Camera verified" : "Camera verify") {
                     engine.verifyStationWithCamera(station.role)
@@ -163,5 +172,40 @@ struct RoomSetupView: View {
         .padding(.vertical, 8)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("room-station-card-\(station.role.rawValue)")
+    }
+
+    @ViewBuilder
+    private func referencePreview(for station: RoomQuestStation) -> some View {
+        if let data = station.referenceImageJPEGData,
+           let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(height: 96)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(alignment: .bottomLeading) {
+                    Text("Saved preview")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(.black.opacity(0.6), in: Capsule())
+                        .padding(8)
+                }
+        } else if station.referenceCaptureState != .notCaptured {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(MatherTheme.cardSubtitle.opacity(0.12))
+                .frame(height: 96)
+                .overlay {
+                    VStack(spacing: 6) {
+                        Image(systemName: station.referenceCaptureState == .captured ? "photo.badge.checkmark" : "checklist")
+                            .font(.title3.weight(.semibold))
+                        Text(station.referenceCaptureState == .captured ? "Saved reference" : "Fallback saved")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(MatherTheme.ink)
+                }
+        }
     }
 }

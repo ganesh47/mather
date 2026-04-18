@@ -98,7 +98,7 @@ struct SpotPromptView: View {
                     case .scanning, .celebrating:
                         return true
                     case .idle, .almost, .failed:
-                        return false
+                        return station?.referenceCaptureState != .captured
                     }
                 }())
                 .opacity({
@@ -106,7 +106,7 @@ struct SpotPromptView: View {
                     case .scanning, .celebrating:
                         return 0.7
                     case .idle, .almost, .failed:
-                        return 1
+                        return station?.referenceCaptureState == .captured ? 1 : 0.55
                     }
                 }())
                 .padding(.horizontal, 40)
