@@ -311,8 +311,8 @@ final class RoomQuestUITests: XCTestCase {
             if app.buttons["room-spot-confirm-button"].exists ||
                 app.buttons["room-spot-scan-button"].exists ||
                 app.buttons["room-return-confirm-button"].exists ||
-                app.buttons["room-return-scan-button"].exists ||
-                app.buttons["room-pause-button-returning"].exists {
+                app.buttons["room-pause-button-returning"].exists ||
+                app.staticTexts["Bring them back!"].exists {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
@@ -320,8 +320,8 @@ final class RoomQuestUITests: XCTestCase {
         return app.buttons["room-spot-confirm-button"].exists ||
             app.buttons["room-spot-scan-button"].exists ||
             app.buttons["room-return-confirm-button"].exists ||
-            app.buttons["room-return-scan-button"].exists ||
-            app.buttons["room-pause-button-returning"].exists
+            app.buttons["room-pause-button-returning"].exists ||
+            app.staticTexts["Bring them back!"].exists
     }
 
     private func openPauseMenu(_ app: XCUIApplication, buttonID: String) -> Bool {
