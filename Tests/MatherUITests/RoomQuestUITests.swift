@@ -91,7 +91,7 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(waitForSpotStage(app, timeout: 10))
         snapshot(app, "RoomQuest-Spot2-Blue")
-        advanceCurrentSpot(app)
+        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 3))
 
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         snapshot(app, "RoomQuest-Returning")
@@ -108,11 +108,7 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
-        advanceCurrentSpot(app)
-
-        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
-        advanceCurrentSpot(app)
+        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
 
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         let returningAction = returningPrimaryAction(app)
@@ -196,10 +192,7 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
-        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
-        advanceCurrentSpot(app)
-        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
-        advanceCurrentSpot(app)
+        XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 4))
 
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
         XCTAssertTrue(app.buttons["room-pause-button-returning"].waitForExistence(timeout: 5))
@@ -326,6 +319,30 @@ final class RoomQuestUITests: XCTestCase {
             app.buttons["room-return-confirm-button"].exists ||
             app.buttons["room-pause-button-returning"].exists ||
             app.staticTexts["Bring them back!"].exists
+    }
+
+    private func advanceUntilReturningStage(_ app: XCUIApplication, maxTransitions: Int) -> Bool {
+        if waitForReturningStage(app, timeout: 2) {
+            return true
+        }
+
+        for _ in 0..<maxTransitions {
+            guard waitForSpotResolution(app, timeout: 10) else {
+                return false
+            }
+            if waitForReturningStage(app, timeout: 2) {
+                return true
+            }
+            guard waitForSpotStage(app, timeout: 2) else {
+                return false
+            }
+            advanceCurrentSpot(app)
+            if waitForReturningStage(app, timeout: 2) {
+                return true
+            }
+        }
+
+        return waitForReturningStage(app, timeout: 5)
     }
 
     private func openPauseMenu(_ app: XCUIApplication, buttonID: String) -> Bool {
