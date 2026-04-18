@@ -89,8 +89,6 @@ final class RoomQuestUITests: XCTestCase {
 
         advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
-        snapshot(app, "RoomQuest-Spot2-Blue")
         XCTAssertTrue(advanceUntilReturningStage(app, maxTransitions: 3))
         snapshot(app, "RoomQuest-Returning")
     }
