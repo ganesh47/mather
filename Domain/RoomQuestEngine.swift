@@ -228,7 +228,7 @@ final class RoomQuestEngine {
                 }
 
                 if let savedReference = try? stationStore.reference(for: station.role),
-                   savedReference.captureState == .captured,
+                   savedReference.referenceCaptureState == .captured,
                    let savedMarkerPayload = savedReference.markerPayload,
                    let scannedMarkerPayload = result.markerPayload,
                    savedMarkerPayload != scannedMarkerPayload {

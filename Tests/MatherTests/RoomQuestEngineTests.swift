@@ -193,39 +193,43 @@ struct RoomQuestEngineTests {
 
     @Test
     func verifyCurrentSpotRejectsMarkerPayloadThatDoesNotMatchSavedReference() async throws {
-        enum ScanPhase {
-            case setup
-            case recheck
+        let setupScanner = FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
         }
+        let huntScanner = FakeRoomQuestScanner { role in
+            RoomQuestMarkerScanResult(
+                role: role,
+                markerPayload: role == .redRocket ? "mather:roomquest:redRocket:DIFFERENT" : "mather:roomquest:blueBubble:v1",
+                referenceImageJPEGData: nil,
+                usedARCelebration: false
+            )
+        }
+        let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let sharedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
 
-        var scanPhase = ScanPhase.setup
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
-            let payload: String
-            switch (scanPhase, role) {
-            case (.setup, .redRocket):
-                payload = "mather:roomquest:redRocket:v1"
-            case (.setup, .blueBubble):
-                payload = "mather:roomquest:blueBubble:v1"
-            case (.recheck, .redRocket):
-                payload = "mather:roomquest:redRocket:DIFFERENT"
-            case (.recheck, .blueBubble):
-                payload = "mather:roomquest:blueBubble:v1"
-            }
-            return RoomQuestMarkerScanResult(role: role, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: false)
-        })
-
+        let engine = makeEngine(scanner: setupScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".setup")
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
         try await Task.sleep(for: .milliseconds(100))
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
-        scanPhase = .recheck
-        engine.verifyCurrentSpotWithCamera()
+        let recheckingEngine = makeEngine(scanner: huntScanner, stationStore: sharedStationStore, defaultsSuiteName: #function + ".recheck")
+        recheckingEngine.startSession()
+        recheckingEngine.registerStation(.redRocket)
+        recheckingEngine.registerStation(.blueBubble)
+        recheckingEngine.markSetupComplete()
+
+        recheckingEngine.verifyCurrentSpotWithCamera()
         try await Task.sleep(for: .milliseconds(100))
 
-        #expect(engine.phase == .spot(index: 0))
-        if case .failed(let role, let message) = engine.scanState {
+        #expect(recheckingEngine.phase == .spot(index: 0))
+        if case .failed(let role, let message) = recheckingEngine.scanState {
             #expect(role == .redRocket)
             #expect(message.localizedCaseInsensitiveContains("saved red rocket station"))
         } else {
