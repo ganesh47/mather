@@ -156,9 +156,9 @@ struct RoomQuestEngineTests {
 
         engine.startSession()
         engine.verifyStationWithCamera(.redRocket)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.verifyStationWithCamera(.blueBubble)
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(1300))
         engine.markSetupComplete()
 
         engine.verifyCurrentSpotWithCamera()
