@@ -293,6 +293,27 @@ struct RoomQuestEngineTests {
         #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
         #expect(engine.currentSpotStatusTitle.localizedCaseInsensitiveContains("find the saved place"))
         #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
+        #expect(!engine.shouldShowSpotManualFallback)
+    }
+
+    @Test
+    func spotFallbackStaysHiddenUntilCameraMisses() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+            throw RoomQuestScannerError.wrongMarker(expected: role, detected: .blueBubble)
+        })
+
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        #expect(!engine.shouldShowSpotManualFallback)
+
+        engine.verifyCurrentSpotWithCamera()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.shouldShowSpotManualFallback)
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("fallback"))
     }
 
     @Test

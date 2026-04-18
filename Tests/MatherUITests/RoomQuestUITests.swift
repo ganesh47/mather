@@ -88,12 +88,17 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
 
+        let scanRed = app.buttons["room-spot-scan-button"]
+        XCTAssertTrue(scanRed.waitForExistence(timeout: 5))
+        scanRed.tap()
         let gotRed = app.buttons["room-spot-confirm-button"]
         XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
         gotRed.tap()
 
         XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-Spot2-Blue")
+        app.buttons["room-spot-scan-button"].tap()
+        XCTAssertTrue(app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5))
         app.buttons["room-spot-confirm-button"].tap()
 
         XCTAssertTrue(app.staticTexts["Bring them back!"].waitForExistence(timeout: 5))
@@ -111,11 +116,16 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
+        let scanRed = app.buttons["room-spot-scan-button"]
+        _ = scanRed.waitForExistence(timeout: 5)
+        scanRed.tap()
         let gotRed = app.buttons["room-spot-confirm-button"]
         _ = gotRed.waitForExistence(timeout: 5)
         gotRed.tap()
 
         _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        app.buttons["room-spot-scan-button"].tap()
+        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         app.buttons["room-spot-confirm-button"].tap()
 
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)
@@ -188,9 +198,13 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
+        _ = app.buttons["room-spot-scan-button"].waitForExistence(timeout: 5)
+        app.buttons["room-spot-scan-button"].tap()
         _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         app.buttons["room-spot-confirm-button"].tap()
         _ = app.staticTexts["Blue Bubble"].waitForExistence(timeout: 5)
+        app.buttons["room-spot-scan-button"].tap()
+        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
         app.buttons["room-spot-confirm-button"].tap()
 
         _ = app.staticTexts["Bring them back!"].waitForExistence(timeout: 5)

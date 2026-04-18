@@ -222,8 +222,19 @@ final class RoomQuestEngine {
             if station.referenceCaptureState == .captured {
                 return "Look for the saved \(station.role.title) place, then hold the camera still for a recheck."
             } else {
-                return "Look for \(station.role.title), then ask a grown-up to use fallback if the camera cannot help yet."
+                return "Look for \(station.role.title), then start with a camera check. A grown-up fallback appears if the scan misses."
             }
+        }
+    }
+
+    var shouldShowSpotManualFallback: Bool {
+        guard currentStation != nil else { return false }
+
+        switch scanState {
+        case .almost, .failed:
+            return true
+        case .idle, .scanning, .celebrating:
+            return false
         }
     }
 
