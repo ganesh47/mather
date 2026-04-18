@@ -50,24 +50,33 @@ struct SpotPromptView: View {
                 scanStatusCard
 
                 CardSurface {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Label(engine.currentSpotReferenceLabel, systemImage: station?.referenceCaptureState == .captured ? "photo.badge.checkmark" : "photo")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.ink)
-                        Text(engine.currentSpotSearchGuidance)
-                            .font(.subheadline)
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .fixedSize(horizontal: false, vertical: true)
+                        Divider()
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(engine.currentSpotStatusTitle)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                            Text(engine.currentSpotSearchGuidance)
+                                .font(.subheadline)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
 
                 CardSurface {
                     VStack(alignment: .leading, spacing: 10) {
-                        Label("Need a fallback?", systemImage: "hand.tap.fill")
+                        Label("Grown-up helper", systemImage: "figure.and.child.holdinghands")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.ink)
-                        Text("Scanning is the main way to unlock progress. If the place is hard to confirm, use the fallback button below.")
+                        Text("Kid steps: look, point, hold still, then collect.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("If the camera keeps missing the place, a grown-up can tap the fallback button below.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                             .fixedSize(horizontal: false, vertical: true)

@@ -265,7 +265,8 @@ struct RoomQuestEngineTests {
         if case .almost(let role, let message) = recheckingEngine.scanState {
             #expect(role == .redRocket)
             #expect(message.localizedCaseInsensitiveContains("almost"))
-            #expect(recheckingEngine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+            #expect(recheckingEngine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
+            #expect(recheckingEngine.currentSpotStatusTitle.localizedCaseInsensitiveContains("almost there"))
             #expect(recheckingEngine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("move a little closer"))
         } else {
             Issue.record("Expected almost scan state after saved-reference payload mismatch")
@@ -289,7 +290,8 @@ struct RoomQuestEngineTests {
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
 
-        #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera reference"))
+        #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
+        #expect(engine.currentSpotStatusTitle.localizedCaseInsensitiveContains("find the saved place"))
         #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
     }
 
