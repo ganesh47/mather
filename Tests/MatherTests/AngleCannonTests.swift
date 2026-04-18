@@ -100,8 +100,12 @@ struct AngleCannonTests {
             "20° off target should be a miss with 15° tolerance"
         )
         #expect(
-            !AngleCannonView.isHit(firedDeg: 35, targetDeg: 45, toleranceDeg: 10),
-            "10° off target should be a miss with 10° tolerance (Level 2)"
+            AngleCannonView.isHit(firedDeg: 35, targetDeg: 45, toleranceDeg: 10),
+            "10° off target should count as a hit when tolerance is inclusive"
+        )
+        #expect(
+            !AngleCannonView.isHit(firedDeg: 34, targetDeg: 45, toleranceDeg: 10),
+            "11° off target should be a miss with 10° tolerance (Level 2)"
         )
     }
 
