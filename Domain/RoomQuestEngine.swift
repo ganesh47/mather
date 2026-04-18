@@ -181,11 +181,28 @@ final class RoomQuestEngine {
 
         switch station.referenceCaptureState {
         case .captured:
-            return "Saved camera reference ready for \(station.role.title)."
+            return "Saved camera place for \(station.role.title)"
         case .manualFallback:
-            return "No camera reference was saved for \(station.role.title)."
+            return "No saved camera place for \(station.role.title)"
         case .notCaptured:
-            return "Reference still needs to be saved for \(station.role.title)."
+            return "Camera place not saved for \(station.role.title)"
+        }
+    }
+
+    var currentSpotStatusTitle: String {
+        guard let station = currentStation else { return "" }
+
+        switch scanState {
+        case .almost:
+            return "Almost there"
+        case .failed:
+            return "Not this place yet"
+        case .celebrating:
+            return "You found it"
+        case .scanning:
+            return "Checking the camera"
+        case .idle:
+            return station.referenceCaptureState == .captured ? "Find the saved place" : "Find \(station.role.title)"
         }
     }
 
@@ -194,12 +211,14 @@ final class RoomQuestEngine {
 
         switch scanState {
         case .almost(let role, _):
-            return "Almost. Hold still, move a little closer, and point back at the saved \(role.title) place."
+            return "Hold still, move a little closer, and point back at the saved \(role.title) place."
         case .failed(let role, _):
-            return "Try again. Look for the saved \(role.title) place, then ask a grown-up to use fallback if the camera keeps missing it."
+            return "Try again at the saved \(role.title) place. Ask a grown-up to use fallback if the camera keeps missing it."
         case .celebrating(let role, _):
-            return "You found the saved \(role.title) place."
-        case .idle, .scanning:
+            return "Now collect from the saved \(role.title) place."
+        case .scanning(let role):
+            return "Keep the camera pointed at \(role.title) until it finishes checking."
+        case .idle:
             if station.referenceCaptureState == .captured {
                 return "Look for the saved \(station.role.title) place, then hold the camera still for a recheck."
             } else {

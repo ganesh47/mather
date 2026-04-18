@@ -13,6 +13,7 @@ enum AppRoute {
     case symmetryFold
     case rectangleFactory
     case angleCannon
+    case twoFingerProtractor
     case compassAngles
 }
 
@@ -109,6 +110,7 @@ final class VerticalSliceEngine {
     func showSymmetryFold() { route = .symmetryFold }
     func showRectangleFactory() { route = .rectangleFactory }
     func showAngleCannon() { route = .angleCannon }
+    func showTwoFingerProtractor() { route = .twoFingerProtractor }
     func showCompassAngles() { route = .compassAngles }
 
     func startSession() {

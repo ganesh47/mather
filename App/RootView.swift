@@ -51,6 +51,8 @@ struct RootView: View {
                     SymmetryFoldView(appModel: appModel)
                 case .angleCannon:
                     AngleCannonView(appModel: appModel)
+                case .twoFingerProtractor:
+                    TwoFingerProtractorView(appModel: appModel)
                 case .compassAngles:
                     CompassAnglesView(appModel: appModel)
                 }

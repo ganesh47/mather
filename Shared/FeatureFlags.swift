@@ -21,6 +21,7 @@ final class FeatureFlagService {
         static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
         static let rectangleFactoryEnabled = "feature.rectangleFactoryEnabled"
         static let angleCannonEnabled = "feature.angleCannonEnabled"
+        static let twoFingerProtractorEnabled = "feature.twoFingerProtractorEnabled"
         static let compassAnglesEnabled = "feature.compassAnglesEnabled"
     }
 
@@ -111,6 +112,11 @@ final class FeatureFlagService {
         didSet { defaults.set(angleCannonEnabled, forKey: Keys.angleCannonEnabled) }
     }
 
+    /// Gates the Two-Finger Protractor angle-measurement activity (ages 7–9). Default false; parent enables in Settings.
+    var twoFingerProtractorEnabled: Bool {
+        didSet { defaults.set(twoFingerProtractorEnabled, forKey: Keys.twoFingerProtractorEnabled) }
+    }
+
     /// Gates the Compass Angles body-rotation activity (ages 7–9). Default false; parent enables in Settings.
     var compassAnglesEnabled: Bool {
         didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
@@ -142,6 +148,7 @@ final class FeatureFlagService {
             Keys.symmetryFoldEnabled: false,
             Keys.rectangleFactoryEnabled: false,
             Keys.angleCannonEnabled: false,
+            Keys.twoFingerProtractorEnabled: false,
             Keys.compassAnglesEnabled: false,
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
@@ -161,6 +168,7 @@ final class FeatureFlagService {
         symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
         rectangleFactoryEnabled = defaults.bool(forKey: Keys.rectangleFactoryEnabled)
         angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
+        twoFingerProtractorEnabled = defaults.bool(forKey: Keys.twoFingerProtractorEnabled)
         compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
     }
 }
