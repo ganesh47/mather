@@ -654,8 +654,9 @@ struct VerticalSliceEngineTests {
         try await advanceToGravitySplit(engine)
 
         guard let problem = engine.currentProblem else { return }
-        // Tap to exact decomposition — should auto-advance
-        engine.adjustGravitySplitByTap(delta: problem.decompositionA)
+        guard let startLeft = engine.gravitySplitState?.leftCount else { return }
+        // Tap from the branch's far-left start state to the exact decomposition.
+        engine.adjustGravitySplitByTap(delta: problem.decompositionA - startLeft)
         // Drain the MainActor queue so the completeStage Task fires
         for _ in 0..<100 {
             if engine.currentStage != .gravitySplit { break }
