@@ -2,6 +2,7 @@
 
 **Status**: Draft
 **Date**: 2026-04-18
+**See also**: `wiki/Specs/Physics-Geometry-UX-Design.md` — complete UX design for all 7 mechanics + Gravity Split fix
 
 ---
 
