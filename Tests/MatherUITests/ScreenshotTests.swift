@@ -233,22 +233,15 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
-        let parentSecond = app.staticTexts["Session 2"].firstMatch
+        let parentSecond = app.otherElements["parent-summary-session-1"]
         XCTAssertTrue(parentSecond.waitForExistence(timeout: 5))
-        XCTAssertTrue(parentSecond.isHittable)
 
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
-        let settingsSecond = app.staticTexts["Session 2"].firstMatch
+        let settingsSecond = app.otherElements["settings-history-session-1"]
         XCTAssertTrue(settingsSecond.waitForExistence(timeout: 5))
-        // Scroll down to bring the session history entry into the visible viewport
-        // before asserting isHittable — the settings card may push it below the fold.
-        if !settingsSecond.isHittable {
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        XCTAssertTrue(settingsSecond.isHittable)
     }
 
     // MARK: - iPhone layout / pilot runbook

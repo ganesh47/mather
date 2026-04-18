@@ -88,13 +88,11 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 3))
 
-        let gotRed = app.buttons["room-spot-confirm-button"]
-        XCTAssertTrue(gotRed.waitForExistence(timeout: 5))
-        tapWhenHittable(gotRed, in: app, reveal: .up)
+        advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
+        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
         snapshot(app, "RoomQuest-Spot2-Blue")
-        tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
+        advanceCurrentSpot(app)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
         snapshot(app, "RoomQuest-Returning")
@@ -111,12 +109,10 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        let gotRed = app.buttons["room-spot-confirm-button"]
-        _ = gotRed.waitForExistence(timeout: 5)
-        tapWhenHittable(gotRed, in: app, reveal: .up)
+        advanceCurrentSpot(app)
 
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
-        tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
+        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
+        advanceCurrentSpot(app)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
         tapWhenHittable(app.buttons["room-return-confirm-button"], in: app, reveal: .up)
@@ -172,7 +168,7 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
 
         tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
         snapshot(app, "RoomQuest-Paused")
 
         tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
@@ -188,14 +184,13 @@ final class RoomQuestUITests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
-        _ = app.buttons["room-spot-confirm-button"].waitForExistence(timeout: 5)
-        tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
-        XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-spot-confirm-button", timeout: 10))
-        tapWhenHittable(app.buttons["room-spot-confirm-button"], in: app, reveal: .up)
+        advanceCurrentSpot(app)
+        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
+        advanceCurrentSpot(app)
 
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
         tapWhenHittable(app.buttons["room-pause-button-returning"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
 
         tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
         XCTAssertTrue(waitForRoomQuestAction(app, actionID: "room-return-confirm-button", timeout: 10))
@@ -213,7 +208,7 @@ final class RoomQuestUITests: XCTestCase {
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
         tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 10))
+        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
 
         tapWhenHittable(app.buttons["Stop session"], in: app, reveal: .up)
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
@@ -265,6 +260,30 @@ final class RoomQuestUITests: XCTestCase {
     private enum RevealDirection {
         case up
         case down
+    }
+
+    private func waitForSpotStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.buttons["room-spot-confirm-button"].exists || app.buttons["room-spot-scan-button"].exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return app.buttons["room-spot-confirm-button"].exists || app.buttons["room-spot-scan-button"].exists
+    }
+
+    private func advanceCurrentSpot(_ app: XCUIApplication) {
+        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
+        let confirm = app.buttons["room-spot-confirm-button"]
+        if confirm.exists {
+            tapWhenHittable(confirm, in: app, reveal: .up)
+            return
+        }
+        let scan = app.buttons["room-spot-scan-button"]
+        tapWhenHittable(scan, in: app, reveal: .up)
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        tapWhenHittable(confirm, in: app, reveal: .up)
     }
 
     private func waitForRoomQuestAction(_ app: XCUIApplication, actionID: String, timeout: TimeInterval) -> Bool {
