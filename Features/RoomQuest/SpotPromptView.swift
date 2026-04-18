@@ -71,6 +71,22 @@ struct SpotPromptView: View {
                 }
                 .accessibilityIdentifier("room-spot-scan-button")
                 .buttonStyle(RoomQuestPrimaryButtonStyle())
+                .disabled({
+                    switch engine.scanState {
+                    case .scanning, .celebrating:
+                        return true
+                    case .idle, .failed:
+                        return false
+                    }
+                }())
+                .opacity({
+                    switch engine.scanState {
+                    case .scanning, .celebrating:
+                        return 0.7
+                    case .idle, .failed:
+                        return 1
+                    }
+                }())
                 .padding(.horizontal, 40)
 
                 Button(station?.role.fallbackButtonTitle ?? "I found it") {
