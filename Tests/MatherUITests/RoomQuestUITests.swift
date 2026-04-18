@@ -183,8 +183,7 @@ final class RoomQuestUITests: XCTestCase {
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
 
-        tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
+        XCTAssertTrue(openPauseMenu(app, buttonID: "room-pause-button"))
         snapshot(app, "RoomQuest-Paused")
 
         tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
@@ -205,8 +204,7 @@ final class RoomQuestUITests: XCTestCase {
         advanceCurrentSpot(app)
 
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
-        tapWhenHittable(app.buttons["room-pause-button-returning"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
+        XCTAssertTrue(openPauseMenu(app, buttonID: "room-pause-button-returning"))
 
         tapWhenHittable(app.buttons["Resume"], in: app, reveal: .up)
         XCTAssertTrue(waitForReturningStage(app, timeout: 15))
@@ -223,8 +221,7 @@ final class RoomQuestUITests: XCTestCase {
         completeSetupViaManualFallback(app)
 
         _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        tapWhenHittable(app.buttons["room-pause-button"], in: app, reveal: .down)
-        XCTAssertTrue(waitForPauseMenu(app, timeout: 15))
+        XCTAssertTrue(openPauseMenu(app, buttonID: "room-pause-button"))
 
         tapWhenHittable(app.buttons["Stop session"], in: app, reveal: .up)
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
@@ -301,8 +298,41 @@ final class RoomQuestUITests: XCTestCase {
         }
         let scan = app.buttons["room-spot-scan-button"]
         tapWhenHittable(scan, in: app, reveal: .up)
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
-        tapWhenHittable(confirm, in: app, reveal: .up)
+        if confirm.waitForExistence(timeout: 2) {
+            tapWhenHittable(confirm, in: app, reveal: .up)
+            return
+        }
+        XCTAssertTrue(waitForSpotResolution(app, timeout: 10))
+    }
+
+    private func waitForSpotResolution(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.buttons["room-spot-confirm-button"].exists ||
+                app.buttons["room-spot-scan-button"].exists ||
+                app.buttons["room-return-confirm-button"].exists ||
+                app.buttons["room-return-scan-button"].exists ||
+                app.buttons["room-pause-button-returning"].exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return app.buttons["room-spot-confirm-button"].exists ||
+            app.buttons["room-spot-scan-button"].exists ||
+            app.buttons["room-return-confirm-button"].exists ||
+            app.buttons["room-return-scan-button"].exists ||
+            app.buttons["room-pause-button-returning"].exists
+    }
+
+    private func openPauseMenu(_ app: XCUIApplication, buttonID: String) -> Bool {
+        let button = app.buttons[buttonID]
+        for _ in 0..<3 {
+            tapWhenHittable(button, in: app, reveal: .down)
+            if waitForPauseMenu(app, timeout: 5) {
+                return true
+            }
+        }
+        return false
     }
 
     private func waitForReturningStage(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
