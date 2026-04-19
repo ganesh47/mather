@@ -10,9 +10,9 @@ TEST_ID="MatherUITests/ScreenshotTests/testScreenshot_Issue222LoopV2_AcrossTwoTa
 TIMESTAMP="$(date -u +"%Y%m%dT%H%M%SZ")"
 ARTIFACT_DIR="$ROOT_DIR/artifacts/issue222-closeout-validation/$TIMESTAMP"
 
-DESTINATIONS=(
-  "platform=iOS Simulator,name=iPhone 16,OS=latest"
-  "platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=latest"
+SIMULATOR_NAMES=(
+  "iPhone 16"
+  "iPad Pro 13-inch (M4)"
 )
 
 mkdir -p "$ARTIFACT_DIR"
@@ -32,19 +32,36 @@ else
   exit 1
 fi
 
-for destination in "${DESTINATIONS[@]}"; do
-  simulator_name="$(sed -E 's/.*name=([^,]+).*/\1/' <<<"$destination")"
+resolve_simulator_id() {
+  local simulator_name="$1"
+  xcrun simctl list devices available | awk -v name="$simulator_name" '
+    index($0, name " (") {
+      if (match($0, /\(([0-9A-F-]+)\)/)) {
+        print substr($0, RSTART + 1, RLENGTH - 2)
+        exit
+      }
+    }
+  '
+}
+
+for simulator_name in "${SIMULATOR_NAMES[@]}"; do
+  simulator_id="$(resolve_simulator_id "$simulator_name")"
+  if [[ -z "$simulator_id" ]]; then
+    echo "error: could not find an available simulator named '$simulator_name'." >&2
+    exit 1
+  fi
+
   result_name="${simulator_name// /-}"
   result_bundle="$ARTIFACT_DIR/${result_name}.xcresult"
 
   echo
-  echo "Running $TEST_ID on $simulator_name"
+  echo "Running $TEST_ID on $simulator_name ($simulator_id)"
   echo "Result bundle: $result_bundle"
 
   xcodebuild test \
     -project Mather.xcodeproj \
     -scheme "$SCHEME" \
-    -destination "$destination" \
+    -destination "id=$simulator_id" \
     -only-testing:"$TEST_ID" \
     -resultBundlePath "$result_bundle" \
     CODE_SIGNING_ALLOWED=NO
