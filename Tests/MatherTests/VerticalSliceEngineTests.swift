@@ -52,7 +52,6 @@ struct VerticalSliceEngineTests {
     @Test
     func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
         flags.vs1BondMatchEnabled = true
 
@@ -88,9 +87,7 @@ struct VerticalSliceEngineTests {
     @Test
     func roomQuestRouteDoesNotForceTransferStageInVs1Engine() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
-        flags.roomQuestEnabled = true
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -108,7 +105,6 @@ struct VerticalSliceEngineTests {
     @Test
     func bondBlastStartsWhenConcreteStageClears() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -717,7 +713,6 @@ struct VerticalSliceEngineTests {
     @Test
     func makeBreakLoopV2RoutesConcreteToGravitySplitToSumSprintToBondBlast() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
         flags.makeBreakLoopV2Enabled = true
 
@@ -752,7 +747,6 @@ struct VerticalSliceEngineTests {
     @Test
     func makeBreakLoopV2CreatesMicroSumSprintBurstPerTarget() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
         flags.makeBreakLoopV2Enabled = true
 
@@ -778,7 +772,6 @@ struct VerticalSliceEngineTests {
     @Test
     func makeBreakLoopV2AdvancesToBondBlastAfterBurstCards() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
         flags.makeBreakLoopV2Enabled = true
 

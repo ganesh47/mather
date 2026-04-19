@@ -85,9 +85,6 @@ final class ScreenshotTests: XCTestCase {
     // MARK: - Concrete stage
 
     func testScreenshot_ConcreteBuildView() {
-        // Pre-enable VS1 via launch argument to skip Settings navigation.
-        // This test runs first alphabetically and bears cold-start overhead;
-        // removing the enableVS1() round-trip keeps it within CI time budget.
         let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
 
@@ -307,10 +304,6 @@ final class ScreenshotTests: XCTestCase {
         return app
     }
 
-    /// Launches with VS1 pre-enabled via launch argument.
-    /// Use this instead of launch() + enableVS1() when the test doesn't need
-    /// to exercise the Settings toggle flow — it removes 3 screen navigations
-    /// from the critical path, which matters for the first (cold) test in CI.
     private func launchWithVS1(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -318,29 +311,12 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.verticalSlice1Enabled", "YES"
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
         }
         app.launch()
         return app
-    }
-
-    /// Navigates to Settings, enables VS1, returns to Home.
-    private func enableVS1(_ app: XCUIApplication) {
-        let settingsButton = app.buttons["Settings"]
-        _ = settingsButton.waitForExistence(timeout: 5)
-        settingsButton.tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
-        let toggle = app.switches["Make & Break to 10"]
-        if toggle.waitForExistence(timeout: 10), toggle.value as? String == "0" {
-            toggle.tap()
-        }
-        let homeButton = app.buttons["Home"]
-        _ = homeButton.waitForExistence(timeout: 5)
-        homeButton.tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
     }
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
@@ -351,7 +327,6 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "YES",
             "-feature.testModeEnabled", "YES",
-            "-feature.verticalSlice1Enabled", "YES"
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -381,7 +356,6 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.verticalSlice1Enabled", "YES",
             "-feature.selectedThemeId", "vehicle"
         ]
         if let appearance {

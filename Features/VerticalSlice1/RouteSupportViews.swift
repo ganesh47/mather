@@ -48,13 +48,6 @@ struct VS1SettingsPlaceholderView: View {
     let summaries: [StoredSessionSummary]
     @State private var confirmClear = false
 
-    private var verticalSliceBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.verticalSlice1Enabled },
-            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
-        )
-    }
-
     private var audioBinding: Binding<Bool> {
         Binding(
             get: { appModel.featureFlags.audioEnabled },
@@ -95,11 +88,6 @@ struct VS1SettingsPlaceholderView: View {
 
                 VS1Card {
                     VStack(alignment: .leading, spacing: 12) {
-                        VS1ToggleRow(
-                            title: "Make & Break to 10",
-                            subtitle: "Enable the Make & Break to 10 activity for your child.",
-                            isOn: verticalSliceBinding
-                        )
                         VS1ToggleRow(
                             title: "Audio enabled",
                             subtitle: "Keep prompts and neutral feedback audible.",

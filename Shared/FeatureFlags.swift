@@ -4,7 +4,6 @@ import Observation
 @Observable
 final class FeatureFlagService {
     private enum Keys {
-        static let verticalSlice1Enabled  = "feature.verticalSlice1Enabled"
         // Place-matching thresholds (tunable from Settings)
         static let placeMatchGPSMatch     = "placeMatch.gpsMatchMetres"
         static let placeMatchGPSClose     = "placeMatch.gpsCloseMetres"
@@ -20,21 +19,9 @@ final class FeatureFlagService {
         static let makeBreakLoopV2Enabled = "feature.makeBreakLoopV2Enabled"
         static let motionControlsEnabled = "feature.motionControlsEnabled"
         static let soundReactionEnabled = "feature.soundReactionEnabled"
-        static let roomQuestEnabled = "feature.roomQuestEnabled"
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
-        static let sumSprintEnabled = "feature.sumSprintEnabled"
-        static let symmetryFoldEnabled = "feature.symmetryFoldEnabled"
-        static let rectangleFactoryEnabled = "feature.rectangleFactoryEnabled"
-        static let angleCannonEnabled = "feature.angleCannonEnabled"
-        static let twoFingerProtractorEnabled = "feature.twoFingerProtractorEnabled"
-        static let gravityArtistEnabled = "feature.gravityArtistEnabled"
-        static let compassAnglesEnabled = "feature.compassAnglesEnabled"
-    }
-
-    var verticalSlice1Enabled: Bool {
-        didSet { defaults.set(verticalSlice1Enabled, forKey: Keys.verticalSlice1Enabled) }
     }
 
     var testModeEnabled: Bool {
@@ -84,11 +71,6 @@ final class FeatureFlagService {
         didSet { defaults.set(soundReactionEnabled, forKey: Keys.soundReactionEnabled) }
     }
 
-    /// Gates the Room Quest companion slice. Default false; parent enables in Settings.
-    var roomQuestEnabled: Bool {
-        didSet { defaults.set(roomQuestEnabled, forKey: Keys.roomQuestEnabled) }
-    }
-
     /// Persists whether the parent has acknowledged the Room Quest safety checklist.
     /// Shown once before the first Room Quest session.
     var roomQuestSafetyAcknowledged: Bool {
@@ -103,41 +85,6 @@ final class FeatureFlagService {
     /// Enables saving a lightweight station reference during camera verification.
     var roomQuestReferenceCaptureEnabled: Bool {
         didSet { defaults.set(roomQuestReferenceCaptureEnabled, forKey: Keys.roomQuestReferenceCaptureEnabled) }
-    }
-
-    /// Gates the Sum Sprint fluency activity (sums 11–20). Default false; parent enables in Settings.
-    var sumSprintEnabled: Bool {
-        didSet { defaults.set(sumSprintEnabled, forKey: Keys.sumSprintEnabled) }
-    }
-
-    /// Gates the Symmetry Fold geometry activity (ages 5–7). Default false; parent enables in Settings.
-    var symmetryFoldEnabled: Bool {
-        didSet { defaults.set(symmetryFoldEnabled, forKey: Keys.symmetryFoldEnabled) }
-    }
-
-    /// Gates the Rectangle Factory factor-discovery activity (ages 7–9). Default false; parent enables in Settings.
-    var rectangleFactoryEnabled: Bool {
-        didSet { defaults.set(rectangleFactoryEnabled, forKey: Keys.rectangleFactoryEnabled) }
-    }
-
-    /// Gates the Angle Cannon geometry activity (ages 7–9). Default false; parent enables in Settings.
-    var angleCannonEnabled: Bool {
-        didSet { defaults.set(angleCannonEnabled, forKey: Keys.angleCannonEnabled) }
-    }
-
-    /// Gates the Two-Finger Protractor angle-measurement activity (ages 7–9). Default false; parent enables in Settings.
-    var twoFingerProtractorEnabled: Bool {
-        didSet { defaults.set(twoFingerProtractorEnabled, forKey: Keys.twoFingerProtractorEnabled) }
-    }
-
-    /// Gates the Gravity Artist predict-then-fire projectile activity (ages 8–10). Default false; parent enables in Settings.
-    var gravityArtistEnabled: Bool {
-        didSet { defaults.set(gravityArtistEnabled, forKey: Keys.gravityArtistEnabled) }
-    }
-
-    /// Gates the Compass Angles body-rotation activity (ages 7–9). Default false; parent enables in Settings.
-    var compassAnglesEnabled: Bool {
-        didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
     }
 
     // MARK: - Place-matching thresholds
@@ -183,7 +130,6 @@ final class FeatureFlagService {
         // "YES"/"NO"/"1"/"0" string values injected via -key value launch arguments,
         // which object(forKey:) as? Bool does not.
         defaults.register(defaults: [
-            Keys.verticalSlice1Enabled: false,
             Keys.testModeEnabled: true,
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
@@ -193,24 +139,15 @@ final class FeatureFlagService {
             Keys.makeBreakLoopV2Enabled: false,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: false,
-            Keys.roomQuestEnabled: false,
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
-            Keys.sumSprintEnabled: false,
-            Keys.symmetryFoldEnabled: false,
-            Keys.rectangleFactoryEnabled: false,
-            Keys.angleCannonEnabled: false,
-            Keys.twoFingerProtractorEnabled: false,
-            Keys.gravityArtistEnabled: false,
-            Keys.compassAnglesEnabled: false,
             Keys.placeMatchGPSMatch:    PlaceMatchThresholds.default.gpsMatchMetres,
             Keys.placeMatchGPSClose:    PlaceMatchThresholds.default.gpsCloseMetres,
             Keys.placeMatchGPSCutoff:   PlaceMatchThresholds.default.gpsAccuracyCutoff,
             Keys.placeMatchVisionMatch: Double(PlaceMatchThresholds.default.visionMatchDistance),
             Keys.placeMatchVisionClose: Double(PlaceMatchThresholds.default.visionCloseDistance),
         ])
-        verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)
         hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
@@ -220,17 +157,9 @@ final class FeatureFlagService {
         makeBreakLoopV2Enabled = defaults.bool(forKey: Keys.makeBreakLoopV2Enabled)
         motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
-        roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
-        sumSprintEnabled = defaults.bool(forKey: Keys.sumSprintEnabled)
-        symmetryFoldEnabled = defaults.bool(forKey: Keys.symmetryFoldEnabled)
-        rectangleFactoryEnabled = defaults.bool(forKey: Keys.rectangleFactoryEnabled)
-        angleCannonEnabled = defaults.bool(forKey: Keys.angleCannonEnabled)
-        twoFingerProtractorEnabled = defaults.bool(forKey: Keys.twoFingerProtractorEnabled)
-        gravityArtistEnabled = defaults.bool(forKey: Keys.gravityArtistEnabled)
-        compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
         placeMatchGPSMatch   = defaults.double(forKey: Keys.placeMatchGPSMatch)
         placeMatchGPSClose   = defaults.double(forKey: Keys.placeMatchGPSClose)
         placeMatchGPSCutoff  = defaults.double(forKey: Keys.placeMatchGPSCutoff)

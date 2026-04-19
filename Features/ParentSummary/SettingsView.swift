@@ -8,20 +8,6 @@ struct SettingsView: View {
     @State private var showingClearConfirmation = false
     @State private var showingSafetyRules = false
 
-    private var verticalSliceBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.verticalSlice1Enabled },
-            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
-        )
-    }
-
-    private var testModeBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.testModeEnabled },
-            set: { appModel.featureFlags.testModeEnabled = $0 }
-        )
-    }
-
     private var audioBinding: Binding<Bool> {
         Binding(
             get: { appModel.featureFlags.audioEnabled },
@@ -64,38 +50,10 @@ struct SettingsView: View {
         )
     }
 
-    private var roomQuestBinding: Binding<Bool> {
+    private var testModeBinding: Binding<Bool> {
         Binding(
-            get: { appModel.featureFlags.roomQuestEnabled },
-            set: { appModel.featureFlags.roomQuestEnabled = $0 }
-        )
-    }
-
-    private var sumSprintBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.sumSprintEnabled },
-            set: { appModel.featureFlags.sumSprintEnabled = $0 }
-        )
-    }
-
-    private var symmetryFoldBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.symmetryFoldEnabled },
-            set: { appModel.featureFlags.symmetryFoldEnabled = $0 }
-        )
-    }
-
-    private var rectangleFactoryBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.rectangleFactoryEnabled },
-            set: { appModel.featureFlags.rectangleFactoryEnabled = $0 }
-        )
-    }
-
-    private var angleCannonBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.angleCannonEnabled },
-            set: { appModel.featureFlags.angleCannonEnabled = $0 }
+            get: { appModel.featureFlags.testModeEnabled },
+            set: { appModel.featureFlags.testModeEnabled = $0 }
         )
     }
 
@@ -123,13 +81,10 @@ struct SettingsView: View {
                             Text("Settings")
                                 .font(.largeTitle.weight(.black))
 
-                            Text("Activities")
+                            Text("Make & Break")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 4)
-                            Toggle("Make & Break to 10", isOn: verticalSliceBinding)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.85)
                             VS1ToggleRow(
                                 title: "Bond Blast finale",
                                 subtitle: "Adds a free-match bonus round after all bonds for a number are found.",
@@ -140,31 +95,23 @@ struct SettingsView: View {
                                 subtitle: "Replace the Show-it step with a tilt-powered balance scale activity.",
                                 isOn: gravitySplitBinding
                             )
-                            Toggle("Sum Sprint — sums 11–20", isOn: sumSprintBinding)
-                            Toggle("Room Quest (beta)", isOn: roomQuestBinding)
-                            if appModel.featureFlags.roomQuestEnabled {
-                                Button("Review Room Quest safety rules") {
-                                    showingSafetyRules = true
-                                }
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(MatherTheme.accent)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 4)
-                            }
 
                             Divider()
 
-                            if appModel.featureFlags.roomQuestEnabled {
-                                PlaceMatchThresholdSection(featureFlags: appModel.featureFlags)
-                                Divider()
-                            }
-
-                            Text("Physics & Geometry")
+                            Text("Room Quest")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                            Toggle("Symmetry Fold — ages 5–7", isOn: symmetryFoldBinding)
-                            Toggle("Rectangle Factory — ages 7–9", isOn: rectangleFactoryBinding)
-                            Toggle("Angle Cannon — ages 7–9", isOn: angleCannonBinding)
+                            Button("Review Room Quest safety rules") {
+                                showingSafetyRules = true
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(MatherTheme.accent)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 4)
+
+                            Divider()
+
+                            PlaceMatchThresholdSection(featureFlags: appModel.featureFlags)
 
                             Divider()
 
@@ -252,11 +199,10 @@ struct SettingsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(MatherTheme.cardSubtitle)
                             VStack(alignment: .leading, spacing: 8) {
-                                smokeStep("1. Enable Make & Break to 10 (toggle above).")
-                                smokeStep("2. Tap Home → Play → Start Session.")
-                                smokeStep("3. Complete one full problem (Make → Break → Write → Show).")
-                                smokeStep("4. Confirm Session Complete screen appears.")
-                                smokeStep("5. Return here and tap Share latest export to verify JSONL.")
+                                smokeStep("1. Tap Home → Play → Start Session.")
+                                smokeStep("2. Complete one full problem (Make → Break → Write → Show).")
+                                smokeStep("3. Confirm Session Complete screen appears.")
+                                smokeStep("4. Return here and tap Share latest export to verify JSONL.")
                             }
                         }
                     }

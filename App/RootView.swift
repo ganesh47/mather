@@ -62,6 +62,8 @@ struct RootView: View {
                     GravityArtistView(appModel: appModel)
                 case .compassAngles:
                     CompassAnglesView(appModel: appModel)
+                case .lab:
+                    LabView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

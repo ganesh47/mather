@@ -2,8 +2,7 @@ import XCTest
 
 /// UI tests for the Room Quest companion slice.
 ///
-/// These tests now focus on stable companion-slice checkpoints:
-/// - Feature flag toggle surfaces the button on Home
+/// These tests focus on stable companion-slice checkpoints:
 /// - Safety acknowledgement screen renders and can be accepted
 /// - Setup screen shows station cards and saved fallback state
 /// - Hunt entry reaches the first spot with the expected scan/pause affordances
@@ -11,36 +10,13 @@ import XCTest
 @MainActor
 final class RoomQuestUITests: XCTestCase {
 
-    // MARK: - Flag visibility
-
-    func testRoomQuestToggleShowsStartButtonOnHome() {
-        let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
-
-        // Button absent by default
-        XCTAssertFalse(app.buttons["Start Room Quest"].exists)
-
-        // Enable Room Quest in Settings
-        app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 5)
-        let rqToggle = app.switches["Room Quest (beta)"]
-        XCTAssertTrue(rqToggle.waitForExistence(timeout: 5))
-        if rqToggle.value as? String == "0" { rqToggle.tap() }
-
-        app.buttons["Home"].tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
-        XCTAssertTrue(app.buttons["Start Room Quest"].waitForExistence(timeout: 5))
-
-        snapshot(app, "RoomQuest-HomeWithButton")
-    }
-
     // MARK: - Safety acknowledgement (first launch)
 
     func testRoomQuestSafetyAckScreenAppearsAndCanBeAccepted() {
         let app = launchWithRoomQuestEnabled()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
 
         // Safety ack screen
         XCTAssertTrue(app.staticTexts["Before you start"].waitForExistence(timeout: 5))
@@ -61,7 +37,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 3))
@@ -77,7 +53,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
@@ -93,7 +69,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
@@ -108,7 +84,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
 
         XCTAssertTrue(app.staticTexts["Finish setup for both stations before you start."].waitForExistence(timeout: 5))
@@ -125,7 +101,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
@@ -138,7 +114,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
@@ -153,7 +129,7 @@ final class RoomQuestUITests: XCTestCase {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Start Room Quest"].tap()
+        openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
         completeSetupViaManualFallback(app)
 
@@ -185,6 +161,12 @@ final class RoomQuestUITests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// Navigates from Home → Explorer Lab → Room Quest.
+    private func openRoomQuest(_ app: XCUIApplication) {
+        app.buttons["ExplorerLab"].tap()
+        _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
+        app.buttons["Room Quest"].tap()
+    }
 
     private func completeSetupViaManualFallback(_ app: XCUIApplication) {
         configureSetupViaManualFallback(app)
@@ -254,7 +236,6 @@ final class RoomQuestUITests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.roomQuestEnabled", "NO",
             "-feature.roomQuestSafetyAcknowledged", "NO"
         ]
         app.launch()
@@ -262,20 +243,10 @@ final class RoomQuestUITests: XCTestCase {
     }
 
     private func launchWithRoomQuestEnabled() -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
-            "-feature.audioEnabled", "NO",
-            "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES",
-            "-feature.roomQuestEnabled", "YES",
-            "-feature.roomQuestSafetyAcknowledged", "NO"
-        ]
-        app.launch()
-        return app
+        launch()
     }
 
-    /// Launches with Room Quest enabled and safety already acknowledged —
+    /// Launches with safety already acknowledged —
     /// skips the one-time SafetyAckView so tests land directly on Setup.
     private func launchWithRoomQuestAndSafetyAck() -> XCUIApplication {
         continueAfterFailure = false
@@ -284,7 +255,6 @@ final class RoomQuestUITests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.roomQuestEnabled", "YES",
             "-feature.roomQuestSafetyAcknowledged", "YES"
         ]
         app.launch()
