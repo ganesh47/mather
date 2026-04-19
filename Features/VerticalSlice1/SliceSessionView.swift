@@ -148,18 +148,42 @@ struct SliceSessionView: View {
                 CardSurface { Text("Loading Balance...") }
             }
         case .sumSprint:
-            CardSurface {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Sum Sprint")
-                        .font(.title.weight(.black))
-                    Text("PR2 placeholder: the loop now routes through a dedicated Sum Sprint stop before Bond Blast.")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                    Button("Sprint on") {
-                        appModel.engine.submitCurrentStage()
+            if let burst = appModel.engine.sumSprintBurstState,
+               let card = burst.currentCard {
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Sum Sprint")
+                            .font(.title.weight(.black))
+                        Text("Card \(burst.progressLabel)")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(card.prompt)
+                            .font(.system(size: 40, weight: .black, design: .rounded))
+                        Text(card.typedAnswer.isEmpty ? "?" : card.typedAnswer)
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundStyle(MatherTheme.accent)
+                        VStack(spacing: 12) {
+                            ForEach([[1,2,3],[4,5,6],[7,8,9]], id: \.self) { row in
+                                HStack(spacing: 12) {
+                                    ForEach(row, id: \.self) { digit in
+                                        Button(String(digit)) { appModel.engine.appendSumSprintDigit(digit) }
+                                            .buttonStyle(PrimaryActionButtonStyle())
+                                    }
+                                }
+                            }
+                            HStack(spacing: 12) {
+                                Button("⌫") { appModel.engine.deleteSumSprintDigit() }
+                                    .buttonStyle(PrimaryActionButtonStyle())
+                                Button("0") { appModel.engine.appendSumSprintDigit(0) }
+                                    .buttonStyle(PrimaryActionButtonStyle())
+                                Button("Go") { appModel.engine.submitSumSprintCard() }
+                                    .buttonStyle(PrimaryActionButtonStyle())
+                            }
+                        }
                     }
-                    .buttonStyle(PrimaryActionButtonStyle())
                 }
+            } else {
+                CardSurface { Text("Loading Sum Sprint...") }
             }
         case .bondMatch:
             if let bondState = appModel.engine.bondMatchState {

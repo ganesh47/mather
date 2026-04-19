@@ -228,6 +228,73 @@ struct BondMatchState: Equatable {
     }
 }
 
+
+
+// MARK: - Embedded Sum Sprint models
+
+struct SumSprintBurstCard: Identifiable, Equatable {
+    let id: UUID
+    let prompt: String
+    let answer: Int
+    var typedAnswer: String = ""
+    var isCorrect: Bool = false
+}
+
+struct SumSprintBurstState: Equatable {
+    let target: Int
+    var cards: [SumSprintBurstCard]
+    var currentCardIndex: Int = 0
+
+    var currentCard: SumSprintBurstCard? {
+        guard cards.indices.contains(currentCardIndex) else { return nil }
+        return cards[currentCardIndex]
+    }
+
+    var isComplete: Bool {
+        currentCardIndex >= cards.count
+    }
+
+    var progressLabel: String {
+        guard !cards.isEmpty else { return "0 / 0" }
+        return "\(min(currentCardIndex + 1, cards.count)) / \(cards.count)"
+    }
+
+    static func make(for problem: SliceProblem) -> SumSprintBurstState {
+        let cards = makeFacts(for: problem).map { fact in
+            SumSprintBurstCard(
+                id: UUID(),
+                prompt: "\(fact.0) + \(fact.1)",
+                answer: fact.0 + fact.1
+            )
+        }
+        return SumSprintBurstState(target: problem.target, cards: cards)
+    }
+
+    private static func makeFacts(for problem: SliceProblem) -> [(Int, Int)] {
+        let target = problem.target
+        let first = (problem.decompositionA, problem.decompositionB)
+        let second = (max(1, target - 1), min(1, target))
+        let thirdLeft = max(1, target / 2)
+        let third = (thirdLeft, max(1, target - thirdLeft))
+
+        var facts: [(Int, Int)] = [first]
+        if target >= 4 {
+            facts.append(second)
+        }
+        if target >= 8 {
+            facts.append(third)
+        }
+
+        var deduped: [(Int, Int)] = []
+        for pair in facts {
+            if !deduped.contains(where: { $0.0 == pair.0 && $0.1 == pair.1 }) {
+                deduped.append(pair)
+            }
+        }
+        return deduped
+    }
+}
+
 // MARK: - Room Quest models
 
 enum RoomQuestStationRole: String, Codable, Equatable, CaseIterable {

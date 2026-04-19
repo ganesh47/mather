@@ -41,6 +41,7 @@ final class VerticalSliceEngine {
     var transferRightCount = 0
     private(set) var bondMatchState: BondMatchState? = nil
     private(set) var gravitySplitState: GravitySplitState? = nil
+    private(set) var sumSprintBurstState: SumSprintBurstState? = nil
     /// Recorded on the first tilt sample after the stage becomes active.
     /// All subsequent tilt is computed as a delta from this neutral position,
     /// so the puzzle cannot be accidentally solved by simply picking up the device.
@@ -158,6 +159,7 @@ final class VerticalSliceEngine {
         transferRightCount = 0
         bondMatchState = nil
         gravitySplitState = nil
+        sumSprintBurstState = nil
         gravitySplitNeutralRoll = nil
         feedbackMessage = activeTheme.sessionStartFeedback()
         showCelebration = false
@@ -263,7 +265,7 @@ final class VerticalSliceEngine {
         case .gravitySplit:
             isCorrect = gravitySplitState?.isLocked == true
         case .sumSprint:
-            isCorrect = true
+            isCorrect = sumSprintBurstState?.isComplete == true
         case .bondMatch:
             // Bond Blast is not submitted via submitCurrentStage — pairs are matched
             // individually via matchPair(id:). This case is unreachable in practice.
@@ -284,6 +286,73 @@ final class VerticalSliceEngine {
 
     func replayPrompt() {
         speechService.speak(promptForCurrentStage(), enabled: featureFlags.audioEnabled)
+    }
+
+    func appendSumSprintDigit(_ digit: Int) {
+        guard currentStage == .sumSprint, var state = sumSprintBurstState,
+              state.cards.indices.contains(state.currentCardIndex) else { return }
+        let current = state.cards[state.currentCardIndex].typedAnswer
+        guard current.count < 2 else { return }
+        state.cards[state.currentCardIndex].typedAnswer = current + String(digit)
+        sumSprintBurstState = state
+    }
+
+    func deleteSumSprintDigit() {
+        guard currentStage == .sumSprint, var state = sumSprintBurstState,
+              state.cards.indices.contains(state.currentCardIndex) else { return }
+        let current = state.cards[state.currentCardIndex].typedAnswer
+        guard !current.isEmpty else { return }
+        state.cards[state.currentCardIndex].typedAnswer = String(current.dropLast())
+        sumSprintBurstState = state
+    }
+
+    func submitSumSprintCard() {
+        guard currentStage == .sumSprint, var state = sumSprintBurstState,
+              state.cards.indices.contains(state.currentCardIndex) else { return }
+        guard let entered = Int(state.cards[state.currentCardIndex].typedAnswer) else { return }
+        let card = state.cards[state.currentCardIndex]
+        let isCorrect = entered == card.answer
+        recordInteraction(action: "sum_sprint_submit", value: entered)
+
+        if isCorrect {
+            state.cards[state.currentCardIndex].isCorrect = true
+            try? telemetryWriter.append(
+                SliceEvent(type: .sumSprintCardAnswered, payload: [
+                    "problem_id": currentProblem?.id.uuidString ?? "",
+                    "card_index": String(state.currentCardIndex),
+                    "prompt": card.prompt,
+                    "correct": "true"
+                ])
+            )
+            state.currentCardIndex += 1
+            sumSprintBurstState = state
+            if state.isComplete, let problem = currentProblem {
+                completeStage(successMessage: successMessage(for: .sumSprint, problem: problem))
+            } else {
+                if let nextCard = state.currentCard {
+                    try? telemetryWriter.append(
+                        SliceEvent(type: .sumSprintCardShown, payload: [
+                            "problem_id": currentProblem?.id.uuidString ?? "",
+                            "card_index": String(state.currentCardIndex),
+                            "prompt": nextCard.prompt
+                        ])
+                    )
+                }
+                feedbackMessage = promptForCurrentStage()
+            }
+        } else {
+            try? telemetryWriter.append(
+                SliceEvent(type: .sumSprintCardAnswered, payload: [
+                    "problem_id": currentProblem?.id.uuidString ?? "",
+                    "card_index": String(state.currentCardIndex),
+                    "prompt": card.prompt,
+                    "correct": "false"
+                ])
+            )
+            feedbackMessage = "Try again. Solve this one before Bond Blast."
+            speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
+            hapticsService.failure(enabled: featureFlags.hapticsEnabled)
+        }
     }
 
     // MARK: - Bond Blast actions
@@ -460,6 +529,26 @@ final class VerticalSliceEngine {
         case .sumSprint:
             bondMatchState = nil
             gravitySplitState = nil
+            if let problem = currentProblem {
+                let burst = SumSprintBurstState.make(for: problem)
+                sumSprintBurstState = burst
+                try? telemetryWriter.append(
+                    SliceEvent(type: .sumSprintStarted, payload: [
+                        "problem_id": problem.id.uuidString,
+                        "target": String(problem.target),
+                        "card_count": String(burst.cards.count)
+                    ])
+                )
+                if let card = burst.currentCard {
+                    try? telemetryWriter.append(
+                        SliceEvent(type: .sumSprintCardShown, payload: [
+                            "problem_id": problem.id.uuidString,
+                            "card_index": "0",
+                            "prompt": card.prompt
+                        ])
+                    )
+                }
+            }
         case .bondMatch:
             if let problem = currentProblem {
                 bondMatchState = BondMatchState(
@@ -498,6 +587,7 @@ final class VerticalSliceEngine {
             transferRightCount = 0
             gravitySplitState = nil
             gravitySplitNeutralRoll = nil
+            sumSprintBurstState = nil
             problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
             logProblemPresented()
@@ -656,6 +746,9 @@ final class VerticalSliceEngine {
         case .pictorial, .bondMatch:
             return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
         case .sumSprint:
+            if let card = sumSprintBurstState?.currentCard {
+                return "Quick Sum Sprint. Solve \(card.prompt), then finish with Bond Blast."
+            }
             return "Quick Sum Sprint! Solve a tiny burst, then finish with Bond Blast."
         case .abstract:
             return activeTheme.abstractPrompt()
@@ -706,7 +799,7 @@ final class VerticalSliceEngine {
         case .gravitySplit:
             return "Keep building the split. Put \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
         case .sumSprint:
-            return "Keep going. This quick sprint comes before Bond Blast."
+            return "Keep going. Finish this quick sprint before Bond Blast."
         case .done:
             return "Try again."
         }
