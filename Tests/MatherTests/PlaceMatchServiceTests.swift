@@ -8,14 +8,14 @@ struct PlaceMatchServiceTests {
 
     @Test
     func gpsMatchWithinMatchRadius() {
-        // Two locations 10 metres apart — well inside 15 m match threshold
+        // Two locations ~6 m apart — inside the 8 m match threshold
         let result = PlaceMatchService.evaluate(
             savedLatitude: 51.5074,
             savedLongitude: -0.1278,
             savedGPSAccuracy: 5.0,
             currentLocation: CLLocation(
                 coordinate: CLLocationCoordinate2D(
-                    latitude: 51.5074 + 0.00009,   // ~10 m north
+                    latitude: 51.5074 + 0.000054,   // ~6 m north
                     longitude: -0.1278
                 ),
                 altitude: 0,
@@ -32,14 +32,14 @@ struct PlaceMatchServiceTests {
 
     @Test
     func gpsCloseInCloseRange() {
-        // ~25 m apart — between 15 m match and 30 m close thresholds
+        // ~15 m apart — between the 8 m match and 20 m close thresholds
         let result = PlaceMatchService.evaluate(
             savedLatitude: 51.5074,
             savedLongitude: -0.1278,
             savedGPSAccuracy: 5.0,
             currentLocation: CLLocation(
                 coordinate: CLLocationCoordinate2D(
-                    latitude: 51.5074 + 0.000225,   // ~25 m north
+                    latitude: 51.5074 + 0.000135,   // ~15 m north
                     longitude: -0.1278
                 ),
                 altitude: 0,
@@ -56,7 +56,7 @@ struct PlaceMatchServiceTests {
 
     @Test
     func gpsNoMatchBeyondCloseRange() {
-        // ~100 m apart — beyond 30 m close threshold
+        // ~100 m apart — beyond the 20 m close threshold
         let result = PlaceMatchService.evaluate(
             savedLatitude: 51.5074,
             savedLongitude: -0.1278,
@@ -79,18 +79,18 @@ struct PlaceMatchServiceTests {
 
     @Test
     func gpsIgnoredWhenAccuracyTooWeak() {
-        // GPS accuracy 50 m — above the 20 m cutoff, should be discarded
+        // GPS accuracy 15 m — above the 10 m cutoff, should be discarded
         let result = PlaceMatchService.evaluate(
             savedLatitude: 51.5074,
             savedLongitude: -0.1278,
-            savedGPSAccuracy: 50.0,
+            savedGPSAccuracy: 15.0,
             currentLocation: CLLocation(
                 coordinate: CLLocationCoordinate2D(
-                    latitude: 51.5074 + 0.00009,
+                    latitude: 51.5074 + 0.000054,
                     longitude: -0.1278
                 ),
                 altitude: 0,
-                horizontalAccuracy: 50.0,
+                horizontalAccuracy: 15.0,
                 verticalAccuracy: -1,
                 timestamp: .now
             ),
@@ -137,14 +137,14 @@ struct PlaceMatchServiceTests {
 
     @Test
     func gpsMatchWinsEvenWithNilImages() {
-        // GPS match + no vision → overall match via GPS
+        // GPS match (~6 m apart) + no vision → overall match via GPS
         let result = PlaceMatchService.evaluate(
             savedLatitude: 51.5074,
             savedLongitude: -0.1278,
             savedGPSAccuracy: 5.0,
             currentLocation: CLLocation(
                 coordinate: CLLocationCoordinate2D(
-                    latitude: 51.5074 + 0.00009,
+                    latitude: 51.5074 + 0.000054,   // ~6 m north
                     longitude: -0.1278
                 ),
                 altitude: 0,

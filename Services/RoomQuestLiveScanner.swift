@@ -91,7 +91,7 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             verifyFeedback = .evaluating
 
             Task.detached { [weak self, savedRef, currentLocation] in
-                let (result, wasGPS) = PlaceMatchService.evaluate(
+                let (result, wasGPS, gpsMetres, visionDist) = PlaceMatchService.evaluate(
                     savedLatitude: savedRef?.latitude,
                     savedLongitude: savedRef?.longitude,
                     savedGPSAccuracy: savedRef?.gpsAccuracy,
@@ -99,6 +99,10 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
                     savedImageData: savedRef?.imageJPEGData,
                     candidateImageData: jpegData
                 )
+                // Log raw distances — useful for threshold tuning.
+                let gpsStr   = gpsMetres.map   { String(format: "%.1f m", $0) } ?? "n/a"
+                let visStr   = visionDist.map  { String(format: "%.3f",   $0) } ?? "n/a"
+                print("[PlaceMatch] result=\(result) wasGPS=\(wasGPS) GPS=\(gpsStr) Vision=\(visStr)")
                 await MainActor.run { [weak self] in
                     guard let self, self.activeSession != nil else {
                         // Session was cancelled while PlaceMatchService ran — ignore.
