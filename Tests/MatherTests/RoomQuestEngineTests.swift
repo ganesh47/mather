@@ -79,7 +79,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func markSetupCompleteTransitionsToFirstSpotAfterRegistration() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: true)
         })
         engine.startSession()
@@ -94,7 +94,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func stationVerificationTracksCameraVsManualFallback() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: false)
         })
         engine.startSession()
@@ -112,7 +112,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func cameraScanSuccessMarksStationAndCelebrates() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: nil, usedARCelebration: true)
         })
 
@@ -138,7 +138,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func wrongMarkerLeavesStationUnregisteredAndShowsError() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             throw RoomQuestScannerError.wrongMarker(expected: role, detected: .blueBubble)
         })
 
@@ -174,7 +174,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func verifyCurrentSpotWithCameraUnlocksAndAdvances() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(role: role, markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1", referenceImageJPEGData: nil, usedARCelebration: false)
         })
 
@@ -209,7 +209,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func verifyCurrentSpotWithWrongMarkerDoesNotAdvance() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             throw RoomQuestScannerError.wrongMarker(expected: role, detected: role == .redRocket ? .blueBubble : .redRocket)
         })
 
@@ -237,7 +237,7 @@ struct RoomQuestEngineTests {
 
     @Test
     func verifyCurrentSpotReportsAlmostWhenMarkerPayloadDoesNotMatchSavedReference() async throws {
-        let setupScanner = FakeRoomQuestScanner { role in
+        let setupScanner = FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(
                 role: role,
                 markerPayload: role == .redRocket ? "mather:roomquest:redRocket:v1" : "mather:roomquest:blueBubble:v1",
@@ -245,7 +245,7 @@ struct RoomQuestEngineTests {
                 usedARCelebration: false
             )
         }
-        let huntScanner = FakeRoomQuestScanner { role in
+        let huntScanner = FakeRoomQuestScanner { role, _ in
             RoomQuestMarkerScanResult(
                 role: role,
                 markerPayload: role == .redRocket ? "mather:roomquest:redRocket:DIFFERENT" : "mather:roomquest:blueBubble:v1",
@@ -345,30 +345,43 @@ struct RoomQuestEngineTests {
 
         #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
         #expect(engine.currentSpotStatusTitle.localizedCaseInsensitiveContains("find the saved place"))
-        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("recheck"))
         #expect(!engine.shouldShowSpotManualFallback)
     }
 
     @Test
-    func spotFallbackStaysHiddenUntilCameraMisses() async throws {
-        let engine = makeEngine(scanner: FakeRoomQuestScanner { role in
+    func spotFallbackShownImmediatelyForManualFallbackStation() async throws {
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
             throw RoomQuestScannerError.wrongMarker(expected: role, detected: .blueBubble)
         })
 
         engine.startSession()
-        engine.registerStation(.redRocket)
+        engine.registerStation(.redRocket)     // manual fallback — no camera reference
         engine.registerStation(.blueBubble)
         engine.markSetupComplete()
 
-        #expect(!engine.shouldShowSpotManualFallback)
-
-        engine.verifyCurrentSpotWithCamera()
-        await waitFor("spot fallback becomes visible after camera miss") {
-            engine.shouldShowSpotManualFallback
-        }
-
+        // Fallback must show immediately for manual-fallback stations — child was stuck before this fix
         #expect(engine.shouldShowSpotManualFallback)
-        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("fallback"))
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("found it"))
+    }
+
+    @Test
+    func spotFallbackStaysHiddenForCapturedStationUntilCameraMisses() async throws {
+        let expectedJPEGData = Data([0xFF, 0xD8, 0xFF, 0xD9])
+        let engine = makeEngine(scanner: FakeRoomQuestScanner { role, _ in
+            RoomQuestMarkerScanResult(role: role, markerPayload: "mather:roomquest:redRocket:v1", referenceImageJPEGData: expectedJPEGData, usedARCelebration: false)
+        })
+
+        engine.startSession()
+        engine.verifyStationWithCamera(.redRocket)
+        await waitFor("camera setup completes") {
+            engine.stations.first(where: { $0.role == .redRocket })?.referenceCaptureState == .captured
+        }
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        // Captured station — fallback hidden until camera misses
+        #expect(!engine.shouldShowSpotManualFallback)
     }
 
     @Test
@@ -377,7 +390,7 @@ struct RoomQuestEngineTests {
         let container = try! ModelContainer(for: StoredRoomQuestStationReference.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let sharedStationStore = RoomQuestStationStore(modelContext: container.mainContext, modelContainer: container)
         let engine = makeEngine(
-            scanner: FakeRoomQuestScanner { role in
+            scanner: FakeRoomQuestScanner { role, _ in
                 RoomQuestMarkerScanResult(
                     role: role,
                     markerPayload: "mather:roomquest:redRocket:v1",
@@ -413,7 +426,7 @@ struct RoomQuestEngineTests {
     @Test
     func verifyCurrentSpotIgnoresDuplicateScanRequestsWhileScanIsActive() async throws {
         let tracker = ScanTracker()
-        let scanner = FakeRoomQuestScanner { role in
+        let scanner = FakeRoomQuestScanner { role, _ in
             await tracker.markStarted()
             while !(await tracker.canFinish) {
                 try await Task.sleep(for: .milliseconds(20))
@@ -600,9 +613,9 @@ private actor ScanTracker {
 }
 
 private struct FakeRoomQuestScanner: RoomQuestScanner {
-    let handler: @MainActor (RoomQuestStationRole) async throws -> RoomQuestMarkerScanResult
+    let handler: @MainActor (RoomQuestStationRole, RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult
 
-    func scanMarker(for role: RoomQuestStationRole) async throws -> RoomQuestMarkerScanResult {
-        try await handler(role)
+    func scanMarker(for role: RoomQuestStationRole, mode: RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult {
+        try await handler(role, mode)
     }
 }

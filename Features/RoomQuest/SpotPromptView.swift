@@ -88,30 +88,25 @@ struct SpotPromptView: View {
 
                 Spacer()
 
-                Button {
-                    engine.verifyCurrentSpotWithCamera()
-                } label: {
-                    Label(station?.referenceCaptureState == .captured ? "Recheck this place" : "Scan to unlock", systemImage: "camera.viewfinder")
+                // Camera scan button — only active for stations with a saved photo reference
+                if station?.referenceCaptureState == .captured {
+                    let isScanBusy: Bool = {
+                        switch engine.scanState {
+                        case .scanning, .celebrating: return true
+                        default: return false
+                        }
+                    }()
+                    Button {
+                        engine.verifyCurrentSpotWithCamera()
+                    } label: {
+                        Label("Recheck this place", systemImage: "camera.viewfinder")
+                    }
+                    .accessibilityIdentifier("room-spot-scan-button")
+                    .buttonStyle(RoomQuestPrimaryButtonStyle())
+                    .disabled(isScanBusy)
+                    .opacity(isScanBusy ? 0.7 : 1)
+                    .padding(.horizontal, 40)
                 }
-                .accessibilityIdentifier("room-spot-scan-button")
-                .buttonStyle(RoomQuestPrimaryButtonStyle())
-                .disabled({
-                    switch engine.scanState {
-                    case .scanning, .celebrating:
-                        return true
-                    case .idle, .almost, .failed:
-                        return station?.referenceCaptureState != .captured
-                    }
-                }())
-                .opacity({
-                    switch engine.scanState {
-                    case .scanning, .celebrating:
-                        return 0.7
-                    case .idle, .almost, .failed:
-                        return station?.referenceCaptureState == .captured ? 1 : 0.55
-                    }
-                }())
-                .padding(.horizontal, 40)
 
                 if engine.shouldShowSpotManualFallback {
                     Button(station?.role.fallbackButtonTitle ?? "I found it") {
@@ -123,12 +118,15 @@ struct SpotPromptView: View {
                     .foregroundStyle(.white.opacity(0.92))
                     .padding(.horizontal, 40)
                     .padding(.bottom, 40)
-                } else {
-                    Text("Fallback unlocks only after a missed scan.")
+                } else if station?.referenceCaptureState != .captured {
+                    // Station has no reference yet — scan button is hidden, fallback not yet triggered
+                    Text("Start a camera check to unlock collect.")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white.opacity(0.92))
                         .padding(.horizontal, 40)
                         .padding(.bottom, 40)
+                } else {
+                    Spacer().frame(height: 40)
                 }
             }
 
