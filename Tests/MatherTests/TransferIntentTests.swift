@@ -45,7 +45,6 @@ struct TransferIntentTests {
 
     private func makeEngine() -> VerticalSliceEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.verticalSlice1Enabled = true
         flags.testModeEnabled = true
         return VerticalSliceEngine(
             featureFlags: flags,

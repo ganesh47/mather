@@ -37,7 +37,6 @@ final class TelemetryWriter {
                 type: .sessionStart,
                 payload: [
                     "schema_version": String(Self.schemaVersion),
-                    "feature_verticalSlice1Enabled": String(featureFlags.verticalSlice1Enabled),
                     "feature_testModeEnabled": String(featureFlags.testModeEnabled),
                     "feature_audioEnabled": String(featureFlags.audioEnabled),
                     "theme_id": featureFlags.selectedThemeId

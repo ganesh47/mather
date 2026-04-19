@@ -10,7 +10,6 @@ struct SumSprintEngineTests {
 
     private func makeEngine(feedbackDuration: TimeInterval = 0) throws -> (SumSprintEngine, FeatureFlagService) {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        flags.sumSprintEnabled = true
         flags.audioEnabled = false
         flags.hapticsEnabled = false
 
@@ -284,13 +283,6 @@ struct SumSprintEngineTests {
         #expect(engine.phase == .idle)
     }
 
-    // MARK: - Feature flag
-
-    @Test
-    func sumSprintEnabledDefaultsFalse() {
-        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        #expect(flags.sumSprintEnabled == false)
-    }
 
     // MARK: - Cards contain valid sums
 

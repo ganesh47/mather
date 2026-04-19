@@ -48,8 +48,7 @@ final class CompactLayoutTests: XCTestCase {
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES",
-            "-feature.verticalSlice1Enabled", "YES"
+            "-feature.testModeEnabled", "YES"
         ]
         app.launch()
         return app
