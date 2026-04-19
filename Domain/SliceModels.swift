@@ -168,7 +168,7 @@ struct GravitySplitState: Equatable {
     let decompositionA: Int   // expected left-pan count
     let decompositionB: Int   // expected right-pan count
     var leftCount: Int        // current left-pan count (starts at 0)
-    var rightCount: Int       // always target − leftCount
+    var rightCount: Int       // current right-pan count (starts at 0)
 
     var isLocked: Bool {
         leftCount == decompositionA && rightCount == decompositionB
@@ -178,16 +178,16 @@ struct GravitySplitState: Equatable {
         target         = problem.target
         decompositionA = problem.decompositionA
         decompositionB = problem.decompositionB
-        // Start with target−1 on the left pan (far-left imbalance) so the beam
-        // is visibly unbalanced and the answer is never the starting position.
-        leftCount      = max(0, problem.target - 1)
-        rightCount     = 1
+        leftCount      = 0
+        rightCount     = 0
     }
 
-    /// Sets `leftCount` to `count` (clamped 0…target) and derives `rightCount`.
-    mutating func setLeft(_ count: Int) {
-        leftCount  = min(max(count, 0), target)
-        rightCount = target - leftCount
+    mutating func adjustLeft(by delta: Int) {
+        leftCount = min(max(leftCount + delta, 0), decompositionA)
+    }
+
+    mutating func adjustRight(by delta: Int) {
+        rightCount = min(max(rightCount + delta, 0), decompositionB)
     }
 }
 
