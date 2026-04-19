@@ -3,62 +3,77 @@ import SwiftUI
 /// Symmetry Fold — children tilt the iPad to fold the right half of a shape
 /// onto the left half along a vertical axis of symmetry.
 ///
-/// When both halves overlap perfectly the shape "snaps" closed and the child
-/// discovers that the two halves are mirror images — the definition of
-/// reflective symmetry.
+/// UX improvements over v1:
+///  • 5 shapes (heart → star → hexagon → diamond → triangle) with
+///    progressively reduced guide opacity (0.28 → 0 on final level).
+///  • Hold-to-lock mechanic: child must hold ≥ 0.85 fold for 0.8 s — shown
+///    as a circular progress ring.  Prevents accidental solves and creates
+///    a satisfying "snap" moment.
+///  • Bilateral success: full shape glows on lock, not just the right half.
+///  • Level progress dots size-animate to show the active level clearly.
 ///
 /// Age range: 5–7. CPA level: Pictorial → Abstract.
 /// Sensor: neutral-relative roll tilt (left tilt folds right half onto left).
-/// Three levels of increasing abstraction:
-///   1. Heart with fold guide (dashed left-half ghost)
-///   2. Star with lighter fold guide
-///   3. Hexagon shape, no guide
 struct SymmetryFoldView: View {
 
     @Bindable var appModel: AppModel
 
     // MARK: - Local state
 
-    /// Roll value at the moment the child taps "ready". All subsequent tilt
-    /// is computed as a delta from this neutral, matching the Gravity Split
-    /// neutral-relative pattern to prevent accidental solves.
     @State private var neutralRoll: Double? = nil
-    /// 0 = shape is fully open; 1 = right half is folded flat onto left half.
+    /// 0 = shape open; 1 = right half fully folded onto left.
     @State private var foldAngle: Double = 0
     @State private var success = false
-    @State private var currentLevel: Int = 1   // 1, 2, 3
+    @State private var currentLevel: Int = 1   // 1–5
+    /// 0–1 progress filled by holding the shape in the folded zone.
+    @State private var holdProgress: Double = 0
+    @State private var holdTask: Task<Void, Never>? = nil
 
     // MARK: - Level config
 
     private struct LevelConfig {
         let symbolName: String
         let color: Color
-        let showGuide: Bool
+        let guideOpacity: Double
         let title: String
-        let accessibilityLabel: String
+        let speechPrompt: String
     }
 
     private let levels: [LevelConfig] = [
         LevelConfig(
             symbolName: "heart.fill",
             color: MatherTheme.coral,
-            showGuide: true,
+            guideOpacity: 0.28,
             title: "Fold the heart",
-            accessibilityLabel: "Heart shape. Tilt left to fold."
+            speechPrompt: "Tilt left to fold the heart in half!"
         ),
         LevelConfig(
             symbolName: "star.fill",
             color: MatherTheme.warm,
-            showGuide: true,
+            guideOpacity: 0.28,
             title: "Fold the star",
-            accessibilityLabel: "Star shape. Tilt left to fold."
+            speechPrompt: "Tilt left to fold the star!"
         ),
         LevelConfig(
             symbolName: "hexagon.fill",
             color: MatherTheme.accent,
-            showGuide: false,
-            title: "Fold it!",
-            accessibilityLabel: "Hexagon shape. Tilt left to fold."
+            guideOpacity: 0.18,
+            title: "Fold the hexagon",
+            speechPrompt: "Tilt left to fold the hexagon. Lighter guide this time!"
+        ),
+        LevelConfig(
+            symbolName: "diamond.fill",
+            color: MatherTheme.softBlue,
+            guideOpacity: 0.10,
+            title: "Fold the diamond",
+            speechPrompt: "Tiny guide now — use what you remember!"
+        ),
+        LevelConfig(
+            symbolName: "triangle.fill",
+            color: MatherTheme.warm,
+            guideOpacity: 0.0,
+            title: "No guide — you've got this!",
+            speechPrompt: "No guide! You know where the fold goes. Tilt left!"
         ),
     ]
 
@@ -68,8 +83,8 @@ struct SymmetryFoldView: View {
 
     // MARK: - Constants
 
-    /// Full 45° tilt maps to fully folded.
     private let maxTiltRadians: Double = .pi / 4
+    private static let holdDuration: Double = 0.8
 
     // MARK: - Body
 
@@ -95,21 +110,20 @@ struct SymmetryFoldView: View {
         }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
             guard let neutral = neutralRoll, !success else { return }
-            // Left tilt → roll decreases from neutral → negative delta → foldAngle increases.
             let delta = roll - neutral
-            foldAngle = max(0.0, min(-delta / maxTiltRadians, 1.0))
-            if foldAngle >= 0.95 {
-                handleSuccess()
-            }
+            let newFold = max(0.0, min(-delta / maxTiltRadians, 1.0))
+            foldAngle = newFold
+            updateHoldProgress(for: newFold)
         }
         .onAppear {
             appModel.motionService.startUpdates()
         }
         .onDisappear {
+            holdTask?.cancel()
             appModel.motionService.stopUpdates()
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(config.accessibilityLabel)
+        .accessibilityLabel(config.title)
     }
 
     // MARK: - Header
@@ -126,8 +140,9 @@ struct SymmetryFoldView: View {
             }
             Spacer()
             Button("Done") {
-                appModel.engine.showHome()
+                holdTask?.cancel()
                 appModel.motionService.stopUpdates()
+                appModel.engine.showHome()
             }
             .font(.headline.weight(.semibold))
             .foregroundStyle(.white)
@@ -146,15 +161,15 @@ struct SymmetryFoldView: View {
         GeometryReader { geo in
             let size = min(geo.size.width * 0.8, geo.size.height * 0.8, 280.0)
             ZStack {
-                // Ghost left-half (visible guide only on levels 1 and 2)
-                if config.showGuide {
+                // Ghost left-half guide (fades with each level)
+                if config.guideOpacity > 0 {
                     ghostHalf(size: size)
                 }
 
-                // Dashed vertical fold line
+                // Dashed fold line
                 foldLine(size: size)
 
-                // Foldable right half
+                // Foldable right half — 3D-rotates as child tilts
                 foldableRightHalf(size: size)
                     .rotation3DEffect(
                         .degrees(foldAngle * -180),
@@ -167,13 +182,37 @@ struct SymmetryFoldView: View {
                         value: foldAngle
                     )
 
-                // Success overlay
+                // Hold-to-lock circular progress ring
+                if holdProgress > 0 && !success {
+                    Circle()
+                        .trim(from: 0, to: holdProgress)
+                        .stroke(
+                            config.color,
+                            style: StrokeStyle(lineWidth: 7, lineCap: .round)
+                        )
+                        .frame(width: size + 28, height: size + 28)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 0.05), value: holdProgress)
+                }
+
+                // Success: bilateral flash — full shape glows
                 if success {
-                    successOverlay(size: size)
+                    Image(systemName: config.symbolName)
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(config.color)
+                        .frame(width: size, height: size)
                         .transition(.scale(scale: 0.7).combined(with: .opacity))
                 }
 
-                // "Tap to start" prompt
+                // Success overlay card
+                if success {
+                    successOverlay
+                        .transition(.scale(scale: 0.85).combined(with: .opacity))
+                        .zIndex(10)
+                }
+
+                // Tap-to-start prompt
                 if neutralRoll == nil && !success {
                     tapPrompt(size: size)
                         .transition(.opacity)
@@ -188,6 +227,10 @@ struct SymmetryFoldView: View {
                     withAnimation(.easeOut(duration: 0.15)) {
                         neutralRoll = appModel.motionService.tiltRoll
                     }
+                    appModel.speechService.speak(
+                        config.speechPrompt,
+                        enabled: appModel.featureFlags.audioEnabled
+                    )
                 } else if success {
                     advanceLevel()
                 }
@@ -195,16 +238,17 @@ struct SymmetryFoldView: View {
             .accessibilityIdentifier("symmetry-fold-scene")
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 300)
+        .frame(height: 320)
     }
+
+    // MARK: - Scene sub-views
 
     private func ghostHalf(size: CGFloat) -> some View {
         Image(systemName: config.symbolName)
             .resizable()
             .scaledToFit()
-            .foregroundStyle(config.color.opacity(0.18))
+            .foregroundStyle(config.color.opacity(config.guideOpacity))
             .frame(width: size, height: size)
-            // Mask: show only the left half
             .mask(
                 HStack(spacing: 0) {
                     Color.black.frame(width: size / 2)
@@ -214,7 +258,6 @@ struct SymmetryFoldView: View {
     }
 
     private func foldLine(size: CGFloat) -> some View {
-        // Dashed vertical line
         Canvas { ctx, canvasSize in
             var path = Path()
             var y: CGFloat = 0
@@ -224,8 +267,11 @@ struct SymmetryFoldView: View {
                 path.addLine(to: CGPoint(x: x, y: min(y + 10, canvasSize.height)))
                 y += 18
             }
-            ctx.stroke(path, with: .color(MatherTheme.ink.opacity(0.3)),
-                       style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            ctx.stroke(
+                path,
+                with: .color(MatherTheme.ink.opacity(0.3)),
+                style: StrokeStyle(lineWidth: 2, lineCap: .round)
+            )
         }
         .frame(width: size, height: size)
     }
@@ -234,9 +280,8 @@ struct SymmetryFoldView: View {
         Image(systemName: config.symbolName)
             .resizable()
             .scaledToFit()
-            .foregroundStyle(success ? MatherTheme.accent : config.color)
+            .foregroundStyle(config.color)
             .frame(width: size, height: size)
-            // Mask: show only the right half
             .mask(
                 HStack(spacing: 0) {
                     Color.clear.frame(width: size / 2)
@@ -249,7 +294,7 @@ struct SymmetryFoldView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .frame(width: size * 0.7, height: 110)
+                .frame(width: size * 0.72, height: 110)
             VStack(spacing: 8) {
                 Image(systemName: "hand.tap.fill")
                     .font(.system(size: 28))
@@ -264,25 +309,18 @@ struct SymmetryFoldView: View {
         }
     }
 
-    private func successOverlay(size: CGFloat) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(MatherTheme.accent)
+    private var successOverlay: some View {
+        VStack(spacing: 8) {
+            Text("✨")
+                .font(.system(size: 44))
             Text("Symmetric!")
                 .font(.title2.weight(.black))
                 .foregroundStyle(MatherTheme.accent)
-            if currentLevel < 3 {
-                Text("Tap for the next shape")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-            } else {
-                Text("All done! Tap to finish.")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-            }
+            Text(currentLevel < levels.count ? "Tap for the next shape" : "All done! Tap to finish.")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
         }
-        .padding(20)
+        .padding(24)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
@@ -290,28 +328,73 @@ struct SymmetryFoldView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 12) {
+            // Contextual tilt hint
             if !success && neutralRoll != nil {
                 HStack(spacing: 8) {
                     Image(systemName: "gyroscope")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(config.color.opacity(0.8))
-                    Text("Tilt left to fold")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
+                    if holdProgress > 0 {
+                        Text("Hold steady…")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(config.color)
+                    } else {
+                        Text("Tilt left to fold")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
                 }
+                .animation(.easeInOut(duration: 0.2), value: holdProgress > 0)
             }
 
-            // Level progress dots
+            // Level progress dots (5) — active dot is slightly larger
             HStack(spacing: 8) {
-                ForEach(1...3, id: \.self) { lvl in
+                ForEach(1...levels.count, id: \.self) { lvl in
+                    let isActive = lvl == currentLevel
+                    let isPast   = lvl < currentLevel
                     Circle()
-                        .fill(lvl <= currentLevel
-                              ? config.color
-                              : config.color.opacity(0.2))
-                        .frame(width: 10, height: 10)
-                        .animation(.easeInOut(duration: 0.25), value: currentLevel)
+                        .fill(
+                            isPast   ? MatherTheme.accent :
+                            isActive ? config.color :
+                            config.color.opacity(0.2)
+                        )
+                        .frame(
+                            width:  isActive ? 13 : 10,
+                            height: isActive ? 13 : 10
+                        )
+                        .animation(
+                            .spring(response: 0.3, dampingFraction: 0.6),
+                            value: currentLevel
+                        )
                 }
             }
+        }
+    }
+
+    // MARK: - Hold-to-lock
+
+    private func updateHoldProgress(for fold: Double) {
+        if fold >= 0.85 && !success {
+            // Start hold timer if not already running
+            if holdTask == nil {
+                let startDate = Date()
+                holdTask = Task { @MainActor in
+                    while !Task.isCancelled && !success {
+                        let elapsed = Date().timeIntervalSince(startDate)
+                        holdProgress = min(elapsed / Self.holdDuration, 1.0)
+                        if holdProgress >= 1.0 {
+                            handleSuccess()
+                            break
+                        }
+                        try? await Task.sleep(nanoseconds: 16_000_000)   // ~60 fps
+                    }
+                }
+            }
+        } else {
+            // Fold dropped — cancel and reset ring
+            holdTask?.cancel()
+            holdTask = nil
+            holdProgress = 0
         }
     }
 
@@ -319,6 +402,9 @@ struct SymmetryFoldView: View {
 
     private func handleSuccess() {
         success = true
+        holdTask?.cancel()
+        holdTask = nil
+        holdProgress = 0
         appModel.hapticsService.balanceLock(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
             "Perfectly folded! Both sides match — it's symmetric!",
@@ -327,11 +413,14 @@ struct SymmetryFoldView: View {
     }
 
     private func advanceLevel() {
-        if currentLevel < 3 {
+        if currentLevel < levels.count {
             currentLevel += 1
             foldAngle = 0
             success = false
             neutralRoll = nil
+            holdProgress = 0
+            holdTask?.cancel()
+            holdTask = nil
         } else {
             appModel.engine.showHome()
         }
