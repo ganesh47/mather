@@ -12,6 +12,33 @@ struct VerticalSliceEngineTests {
         }
     }
 
+    private func lockGravitySplit(_ engine: VerticalSliceEngine, problem: SliceProblem) {
+        let currentLeft = engine.gravitySplitState?.leftCount ?? 0
+        let leftDelta = problem.decompositionA - currentLeft
+        if leftDelta > 0 {
+            for _ in 0..<leftDelta { engine.adjustGravitySplitByTap(delta: 1, side: .left) }
+        } else if leftDelta < 0 {
+            for _ in 0..<(-leftDelta) { engine.adjustGravitySplitByTap(delta: -1, side: .left) }
+        }
+
+        let currentRight = engine.gravitySplitState?.rightCount ?? 0
+        let rightDelta = problem.decompositionB - currentRight
+        if rightDelta > 0 {
+            for _ in 0..<rightDelta { engine.adjustGravitySplitByTap(delta: 1, side: .right) }
+        } else if rightDelta < 0 {
+            for _ in 0..<(-rightDelta) { engine.adjustGravitySplitByTap(delta: -1, side: .right) }
+        }
+    }
+
+    private func completeSumSprintBurst(_ engine: VerticalSliceEngine) {
+        while let card = engine.sumSprintBurstState?.currentCard {
+            for digit in String(card.answer) {
+                engine.appendSumSprintDigit(Int(String(digit))!)
+            }
+            engine.submitSumSprintCard()
+        }
+    }
+
     private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
         let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
         while DispatchTime.now().uptimeNanoseconds < deadline {
@@ -710,20 +737,70 @@ struct VerticalSliceEngineTests {
         await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
         #expect(engine.currentStage == .gravitySplit)
 
-        let currentLeft = engine.gravitySplitState?.leftCount ?? 0
-        let delta = problem.decompositionA - currentLeft
-        if delta > 0 {
-            for _ in 0..<delta { engine.adjustGravitySplitByTap(delta: 1, side: .left) }
-        } else if delta < 0 {
-            for _ in 0..<(-delta) { engine.adjustGravitySplitByTap(delta: -1, side: .left) }
-        }
-        for _ in 0..<(problem.decompositionB) { engine.adjustGravitySplitByTap(delta: 1, side: .right) }
+        lockGravitySplit(engine, problem: problem)
         await waitFor("gravity split lock") { engine.gravitySplitState?.isLocked == true }
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
         #expect(engine.currentStage == .sumSprint)
 
-        engine.submitCurrentStage()
+        completeSumSprintBurst(engine)
         await waitFor("bond blast after sum sprint") { engine.currentStage == .bondMatch }
+        #expect(engine.currentStage == .bondMatch)
+    }
+
+
+
+    @Test
+    func makeBreakLoopV2CreatesMicroSumSprintBurstPerTarget() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.verticalSlice1Enabled = true
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+        lockGravitySplit(engine, problem: problem)
+        await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
+        #expect((engine.sumSprintBurstState?.cards.count ?? 0) >= 1)
+        #expect((engine.sumSprintBurstState?.cards.count ?? 0) <= 3)
+    }
+
+    @Test
+    func makeBreakLoopV2AdvancesToBondBlastAfterBurstCards() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.verticalSlice1Enabled = true
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+        lockGravitySplit(engine, problem: problem)
+        await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
+
+        completeSumSprintBurst(engine)
+
+        await waitFor("bond blast after sum sprint burst") { engine.currentStage == .bondMatch }
         #expect(engine.currentStage == .bondMatch)
     }
 
