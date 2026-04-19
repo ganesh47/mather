@@ -503,11 +503,7 @@ struct VerticalSliceEngineTests {
         guard let problem = engine.currentProblem else { return }
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-<<<<<<< HEAD
         await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
-=======
-        try await Task.sleep(for: .milliseconds(200))
->>>>>>> ce4f5c6 (test(vs1): wait for async stage transitions in engine tests)
         await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         let pairIds = engine.bondMatchState?.pairs.map(\.id) ?? []
         for id in pairIds { engine.matchPair(id: id) }
