@@ -283,8 +283,8 @@ enum RoomQuestStationVerificationMethod: String, Codable, Equatable {
 
     var badgeTitle: String {
         switch self {
-        case .cameraVerified: "Camera verified"
-        case .manualConfirmed: "Confirmed manually"
+        case .cameraVerified: "Marker scanned"
+        case .manualConfirmed: "Fallback used"
         }
     }
 }
@@ -296,9 +296,9 @@ enum RoomQuestReferenceCaptureState: String, Equatable, Codable {
 
     var badgeTitle: String {
         switch self {
-        case .notCaptured: "Reference not saved"
-        case .captured: "Reference saved"
-        case .manualFallback: "Reference skipped"
+        case .notCaptured: "Place check not saved"
+        case .captured: "Place photo saved"
+        case .manualFallback: "Same-place fallback saved"
         }
     }
 }

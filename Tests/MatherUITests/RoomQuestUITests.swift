@@ -50,7 +50,7 @@ final class RoomQuestUITests: XCTestCase {
         // Accept — transitions to Setup
         app.buttons["I understand — let's go"].tap()
         XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Camera verify"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Scan station marker"].waitForExistence(timeout: 5))
         snapshot(app, "RoomQuest-SetupAfterAck")
     }
 
@@ -66,7 +66,7 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Scan-friendly setup"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Setup progress"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Safety reminder"].waitForExistence(timeout: 3))
         snapshot(app, "RoomQuest-SetupView")
     }
@@ -111,12 +111,12 @@ final class RoomQuestUITests: XCTestCase {
         app.buttons["Start Room Quest"].tap()
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
 
-        XCTAssertTrue(app.staticTexts["Save a hiding-place reference for both stations before you start."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Finish setup for both stations before you start."].waitForExistence(timeout: 5))
 
         configureSetupViaManualFallback(app)
 
-        XCTAssertTrue(app.staticTexts["Fallback saved"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Ready — stations are set!"].exists)
+        XCTAssertTrue(app.staticTexts["Same-place fallback saved"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Ready, start Room Quest!"].exists)
     }
 
     // MARK: - Pause / Resume
@@ -188,7 +188,7 @@ final class RoomQuestUITests: XCTestCase {
 
     private func completeSetupViaManualFallback(_ app: XCUIApplication) {
         configureSetupViaManualFallback(app)
-        app.buttons["Ready — stations are set!"].tap()
+        app.buttons["Ready, start Room Quest!"].tap()
     }
 
     private func configureSetupViaManualFallback(_ app: XCUIApplication) {
@@ -198,13 +198,13 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(redCard.waitForExistence(timeout: 5))
         XCTAssertTrue(blueCard.waitForExistence(timeout: 5))
 
-        redCard.buttons["Camera verify"].tap()
+        redCard.buttons["Scan station marker"].tap()
         XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
-        tapWhenHittable(redCard.buttons["Same-place fallback"], in: app, reveal: .up)
+        tapWhenHittable(redCard.buttons["Save same-place fallback"], in: app, reveal: .up)
 
-        blueCard.buttons["Camera verify"].tap()
+        blueCard.buttons["Scan station marker"].tap()
         XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
-        tapWhenHittable(blueCard.buttons["Same-place fallback"], in: app, reveal: .up)
+        tapWhenHittable(blueCard.buttons["Save same-place fallback"], in: app, reveal: .up)
     }
 
     private enum RevealDirection {

@@ -12,7 +12,7 @@ struct RoomSetupView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Set up the room")
                         .font(.largeTitle.weight(.black))
-                    Text("Place the two station markers in one room, then camera-verify each one or use the manual fallback.")
+                    Text("Place both station markers in one room, then finish setup for each station below.")
                         .font(.subheadline)
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
@@ -37,21 +37,22 @@ struct RoomSetupView: View {
 
                 CardSurface {
                     VStack(alignment: .leading, spacing: 10) {
-                        Label("Scan-friendly setup", systemImage: "camera.viewfinder")
+                        Label(engine.allStationsRegistered ? "Ready to start" : "Setup progress", systemImage: engine.allStationsRegistered ? "checkmark.seal.fill" : "list.bullet.clipboard")
                             .font(.headline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.softBlue)
-                        Text("Tap Camera verify first. If scanning is awkward, use the manual same-place fallback.")
+                            .foregroundStyle(engine.allStationsRegistered ? MatherTheme.accent : MatherTheme.softBlue)
+                        Text("\(engine.stations.filter(\.isReadyForRoomQuest).count) of \(engine.stations.count) stations ready")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("Scan each station marker first. If needed, a grown-up can save the same-place fallback instead.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                         Text("Both stations must stay in the same room as this iPad.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
 
-                        if !engine.missingSetupRequirementsMessage.isEmpty {
-                            Text(engine.missingSetupRequirementsMessage)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(MatherTheme.coral)
-                        }
+                        Text(engine.missingSetupRequirementsMessage)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(engine.allStationsRegistered ? MatherTheme.accent : MatherTheme.coral)
 
                         switch engine.scanState {
                         case .idle:
@@ -94,7 +95,7 @@ struct RoomSetupView: View {
                     }
                 }
 
-                Button("Ready — stations are set!") {
+                Button("Ready, start Room Quest!") {
                     engine.markSetupComplete()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -109,6 +110,13 @@ struct RoomSetupView: View {
         let colour = station.role == .redRocket ? MatherTheme.warm : MatherTheme.accent
 
         return VStack(spacing: 12) {
+            Text(station.isReadyForRoomQuest ? "Ready to play" : "Needs setup")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(station.isReadyForRoomQuest ? MatherTheme.accent : MatherTheme.coral)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background((station.isReadyForRoomQuest ? MatherTheme.accent : MatherTheme.coral).opacity(0.14))
+                .clipShape(Capsule())
             RoundedRectangle(cornerRadius: 16)
                 .fill(colour)
                 .frame(height: 80)
@@ -151,7 +159,7 @@ struct RoomSetupView: View {
             referencePreview(for: station)
 
             VStack(spacing: 8) {
-                Button(station.verificationMethod == .cameraVerified ? "Camera verified" : "Camera verify") {
+                Button(station.verificationMethod == .cameraVerified ? "Marker scanned" : "Scan station marker") {
                     engine.verifyStationWithCamera(station.role)
                 }
                 .buttonStyle(SecondaryTileButtonStyle(fill: colour.opacity(0.18)))
@@ -159,7 +167,7 @@ struct RoomSetupView: View {
                 .disabled({ if case .scanning = engine.scanState { return true } else { return false } }())
                 .accessibilityIdentifier("room-station-camera-\(station.role.rawValue)")
 
-                Button(station.verificationMethod == .manualConfirmed ? "Manual fallback saved" : "Same-place fallback") {
+                Button(station.verificationMethod == .manualConfirmed ? "Same-place fallback saved" : "Save same-place fallback") {
                     engine.confirmStationManually(station.role)
                 }
                 .buttonStyle(.plain)
@@ -185,7 +193,7 @@ struct RoomSetupView: View {
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(alignment: .bottomLeading) {
-                    Text("Saved preview")
+                    Text("Saved place photo")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
@@ -201,7 +209,7 @@ struct RoomSetupView: View {
                     VStack(spacing: 6) {
                         Image(systemName: station.referenceCaptureState == .captured ? "photo.badge.checkmark" : "checklist")
                             .font(.title3.weight(.semibold))
-                        Text(station.referenceCaptureState == .captured ? "Saved reference" : "Fallback saved")
+                        Text(station.referenceCaptureState == .captured ? "Place photo saved" : "Same-place fallback saved")
                             .font(.caption.weight(.semibold))
                     }
                     .foregroundStyle(MatherTheme.ink)
