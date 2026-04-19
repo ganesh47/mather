@@ -95,11 +95,15 @@ jobs:
             ci-videos/ui-tests.mp4 &
           VIDEO_PID=$!
 
+          # Keep screenshot review focused on artifact-producing flows.
+          # Slower behavioral UI assertions belong in the main test lane.
           xcodebuild test-without-building \
             -project Mather.xcodeproj \
             -scheme Mather \
             -destination "$SIM_DESTINATION" \
-            -only-testing MatherUITests \
+            -only-testing MatherUITests/ScreenshotTests \
+            -skip-testing MatherUITests/ScreenshotTests/testConcreteBuild_AccentRowLockedUntilWarmFull \
+            -skip-testing MatherUITests/ScreenshotTests/testSessionHistoryShowsMultipleSavedSessionsInParentSummaryAndSettings \
             -resultBundlePath UITestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
           XCODE_EXIT=$?
