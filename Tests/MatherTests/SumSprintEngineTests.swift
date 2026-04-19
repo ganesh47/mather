@@ -387,7 +387,7 @@ struct SumSprintEngineTests {
         let (engine, _) = try makeEngine(feedbackDuration: 0)
         engine.selectDifficulty(.standard)
         // Manually fire timeout
-        engine.cardTimeRemaining = 0.05   // nearly expired
+        engine.setCardTimeRemainingForTests(0.05)   // nearly expired
         try await Task.sleep(for: .milliseconds(300))   // allow timer task to fire
         #expect(engine.cards[0].timedOut == true)
     }
@@ -396,7 +396,7 @@ struct SumSprintEngineTests {
     func timeoutMarksCardAsTimedOut() async throws {
         let (engine, _) = try makeEngine(feedbackDuration: 0)
         engine.selectDifficulty(.sprint)
-        engine.cardTimeRemaining = 0.05
+        engine.setCardTimeRemainingForTests(0.05)
         try await Task.sleep(for: .milliseconds(300))
         #expect(engine.cards[0].timedOut == true)
     }
@@ -407,7 +407,7 @@ struct SumSprintEngineTests {
         engine.selectDifficulty(.sprint)
         let timedOutFact = engine.cards[0].fact
         // Force immediate timeout on card 0
-        engine.cardTimeRemaining = 0.05
+        engine.setCardTimeRemainingForTests(0.05)
         try await Task.sleep(for: .milliseconds(300))
         // The re-queued card should appear somewhere after the original 15
         let requeuedKey = timedOutFact.factKey

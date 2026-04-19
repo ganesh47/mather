@@ -150,6 +150,12 @@ final class SumSprintEngine {
         }
     }
 
+    /// Test-only hook for driving near-timeout scenarios without exposing the
+    /// countdown setter publicly in production code.
+    func setCardTimeRemainingForTests(_ seconds: Double) {
+        cardTimeRemaining = seconds
+    }
+
     // MARK: - Private: card display
 
     private func showCurrentCard() {
