@@ -23,15 +23,15 @@ enum PlaceMatchService {
     // MARK: - Tunable thresholds
 
     /// Child must be within this many metres of the saved GPS coordinate (outdoor).
-    static var gpsMatchMetres: Double = 15.0
+    static let gpsMatchMetres: Double = 15.0
     /// GPS within this range shows "almost there" instead of "wrong place".
-    static var gpsCloseMetres: Double = 30.0
+    static let gpsCloseMetres: Double = 30.0
     /// VNFeaturePrintObservation distance treated as same place (indoor).
-    static var visionMatchDistance: Float = 0.65
+    static let visionMatchDistance: Float = 0.65
     /// VNFeaturePrintObservation distance treated as "almost" (indoor).
-    static var visionCloseDistance: Float = 1.0
+    static let visionCloseDistance: Float = 1.0
     /// Discard GPS fixes with horizontal accuracy worse than this (metres).
-    static var gpsAccuracyCutoff: Double = 20.0
+    static let gpsAccuracyCutoff: Double = 20.0
 
     // MARK: - Evaluation
 
