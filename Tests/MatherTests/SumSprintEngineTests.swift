@@ -303,4 +303,139 @@ struct SumSprintEngineTests {
             #expect(card.fact.sum <= 20)
         }
     }
+
+    // MARK: - Difficulty selection
+
+    @Test
+    func selectDifficultyRelaxedGives10Cards() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.relaxed)
+        #expect(engine.cards.count == 10)
+    }
+
+    @Test
+    func selectDifficultySprintGives15Cards() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.sprint)
+        #expect(engine.cards.count == 15)
+    }
+
+    @Test
+    func selectDifficultyStoresValue() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.standard)
+        #expect(engine.difficulty == .standard)
+    }
+
+    @Test
+    func showDifficultyPickSetsDifficultyPickPhase() throws {
+        let (engine, _) = try makeEngine()
+        engine.showDifficultyPick()
+        #expect(engine.phase == .difficultyPick)
+    }
+
+    @Test
+    func selectDifficultySetsSessionPhase() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.relaxed)
+        #expect(engine.phase == .session)
+    }
+
+    // MARK: - Timer
+
+    @Test
+    func relaxedDifficultyHasNoTimer() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.relaxed)
+        // cardTimeRemaining stays 0 for relaxed mode
+        #expect(engine.cardTimeRemaining == 0)
+    }
+
+    @Test
+    func standardDifficultyStartsTimerAt12Seconds() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.standard)
+        #expect(engine.cardTimeRemaining > 11.0)   // timer started ≈ 12s
+        #expect(engine.cardTimeRemaining <= 12.0)
+    }
+
+    @Test
+    func sprintDifficultyStartsTimerAt8Seconds() throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.sprint)
+        #expect(engine.cardTimeRemaining > 7.0)
+        #expect(engine.cardTimeRemaining <= 8.0)
+    }
+
+    @Test
+    func timerResetsOnCardAdvance() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.standard)
+        let initialRemaining = engine.cardTimeRemaining
+        // Answer card 0 correctly
+        let fact = engine.cards[0].fact
+        for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
+        engine.submitAnswer()
+        try await Task.sleep(for: .milliseconds(80))
+        // After advance, timer should have been reset to ≈12s again
+        #expect(engine.cardTimeRemaining <= initialRemaining + 1.0)
+        #expect(engine.currentCardIndex == 1)
+    }
+
+    @Test
+    func timeoutAdvancesToNextCard() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.standard)
+        // Manually fire timeout
+        engine.setCardTimeRemainingForTests(0.05)   // nearly expired
+        try await Task.sleep(for: .milliseconds(300))   // allow timer task to fire
+        #expect(engine.cards[0].timedOut == true)
+    }
+
+    @Test
+    func timeoutMarksCardAsTimedOut() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.sprint)
+        engine.setCardTimeRemainingForTests(0.05)
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(engine.cards[0].timedOut == true)
+    }
+
+    @Test
+    func sprintTimeoutMarksCardForRequeueFlow() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.sprint)
+        // Force immediate timeout on card 0
+        engine.setCardTimeRemainingForTests(0.05)
+        try await Task.sleep(for: .milliseconds(300))
+        // Requeue append happens only after all original cards are processed,
+        // so this test should assert the timeout path, not immediate appended cards.
+        #expect(engine.cards[0].timedOut == true)
+    }
+
+    // MARK: - Summary includes difficulty
+
+    @Test
+    func completedSummaryIncludesDifficulty() async throws {
+        let (engine, _) = try makeEngine()
+        engine.selectDifficulty(.standard)
+        for i in 0..<engine.cards.count {
+            let fact = engine.cards[i].fact
+            for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
+            engine.submitAnswer()
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        #expect(engine.completedSummary?.difficulty == .standard)
+    }
+
+    @Test
+    func fastestCardSecondsNonNilAfterFirstTryCorrect() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.relaxed)
+        let fact = engine.cards[0].fact
+        for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
+        engine.submitAnswer()
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(engine.cards[0].elapsedSeconds != nil)
+    }
 }

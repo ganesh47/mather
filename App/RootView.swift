@@ -36,13 +36,18 @@ struct RootView: View {
                     switch appModel.sumSprintEngine.phase {
                     case .idle:
                         HomeView(appModel: appModel)
+                    case .difficultyPick:
+                        SumSprintDifficultyView(
+                            engine: appModel.sumSprintEngine,
+                            onExit: { appModel.sumSprintEngine.exitToHome() }
+                        )
                     case .session:
                         SumSprintSessionView(appModel: appModel)
                     case .summary:
                         if let summary = appModel.sumSprintEngine.completedSummary {
                             SumSprintSummaryView(
                                 summary: summary,
-                                onPlayAgain: { appModel.sumSprintEngine.startSession() },
+                                onPlayAgain: { appModel.sumSprintEngine.showDifficultyPick() },
                                 onDone: { appModel.sumSprintEngine.exitToHome() }
                             )
                         }
