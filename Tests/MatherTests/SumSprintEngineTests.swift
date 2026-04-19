@@ -402,19 +402,15 @@ struct SumSprintEngineTests {
     }
 
     @Test
-    func sprintRequeuedCardAppearsAtEnd() async throws {
+    func sprintTimeoutMarksCardForRequeueFlow() async throws {
         let (engine, _) = try makeEngine(feedbackDuration: 0)
         engine.selectDifficulty(.sprint)
-        let timedOutFact = engine.cards[0].fact
         // Force immediate timeout on card 0
         engine.setCardTimeRemainingForTests(0.05)
         try await Task.sleep(for: .milliseconds(300))
-        // The re-queued card should appear somewhere after the original 15
-        let requeuedKey = timedOutFact.factKey
-        let requeued = engine.cards.dropFirst(15).first { $0.fact.factKey == requeuedKey }
-        // May not yet be appended (only after all original cards processed), so just verify timeout was recorded
+        // Requeue append happens only after all original cards are processed,
+        // so this test should assert the timeout path, not immediate appended cards.
         #expect(engine.cards[0].timedOut == true)
-        _ = requeued  // suppress unused warning
     }
 
     // MARK: - Summary includes difficulty
