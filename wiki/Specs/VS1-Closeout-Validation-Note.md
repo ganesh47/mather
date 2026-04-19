@@ -12,6 +12,10 @@ VS1 is implemented and represented in code, tests, and CI, but final milestone c
 ## What is validated
 - Core child flow exists and is testable end-to-end:
   - Home -> Session setup -> Concrete -> Pictorial -> Abstract -> Transfer -> Session complete
+- Reopened issue #222 loop now has a deterministic simulator evidence lane:
+  - `Tests/MatherUITests/ScreenshotTests.swift` includes `testScreenshot_Issue222LoopV2_AcrossTwoTargets`
+  - It clears `Make it -> Gravity Split -> Sum Sprint -> Bond Blast` twice in one session for deterministic targets 6 and 9
+  - Each pass attaches screenshots to the `.xcresult`, so the route is inspectable without reconstructing the session manually
 - Parent-facing flows exist:
   - Parent Summary
   - Settings
@@ -33,8 +37,24 @@ VS1 is implemented and represented in code, tests, and CI, but final milestone c
 ## Recommended next closeout inputs
 1. Run or summarize real pilot sessions.
 2. Record median duration and major observations.
-3. Confirm iPad + iPhone smoke-test outcome in one short note.
+3. Run `scripts/run_issue222_closeout_validation.sh` and confirm the iPhone + iPad result bundles contain the issue #222 loop screenshots.
 4. Then decide whether to close the milestone.
+
+## Practical runner
+Use the local runner when you need fresh simulator evidence for issue #222:
+
+```bash
+scripts/run_issue222_closeout_validation.sh
+```
+
+It will:
+- regenerate the project with `xcodegen` when available, otherwise reuse the checked-in `Mather.xcodeproj`
+- run the deterministic issue #222 screenshot test on `iPhone 16` and `iPad Pro 13-inch (M4)` simulators
+- write per-device `.xcresult` bundles under `artifacts/issue222-closeout-validation/<timestamp>/`
+
+Open the `.xcresult` bundles in Xcode's report navigator to review the attached screenshots for:
+- target 6 concrete, gravity split, sum sprint, and bond blast
+- target 9 concrete, gravity split, sum sprint, and bond blast
 
 ## Important note
 This page is a staging note only. It should support milestone review, not replace it.
