@@ -87,12 +87,51 @@ struct RoomSessionView: View {
 
     // MARK: - On-screen CPA views (reuse VS1 views)
 
+    /// Compact token-collection recap shown at the top of every on-screen CPA stage.
+    /// Bridges the physical room phase ("you picked up 3 and 5") to the abstract math work.
+    @ViewBuilder
+    private var roomContextBanner: some View {
+        if let p = engine.problem {
+            CardSurface {
+                VStack(spacing: 4) {
+                    Text("tokens you collected")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    HStack(spacing: 10) {
+                        Spacer(minLength: 0)
+                        Text(RoomQuestStationRole.redRocket.icon).font(.title2)
+                        Text("\(p.decompositionA)")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.warm)
+                        Text("+")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                        Text(RoomQuestStationRole.blueBubble.icon).font(.title2)
+                        Text("\(p.decompositionB)")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.accent)
+                        Text("=")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                        Text("\(p.target)")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+
     @ViewBuilder
     private var onScreenPictorialView: some View {
         if let p = engine.problem {
             ScrollView {
                 VStack(spacing: 20) {
                     FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
+                    roomContextBanner
                     SplitView(
                         target: p.target,
                         leftCount: engine.splitLeftCount,
@@ -113,6 +152,7 @@ struct RoomSessionView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
+                    roomContextBanner
                     EquationResolveView(
                         target: p.target,
                         leftInput: engine.equationLeftInput,
@@ -146,6 +186,7 @@ struct RoomSessionView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     FeedbackBannerView(message: engine.feedbackMessage, isCelebrating: engine.showCelebration)
+                    roomContextBanner
                     TransferCheckView(
                         problem: p,
                         leftCount: engine.transferLeftCount,
