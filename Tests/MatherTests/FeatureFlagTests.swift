@@ -35,15 +35,17 @@ struct FeatureFlagTests {
         #expect(flags.hapticsEnabled == true)
     }
 
-
-    @Test func loopV2FlagDefaultsOffAndPersists() {
-        let defaults = UserDefaults(suiteName: #function)!
-        let flags = FeatureFlagService(defaults: defaults)
+    @Test func makeBreakLoopV2DefaultsFalse() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         #expect(flags.makeBreakLoopV2Enabled == false)
-        flags.makeBreakLoopV2Enabled = true
-
-        let reloaded = FeatureFlagService(defaults: defaults)
-        #expect(reloaded.makeBreakLoopV2Enabled)
     }
 
+    @Test func makeBreakLoopV2PersistsAcrossInstances() {
+        let defaults = UserDefaults(suiteName: #function)!
+        let flags1 = FeatureFlagService(defaults: defaults)
+        flags1.makeBreakLoopV2Enabled = true
+
+        let flags2 = FeatureFlagService(defaults: defaults)
+        #expect(flags2.makeBreakLoopV2Enabled)
+    }
 }

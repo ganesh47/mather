@@ -54,7 +54,9 @@ final class FeatureFlagService {
         didSet { defaults.set(vs1GravitySplitEnabled, forKey: Keys.vs1GravitySplitEnabled) }
     }
 
-    /// Enables the issue #222 per-target loop: Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
+    /// Enables the reopened issue #222 per-target loop:
+    /// Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
+    /// Default false until recovery QA signs off.
     var makeBreakLoopV2Enabled: Bool {
         didSet { defaults.set(makeBreakLoopV2Enabled, forKey: Keys.makeBreakLoopV2Enabled) }
     }
