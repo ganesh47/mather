@@ -48,14 +48,20 @@ enum SliceEventType: String, Codable {
 }
 
 struct SliceConfig: Codable, Equatable {
+    private static let allowedTargets = 1...20
+
     var maxProblems: Int = 6
-    var minTarget: Int = 6
-    var maxTarget: Int = 10
+    var minTarget: Int = allowedTargets.lowerBound
+    var maxTarget: Int = allowedTargets.upperBound
     var showTransfer: Bool = true
     var audioEnabled: Bool = true
     var deterministicMode: Bool = true
 
-    var targetRange: ClosedRange<Int> { minTarget...maxTarget }
+    var targetRange: ClosedRange<Int> {
+        let lower = min(max(minTarget, Self.allowedTargets.lowerBound), Self.allowedTargets.upperBound)
+        let upper = min(max(maxTarget, Self.allowedTargets.lowerBound), Self.allowedTargets.upperBound)
+        return min(lower, upper)...max(lower, upper)
+    }
 }
 
 struct SliceProblem: Identifiable, Codable, Equatable {
