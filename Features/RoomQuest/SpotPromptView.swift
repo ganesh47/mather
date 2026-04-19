@@ -88,6 +88,30 @@ struct SpotPromptView: View {
 
                 Spacer()
 
+                // Reference thumbnail — shows the saved photo so the child knows where to go
+                if let imageData = station?.referenceImageJPEGData,
+                   let uiImage = UIImage(data: imageData) {
+                    CardSurface {
+                        HStack(spacing: 12) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Find this place")
+                                    .font(.headline.weight(.bold))
+                                    .foregroundStyle(MatherTheme.ink)
+                                Text("Walk to where this photo was taken")
+                                    .font(.subheadline)
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+
                 // Camera scan button — only active for stations with a saved photo reference
                 if station?.referenceCaptureState == .captured {
                     let isScanBusy: Bool = {

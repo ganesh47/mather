@@ -5,6 +5,19 @@ import Observation
 import RealityKit
 import SwiftUI
 
+// MARK: - Verify feedback
+
+/// Result of a place-comparison attempt in `.verify` mode.
+/// Drives the feedback overlay inside the scanner sheet.
+enum VerifyFeedback: Equatable {
+    case evaluating                   // PlaceMatchService is running
+    case match                        // confirmed — continuation already resolved
+    case close(wasGPS: Bool)          // almost there
+    case noMatch(wasGPS: Bool)        // wrong place
+}
+
+// MARK: - Live scanner
+
 @MainActor
 @Observable
 final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
@@ -12,46 +25,127 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
         let id = UUID()
         let expectedRole: RoomQuestStationRole
         let mode: RoomQuestScanMode
+        let savedReference: RoomQuestSavedReference?
         let continuation: CheckedContinuation<RoomQuestMarkerScanResult, Error>
     }
 
     private(set) var activeSession: Session?
+    private(set) var verifyFeedback: VerifyFeedback? = nil
 
-    func scanMarker(for role: RoomQuestStationRole, mode: RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult {
-        try await withCheckedThrowingContinuation { continuation in
-            activeSession = Session(expectedRole: role, mode: mode, continuation: continuation)
+    /// Location service — owned here so GPS coordinates are captured at the exact photo moment.
+    let locationService = LocationService()
+
+    // MARK: - Protocol
+
+    func scanMarker(
+        for role: RoomQuestStationRole,
+        mode: RoomQuestScanMode,
+        savedReference: RoomQuestSavedReference?
+    ) async throws -> RoomQuestMarkerScanResult {
+        verifyFeedback = nil
+        locationService.requestWhenInUseIfNeeded()
+        locationService.startUpdates()
+        return try await withCheckedThrowingContinuation { continuation in
+            activeSession = Session(
+                expectedRole: role,
+                mode: mode,
+                savedReference: savedReference,
+                continuation: continuation
+            )
         }
     }
 
+    // MARK: - Resolution paths
+
+    /// Called from `ScannerViewController` when a photo is taken.
+    /// • Setup mode: include GPS from `locationService`, resolve immediately.
+    /// • Verify mode: run PlaceMatchService; resolve on `.match`, set `verifyFeedback` otherwise.
+    func resolveWithPhoto(_ jpegData: Data) {
+        guard let session = activeSession else { return }
+
+        switch session.mode {
+
+        case .setup:
+            let loc = locationService.lastLocation
+            session.continuation.resume(returning: RoomQuestMarkerScanResult(
+                role: session.expectedRole,
+                markerPayload: nil,
+                referenceImageJPEGData: jpegData,
+                referenceLatitude: loc?.coordinate.latitude,
+                referenceLongitude: loc?.coordinate.longitude,
+                referenceGPSAccuracy: loc?.horizontalAccuracy,
+                usedARCelebration: false
+            ))
+            locationService.stopUpdates()
+            activeSession = nil
+
+        case .verify:
+            let savedRef = session.savedReference
+            let currentLocation = locationService.lastLocation
+            let expectedRole = session.expectedRole
+            let continuation = session.continuation
+            verifyFeedback = .evaluating
+
+            Task.detached { [weak self, savedRef, currentLocation] in
+                let (result, wasGPS) = PlaceMatchService.evaluate(
+                    savedLatitude: savedRef?.latitude,
+                    savedLongitude: savedRef?.longitude,
+                    savedGPSAccuracy: savedRef?.gpsAccuracy,
+                    currentLocation: currentLocation,
+                    savedImageData: savedRef?.imageJPEGData,
+                    candidateImageData: jpegData
+                )
+                await MainActor.run { [weak self] in
+                    guard let self, self.activeSession != nil else {
+                        // Session was cancelled while PlaceMatchService ran — ignore.
+                        return
+                    }
+                    switch result {
+                    case .match:
+                        self.verifyFeedback = .match
+                        continuation.resume(returning: RoomQuestMarkerScanResult(
+                            role: expectedRole,
+                            markerPayload: nil,
+                            referenceImageJPEGData: nil,
+                            usedARCelebration: false
+                        ))
+                        self.locationService.stopUpdates()
+                        self.activeSession = nil
+                    case .close:
+                        self.verifyFeedback = .close(wasGPS: wasGPS)
+                    case .noMatch:
+                        self.verifyFeedback = .noMatch(wasGPS: wasGPS)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Called when the QR scanner detects a valid marker (setup mode only).
     func resolveScan(payload: String) {
         guard let session = activeSession else { return }
         guard let detectedRole = Self.role(from: payload) else {
             session.continuation.resume(throwing: RoomQuestScannerError.unavailable)
+            locationService.stopUpdates()
             activeSession = nil
             return
         }
         guard detectedRole == session.expectedRole else {
             session.continuation.resume(throwing: RoomQuestScannerError.wrongMarker(expected: session.expectedRole, detected: detectedRole))
+            locationService.stopUpdates()
             activeSession = nil
             return
         }
-        session.continuation.resume(returning: RoomQuestMarkerScanResult(role: detectedRole, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: true))
-        activeSession = nil
-    }
-
-    /// Called when parent takes a photo to save this place as the station reference.
-    func resolveWithPhoto(_ jpegData: Data) {
-        guard let session = activeSession else { return }
         session.continuation.resume(returning: RoomQuestMarkerScanResult(
-            role: session.expectedRole,
-            markerPayload: nil,
-            referenceImageJPEGData: jpegData,
-            usedARCelebration: false
+            role: detectedRole,
+            markerPayload: payload,
+            referenceImageJPEGData: nil,
+            usedARCelebration: true
         ))
+        locationService.stopUpdates()
         activeSession = nil
     }
 
-    /// Called when child confirms they are at the correct spot (no QR required).
     func resolveWithConfirm() {
         guard let session = activeSession else { return }
         session.continuation.resume(returning: RoomQuestMarkerScanResult(
@@ -60,26 +154,30 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             referenceImageJPEGData: nil,
             usedARCelebration: false
         ))
+        locationService.stopUpdates()
         activeSession = nil
     }
 
     func cancelScan() {
         guard let session = activeSession else { return }
         session.continuation.resume(throwing: RoomQuestScannerError.cancelled)
+        locationService.stopUpdates()
         activeSession = nil
+        verifyFeedback = nil
     }
+
+    // MARK: - Helpers
 
     private static func role(from payload: String) -> RoomQuestStationRole? {
         switch payload.trimmingCharacters(in: .whitespacesAndNewlines) {
-        case "mather:roomquest:redRocket:v1":
-            return .redRocket
-        case "mather:roomquest:blueBubble:v1":
-            return .blueBubble
-        default:
-            return nil
+        case "mather:roomquest:redRocket:v1":  return .redRocket
+        case "mather:roomquest:blueBubble:v1": return .blueBubble
+        default: return nil
         }
     }
 }
+
+// MARK: - Sheet wrapper
 
 struct RoomQuestScannerSheet: View {
     @Bindable var scanner: RoomQuestLiveScanner
@@ -91,6 +189,8 @@ struct RoomQuestScannerSheet: View {
                     RoomQuestCameraScannerView(
                         expectedRole: session.expectedRole,
                         scanMode: session.mode,
+                        savedImageData: session.savedReference?.imageJPEGData,
+                        verifyFeedback: scanner.verifyFeedback,
                         onPayload: { payload in scanner.resolveScan(payload: payload) },
                         onPhoto: { jpegData in scanner.resolveWithPhoto(jpegData) },
                         onConfirm: { scanner.resolveWithConfirm() },
@@ -106,9 +206,13 @@ struct RoomQuestScannerSheet: View {
     }
 }
 
+// MARK: - UIViewControllerRepresentable bridge
+
 private struct RoomQuestCameraScannerView: UIViewControllerRepresentable {
     let expectedRole: RoomQuestStationRole
     let scanMode: RoomQuestScanMode
+    let savedImageData: Data?
+    let verifyFeedback: VerifyFeedback?
     let onPayload: (String) -> Void
     let onPhoto: (Data) -> Void
     let onConfirm: () -> Void
@@ -118,6 +222,7 @@ private struct RoomQuestCameraScannerView: UIViewControllerRepresentable {
         let controller = ScannerViewController()
         controller.expectedRole = expectedRole
         controller.scanMode = scanMode
+        controller.savedImageData = savedImageData
         controller.onPayload = onPayload
         controller.onPhoto = onPhoto
         controller.onConfirm = onConfirm
@@ -125,8 +230,14 @@ private struct RoomQuestCameraScannerView: UIViewControllerRepresentable {
         return controller
     }
 
-    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {
+        if let feedback = verifyFeedback {
+            uiViewController.applyVerifyFeedback(feedback)
+        }
+    }
 }
+
+// MARK: - ScannerViewController
 
 final class ScannerViewController: UIViewController,
     @preconcurrency AVCaptureMetadataOutputObjectsDelegate,
@@ -134,6 +245,7 @@ final class ScannerViewController: UIViewController,
 
     var expectedRole: RoomQuestStationRole = .redRocket
     var scanMode: RoomQuestScanMode = .setup
+    var savedImageData: Data? = nil
     var onPayload: ((String) -> Void)?
     var onPhoto: ((Data) -> Void)?
     var onConfirm: (() -> Void)?
@@ -143,6 +255,13 @@ final class ScannerViewController: UIViewController,
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var photoOutput: AVCapturePhotoOutput?
     private var hasResolved = false
+    private var isEvaluating = false     // verify mode: prevents re-tap while PlaceMatch runs
+
+    // Verify mode overlays
+    private var thumbnailContainer: UIView?
+    private var feedbackBanner: UIView?
+    private var feedbackLabel: UILabel?
+    private var primaryButton: UIButton?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -171,14 +290,15 @@ final class ScannerViewController: UIViewController,
         }
         captureSession.addInput(input)
 
-        let metadataOutput = AVCaptureMetadataOutput()
-        guard captureSession.canAddOutput(metadataOutput) else {
-            onCancel?()
-            return
+        // QR metadata only needed in setup mode (verify uses photo comparison)
+        if scanMode == .setup {
+            let metadataOutput = AVCaptureMetadataOutput()
+            if captureSession.canAddOutput(metadataOutput) {
+                captureSession.addOutput(metadataOutput)
+                metadataOutput.setMetadataObjectsDelegate(self, queue: .main)
+                metadataOutput.metadataObjectTypes = [.qr]
+            }
         }
-        captureSession.addOutput(metadataOutput)
-        metadataOutput.setMetadataObjectsDelegate(self, queue: .main)
-        metadataOutput.metadataObjectTypes = [.qr]
 
         let photoOut = AVCapturePhotoOutput()
         if captureSession.canAddOutput(photoOut) {
@@ -199,49 +319,39 @@ final class ScannerViewController: UIViewController,
     }
 
     private func addOverlay() {
+        switch scanMode {
+        case .setup:
+            addSetupOverlay()
+        case .verify:
+            addVerifyOverlay()
+        }
+    }
+
+    // MARK: Setup overlay
+
+    private func addSetupOverlay() {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textAlignment = .center
         label.numberOfLines = 0
         label.textColor = .white
         label.font = .preferredFont(forTextStyle: .title2)
+        label.text = "Point at the \(expectedRole.title) spot, then save a photo"
 
-        var primaryConfig = UIButton.Configuration.filled()
-        primaryConfig.cornerStyle = .large
-        primaryConfig.buttonSize = .large
+        var config = UIButton.Configuration.filled()
+        config.cornerStyle = .large
+        config.buttonSize = .large
+        config.title = "📸 Save this place"
+        config.baseBackgroundColor = .systemBlue
 
-        let primaryButton: UIButton
-        let cancelButton = UIButton(type: .system)
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle("Use fallback instead", for: .normal)
-        cancelButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        cancelButton.tintColor = .white
-        cancelButton.addAction(UIAction { [weak self] _ in self?.onCancel?() }, for: .touchUpInside)
+        let btn = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            self?.capturePhoto()
+        })
+        btn.translatesAutoresizingMaskIntoConstraints = false
 
-        switch scanMode {
-        case .setup:
-            label.text = "Point at the \(expectedRole.title) spot, then save a photo"
-            primaryConfig.title = "📸 Save this place"
-            primaryConfig.baseBackgroundColor = .systemBlue
-            primaryButton = UIButton(configuration: primaryConfig, primaryAction: UIAction { [weak self] _ in
-                self?.capturePhoto()
-            })
+        let cancelButton = makeCancelButton()
 
-        case .verify:
-            label.text = "Are you standing at the \(expectedRole.title) spot?"
-            primaryConfig.title = "✓ That's my spot!"
-            primaryConfig.baseBackgroundColor = .systemGreen
-            primaryButton = UIButton(configuration: primaryConfig, primaryAction: UIAction { [weak self] _ in
-                guard let self, !self.hasResolved else { return }
-                self.hasResolved = true
-                self.captureSession.stopRunning()
-                self.onConfirm?()
-            })
-        }
-
-        primaryButton.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = UIStackView(arrangedSubviews: [label, primaryButton, cancelButton])
+        let stack = UIStackView(arrangedSubviews: [label, btn, cancelButton])
         stack.axis = .vertical
         stack.spacing = 16
         stack.alignment = .center
@@ -252,10 +362,175 @@ final class ScannerViewController: UIViewController,
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
-            primaryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
-            primaryButton.widthAnchor.constraint(equalTo: stack.widthAnchor)
+            btn.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
+            btn.widthAnchor.constraint(equalTo: stack.widthAnchor)
         ])
     }
+
+    // MARK: Verify overlay
+
+    private func addVerifyOverlay() {
+        // --- Reference thumbnail (top-left) ---
+        if let imageData = savedImageData, let uiImage = UIImage(data: imageData) {
+            let container = makeThumbnailContainer(image: uiImage)
+            view.addSubview(container)
+            thumbnailContainer = container
+            NSLayoutConstraint.activate([
+                container.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+                container.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+                container.widthAnchor.constraint(equalToConstant: 130),
+            ])
+        }
+
+        // --- Primary action button ---
+        var config = UIButton.Configuration.filled()
+        config.cornerStyle = .large
+        config.buttonSize = .large
+        config.title = "📸 Check my spot"
+        config.baseBackgroundColor = .systemGreen
+
+        let btn = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            guard let self, !self.hasResolved, !self.isEvaluating else { return }
+            self.isEvaluating = true
+            self.updatePrimaryButton(enabled: false)
+            self.capturePhoto()
+        })
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        self.primaryButton = btn
+
+        let cancelButton = makeCancelButton()
+
+        // --- Feedback banner (hidden until feedback arrives) ---
+        let bannerView = UIView()
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
+        bannerView.layer.cornerRadius = 14
+        bannerView.clipsToBounds = true
+        bannerView.isHidden = true
+        self.feedbackBanner = bannerView
+
+        let bannerLabel = UILabel()
+        bannerLabel.translatesAutoresizingMaskIntoConstraints = false
+        bannerLabel.textAlignment = .center
+        bannerLabel.numberOfLines = 0
+        bannerLabel.textColor = .white
+        bannerLabel.font = .preferredFont(forTextStyle: .headline)
+        bannerView.addSubview(bannerLabel)
+        self.feedbackLabel = bannerLabel
+
+        NSLayoutConstraint.activate([
+            bannerLabel.leadingAnchor.constraint(equalTo: bannerView.leadingAnchor, constant: 16),
+            bannerLabel.trailingAnchor.constraint(equalTo: bannerView.trailingAnchor, constant: -16),
+            bannerLabel.topAnchor.constraint(equalTo: bannerView.topAnchor, constant: 12),
+            bannerLabel.bottomAnchor.constraint(equalTo: bannerView.bottomAnchor, constant: -12)
+        ])
+
+        let stack = UIStackView(arrangedSubviews: [bannerView, btn, cancelButton])
+        stack.axis = .vertical
+        stack.spacing = 16
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
+            btn.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
+            btn.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            bannerView.widthAnchor.constraint(equalTo: stack.widthAnchor)
+        ])
+    }
+
+    private func makeThumbnailContainer(image: UIImage) -> UIView {
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.backgroundColor = UIColor.black.withAlphaComponent(0.55)
+        container.layer.cornerRadius = 12
+        container.clipsToBounds = true
+
+        let imageView = UIImageView(image: image)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 10
+
+        let caption = UILabel()
+        caption.translatesAutoresizingMaskIntoConstraints = false
+        caption.text = "Find this place"
+        caption.textColor = .white
+        caption.font = .preferredFont(forTextStyle: .caption1)
+        caption.textAlignment = .center
+
+        container.addSubview(imageView)
+        container.addSubview(caption)
+
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 8),
+            imageView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+            imageView.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            imageView.heightAnchor.constraint(equalToConstant: 90),
+            caption.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 8),
+            caption.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+            caption.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 4),
+            caption.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+        ])
+        return container
+    }
+
+    private func makeCancelButton() -> UIButton {
+        let btn = UIButton(type: .system)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setTitle("Use fallback instead", for: .normal)
+        btn.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        btn.tintColor = .white
+        btn.addAction(UIAction { [weak self] _ in self?.onCancel?() }, for: .touchUpInside)
+        return btn
+    }
+
+    // MARK: Verify feedback
+
+    /// Called from `updateUIViewController` when `verifyFeedback` changes.
+    func applyVerifyFeedback(_ feedback: VerifyFeedback) {
+        switch feedback {
+        case .evaluating:
+            updatePrimaryButton(enabled: false)
+            feedbackBanner?.isHidden = true
+
+        case .match:
+            // Sheet auto-dismisses when `activeSession` is set to nil in scanner.
+            // Camera stops in `viewWillDisappear`. Nothing to do here.
+            break
+
+        case .close(let wasGPS):
+            isEvaluating = false
+            updatePrimaryButton(enabled: true)
+            let msg = wasGPS
+                ? "Almost there! Walk a bit closer, then tap again."
+                : "Almost! Move the camera to look more like the saved photo."
+            showFeedbackBanner(message: msg, color: UIColor.systemOrange)
+
+        case .noMatch(let wasGPS):
+            isEvaluating = false
+            updatePrimaryButton(enabled: true)
+            let msg = wasGPS
+                ? "Wrong place — keep walking and looking around."
+                : "Wrong place — the camera view looks different. Keep searching."
+            showFeedbackBanner(message: msg, color: UIColor.systemRed.withAlphaComponent(0.85))
+        }
+    }
+
+    private func showFeedbackBanner(message: String, color: UIColor) {
+        feedbackLabel?.text = message
+        feedbackBanner?.backgroundColor = color
+        feedbackBanner?.isHidden = false
+    }
+
+    private func updatePrimaryButton(enabled: Bool) {
+        primaryButton?.isEnabled = enabled
+        primaryButton?.alpha = enabled ? 1.0 : 0.6
+    }
+
+    // MARK: Photo capture
 
     private func capturePhoto() {
         guard !hasResolved else { return }
@@ -276,13 +551,19 @@ final class ScannerViewController: UIViewController,
         }
         Task { @MainActor [weak self] in
             guard let self, !self.hasResolved else { return }
-            self.hasResolved = true
-            self.captureSession.stopRunning()
-            self.onPhoto?(jpegData)
+            if self.scanMode == .setup {
+                // Setup: stop camera now, resolve immediately
+                self.hasResolved = true
+                self.captureSession.stopRunning()
+                self.onPhoto?(jpegData)
+            } else {
+                // Verify: keep camera running for retries; scanner drives resolution
+                self.onPhoto?(jpegData)
+            }
         }
     }
 
-    // MARK: - AVCaptureMetadataOutputObjectsDelegate
+    // MARK: - AVCaptureMetadataOutputObjectsDelegate (setup only)
 
     @MainActor
     private func presentARCelebration(for payload: String) {
@@ -306,6 +587,8 @@ final class ScannerViewController: UIViewController,
         }
     }
 }
+
+// MARK: - AR Celebration
 
 @MainActor
 private final class RoomQuestARCelebrationViewController: UIViewController {

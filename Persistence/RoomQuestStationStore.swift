@@ -20,6 +20,9 @@ final class RoomQuestStationStore {
         if let existing = try modelContext.fetch(descriptor).first {
             existing.markerPayload = draft.markerPayload
             existing.referenceImageJPEGData = draft.referenceImageJPEGData
+            existing.referenceLatitude = draft.referenceLatitude
+            existing.referenceLongitude = draft.referenceLongitude
+            existing.referenceGPSAccuracy = draft.referenceGPSAccuracy
             existing.capturedAt = draft.capturedAt
             existing.note = draft.note
             existing.captureStateRawValue = draft.captureState.rawValue
@@ -29,6 +32,9 @@ final class RoomQuestStationStore {
                     role: draft.role,
                     markerPayload: draft.markerPayload,
                     referenceImageJPEGData: draft.referenceImageJPEGData,
+                    referenceLatitude: draft.referenceLatitude,
+                    referenceLongitude: draft.referenceLongitude,
+                    referenceGPSAccuracy: draft.referenceGPSAccuracy,
                     capturedAt: draft.capturedAt,
                     note: draft.note,
                     captureState: draft.captureState
