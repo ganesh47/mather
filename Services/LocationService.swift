@@ -39,8 +39,9 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
         Task { @MainActor [weak self] in
-            self?.authorizationStatus = manager.authorizationStatus
+            self?.authorizationStatus = status
         }
     }
 }
