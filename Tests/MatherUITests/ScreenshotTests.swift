@@ -453,9 +453,13 @@ final class ScreenshotTests: XCTestCase {
 
         for answer in sumSprintAnswers {
             for digit in answer {
-                app.buttons[String(digit)].tap()
+                let digitButton = revealButton(String(digit), in: app)
+                XCTAssertTrue(digitButton.waitForExistence(timeout: 5), "Expected Sum Sprint digit \(digit) for target \(target)")
+                digitButton.tap()
             }
-            app.buttons["Go"].tap()
+            let goButton = revealButton("Go", in: app)
+            XCTAssertTrue(goButton.waitForExistence(timeout: 5), "Expected Sum Sprint Go button for target \(target)")
+            goButton.tap()
         }
 
         let bondBlastTitle = app.staticTexts["Bond Blast!"]
@@ -470,6 +474,25 @@ final class ScreenshotTests: XCTestCase {
             leftCard.tap()
             rightCard.tap()
         }
+    }
+
+    private func revealButton(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        let button = app.buttons[label]
+        if button.waitForExistence(timeout: 1) {
+            return button
+        }
+
+        let scrollView = app.scrollViews.firstMatch
+        for _ in 0..<4 {
+            if button.exists { return button }
+            if scrollView.exists {
+                scrollView.swipeUp()
+            } else {
+                app.swipeUp()
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return button
     }
 
     private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
