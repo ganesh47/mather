@@ -128,6 +128,19 @@ struct HomeView: View {
         .accessibilityIdentifier("Play")
     }
 
+    private var lockedActivityCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Make & Break 1–20")
+                    .font(.title2.weight(.bold))
+                Text("Enable the activity in Settings before handing the iPad to your child.")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     // MARK: - Explorer Lab card
 
     private var labCard: some View {

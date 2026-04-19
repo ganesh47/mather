@@ -1,6 +1,33 @@
 import Foundation
 
 enum SliceStateMachine {
+    static func nextStage(
+        after stage: SliceStage,
+        success: Bool,
+        routeMode: SliceRouteMode
+    ) -> SliceStage {
+        guard success else { return stage }
+
+        switch routeMode {
+        case .makeBreakLoopV2:
+            switch stage {
+            case .concrete: return .gravitySplit
+            case .gravitySplit: return .sumSprint
+            case .sumSprint: return .bondMatch
+            case .bondMatch, .pictorial, .abstract, .transfer: return .done
+            case .done: return .done
+            }
+        case let .legacy(showTransfer, showGravitySplit, showBondMatch):
+            return nextStage(
+                after: stage,
+                success: success,
+                showTransfer: showTransfer,
+                showGravitySplit: showGravitySplit,
+                showBondMatch: showBondMatch
+            )
+        }
+    }
+
     /// Compute the next stage after `stage` succeeds.
     ///
     /// - Parameters:
@@ -44,6 +71,14 @@ enum SliceStateMachine {
         case .done:
             return .done
         }
+    }
+
+    static func canTransition(
+        from current: SliceStage,
+        to next: SliceStage,
+        routeMode: SliceRouteMode
+    ) -> Bool {
+        nextStage(after: current, success: true, routeMode: routeMode) == next
     }
 
     static func canTransition(

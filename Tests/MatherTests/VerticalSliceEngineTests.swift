@@ -50,6 +50,52 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func loopV2RoutesConcreteToGravitySplitToSumSprintToBondBlast() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+        #expect(engine.currentStage == .gravitySplit)
+
+        lockGravitySplit(engine, problem: problem)
+        await waitFor("gravity split lock") { engine.gravitySplitState?.isLocked == true }
+        await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
+        #expect(engine.currentStage == .sumSprint)
+        #expect((engine.sumSprintBurstState?.cards.count ?? 0) >= 1)
+        #expect((engine.sumSprintBurstState?.cards.count ?? 0) <= 3)
+
+        completeSumSprintBurst(engine)
+        await waitFor("bond blast after sum sprint") { engine.currentStage == .bondMatch }
+        #expect(engine.currentStage == .bondMatch)
+
+        let pairIds = engine.bondMatchState?.pairs.map(\.id) ?? []
+        #expect(!pairIds.isEmpty)
+        for id in pairIds {
+            engine.matchPair(id: id)
+        }
+
+        await waitFor("advance to next problem after loop v2 bond blast") {
+            engine.currentProblemIndex == 1 && engine.currentStage == .concrete
+        }
+        #expect(engine.currentProblemIndex == 1)
+        #expect(engine.currentStage == .concrete)
+    }
+
+    @Test
     func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true

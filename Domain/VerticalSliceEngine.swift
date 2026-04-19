@@ -103,6 +103,7 @@ final class VerticalSliceEngine {
     }
 
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
+    var sumSprintStageCardCount: Int { sumSprintBurstState?.cards.count ?? 0 }
 
     func showSettings() { route = .settings }
     func showHome() { route = .home }
@@ -193,11 +194,11 @@ final class VerticalSliceEngine {
         guard let currentProblem else { return }
         switch side {
         case .warm:
-            let maxWarm = min(5, max(currentProblem.target - concreteAccentCount, 0))
+            let maxWarm = min(10, max(currentProblem.target - concreteAccentCount, 0))
             concreteWarmCount = min(max(concreteWarmCount + delta, 0), maxWarm)
             recordInteraction(action: "place_warm", value: concreteWarmCount)
         case .accent:
-            let maxAccent = min(5, max(currentProblem.target - concreteWarmCount, 0))
+            let maxAccent = min(10, max(currentProblem.target - concreteWarmCount, 0))
             concreteAccentCount = min(max(concreteAccentCount + delta, 0), maxAccent)
             recordInteraction(action: "place_accent", value: concreteAccentCount)
         }
@@ -361,21 +362,21 @@ final class VerticalSliceEngine {
 
     /// Called by BondMatchView when the child begins dragging or taps a left card.
     func bondDragStarted(pairId: UUID) {
-        guard currentStage == .pictorial || currentStage == .bondMatch else { return }
+        guard isBondBlastStage else { return }
         hapticsService.cardPickup(enabled: featureFlags.hapticsEnabled)
         logBondMatchTelemetry("pair_drag_started", extra: ["pair_id": pairId.uuidString])
     }
 
     /// Called by BondMatchView when a dragged card is hovering near a snap target.
     func bondNearTarget() {
-        guard currentStage == .pictorial || currentStage == .bondMatch else { return }
+        guard isBondBlastStage else { return }
         hapticsService.cardNearSnap(enabled: featureFlags.hapticsEnabled)
     }
 
     /// Called when the child successfully matches a complement pair.
     /// Advances to `.done` when all pairs are matched.
     func matchPair(id: UUID) {
-        guard (currentStage == .pictorial || currentStage == .bondMatch),
+        guard isBondBlastStage,
               let problem = currentProblem,
               var state = bondMatchState,
               let idx = state.pairs.firstIndex(where: { $0.id == id }) else { return }
@@ -399,7 +400,7 @@ final class VerticalSliceEngine {
 
     /// Called when the child drops a card on the wrong target.
     func mismatchPair() {
-        guard (currentStage == .pictorial || currentStage == .bondMatch), let problem = currentProblem else { return }
+        guard isBondBlastStage, let problem = currentProblem else { return }
         logBondMatchTelemetry("pair_mismatch", extra: [:])
         hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
         let msg = "Try again! Find two numbers that make \(problem.target)."
@@ -454,20 +455,7 @@ final class VerticalSliceEngine {
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
-        // Bond Blast fires only on the last problem of the session.
-        let isLastProblem = currentProblemIndex + 1 >= problems.count
-        let makeBreakLoopV2Enabled = featureFlags.makeBreakLoopV2Enabled
-        let showBondMatch = makeBreakLoopV2Enabled || (featureFlags.vs1BondMatchEnabled && isLastProblem)
-        let showGravitySplit = makeBreakLoopV2Enabled || featureFlags.vs1GravitySplitEnabled
-
-        let next = SliceStateMachine.nextStage(
-            after: currentStage,
-            success: true,
-            showTransfer: config.showTransfer,
-            showGravitySplit: showGravitySplit,
-            showBondMatch: showBondMatch,
-            makeBreakLoopV2Enabled: makeBreakLoopV2Enabled
-        )
+        let next = SliceStateMachine.nextStage(after: currentStage, success: true, routeMode: routeMode)
         recordStageTransition(from: currentStage, to: next)
 
         // A problem is complete when the next stage is .done (the last meaningful
@@ -634,7 +622,7 @@ final class VerticalSliceEngine {
         let accuracy = completed == 0 ? 0 : Double(firstTryCount) / Double(completed)
 
         return ParentDigest(
-            objectiveTitle: "Make & Break Numbers",
+            objectiveTitle: "Make & Break 1–20",
             firstAttemptAccuracy: accuracy,
             medianLatencyMs: median,
             problemsCompleted: completed,
@@ -760,13 +748,21 @@ final class VerticalSliceEngine {
             let a = currentProblem.decompositionA
             let b = currentProblem.decompositionB
             return "Use plus and minus to build \(a) on one side and \(b) on the other."
+        case .sumSprint:
+            if let card = sumSprintBurstState?.currentCard {
+                return "Quick Sum Sprint. Solve \(card.prompt), then finish with Bond Blast."
+            }
+            return "Quick Sum Sprint! Solve a tiny burst, then finish with Bond Blast."
         case .done:
             return "Nice work."
         }
     }
 
     private func successMessage(for stage: SliceStage, problem: SliceProblem) -> String {
-        activeTheme.stageSuccessPhrase(for: stage, target: problem.target)
+        if stage == .sumSprint {
+            return "Nice burst! Now finish with Bond Blast for \(problem.target)."
+        }
+        return activeTheme.stageSuccessPhrase(for: stage, target: problem.target)
     }
 
     private func feedbackMessageForFailure(stage: SliceStage, problem: SliceProblem) -> String {
@@ -821,19 +817,39 @@ final class VerticalSliceEngine {
     private func appendDigit(to string: String, digit: Int) -> String {
         let candidate = (string + String(digit)).prefix(2)
         let numeric = Int(candidate) ?? 0
-        return numeric > 10 ? string : String(candidate)
+        return numeric > 20 ? string : String(candidate)
     }
 
     private func setConcreteTotal(_ total: Int) {
         let maxTotal = currentProblem?.target ?? 10
         let clamped = min(max(total, 0), maxTotal)
-        concreteWarmCount = min(clamped, 5)
+        concreteWarmCount = min(clamped, 10)
         concreteAccentCount = max(clamped - concreteWarmCount, 0)
         recordInteraction(action: "place", value: concreteCount)
         #if targetEnvironment(simulator)
         print("[Mather][concrete] warm=\(concreteWarmCount) accent=\(concreteAccentCount) total=\(concreteCount)")
         #endif
     }
+
+    private var isBondBlastStage: Bool {
+        if featureFlags.makeBreakLoopV2Enabled {
+            return currentStage == .bondMatch
+        }
+        return currentStage == .pictorial || currentStage == .bondMatch
+    }
+
+    private var routeMode: SliceRouteMode {
+        if featureFlags.makeBreakLoopV2Enabled {
+            return .makeBreakLoopV2
+        }
+        let isLastProblem = currentProblemIndex + 1 >= problems.count
+        return .legacy(
+            showTransfer: config.showTransfer,
+            showGravitySplit: featureFlags.vs1GravitySplitEnabled,
+            showBondMatch: featureFlags.vs1BondMatchEnabled && isLastProblem
+        )
+    }
+
 }
 
 enum EquationSide {

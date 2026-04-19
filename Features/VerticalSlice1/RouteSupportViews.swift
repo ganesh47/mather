@@ -69,6 +69,12 @@ struct VS1SettingsPlaceholderView: View {
         )
     }
 
+    private var verticalSliceBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.verticalSlice1Enabled },
+            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
+        )
+    }
 
     private var makeBreakLoopV2Binding: Binding<Bool> {
         Binding(
@@ -88,6 +94,11 @@ struct VS1SettingsPlaceholderView: View {
 
                 VS1Card {
                     VStack(alignment: .leading, spacing: 12) {
+                        VS1ToggleRow(
+                            title: "Make & Break 1–20",
+                            subtitle: "Enable the Make & Break 1–20 activity for your child.",
+                            isOn: verticalSliceBinding
+                        )
                         VS1ToggleRow(
                             title: "Audio enabled",
                             subtitle: "Keep prompts and neutral feedback audible.",

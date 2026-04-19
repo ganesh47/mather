@@ -3,6 +3,14 @@ import Testing
 
 struct SliceStateMachineTests {
     @Test
+    func loopV2TransitionsAdvanceInRecoveryOrder() {
+        #expect(SliceStateMachine.nextStage(after: .concrete, success: true, routeMode: .makeBreakLoopV2) == .gravitySplit)
+        #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, routeMode: .makeBreakLoopV2) == .sumSprint)
+        #expect(SliceStateMachine.nextStage(after: .sumSprint, success: true, routeMode: .makeBreakLoopV2) == .bondMatch)
+        #expect(SliceStateMachine.nextStage(after: .bondMatch, success: true, routeMode: .makeBreakLoopV2) == .done)
+    }
+
+    @Test
     func validTransitionsAdvanceInOrder() {
         #expect(SliceStateMachine.nextStage(after: .concrete, success: true, showTransfer: true) == .pictorial)
         #expect(SliceStateMachine.nextStage(after: .pictorial, success: true, showTransfer: true) == .abstract)
@@ -15,6 +23,8 @@ struct SliceStateMachineTests {
         #expect(SliceStateMachine.canTransition(from: .concrete, to: .abstract, showTransfer: true) == false)
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: true) == false)
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: false))
+        #expect(SliceStateMachine.canTransition(from: .concrete, to: .abstract, routeMode: .makeBreakLoopV2) == false)
+        #expect(SliceStateMachine.canTransition(from: .gravitySplit, to: .bondMatch, routeMode: .makeBreakLoopV2) == false)
     }
 
     // MARK: - Bond Blast transitions

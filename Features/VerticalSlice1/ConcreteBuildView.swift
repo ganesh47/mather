@@ -8,9 +8,9 @@ struct ConcreteBuildView: View {
     let onSubmit: () -> Void
     var theme: any SliceTheme = ClassicTheme()
 
-    // Ten-frame is always 5 columns × 2 rows — invariant across device sizes.
-    // The 2×5 structure is what enables subitizing: 7 is instantly seen as
-    // "a full row of 5 + 2 more", not counted one-by-one.
+    // For issue #222 recovery the concrete stage must genuinely support 1...20.
+    // We keep 5 columns so the child still sees familiar subitizing-friendly rows,
+    // but expand the surface to 4 rows when needed.
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
 
     var body: some View {
@@ -31,19 +31,19 @@ struct ConcreteBuildView: View {
                 // Cells are capped at 72pt so on wide screens (iPad) they don't grow
                 // to 130pt+ — "bigger circles" feedback and scrolling are eliminated.
                 LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(0..<10, id: \.self) { index in
+                    ForEach(0..<min(max(target, 1), 20), id: \.self) { index in
                         counterCell(index: index)
                             .frame(maxWidth: 72, maxHeight: 72)
                             .accessibilityIdentifier("counter-cell-\(index)")
                             .accessibilityLabel("Counter \(index + 1)")
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                let isWarm = index < 5
-                                let rowIndex = index % 5
-                                // Accent row is locked until the warm row is filled to capacity
-                                // (min(target, 5) circles). Enforces CPA warm-first pedagogy:
-                                // the first addend must be established before the complement.
-                                guard isWarm || warmCount >= min(target, 5) else { return }
+                                let isWarm = index < 10
+                                let rowIndex = index % 10
+                                // Accent half is locked until the warm half is filled to capacity
+                                // (up to 10 counters). This preserves the warm-first pedagogy
+                                // while allowing genuine 11...20 targets.
+                                guard isWarm || warmCount >= min(target, 10) else { return }
                                 onAdjust(
                                     (rowIndex + 1) - (isWarm ? warmCount : accentCount),
                                     isWarm ? .warm : .accent
@@ -89,8 +89,8 @@ struct ConcreteBuildView: View {
 
     @ViewBuilder
     private func counterCell(index: Int) -> some View {
-        let isFirstRow = index < 5
-        let rowIndex = index % 5
+        let isFirstRow = index < 10
+        let rowIndex = index % 10
         let filled = isFirstRow ? rowIndex < warmCount : rowIndex < accentCount
         CounterView(index: index, filled: filled, theme: theme)
     }

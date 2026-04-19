@@ -200,7 +200,7 @@ struct GravitySplitView: View {
     private func panView(count: Int, fill: Color, side: String) -> some View {
         VStack(spacing: 6) {
             // Counter dots in the pan (up to target, max display 10)
-            let display = min(state.target, 10)
+            let display = min(state.target, 20)
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5),
                 spacing: 4

@@ -27,6 +27,11 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum SliceRouteMode: Equatable {
+    case legacy(showTransfer: Bool, showGravitySplit: Bool, showBondMatch: Bool)
+    case makeBreakLoopV2
+}
+
 enum SliceEventType: String, Codable {
     case sessionStart = "session_start"
     case problemPresented = "problem_presented"
