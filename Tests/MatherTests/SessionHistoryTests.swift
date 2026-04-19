@@ -26,7 +26,7 @@ private func makeDraft(
         sessionId: sessionId,
         startedAt: startedAt,
         endedAt: startedAt.addingTimeInterval(300),
-        objectiveTitle: "Make & Break to 10",
+        objectiveTitle: "Make & Break Numbers",
         problemsCompleted: problemsCompleted,
         firstAttemptAccuracy: accuracy,
         transferCorrectCount: transferCorrect,
