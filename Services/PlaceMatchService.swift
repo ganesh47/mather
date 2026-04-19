@@ -10,6 +10,30 @@ enum PlaceMatchResult: Equatable {
     case noMatch    // clearly wrong location
 }
 
+// MARK: - Thresholds
+
+/// All tunable knobs for place-matching in one value type.
+/// Stored in `FeatureFlagService` (UserDefaults) so parents can adjust from Settings
+/// without recompiling. The static `.default` reflects the values chosen after v2.3.2
+/// field testing.
+struct PlaceMatchThresholds: Equatable {
+    /// Child must be within this many metres of the saved GPS coordinate (outdoor).
+    var gpsMatchMetres: Double   = 8.0
+    /// GPS within this range shows "almost there" instead of "wrong place".
+    var gpsCloseMetres: Double   = 20.0
+    /// Discard GPS fixes with horizontal accuracy worse than this (metres).
+    /// 10 m prevents indoor GPS fixes (~15 m accuracy) from causing false positives.
+    var gpsAccuracyCutoff: Double = 10.0
+    /// VNFeaturePrintObservation L2 distance treated as same place (indoor).
+    /// 0.25 requires photos to look very similar — different rooms in the same house
+    /// typically score 0.40–0.80, which is why the original 0.65 caused false matches.
+    var visionMatchDistance: Float = 0.25
+    /// VNFeaturePrintObservation distance treated as "almost" (indoor).
+    var visionCloseDistance: Float = 0.50
+
+    static let `default` = PlaceMatchThresholds()
+}
+
 // MARK: - Service
 
 /// Pure namespace — stateless, no actor isolation.
@@ -20,29 +44,11 @@ enum PlaceMatchResult: Equatable {
 /// **Outdoor play** → GPS reliable (±3–5 m); either signal can confirm.
 enum PlaceMatchService {
 
-    // MARK: - Tunable thresholds
-
-    /// Child must be within this many metres of the saved GPS coordinate (outdoor).
-    /// Kept tight (8 m) to avoid indoor false positives — two rooms in the same house
-    /// are often within 15 m of each other.
-    static let gpsMatchMetres: Double = 8.0
-    /// GPS within this range shows "almost there" instead of "wrong place".
-    static let gpsCloseMetres: Double = 20.0
-    /// VNFeaturePrintObservation L2 distance treated as same place (indoor).
-    /// 0.65 was too lenient — different rooms in the same house routinely scored under 0.65
-    /// because VNFeaturePrintObservation is a semantic similarity metric, not a geometric one.
-    /// 0.25 requires photos to look very similar (same content, comparable framing).
-    static let visionMatchDistance: Float = 0.25
-    /// VNFeaturePrintObservation distance treated as "almost" (indoor).
-    static let visionCloseDistance: Float = 0.50
-    /// Discard GPS fixes with horizontal accuracy worse than this (metres).
-    /// Reduced from 20 m to 10 m — indoor fixes frequently report ~15 m accuracy
-    /// while actually being unreliable room-to-room.
-    static let gpsAccuracyCutoff: Double = 10.0
-
     // MARK: - Evaluation
 
     /// Evaluate whether `currentLocation` / `candidateImageData` match the saved reference.
+    /// - Parameter thresholds: Tunable knobs — defaults to `PlaceMatchThresholds.default`.
+    ///   Pass `featureFlags.placeMatchThresholds` to use the parent's in-app settings.
     /// - Returns: `(result, wasGPS, gpsMetres, visionDist)` where:
     ///   - `wasGPS` is `true` when GPS was the decisive signal (tailor speech)
     ///   - `gpsMetres` is the raw GPS distance in metres (nil when GPS was skipped)
@@ -53,11 +59,12 @@ enum PlaceMatchService {
         savedGPSAccuracy: Double?,
         currentLocation: CLLocation?,
         savedImageData: Data?,
-        candidateImageData: Data?
+        candidateImageData: Data?,
+        thresholds: PlaceMatchThresholds = .default
     ) -> (result: PlaceMatchResult, wasGPS: Bool, gpsMetres: Double?, visionDist: Float?) {
         let savedLoc = makeSavedLocation(lat: savedLatitude, lon: savedLongitude, accuracy: savedGPSAccuracy)
-        let (gpsResult, gpsMetres) = evaluateGPS(saved: savedLoc, current: currentLocation)
-        let (visResult, visionDist) = evaluateVision(reference: savedImageData, candidate: candidateImageData)
+        let (gpsResult, gpsMetres) = evaluateGPS(saved: savedLoc, current: currentLocation, thresholds: thresholds)
+        let (visResult, visionDist) = evaluateVision(reference: savedImageData, candidate: candidateImageData, thresholds: thresholds)
 
         // OR logic: either strong signal alone confirms place
         switch (gpsResult, visResult) {
@@ -82,29 +89,29 @@ enum PlaceMatchService {
         )
     }
 
-    private static func evaluateGPS(saved: CLLocation?, current: CLLocation?) -> (PlaceMatchResult, Double?) {
+    private static func evaluateGPS(saved: CLLocation?, current: CLLocation?, thresholds: PlaceMatchThresholds) -> (PlaceMatchResult, Double?) {
         guard let saved, let current,
-              saved.horizontalAccuracy > 0,   saved.horizontalAccuracy  <= gpsAccuracyCutoff,
-              current.horizontalAccuracy > 0, current.horizontalAccuracy <= gpsAccuracyCutoff
+              saved.horizontalAccuracy > 0,   saved.horizontalAccuracy  <= thresholds.gpsAccuracyCutoff,
+              current.horizontalAccuracy > 0, current.horizontalAccuracy <= thresholds.gpsAccuracyCutoff
         else { return (.noMatch, nil) }   // GPS unreliable — skip this signal
 
         let dist = current.distance(from: saved)
-        if dist <= gpsMatchMetres { return (.match, dist) }
-        if dist <= gpsCloseMetres { return (.close, dist) }
+        if dist <= thresholds.gpsMatchMetres { return (.match, dist) }
+        if dist <= thresholds.gpsCloseMetres { return (.close, dist) }
         return (.noMatch, dist)
     }
 
     // MARK: - Vision sub-evaluation
 
-    private static func evaluateVision(reference: Data?, candidate: Data?) -> (PlaceMatchResult, Float?) {
+    private static func evaluateVision(reference: Data?, candidate: Data?, thresholds: PlaceMatchThresholds) -> (PlaceMatchResult, Float?) {
         guard let refData = reference, let candData = candidate else { return (.noMatch, nil) }
         do {
             let refPrint  = try featurePrint(for: refData)
             let candPrint = try featurePrint(for: candData)
             var dist: Float = 0
             try refPrint.computeDistance(&dist, to: candPrint)
-            if dist <= visionMatchDistance { return (.match, dist) }
-            if dist <= visionCloseDistance { return (.close, dist) }
+            if dist <= thresholds.visionMatchDistance { return (.match, dist) }
+            if dist <= thresholds.visionCloseDistance { return (.close, dist) }
             return (.noMatch, dist)
         } catch {
             // Blurry / too-dark photo — treat as noMatch; grown-up fallback handles it

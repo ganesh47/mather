@@ -39,6 +39,7 @@ final class AppModel {
         self.motionService = motionService
         self.soundDetectionService = soundDetectionService
         self.roomQuestScanner = roomQuestScanner
+        roomQuestScanner.featureFlags = featureFlags
 
         let vsEngine = VerticalSliceEngine(
             featureFlags: featureFlags,
