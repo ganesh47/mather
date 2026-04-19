@@ -364,7 +364,7 @@ struct MemoryView: View {
         if let idx = cards.firstIndex(where: { $0.id == card.id }) {
             cards[idx].isSelected = true
         }
-        appModel.hapticsService.counterSettle()
+        appModel.hapticsService.counterSettle(enabled: appModel.featureFlags.hapticsEnabled)
 
         guard let first = firstSelected else {
             // First card of a pair
@@ -401,7 +401,7 @@ struct MemoryView: View {
             cards[idx].isSelected = false
         }
         matchedPairs += 1
-        appModel.hapticsService.stageSuccess()
+        appModel.hapticsService.stageSuccess(enabled: appModel.featureFlags.hapticsEnabled)
 
         if matchedPairs == totalPairs {
             roundsPlayed += 1
