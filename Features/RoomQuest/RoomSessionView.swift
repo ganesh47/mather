@@ -12,7 +12,45 @@ struct RoomSessionView: View {
             MatherTheme.background.ignoresSafeArea()
             phaseContent
         }
+        .overlay(alignment: .topTrailing) {
+            sessionChromeOverlay
+        }
         .onAppear { engine.startSession() }
+    }
+
+    /// Home / Pause chrome buttons overlaid on top of phases that don't manage their own chrome.
+    @ViewBuilder
+    private var sessionChromeOverlay: some View {
+        switch engine.phase {
+
+        case .safetyAck:
+            // Parent-only screen — Home only (can't pause, session barely started)
+            roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-safetyack") {
+                engine.onExitToHome?()
+            }
+            .padding(24)
+
+        case .setup, .onScreenPictorial, .onScreenAbstract, .onScreenTransfer:
+            HStack(spacing: 12) {
+                roomLightChromeButton(title: "Pause", systemImage: "pause.circle.fill", accessibilityID: "room-pause-session") {
+                    engine.pauseSession()
+                }
+                roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-session") {
+                    engine.abandonSession(reason: "parent_home")
+                }
+            }
+            .padding(24)
+
+        case .paused:
+            roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-paused") {
+                engine.abandonSession(reason: "parent_home")
+            }
+            .padding(24)
+
+        case .spot, .returning, .complete:
+            // These views manage their own chrome buttons
+            EmptyView()
+        }
     }
 
     @ViewBuilder
@@ -248,6 +286,22 @@ private struct ReturningView: View {
     }
 }
 
+/// Chrome button for light-background Room Quest screens (dark ink, white pill).
+/// Used for Safety Ack, Setup, CPA phases, and Paused screen.
+private func roomLightChromeButton(title: String, systemImage: String, accessibilityID: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label(title, systemImage: systemImage)
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(MatherTheme.ink)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.black.opacity(0.06), in: Capsule())
+    }
+    .accessibilityIdentifier(accessibilityID)
+    .accessibilityLabel(title)
+    .accessibilityAddTraits(.isButton)
+}
+
 /// Hard pause screen — resume or abandon.
 private func roomReturningChromeButton(title: String, systemImage: String, accessibilityID: String, action: @escaping () -> Void) -> some View {
     Button(action: action) {
@@ -292,7 +346,7 @@ private struct RoomPausedView: View {
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
 
-                Button("Stop session") {
+                Button("End session & go home") {
                     engine.abandonSession(reason: "parent_abort")
                 }
                 .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.danger.opacity(0.45)))
