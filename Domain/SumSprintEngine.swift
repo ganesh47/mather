@@ -37,6 +37,7 @@ final class SumSprintEngine {
     private var cardStartedAt: Date = .now
     private var seenFactKeys: Set<String> = []
     private var timerTask: Task<Void, Never>? = nil
+    private var feedbackTask: Task<Void, Never>? = nil
     /// Cards queued to re-appear at end (Sprint mode only — timed-out cards).
     private var requeuedCardFacts: [ArithmeticFact] = []
 
@@ -76,6 +77,8 @@ final class SumSprintEngine {
     func startSession() {
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         sessionId = UUID()
         sessionStartedAt = .now
         seenFactKeys = []
@@ -110,6 +113,8 @@ final class SumSprintEngine {
     func exitToHome() {
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         phase = .idle
         onExitToHome?()
     }
@@ -175,6 +180,8 @@ final class SumSprintEngine {
     private func handleCorrect(isFirstTry: Bool) {
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         let card = cards[currentCardIndex]
         cards[currentCardIndex].result = .correct(firstTry: isFirstTry)
 
@@ -198,18 +205,23 @@ final class SumSprintEngine {
         applyLeitnerUpdate(factKey: card.fact.factKey, correct: true, firstTry: isFirstTry)
 
         showCorrectFeedback = true
-        Task { @MainActor in
-            if feedbackDuration > 0 {
-                try? await Task.sleep(for: .seconds(feedbackDuration))
+        feedbackTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            if self.feedbackDuration > 0 {
+                try? await Task.sleep(for: .seconds(self.feedbackDuration))
             }
-            showCorrectFeedback = false
-            advanceCard()
+            guard !Task.isCancelled else { return }
+            self.showCorrectFeedback = false
+            self.feedbackTask = nil
+            self.advanceCard()
         }
     }
 
     private func handleIncorrect() {
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         let card = cards[currentCardIndex]
         let attempts = cards[currentCardIndex].attemptCount
         cards[currentCardIndex].result = .incorrect(attempts: attempts)
@@ -230,11 +242,14 @@ final class SumSprintEngine {
         applyLeitnerUpdate(factKey: card.fact.factKey, correct: false, firstTry: false)
 
         showIncorrectFeedback = true
-        Task { @MainActor in
-            if feedbackDuration > 0 {
-                try? await Task.sleep(for: .seconds(feedbackDuration * 0.5))
+        feedbackTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            if self.feedbackDuration > 0 {
+                try? await Task.sleep(for: .seconds(self.feedbackDuration * 0.5))
             }
-            showIncorrectFeedback = false
+            guard !Task.isCancelled else { return }
+            self.showIncorrectFeedback = false
+            self.feedbackTask = nil
         }
     }
 
@@ -242,6 +257,8 @@ final class SumSprintEngine {
         guard phase == .session, currentCardIndex < cards.count else { return }
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         cardTimeRemaining = 0
 
         let card = cards[currentCardIndex]
@@ -270,12 +287,15 @@ final class SumSprintEngine {
         seenFactKeys.insert(card.fact.factKey)
 
         showTimeoutFeedback = true
-        Task { @MainActor in
-            if feedbackDuration > 0 {
-                try? await Task.sleep(for: .seconds(feedbackDuration))
+        feedbackTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            if self.feedbackDuration > 0 {
+                try? await Task.sleep(for: .seconds(self.feedbackDuration))
             }
-            showTimeoutFeedback = false
-            advanceCard()
+            guard !Task.isCancelled else { return }
+            self.showTimeoutFeedback = false
+            self.feedbackTask = nil
+            self.advanceCard()
         }
     }
 
@@ -302,6 +322,8 @@ final class SumSprintEngine {
     private func finishSession() {
         timerTask?.cancel()
         timerTask = nil
+        feedbackTask?.cancel()
+        feedbackTask = nil
         cardTimeRemaining = 0
         factStore.incrementSessionCounts(excludingKeys: seenFactKeys)
 
