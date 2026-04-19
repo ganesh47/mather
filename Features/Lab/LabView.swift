@@ -56,6 +56,11 @@ struct LabView: View {
                      fill: MatherTheme.softBlue) {
                 appModel.engine.showCompassAngles()
             },
+            GameTile(emoji: "🃏", name: "Memory Match",
+                     tagline: "Match animals to their names",
+                     fill: MatherTheme.coral) {
+                appModel.engine.showMemory()
+            },
         ]
     }
 

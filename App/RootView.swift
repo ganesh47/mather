@@ -64,6 +64,8 @@ struct RootView: View {
                     CompassAnglesView(appModel: appModel)
                 case .lab:
                     LabView(appModel: appModel)
+                case .memory:
+                    MemoryView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
