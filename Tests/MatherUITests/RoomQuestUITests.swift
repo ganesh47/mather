@@ -66,7 +66,7 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Blue Bubble"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Scan-friendly setup"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Setup progress"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Safety reminder"].waitForExistence(timeout: 3))
         snapshot(app, "RoomQuest-SetupView")
     }
@@ -188,7 +188,7 @@ final class RoomQuestUITests: XCTestCase {
 
     private func completeSetupViaManualFallback(_ app: XCUIApplication) {
         configureSetupViaManualFallback(app)
-        app.buttons["Ready — stations are set!"].tap()
+        app.buttons["Ready, start Room Quest!"].tap()
     }
 
     private func configureSetupViaManualFallback(_ app: XCUIApplication) {
