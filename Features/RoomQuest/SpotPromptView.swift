@@ -142,13 +142,6 @@ struct SpotPromptView: View {
                     .foregroundStyle(.white.opacity(0.92))
                     .padding(.horizontal, 40)
                     .padding(.bottom, 40)
-                } else if station?.referenceCaptureState != .captured {
-                    // Station has no reference yet — scan button is hidden, fallback not yet triggered
-                    Text("Start a camera check to unlock collect.")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.92))
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 40)
                 } else {
                     Spacer().frame(height: 40)
                 }

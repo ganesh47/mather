@@ -32,6 +32,10 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
     private(set) var activeSession: Session?
     private(set) var verifyFeedback: VerifyFeedback? = nil
 
+    /// Called whenever the verify result changes to `.close` or `.noMatch` so the engine
+    /// can fire speech. Set by `AppModel` at startup.
+    var onVerifyFeedback: ((VerifyFeedback) -> Void)? = nil
+
     /// Location service — owned here so GPS coordinates are captured at the exact photo moment.
     let locationService = LocationService()
 
@@ -112,9 +116,13 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
                         self.locationService.stopUpdates()
                         self.activeSession = nil
                     case .close:
-                        self.verifyFeedback = .close(wasGPS: wasGPS)
+                        let feedback = VerifyFeedback.close(wasGPS: wasGPS)
+                        self.verifyFeedback = feedback
+                        self.onVerifyFeedback?(feedback)
                     case .noMatch:
-                        self.verifyFeedback = .noMatch(wasGPS: wasGPS)
+                        let feedback = VerifyFeedback.noMatch(wasGPS: wasGPS)
+                        self.verifyFeedback = feedback
+                        self.onVerifyFeedback?(feedback)
                     }
                 }
             }

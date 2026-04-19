@@ -252,8 +252,9 @@ final class RoomQuestEngine {
         case .almost, .failed:
             return true
         case .idle:
-            // Show fallback immediately when no camera reference was saved
+            // Show fallback immediately when no camera reference was saved or setup was skipped
             return station.referenceCaptureState == .manualFallback
+                || station.referenceCaptureState == .notCaptured
         case .scanning, .celebrating:
             return false
         }
