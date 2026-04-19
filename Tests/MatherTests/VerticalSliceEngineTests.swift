@@ -12,6 +12,16 @@ struct VerticalSliceEngineTests {
         }
     }
 
+    private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
+        let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
+        while DispatchTime.now().uptimeNanoseconds < deadline {
+            if await MainActor.run(body: condition) { return }
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        Issue.record("Timed out waiting for \(description)")
+    }
+
     @Test
     func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
@@ -32,18 +42,19 @@ struct VerticalSliceEngineTests {
 
         engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
         #expect(engine.currentStage == .pictorial)
 
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         #expect(engine.bondMatchState != nil)
         completePictorialBondBlast(engine)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         #expect(engine.currentStage == .abstract)
 
         engine.equationLeftInput = String(engine.currentProblem?.decompositionA ?? 0)
         engine.equationRightInput = String(engine.currentProblem?.decompositionB ?? 0)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         #expect(engine.currentStage == .transfer)
     }
 
@@ -89,7 +100,8 @@ struct VerticalSliceEngineTests {
 
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
 
         #expect(engine.currentStage == .pictorial)
         #expect(engine.bondMatchState != nil)
@@ -144,17 +156,18 @@ struct VerticalSliceEngineTests {
         // stage-advance Task (which runs after celebrationDuration: 0) can fire.
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()    // concrete → pictorial (stageSuccess)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         completePictorialBondBlast(engine)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()    // abstract → transfer (stageSuccess)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         engine.adjustTransfer(by: problem.decompositionA, side: .left)
         engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()    // transfer → done (success — problem complete)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("next problem or summary after transfer") { engine.currentStage != .transfer }
 
         #expect(haptics.successFiredCount == 1)
         #expect(haptics.stageSuccessFiredCount == 3)
@@ -229,9 +242,10 @@ struct VerticalSliceEngineTests {
         // Advance to abstract stage — await after each submit so the stage-advance Task fires.
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage() // → pictorial
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         completePictorialBondBlast(engine)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
 
         #expect(engine.currentStage == .abstract)
 
@@ -242,7 +256,7 @@ struct VerticalSliceEngineTests {
         engine.equationLeftInput = String(altLeft)
         engine.equationRightInput = String(altRight)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("advance past abstract after valid equation") { engine.currentStage != .abstract }
 
         // Should advance past abstract regardless of which valid decomposition was entered
         #expect(engine.currentStage != .abstract)
@@ -320,17 +334,18 @@ struct VerticalSliceEngineTests {
         // Advance through concrete → pictorial → abstract → transfer
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         completePictorialBondBlast(engine)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         engine.adjustTransfer(by: problem.decompositionA, side: .left)
         engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()  // transfer → bondMatch
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("bond match stage after transfer") { engine.currentStage == .bondMatch }
 
         #expect(engine.currentStage == .bondMatch)
         #expect(engine.bondMatchState != nil)
@@ -359,17 +374,18 @@ struct VerticalSliceEngineTests {
         // Fast-path to bondMatch stage
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         completePictorialBondBlast(engine)
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         engine.adjustTransfer(by: problem.decompositionA, side: .left)
         engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("bond match stage after transfer") { engine.currentStage == .bondMatch }
         #expect(engine.currentStage == .bondMatch)
 
         // Match all pairs
@@ -377,7 +393,7 @@ struct VerticalSliceEngineTests {
         for pair in pairs {
             engine.matchPair(id: pair.id)
         }
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("session summary after completing bond match") { engine.route == .sessionSummary }
 
         // All pairs matched → session ends → route should be .sessionSummary
         #expect(engine.route == .sessionSummary)
@@ -423,17 +439,18 @@ struct VerticalSliceEngineTests {
 
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after pictorial submit") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         engine.adjustTransfer(by: problem.decompositionA, side: .left)
         engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("bond match stage after transfer") { engine.currentStage == .bondMatch }
 
         let before = engine.bondMatchState
         engine.matchPair(id: UUID())
@@ -462,17 +479,18 @@ struct VerticalSliceEngineTests {
         // Complete first problem (not last — bondMatch should NOT fire)
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
-        engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
+        completePictorialBondBlast(engine)
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("transfer stage after abstract") { engine.currentStage == .transfer }
         engine.adjustTransfer(by: problem.decompositionA, side: .left)
         engine.adjustTransfer(by: problem.decompositionB, side: .right)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("next concrete stage after non-final transfer") { engine.currentStage == .concrete && engine.currentProblemIndex == 1 }
 
         // Should have advanced to problem 2 (concrete stage), not bondMatch
         #expect(engine.currentStage == .concrete)
@@ -485,14 +503,15 @@ struct VerticalSliceEngineTests {
         guard let problem = engine.currentProblem else { return }
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("pictorial stage after concrete") { engine.currentStage == .pictorial }
+        await waitFor("bond match state in pictorial") { engine.bondMatchState != nil }
         let pairIds = engine.bondMatchState?.pairs.map(\.id) ?? []
         for id in pairIds { engine.matchPair(id: id) }
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("abstract stage after Bond Blast") { engine.currentStage == .abstract }
         engine.equationLeftInput = String(problem.decompositionA)
         engine.equationRightInput = String(problem.decompositionB)
         engine.submitCurrentStage()
-        try await Task.sleep(for: .milliseconds(200))
+        await waitFor("gravity split stage after abstract") { engine.currentStage == .gravitySplit }
         #expect(engine.currentStage == .gravitySplit)
     }
 
@@ -630,10 +649,8 @@ struct VerticalSliceEngineTests {
         engine.adjustGravitySplitByTilt(0.3)
         #expect(engine.gravitySplitState?.isLocked == true)
 
-        // Allow the stage-advance Task to run.
-        for _ in 0..<100 {
-            if engine.currentStage != .gravitySplit { break }
-            await Task.yield()
+        await waitFor("gravity split auto-advance after neutral lock") {
+            engine.currentStage != .gravitySplit
         }
         #expect(engine.currentStage != .gravitySplit)
     }
@@ -658,10 +675,8 @@ struct VerticalSliceEngineTests {
         guard let startLeft = engine.gravitySplitState?.leftCount else { return }
         // Tap from the branch's far-left start state to the exact decomposition.
         engine.adjustGravitySplitByTap(delta: problem.decompositionA - startLeft)
-        // Drain the MainActor queue so the completeStage Task fires
-        for _ in 0..<100 {
-            if engine.currentStage != .gravitySplit { break }
-            await Task.yield()
+        await waitFor("gravity split auto-advance after tap lock") {
+            engine.currentStage != .gravitySplit
         }
         #expect(engine.currentStage != .gravitySplit)
     }

@@ -76,7 +76,9 @@ struct SpotPromptView: View {
                         Text("Kid steps: look, point, hold still, then collect.")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(MatherTheme.ink)
-                        Text("If the camera keeps missing the place, a grown-up can tap the fallback button below.")
+                        Text(engine.shouldShowSpotManualFallback
+                             ? "The camera missed this place. A grown-up can use fallback now."
+                             : "Start with a camera check. Fallback stays hidden unless the scan misses, so the camera feels like the real helper.")
                             .font(.subheadline)
                             .foregroundStyle(MatherTheme.cardSubtitle)
                             .fixedSize(horizontal: false, vertical: true)
@@ -111,15 +113,23 @@ struct SpotPromptView: View {
                 }())
                 .padding(.horizontal, 40)
 
-                Button(station?.role.fallbackButtonTitle ?? "I found it") {
-                    engine.markSpotVisited(index: spotIndex)
+                if engine.shouldShowSpotManualFallback {
+                    Button(station?.role.fallbackButtonTitle ?? "I found it") {
+                        engine.markSpotVisited(index: spotIndex)
+                    }
+                    .accessibilityIdentifier("room-spot-confirm-button")
+                    .buttonStyle(.plain)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 40)
+                } else {
+                    Text("Fallback unlocks only after a missed scan.")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 40)
                 }
-                .accessibilityIdentifier("room-spot-confirm-button")
-                .buttonStyle(.plain)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(.white.opacity(0.92))
-                .padding(.horizontal, 40)
-                .padding(.bottom, 40)
             }
 
             HStack(spacing: 12) {
