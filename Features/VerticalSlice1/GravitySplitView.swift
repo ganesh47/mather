@@ -1,12 +1,10 @@
 import SwiftUI
 
-/// Balance-scale stage where the child tilts the iPad to slide counters
-/// between two pans until the split matches the problem's decomposition.
+/// Balance-scale stage where the child uses plus and minus controls to build
+/// the requested split from zero.
 ///
-/// Tilt input arrives via `tiltRoll` (radians) and is forwarded to the engine
-/// through `onAdjustTilt`. Tap buttons provide a fallback for cases where
-/// motion is unavailable. When `state.isLocked` becomes true the beam snaps
-/// level and the view auto-advances after 0.6 s via `onSubmit`.
+/// Tilt is ignored in V1 loop mode and kept only for future polish hooks.
+/// When `state.isLocked` becomes true the view auto-advances after 0.6 s.
 struct GravitySplitView: View {
 
     // MARK: - Inputs
@@ -15,7 +13,7 @@ struct GravitySplitView: View {
     let tiltRoll: Double
     let shakeDetected: Bool
     let onAdjustTilt: (Double) -> Void
-    let onTap: (Int) -> Void            // delta ±1 for the left pan; right = target − left
+    let onTap: (Int, TransferSide) -> Void
     let onShakeHandled: () -> Void
     let onSubmit: () -> Void
 
@@ -35,8 +33,9 @@ struct GravitySplitView: View {
     private var beamAngle: Double {
         guard state.target > 0 else { return 0 }
         if state.isLocked { return 0 }
-        let fraction = Double(state.leftCount - state.rightCount) / Double(state.target)
-        return fraction * maxBeamAngle
+        let solvedBias = Double(state.decompositionA - state.decompositionB) / Double(max(state.target, 1))
+        let builtBias = Double(state.leftCount - state.rightCount) / Double(max(state.target, 1))
+        return (solvedBias - builtBias) * maxBeamAngle
     }
 
     // MARK: - Body
@@ -53,7 +52,7 @@ struct GravitySplitView: View {
             }
         }
         .onChange(of: tiltRoll) { _, roll in
-            guard !showGoScrim else { return }   // block tilt until GO is tapped
+            guard !showGoScrim else { return }
             onAdjustTilt(roll)
         }
         .onChange(of: shakeDetected) { _, shook in
@@ -85,7 +84,7 @@ struct GravitySplitView: View {
     private var headerRow: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Balance it!")
+                Text("Gravity Split")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.coral)
 
@@ -93,8 +92,8 @@ struct GravitySplitView: View {
                     counterPill(value: state.leftCount, fill: MatherTheme.warm)
                     Text("+").font(.title3.weight(.black)).foregroundStyle(.secondary)
                     counterPill(value: state.rightCount, fill: MatherTheme.accent)
-                    Text("=").font(.title3.weight(.black)).foregroundStyle(.secondary)
-                    Text("\(state.target)")
+                    Text("/").font(.title3.weight(.black)).foregroundStyle(.secondary)
+                    Text("\(state.decompositionA) + \(state.decompositionB)")
                         .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.ink)
                 }
@@ -240,9 +239,9 @@ struct GravitySplitView: View {
                 fill: MatherTheme.warm,
                 side: "left",
                 canDecrement: state.leftCount > 0 && !state.isLocked,
-                canIncrement: state.leftCount < state.target && !state.isLocked
+                canIncrement: state.leftCount < state.decompositionA && !state.isLocked
             ) { delta in
-                onTap(delta)
+                onTap(delta, .left)
             }
 
             panControlButtons(
@@ -250,9 +249,9 @@ struct GravitySplitView: View {
                 fill: MatherTheme.accent,
                 side: "right",
                 canDecrement: state.rightCount > 0 && !state.isLocked,
-                canIncrement: state.rightCount < state.target && !state.isLocked
+                canIncrement: state.rightCount < state.decompositionB && !state.isLocked
             ) { delta in
-                onTap(-delta)   // right + → left −
+                onTap(delta, .right)
             }
         }
     }
@@ -313,7 +312,7 @@ struct GravitySplitView: View {
             Image(systemName: "gyroscope")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.coral.opacity(0.8))
-            Text("Tilt the iPad to slide the counters")
+            Text("Use plus and minus to build the split from zero")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
         }

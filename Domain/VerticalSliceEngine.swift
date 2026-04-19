@@ -338,61 +338,40 @@ final class VerticalSliceEngine {
 
     // MARK: - Gravity Split actions
 
-    /// Called each time tiltRoll updates (≈30 Hz from MotionService).
-    /// Uses neutral-relative tilt: the first sample records the device's natural
-    /// hold position as neutral (Δ=0). All subsequent tilt is a delta from neutral,
-    /// so symmetric decompositions (e.g. 6=3+3) cannot be accidentally solved by
-    /// picking up the iPad in a flat/natural position.
     func adjustGravitySplitByTilt(_ tiltRoll: Double) {
-        guard currentStage == .gravitySplit, let state = gravitySplitState,
-              !state.isLocked else { return }
-        // Record neutral on the very first sample after stage entry.
-        if gravitySplitNeutralRoll == nil {
-            gravitySplitNeutralRoll = tiltRoll
-        }
-        let delta = tiltRoll - gravitySplitNeutralRoll!
-        let clamped = max(-Double.pi / 4, min(delta, Double.pi / 4))
-        let fraction = 0.5 - clamped / (Double.pi / 4) * 0.5
-        let newLeft = Int((Double(state.target) * fraction).rounded())
-        setGravitySplit(leftCount: newLeft)
-    }
-
-    /// Called by the ±1 tap fallback buttons in GravitySplitView.
-    func adjustGravitySplitByTap(delta: Int) {
-        guard currentStage == .gravitySplit, let state = gravitySplitState,
-              !state.isLocked else { return }
-        setGravitySplit(leftCount: state.leftCount + delta)
-    }
-
-    /// Resets all counters back to the starting position (shake gesture).
-    /// Also clears the neutral roll so the next tilt re-calibrates from the
-    /// current hold position.
-    func resetGravitySplit() {
         guard currentStage == .gravitySplit else { return }
-        gravitySplitState?.setLeft(max(0, (gravitySplitState?.target ?? 1) - 1))
-        gravitySplitNeutralRoll = nil
+        gravitySplitNeutralRoll = tiltRoll
     }
 
-    private func setGravitySplit(leftCount: Int) {
-        guard var state = gravitySplitState else { return }
-        let previousCount = state.leftCount
-        state.setLeft(leftCount)
+    func adjustGravitySplitByTap(delta: Int, side: TransferSide = .left) {
+        guard currentStage == .gravitySplit, var state = gravitySplitState,
+              !state.isLocked else { return }
+
+        let previousLeft = state.leftCount
+        let previousRight = state.rightCount
+        switch side {
+        case .left:
+            state.adjustLeft(by: delta)
+        case .right:
+            state.adjustRight(by: delta)
+        }
         gravitySplitState = state
 
-        if state.leftCount != previousCount {
+        if state.leftCount != previousLeft || state.rightCount != previousRight {
             hapticsService.counterSettle(enabled: featureFlags.hapticsEnabled)
             hapticsService.counterSlide(enabled: featureFlags.hapticsEnabled)
-        }
-
-        // Whisper tick when passing through the balanced midpoint.
-        if previousCount != state.target / 2 && state.leftCount == state.target / 2 {
-            hapticsService.tiltNeutral(enabled: featureFlags.hapticsEnabled)
         }
 
         if state.isLocked, let problem = currentProblem {
             hapticsService.balanceLock(enabled: featureFlags.hapticsEnabled)
             completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
         }
+    }
+
+    func resetGravitySplit() {
+        guard currentStage == .gravitySplit, let problem = currentProblem else { return }
+        gravitySplitState = GravitySplitState(problem: problem)
+        gravitySplitNeutralRoll = nil
     }
 
     private func validateEquation(for problem: SliceProblem) -> Bool {
@@ -685,7 +664,7 @@ final class VerticalSliceEngine {
         case .gravitySplit:
             let a = currentProblem.decompositionA
             let b = currentProblem.decompositionB
-            return "Tilt to put \(a) on one side and \(b) on the other!"
+            return "Use plus and minus to build \(a) on one side and \(b) on the other."
         case .done:
             return "Nice work."
         }
@@ -725,7 +704,7 @@ final class VerticalSliceEngine {
                 return "Build the same equation again with counters, one group on each side."
             }
         case .gravitySplit:
-            return "Keep tilting! Get \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
+            return "Keep building the split. Put \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
         case .sumSprint:
             return "Keep going. This quick sprint comes before Bond Blast."
         case .done:
