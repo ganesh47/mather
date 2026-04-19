@@ -4,6 +4,7 @@ import Observation
 @Observable
 final class FeatureFlagService {
     private enum Keys {
+        static let verticalSlice1Enabled = "feature.verticalSlice1Enabled"
         // Place-matching thresholds (tunable from Settings)
         static let placeMatchGPSMatch     = "placeMatch.gpsMatchMetres"
         static let placeMatchGPSClose     = "placeMatch.gpsCloseMetres"
@@ -22,6 +23,10 @@ final class FeatureFlagService {
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
+    }
+
+    var verticalSlice1Enabled: Bool {
+        didSet { defaults.set(verticalSlice1Enabled, forKey: Keys.verticalSlice1Enabled) }
     }
 
     var testModeEnabled: Bool {
@@ -132,6 +137,7 @@ final class FeatureFlagService {
         // "YES"/"NO"/"1"/"0" string values injected via -key value launch arguments,
         // which object(forKey:) as? Bool does not.
         defaults.register(defaults: [
+            Keys.verticalSlice1Enabled: false,
             Keys.testModeEnabled: true,
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
@@ -150,6 +156,7 @@ final class FeatureFlagService {
             Keys.placeMatchVisionMatch: Double(PlaceMatchThresholds.default.visionMatchDistance),
             Keys.placeMatchVisionClose: Double(PlaceMatchThresholds.default.visionCloseDistance),
         ])
+        verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)
         hapticsEnabled = defaults.bool(forKey: Keys.hapticsEnabled)
