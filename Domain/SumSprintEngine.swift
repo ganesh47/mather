@@ -13,8 +13,13 @@ final class SumSprintEngine {
     private(set) var peakStreak: Int = 0
     private(set) var showCorrectFeedback: Bool = false
     private(set) var showIncorrectFeedback: Bool = false
+    private(set) var showTimeoutFeedback: Bool = false
     private(set) var completedSummary: SumSprintSessionSummary? = nil
     private(set) var phase: SumSprintPhase = .idle
+    private(set) var difficulty: SumSprintDifficulty = .relaxed
+
+    /// Countdown seconds remaining for the current card.  0 when no timer is active.
+    private(set) var cardTimeRemaining: Double = 0
 
     // MARK: - Dependencies
 
@@ -22,7 +27,6 @@ final class SumSprintEngine {
     private let telemetryWriter: TelemetryWriter
     private let speechService: SpeechService
     private let hapticsService: HapticsService
-    // Internal so @testable import tests can verify Leitner state directly
     let factStore: FactRecordStore
     let feedbackDuration: TimeInterval
 
@@ -30,7 +34,11 @@ final class SumSprintEngine {
 
     private var sessionId: UUID = UUID()
     private var sessionStartedAt: Date = .now
+    private var cardStartedAt: Date = .now
     private var seenFactKeys: Set<String> = []
+    private var timerTask: Task<Void, Never>? = nil
+    /// Cards queued to re-appear at end (Sprint mode only — timed-out cards).
+    private var requeuedCardFacts: [ArithmeticFact] = []
 
     // MARK: - Callback
 
@@ -56,26 +64,43 @@ final class SumSprintEngine {
 
     // MARK: - Navigation
 
+    func showDifficultyPick() {
+        phase = .difficultyPick
+    }
+
+    func selectDifficulty(_ d: SumSprintDifficulty) {
+        difficulty = d
+        startSession()
+    }
+
     func startSession() {
+        timerTask?.cancel()
+        timerTask = nil
         sessionId = UUID()
         sessionStartedAt = .now
         seenFactKeys = []
+        requeuedCardFacts = []
         currentCardIndex = 0
         currentStreak = 0
         peakStreak = 0
         showCorrectFeedback = false
         showIncorrectFeedback = false
+        showTimeoutFeedback = false
         completedSummary = nil
 
         let records = factStore.fetchAll()
-        let facts = SumSprintGenerator.generateSession(allRecords: records)
+        let facts = SumSprintGenerator.generateSession(
+            allRecords: records,
+            cardCount: difficulty.cardCount
+        )
         cards = facts.map { SumSprintCard(id: UUID(), fact: $0) }
 
         phase = .session
 
         logEvent(.sumSprintStarted, payload: [
             "session_id": sessionId.uuidString,
-            "card_count": String(cards.count)
+            "card_count": String(cards.count),
+            "difficulty": difficulty.rawValue
         ])
 
         speechService.speak("Let's practice! What's the sum?", enabled: featureFlags.audioEnabled)
@@ -83,6 +108,8 @@ final class SumSprintEngine {
     }
 
     func exitToHome() {
+        timerTask?.cancel()
+        timerTask = nil
         phase = .idle
         onExitToHome?()
     }
@@ -92,7 +119,6 @@ final class SumSprintEngine {
     func appendDigit(_ digit: Int) {
         guard phase == .session, currentCardIndex < cards.count else { return }
         let current = cards[currentCardIndex].typedAnswer
-        // Max 2 digits: sums are at most 20
         guard current.count < 2 else { return }
         cards[currentCardIndex].typedAnswer = current + String(digit)
     }
@@ -116,15 +142,19 @@ final class SumSprintEngine {
         seenFactKeys.insert(card.fact.factKey)
 
         if isCorrect {
+            // Record elapsed time
+            cards[currentCardIndex].elapsedSeconds = Date().timeIntervalSince(cardStartedAt)
             handleCorrect(isFirstTry: isFirstTry)
         } else {
             handleIncorrect()
         }
     }
 
-    // MARK: - Private
+    // MARK: - Private: card display
 
     private func showCurrentCard() {
+        cardStartedAt = .now
+        startCardTimer()
         guard currentCardIndex < cards.count else { return }
         let card = cards[currentCardIndex]
         logEvent(.sumSprintCardShown, payload: [
@@ -134,7 +164,11 @@ final class SumSprintEngine {
         ])
     }
 
+    // MARK: - Private: answer handling
+
     private func handleCorrect(isFirstTry: Bool) {
+        timerTask?.cancel()
+        timerTask = nil
         let card = cards[currentCardIndex]
         cards[currentCardIndex].result = .correct(firstTry: isFirstTry)
 
@@ -150,7 +184,6 @@ final class SumSprintEngine {
 
         hapticsService.cardSnapCorrect(enabled: featureFlags.hapticsEnabled)
 
-        // Streak milestone every 3
         if currentStreak > 0 && currentStreak % 3 == 0 {
             hapticsService.bondMatchComplete(enabled: featureFlags.hapticsEnabled)
             speechService.speak("\(currentStreak) in a row!", enabled: featureFlags.audioEnabled)
@@ -169,6 +202,8 @@ final class SumSprintEngine {
     }
 
     private func handleIncorrect() {
+        timerTask?.cancel()
+        timerTask = nil
         let card = cards[currentCardIndex]
         let attempts = cards[currentCardIndex].attemptCount
         cards[currentCardIndex].result = .incorrect(attempts: attempts)
@@ -197,17 +232,71 @@ final class SumSprintEngine {
         }
     }
 
-    private func advanceCard() {
-        let nextIndex = currentCardIndex + 1
-        if nextIndex >= cards.count {
-            finishSession()
-        } else {
-            currentCardIndex = nextIndex
-            showCurrentCard()
+    private func handleTimeout() {
+        guard phase == .session, currentCardIndex < cards.count else { return }
+        timerTask?.cancel()
+        timerTask = nil
+        cardTimeRemaining = 0
+
+        let card = cards[currentCardIndex]
+        cards[currentCardIndex].timedOut = true
+        cards[currentCardIndex].result = .incorrect(attempts: cards[currentCardIndex].attemptCount + 1)
+        cards[currentCardIndex].typedAnswer = ""
+        currentStreak = 0
+
+        logEvent(.sumSprintCardAnswered, payload: [
+            "fact_key": card.fact.factKey,
+            "correct": "false",
+            "timed_out": "true",
+            "streak": "0"
+        ])
+
+        hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
+        speechService.speak("Time's up!", enabled: featureFlags.audioEnabled)
+
+        applyLeitnerUpdate(factKey: card.fact.factKey, correct: false, firstTry: false)
+
+        // Sprint: re-queue the timed-out card at the end
+        if difficulty == .sprint {
+            requeuedCardFacts.append(card.fact)
+        }
+
+        seenFactKeys.insert(card.fact.factKey)
+
+        showTimeoutFeedback = true
+        Task { @MainActor in
+            if feedbackDuration > 0 {
+                try? await Task.sleep(for: .seconds(feedbackDuration))
+            }
+            showTimeoutFeedback = false
+            advanceCard()
         }
     }
 
+    // MARK: - Private: card advancement
+
+    private func advanceCard() {
+        let nextIndex = currentCardIndex + 1
+        if nextIndex >= cards.count {
+            // Sprint: append any re-queued timed-out cards once
+            if difficulty == .sprint && !requeuedCardFacts.isEmpty {
+                let extra = requeuedCardFacts.map { SumSprintCard(id: UUID(), fact: $0) }
+                cards.append(contentsOf: extra)
+                requeuedCardFacts = []
+            }
+            if nextIndex >= cards.count {
+                finishSession()
+                return
+            }
+        }
+        currentCardIndex = nextIndex
+        showCurrentCard()
+    }
+
     private func finishSession() {
+        timerTask?.cancel()
+        timerTask = nil
+        cardTimeRemaining = 0
         factStore.incrementSessionCounts(excludingKeys: seenFactKeys)
 
         let summary = SumSprintSessionSummary(
@@ -215,7 +304,8 @@ final class SumSprintEngine {
             startedAt: sessionStartedAt,
             endedAt: .now,
             cards: cards,
-            peakStreak: peakStreak
+            peakStreak: peakStreak,
+            difficulty: difficulty
         )
         completedSummary = summary
         phase = .summary
@@ -224,8 +314,32 @@ final class SumSprintEngine {
             "session_id": sessionId.uuidString,
             "cards_completed": String(cards.count),
             "peak_streak": String(peakStreak),
-            "first_try_accuracy": String(format: "%.2f", summary.firstTryAccuracy)
+            "first_try_accuracy": String(format: "%.2f", summary.firstTryAccuracy),
+            "timeout_count": String(summary.timeoutCount),
+            "difficulty": difficulty.rawValue
         ])
+    }
+
+    // MARK: - Private: countdown timer
+
+    private func startCardTimer() {
+        timerTask?.cancel()
+        timerTask = nil
+        guard let secs = difficulty.secondsPerCard else {
+            cardTimeRemaining = 0
+            return
+        }
+        cardTimeRemaining = secs
+        timerTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 s tick
+                cardTimeRemaining = max(0, cardTimeRemaining - 0.1)
+                if cardTimeRemaining <= 0 {
+                    handleTimeout()
+                    break
+                }
+            }
+        }
     }
 
     // MARK: - Leitner updates

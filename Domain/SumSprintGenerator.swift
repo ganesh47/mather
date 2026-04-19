@@ -23,10 +23,10 @@ enum SumSprintGenerator {
 
     // MARK: - Session selection
 
-    /// Returns up to 10 ArithmeticFacts ordered by Leitner priority.
+    /// Returns up to `cardCount` ArithmeticFacts ordered by Leitner priority.
     /// - Parameter allRecords: Current state from FactRecordStore.fetchAll().
-    /// - Parameter sessionCount: Used only in tests to verify determinism; not used in selection logic.
-    static func generateSession(allRecords: [StoredFactRecord]) -> [ArithmeticFact] {
+    /// - Parameter cardCount: Maximum cards to return.  Defaults to 10 (Relaxed / Standard).
+    static func generateSession(allRecords: [StoredFactRecord], cardCount: Int = 10) -> [ArithmeticFact] {
         let recordByKey = Dictionary(uniqueKeysWithValues: allRecords.map { ($0.factKey, $0) })
 
         // Partition facts into eligible and ineligible
@@ -66,7 +66,7 @@ enum SumSprintGenerator {
             selected += backfill
         }
 
-        let trimmed = Array(selected.prefix(10))
+        let trimmed = Array(selected.prefix(cardCount))
         return diversifyAdjacentSums(in: trimmed).map(\.fact)
     }
 

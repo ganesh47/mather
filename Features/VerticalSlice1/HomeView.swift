@@ -30,7 +30,7 @@ struct HomeView: View {
                 if appModel.featureFlags.sumSprintEnabled {
                     Button("Sum Sprint") {
                         appModel.engine.showSumSprint()
-                        appModel.sumSprintEngine.startSession()
+                        appModel.sumSprintEngine.showDifficultyPick()
                     }
                     .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.65)))
                 }

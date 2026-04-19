@@ -36,14 +36,33 @@ struct SumSprintSessionView: View {
                 }
             }
 
+            // Countdown ring — top-right corner, only when timed mode active
+            if engine.difficulty != .relaxed {
+                VStack {
+                    HStack {
+                        Spacer()
+                        countdownRing
+                            .padding(.top, 12)
+                            .padding(.trailing, 20)
+                    }
+                    Spacer()
+                }
+                .allowsHitTesting(false)
+            }
+
             // Correct feedback overlay
             if engine.showCorrectFeedback {
-                feedbackOverlay(correct: true)
+                feedbackOverlay(symbol: "✓", color: MatherTheme.accent)
             }
 
             // Incorrect feedback overlay
             if engine.showIncorrectFeedback {
-                feedbackOverlay(correct: false)
+                feedbackOverlay(symbol: "✗", color: MatherTheme.danger)
+            }
+
+            // Timeout feedback overlay
+            if engine.showTimeoutFeedback {
+                feedbackOverlay(symbol: "⏰", color: MatherTheme.warm)
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: engine.currentCardIndex)
@@ -67,6 +86,10 @@ struct SumSprintSessionView: View {
                     }
                 }
                 Spacer()
+                // Space reserved for countdown ring in timed modes
+                if engine.difficulty != .relaxed {
+                    Color.clear.frame(width: 64, height: 1)
+                }
                 Button {
                     engine.exitToHome()
                 } label: {
@@ -85,14 +108,48 @@ struct SumSprintSessionView: View {
         .animation(.spring(response: 0.3), value: engine.currentStreak)
     }
 
+    // MARK: - Countdown ring
+
+    private var countdownRing: some View {
+        let total = engine.difficulty.secondsPerCard ?? 1
+        let remaining = engine.cardTimeRemaining
+        let fraction = remaining / total
+
+        // Color shifts green → amber → red as time runs low
+        let ringColor: Color = fraction > 0.4
+            ? engine.difficulty.timerColor
+            : fraction > 0.2
+                ? MatherTheme.warm
+                : MatherTheme.danger
+
+        return ZStack {
+            // Background track
+            Circle()
+                .stroke(ringColor.opacity(0.18), lineWidth: 5)
+            // Depleting arc
+            Circle()
+                .trim(from: 0, to: fraction)
+                .stroke(ringColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.1), value: fraction)
+            // Seconds label
+            Text("\(max(0, Int(remaining.rounded(.up))))")
+                .font(.system(size: 17, weight: .black, design: .rounded))
+                .foregroundStyle(ringColor)
+                .contentTransition(.numericText())
+                .animation(.linear(duration: 0.1), value: Int(remaining.rounded(.up)))
+        }
+        .frame(width: 54, height: 54)
+    }
+
     // MARK: - Feedback overlay
 
-    private func feedbackOverlay(correct: Bool) -> some View {
+    private func feedbackOverlay(symbol: String, color: Color) -> some View {
         ZStack {
             Color.black.opacity(0.12).ignoresSafeArea()
-            Text(correct ? "✓" : "✗")
+            Text(symbol)
                 .font(.system(size: 80, weight: .black))
-                .foregroundStyle(correct ? MatherTheme.accent : MatherTheme.danger)
+                .foregroundStyle(color)
                 .transition(.scale.combined(with: .opacity))
         }
         .allowsHitTesting(false)

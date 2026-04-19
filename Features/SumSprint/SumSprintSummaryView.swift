@@ -20,6 +20,8 @@ struct SumSprintSummaryView: View {
 
                     celebrationBlock
 
+                    statsRow
+
                     factsPracticedGrid
 
                     buttonStack
@@ -33,10 +35,10 @@ struct SumSprintSummaryView: View {
 
     private var celebrationBlock: some View {
         VStack(spacing: 12) {
-            Text(summary.peakStreak >= 5 ? "⭐️" : "🎉")
+            Text(celebrationEmoji)
                 .font(.system(size: 72))
 
-            Text(summary.peakStreak >= 5 ? "Amazing streak!" : "Great practice!")
+            Text(celebrationTitle)
                 .font(.system(size: 32, weight: .black, design: .rounded))
                 .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.center)
@@ -50,7 +52,76 @@ struct SumSprintSummaryView: View {
             Text("\(summary.correctCount) of \(summary.cards.count) correct")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(MatherTheme.ink.opacity(0.6))
+
+            // Difficulty badge
+            Text(summary.difficulty.emoji + " " + summary.difficulty.label)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(summary.difficulty.timerColor)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(summary.difficulty.timerColor.opacity(0.12), in: Capsule())
         }
+    }
+
+    private var celebrationEmoji: String {
+        if summary.difficulty == .sprint && summary.timeoutCount == 0 { return "🏆" }
+        if summary.peakStreak >= 5 { return "⭐️" }
+        return "🎉"
+    }
+
+    private var celebrationTitle: String {
+        if summary.difficulty == .sprint && summary.timeoutCount == 0 { return "Perfect Sprint!" }
+        if summary.peakStreak >= 5 { return "Amazing streak!" }
+        return "Great practice!"
+    }
+
+    // MARK: - Stats row
+
+    private var statsRow: some View {
+        HStack(spacing: 12) {
+            statTile(
+                value: "\(summary.correctCount)/\(summary.cards.count)",
+                label: "Correct",
+                icon: "checkmark.circle.fill",
+                color: MatherTheme.accent
+            )
+
+            if summary.difficulty != .relaxed && summary.timeoutCount > 0 {
+                statTile(
+                    value: "\(summary.timeoutCount)",
+                    label: "Timed out",
+                    icon: "clock.badge.xmark.fill",
+                    color: MatherTheme.warm
+                )
+            }
+
+            if let fastest = summary.fastestCardSeconds {
+                statTile(
+                    value: String(format: "%.1fs", fastest),
+                    label: "Fastest",
+                    icon: "bolt.fill",
+                    color: MatherTheme.warm
+                )
+            }
+        }
+    }
+
+    private func statTile(value: String, label: String, icon: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     // MARK: - Facts practiced grid
@@ -83,16 +154,23 @@ struct SumSprintSummaryView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.ink)
             Spacer()
-            Image(systemName: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(wasCorrect ? MatherTheme.accent : MatherTheme.danger)
+            if card.timedOut {
+                Image(systemName: "clock.badge.xmark.fill")
+                    .foregroundStyle(MatherTheme.warm)
+            } else {
+                Image(systemName: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundStyle(wasCorrect ? MatherTheme.accent : MatherTheme.danger)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(wasCorrect
-                    ? MatherTheme.accent.opacity(0.1)
-                    : MatherTheme.danger.opacity(0.1))
+                .fill(
+                    card.timedOut    ? MatherTheme.warm.opacity(0.1)   :
+                    wasCorrect       ? MatherTheme.accent.opacity(0.1) :
+                    MatherTheme.danger.opacity(0.1)
+                )
         )
     }
 
@@ -100,15 +178,11 @@ struct SumSprintSummaryView: View {
 
     private var buttonStack: some View {
         VStack(spacing: 12) {
-            Button("Play again") {
-                onPlayAgain()
-            }
-            .buttonStyle(PrimaryActionButtonStyle())
+            Button("Play again") { onPlayAgain() }
+                .buttonStyle(PrimaryActionButtonStyle())
 
-            Button("Done") {
-                onDone()
-            }
-            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
+            Button("Done") { onDone() }
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
         }
     }
 }
