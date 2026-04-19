@@ -30,6 +30,7 @@ struct ClassicTheme: SliceTheme {
         case .abstract:   return "Your equation matches the split."
         case .transfer:   return "You matched the same equation with counters."
         case .gravitySplit: return "Perfect balance!"
+        case .sumSprint:  return "Nice sprint!"
         case .bondMatch:  return "Bond Blast complete!"
         case .done:       return "Problem complete."
         }

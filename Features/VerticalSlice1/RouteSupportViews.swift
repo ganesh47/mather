@@ -76,6 +76,14 @@ struct VS1SettingsPlaceholderView: View {
         )
     }
 
+
+    private var makeBreakLoopV2Binding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.makeBreakLoopV2Enabled },
+            set: { appModel.featureFlags.makeBreakLoopV2Enabled = $0 }
+        )
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -106,6 +114,11 @@ struct VS1SettingsPlaceholderView: View {
                             title: "Test mode",
                             subtitle: "Deterministic ordering for repeatable pilot checks.",
                             isOn: testModeBinding
+                        )
+                        VS1ToggleRow(
+                            title: "Make & Break loop V2",
+                            subtitle: "Use the issue #222 per-target route: Make it, Gravity Split, Sum Sprint, Bond Blast.",
+                            isOn: makeBreakLoopV2Binding
                         )
                     }
                 }

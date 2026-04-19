@@ -11,6 +11,7 @@ final class FeatureFlagService {
         static let selectedThemeId = "feature.selectedThemeId"
         static let vs1BondMatchEnabled = "feature.vs1BondMatchEnabled"
         static let vs1GravitySplitEnabled = "feature.vs1GravitySplitEnabled"
+        static let makeBreakLoopV2Enabled = "feature.makeBreakLoopV2Enabled"
         static let motionControlsEnabled = "feature.motionControlsEnabled"
         static let soundReactionEnabled = "feature.soundReactionEnabled"
         static let roomQuestEnabled = "feature.roomQuestEnabled"
@@ -58,6 +59,11 @@ final class FeatureFlagService {
     /// Default false — parent opts in via Settings.
     var vs1GravitySplitEnabled: Bool {
         didSet { defaults.set(vs1GravitySplitEnabled, forKey: Keys.vs1GravitySplitEnabled) }
+    }
+
+    /// Enables the issue #222 per-target loop: Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
+    var makeBreakLoopV2Enabled: Bool {
+        didSet { defaults.set(makeBreakLoopV2Enabled, forKey: Keys.makeBreakLoopV2Enabled) }
     }
 
     /// Enables CMMotionManager tilt drift and shake-to-shuffle in Bond Blast.
@@ -144,6 +150,7 @@ final class FeatureFlagService {
             Keys.selectedThemeId: "classic",
             Keys.vs1BondMatchEnabled: false,
             Keys.vs1GravitySplitEnabled: false,
+            Keys.makeBreakLoopV2Enabled: false,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: false,
             Keys.roomQuestEnabled: false,
@@ -165,6 +172,7 @@ final class FeatureFlagService {
         selectedThemeId = defaults.string(forKey: Keys.selectedThemeId) ?? "classic"
         vs1BondMatchEnabled = defaults.bool(forKey: Keys.vs1BondMatchEnabled)
         vs1GravitySplitEnabled = defaults.bool(forKey: Keys.vs1GravitySplitEnabled)
+        makeBreakLoopV2Enabled = defaults.bool(forKey: Keys.makeBreakLoopV2Enabled)
         motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)
         roomQuestEnabled = defaults.bool(forKey: Keys.roomQuestEnabled)

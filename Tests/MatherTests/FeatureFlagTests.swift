@@ -34,4 +34,16 @@ struct FeatureFlagTests {
         #expect(flags.audioEnabled == true)
         #expect(flags.hapticsEnabled == true)
     }
+
+
+    @Test func loopV2FlagDefaultsOffAndPersists() {
+        let defaults = UserDefaults(suiteName: #function)!
+        let flags = FeatureFlagService(defaults: defaults)
+        #expect(flags.makeBreakLoopV2Enabled == false)
+        flags.makeBreakLoopV2Enabled = true
+
+        let reloaded = FeatureFlagService(defaults: defaults)
+        #expect(reloaded.makeBreakLoopV2Enabled)
+    }
+
 }
