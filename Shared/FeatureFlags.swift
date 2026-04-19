@@ -4,7 +4,13 @@ import Observation
 @Observable
 final class FeatureFlagService {
     private enum Keys {
-        static let verticalSlice1Enabled = "feature.verticalSlice1Enabled"
+        static let verticalSlice1Enabled  = "feature.verticalSlice1Enabled"
+        // Place-matching thresholds (tunable from Settings)
+        static let placeMatchGPSMatch     = "placeMatch.gpsMatchMetres"
+        static let placeMatchGPSClose     = "placeMatch.gpsCloseMetres"
+        static let placeMatchGPSCutoff    = "placeMatch.gpsAccuracyCutoff"
+        static let placeMatchVisionMatch  = "placeMatch.visionMatchDistance"
+        static let placeMatchVisionClose  = "placeMatch.visionCloseDistance"
         static let testModeEnabled = "feature.testModeEnabled"
         static let audioEnabled = "feature.audioEnabled"
         static let hapticsEnabled = "feature.hapticsEnabled"
@@ -134,6 +140,40 @@ final class FeatureFlagService {
         didSet { defaults.set(compassAnglesEnabled, forKey: Keys.compassAnglesEnabled) }
     }
 
+    // MARK: - Place-matching thresholds
+
+    /// GPS match radius in metres. Default 8 m. Tighter = harder to get false match indoors.
+    var placeMatchGPSMatch: Double {
+        didSet { defaults.set(placeMatchGPSMatch, forKey: Keys.placeMatchGPSMatch) }
+    }
+    /// GPS "close" radius in metres. Must be greater than `placeMatchGPSMatch`. Default 20 m.
+    var placeMatchGPSClose: Double {
+        didSet { defaults.set(placeMatchGPSClose, forKey: Keys.placeMatchGPSClose) }
+    }
+    /// Discard GPS fixes with horizontal accuracy worse than this (metres). Default 10 m.
+    var placeMatchGPSCutoff: Double {
+        didSet { defaults.set(placeMatchGPSCutoff, forKey: Keys.placeMatchGPSCutoff) }
+    }
+    /// VNFeaturePrintObservation match distance. Default 0.25. Lower = stricter.
+    var placeMatchVisionMatch: Double {
+        didSet { defaults.set(placeMatchVisionMatch, forKey: Keys.placeMatchVisionMatch) }
+    }
+    /// VNFeaturePrintObservation "close" distance. Default 0.50.
+    var placeMatchVisionClose: Double {
+        didSet { defaults.set(placeMatchVisionClose, forKey: Keys.placeMatchVisionClose) }
+    }
+
+    /// Live snapshot of thresholds — read by `RoomQuestLiveScanner` at scan time.
+    var placeMatchThresholds: PlaceMatchThresholds {
+        PlaceMatchThresholds(
+            gpsMatchMetres:    placeMatchGPSMatch,
+            gpsCloseMetres:    placeMatchGPSClose,
+            gpsAccuracyCutoff: placeMatchGPSCutoff,
+            visionMatchDistance: Float(placeMatchVisionMatch),
+            visionCloseDistance: Float(placeMatchVisionClose)
+        )
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -164,6 +204,11 @@ final class FeatureFlagService {
             Keys.twoFingerProtractorEnabled: false,
             Keys.gravityArtistEnabled: false,
             Keys.compassAnglesEnabled: false,
+            Keys.placeMatchGPSMatch:    PlaceMatchThresholds.default.gpsMatchMetres,
+            Keys.placeMatchGPSClose:    PlaceMatchThresholds.default.gpsCloseMetres,
+            Keys.placeMatchGPSCutoff:   PlaceMatchThresholds.default.gpsAccuracyCutoff,
+            Keys.placeMatchVisionMatch: Double(PlaceMatchThresholds.default.visionMatchDistance),
+            Keys.placeMatchVisionClose: Double(PlaceMatchThresholds.default.visionCloseDistance),
         ])
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
@@ -186,5 +231,10 @@ final class FeatureFlagService {
         twoFingerProtractorEnabled = defaults.bool(forKey: Keys.twoFingerProtractorEnabled)
         gravityArtistEnabled = defaults.bool(forKey: Keys.gravityArtistEnabled)
         compassAnglesEnabled = defaults.bool(forKey: Keys.compassAnglesEnabled)
+        placeMatchGPSMatch   = defaults.double(forKey: Keys.placeMatchGPSMatch)
+        placeMatchGPSClose   = defaults.double(forKey: Keys.placeMatchGPSClose)
+        placeMatchGPSCutoff  = defaults.double(forKey: Keys.placeMatchGPSCutoff)
+        placeMatchVisionMatch = defaults.double(forKey: Keys.placeMatchVisionMatch)
+        placeMatchVisionClose = defaults.double(forKey: Keys.placeMatchVisionClose)
     }
 }

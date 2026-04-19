@@ -154,6 +154,11 @@ struct SettingsView: View {
 
                             Divider()
 
+                            if appModel.featureFlags.roomQuestEnabled {
+                                PlaceMatchThresholdSection(featureFlags: appModel.featureFlags)
+                                Divider()
+                            }
+
                             Text("Physics & Geometry")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
@@ -292,6 +297,130 @@ struct SettingsView: View {
         } message: {
             Text("This removes saved summaries and local JSONL exports.")
         }
+    }
+}
+
+// MARK: - Place matching threshold sliders
+
+private struct PlaceMatchThresholdSection: View {
+    @Bindable var featureFlags: FeatureFlagService
+
+    private let defaults = PlaceMatchThresholds.default
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Place matching")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Reset") { resetToDefaults() }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.accent)
+            }
+
+            Text("Tune how strictly the camera and GPS must agree that the child is at the right spot. Lower = stricter. Check the Xcode console for [PlaceMatch] lines to see live distances.")
+                .font(.caption)
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+
+            ThresholdSliderRow(
+                label: "Vision match",
+                unit: "",
+                value: $featureFlags.placeMatchVisionMatch,
+                range: 0.10...0.60,
+                step: 0.05,
+                defaultValue: Double(defaults.visionMatchDistance),
+                format: "%.2f",
+                hint: "Lower = more similar photos required. 0.25 rejects different rooms; 0.50 is lenient."
+            )
+
+            ThresholdSliderRow(
+                label: "Vision close",
+                unit: "",
+                value: $featureFlags.placeMatchVisionClose,
+                range: 0.20...1.00,
+                step: 0.05,
+                defaultValue: Double(defaults.visionCloseDistance),
+                format: "%.2f",
+                hint: "\"Almost there\" band. Should be above Vision match."
+            )
+
+            ThresholdSliderRow(
+                label: "GPS match",
+                unit: " m",
+                value: $featureFlags.placeMatchGPSMatch,
+                range: 3...20,
+                step: 1,
+                defaultValue: defaults.gpsMatchMetres,
+                format: "%.0f",
+                hint: "Metres. Outdoors: 8 m is reliable. Indoors: GPS is usually skipped by the accuracy cutoff."
+            )
+
+            ThresholdSliderRow(
+                label: "GPS close",
+                unit: " m",
+                value: $featureFlags.placeMatchGPSClose,
+                range: 10...50,
+                step: 2,
+                defaultValue: defaults.gpsCloseMetres,
+                format: "%.0f",
+                hint: "\"Almost there\" band for GPS. Should be above GPS match."
+            )
+
+            ThresholdSliderRow(
+                label: "GPS accuracy cutoff",
+                unit: " m",
+                value: $featureFlags.placeMatchGPSCutoff,
+                range: 3...20,
+                step: 1,
+                defaultValue: defaults.gpsAccuracyCutoff,
+                format: "%.0f",
+                hint: "Discard GPS fixes worse than this. 10 m blocks unreliable indoor readings."
+            )
+        }
+        .font(.subheadline)
+    }
+
+    private func resetToDefaults() {
+        featureFlags.placeMatchVisionMatch = Double(defaults.visionMatchDistance)
+        featureFlags.placeMatchVisionClose = Double(defaults.visionCloseDistance)
+        featureFlags.placeMatchGPSMatch    = defaults.gpsMatchMetres
+        featureFlags.placeMatchGPSClose    = defaults.gpsCloseMetres
+        featureFlags.placeMatchGPSCutoff   = defaults.gpsAccuracyCutoff
+    }
+}
+
+private struct ThresholdSliderRow: View {
+    let label: String
+    let unit: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let defaultValue: Double
+    let format: String
+    let hint: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text(String(format: format, value) + unit)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(value == defaultValue ? MatherTheme.cardSubtitle : MatherTheme.accent)
+                    .monospacedDigit()
+            }
+            Slider(value: $value, in: range, step: step)
+                .tint(value == defaultValue ? MatherTheme.cardSubtitle : MatherTheme.accent)
+            Text(hint)
+                .font(.caption)
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 2)
     }
 }
 

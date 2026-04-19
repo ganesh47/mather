@@ -36,6 +36,10 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
     /// can fire speech. Set by `AppModel` at startup.
     var onVerifyFeedback: ((VerifyFeedback) -> Void)? = nil
 
+    /// Threshold settings — injected from `AppModel` so parents can tune from Settings.
+    /// Reads `featureFlags.placeMatchThresholds` at scan time (each photo tap).
+    var featureFlags: FeatureFlagService? = nil
+
     /// Location service — owned here so GPS coordinates are captured at the exact photo moment.
     let locationService = LocationService()
 
@@ -88,16 +92,18 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             let currentLocation = locationService.lastLocation
             let expectedRole = session.expectedRole
             let continuation = session.continuation
+            let thresholds = featureFlags?.placeMatchThresholds ?? .default
             verifyFeedback = .evaluating
 
-            Task.detached { [weak self, savedRef, currentLocation] in
+            Task.detached { [weak self, savedRef, currentLocation, thresholds] in
                 let (result, wasGPS, gpsMetres, visionDist) = PlaceMatchService.evaluate(
                     savedLatitude: savedRef?.latitude,
                     savedLongitude: savedRef?.longitude,
                     savedGPSAccuracy: savedRef?.gpsAccuracy,
                     currentLocation: currentLocation,
                     savedImageData: savedRef?.imageJPEGData,
-                    candidateImageData: jpegData
+                    candidateImageData: jpegData,
+                    thresholds: thresholds
                 )
                 // Log raw distances — useful for threshold tuning.
                 let gpsStr   = gpsMetres.map   { String(format: "%.1f m", $0) } ?? "n/a"
