@@ -1,0 +1,231 @@
+name: iOS UI Review (main)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ui-review:
+    name: UI Screenshot Review
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Choose simulator destination
+        run: |
+          set -euo pipefail
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
+            if [[ -n "$line" ]]; then
+              id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
+              echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
+              echo "Using simulator: $name ($id)"
+              exit 0
+            fi
+          done
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15" "iPhone 17"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | head -n 1 || true)"
+            if [[ -n "$line" ]]; then
+              id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
+              echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
+              echo "Using simulator (fallback): $name ($id)"
+              exit 0
+            fi
+          done
+          echo "No preferred iPhone simulator found" >&2
+          xcrun simctl list devices available
+          exit 1
+
+      - name: Resolve dependencies
+        run: xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
+
+      - name: Build for testing
+        run: |
+          xcodebuild build-for-testing \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Boot simulator
+        timeout-minutes: 8
+        run: |
+          SIM_ID="${SIM_DESTINATION#id=}"
+          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+          for i in $(seq 1 40); do
+            STATE=$(xcrun simctl list devices | grep -F "$SIM_ID" \
+              | grep -oE 'Booted|Shutdown|Booting' | head -1 || echo "Unknown")
+            echo "[$i/40] $STATE"
+            [[ "$STATE" == "Booted" ]] && {
+              echo "Simulator booted: $SIM_ID"
+              sleep 10
+              exit 0
+            }
+            sleep 5
+          done
+          echo "Simulator did not reach Booted state after 200s" >&2
+          xcrun simctl list devices | grep -F "$SIM_ID" >&2
+          exit 1
+
+      - name: Run UI screenshot tests
+        timeout-minutes: 15
+        run: |
+          mkdir -p ci-videos
+          SIM_ID="${SIM_DESTINATION#id=}"
+
+          xcrun simctl io "$SIM_ID" recordVideo --codec hevc \
+            ci-videos/ui-tests.mp4 &
+          VIDEO_PID=$!
+
+          xcodebuild test-without-building \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination "$SIM_DESTINATION" \
+            -only-testing MatherUITests \
+            -resultBundlePath UITestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+          XCODE_EXIT=$?
+
+          kill -INT "$VIDEO_PID" && wait "$VIDEO_PID" 2>/dev/null || true
+          exit $XCODE_EXIT
+
+      - name: Extract screenshots from result bundle
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p ci-screenshots
+
+          cat > /tmp/extract_screenshots.py << 'PYEOF'
+          import sys, json, subprocess, pathlib, shutil, plistlib
+
+          bundle = pathlib.Path("UITestResults.xcresult")
+          out    = pathlib.Path("ci-screenshots")
+          out.mkdir(exist_ok=True)
+
+          if not bundle.exists():
+              print("No UITestResults.xcresult, skipping")
+              sys.exit(0)
+
+          root_id = None
+          info_path = bundle / "Info.plist"
+          if info_path.exists():
+              try:
+                  info = plistlib.loads(info_path.read_bytes())
+                  ref = info.get("rootObject", {})
+                  root_id = (ref.get("id") or {}).get("_value") or ref.get("_value")
+              except Exception as e:
+                  print(f"Info.plist read failed: {e}")
+
+          cmds = []
+          if root_id:
+              cmds.append(["xcrun", "xcresulttool", "get", "--path", str(bundle),
+                           "--id", root_id, "--format", "json"])
+          cmds += [
+              ["xcrun", "xcresulttool", "get", "--path", str(bundle), "--format", "json", "--legacy"],
+              ["xcrun", "xcresulttool", "get", "--path", str(bundle), "--format", "json"],
+          ]
+
+          raw = ""
+          for cmd in cmds:
+              res = subprocess.run(cmd, capture_output=True, text=True)
+              raw = res.stdout.strip()
+              if raw:
+                  break
+
+          extracted = 0
+          if raw:
+              try:
+                  data = json.loads(raw)
+                  def walk(node):
+                      global extracted
+                      if isinstance(node, dict):
+                          if node.get("_type", {}).get("_name") == "ActionTestAttachment":
+                              name = node.get("name", {}).get("_value", f"screenshot-{extracted:02d}")
+                              ref_id = (node.get("payloadRef") or {}).get("id", {}).get("_value")
+                              if ref_id:
+                                  dest = out / f"{name}.png"
+                                  subprocess.run([
+                                      "xcrun", "xcresulttool", "export",
+                                      "--path", str(bundle),
+                                      "--id", ref_id,
+                                      "--output-path", str(dest)
+                                  ], check=False, capture_output=True)
+                                  if dest.exists():
+                                      extracted += 1
+                          for v in node.values():
+                              walk(v)
+                      elif isinstance(node, list):
+                          for item in node:
+                              walk(item)
+                  walk(data)
+              except Exception as e:
+                  print(f"JSON walk failed: {e}")
+                  extracted = 0
+
+          if extracted == 0:
+              att_dir = bundle / "Attachments"
+              if att_dir.exists():
+                  idx = 0
+                  for f in sorted(att_dir.iterdir()):
+                      if not f.is_file():
+                          continue
+                      if f.read_bytes()[:4] == b'\x89PNG':
+                          dest = out / f"screenshot-{idx:02d}.png"
+                          shutil.copy(f, dest)
+                          idx += 1
+          PYEOF
+
+          python3 /tmp/extract_screenshots.py
+
+          SIM_ID=$(xcrun simctl list devices booted \
+            | grep -E '\([-A-F0-9]+\)' | head -1 \
+            | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          if [[ -n "$SIM_ID" ]]; then
+            xcrun simctl io "$SIM_ID" screenshot \
+              ci-screenshots/simulator-final-state.png 2>/dev/null || true
+          fi
+
+      - name: Upload UI result bundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-review-results-${{ github.run_number }}
+          path: UITestResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-review-screenshots-${{ github.run_number }}
+          path: ci-screenshots/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload UI test video
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-review-video-${{ github.run_number }}
+          path: ci-videos/
+          if-no-files-found: ignore
+          retention-days: 30
