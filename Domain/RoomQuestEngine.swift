@@ -115,7 +115,7 @@ final class RoomQuestEngine {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let result = try await scanner.scanMarker(for: role, mode: .setup)
+                let result = try await scanner.scanMarker(for: role, mode: .setup, savedReference: nil)
                 guard self.captureReference(for: result) else {
                     self.feedbackMessage = "We found \(result.role.title), but could not save its hiding-place reference yet. Try again."
                     self.scanState = .failed(role: role, message: self.feedbackMessage)
@@ -308,10 +308,20 @@ final class RoomQuestEngine {
             ? "Rechecking the saved \(station.role.title) place."
             : "Scan \(station.role.title) to unlock the collect step."
 
+        // Build saved-place reference so the scanner can do photo + GPS comparison.
+        let savedRef: RoomQuestSavedReference? = station.referenceCaptureState == .captured
+            ? RoomQuestSavedReference(
+                imageJPEGData: station.referenceImageJPEGData,
+                latitude: station.referenceLatitude,
+                longitude: station.referenceLongitude,
+                gpsAccuracy: station.referenceGPSAccuracy
+              )
+            : nil
+
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let result = try await scanner.scanMarker(for: station.role, mode: .verify)
+                let result = try await scanner.scanMarker(for: station.role, mode: .verify, savedReference: savedRef)
 
                 if let savedReference = try? stationStore.reference(for: station.role),
                    let expectedRole = savedReference.role,
@@ -473,6 +483,9 @@ final class RoomQuestEngine {
             for: result.role,
             markerPayload: result.markerPayload,
             referenceImageJPEGData: result.referenceImageJPEGData,
+            referenceLatitude: result.referenceLatitude,
+            referenceLongitude: result.referenceLongitude,
+            referenceGPSAccuracy: result.referenceGPSAccuracy,
             note: result.referenceImageJPEGData == nil
                 ? "Reference saved for \(result.role.title)"
                 : "Photo saved for \(result.role.title)"
@@ -480,11 +493,23 @@ final class RoomQuestEngine {
     }
 
     @discardableResult
-    private func persistReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, markerPayload: String?, referenceImageJPEGData: Data? = nil, note: String) -> Bool {
+    private func persistReferenceState(
+        _ state: RoomQuestReferenceCaptureState,
+        for role: RoomQuestStationRole,
+        markerPayload: String?,
+        referenceImageJPEGData: Data? = nil,
+        referenceLatitude: Double? = nil,
+        referenceLongitude: Double? = nil,
+        referenceGPSAccuracy: Double? = nil,
+        note: String
+    ) -> Bool {
         let draft = RoomQuestStationReferenceDraft(
             role: role,
             markerPayload: markerPayload,
             referenceImageJPEGData: referenceImageJPEGData,
+            referenceLatitude: referenceLatitude,
+            referenceLongitude: referenceLongitude,
+            referenceGPSAccuracy: referenceGPSAccuracy,
             capturedAt: .now,
             note: note,
             captureState: state
@@ -492,7 +517,7 @@ final class RoomQuestEngine {
 
         do {
             try stationStore.save(draft)
-            setReferenceState(state, for: role, note: note, referenceImageJPEGData: referenceImageJPEGData)
+            setReferenceState(state, for: role, note: note, referenceImageJPEGData: referenceImageJPEGData, referenceLatitude: referenceLatitude, referenceLongitude: referenceLongitude, referenceGPSAccuracy: referenceGPSAccuracy)
             try? telemetryWriter.append(SliceEvent(
                 type: .roomQuestReferenceCaptureCompleted,
                 payload: [
@@ -500,7 +525,8 @@ final class RoomQuestEngine {
                     "saved": String(state == .captured),
                     "capture_state": state.rawValue,
                     "reference_image_present": String(referenceImageJPEGData != nil),
-                    "marker_payload_present": String(markerPayload != nil)
+                    "marker_payload_present": String(markerPayload != nil),
+                    "gps_present": String(referenceLatitude != nil)
                 ]
             ))
             return true
@@ -518,18 +544,37 @@ final class RoomQuestEngine {
         }
     }
 
-    private func setReferenceState(_ state: RoomQuestReferenceCaptureState, for role: RoomQuestStationRole, note: String, referenceImageJPEGData: Data?) {
+    private func setReferenceState(
+        _ state: RoomQuestReferenceCaptureState,
+        for role: RoomQuestStationRole,
+        note: String,
+        referenceImageJPEGData: Data?,
+        referenceLatitude: Double? = nil,
+        referenceLongitude: Double? = nil,
+        referenceGPSAccuracy: Double? = nil
+    ) {
         guard let idx = stations.firstIndex(where: { $0.role == role }) else { return }
         stations[idx].referenceCaptureState = state
         stations[idx].referenceNote = note
         stations[idx].referenceImageJPEGData = referenceImageJPEGData
+        stations[idx].referenceLatitude = referenceLatitude
+        stations[idx].referenceLongitude = referenceLongitude
+        stations[idx].referenceGPSAccuracy = referenceGPSAccuracy
     }
 
     private func loadSavedReferenceState() {
         for role in RoomQuestStationRole.allCases {
             guard let savedReference = try? stationStore.reference(for: role),
                   let captureState = savedReference.captureState else { continue }
-            setReferenceState(captureState, for: role, note: savedReference.note, referenceImageJPEGData: savedReference.referenceImageJPEGData)
+            setReferenceState(
+                captureState,
+                for: role,
+                note: savedReference.note,
+                referenceImageJPEGData: savedReference.referenceImageJPEGData,
+                referenceLatitude: savedReference.referenceLatitude,
+                referenceLongitude: savedReference.referenceLongitude,
+                referenceGPSAccuracy: savedReference.referenceGPSAccuracy
+            )
         }
     }
 

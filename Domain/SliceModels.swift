@@ -279,6 +279,9 @@ struct RoomQuestStation: Equatable, Codable, Identifiable {
     var referenceCaptureState: RoomQuestReferenceCaptureState = .notCaptured
     var referenceNote: String? = nil
     var referenceImageJPEGData: Data? = nil
+    var referenceLatitude: Double? = nil
+    var referenceLongitude: Double? = nil
+    var referenceGPSAccuracy: Double? = nil
 
     var isReadyForRoomQuest: Bool {
         isRegistered && referenceCaptureState != .notCaptured
@@ -323,9 +326,34 @@ struct RoomQuestStationReferenceDraft: Equatable, Codable {
     let role: RoomQuestStationRole
     let markerPayload: String?
     let referenceImageJPEGData: Data?
+    let referenceLatitude: Double?
+    let referenceLongitude: Double?
+    let referenceGPSAccuracy: Double?
     let capturedAt: Date
     let note: String
     let captureState: RoomQuestReferenceCaptureState
+
+    init(
+        role: RoomQuestStationRole,
+        markerPayload: String?,
+        referenceImageJPEGData: Data?,
+        referenceLatitude: Double? = nil,
+        referenceLongitude: Double? = nil,
+        referenceGPSAccuracy: Double? = nil,
+        capturedAt: Date,
+        note: String,
+        captureState: RoomQuestReferenceCaptureState
+    ) {
+        self.role = role
+        self.markerPayload = markerPayload
+        self.referenceImageJPEGData = referenceImageJPEGData
+        self.referenceLatitude = referenceLatitude
+        self.referenceLongitude = referenceLongitude
+        self.referenceGPSAccuracy = referenceGPSAccuracy
+        self.capturedAt = capturedAt
+        self.note = note
+        self.captureState = captureState
+    }
 }
 
 @Model
@@ -333,14 +361,22 @@ final class StoredRoomQuestStationReference {
     var roleRawValue: String
     var markerPayload: String?
     var referenceImageJPEGData: Data?
+    var referenceLatitude: Double?
+    var referenceLongitude: Double?
+    var referenceGPSAccuracy: Double?
     var capturedAt: Date
     var note: String
     var captureStateRawValue: String
 
-    init(role: RoomQuestStationRole, markerPayload: String?, referenceImageJPEGData: Data?, capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
+    init(role: RoomQuestStationRole, markerPayload: String?, referenceImageJPEGData: Data?,
+         referenceLatitude: Double?, referenceLongitude: Double?, referenceGPSAccuracy: Double?,
+         capturedAt: Date, note: String, captureState: RoomQuestReferenceCaptureState) {
         self.roleRawValue = role.rawValue
         self.markerPayload = markerPayload
         self.referenceImageJPEGData = referenceImageJPEGData
+        self.referenceLatitude = referenceLatitude
+        self.referenceLongitude = referenceLongitude
+        self.referenceGPSAccuracy = referenceGPSAccuracy
         self.capturedAt = capturedAt
         self.note = note
         self.captureStateRawValue = captureState.rawValue

@@ -22,6 +22,8 @@
 	<string>Mather listens for claps to celebrate with you! Enable in Settings → Clap reaction.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Room Quest uses the camera to scan station markers and unlock playful AR moments for kids.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mather uses your location outdoors to help your child find the right spot during Room Quest.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchScreen</key>

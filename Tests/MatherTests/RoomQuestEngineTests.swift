@@ -615,7 +615,7 @@ private actor ScanTracker {
 private struct FakeRoomQuestScanner: RoomQuestScanner {
     let handler: @MainActor (RoomQuestStationRole, RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult
 
-    func scanMarker(for role: RoomQuestStationRole, mode: RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult {
+    func scanMarker(for role: RoomQuestStationRole, mode: RoomQuestScanMode, savedReference: RoomQuestSavedReference?) async throws -> RoomQuestMarkerScanResult {
         try await handler(role, mode)
     }
 }
