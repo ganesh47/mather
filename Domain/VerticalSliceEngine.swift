@@ -17,6 +17,7 @@ enum AppRoute {
     case gravityArtist
     case compassAngles
     case lab
+    case memory
 }
 
 @MainActor
@@ -117,6 +118,7 @@ final class VerticalSliceEngine {
     func showGravityArtist() { route = .gravityArtist }
     func showCompassAngles() { route = .compassAngles }
     func showLab() { route = .lab }
+    func showMemory() { route = .memory }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom
