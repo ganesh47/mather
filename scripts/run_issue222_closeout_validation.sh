@@ -26,7 +26,14 @@ if command -v xcodegen >/dev/null 2>&1; then
   echo "Generating Xcode project..."
   xcodegen generate
 elif [[ -f "$ROOT_DIR/Mather.xcodeproj/project.pbxproj" ]]; then
-  echo "xcodegen not found; using the checked-in Mather.xcodeproj."
+  if grep -q 'BlueprintName = "MatherUITests"' "$ROOT_DIR/Mather.xcodeproj/xcshareddata/xcschemes/Mather.xcscheme" 2>/dev/null || \
+     grep -q 'MatherUITests' "$ROOT_DIR/Mather.xcodeproj/project.pbxproj"; then
+    echo "xcodegen not found; using the checked-in Mather.xcodeproj."
+  else
+    echo "error: xcodegen is not installed and the checked-in Mather.xcodeproj does not include MatherUITests." >&2
+    echo "hint: install xcodegen or prepend a temporary xcodegen binary to PATH before running this script." >&2
+    exit 1
+  fi
 else
   echo "error: xcodegen is not installed and Mather.xcodeproj is missing." >&2
   exit 1
