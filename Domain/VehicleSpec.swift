@@ -41,6 +41,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "You parked them perfectly."
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -65,6 +66,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Trucks delivered perfectly."
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -89,6 +91,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Vans delivered!"
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -113,6 +116,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Buses on route!"
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -137,6 +141,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Bulldozers in position!"
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -161,6 +166,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Helicopters landed perfectly."
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }
@@ -185,6 +191,7 @@ extension VehicleSpec {
             case .abstract:   return "Your equation matches the split."
             case .transfer:   return "Planes ready for take-off!"
             case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
             case .bondMatch:  return "Bond Blast complete!"
             case .done:       return "Problem complete."
             }

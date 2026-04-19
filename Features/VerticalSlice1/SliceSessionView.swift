@@ -147,6 +147,20 @@ struct SliceSessionView: View {
             } else {
                 CardSurface { Text("Loading Balance...") }
             }
+        case .sumSprint:
+            CardSurface {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Sum Sprint")
+                        .font(.title.weight(.black))
+                    Text("PR2 placeholder: the loop now routes through a dedicated Sum Sprint stop before Bond Blast.")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Button("Sprint on") {
+                        appModel.engine.submitCurrentStage()
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+                }
+            }
         case .bondMatch:
             if let bondState = appModel.engine.bondMatchState {
                 BondMatchView(
@@ -250,6 +264,7 @@ struct SliceSessionView: View {
         case .abstract:  MatherTheme.accent
         case .transfer:      MatherTheme.coral
         case .gravitySplit:  MatherTheme.coral
+        case .sumSprint:     MatherTheme.softBlue
         case .bondMatch:     MatherTheme.accent
         case .done:          .secondary
         }

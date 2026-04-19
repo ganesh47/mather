@@ -18,12 +18,14 @@ enum SliceStateMachine {
         success: Bool,
         showTransfer: Bool,
         showGravitySplit: Bool = false,
-        showBondMatch: Bool = false
+        showBondMatch: Bool = false,
+        makeBreakLoopV2Enabled: Bool = false
     ) -> SliceStage {
         guard success else { return stage }
 
         switch stage {
         case .concrete:
+            if makeBreakLoopV2Enabled { return .gravitySplit }
             return .pictorial
         case .pictorial:
             return .abstract
@@ -32,7 +34,9 @@ enum SliceStateMachine {
             if showTransfer     { return .transfer }
             return showBondMatch ? .bondMatch : .done
         case .gravitySplit:
-            return showBondMatch ? .bondMatch : .done
+            return makeBreakLoopV2Enabled ? .sumSprint : (showBondMatch ? .bondMatch : .done)
+        case .sumSprint:
+            return .bondMatch
         case .transfer:
             return showBondMatch ? .bondMatch : .done
         case .bondMatch:
@@ -47,14 +51,16 @@ enum SliceStateMachine {
         to next: SliceStage,
         showTransfer: Bool,
         showGravitySplit: Bool = false,
-        showBondMatch: Bool = false
+        showBondMatch: Bool = false,
+        makeBreakLoopV2Enabled: Bool = false
     ) -> Bool {
         nextStage(
             after: current,
             success: true,
             showTransfer: showTransfer,
             showGravitySplit: showGravitySplit,
-            showBondMatch: showBondMatch
+            showBondMatch: showBondMatch,
+            makeBreakLoopV2Enabled: makeBreakLoopV2Enabled
         ) == next
     }
 }

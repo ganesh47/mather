@@ -7,6 +7,7 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
     case abstract
     case transfer
     case gravitySplit
+    case sumSprint
     case bondMatch
     case done
 
@@ -18,7 +19,8 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
         case .pictorial:    "Bond Blast!"
         case .abstract:     "Write it"
         case .transfer:     "Show it"
-        case .gravitySplit: "Balance it!"
+        case .gravitySplit: "Gravity Split"
+        case .sumSprint:    "Sum Sprint"
         case .bondMatch:    "Bond Blast!"
         case .done:         "Done"
         }

@@ -71,4 +71,14 @@ struct SliceStateMachineTests {
         // Default: showGravitySplit omitted → falls back to Transfer
         #expect(SliceStateMachine.nextStage(after: .abstract, success: true, showTransfer: true) == .transfer)
     }
+
+
+    @Test
+    func makeBreakLoopV2UsesFourStagePerTargetRoute() {
+        #expect(SliceStateMachine.nextStage(after: .concrete, success: true, showTransfer: true, makeBreakLoopV2Enabled: true) == .gravitySplit)
+        #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, showTransfer: true, showBondMatch: true, makeBreakLoopV2Enabled: true) == .sumSprint)
+        #expect(SliceStateMachine.nextStage(after: .sumSprint, success: true, showTransfer: true, showBondMatch: true, makeBreakLoopV2Enabled: true) == .bondMatch)
+        #expect(SliceStateMachine.nextStage(after: .bondMatch, success: true, showTransfer: true, showBondMatch: true, makeBreakLoopV2Enabled: true) == .done)
+    }
+
 }

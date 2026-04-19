@@ -262,6 +262,8 @@ final class VerticalSliceEngine {
                 && transferRightCount == currentProblem.decompositionB
         case .gravitySplit:
             isCorrect = gravitySplitState?.isLocked == true
+        case .sumSprint:
+            isCorrect = true
         case .bondMatch:
             // Bond Blast is not submitted via submitCurrentStage — pairs are matched
             // individually via matchPair(id:). This case is unreachable in practice.
@@ -404,15 +406,17 @@ final class VerticalSliceEngine {
 
         // Bond Blast fires only on the last problem of the session.
         let isLastProblem = currentProblemIndex + 1 >= problems.count
-        let showBondMatch = featureFlags.vs1BondMatchEnabled && isLastProblem
-        let showGravitySplit = featureFlags.vs1GravitySplitEnabled
+        let makeBreakLoopV2Enabled = featureFlags.makeBreakLoopV2Enabled
+        let showBondMatch = makeBreakLoopV2Enabled || (featureFlags.vs1BondMatchEnabled && isLastProblem)
+        let showGravitySplit = makeBreakLoopV2Enabled || featureFlags.vs1GravitySplitEnabled
 
         let next = SliceStateMachine.nextStage(
             after: currentStage,
             success: true,
             showTransfer: config.showTransfer,
             showGravitySplit: showGravitySplit,
-            showBondMatch: showBondMatch
+            showBondMatch: showBondMatch,
+            makeBreakLoopV2Enabled: makeBreakLoopV2Enabled
         )
         recordStageTransition(from: currentStage, to: next)
 
@@ -474,6 +478,9 @@ final class VerticalSliceEngine {
                 gravitySplitState = GravitySplitState(problem: problem)
                 gravitySplitNeutralRoll = nil   // re-calibrate on first tilt after stage entry
             }
+        case .sumSprint:
+            bondMatchState = nil
+            gravitySplitState = nil
         case .bondMatch:
             if let problem = currentProblem {
                 bondMatchState = BondMatchState(
@@ -669,6 +676,8 @@ final class VerticalSliceEngine {
             return activeTheme.concretePrompt(target: currentProblem.target)
         case .pictorial, .bondMatch:
             return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
+        case .sumSprint:
+            return "Quick Sum Sprint! Solve a tiny burst, then finish with Bond Blast."
         case .abstract:
             return activeTheme.abstractPrompt()
         case .transfer:
@@ -717,6 +726,8 @@ final class VerticalSliceEngine {
             }
         case .gravitySplit:
             return "Keep tilting! Get \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
+        case .sumSprint:
+            return "Keep going. This quick sprint comes before Bond Blast."
         case .done:
             return "Try again."
         }
