@@ -60,6 +60,24 @@ final class AppModel {
         self.roomQuestEngine = roomQuestEngine
         roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
 
+        roomQuestScanner.onVerifyFeedback = { [weak speechService, weak featureFlags] feedback in
+            guard let speechService, let featureFlags else { return }
+            switch feedback {
+            case .close(let wasGPS):
+                let msg = wasGPS
+                    ? "Almost there! Walk a little closer, then check again."
+                    : "Almost! Try to match the saved photo."
+                speechService.speak(msg, enabled: featureFlags.audioEnabled)
+            case .noMatch(let wasGPS):
+                let msg = wasGPS
+                    ? "Wrong place. Keep looking around."
+                    : "That doesn't look right. Keep searching."
+                speechService.speak(msg, enabled: featureFlags.audioEnabled)
+            default:
+                break
+            }
+        }
+
         let factStore = FactRecordStore(modelContext: modelContext)
         let sumSprintEngine = SumSprintEngine(
             featureFlags: featureFlags,
