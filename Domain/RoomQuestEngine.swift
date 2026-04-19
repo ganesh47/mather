@@ -177,13 +177,13 @@ final class RoomQuestEngine {
 
     var missingSetupRequirementsMessage: String {
         let pendingRoles = stations.filter { !$0.isReadyForRoomQuest }.map { $0.role.title }
-        guard !pendingRoles.isEmpty else { return "" }
+        guard !pendingRoles.isEmpty else { return "Both stations are ready for Room Quest." }
 
         if pendingRoles.count == 1 {
-            return "Save a hiding-place reference for \(pendingRoles[0]) before you start."
+            return "Finish setup for \(pendingRoles[0]) before you start."
         }
 
-        return "Save a hiding-place reference for both stations before you start."
+        return "Finish setup for both stations before you start."
     }
 
     var currentStation: RoomQuestStation? {
