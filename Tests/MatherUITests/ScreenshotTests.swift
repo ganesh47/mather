@@ -246,6 +246,49 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "iPhone-SplitView")
     }
 
+    // MARK: - Issue #222 validation lane
+
+    /// Captures deterministic evidence for the reopened issue #222 route:
+    /// Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
+    ///
+    /// The test clears two full loop iterations in one session so the xcresult
+    /// includes screenshots and assertions across multiple problem targets.
+    func testScreenshot_Issue222LoopV2_AcrossTwoTargets() {
+        let app = launchWithLoopV2()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        app.buttons["Play"].tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        app.buttons["Start Session"].tap()
+
+        completeLoopV2Problem(
+            in: app,
+            target: 6,
+            concreteCellIndex: 5,
+            leftPanCount: 3,
+            rightPanCount: 3,
+            sumSprintAnswers: ["6", "6"],
+            bondPairs: [(1, 5), (2, 4), (3, 3)],
+            snapshotPrefix: "Issue222-Target6"
+        )
+
+        let nextProblemSubmit = app.buttons["That is 9"]
+        XCTAssertTrue(nextProblemSubmit.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
+        snapshot(app, "Issue222-Target9-Concrete")
+
+        completeLoopV2Problem(
+            in: app,
+            target: 9,
+            concreteCellIndex: 8,
+            leftPanCount: 4,
+            rightPanCount: 5,
+            sumSprintAnswers: ["9", "9", "9"],
+            bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
+            snapshotPrefix: "Issue222-Target9",
+            skipInitialConcreteSnapshot: true
+        )
+    }
+
     // MARK: - Helpers
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.
@@ -269,6 +312,24 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+        ]
+        if let appearance {
+            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
+        app.launch()
+        return app
+    }
+
+    private func launchWithLoopV2(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.motionControlsEnabled", "NO",
+            "-feature.soundReactionEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "YES",
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -346,6 +407,69 @@ final class ScreenshotTests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func completeLoopV2Problem(
+        in app: XCUIApplication,
+        target: Int,
+        concreteCellIndex: Int,
+        leftPanCount: Int,
+        rightPanCount: Int,
+        sumSprintAnswers: [String],
+        bondPairs: [(Int, Int)],
+        snapshotPrefix: String,
+        skipInitialConcreteSnapshot: Bool = false
+    ) {
+        let concreteSubmit = app.buttons["That is \(target)"]
+        XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
+        if !skipInitialConcreteSnapshot {
+            snapshot(app, "\(snapshotPrefix)-Concrete")
+        }
+
+        let concreteCell = app.otherElements["counter-cell-\(concreteCellIndex)"]
+        XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(concreteCellIndex) for target \(target)")
+        concreteCell.tap()
+        concreteSubmit.tap()
+
+        let gravityTitle = app.staticTexts["Gravity Split"]
+        XCTAssertTrue(gravityTitle.waitForExistence(timeout: 15), "Expected Gravity Split after concrete target \(target)")
+        snapshot(app, "\(snapshotPrefix)-GravitySplit")
+
+        let gravityGoButton = app.buttons["gravity-go-button"]
+        if gravityGoButton.waitForExistence(timeout: 3) {
+            gravityGoButton.tap()
+        }
+
+        for _ in 0..<leftPanCount {
+            app.buttons["gravity-left-plus"].tap()
+        }
+        for _ in 0..<rightPanCount {
+            app.buttons["gravity-right-plus"].tap()
+        }
+
+        let sumSprintTitle = app.staticTexts["Sum Sprint"]
+        XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
+        snapshot(app, "\(snapshotPrefix)-SumSprint")
+
+        for answer in sumSprintAnswers {
+            for digit in answer {
+                app.buttons[String(digit)].tap()
+            }
+            app.buttons["Go"].tap()
+        }
+
+        let bondBlastTitle = app.staticTexts["Bond Blast!"]
+        XCTAssertTrue(bondBlastTitle.waitForExistence(timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
+        snapshot(app, "\(snapshotPrefix)-BondBlast")
+
+        for (left, right) in bondPairs {
+            let leftCard = app.buttons["bond-left-\(left)"]
+            let rightCard = app.buttons["bond-right-\(right)"]
+            XCTAssertTrue(leftCard.waitForExistence(timeout: 5), "Missing left Bond Blast card \(left) for target \(target)")
+            XCTAssertTrue(rightCard.waitForExistence(timeout: 5), "Missing right Bond Blast card \(right) for target \(target)")
+            leftCard.tap()
+            rightCard.tap()
+        }
     }
 
     private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
