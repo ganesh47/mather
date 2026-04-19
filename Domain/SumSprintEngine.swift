@@ -336,12 +336,13 @@ final class SumSprintEngine {
             return
         }
         cardTimeRemaining = secs
-        timerTask = Task { @MainActor in
+        timerTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
+                guard let self else { break }
                 try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 s tick
-                cardTimeRemaining = max(0, cardTimeRemaining - 0.1)
-                if cardTimeRemaining <= 0 {
-                    handleTimeout()
+                self.cardTimeRemaining = max(0, self.cardTimeRemaining - 0.1)
+                if self.cardTimeRemaining <= 0 {
+                    self.handleTimeout()
                     break
                 }
             }
