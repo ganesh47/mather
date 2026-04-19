@@ -11,14 +11,15 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
     struct Session: Identifiable {
         let id = UUID()
         let expectedRole: RoomQuestStationRole
+        let mode: RoomQuestScanMode
         let continuation: CheckedContinuation<RoomQuestMarkerScanResult, Error>
     }
 
     private(set) var activeSession: Session?
 
-    func scanMarker(for role: RoomQuestStationRole) async throws -> RoomQuestMarkerScanResult {
+    func scanMarker(for role: RoomQuestStationRole, mode: RoomQuestScanMode) async throws -> RoomQuestMarkerScanResult {
         try await withCheckedThrowingContinuation { continuation in
-            activeSession = Session(expectedRole: role, continuation: continuation)
+            activeSession = Session(expectedRole: role, mode: mode, continuation: continuation)
         }
     }
 
@@ -35,6 +36,30 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             return
         }
         session.continuation.resume(returning: RoomQuestMarkerScanResult(role: detectedRole, markerPayload: payload, referenceImageJPEGData: nil, usedARCelebration: true))
+        activeSession = nil
+    }
+
+    /// Called when parent takes a photo to save this place as the station reference.
+    func resolveWithPhoto(_ jpegData: Data) {
+        guard let session = activeSession else { return }
+        session.continuation.resume(returning: RoomQuestMarkerScanResult(
+            role: session.expectedRole,
+            markerPayload: nil,
+            referenceImageJPEGData: jpegData,
+            usedARCelebration: false
+        ))
+        activeSession = nil
+    }
+
+    /// Called when child confirms they are at the correct spot (no QR required).
+    func resolveWithConfirm() {
+        guard let session = activeSession else { return }
+        session.continuation.resume(returning: RoomQuestMarkerScanResult(
+            role: session.expectedRole,
+            markerPayload: nil,
+            referenceImageJPEGData: nil,
+            usedARCelebration: false
+        ))
         activeSession = nil
     }
 
@@ -63,11 +88,14 @@ struct RoomQuestScannerSheet: View {
         NavigationStack {
             Group {
                 if let session = scanner.activeSession {
-                    RoomQuestCameraScannerView(expectedRole: session.expectedRole) { payload in
-                        scanner.resolveScan(payload: payload)
-                    } onCancel: {
-                        scanner.cancelScan()
-                    }
+                    RoomQuestCameraScannerView(
+                        expectedRole: session.expectedRole,
+                        scanMode: session.mode,
+                        onPayload: { payload in scanner.resolveScan(payload: payload) },
+                        onPhoto: { jpegData in scanner.resolveWithPhoto(jpegData) },
+                        onConfirm: { scanner.resolveWithConfirm() },
+                        onCancel: { scanner.cancelScan() }
+                    )
                 } else {
                     ContentUnavailableView("Camera verify", systemImage: "camera.viewfinder", description: Text("Preparing scanner…"))
                 }
@@ -80,13 +108,19 @@ struct RoomQuestScannerSheet: View {
 
 private struct RoomQuestCameraScannerView: UIViewControllerRepresentable {
     let expectedRole: RoomQuestStationRole
+    let scanMode: RoomQuestScanMode
     let onPayload: (String) -> Void
+    let onPhoto: (Data) -> Void
+    let onConfirm: () -> Void
     let onCancel: () -> Void
 
     func makeUIViewController(context: Context) -> ScannerViewController {
         let controller = ScannerViewController()
         controller.expectedRole = expectedRole
+        controller.scanMode = scanMode
         controller.onPayload = onPayload
+        controller.onPhoto = onPhoto
+        controller.onConfirm = onConfirm
         controller.onCancel = onCancel
         return controller
     }
@@ -94,13 +128,20 @@ private struct RoomQuestCameraScannerView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {}
 }
 
-final class ScannerViewController: UIViewController, @preconcurrency AVCaptureMetadataOutputObjectsDelegate {
+final class ScannerViewController: UIViewController,
+    @preconcurrency AVCaptureMetadataOutputObjectsDelegate,
+    AVCapturePhotoCaptureDelegate {
+
     var expectedRole: RoomQuestStationRole = .redRocket
+    var scanMode: RoomQuestScanMode = .setup
     var onPayload: ((String) -> Void)?
+    var onPhoto: ((Data) -> Void)?
+    var onConfirm: (() -> Void)?
     var onCancel: (() -> Void)?
 
-    private let session = AVCaptureSession()
+    private let captureSession = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var photoOutput: AVCapturePhotoOutput?
     private var hasResolved = false
 
     override func viewDidLoad() {
@@ -112,34 +153,40 @@ final class ScannerViewController: UIViewController, @preconcurrency AVCaptureMe
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if !session.isRunning { session.startRunning() }
+        if !captureSession.isRunning { captureSession.startRunning() }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if session.isRunning { session.stopRunning() }
+        if captureSession.isRunning { captureSession.stopRunning() }
     }
 
     private func configureCamera() {
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input)
+              captureSession.canAddInput(input)
         else {
             onCancel?()
             return
         }
-        session.addInput(input)
+        captureSession.addInput(input)
 
-        let output = AVCaptureMetadataOutput()
-        guard session.canAddOutput(output) else {
+        let metadataOutput = AVCaptureMetadataOutput()
+        guard captureSession.canAddOutput(metadataOutput) else {
             onCancel?()
             return
         }
-        session.addOutput(output)
-        output.setMetadataObjectsDelegate(self, queue: .main)
-        output.metadataObjectTypes = [.qr]
+        captureSession.addOutput(metadataOutput)
+        metadataOutput.setMetadataObjectsDelegate(self, queue: .main)
+        metadataOutput.metadataObjectTypes = [.qr]
 
-        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+        let photoOut = AVCapturePhotoOutput()
+        if captureSession.canAddOutput(photoOut) {
+            captureSession.addOutput(photoOut)
+            self.photoOutput = photoOut
+        }
+
+        let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.videoGravity = .resizeAspectFill
         previewLayer.frame = view.bounds
         view.layer.addSublayer(previewLayer)
@@ -158,27 +205,84 @@ final class ScannerViewController: UIViewController, @preconcurrency AVCaptureMe
         label.numberOfLines = 0
         label.textColor = .white
         label.font = .preferredFont(forTextStyle: .title2)
-        label.text = "Scan the \(expectedRole.title) marker"
 
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Use fallback instead", for: .normal)
-        button.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        button.tintColor = .white
-        button.addAction(UIAction { [weak self] _ in self?.onCancel?() }, for: .touchUpInside)
+        var primaryConfig = UIButton.Configuration.filled()
+        primaryConfig.cornerStyle = .large
+        primaryConfig.buttonSize = .large
 
-        let stack = UIStackView(arrangedSubviews: [label, button])
+        let primaryButton: UIButton
+        let cancelButton = UIButton(type: .system)
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        cancelButton.setTitle("Use fallback instead", for: .normal)
+        cancelButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        cancelButton.tintColor = .white
+        cancelButton.addAction(UIAction { [weak self] _ in self?.onCancel?() }, for: .touchUpInside)
+
+        switch scanMode {
+        case .setup:
+            label.text = "Point at the \(expectedRole.title) spot, then save a photo"
+            primaryConfig.title = "📸 Save this place"
+            primaryConfig.baseBackgroundColor = .systemBlue
+            primaryButton = UIButton(configuration: primaryConfig, primaryAction: UIAction { [weak self] _ in
+                self?.capturePhoto()
+            })
+
+        case .verify:
+            label.text = "Are you standing at the \(expectedRole.title) spot?"
+            primaryConfig.title = "✓ That's my spot!"
+            primaryConfig.baseBackgroundColor = .systemGreen
+            primaryButton = UIButton(configuration: primaryConfig, primaryAction: UIAction { [weak self] _ in
+                guard let self, !self.hasResolved else { return }
+                self.hasResolved = true
+                self.captureSession.stopRunning()
+                self.onConfirm?()
+            })
+        }
+
+        primaryButton.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = UIStackView(arrangedSubviews: [label, primaryButton, cancelButton])
         stack.axis = .vertical
         stack.spacing = 16
+        stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
 
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32)
+            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
+            primaryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
+            primaryButton.widthAnchor.constraint(equalTo: stack.widthAnchor)
         ])
     }
+
+    private func capturePhoto() {
+        guard !hasResolved else { return }
+        guard let photoOutput else {
+            onCancel?()
+            return
+        }
+        let settings = AVCapturePhotoSettings()
+        photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+
+    // MARK: - AVCapturePhotoCaptureDelegate
+
+    nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        guard error == nil, let jpegData = photo.fileDataRepresentation() else {
+            Task { @MainActor [weak self] in self?.onCancel?() }
+            return
+        }
+        Task { @MainActor [weak self] in
+            guard let self, !self.hasResolved else { return }
+            self.hasResolved = true
+            self.captureSession.stopRunning()
+            self.onPhoto?(jpegData)
+        }
+    }
+
+    // MARK: - AVCaptureMetadataOutputObjectsDelegate
 
     @MainActor
     private func presentARCelebration(for payload: String) {
@@ -197,7 +301,7 @@ final class ScannerViewController: UIViewController, @preconcurrency AVCaptureMe
         Task { @MainActor [weak self] in
             guard let self, !self.hasResolved else { return }
             self.hasResolved = true
-            self.session.stopRunning()
+            self.captureSession.stopRunning()
             self.presentARCelebration(for: payload)
         }
     }

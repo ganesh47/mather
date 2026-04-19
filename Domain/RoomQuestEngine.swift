@@ -115,7 +115,7 @@ final class RoomQuestEngine {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let result = try await scanner.scanMarker(for: role)
+                let result = try await scanner.scanMarker(for: role, mode: .setup)
                 guard self.captureReference(for: result) else {
                     self.feedbackMessage = "We found \(result.role.title), but could not save its hiding-place reference yet. Try again."
                     self.scanState = .failed(role: role, message: self.feedbackMessage)
@@ -234,21 +234,27 @@ final class RoomQuestEngine {
         case .scanning(let role):
             return "Keep the camera pointed at \(role.title) until it finishes checking."
         case .idle:
-            if station.referenceCaptureState == .captured {
-                return "Look for the saved \(station.role.title) place, then hold the camera still for a recheck."
-            } else {
+            switch station.referenceCaptureState {
+            case .captured:
+                return "Walk to the saved \(station.role.title) place and tap 'Recheck' to confirm you're there."
+            case .manualFallback:
+                return "No camera reference saved for \(station.role.title). Tap 'I found it' when you get there."
+            case .notCaptured:
                 return "Look for \(station.role.title), then start with a camera check. A grown-up fallback appears if the scan misses."
             }
         }
     }
 
     var shouldShowSpotManualFallback: Bool {
-        guard currentStation != nil else { return false }
+        guard let station = currentStation else { return false }
 
         switch scanState {
         case .almost, .failed:
             return true
-        case .idle, .scanning, .celebrating:
+        case .idle:
+            // Show fallback immediately when no camera reference was saved
+            return station.referenceCaptureState == .manualFallback
+        case .scanning, .celebrating:
             return false
         }
     }
@@ -305,7 +311,7 @@ final class RoomQuestEngine {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let result = try await scanner.scanMarker(for: station.role)
+                let result = try await scanner.scanMarker(for: station.role, mode: .verify)
 
                 if let savedReference = try? stationStore.reference(for: station.role),
                    let expectedRole = savedReference.role,
