@@ -272,8 +272,8 @@ final class ScreenshotTests: XCTestCase {
             snapshotPrefix: "Issue222-Target6"
         )
 
-        let nextProblemLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Make 9'"))
-        XCTAssertTrue(nextProblemLabel.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
+        let nextProblemSubmit = app.buttons["That is 9"]
+        XCTAssertTrue(nextProblemSubmit.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
         snapshot(app, "Issue222-Target9-Concrete")
 
         completeLoopV2Problem(
@@ -420,8 +420,8 @@ final class ScreenshotTests: XCTestCase {
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
-        let makeLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Make \(target)'"))
-        XCTAssertTrue(makeLabel.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
+        let concreteSubmit = app.buttons["That is \(target)"]
+        XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
         if !skipInitialConcreteSnapshot {
             snapshot(app, "\(snapshotPrefix)-Concrete")
         }
@@ -429,9 +429,6 @@ final class ScreenshotTests: XCTestCase {
         let concreteCell = app.otherElements["counter-cell-\(concreteCellIndex)"]
         XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(concreteCellIndex) for target \(target)")
         concreteCell.tap()
-
-        let concreteSubmit = app.buttons.element(matching: NSPredicate(format: "label BEGINSWITH 'That is '"))
-        XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 5))
         concreteSubmit.tap()
 
         let gravityTitle = app.staticTexts["Gravity Split"]
