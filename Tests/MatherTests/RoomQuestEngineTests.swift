@@ -345,7 +345,7 @@ struct RoomQuestEngineTests {
 
         #expect(engine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
         #expect(engine.currentSpotStatusTitle.localizedCaseInsensitiveContains("find the saved place"))
-        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("hold the camera still"))
+        #expect(engine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("recheck"))
         #expect(!engine.shouldShowSpotManualFallback)
     }
 
