@@ -103,6 +103,7 @@ final class VerticalSliceEngine {
     }
 
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
+    var sumSprintStageCardCount: Int { sumSprintBurstState?.cards.count ?? 0 }
 
     func showSettings() { route = .settings }
     func showHome() { route = .home }
