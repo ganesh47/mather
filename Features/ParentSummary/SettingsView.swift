@@ -64,6 +64,13 @@ struct SettingsView: View {
         )
     }
 
+    private var verticalSliceBinding: Binding<Bool> {
+        Binding(
+            get: { appModel.featureFlags.verticalSlice1Enabled },
+            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
+        )
+    }
+
     private func smokeStep(_ text: String) -> some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
