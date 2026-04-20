@@ -72,7 +72,9 @@ struct VerticalSliceEngineTests {
         #expect(engine.currentStage == .gravitySplit)
 
         lockGravitySplit(engine, problem: problem)
-        await waitFor("gravity split lock") { engine.gravitySplitState?.isLocked == true }
+        // Locking the split can auto-advance the stage immediately, which clears
+        // gravitySplitState before the assertion loop observes `isLocked == true`.
+        // Wait for the durable next-stage outcome instead of the transient lock bit.
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
         #expect(engine.currentStage == .sumSprint)
         #expect((engine.sumSprintBurstState?.cards.count ?? 0) >= 1)
@@ -779,7 +781,9 @@ struct VerticalSliceEngineTests {
         #expect(engine.currentStage == .gravitySplit)
 
         lockGravitySplit(engine, problem: problem)
-        await waitFor("gravity split lock") { engine.gravitySplitState?.isLocked == true }
+        // Locking the split can auto-advance the stage immediately, which clears
+        // gravitySplitState before the assertion loop observes `isLocked == true`.
+        // Wait for the durable next-stage outcome instead of the transient lock bit.
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
         #expect(engine.currentStage == .sumSprint)
 
