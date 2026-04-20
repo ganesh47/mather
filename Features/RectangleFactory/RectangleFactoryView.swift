@@ -13,6 +13,11 @@ import SwiftUI
 //  • Wider grid (8 cols for N > 12) so larger factor pairs like 3×8 are reachable.
 
 struct RectangleFactoryView: View {
+    enum CompletionStyle: Equatable {
+        case standard
+        case prime
+    }
+
     @Bindable var appModel: AppModel
 
     private static let nSequence: [Int] = [4, 6, 9, 12, 7, 11, 16, 18, 13, 24]
@@ -25,6 +30,7 @@ struct RectangleFactoryView: View {
     @State private var showEquation: Bool = false
     @State private var lastEquation: String = ""
     @State private var allFoundForN: Bool = false
+    @State private var celebratingFactorKey: String?
 
     // MARK: - Grid constants
 
@@ -121,13 +127,7 @@ struct RectangleFactoryView: View {
 
             // Equation label (floats above top-right of frame on valid snap)
             if showEquation {
-                Text(lastEquation)
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(MatherTheme.accent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(MatherTheme.card.opacity(0.95))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                discoveryCallout
                     .offset(x: frameW + 6, y: 0)
                     .transition(.scale.combined(with: .opacity))
                     .zIndex(10)
@@ -208,10 +208,93 @@ struct RectangleFactoryView: View {
             }
 
             if allFoundForN {
+                completionPanel
+                    .padding(.horizontal, 24)
+            }
+
+            Text("Shake to reset frame")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.bottom, 16)
+        }
+    }
+
+    private var discoveryCallout: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if celebratingFactorKey != nil {
+                Label("New rectangle!", systemImage: "sparkles")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.coral)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(MatherTheme.coral.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+
+            Text(lastEquation)
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.accent)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(MatherTheme.card.opacity(0.95))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    private var completionPanel: some View {
+        let style = Self.completionStyle(for: targetN)
+
+        return Group {
+            if style == .prime {
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles.rectangle.stack.fill")
+                            .font(.system(size: 28, weight: .black))
+                            .foregroundStyle(MatherTheme.warm)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(Self.completionTitle(for: targetN))
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                            Text("Only 1×\(targetN) works, so \(targetN) is special.")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+
+                    Button(action: advanceToNextN) {
+                        Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(MatherTheme.coral)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    MatherTheme.warm.opacity(0.22),
+                                    MatherTheme.coral.opacity(0.16)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(MatherTheme.warm.opacity(0.35), lineWidth: 1.5)
+                )
+            } else {
                 Button(action: advanceToNextN) {
-                    Text(sequenceIndex + 1 < RectangleFactoryView.nSequence.count
-                         ? "Next Number →"
-                         : "All done! 🎉")
+                    Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -219,13 +302,7 @@ struct RectangleFactoryView: View {
                         .background(MatherTheme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
-                .padding(.horizontal, 24)
             }
-
-            Text("Shake to reset frame")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .padding(.bottom, 16)
         }
     }
 
@@ -270,8 +347,35 @@ struct RectangleFactoryView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 9)
-            .background(MatherTheme.accent.opacity(0.15))
+            .background(
+                key == celebratingFactorKey
+                    ? LinearGradient(
+                        colors: [MatherTheme.warm.opacity(0.34), MatherTheme.coral.opacity(0.20)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    : LinearGradient(
+                        colors: [MatherTheme.accent.opacity(0.15), MatherTheme.accent.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+            )
+            .overlay(alignment: .topTrailing) {
+                if key == celebratingFactorKey {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(MatherTheme.coral)
+                        .offset(x: 4, y: -4)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .scaleEffect(key == celebratingFactorKey ? 1.08 : 1)
+            .shadow(
+                color: key == celebratingFactorKey ? MatherTheme.coral.opacity(0.22) : .clear,
+                radius: 10,
+                y: 4
+            )
+            .animation(.spring(response: 0.28, dampingFraction: 0.58), value: celebratingFactorKey)
         )
     }
 
@@ -303,6 +407,7 @@ struct RectangleFactoryView: View {
         let key = Self.factorKey(frameWidth, frameHeight)
         guard !foundFactors.contains(key) else { return }
         foundFactors.insert(key)
+        celebratingFactorKey = key
         lastEquation = "\(min(frameWidth, frameHeight)) × \(max(frameWidth, frameHeight)) = \(targetN)"
         showEquation = true
         appModel.hapticsService.cardSnapCorrect(enabled: appModel.featureFlags.hapticsEnabled)
@@ -313,6 +418,7 @@ struct RectangleFactoryView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1.5))
             showEquation = false
+            celebratingFactorKey = nil
             checkAllFound()
         }
     }
@@ -322,12 +428,8 @@ struct RectangleFactoryView: View {
         guard foundFactors.count >= allFactors.count else { return }
         allFoundForN = true
         appModel.hapticsService.bondMatchComplete(enabled: appModel.featureFlags.hapticsEnabled)
-        let count = allFactors.count
-        let noun  = count == 1 ? "rectangle" : "rectangles"
         appModel.speechService.speak(
-            count == 1
-                ? "\(targetN) is prime — only one \(noun)!"
-                : "You found all \(count) \(noun) for \(targetN)!",
+            Self.completionSpeech(for: targetN),
             enabled: appModel.featureFlags.audioEnabled
         )
     }
@@ -349,6 +451,7 @@ struct RectangleFactoryView: View {
         foundFactors = []
         allFoundForN = false
         showEquation = false
+        celebratingFactorKey = nil
         let start = Self.smartStartDimensions(for: n)
         frameWidth  = start.width
         frameHeight = start.height
@@ -359,6 +462,7 @@ struct RectangleFactoryView: View {
         frameWidth  = start.width
         frameHeight = start.height
         showEquation = false
+        celebratingFactorKey = nil
     }
 
     // MARK: - Static helpers
@@ -375,6 +479,26 @@ struct RectangleFactoryView: View {
             result.insert(factorKey(i, n / i))
         }
         return result
+    }
+
+    nonisolated static func completionStyle(for n: Int) -> CompletionStyle {
+        factorsOf(n).count == 1 ? .prime : .standard
+    }
+
+    nonisolated static func completionTitle(for n: Int) -> String {
+        completionStyle(for: n) == .prime ? "Prime discovery!" : "All rectangles found!"
+    }
+
+    nonisolated static func completionSpeech(for n: Int) -> String {
+        let count = factorsOf(n).count
+        let noun = count == 1 ? "rectangle" : "rectangles"
+        return completionStyle(for: n) == .prime
+            ? "\(n) is prime. Only one rectangle works!"
+            : "You found all \(count) \(noun) for \(n)!"
+    }
+
+    nonisolated static func advanceButtonTitle(hasNext: Bool) -> String {
+        hasNext ? "Next Number →" : "All done! 🎉"
     }
 
     /// Starting frame dimensions: one cell wider than the square-root floor,

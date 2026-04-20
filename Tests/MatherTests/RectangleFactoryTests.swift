@@ -111,4 +111,26 @@ struct RectangleFactoryTests {
         let composites = seq.filter { n in RectangleFactoryView.factorsOf(n).count > 1 }
         #expect(composites.count >= 6)
     }
+
+    // MARK: - Completion helpers
+
+    @Test func completionStyleMarksPrimeTargets() {
+        #expect(RectangleFactoryView.completionStyle(for: 7) == .prime)
+        #expect(RectangleFactoryView.completionStyle(for: 12) == .standard)
+    }
+
+    @Test func completionTitleHighlightsPrimeDiscovery() {
+        #expect(RectangleFactoryView.completionTitle(for: 11) == "Prime discovery!")
+        #expect(RectangleFactoryView.completionTitle(for: 16) == "All rectangles found!")
+    }
+
+    @Test func completionSpeechDifferentiatesPrimeAndComposite() {
+        #expect(RectangleFactoryView.completionSpeech(for: 13) == "13 is prime. Only one rectangle works!")
+        #expect(RectangleFactoryView.completionSpeech(for: 12) == "You found all 3 rectangles for 12!")
+    }
+
+    @Test func advanceButtonTitleReflectsSequenceEnd() {
+        #expect(RectangleFactoryView.advanceButtonTitle(hasNext: true) == "Next Number →")
+        #expect(RectangleFactoryView.advanceButtonTitle(hasNext: false) == "All done! 🎉")
+    }
 }
