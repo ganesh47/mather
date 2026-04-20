@@ -25,126 +25,65 @@ struct SpotPromptView: View {
             spotColour
                 .ignoresSafeArea()
 
-            VStack(spacing: 32) {
-                Spacer()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Color.clear
+                        .frame(height: 88)
 
-                Text(spotLabel)
-                    .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-
-                Text(station?.role.icon ?? "✨")
-                    .font(.system(size: 72))
-
-                if let station {
-                    Text(station.referenceCaptureState == .captured ? "Recheck the saved \(station.role.title) place." : "Scan to find \(station.role.title).")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.92))
+                    Text(spotLabel)
+                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 28)
 
-                    Text("When the place matches, collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
-                        .font(.title.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.84))
-                }
+                    Text(station?.role.icon ?? "✨")
+                        .font(.system(size: 72))
 
-                scanStatusCard
+                    if let station {
+                        Text(station.referenceCaptureState == .captured ? "Recheck the saved \(station.role.title) place." : "Scan to find \(station.role.title).")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white.opacity(0.92))
+                            .multilineTextAlignment(.center)
 
-                CardSurface {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label(engine.currentSpotReferenceLabel, systemImage: station?.referenceCaptureState == .captured ? "photo.badge.checkmark" : "photo")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.ink)
-                        Divider()
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(engine.currentSpotStatusTitle)
-                                .font(.title3.weight(.black))
-                                .foregroundStyle(MatherTheme.ink)
-                            Text(engine.currentSpotSearchGuidance)
-                                .font(.subheadline)
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        Text("When the place matches, collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens").")
+                            .font(.title.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.84))
+                            .multilineTextAlignment(.center)
                     }
-                }
-                .padding(.horizontal, 24)
 
-                CardSurface {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Label("Grown-up helper", systemImage: "figure.and.child.holdinghands")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text("Kid steps: look, point, hold still, then collect.")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text(engine.shouldShowSpotManualFallback
-                             ? "The camera missed this place. A grown-up can use fallback now."
-                             : "Start with a camera check. Fallback stays hidden unless the scan misses, so the camera feels like the real helper.")
-                            .font(.subheadline)
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(.horizontal, 24)
+                    scanStatusCard
 
-                Spacer()
+                    referenceCard
 
-                // Reference thumbnail — shows the saved photo so the child knows where to go
-                if let imageData = station?.referenceImageJPEGData,
-                   let uiImage = UIImage(data: imageData) {
-                    CardSurface {
-                        HStack(spacing: 12) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Find this place")
-                                    .font(.headline.weight(.bold))
-                                    .foregroundStyle(MatherTheme.ink)
-                                Text("Walk to where this photo was taken")
-                                    .font(.subheadline)
-                                    .foregroundStyle(MatherTheme.cardSubtitle)
-                                    .fixedSize(horizontal: false, vertical: true)
+                    helperCard
+
+                    if let imageData = station?.referenceImageJPEGData,
+                       let uiImage = UIImage(data: imageData) {
+                        CardSurface {
+                            HStack(spacing: 12) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Find this place")
+                                        .font(.headline.weight(.bold))
+                                        .foregroundStyle(MatherTheme.ink)
+                                    Text("Walk to where this photo was taken")
+                                        .font(.subheadline)
+                                        .foregroundStyle(MatherTheme.cardSubtitle)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                         }
                     }
-                    .padding(.horizontal, 24)
                 }
-
-                // Camera scan button — only active for stations with a saved photo reference
-                if station?.referenceCaptureState == .captured {
-                    let isScanBusy: Bool = {
-                        switch engine.scanState {
-                        case .scanning, .celebrating: return true
-                        default: return false
-                        }
-                    }()
-                    Button {
-                        engine.verifyCurrentSpotWithCamera()
-                    } label: {
-                        Label("Recheck this place", systemImage: "camera.viewfinder")
-                    }
-                    .accessibilityIdentifier("room-spot-scan-button")
-                    .buttonStyle(RoomQuestPrimaryButtonStyle())
-                    .disabled(isScanBusy)
-                    .opacity(isScanBusy ? 0.7 : 1)
-                    .padding(.horizontal, 40)
-                }
-
-                if engine.shouldShowSpotManualFallback {
-                    Button(station?.role.fallbackButtonTitle ?? "I found it") {
-                        engine.markSpotVisited(index: spotIndex)
-                    }
-                    .accessibilityIdentifier("room-spot-confirm-button")
-                    .buttonStyle(.plain)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
-                } else {
-                    Spacer().frame(height: 40)
-                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+            }
+            .safeAreaInset(edge: .bottom) {
+                actionBar
             }
 
             HStack(spacing: 12) {
@@ -160,6 +99,95 @@ struct SpotPromptView: View {
         }
     }
 
+    private var referenceCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(engine.currentSpotReferenceLabel, systemImage: station?.referenceCaptureState == .captured ? "photo.badge.checkmark" : "photo")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+                Divider()
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(engine.currentSpotStatusTitle)
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(engine.currentSpotSearchGuidance)
+                        .font(.subheadline)
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var helperCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Grown-up helper", systemImage: "figure.and.child.holdinghands")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Kid steps: look, point, hold still, then collect.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(engine.shouldShowSpotManualFallback
+                     ? "The camera missed this place. A grown-up can use fallback now."
+                     : "Start with a camera check. Fallback stays hidden unless the scan misses, so the camera feels like the real helper.")
+                    .font(.subheadline)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var actionBar: some View {
+        VStack(spacing: 12) {
+            if station?.referenceCaptureState == .captured {
+                let isScanBusy: Bool = {
+                    switch engine.scanState {
+                    case .scanning, .celebrating: return true
+                    default: return false
+                    }
+                }()
+
+                Button {
+                    engine.verifyCurrentSpotWithCamera()
+                } label: {
+                    Label("Recheck this place", systemImage: "camera.viewfinder")
+                }
+                .accessibilityIdentifier("room-spot-scan-button")
+                .buttonStyle(RoomQuestPrimaryButtonStyle())
+                .disabled(isScanBusy)
+                .opacity(isScanBusy ? 0.7 : 1)
+            }
+
+            if engine.shouldShowSpotManualFallback {
+                Button(station?.role.fallbackButtonTitle ?? "I found it") {
+                    engine.markSpotVisited(index: spotIndex)
+                }
+                .accessibilityIdentifier("room-spot-confirm-button")
+                .buttonStyle(.plain)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white.opacity(0.92))
+            } else if station?.referenceCaptureState == .captured {
+                Text("Try the camera first. Fallback appears only if the scan misses.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.88))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+        .padding(.bottom, 24)
+        .background {
+            LinearGradient(
+                colors: [spotColour.opacity(0), spotColour.opacity(0.92), spotColour],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+    }
+
     @ViewBuilder
     private var scanStatusCard: some View {
         switch engine.scanState {
@@ -171,28 +199,24 @@ struct SpotPromptView: View {
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.ink)
             }
-            .padding(.horizontal, 24)
         case .celebrating(let role, _):
             CardSurface {
                 Label("\(role.title) unlocked!", systemImage: "sparkles")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.accent)
             }
-            .padding(.horizontal, 24)
         case .almost(_, let message):
             CardSurface {
                 Label(message, systemImage: "scope")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.warm)
             }
-            .padding(.horizontal, 24)
         case .failed(_, let message):
             CardSurface {
                 Label(message, systemImage: "exclamationmark.triangle.fill")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.coral)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
