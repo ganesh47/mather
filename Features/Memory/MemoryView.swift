@@ -49,7 +49,7 @@ enum MemoryDeck {
         MemoryAnimal(id: "owl",        emoji: "🦉", name: "Owl"),
         MemoryAnimal(id: "penguin",    emoji: "🐧", name: "Penguin"),
         MemoryAnimal(id: "swan",       emoji: "🦢", name: "Swan"),
-        MemoryAnimal(id: "hummingbird",emoji: "🐦‍⬛", name: "Hummingbird"),
+        MemoryAnimal(id: "hummingbird",emoji: "🐦⬛", name: "Hummingbird"),
         MemoryAnimal(id: "cockatoo",   emoji: "🦜", name: "Cockatoo"),
         MemoryAnimal(id: "ibis",       emoji: "🦤", name: "Ibis"),
     ]
@@ -77,6 +77,14 @@ enum MemoryDifficulty: CaseIterable {
         case .easy:   return "Easy"
         case .medium: return "Medium"
         case .hard:   return "Flip!"
+        }
+    }
+
+    var menuLabel: String {
+        switch self {
+        case .easy: return "Easy"
+        case .medium: return "Medium"
+        case .hard: return "Flip mode"
         }
     }
 
@@ -115,6 +123,12 @@ struct MemoryView: View {
             case .tropical:  return "🦜 Birds"
             }
         }
+        var menuLabel: String {
+            switch self {
+            case .domestic: return "Animals"
+            case .tropical: return "Birds"
+            }
+        }
         var animals: [MemoryAnimal] {
             switch self {
             case .domestic: return MemoryDeck.domesticAnimals
@@ -130,15 +144,17 @@ struct MemoryView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            VStack(spacing: 0) {
-                header
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 12)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
 
-                cardGrid
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    cardGrid
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                }
             }
 
             if showRoundComplete {
@@ -151,61 +167,93 @@ struct MemoryView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Button {
-                appModel.engine.showLab()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(MatherTheme.accent)
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("Back")
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Memory Match")
-                    .font(.title2.weight(.black))
-                    .foregroundStyle(MatherTheme.ink)
-                Text("\(matchedPairs)/\(totalPairs) pairs matched")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-            }
-
-            Spacer()
-
-            // Deck picker
-            HStack(spacing: 6) {
-                ForEach(DeckSelection.allCases, id: \.label) { d in
-                    Button(d.label) {
-                        deckSelection = d
-                        deck = d.animals
-                        dealRound()
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(deckSelection == d ? .white : MatherTheme.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(deckSelection == d ? MatherTheme.accent : MatherTheme.card)
-                    .clipShape(Capsule())
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Button {
+                    appModel.engine.showLab()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(MatherTheme.accent)
+                        .frame(width: 44, height: 44)
                 }
+                .accessibilityLabel("Back")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Memory Match")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text("\(matchedPairs)/\(totalPairs) pairs matched")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+
+                Spacer(minLength: 0)
             }
 
-            // Difficulty picker
-            HStack(spacing: 6) {
-                ForEach(MemoryDifficulty.allCases, id: \.label) { d in
-                    Button(d.label) {
-                        difficulty = d
-                        dealRound()
+            CardSurface {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Choose a deck and level")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+
+                    VStack(spacing: 10) {
+                        Menu {
+                            ForEach(DeckSelection.allCases, id: \.label) { selectedDeck in
+                                Button(selectedDeck.label) {
+                                    deckSelection = selectedDeck
+                                    deck = selectedDeck.animals
+                                    dealRound()
+                                }
+                            }
+                        } label: {
+                            controlLabel(title: "Deck", value: deckSelection.menuLabel, tint: MatherTheme.accent)
+                        }
+                        .accessibilityIdentifier("memory-deck-menu")
+
+                        Menu {
+                            ForEach(MemoryDifficulty.allCases, id: \.label) { selectedDifficulty in
+                                Button(selectedDifficulty.label) {
+                                    difficulty = selectedDifficulty
+                                    dealRound()
+                                }
+                            }
+                        } label: {
+                            controlLabel(title: "Difficulty", value: difficulty.menuLabel, tint: MatherTheme.warm)
+                        }
+                        .accessibilityIdentifier("memory-difficulty-menu")
                     }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(difficulty == d ? .white : MatherTheme.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(difficulty == d ? MatherTheme.warm : MatherTheme.card)
-                    .clipShape(Capsule())
                 }
             }
         }
+    }
+
+    private func controlLabel(title: String, value: String, tint: Color) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                Text(value)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+
+            Spacer(minLength: 12)
+
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(tint)
+                .padding(10)
+                .background(tint.opacity(colorScheme == .dark ? 0.24 : 0.12), in: Capsule())
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     // MARK: - Card grid
