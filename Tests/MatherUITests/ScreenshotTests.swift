@@ -282,7 +282,10 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 8,
             leftPanCount: 4,
             rightPanCount: 5,
-            sumSprintAnswers: ["9", "9", "9"],
+            // The loop-v2 burst de-duplicates repeated facts for each target.
+            // In deterministic UI-test mode, target 9 currently yields two unique
+            // Sum Sprint cards, not three.
+            sumSprintAnswers: ["9", "9"],
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
             snapshotPrefix: "Issue222-Target9",
             skipInitialConcreteSnapshot: true
