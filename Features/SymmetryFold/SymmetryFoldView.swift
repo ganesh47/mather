@@ -36,6 +36,7 @@ struct SymmetryFoldView: View {
         let color: Color
         let guideOpacity: Double
         let title: String
+        let shapeName: String
         let speechPrompt: String
     }
 
@@ -45,6 +46,7 @@ struct SymmetryFoldView: View {
             color: MatherTheme.coral,
             guideOpacity: 0.28,
             title: "Fold the heart",
+            shapeName: "heart",
             speechPrompt: "Tilt left to fold the heart in half!"
         ),
         LevelConfig(
@@ -52,6 +54,7 @@ struct SymmetryFoldView: View {
             color: MatherTheme.warm,
             guideOpacity: 0.28,
             title: "Fold the star",
+            shapeName: "star",
             speechPrompt: "Tilt left to fold the star!"
         ),
         LevelConfig(
@@ -59,6 +62,7 @@ struct SymmetryFoldView: View {
             color: MatherTheme.accent,
             guideOpacity: 0.18,
             title: "Fold the hexagon",
+            shapeName: "hexagon",
             speechPrompt: "Tilt left to fold the hexagon. Lighter guide this time!"
         ),
         LevelConfig(
@@ -66,6 +70,7 @@ struct SymmetryFoldView: View {
             color: MatherTheme.softBlue,
             guideOpacity: 0.10,
             title: "Fold the diamond",
+            shapeName: "diamond",
             speechPrompt: "Tiny guide now — use what you remember!"
         ),
         LevelConfig(
@@ -73,6 +78,7 @@ struct SymmetryFoldView: View {
             color: MatherTheme.warm,
             guideOpacity: 0.0,
             title: "No guide — you've got this!",
+            shapeName: "triangle",
             speechPrompt: "No guide! You know where the fold goes. Tilt left!"
         ),
     ]
@@ -313,9 +319,10 @@ struct SymmetryFoldView: View {
         VStack(spacing: 8) {
             Text("✨")
                 .font(.system(size: 44))
-            Text("Symmetric!")
+            Text(Self.successTitle(for: config.shapeName))
                 .font(.title2.weight(.black))
                 .foregroundStyle(MatherTheme.accent)
+                .multilineTextAlignment(.center)
             Text(currentLevel < levels.count ? "Tap for the next shape" : "All done! Tap to finish.")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
@@ -407,9 +414,17 @@ struct SymmetryFoldView: View {
         holdProgress = 0
         appModel.hapticsService.balanceLock(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
-            "Perfectly folded! Both sides match — it's symmetric!",
+            Self.successSpeech(for: config.shapeName),
             enabled: appModel.featureFlags.audioEnabled
         )
+    }
+
+    nonisolated static func successTitle(for shapeName: String) -> String {
+        "\(shapeName.capitalized) is symmetric!"
+    }
+
+    nonisolated static func successSpeech(for shapeName: String) -> String {
+        "Perfectly folded! You made a symmetric \(shapeName)."
     }
 
     private func advanceLevel() {
