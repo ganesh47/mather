@@ -347,11 +347,41 @@ struct MemoryView: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(card.isMatched ? Color.green.opacity(0.15) : MatherTheme.softBlue.opacity(0.18))
                 Text(name)
-                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .font(.system(size: Self.labelFontSize(for: difficulty), weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(Self.labelMinimumScaleFactor(for: difficulty))
+                    .allowsTightening(true)
+                    .truncationMode(.tail)
                     .multilineTextAlignment(.center)
-                    .padding(8)
+                    .padding(.horizontal, Self.labelHorizontalPadding(for: difficulty))
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
             }
+        }
+    }
+
+    static func labelFontSize(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 22
+        case .medium: return 20
+        case .hard: return 18
+        }
+    }
+
+    static func labelMinimumScaleFactor(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 0.82
+        case .medium: return 0.76
+        case .hard: return 0.68
+        }
+    }
+
+    static func labelHorizontalPadding(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 10
+        case .medium: return 8
+        case .hard: return 6
         }
     }
 
