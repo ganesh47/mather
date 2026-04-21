@@ -102,6 +102,9 @@ struct BondMatchView: View {
             Text("Make \(state.target)")
                 .font(.title2.weight(.bold))
                 .foregroundStyle(MatherTheme.warm)
+            Text(selectedPairId == nil ? "Pick a number first" : "Now find its match")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -163,7 +166,7 @@ struct BondMatchView: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 numberCardFill(
-                    value: pair.left,
+                    value: String(pair.left),
                     textColor: isMatched ? MatherTheme.accent : .white,
                     background: isMatched
                         ? MatherTheme.accent.opacity(0.15)
@@ -240,6 +243,11 @@ struct BondMatchView: View {
         let isMatched   = state.pairs.first(where: { $0.right == value })?.isMatched == true
         let isWobbling  = mismatchedRightValue == value
         let isActivated = selectedPairId != nil && !isMatched
+        let shownValue = Self.visibleRightValue(
+            selectedPairId: selectedPairId,
+            rightValue: value,
+            state: state
+        )
 
         Button {
             guard let selId = selectedPairId,
@@ -255,8 +263,10 @@ struct BondMatchView: View {
             }
         } label: {
             numberCardFill(
-                value: value,
-                textColor: isMatched ? MatherTheme.softBlue : MatherTheme.ink,
+                value: shownValue.map(String.init) ?? "?",
+                textColor: isMatched
+                    ? MatherTheme.softBlue
+                    : (shownValue == nil ? .secondary : MatherTheme.ink),
                 background: isMatched
                     ? MatherTheme.softBlue.opacity(0.15)
                     : (isActivated ? MatherTheme.softBlue.opacity(0.18) : Color.secondary.opacity(0.08)),
@@ -277,22 +287,31 @@ struct BondMatchView: View {
                 : .default,
             value: isWobbling
         )
-        .accessibilityLabel("\(value)\(isMatched ? ", matched" : "")")
+        .accessibilityLabel(shownValue.map { "\($0)\(isMatched ? ", matched" : "")" } ?? "Hidden match")
         .accessibilityIdentifier("bond-right-\(value)")
     }
 
     // MARK: - Shared card fill
 
+    nonisolated static func visibleRightValue(
+        selectedPairId: UUID?,
+        rightValue: Int,
+        state: BondMatchState
+    ) -> Int? {
+        let isMatched = state.pairs.first(where: { $0.right == rightValue })?.isMatched == true
+        return (selectedPairId != nil || isMatched) ? rightValue : nil
+    }
+
     @ViewBuilder
     private func numberCardFill(
-        value: Int,
+        value: String,
         textColor: Color,
         background: Color,
         strokeColor: Color,
         strokeWidth: CGFloat,
         dashed: Bool
     ) -> some View {
-        Text("\(value)")
+        Text(value)
             .font(.system(size: 38, weight: .black, design: .rounded))
             .foregroundStyle(textColor)
             .frame(width: cardSize, height: cardSize)
