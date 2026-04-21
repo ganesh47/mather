@@ -138,7 +138,7 @@ final class FeatureFlagService {
         // which object(forKey:) as? Bool does not.
         defaults.register(defaults: [
             Keys.verticalSlice1Enabled: false,
-            Keys.testModeEnabled: true,
+            Keys.testModeEnabled: false,
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
             Keys.selectedThemeId: "classic",

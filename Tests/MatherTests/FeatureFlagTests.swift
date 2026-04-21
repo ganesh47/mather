@@ -30,7 +30,7 @@ struct FeatureFlagTests {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.selectedThemeId = "vehicle"
         // Defaults should still be what FeatureFlagService registers
-        #expect(flags.testModeEnabled == true)
+        #expect(flags.testModeEnabled == false)
         #expect(flags.audioEnabled == true)
         #expect(flags.hapticsEnabled == true)
     }
