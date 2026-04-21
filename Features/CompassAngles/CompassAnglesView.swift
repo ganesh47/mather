@@ -38,6 +38,12 @@ private struct CompassLevel {
     let directionHint: String      // shown in UI
 }
 
+enum BodyTurnDirection {
+    case left
+    case right
+    case around
+}
+
 private let levels: [CompassLevel] = [
     CompassLevel(targetDeg: 90,  instruction: "Turn 90 degrees to the right",       directionHint: "Turn right 90°"),
     CompassLevel(targetDeg: 180, instruction: "Turn all the way around, 180 degrees", directionHint: "Turn 180°"),
@@ -97,6 +103,9 @@ struct CompassAnglesView: View {
                 Text(level.directionHint)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
+                Text(Self.bodyRelativeHint(for: level.targetDeg))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
             }
             Spacer()
             Button {
@@ -123,6 +132,10 @@ struct CompassAnglesView: View {
             Text("Hold iPad flat, then tap START")
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(MatherTheme.ink)
+                .multilineTextAlignment(.center)
+            Text("Turn your body until the red pointer reaches the blue target.")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
                 .multilineTextAlignment(.center)
             Button("START") {
                 appModel.motionService.startRelativeYawTracking()
@@ -246,6 +259,8 @@ struct CompassAnglesView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 8) {
+            turnCueCard
+
             if matched {
                 Button(action: advanceLevel) {
                     Text(wonCount >= levels.count ? "All done!" : "Next turn →")
@@ -265,6 +280,66 @@ struct CompassAnglesView: View {
                 .padding(.bottom, 16)
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: matched)
+    }
+
+    private var turnCueCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: Self.turnCueSymbol(for: level.targetDeg))
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(MatherTheme.softBlue)
+                .frame(width: 34, height: 34)
+                .background(MatherTheme.softBlue.opacity(0.12), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Self.turnCueTitle(for: level.targetDeg))
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(Self.bodyRelativeHint(for: level.targetDeg))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(MatherTheme.card.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.horizontal, 24)
+    }
+
+    nonisolated static func turnDirection(for targetDeg: Double) -> BodyTurnDirection {
+        let normalized = CompassMath.normalise(targetDeg)
+        if abs(abs(normalized) - 180) < 0.01 || abs(normalized) < 0.01 {
+            return .around
+        }
+        return normalized > 0 ? .right : .left
+    }
+
+    nonisolated static func bodyRelativeHint(for targetDeg: Double) -> String {
+        switch turnDirection(for: targetDeg) {
+        case .right:
+            return "Move your body to the right until the red pointer touches the blue dot."
+        case .left:
+            return "Move your body to the left until the red pointer touches the blue dot."
+        case .around:
+            return "Keep turning your body until the red pointer reaches the blue dot."
+        }
+    }
+
+    nonisolated static func turnCueTitle(for targetDeg: Double) -> String {
+        switch turnDirection(for: targetDeg) {
+        case .right: return "Your right"
+        case .left: return "Your left"
+        case .around: return "Keep turning"
+        }
+    }
+
+    nonisolated static func turnCueSymbol(for targetDeg: Double) -> String {
+        switch turnDirection(for: targetDeg) {
+        case .right: return "arrow.turn.up.right"
+        case .left: return "arrow.turn.up.left"
+        case .around: return "arrow.clockwise"
+        }
     }
 
     // MARK: - Logic

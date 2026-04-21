@@ -102,4 +102,19 @@ struct CompassAnglesTests {
             #expect(d <= 180.01)
         }
     }
+
+    // MARK: - Compass cue helpers
+
+    @Test func turnDirectionMapsRightLeftAndAround() {
+        #expect(CompassAnglesView.turnDirection(for: 90) == .right)
+        #expect(CompassAnglesView.turnDirection(for: -90) == .left)
+        #expect(CompassAnglesView.turnDirection(for: 180) == .around)
+    }
+
+    @Test func bodyRelativeHintUsesChildPerspectiveLanguage() {
+        #expect(CompassAnglesView.bodyRelativeHint(for: 90).contains("right"))
+        #expect(CompassAnglesView.bodyRelativeHint(for: -90).contains("left"))
+        #expect(CompassAnglesView.bodyRelativeHint(for: 180).contains("Keep turning"))
+    }
+
 }
