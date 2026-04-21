@@ -32,6 +32,7 @@ struct AngleCannonView: View {
     @State private var level: Int = 1   // 1 or 2
     /// Briefly true on FIRE to animate the cannon barrel kick
     @State private var firePulse = false
+    @State private var hasFiredOnce = false
 
     // MARK: - Constants
 
@@ -142,17 +143,16 @@ struct AngleCannonView: View {
                 }
             }
             Spacer()
-            Button("Done") {
+            Button {
                 appModel.engine.showHome()
                 appModel.motionService.stopUpdates()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(MatherTheme.ink.opacity(0.35))
+                    .frame(width: 44, height: 44)
             }
-            .font(.headline.weight(.semibold))
-            .foregroundStyle(.white)
-            .frame(minWidth: 88, minHeight: 44)
-            .background(
-                MatherTheme.ink.opacity(0.65),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
+            .accessibilityLabel("Done")
             .accessibilityIdentifier("angle-cannon-done-button")
         }
     }
@@ -201,10 +201,15 @@ struct AngleCannonView: View {
                 }
             }
 
-            // Target ring (drawn in canvas; symbol rendered in overlay)
-            ctx.stroke(Circle().path(in: CGRect(
-                x: target.x - 28, y: target.y - 28, width: 56, height: 56
-            )), with: .color(hitTarget ? MatherTheme.accent : MatherTheme.coral), lineWidth: 3)
+            // Target halo + ring so the landing goal reads clearly before the first shot
+            let targetRect = CGRect(x: target.x - 34, y: target.y - 34, width: 68, height: 68)
+            ctx.fill(Circle().path(in: targetRect.insetBy(dx: -18, dy: -18)),
+                     with: .color((hitTarget ? MatherTheme.accent : MatherTheme.warm).opacity(0.12)))
+            ctx.stroke(Circle().path(in: targetRect),
+                       with: .color(hitTarget ? MatherTheme.accent : MatherTheme.coral), lineWidth: 4)
+            ctx.stroke(Circle().path(in: targetRect.insetBy(dx: 10, dy: 10)),
+                       with: .color((hitTarget ? MatherTheme.accent : MatherTheme.warm).opacity(0.55)),
+                       style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
 
             // Cannon body — scales on firePulse via overlay scaleEffect
             drawCannon(ctx: ctx, at: cannon, angleDeg: firedAngleDeg ?? currentAngleDeg)
@@ -255,6 +260,46 @@ struct AngleCannonView: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .position(x: canvasSize.width / 2, y: canvasSize.height * 0.35)
                 .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+
+            if neutralRoll != nil, firedAngleDeg == nil, !hasFiredOnce {
+                VStack(spacing: 10) {
+                    Text("Tilt to aim at the glowing target")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text("When the dotted path looks right, tap FIRE.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                    HStack(spacing: 12) {
+                        Label("Aim", systemImage: "scope")
+                        Label("Fire", systemImage: "hand.tap.fill")
+                    }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.coral)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(MatherTheme.warm.opacity(0.35), lineWidth: 1.5))
+                .position(x: canvasSize.width / 2, y: canvasSize.height * 0.18)
+                .transition(.scale.combined(with: .opacity))
+            }
+
+            if firedAngleDeg == nil {
+                VStack(spacing: 4) {
+                    Text("Aim here")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white)
+                    Image(systemName: "arrow.down")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(MatherTheme.coral, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .position(x: target.x, y: max(36, target.y - 56))
+                .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
             }
 
             // "Too high / Too low" miss hint
@@ -428,6 +473,7 @@ struct AngleCannonView: View {
             firePulse = false
         }
 
+        hasFiredOnce = true
         firedAngleDeg = currentAngleDeg
         let hit = Self.isHit(firedDeg: currentAngleDeg, targetDeg: targetAngleDeg,
                              toleranceDeg: hitTolerance)
