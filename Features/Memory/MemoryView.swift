@@ -39,19 +39,34 @@ enum MemoryDeck {
         MemoryAnimal(id: "goldfish", emoji: "🐟", name: "Goldfish"),
     ]
 
-    static let tropicalBirds: [MemoryAnimal] = [
-        MemoryAnimal(id: "macaw",      emoji: "🦜", name: "Macaw"),
-        MemoryAnimal(id: "flamingo",   emoji: "🦩", name: "Flamingo"),
-        MemoryAnimal(id: "peacock",    emoji: "🦚", name: "Peacock"),
-        MemoryAnimal(id: "toucan",     emoji: "🐦", name: "Toucan"),
-        MemoryAnimal(id: "parrot",     emoji: "🦜", name: "Parrot"),
-        MemoryAnimal(id: "eagle",      emoji: "🦅", name: "Eagle"),
-        MemoryAnimal(id: "owl",        emoji: "🦉", name: "Owl"),
-        MemoryAnimal(id: "penguin",    emoji: "🐧", name: "Penguin"),
-        MemoryAnimal(id: "swan",       emoji: "🦢", name: "Swan"),
-        MemoryAnimal(id: "hummingbird",emoji: "🐦⬛", name: "Hummingbird"),
-        MemoryAnimal(id: "cockatoo",   emoji: "🦜", name: "Cockatoo"),
-        MemoryAnimal(id: "ibis",       emoji: "🦤", name: "Ibis"),
+    static let birds: [MemoryAnimal] = [
+        MemoryAnimal(id: "parrot",    emoji: "🦜", name: "Parrot"),
+        MemoryAnimal(id: "flamingo",  emoji: "🦩", name: "Flamingo"),
+        MemoryAnimal(id: "peacock",   emoji: "🦚", name: "Peacock"),
+        MemoryAnimal(id: "eagle",     emoji: "🦅", name: "Eagle"),
+        MemoryAnimal(id: "owl",       emoji: "🦉", name: "Owl"),
+        MemoryAnimal(id: "penguin",   emoji: "🐧", name: "Penguin"),
+        MemoryAnimal(id: "swan",      emoji: "🦢", name: "Swan"),
+        MemoryAnimal(id: "duck",      emoji: "🦆", name: "Duck"),
+        MemoryAnimal(id: "rooster",   emoji: "🐓", name: "Rooster"),
+        MemoryAnimal(id: "turkey",    emoji: "🦃", name: "Turkey"),
+        MemoryAnimal(id: "dove",      emoji: "🕊️", name: "Dove"),
+        MemoryAnimal(id: "blackbird", emoji: "🐦⬛", name: "Blackbird"),
+    ]
+
+    static let vehicles: [MemoryAnimal] = [
+        MemoryAnimal(id: "car",        emoji: "🚗", name: "Car"),
+        MemoryAnimal(id: "bus",        emoji: "🚌", name: "Bus"),
+        MemoryAnimal(id: "train",      emoji: "🚂", name: "Train"),
+        MemoryAnimal(id: "plane",      emoji: "✈️", name: "Plane"),
+        MemoryAnimal(id: "boat",       emoji: "⛵", name: "Boat"),
+        MemoryAnimal(id: "bike",       emoji: "🚲", name: "Bike"),
+        MemoryAnimal(id: "truck",      emoji: "🚚", name: "Truck"),
+        MemoryAnimal(id: "tractor",    emoji: "🚜", name: "Tractor"),
+        MemoryAnimal(id: "helicopter", emoji: "🚁", name: "Copter"),
+        MemoryAnimal(id: "rocket",     emoji: "🚀", name: "Rocket"),
+        MemoryAnimal(id: "scooter",    emoji: "🛵", name: "Scooter"),
+        MemoryAnimal(id: "taxi",       emoji: "🚕", name: "Taxi"),
     ]
 }
 
@@ -116,23 +131,26 @@ struct MemoryView: View {
     @State private var deckSelection: DeckSelection = .domestic
 
     enum DeckSelection: CaseIterable {
-        case domestic, tropical
+        case domestic, birds, vehicles
         var label: String {
             switch self {
-            case .domestic:  return "🐄 Animals"
-            case .tropical:  return "🦜 Birds"
+            case .domestic: return "🐄 Animals"
+            case .birds: return "🦜 Birds"
+            case .vehicles: return "🚗 Vehicles"
             }
         }
         var menuLabel: String {
             switch self {
             case .domestic: return "Animals"
-            case .tropical: return "Birds"
+            case .birds: return "Birds"
+            case .vehicles: return "Vehicles"
             }
         }
         var animals: [MemoryAnimal] {
             switch self {
             case .domestic: return MemoryDeck.domesticAnimals
-            case .tropical: return MemoryDeck.tropicalBirds
+            case .birds: return MemoryDeck.birds
+            case .vehicles: return MemoryDeck.vehicles
             }
         }
     }
