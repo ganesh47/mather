@@ -9,7 +9,7 @@ struct MemoryVarietyTests {
         #expect(MemoryDeck.birds.count >= 18)
     }
 
-    @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
+    @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
         let deck = MemoryDeck.domesticAnimals
         let recent = Array(deck.prefix(6).map(\.id))
 
@@ -20,7 +20,7 @@ struct MemoryVarietyTests {
         #expect(round.allSatisfy { !recent.contains($0.id) })
     }
 
-    @Test func preferredRoundAnimalsFallsBackToDeckWhenRecentHistoryCoversMostOptions() {
+    @MainActor @Test func preferredRoundAnimalsFallsBackToDeckWhenRecentHistoryCoversMostOptions() {
         let deck = Array(MemoryDeck.birds.prefix(6))
         let recent = deck.map(\.id)
 
@@ -30,7 +30,7 @@ struct MemoryVarietyTests {
         #expect(Set(round.map(\.id)).count == 4)
     }
 
-    @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {
+    @MainActor @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {
         let previous = ["a", "b", "c", "d", "e", "f", "g", "h"]
         let round = Array(MemoryDeck.vehicles.prefix(4))
 
