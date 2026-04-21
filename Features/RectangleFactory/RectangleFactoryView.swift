@@ -25,7 +25,7 @@ struct RectangleFactoryView: View {
     @State private var sequenceIndex: Int = 0
     @State private var targetN: Int = 4
     @State private var foundFactors: Set<String> = []
-    @State private var frameWidth: Int = 1
+    @State private var frameWidth: Int = 2
     @State private var frameHeight: Int = 1
     @State private var showEquation: Bool = false
     @State private var lastEquation: String = ""
@@ -125,6 +125,13 @@ struct RectangleFactoryView: View {
             // Selection frame overlay
             selectionFrame(w: frameW, h: frameH, valid: valid, cellSize: cellSize)
 
+            if isDragging {
+                liveCountBadge(valid: valid)
+                    .offset(x: max(8, frameW - 96), y: max(8, frameH - 52))
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(9)
+            }
+
             // Equation label (floats above top-right of frame on valid snap)
             if showEquation {
                 discoveryCallout
@@ -170,13 +177,15 @@ struct RectangleFactoryView: View {
             // Corner drag handle
             Circle()
                 .fill(borderColor)
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
                 .overlay(
                     Image(systemName: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.white)
                 )
-                .offset(x: 14, y: 14)
+                .offset(x: 16, y: 16)
+                .padding(10)
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
@@ -217,6 +226,21 @@ struct RectangleFactoryView: View {
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
         }
+    }
+
+    private func liveCountBadge(valid: Bool) -> some View {
+        Text("\(frameWidth) × \(frameHeight) = \(frameWidth * frameHeight)")
+            .font(.system(size: 18, weight: .black, design: .rounded))
+            .foregroundStyle(valid ? .white : MatherTheme.ink)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(valid ? MatherTheme.accent : MatherTheme.card.opacity(0.96))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(valid ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.35), lineWidth: 2)
+            )
+            .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
     }
 
     private var discoveryCallout: some View {
@@ -382,7 +406,7 @@ struct RectangleFactoryView: View {
     // MARK: - Drag handling
 
     @State private var isDragging = false
-    @State private var dragStartW: Int = 1
+    @State private var dragStartW: Int = 2
     @State private var dragStartH: Int = 1
 
     private func handleDrag(translation: CGSize, cellSize: CGFloat) {
