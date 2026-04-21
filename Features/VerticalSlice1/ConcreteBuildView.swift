@@ -38,21 +38,19 @@ struct ConcreteBuildView: View {
                             .accessibilityLabel("Counter \(index + 1)")
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                let isWarm = index < 10
-                                let rowIndex = index % 10
-                                // Accent half is locked until the warm half is filled to capacity
-                                // (up to 10 counters). This preserves the warm-first pedagogy
-                                // while allowing genuine 11...20 targets.
-                                guard isWarm || warmCount >= min(target, 10) else { return }
-                                onAdjust(
-                                    (rowIndex + 1) - (isWarm ? warmCount : accentCount),
-                                    isWarm ? .warm : .accent
-                                )
+                                guard let tap = Self.tapAction(
+                                    for: index,
+                                    target: target,
+                                    warmCount: warmCount,
+                                    accentCount: accentCount
+                                ) else { return }
+                                onAdjust(tap.delta, tap.group)
                             }
                     }
                 }
                 .frame(maxWidth: 400)
                 .frame(maxWidth: .infinity)
+
 
                 // Number-bond display: live A + B = target as circles are tapped.
                 // Numerals and symbols only — no words, consistent with the no-reading principle.
@@ -85,6 +83,32 @@ struct ConcreteBuildView: View {
                 .buttonStyle(PrimaryActionButtonStyle())
             }
         }
+    }
+
+    nonisolated static func tapAction(
+        for index: Int,
+        target: Int,
+        warmCount: Int,
+        accentCount: Int
+    ) -> (delta: Int, group: ConcreteGroup)? {
+        let isWarm = index < 10
+        let group: ConcreteGroup = isWarm ? .warm : .accent
+        let groupCount = isWarm ? warmCount : accentCount
+        let groupCapacity = isWarm ? min(target, 10) : max(target - 10, 0)
+        let slotIndex = index % 10
+
+        guard isWarm || warmCount >= min(target, 10) else { return nil }
+        guard slotIndex < groupCapacity else { return nil }
+
+        if slotIndex == groupCount, groupCount < groupCapacity {
+            return (1, group)
+        }
+
+        if groupCount > 0, slotIndex == groupCount - 1 {
+            return (-1, group)
+        }
+
+        return nil
     }
 
     @ViewBuilder
