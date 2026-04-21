@@ -21,6 +21,15 @@ struct MemoryCard: Identifiable {
     var isSelected: Bool = false
 }
 
+struct MemoryArtStyle {
+    let topColor: Color
+    let bottomColor: Color
+    let badgeColor: Color
+    let badgeHighlight: Color
+    let ornament: String
+    let ornamentColor: Color
+}
+
 // MARK: - Decks
 
 enum MemoryDeck {
@@ -346,30 +355,99 @@ struct MemoryView: View {
 
     @ViewBuilder
     private func cardFace(_ card: MemoryCard) -> some View {
+        let artStyle = Self.artStyle(for: card.pairId)
+
         switch card.content {
         case .picture(let emoji):
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(card.isMatched ? Color.green.opacity(0.15) : MatherTheme.warm.opacity(0.18))
+                    .fill(
+                        LinearGradient(
+                            colors: card.isMatched
+                                ? [Color.green.opacity(0.24), Color.green.opacity(0.10)]
+                                : [artStyle.topColor, artStyle.bottomColor],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                Circle()
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.24))
+                    .frame(width: cardHeight * 0.72, height: cardHeight * 0.72)
+                    .offset(x: cardHeight * 0.16, y: -cardHeight * 0.18)
+
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.16))
+                    .frame(width: cardHeight * 0.52, height: cardHeight * 0.16)
+                    .offset(x: -cardHeight * 0.14, y: cardHeight * 0.24)
+                    .rotationEffect(.degrees(-10))
+
+                Image(systemName: artStyle.ornament)
+                    .font(.system(size: difficulty == .hard ? 12 : 14, weight: .black))
+                    .foregroundStyle(artStyle.ornamentColor.opacity(0.95))
+                    .padding(8)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.22), in: Circle())
+                    .offset(x: -cardHeight * 0.28, y: -cardHeight * 0.26)
+
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [artStyle.badgeHighlight, artStyle.badgeColor],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: cardHeight * 0.62, height: cardHeight * 0.62)
+                    .shadow(color: artStyle.badgeColor.opacity(0.25), radius: 10, y: 6)
+
+                Circle()
+                    .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.55), lineWidth: 3)
+                    .frame(width: cardHeight * 0.62, height: cardHeight * 0.62)
+
                 Text(emoji)
                     .font(.system(size: emojiSize))
+                    .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
             }
 
         case .label(let name):
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(card.isMatched ? Color.green.opacity(0.15) : MatherTheme.softBlue.opacity(0.18))
-                Text(name)
-                    .font(.system(size: Self.labelFontSize(for: difficulty), weight: .black, design: .rounded))
-                    .foregroundStyle(MatherTheme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(Self.labelMinimumScaleFactor(for: difficulty))
-                    .allowsTightening(true)
-                    .truncationMode(.tail)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Self.labelHorizontalPadding(for: difficulty))
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity)
+                    .fill(
+                        LinearGradient(
+                            colors: card.isMatched
+                                ? [Color.green.opacity(0.18), Color.green.opacity(0.08)]
+                                : [artStyle.topColor.opacity(0.30), artStyle.bottomColor.opacity(0.18)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                VStack(spacing: 10) {
+                    HStack(spacing: 6) {
+                        Image(systemName: artStyle.ornament)
+                            .font(.caption.weight(.black))
+                        Text("Match the picture")
+                            .font(.caption2.weight(.bold))
+                    }
+                    .foregroundStyle(artStyle.ornamentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.45), in: Capsule())
+
+                    Text(name)
+                        .font(.system(size: Self.labelFontSize(for: difficulty), weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(Self.labelMinimumScaleFactor(for: difficulty))
+                        .allowsTightening(true)
+                        .truncationMode(.tail)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Self.labelHorizontalPadding(for: difficulty))
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 10)
             }
         }
     }
@@ -395,6 +473,111 @@ struct MemoryView: View {
         case .easy: return 10
         case .medium: return 8
         case .hard: return 6
+        }
+    }
+
+
+    static func artStyle(for pairId: String) -> MemoryArtStyle {
+        switch pairId {
+        case "cow", "sheep", "rabbit", "llama", "goat":
+            return MemoryArtStyle(
+                topColor: MatherTheme.warm.opacity(0.30),
+                bottomColor: MatherTheme.accent.opacity(0.22),
+                badgeColor: MatherTheme.warm,
+                badgeHighlight: Color.white.opacity(0.92),
+                ornament: "sparkles",
+                ornamentColor: MatherTheme.accent
+            )
+        case "dog", "cat", "mouse", "pig", "donkey":
+            return MemoryArtStyle(
+                topColor: MatherTheme.softBlue.opacity(0.28),
+                bottomColor: MatherTheme.accent.opacity(0.16),
+                badgeColor: MatherTheme.softBlue,
+                badgeHighlight: Color.white.opacity(0.90),
+                ornament: "heart.fill",
+                ornamentColor: MatherTheme.coral
+            )
+        case "horse", "camel", "ox", "tractor", "truck":
+            return MemoryArtStyle(
+                topColor: MatherTheme.warm.opacity(0.22),
+                bottomColor: MatherTheme.panelDeep.opacity(0.18),
+                badgeColor: MatherTheme.panel,
+                badgeHighlight: MatherTheme.warm.opacity(0.88),
+                ornament: "sun.max.fill",
+                ornamentColor: MatherTheme.warm
+            )
+        case "duck", "swan", "goose", "boat":
+            return MemoryArtStyle(
+                topColor: MatherTheme.softBlue.opacity(0.30),
+                bottomColor: MatherTheme.background.opacity(0.10),
+                badgeColor: MatherTheme.softBlue,
+                badgeHighlight: Color.white.opacity(0.95),
+                ornament: "drop.fill",
+                ornamentColor: MatherTheme.accent
+            )
+        case "rooster", "turkey", "chicken", "babychick", "hatchedchick":
+            return MemoryArtStyle(
+                topColor: MatherTheme.coral.opacity(0.28),
+                bottomColor: MatherTheme.warm.opacity(0.18),
+                badgeColor: MatherTheme.coral,
+                badgeHighlight: MatherTheme.warm.opacity(0.86),
+                ornament: "star.fill",
+                ornamentColor: MatherTheme.warm
+            )
+        case "parrot", "peacock", "flamingo", "phoenix":
+            return MemoryArtStyle(
+                topColor: MatherTheme.accent.opacity(0.26),
+                bottomColor: MatherTheme.coral.opacity(0.20),
+                badgeColor: MatherTheme.accent,
+                badgeHighlight: MatherTheme.softBlue.opacity(0.88),
+                ornament: "rainbow",
+                ornamentColor: MatherTheme.coral
+            )
+        case "eagle", "owl", "dove", "blackbird", "duckling", "penguin":
+            return MemoryArtStyle(
+                topColor: MatherTheme.panelDeep.opacity(0.22),
+                bottomColor: MatherTheme.softBlue.opacity(0.18),
+                badgeColor: MatherTheme.panelDeep,
+                badgeHighlight: Color.white.opacity(0.82),
+                ornament: "moon.stars.fill",
+                ornamentColor: MatherTheme.softBlue
+            )
+        case "goldfish", "frog":
+            return MemoryArtStyle(
+                topColor: MatherTheme.accent.opacity(0.24),
+                bottomColor: MatherTheme.warm.opacity(0.18),
+                badgeColor: MatherTheme.accent,
+                badgeHighlight: MatherTheme.warm.opacity(0.88),
+                ornament: "bubbles.and.sparkles.fill",
+                ornamentColor: MatherTheme.softBlue
+            )
+        case "car", "bus", "taxi", "scooter", "bike":
+            return MemoryArtStyle(
+                topColor: MatherTheme.coral.opacity(0.24),
+                bottomColor: MatherTheme.warm.opacity(0.16),
+                badgeColor: MatherTheme.coral,
+                badgeHighlight: Color.white.opacity(0.90),
+                ornament: "road.lanes",
+                ornamentColor: MatherTheme.panelDeep
+            )
+        case "train", "plane", "helicopter", "rocket":
+            return MemoryArtStyle(
+                topColor: MatherTheme.softBlue.opacity(0.28),
+                bottomColor: MatherTheme.accent.opacity(0.18),
+                badgeColor: MatherTheme.accent,
+                badgeHighlight: Color.white.opacity(0.92),
+                ornament: "wind",
+                ornamentColor: MatherTheme.softBlue
+            )
+        default:
+            return MemoryArtStyle(
+                topColor: MatherTheme.panel.opacity(0.22),
+                bottomColor: MatherTheme.softBlue.opacity(0.16),
+                badgeColor: MatherTheme.panel,
+                badgeHighlight: Color.white.opacity(0.90),
+                ornament: "sparkles",
+                ornamentColor: MatherTheme.accent
+            )
         }
     }
 
