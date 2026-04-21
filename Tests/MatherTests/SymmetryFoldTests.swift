@@ -100,4 +100,15 @@ struct SymmetryFoldTests {
         let angle = foldAngle(tiltRoll: roll, neutralRoll: 0)
         #expect(angle < 0.95, "80% tilt should produce fold angle < 0.95")
     }
+
+    @Test
+    func successTitleUsesShapeName() {
+        #expect(SymmetryFoldView.successTitle(for: "heart") == "Heart is symmetric!")
+        #expect(SymmetryFoldView.successTitle(for: "hexagon") == "Hexagon is symmetric!")
+    }
+
+    @Test
+    func successSpeechUsesShapeName() {
+        #expect(SymmetryFoldView.successSpeech(for: "star") == "Perfectly folded! You made a symmetric star.")
+    }
 }
