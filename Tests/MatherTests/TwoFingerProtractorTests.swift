@@ -129,4 +129,20 @@ struct TwoFingerProtractorTests {
         #expect(ProtractorMath.isInSnapZone(measured: 86, target: 90, tolerance: 4))
         #expect(!ProtractorMath.isInSnapZone(measured: 85, target: 90, tolerance: 4))
     }
+
+    @Test func matchTransitionClearsStickySuccessWhenAngleDriftsOut() {
+        let entered = ProtractorMath.matchTransition(previouslyMatched: false,
+                                                     measured: 90,
+                                                     target: 90,
+                                                     tolerance: 5)
+        #expect(entered.matched)
+        #expect(entered.newlyMatched)
+
+        let drifted = ProtractorMath.matchTransition(previouslyMatched: true,
+                                                     measured: 104,
+                                                     target: 90,
+                                                     tolerance: 5)
+        #expect(!drifted.matched)
+        #expect(!drifted.newlyMatched)
+    }
 }

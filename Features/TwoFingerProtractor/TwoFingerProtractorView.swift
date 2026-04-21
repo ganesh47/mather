@@ -24,6 +24,14 @@ enum ProtractorMath {
     static func isInSnapZone(measured: Double, target: Double, tolerance: Double = 5) -> Bool {
         abs(measured - target) <= tolerance
     }
+
+    static func matchTransition(previouslyMatched: Bool,
+                                measured: Double,
+                                target: Double,
+                                tolerance: Double = 5) -> (matched: Bool, newlyMatched: Bool) {
+        let matched = isInSnapZone(measured: measured, target: target, tolerance: tolerance)
+        return (matched, matched && !previouslyMatched)
+    }
 }
 
 // MARK: - UIKit multi-touch view
@@ -373,10 +381,13 @@ struct TwoFingerProtractorView: View {
         measuredAngle = angle
         showDegreeLabel = true
 
-        let snapped = ProtractorMath.isInSnapZone(measured: angle, target: level.targetAngle,
-                                                   tolerance: level.snapTolerance)
-        if snapped && !matched {
-            matched = true
+        let transition = ProtractorMath.matchTransition(previouslyMatched: matched,
+                                                        measured: angle,
+                                                        target: level.targetAngle,
+                                                        tolerance: level.snapTolerance)
+        matched = transition.matched
+
+        if transition.newlyMatched {
             wonCount += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
