@@ -429,9 +429,11 @@ final class ScreenshotTests: XCTestCase {
             snapshot(app, "\(snapshotPrefix)-Concrete")
         }
 
-        let concreteCell = app.otherElements["counter-cell-\(concreteCellIndex)"]
-        XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(concreteCellIndex) for target \(target)")
-        concreteCell.tap()
+        for index in 0...concreteCellIndex {
+            let concreteCell = app.otherElements["counter-cell-\(index)"]
+            XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(index) for target \(target)")
+            concreteCell.tap()
+        }
         concreteSubmit.tap()
 
         let gravityTitle = app.staticTexts["Gravity Split"]
