@@ -37,6 +37,12 @@ enum MemoryDeck {
         MemoryAnimal(id: "goat",     emoji: "🐐", name: "Goat"),
         MemoryAnimal(id: "turkey",   emoji: "🦃", name: "Turkey"),
         MemoryAnimal(id: "goldfish", emoji: "🐟", name: "Goldfish"),
+        MemoryAnimal(id: "mouse",    emoji: "🐁", name: "Mouse"),
+        MemoryAnimal(id: "frog",     emoji: "🐸", name: "Frog"),
+        MemoryAnimal(id: "camel",    emoji: "🐪", name: "Camel"),
+        MemoryAnimal(id: "llama",    emoji: "🦙", name: "Llama"),
+        MemoryAnimal(id: "donkey",   emoji: "🫏", name: "Donkey"),
+        MemoryAnimal(id: "ox",       emoji: "🐂", name: "Ox"),
     ]
 
     static let birds: [MemoryAnimal] = [
@@ -52,6 +58,12 @@ enum MemoryDeck {
         MemoryAnimal(id: "turkey",    emoji: "🦃", name: "Turkey"),
         MemoryAnimal(id: "dove",      emoji: "🕊️", name: "Dove"),
         MemoryAnimal(id: "blackbird", emoji: "🐦⬛", name: "Blackbird"),
+        MemoryAnimal(id: "babychick", emoji: "🐤", name: "Chick"),
+        MemoryAnimal(id: "hatchedchick", emoji: "🐥", name: "Hatchling"),
+        MemoryAnimal(id: "chicken",   emoji: "🐔", name: "Chicken"),
+        MemoryAnimal(id: "phoenix",   emoji: "🐦🔥", name: "Firebird"),
+        MemoryAnimal(id: "goose",     emoji: "🪿", name: "Goose"),
+        MemoryAnimal(id: "duckling",  emoji: "🦤", name: "Runner Bird"),
     ]
 
     static let vehicles: [MemoryAnimal] = [
@@ -129,6 +141,7 @@ struct MemoryView: View {
     @State private var isProcessingMismatch: Bool = false
     @State private var showRoundComplete: Bool = false
     @State private var deckSelection: DeckSelection = .domestic
+    @State private var recentPairHistory: [String] = []
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles
@@ -437,13 +450,34 @@ struct MemoryView: View {
 
     // MARK: - Game logic
 
+    static func preferredRoundAnimals(from deck: [MemoryAnimal], pairCount: Int, recentPairHistory: [String]) -> [MemoryAnimal] {
+        let recentSet = Set(recentPairHistory)
+        let freshPool = deck.filter { !recentSet.contains($0.id) }
+        let primaryPool = freshPool.count >= pairCount ? freshPool : deck
+
+        var chosen = Array(primaryPool.shuffled().prefix(pairCount))
+        if chosen.count < pairCount {
+            let chosenIds = Set(chosen.map(\.id))
+            let fallback = deck.filter { !chosenIds.contains($0.id) }.shuffled()
+            chosen.append(contentsOf: fallback.prefix(pairCount - chosen.count))
+        }
+        return chosen
+    }
+
+    static func updatedRecentPairHistory(previous: [String], newRoundAnimals: [MemoryAnimal], pairCount: Int) -> [String] {
+        let historyWindow = max(pairCount * 2, pairCount)
+        let combined = previous + newRoundAnimals.map(\.id)
+        return Array(combined.suffix(historyWindow))
+    }
+
     private func dealRound() {
-        let shuffled = deck.shuffled().prefix(totalPairs)
+        let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
         var newCards: [MemoryCard] = []
-        for animal in shuffled {
+        for animal in roundAnimals {
             newCards.append(MemoryCard(pairId: animal.id, content: .picture(emoji: animal.emoji)))
             newCards.append(MemoryCard(pairId: animal.id, content: .label(name: animal.name)))
         }
+        recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = newCards.shuffled()
         firstSelected = nil
         matchedPairs = 0
