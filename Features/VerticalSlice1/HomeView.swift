@@ -69,7 +69,7 @@ struct HomeView: View {
                             Text("Make & Break")
                                 .font(.title3.weight(.black))
                                 .foregroundStyle(.white)
-                            Text("to 10")
+                            Text("1–20")
                                 .font(.system(size: 36, weight: .black, design: .rounded))
                                 .foregroundStyle(.white)
                         }
