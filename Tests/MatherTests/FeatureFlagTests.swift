@@ -35,9 +35,12 @@ struct FeatureFlagTests {
         #expect(flags.hapticsEnabled == true)
     }
 
-    @Test func makeBreakLoopV2DefaultsFalse() {
+    @Test func stableFeatureRolloutDefaultsAreEnabled() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
-        #expect(flags.makeBreakLoopV2Enabled == false)
+        #expect(flags.verticalSlice1Enabled)
+        #expect(flags.vs1BondMatchEnabled)
+        #expect(flags.vs1GravitySplitEnabled)
+        #expect(flags.makeBreakLoopV2Enabled)
     }
 
     @Test func makeBreakLoopV2PersistsAcrossInstances() {

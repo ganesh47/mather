@@ -62,27 +62,6 @@ struct VS1SettingsPlaceholderView: View {
         )
     }
 
-    private var testModeBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.testModeEnabled },
-            set: { appModel.featureFlags.testModeEnabled = $0 }
-        )
-    }
-
-    private var verticalSliceBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.verticalSlice1Enabled },
-            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
-        )
-    }
-
-    private var makeBreakLoopV2Binding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.makeBreakLoopV2Enabled },
-            set: { appModel.featureFlags.makeBreakLoopV2Enabled = $0 }
-        )
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -94,11 +73,9 @@ struct VS1SettingsPlaceholderView: View {
 
                 VS1Card {
                     VStack(alignment: .leading, spacing: 12) {
-                        VS1ToggleRow(
-                            title: "Make & Break 1–20",
-                            subtitle: "Enable the Make & Break 1–20 activity for your child.",
-                            isOn: verticalSliceBinding
-                        )
+                        Text("Make & Break and the current Bond Blast loop are on by default.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         VS1ToggleRow(
                             title: "Audio enabled",
                             subtitle: "Keep prompts and neutral feedback audible.",
@@ -108,16 +85,6 @@ struct VS1SettingsPlaceholderView: View {
                             title: "Haptics enabled",
                             subtitle: "Reserved for later implementation, kept as a visible setting.",
                             isOn: hapticsBinding
-                        )
-                        VS1ToggleRow(
-                            title: "Test mode",
-                            subtitle: "Deterministic ordering for repeatable pilot checks.",
-                            isOn: testModeBinding
-                        )
-                        VS1ToggleRow(
-                            title: "Make & Break loop V2",
-                            subtitle: "Use the issue #222 per-target route: Make it, Gravity Split, Sum Sprint, Bond Blast.",
-                            isOn: makeBreakLoopV2Binding
                         )
                     }
                 }
