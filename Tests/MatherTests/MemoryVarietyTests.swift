@@ -6,7 +6,7 @@ struct MemoryVarietyTests {
 
     @Test func domesticAndBirdDecksHaveExpandedPools() {
         #expect(MemoryDeck.domesticAnimals.count >= 18)
-        #expect(MemoryDeck.birds.count >= 18)
+        #expect(MemoryDeck.birds.count == 40)
     }
 
     @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
@@ -18,6 +18,14 @@ struct MemoryVarietyTests {
         #expect(round.count == 4)
         #expect(Set(round.map(\.id)).count == 4)
         #expect(round.allSatisfy { !recent.contains($0.id) })
+    }
+
+    @MainActor @Test func preferredRoundAnimalsAvoidsDuplicateSpeciesLabelsInBirdRounds() {
+        let round = MemoryView.preferredRoundAnimals(from: MemoryDeck.birds, pairCount: 6, recentPairHistory: [])
+
+        #expect(round.count == 6)
+        #expect(Set(round.map(\.id)).count == 6)
+        #expect(Set(round.map(\.selectionKey)).count == 6)
     }
 
     @MainActor @Test func preferredRoundAnimalsFallsBackToDeckWhenRecentHistoryCoversMostOptions() {

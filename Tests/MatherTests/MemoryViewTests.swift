@@ -4,18 +4,21 @@ import Testing
 @Suite("MemoryView")
 struct MemoryViewTests {
 
-    @Test func birdsDeckUsesDistinctPictureGlyphs() {
-        let emojis = MemoryDeck.birds.map(\.emoji)
-        #expect(Set(emojis).count == emojis.count)
+    @Test func tropicalBirdDeckExposesApprovedFortyCardPool() {
+        let ids = MemoryDeck.birds.map(\.id)
+        #expect(MemoryDeck.birds.count == 40)
+        #expect(ids.first == "bird-01")
+        #expect(ids.last == "bird-40")
+        #expect(Set(ids).count == ids.count)
     }
 
-    @Test func birdsDeckStillSupportsHardModePairCount() {
+    @Test func birdDeckStillSupportsHardModePairCount() {
         #expect(MemoryDeck.birds.count >= MemoryDifficulty.hard.pairCount)
     }
 
     @Test func vehiclesDeckProvidesEnoughDistinctPairs() {
         let ids = MemoryDeck.vehicles.map(\.id)
-        let emojis = MemoryDeck.vehicles.map(\.emoji)
+        let emojis = MemoryDeck.vehicles.compactMap(\.emoji)
         #expect(MemoryDeck.vehicles.count >= MemoryDifficulty.hard.pairCount)
         #expect(Set(ids).count == ids.count)
         #expect(Set(emojis).count == emojis.count)
