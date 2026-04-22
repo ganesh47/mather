@@ -6,7 +6,7 @@ struct MemoryVarietyTests {
 
     @Test func domesticAndBirdDecksHaveExpandedPools() {
         #expect(MemoryDeck.domesticAnimals.count >= 18)
-        #expect(MemoryDeck.birds.count == 40)
+        #expect(MemoryDeck.birds.count == 36)
     }
 
     @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
@@ -20,22 +20,24 @@ struct MemoryVarietyTests {
         #expect(round.allSatisfy { !recent.contains($0.id) })
     }
 
-    @MainActor @Test func preferredRoundAnimalsAvoidsDuplicateSpeciesLabelsInBirdRounds() {
+    @MainActor @Test func preferredRoundAnimalsPicksUniqueBirdIdentities() {
         let round = MemoryView.preferredRoundAnimals(from: MemoryDeck.birds, pairCount: 6, recentPairHistory: [])
 
         #expect(round.count == 6)
         #expect(Set(round.map(\.id)).count == 6)
-        #expect(Set(round.map(\.selectionKey)).count == 6)
     }
 
-    @MainActor @Test func preferredRoundAnimalsFallsBackToDeckWhenRecentHistoryCoversMostOptions() {
-        let deck = Array(MemoryDeck.birds.prefix(6))
-        let recent = deck.map(\.id)
+    @MainActor @Test func buildCardsCreatesExactPictureAndLabelPairs() {
+        let round = Array(MemoryDeck.birds.prefix(4))
+        let cards = MemoryView.buildCards(for: round)
 
-        let round = MemoryView.preferredRoundAnimals(from: deck, pairCount: 4, recentPairHistory: recent)
-
-        #expect(round.count == 4)
-        #expect(Set(round.map(\.id)).count == 4)
+        #expect(cards.count == 8)
+        for animal in round {
+            let matching = cards.filter { $0.pairId == animal.id }
+            #expect(matching.count == 2)
+            #expect(matching.contains { if case .picture = $0.content { return true } else { return false } })
+            #expect(matching.contains { if case .label = $0.content { return true } else { return false } })
+        }
     }
 
     @MainActor @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {

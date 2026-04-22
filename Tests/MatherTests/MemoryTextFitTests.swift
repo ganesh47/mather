@@ -23,11 +23,11 @@ struct MemoryTextFitTests {
     }
 
     @MainActor
-    @Test func longestCurrentLabelsHaveFallbackHeadroom() {
+    @Test func birdLabelsStayWithinReasonableFallbackRange() {
         let labels = (MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles).map(\.name)
         let longestLabel = labels.max { $0.count < $1.count }
-        #expect(longestLabel == "Mitchell's Cockatoo")
-        #expect(longestLabel?.count == 19)
-        #expect(MemoryView.labelMinimumScaleFactor(for: .hard) <= 0.50)
+        #expect(longestLabel == "Crested Bird 17")
+        #expect(longestLabel?.count == 15)
+        #expect(MemoryView.labelMinimumScaleFactor(for: .hard) >= 0.58)
     }
 }

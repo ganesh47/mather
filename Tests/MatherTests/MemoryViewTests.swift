@@ -4,12 +4,14 @@ import Testing
 @Suite("MemoryView")
 struct MemoryViewTests {
 
-    @Test func tropicalBirdDeckExposesApprovedFortyCardPool() {
+    @Test func birdDeckUsesExtractedSheetAssetPool() {
         let ids = MemoryDeck.birds.map(\.id)
-        #expect(MemoryDeck.birds.count == 40)
-        #expect(ids.first == "bird-01")
-        #expect(ids.last == "bird-40")
+        let assets = MemoryDeck.birds.compactMap(\.imageAssetName)
+        #expect(MemoryDeck.birds.count == 36)
+        #expect(ids.first == "bird-a01")
+        #expect(ids.last == "bird-b18")
         #expect(Set(ids).count == ids.count)
+        #expect(Set(assets).count == assets.count)
     }
 
     @Test func birdDeckStillSupportsHardModePairCount() {
