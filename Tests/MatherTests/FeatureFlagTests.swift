@@ -41,6 +41,7 @@ struct FeatureFlagTests {
         #expect(flags.vs1BondMatchEnabled)
         #expect(flags.vs1GravitySplitEnabled)
         #expect(flags.makeBreakLoopV2Enabled)
+        #expect(flags.soundReactionEnabled)
     }
 
     @Test func makeBreakLoopV2PersistsAcrossInstances() {
@@ -50,5 +51,14 @@ struct FeatureFlagTests {
 
         let flags2 = FeatureFlagService(defaults: defaults)
         #expect(flags2.makeBreakLoopV2Enabled)
+    }
+
+    @Test func soundReactionPreferencePersistsAcrossInstances() {
+        let defaults = UserDefaults(suiteName: #function)!
+        let flags1 = FeatureFlagService(defaults: defaults)
+        flags1.soundReactionEnabled = false
+
+        let flags2 = FeatureFlagService(defaults: defaults)
+        #expect(!flags2.soundReactionEnabled)
     }
 }

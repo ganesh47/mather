@@ -19,7 +19,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Mather listens for claps to celebrate with you! Enable in Settings → Clap reaction.</string>
+	<string>Mather listens for claps to celebrate with you. You can turn Clap reaction off any time in Settings.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Room Quest uses the camera to scan station markers and unlock playful AR moments for kids.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

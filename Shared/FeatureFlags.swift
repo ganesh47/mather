@@ -71,7 +71,7 @@ final class FeatureFlagService {
     }
 
     /// Enables AVAudioEngine clap detection in Bond Blast.
-    /// Defaults to false — requires NSMicrophoneUsageDescription permission.
+    /// Defaults to true and persists as a parent preference.
     var soundReactionEnabled: Bool {
         didSet { defaults.set(soundReactionEnabled, forKey: Keys.soundReactionEnabled) }
     }
@@ -144,7 +144,7 @@ final class FeatureFlagService {
             Keys.vs1GravitySplitEnabled: true,
             Keys.makeBreakLoopV2Enabled: true,
             Keys.motionControlsEnabled: true,
-            Keys.soundReactionEnabled: false,
+            Keys.soundReactionEnabled: true,
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
