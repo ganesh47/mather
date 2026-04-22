@@ -70,6 +70,14 @@ struct SumSprintGeneratorTests {
     }
 
     @Test
+    func generateSessionFreshSessionSpreadsAcross11To20() {
+        let facts = SumSprintGenerator.generateSession(allRecords: [])
+
+        #expect(facts.count == 10)
+        #expect(Set(facts.map(\.sum)) == Set(11...20))
+    }
+
+    @Test
     func generateSessionRespectsBox1IntervalOf2() throws {
         let store = try makeStore()
         // Seed all 45 facts in box1 with sessionsSinceLastSeen = 1 (not yet eligible)
@@ -116,6 +124,32 @@ struct SumSprintGeneratorTests {
         let eligibleKeys = Set(eligibleFacts.map(\.factKey))
         // All selected should be from the eligible box1 facts
         #expect(selectedKeys == eligibleKeys)
+    }
+
+    @Test
+    func generateSessionKeepsHigherPriorityBucketsAheadOfLowerPriorityOnes() throws {
+        let store = try makeStore()
+        let highestPriorityFacts = SumSprintGenerator.allFacts.filter { $0.sum == 11 || $0.sum == 20 }
+        let lowerPriorityFacts = SumSprintGenerator.allFacts.filter { $0.sum != 11 && $0.sum != 20 }
+
+        for fact in highestPriorityFacts {
+            store.upsert(factKey: fact.factKey) { record in
+                record.boxRawValue = LeitnerBox.box0.rawValue
+                record.correctStreak = 3
+            }
+        }
+
+        for fact in lowerPriorityFacts {
+            store.upsert(factKey: fact.factKey) { record in
+                record.boxRawValue = LeitnerBox.box0.rawValue
+                record.correctStreak = 1
+            }
+        }
+
+        let facts = SumSprintGenerator.generateSession(allRecords: store.fetchAll())
+
+        #expect(facts.count == 10)
+        #expect(facts.allSatisfy { $0.sum == 11 || $0.sum == 20 })
     }
 
     @Test
