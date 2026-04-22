@@ -488,14 +488,29 @@ final class ScreenshotTests: XCTestCase {
         }
 
         let scrollView = app.scrollViews.firstMatch
-        for _ in 0..<4 {
-            if button.exists { return button }
+        let swipeUp: () -> Void = {
             if scrollView.exists {
                 scrollView.swipeUp()
             } else {
                 app.swipeUp()
             }
+        }
+        let swipeDown: () -> Void = {
+            if scrollView.exists {
+                scrollView.swipeDown()
+            } else {
+                app.swipeDown()
+            }
+        }
+
+        // The deterministic screenshot flow can leave the scroll position offset
+        // differently across simulator/device layouts. Search in both directions so
+        // the keypad buttons remain discoverable for the second target.
+        for action in [swipeUp, swipeUp, swipeDown, swipeDown, swipeDown] {
+            if button.exists { return button }
+            action()
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            if button.exists { return button }
         }
         return button
     }
