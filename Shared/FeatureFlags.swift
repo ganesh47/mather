@@ -49,19 +49,20 @@ final class FeatureFlagService {
     }
 
     /// Gates the Bond Blast complement-match finale stage at the end of each VS1 session.
+    /// Defaults to true for shipped builds; tests can still pin it off explicitly.
     var vs1BondMatchEnabled: Bool {
         didSet { defaults.set(vs1BondMatchEnabled, forKey: Keys.vs1BondMatchEnabled) }
     }
 
     /// Replaces the Transfer (Show it) stepper stage with the tilt-powered balance activity.
-    /// Default false — parent opts in via Settings.
+    /// Defaults to true for shipped builds; tests can still pin it off explicitly.
     var vs1GravitySplitEnabled: Bool {
         didSet { defaults.set(vs1GravitySplitEnabled, forKey: Keys.vs1GravitySplitEnabled) }
     }
 
-    /// Enables the reopened issue #222 per-target loop:
+    /// Enables the shipped per-target loop:
     /// Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
-    /// Default false until recovery QA signs off.
+    /// Defaults to true for shipped builds; tests can still pin it off explicitly.
     var makeBreakLoopV2Enabled: Bool {
         didSet { defaults.set(makeBreakLoopV2Enabled, forKey: Keys.makeBreakLoopV2Enabled) }
     }
@@ -137,14 +138,14 @@ final class FeatureFlagService {
         // "YES"/"NO"/"1"/"0" string values injected via -key value launch arguments,
         // which object(forKey:) as? Bool does not.
         defaults.register(defaults: [
-            Keys.verticalSlice1Enabled: false,
+            Keys.verticalSlice1Enabled: true,
             Keys.testModeEnabled: false,
             Keys.audioEnabled: true,
             Keys.hapticsEnabled: true,
             Keys.selectedThemeId: "classic",
-            Keys.vs1BondMatchEnabled: false,
-            Keys.vs1GravitySplitEnabled: false,
-            Keys.makeBreakLoopV2Enabled: false,
+            Keys.vs1BondMatchEnabled: true,
+            Keys.vs1GravitySplitEnabled: true,
+            Keys.makeBreakLoopV2Enabled: true,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: false,
             Keys.roomQuestSafetyAcknowledged: false,

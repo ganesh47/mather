@@ -128,6 +128,9 @@ final class CompactLayoutTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
             "-feature.roomQuestSafetyAcknowledged", "YES"
         ]
         app.launch()
@@ -140,7 +143,10 @@ final class CompactLayoutTests: XCTestCase {
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES"
+            "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO"
         ]
         app.launch()
         return app

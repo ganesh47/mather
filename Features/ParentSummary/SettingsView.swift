@@ -22,27 +22,6 @@ struct SettingsView: View {
         )
     }
 
-    private var bondMatchBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.vs1BondMatchEnabled },
-            set: { appModel.featureFlags.vs1BondMatchEnabled = $0 }
-        )
-    }
-
-    private var gravitySplitBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.vs1GravitySplitEnabled },
-            set: { appModel.featureFlags.vs1GravitySplitEnabled = $0 }
-        )
-    }
-
-    private var makeBreakLoopV2Binding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.makeBreakLoopV2Enabled },
-            set: { appModel.featureFlags.makeBreakLoopV2Enabled = $0 }
-        )
-    }
-
     private var motionBinding: Binding<Bool> {
         Binding(
             get: { appModel.featureFlags.motionControlsEnabled },
@@ -54,20 +33,6 @@ struct SettingsView: View {
         Binding(
             get: { appModel.featureFlags.soundReactionEnabled },
             set: { appModel.featureFlags.soundReactionEnabled = $0 }
-        )
-    }
-
-    private var testModeBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.testModeEnabled },
-            set: { appModel.featureFlags.testModeEnabled = $0 }
-        )
-    }
-
-    private var verticalSliceBinding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.verticalSlice1Enabled },
-            set: { appModel.featureFlags.verticalSlice1Enabled = $0 }
         )
     }
 
@@ -94,31 +59,6 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Settings")
                                 .font(.largeTitle.weight(.black))
-
-                            Text("Make & Break")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 4)
-                            Toggle("Make & Break 1–20", isOn: verticalSliceBinding)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.85)
-                            VS1ToggleRow(
-                                title: "Make & Break loop V2 (recovery)",
-                                subtitle: "Uses the reopened #222 route: Make it → Gravity Split → Sum Sprint → Bond Blast.",
-                                isOn: makeBreakLoopV2Binding
-                            )
-                            VS1ToggleRow(
-                                title: "Bond Blast finale",
-                                subtitle: "Adds a free-match bonus round after all bonds for a number are found.",
-                                isOn: bondMatchBinding
-                            )
-                            VS1ToggleRow(
-                                title: "Gravity Split (beta)",
-                                subtitle: "Replace the Show-it step with a tilt-powered balance scale activity.",
-                                isOn: gravitySplitBinding
-                            )
-
-                            Divider()
 
                             Text("Room Quest")
                                 .font(.caption.weight(.semibold))
@@ -158,7 +98,6 @@ struct SettingsView: View {
                                 subtitle: "Listens for a clap to trigger celebrations (uses microphone).",
                                 isOn: soundReactionBinding
                             )
-                            Toggle("Test mode", isOn: testModeBinding)
                         }
                         .font(.title3.weight(.semibold))
                     }
@@ -221,11 +160,10 @@ struct SettingsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(MatherTheme.cardSubtitle)
                             VStack(alignment: .leading, spacing: 8) {
-                                smokeStep("1. Enable Make & Break 1–20 (toggle above).")
-                                smokeStep("2. Tap Home → Play → Start Session.")
-                                smokeStep("3. If loop V2 is on, verify Make → Gravity Split → Sum Sprint → Bond Blast.")
-                                smokeStep("4. Confirm Session Complete screen appears.")
-                                smokeStep("5. Return here and tap Share latest export to verify JSONL.")
+                                smokeStep("1. Tap Home → Play → Start Session.")
+                                smokeStep("2. Verify Make → Gravity Split → Sum Sprint → Bond Blast.")
+                                smokeStep("3. Confirm Session Complete screen appears.")
+                                smokeStep("4. Return here and tap Share latest export to verify JSONL.")
                             }
                         }
                     }

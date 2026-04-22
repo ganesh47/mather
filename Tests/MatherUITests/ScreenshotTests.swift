@@ -302,7 +302,10 @@ final class ScreenshotTests: XCTestCase {
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES"
+            "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO"
         ]
         app.launch()
         return app
@@ -315,6 +318,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -333,28 +339,14 @@ final class ScreenshotTests: XCTestCase {
             "-feature.soundReactionEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.makeBreakLoopV2Enabled", "YES",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
         }
         app.launch()
         return app
-    }
-
-    /// Navigates to Settings, enables VS1, returns to Home.
-    private func enableVS1(_ app: XCUIApplication) {
-        let settingsButton = app.buttons["Settings"]
-        _ = settingsButton.waitForExistence(timeout: 5)
-        settingsButton.tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
-        let toggle = app.switches["Make & Break 1–20"]
-        if toggle.waitForExistence(timeout: 10), toggle.value as? String == "0" {
-            toggle.tap()
-        }
-        let homeButton = app.buttons["Home"]
-        _ = homeButton.waitForExistence(timeout: 5)
-        homeButton.tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
     }
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
@@ -365,6 +357,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "YES",
             "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
         ]
         if let appearance {
             app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -380,6 +375,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
             "-uiTest.seedHistory", "\(count)"
         ]
         app.launch()
@@ -394,6 +392,9 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.vs1BondMatchEnabled", "NO",
+            "-feature.vs1GravitySplitEnabled", "NO",
             "-feature.selectedThemeId", "vehicle"
         ]
         if let appearance {

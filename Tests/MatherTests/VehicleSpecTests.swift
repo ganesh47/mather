@@ -96,6 +96,9 @@ struct VehicleSpecTests {
     @Test func engineStartsVehicleSessionWithCarTheme() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.selectedThemeId = "vehicle"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -114,6 +117,9 @@ struct VehicleSpecTests {
     @Test func engineAdvancesVehicleThemeOnProblemTransition() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.selectedThemeId = "vehicle"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -153,6 +159,9 @@ struct VehicleSpecTests {
     @Test func engineClassicThemeSessionHasNoProblemThemeRotation() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.selectedThemeId = "classic"
         let engine = VerticalSliceEngine(
             featureFlags: flags,

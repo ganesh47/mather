@@ -53,6 +53,9 @@ struct VerticalSliceEngineTests {
     func loopV2RoutesConcreteToGravitySplitToSumSprintToBondBlast() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.makeBreakLoopV2Enabled = true
 
         let engine = VerticalSliceEngine(
@@ -101,6 +104,9 @@ struct VerticalSliceEngineTests {
     func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1BondMatchEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -136,6 +142,9 @@ struct VerticalSliceEngineTests {
     func roomQuestRouteDoesNotForceTransferStageInVs1Engine() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -154,6 +163,9 @@ struct VerticalSliceEngineTests {
     func bondBlastStartsWhenConcreteStageClears() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -183,6 +195,9 @@ struct VerticalSliceEngineTests {
     func hapticsStageSuccessFiredOnConcreteStageClear() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -208,6 +223,9 @@ struct VerticalSliceEngineTests {
     func hapticsSuccessFiredOnProblemComplete() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -249,6 +267,9 @@ struct VerticalSliceEngineTests {
     func hapticsStageSuccessNotFiredWhenDisabled() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = false
         let haptics = HapticsService()
 
@@ -272,6 +293,9 @@ struct VerticalSliceEngineTests {
     func hapticsFailureFiredOnWrongAnswer() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -295,6 +319,9 @@ struct VerticalSliceEngineTests {
     func equationAcceptsAlternativeCorrectDecomposition() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = false
         let haptics = HapticsService()
 
@@ -338,6 +365,9 @@ struct VerticalSliceEngineTests {
     func hapticsFailureNotFiredWhenDisabled() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.hapticsEnabled = false
         let haptics = HapticsService()
 
@@ -359,6 +389,9 @@ struct VerticalSliceEngineTests {
     func concreteGroupsTrackWarmAndAccentSeparately() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -387,6 +420,9 @@ struct VerticalSliceEngineTests {
     func bondMatchStateInitialisedWhenEnteringBondMatchStage() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1BondMatchEnabled = true
 
         // Use a 1-problem session so the first problem IS the last problem,
@@ -429,6 +465,9 @@ struct VerticalSliceEngineTests {
     func bondMatchCompletesSessionWhenAllPairsMatched() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1BondMatchEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -495,6 +534,9 @@ struct VerticalSliceEngineTests {
     func targetOneSkipsBlankPictorialBondBlastStage() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -520,6 +562,9 @@ struct VerticalSliceEngineTests {
     func targetOneSkipsBlankBondBlastFinaleInLoopV2() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.makeBreakLoopV2Enabled = true
 
         let engine = VerticalSliceEngine(
@@ -562,6 +607,9 @@ struct VerticalSliceEngineTests {
     func matchPairGracefullyIgnoresUnknownPairId() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1BondMatchEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -601,6 +649,9 @@ struct VerticalSliceEngineTests {
     func bondMatchNotFiredOnIntermediateProblems() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1BondMatchEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -657,6 +708,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitStateInitialisedOnStageEntry() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -679,6 +733,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitAdjustByTapChangesCount() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -703,6 +760,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitTiltDoesNotAutoSolveStage() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -729,6 +789,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitStartsFromZeroAndUnsolved() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -750,6 +813,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitRequiresTapAdjustmentToLock() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -778,6 +844,9 @@ struct VerticalSliceEngineTests {
     func gravitySplitAutoAdvancesWhenLocked() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.vs1GravitySplitEnabled = true
 
         let engine = VerticalSliceEngine(
@@ -803,6 +872,9 @@ struct VerticalSliceEngineTests {
     func concreteStageAcceptsCombinedWarmAndAccentTotal() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
 
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -829,6 +901,9 @@ struct VerticalSliceEngineTests {
     func makeBreakLoopV2RoutesConcreteToGravitySplitToSumSprintToBondBlast() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.makeBreakLoopV2Enabled = true
 
         let engine = VerticalSliceEngine(
@@ -865,6 +940,9 @@ struct VerticalSliceEngineTests {
     func makeBreakLoopV2CreatesMicroSumSprintBurstPerTarget() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.makeBreakLoopV2Enabled = true
 
         let engine = VerticalSliceEngine(
@@ -890,6 +968,9 @@ struct VerticalSliceEngineTests {
     func makeBreakLoopV2AdvancesToBondBlastAfterBurstCards() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = false
+        flags.vs1GravitySplitEnabled = false
         flags.makeBreakLoopV2Enabled = true
 
         let engine = VerticalSliceEngine(
