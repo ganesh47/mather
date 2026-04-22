@@ -49,23 +49,17 @@ final class ScreenshotTests: XCTestCase {
 
     // MARK: - Settings screen
 
-    func testScreenshot_Settings_EnableVS1() {
+    func testScreenshot_Settings_DefaultRolloutState() {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
-        snapshot(app, "Settings-BeforeEnableVS1")
-
-        let vs1Toggle = app.switches["Make & Break 1–20"]
-        if vs1Toggle.waitForExistence(timeout: 3) {
-            vs1Toggle.tap()
-        }
-        snapshot(app, "Settings-AfterEnableVS1")
+        snapshot(app, "Settings-DefaultRolloutState")
 
         app.buttons["Home"].tap()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 3)
-        snapshot(app, "Home-VS1Enabled")
+        snapshot(app, "Home-DefaultRolloutState")
     }
 
     // MARK: - Session Config screen
@@ -339,22 +333,6 @@ final class ScreenshotTests: XCTestCase {
         }
         app.launch()
         return app
-    }
-
-    /// Navigates to Settings, enables VS1, returns to Home.
-    private func enableVS1(_ app: XCUIApplication) {
-        let settingsButton = app.buttons["Settings"]
-        _ = settingsButton.waitForExistence(timeout: 5)
-        settingsButton.tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
-        let toggle = app.switches["Make & Break 1–20"]
-        if toggle.waitForExistence(timeout: 10), toggle.value as? String == "0" {
-            toggle.tap()
-        }
-        let homeButton = app.buttons["Home"]
-        _ = homeButton.waitForExistence(timeout: 5)
-        homeButton.tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
     }
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
