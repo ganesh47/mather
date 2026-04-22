@@ -11,6 +11,8 @@ import SwiftUI
 ///    a satisfying "snap" moment.
 ///  • Bilateral success: full shape glows on lock, not just the right half.
 ///  • Level progress dots size-animate to show the active level clearly.
+///  • Optional timed challenge unlocked after each normal success, while the
+///    default lesson flow stays unchanged.
 ///
 /// Age range: 5–7. CPA level: Pictorial → Abstract.
 /// Sensor: neutral-relative roll tilt (left tilt folds right half onto left).
@@ -28,6 +30,10 @@ struct SymmetryFoldView: View {
     /// 0–1 progress filled by holding the shape in the folded zone.
     @State private var holdProgress: Double = 0
     @State private var holdTask: Task<Void, Never>? = nil
+    @State private var playMode: PlayMode = .lesson
+    @State private var challengeTimeRemaining: Double = Self.challengeDuration
+    @State private var challengeTask: Task<Void, Never>? = nil
+    @State private var challengeTimedOut = false
 
     // MARK: - Level config
 
@@ -38,6 +44,11 @@ struct SymmetryFoldView: View {
         let title: String
         let shapeName: String
         let speechPrompt: String
+    }
+
+    private enum PlayMode {
+        case lesson
+        case timedChallenge
     }
 
     private let levels: [LevelConfig] = [
@@ -87,10 +98,37 @@ struct SymmetryFoldView: View {
         levels[min(currentLevel - 1, levels.count - 1)]
     }
 
+    private var challengeLabelText: String {
+        if neutralRoll == nil {
+            return challengeTimedOut
+                ? "Timed challenge • tap to retry"
+                : "Timed challenge • tap when ready"
+        }
+        return "Timed challenge • \(Self.challengeCountdownText(for: challengeTimeRemaining))"
+    }
+
+    private var primarySuccessActionTitle: String {
+        currentLevel < levels.count ? "Next shape" : "Finish"
+    }
+
+    private var successBodyText: String {
+        switch playMode {
+        case .lesson:
+            return currentLevel < levels.count
+                ? "Keep the lesson going, or try a timed challenge for this shape."
+                : "Lesson complete. You can finish now, or try one timed challenge."
+        case .timedChallenge:
+            return currentLevel < levels.count
+                ? "Timed challenge cleared. Ready for the next shape?"
+                : "Timed challenge cleared. All done!"
+        }
+    }
+
     // MARK: - Constants
 
     private let maxTiltRadians: Double = .pi / 4
     private static let holdDuration: Double = 0.8
+    private static let challengeDuration: Double = 8.0
 
     // MARK: - Body
 
@@ -126,6 +164,7 @@ struct SymmetryFoldView: View {
         }
         .onDisappear {
             holdTask?.cancel()
+            challengeTask?.cancel()
             appModel.motionService.stopUpdates()
         }
         .accessibilityElement(children: .contain)
@@ -135,18 +174,26 @@ struct SymmetryFoldView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Symmetry Fold")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Text(config.title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
+                if playMode == .timedChallenge {
+                    Text(challengeLabelText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(config.color)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(config.color.opacity(0.12), in: Capsule())
+                }
             }
-            Spacer()
+            Spacer(minLength: 12)
             Button("Done") {
-                holdTask?.cancel()
+                stopAllTasks()
                 appModel.motionService.stopUpdates()
                 appModel.engine.showHome()
             }
@@ -229,17 +276,7 @@ struct SymmetryFoldView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
             .onTapGesture {
-                if neutralRoll == nil && !success {
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        neutralRoll = appModel.motionService.tiltRoll
-                    }
-                    appModel.speechService.speak(
-                        config.speechPrompt,
-                        enabled: appModel.featureFlags.audioEnabled
-                    )
-                } else if success {
-                    advanceLevel()
-                }
+                handleSceneTap()
             }
             .accessibilityIdentifier("symmetry-fold-scene")
         }
@@ -300,35 +337,61 @@ struct SymmetryFoldView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .frame(width: size * 0.72, height: 110)
+                .frame(width: size * 0.72, height: 122)
             VStack(spacing: 8) {
-                Image(systemName: "hand.tap.fill")
+                Image(systemName: playMode == .timedChallenge ? "timer" : "hand.tap.fill")
                     .font(.system(size: 28))
                     .foregroundStyle(config.color)
-                Text("Tap to start")
+                Text(Self.tapPromptTitle(isTimedChallenge: playMode == .timedChallenge, didTimeout: challengeTimedOut))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Then tilt left to fold")
+                Text(Self.tapPromptMessage(isTimedChallenge: playMode == .timedChallenge, didTimeout: challengeTimedOut))
                     .font(.subheadline.weight(.semibold))
+                    .multilineTextAlignment(.center)
                     .foregroundStyle(MatherTheme.cardSubtitle)
+                    .padding(.horizontal, 12)
             }
         }
     }
 
     private var successOverlay: some View {
-        VStack(spacing: 8) {
-            Text("✨")
+        VStack(spacing: 12) {
+            Text(playMode == .timedChallenge ? "⏱️✨" : "✨")
                 .font(.system(size: 44))
-            Text(Self.successTitle(for: config.shapeName))
+            Text(playMode == .timedChallenge ? "Timed challenge cleared!" : Self.successTitle(for: config.shapeName))
                 .font(.title2.weight(.black))
                 .foregroundStyle(MatherTheme.accent)
                 .multilineTextAlignment(.center)
-            Text(currentLevel < levels.count ? "Tap for the next shape" : "All done! Tap to finish.")
+            Text(successBodyText)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
+                .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                overlayButton(title: primarySuccessActionTitle, fill: MatherTheme.accent, foreground: .white) {
+                    advanceLevel()
+                }
+                if playMode == .lesson {
+                    overlayButton(title: "Try timed challenge", fill: config.color.opacity(0.14), foreground: MatherTheme.ink) {
+                        startTimedChallenge()
+                    }
+                }
+            }
+            .padding(.top, 4)
         }
         .padding(24)
+        .frame(maxWidth: 320)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func overlayButton(title: String, fill: Color, foreground: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(foreground)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Bottom bar
@@ -338,11 +401,15 @@ struct SymmetryFoldView: View {
             // Contextual tilt hint
             if !success && neutralRoll != nil {
                 HStack(spacing: 8) {
-                    Image(systemName: "gyroscope")
+                    Image(systemName: playMode == .timedChallenge ? "timer" : "gyroscope")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(config.color.opacity(0.8))
                     if holdProgress > 0 {
                         Text("Hold steady…")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(config.color)
+                    } else if playMode == .timedChallenge {
+                        Text(Self.challengeCountdownText(for: challengeTimeRemaining))
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(config.color)
                     } else {
@@ -407,16 +474,100 @@ struct SymmetryFoldView: View {
 
     // MARK: - Actions
 
+    private func handleSceneTap() {
+        guard neutralRoll == nil, !success else { return }
+        withAnimation(.easeOut(duration: 0.15)) {
+            neutralRoll = appModel.motionService.tiltRoll
+        }
+        challengeTimedOut = false
+        if playMode == .timedChallenge {
+            startChallengeTimer()
+        }
+        appModel.speechService.speak(
+            currentSpeechPrompt,
+            enabled: appModel.featureFlags.audioEnabled
+        )
+    }
+
+    private var currentSpeechPrompt: String {
+        switch playMode {
+        case .lesson:
+            return config.speechPrompt
+        case .timedChallenge:
+            return "Timed challenge. Tap when ready, then tilt left to fold the \(config.shapeName) before the timer ends!"
+        }
+    }
+
     private func handleSuccess() {
         success = true
         holdTask?.cancel()
         holdTask = nil
+        challengeTask?.cancel()
+        challengeTask = nil
         holdProgress = 0
+        challengeTimedOut = false
         appModel.hapticsService.balanceLock(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
-            Self.successSpeech(for: config.shapeName),
+            playMode == .timedChallenge
+                ? "You beat the timer and folded the \(config.shapeName)!"
+                : Self.successSpeech(for: config.shapeName),
             enabled: appModel.featureFlags.audioEnabled
         )
+    }
+
+    private func startTimedChallenge() {
+        playMode = .timedChallenge
+        resetAttemptForCurrentMode()
+        appModel.speechService.speak(
+            "Timed challenge unlocked. Tap when you are ready to start the timer.",
+            enabled: appModel.featureFlags.audioEnabled
+        )
+    }
+
+    private func startChallengeTimer() {
+        challengeTask?.cancel()
+        challengeTimeRemaining = Self.challengeDuration
+        let deadline = Date().addingTimeInterval(Self.challengeDuration)
+        challengeTask = Task { @MainActor in
+            while !Task.isCancelled && !success && neutralRoll != nil {
+                let remaining = max(0, deadline.timeIntervalSinceNow)
+                challengeTimeRemaining = remaining
+                if remaining <= 0 {
+                    handleChallengeTimeout()
+                    break
+                }
+                try? await Task.sleep(nanoseconds: 50_000_000)
+            }
+        }
+    }
+
+    private func handleChallengeTimeout() {
+        guard playMode == .timedChallenge else { return }
+        appModel.speechService.speak(
+            "Time's up. Tap to try that timed challenge again.",
+            enabled: appModel.featureFlags.audioEnabled
+        )
+        resetAttemptForCurrentMode(markTimedOut: true)
+    }
+
+    private func resetAttemptForCurrentMode(markTimedOut: Bool = false) {
+        holdTask?.cancel()
+        holdTask = nil
+        challengeTask?.cancel()
+        challengeTask = nil
+        foldAngle = 0
+        success = false
+        neutralRoll = nil
+        holdProgress = 0
+        challengeTimedOut = markTimedOut
+        challengeTimeRemaining = markTimedOut ? 0 : Self.challengeDuration
+    }
+
+    private func stopAllTasks() {
+        holdTask?.cancel()
+        holdTask = nil
+        challengeTask?.cancel()
+        challengeTask = nil
     }
 
     nonisolated static func successTitle(for shapeName: String) -> String {
@@ -427,15 +578,28 @@ struct SymmetryFoldView: View {
         "Perfectly folded! You made a symmetric \(shapeName)."
     }
 
+    nonisolated static func challengeCountdownText(for secondsRemaining: Double) -> String {
+        "\(max(0, Int(ceil(secondsRemaining))))s left"
+    }
+
+    nonisolated static func tapPromptTitle(isTimedChallenge: Bool, didTimeout: Bool) -> String {
+        guard isTimedChallenge else { return "Tap to start" }
+        return didTimeout ? "Time's up" : "Start timed challenge"
+    }
+
+    nonisolated static func tapPromptMessage(isTimedChallenge: Bool, didTimeout: Bool) -> String {
+        guard isTimedChallenge else { return "Then tilt left to fold" }
+        return didTimeout
+            ? "Tap to retry this shape with a fresh timer"
+            : "Tap when ready. The timer starts after your tap."
+    }
+
     private func advanceLevel() {
+        playMode = .lesson
+        stopAllTasks()
         if currentLevel < levels.count {
             currentLevel += 1
-            foldAngle = 0
-            success = false
-            neutralRoll = nil
-            holdProgress = 0
-            holdTask?.cancel()
-            holdTask = nil
+            resetAttemptForCurrentMode()
         } else {
             appModel.engine.showHome()
         }

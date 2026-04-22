@@ -111,4 +111,29 @@ struct SymmetryFoldTests {
     func successSpeechUsesShapeName() {
         #expect(SymmetryFoldView.successSpeech(for: "star") == "Perfectly folded! You made a symmetric star.")
     }
+
+    @Test
+    func challengeCountdownRoundsUpAndClamps() {
+        #expect(SymmetryFoldView.challengeCountdownText(for: 7.01) == "8s left")
+        #expect(SymmetryFoldView.challengeCountdownText(for: 0.2) == "1s left")
+        #expect(SymmetryFoldView.challengeCountdownText(for: -1) == "0s left")
+    }
+
+    @Test
+    func timedChallengePromptExplainsDelayedTimerStart() {
+        #expect(SymmetryFoldView.tapPromptTitle(isTimedChallenge: true, didTimeout: false) == "Start timed challenge")
+        #expect(
+            SymmetryFoldView.tapPromptMessage(isTimedChallenge: true, didTimeout: false)
+                == "Tap when ready. The timer starts after your tap."
+        )
+    }
+
+    @Test
+    func timedChallengeRetryPromptChangesAfterTimeout() {
+        #expect(SymmetryFoldView.tapPromptTitle(isTimedChallenge: true, didTimeout: true) == "Time's up")
+        #expect(
+            SymmetryFoldView.tapPromptMessage(isTimedChallenge: true, didTimeout: true)
+                == "Tap to retry this shape with a fresh timer"
+        )
+    }
 }
