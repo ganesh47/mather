@@ -290,37 +290,27 @@ final class ScreenshotTests: XCTestCase {
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.
     private func launch() -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        // iOS maps `-key YES/NO` launch arguments to UserDefaults as NSNumber(bool:).
-        app.launchArguments = [
+        launchApp(with: [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES"
-        ]
-        app.launch()
-        return app
+        ])
     }
 
     private func launchWithVS1(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
+        var launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
         ]
         if let appearance {
-            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+            launchArguments += ["-uiTest.appearance", appearance.launchValue]
         }
-        app.launch()
-        return app
+        return launchApp(with: launchArguments)
     }
 
     private func launchWithLoopV2(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
+        var launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.motionControlsEnabled", "NO",
@@ -329,53 +319,60 @@ final class ScreenshotTests: XCTestCase {
             "-feature.makeBreakLoopV2Enabled", "YES",
         ]
         if let appearance {
-            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+            launchArguments += ["-uiTest.appearance", appearance.launchValue]
         }
-        app.launch()
-        return app
+        return launchApp(with: launchArguments)
     }
 
     /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
     private func launchWithVS1AndHaptics(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
+        var launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "YES",
             "-feature.testModeEnabled", "YES",
         ]
         if let appearance {
-            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+            launchArguments += ["-uiTest.appearance", appearance.launchValue]
         }
-        app.launch()
-        return app
+        return launchApp(with: launchArguments)
     }
 
     private func launchWithSeededHistory(count: Int) -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
+        launchApp(with: [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-uiTest.seedHistory", "\(count)"
-        ]
-        app.launch()
-        return app
+        ])
     }
 
     /// Launches with VS1 pre-enabled and Vehicle theme selected via launch argument.
     private func launchWithVehicleTheme(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
-        continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments = [
+        var launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.selectedThemeId", "vehicle"
         ]
         if let appearance {
-            app.launchArguments += ["-uiTest.appearance", appearance.launchValue]
+            launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
+        return launchApp(with: launchArguments)
+    }
+
+    private func launchApp(with arguments: [String]) -> XCUIApplication {
+        continueAfterFailure = false
+
+        let staleApp = XCUIApplication()
+        if staleApp.state != .notRunning {
+            staleApp.terminate()
+            _ = staleApp.wait(for: .notRunning, timeout: 5)
+        }
+
+        let app = XCUIApplication()
+        app.launchArguments = arguments
+        addTeardownBlock {
+            app.terminate()
         }
         app.launch()
         return app
