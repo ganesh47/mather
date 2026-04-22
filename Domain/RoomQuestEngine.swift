@@ -41,6 +41,7 @@ final class RoomQuestEngine {
     // MARK: - Dependencies
 
     private let featureFlags: FeatureFlagService
+    var settings: FeatureFlagService { featureFlags }
     private let telemetryWriter: TelemetryWriter
     private let speechService: SpeechService
     private let hapticsService: HapticsService
