@@ -6,7 +6,6 @@ struct SettingsView: View {
     let summaries: [StoredSessionSummary]
 
     @State private var showingClearConfirmation = false
-    @State private var showingSafetyRules = false
 
     private var audioBinding: Binding<Bool> {
         Binding(
@@ -71,20 +70,7 @@ struct SettingsView: View {
 
                             Divider()
 
-                            Text("Room Quest")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            Button("Review Room Quest safety rules") {
-                                showingSafetyRules = true
-                            }
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(MatherTheme.accent)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 4)
-
-                            Divider()
-
-                            PlaceMatchThresholdSection(featureFlags: appModel.featureFlags)
+                            RoomQuestSettingsEntry(appModel: appModel)
 
                             Divider()
 
@@ -203,9 +189,6 @@ struct SettingsView: View {
                 .padding(24)
             }
         }
-        .sheet(isPresented: $showingSafetyRules) {
-            RoomSafetyRulesSheet()
-        }
         .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
@@ -218,171 +201,32 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Place matching threshold sliders
-
-private struct PlaceMatchThresholdSection: View {
-    @Bindable var featureFlags: FeatureFlagService
-
-    private let defaults = PlaceMatchThresholds.default
+private struct RoomQuestSettingsEntry: View {
+    let appModel: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Place matching")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Reset") { resetToDefaults() }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(MatherTheme.accent)
-            }
-
-            Text("Tune how strictly the camera and GPS must agree that the child is at the right spot. Lower = stricter. Check the Xcode console for [PlaceMatch] lines to see live distances.")
-                .font(.caption)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Room Quest")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text("Safety, camera setup, and place-matching tuning now live inside Room Quest setup.")
+                .font(.subheadline)
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ThresholdSliderRow(
-                label: "Vision match",
-                unit: "",
-                value: $featureFlags.placeMatchVisionMatch,
-                range: 0.10...0.60,
-                step: 0.05,
-                defaultValue: Double(defaults.visionMatchDistance),
-                format: "%.2f",
-                hint: "Lower = more similar photos required. 0.25 rejects different rooms; 0.50 is lenient."
-            )
-
-            ThresholdSliderRow(
-                label: "Vision close",
-                unit: "",
-                value: $featureFlags.placeMatchVisionClose,
-                range: 0.20...1.00,
-                step: 0.05,
-                defaultValue: Double(defaults.visionCloseDistance),
-                format: "%.2f",
-                hint: "\"Almost there\" band. Should be above Vision match."
-            )
-
-            ThresholdSliderRow(
-                label: "GPS match",
-                unit: " m",
-                value: $featureFlags.placeMatchGPSMatch,
-                range: 3...20,
-                step: 1,
-                defaultValue: defaults.gpsMatchMetres,
-                format: "%.0f",
-                hint: "Metres. Outdoors: 8 m is reliable. Indoors: GPS is usually skipped by the accuracy cutoff."
-            )
-
-            ThresholdSliderRow(
-                label: "GPS close",
-                unit: " m",
-                value: $featureFlags.placeMatchGPSClose,
-                range: 10...50,
-                step: 2,
-                defaultValue: defaults.gpsCloseMetres,
-                format: "%.0f",
-                hint: "\"Almost there\" band for GPS. Should be above GPS match."
-            )
-
-            ThresholdSliderRow(
-                label: "GPS accuracy cutoff",
-                unit: " m",
-                value: $featureFlags.placeMatchGPSCutoff,
-                range: 3...20,
-                step: 1,
-                defaultValue: defaults.gpsAccuracyCutoff,
-                format: "%.0f",
-                hint: "Discard GPS fixes worse than this. 10 m blocks unreliable indoor readings."
-            )
-        }
-        .font(.subheadline)
-    }
-
-    private func resetToDefaults() {
-        featureFlags.placeMatchVisionMatch = Double(defaults.visionMatchDistance)
-        featureFlags.placeMatchVisionClose = Double(defaults.visionCloseDistance)
-        featureFlags.placeMatchGPSMatch    = defaults.gpsMatchMetres
-        featureFlags.placeMatchGPSClose    = defaults.gpsCloseMetres
-        featureFlags.placeMatchGPSCutoff   = defaults.gpsAccuracyCutoff
-    }
-}
-
-private struct ThresholdSliderRow: View {
-    let label: String
-    let unit: String
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-    let step: Double
-    let defaultValue: Double
-    let format: String
-    let hint: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.ink)
-                Spacer()
-                Text(String(format: format, value) + unit)
-                    .font(.subheadline.weight(.black))
-                    .foregroundStyle(value == defaultValue ? MatherTheme.cardSubtitle : MatherTheme.accent)
-                    .monospacedDigit()
+            Button("Open Room Quest setup") {
+                appModel.engine.showRoomQuest()
             }
-            Slider(value: $value, in: range, step: step)
-                .tint(value == defaultValue ? MatherTheme.cardSubtitle : MatherTheme.accent)
-            Text(hint)
-                .font(.caption)
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.vertical, 2)
-    }
-}
-
-// MARK: - Room Quest safety rules sheet
-
-private struct RoomSafetyRulesSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Before every Room Quest session, confirm:")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Label("Safety checklist", systemImage: "checklist")
-                                .font(.headline.weight(.semibold))
-                            safetyItem("Both spot-cards in the same room as this iPad")
-                            safetyItem("Spots are away from stairs, windows, and balconies")
-                            safetyItem("Spots are away from the kitchen")
-                            safetyItem("A parent stays nearby during the room phase")
-                            safetyItem("Nothing in the activity rewards running or jumping")
-                        }
-                    }
-                }
-                .padding(24)
-            }
-            .background(MatherTheme.background.ignoresSafeArea())
-            .navigationTitle("Room Quest Safety")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
-
-    private func safetyItem(_ text: String) -> some View {
-        Label(text, systemImage: "checkmark.circle.fill")
             .font(.subheadline.weight(.medium))
-            .foregroundStyle(MatherTheme.ink)
+            .foregroundStyle(MatherTheme.accent)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 4)
+            .accessibilityIdentifier("settings-roomquest-open")
+
+            Text(appModel.featureFlags.roomQuestSafetyAcknowledged ? "Safety checklist already acknowledged on this device." : "The one-time safety checklist appears when you open Room Quest.")
+                .font(.caption)
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
