@@ -48,26 +48,73 @@ enum SumSprintGenerator {
             }
         }
 
-        // Sort: box0 first, then box1, then box2; within each box, most attempts first
-        let sorted = eligible.sorted { lhs, rhs in
-            if lhs.box.rawValue != rhs.box.rawValue { return lhs.box.rawValue < rhs.box.rawValue }
-            return lhs.attempts > rhs.attempts
-        }
+        var selected = prioritizeAndSpreadBySum(eligible)
 
-        var selected = sorted
-
-        // Backfill if fewer than 10 eligible facts
-        if selected.count < 10 {
+        // Backfill if fewer than `cardCount` eligible facts
+        if selected.count < cardCount {
             // Prefer box0 ineligible facts for backfill, then others
-            let backfill = ineligible.sorted { lhs, rhs in
-                if lhs.box.rawValue != rhs.box.rawValue { return lhs.box.rawValue < rhs.box.rawValue }
-                return lhs.attempts > rhs.attempts
-            }
-            selected += backfill
+            selected += prioritizeAndSpreadBySum(ineligible)
         }
 
         let trimmed = Array(selected.prefix(cardCount))
         return diversifyAdjacentSums(in: trimmed).map(\.fact)
+    }
+
+    private static func prioritizeAndSpreadBySum(_ facts: [ScoredFact]) -> [ScoredFact] {
+        let prioritized = facts.sorted(by: prioritySort)
+        guard !prioritized.isEmpty else { return [] }
+
+        let grouped = Dictionary(grouping: prioritized, by: PriorityBucket.init)
+        let buckets = grouped.keys.sorted()
+
+        var arranged: [ScoredFact] = []
+        arranged.reserveCapacity(prioritized.count)
+
+        for bucket in buckets {
+            let bucketFacts = grouped[bucket] ?? []
+            arranged += spreadBySum(bucketFacts)
+        }
+
+        return arranged
+    }
+
+    private static func spreadBySum(_ facts: [ScoredFact]) -> [ScoredFact] {
+        guard facts.count > 1 else { return facts }
+
+        var queuesBySum: [Int: [ScoredFact]] = [:]
+        var sumOrder: [Int] = []
+
+        for fact in facts {
+            if queuesBySum[fact.fact.sum] == nil {
+                sumOrder.append(fact.fact.sum)
+                queuesBySum[fact.fact.sum] = []
+            }
+            queuesBySum[fact.fact.sum, default: []].append(fact)
+        }
+
+        var arranged: [ScoredFact] = []
+        arranged.reserveCapacity(facts.count)
+
+        while arranged.count < facts.count {
+            var addedAny = false
+
+            for sum in sumOrder {
+                guard var queue = queuesBySum[sum], !queue.isEmpty else { continue }
+                arranged.append(queue.removeFirst())
+                queuesBySum[sum] = queue
+                addedAny = true
+            }
+
+            guard addedAny else { break }
+        }
+
+        return arranged
+    }
+
+    private static func prioritySort(lhs: ScoredFact, rhs: ScoredFact) -> Bool {
+        if lhs.box.rawValue != rhs.box.rawValue { return lhs.box.rawValue < rhs.box.rawValue }
+        if lhs.attempts != rhs.attempts { return lhs.attempts > rhs.attempts }
+        return lhs.fact.sum < rhs.fact.sum
     }
 
     // MARK: - Helpers
@@ -132,4 +179,19 @@ private struct ScoredFact {
     let box: LeitnerBox
     let sinceLastSeen: Int
     let attempts: Int
+}
+
+private struct PriorityBucket: Hashable, Comparable {
+    let boxRawValue: Int
+    let attempts: Int
+
+    init(_ fact: ScoredFact) {
+        boxRawValue = fact.box.rawValue
+        attempts = fact.attempts
+    }
+
+    static func < (lhs: PriorityBucket, rhs: PriorityBucket) -> Bool {
+        if lhs.boxRawValue != rhs.boxRawValue { return lhs.boxRawValue < rhs.boxRawValue }
+        return lhs.attempts > rhs.attempts
+    }
 }
