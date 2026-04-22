@@ -73,6 +73,8 @@ struct SessionConfigView: View {
                 }
                 .font(.headline.weight(.semibold))
             }
+            .frame(maxWidth: 760)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(24)
         }
     }
