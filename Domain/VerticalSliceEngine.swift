@@ -183,8 +183,15 @@ final class VerticalSliceEngine {
         route = .session
     }
 
-    func updateConfig(problemCount: Int? = nil, audioEnabled: Bool? = nil) {
+    func updateConfig(
+        problemCount: Int? = nil,
+        minTarget: Int? = nil,
+        maxTarget: Int? = nil,
+        audioEnabled: Bool? = nil
+    ) {
         if let problemCount { config.maxProblems = problemCount }
+        if let minTarget { config.minTarget = minTarget }
+        if let maxTarget { config.maxTarget = maxTarget }
         if let audioEnabled { config.audioEnabled = audioEnabled }
     }
 
@@ -457,7 +464,7 @@ final class VerticalSliceEngine {
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
-        let next = SliceStateMachine.nextStage(after: currentStage, success: true, routeMode: routeMode)
+        let next = resolvedNextStage(after: currentStage)
         recordStageTransition(from: currentStage, to: next)
 
         // A problem is complete when the next stage is .done (the last meaningful
@@ -750,13 +757,25 @@ final class VerticalSliceEngine {
             let a = currentProblem.decompositionA
             let b = currentProblem.decompositionB
             return "Use plus and minus to build \(a) on one side and \(b) on the other."
-        case .sumSprint:
-            if let card = sumSprintBurstState?.currentCard {
-                return "Quick Sum Sprint. Solve \(card.prompt), then finish with Bond Blast."
-            }
-            return "Quick Sum Sprint! Solve a tiny burst, then finish with Bond Blast."
         case .done:
             return "Nice work."
+        }
+    }
+
+    private func resolvedNextStage(after stage: SliceStage) -> SliceStage {
+        let candidate = SliceStateMachine.nextStage(after: stage, success: true, routeMode: routeMode)
+        guard let problem = currentProblem else { return candidate }
+
+        let hasBondPairs = !BondMatchState.makePairs(for: problem.target).isEmpty
+        guard !hasBondPairs else { return candidate }
+
+        switch candidate {
+        case .pictorial:
+            return .abstract
+        case .bondMatch:
+            return .done
+        default:
+            return candidate
         }
     }
 
