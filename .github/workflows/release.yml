@@ -39,6 +39,11 @@ jobs:
 
       - name: Create GitHub Release
         run: |
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Release ${{ steps.version.outputs.tag }} already exists, skipping create."
+            exit 0
+          fi
+
           gh release create "${{ steps.version.outputs.tag }}" \
             --title "Mather ${{ steps.version.outputs.tag }}" \
             --generate-notes \
