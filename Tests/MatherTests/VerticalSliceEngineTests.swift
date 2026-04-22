@@ -492,6 +492,73 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func targetOneSkipsBlankPictorialBondBlastStage() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 1, minTarget: 1, maxTarget: 1)
+        engine.startSession()
+
+        #expect(engine.currentProblem?.target == 1)
+
+        engine.adjustConcrete(by: 1)
+        engine.submitCurrentStage()
+
+        await waitFor("abstract stage after target-1 concrete") { engine.currentStage == .abstract }
+        #expect(engine.currentStage == .abstract)
+        #expect(engine.bondMatchState == nil)
+    }
+
+    @Test
+    func targetOneSkipsBlankBondBlastFinaleInLoopV2() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.updateConfig(problemCount: 1, minTarget: 1, maxTarget: 1)
+        engine.startSession()
+
+        #expect(engine.currentProblem?.target == 1)
+
+        engine.adjustConcrete(by: 1)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+
+        engine.adjustGravitySplitByTap(delta: 1, side: .left)
+        await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
+
+        while engine.currentStage == .sumSprint, let card = engine.sumSprintBurstState?.currentCard {
+            for digit in String(card.answer).compactMap(\.wholeNumberValue) {
+                engine.appendSumSprintDigit(digit)
+            }
+            engine.submitSumSprintCard()
+            if engine.currentStage == .sumSprint {
+                await waitFor("advance sum sprint card") {
+                    engine.sumSprintBurstState?.currentCard?.id != card.id || engine.currentStage != .sumSprint
+                }
+            }
+        }
+
+        await waitFor("session summary after target-1 loop") { engine.route == .sessionSummary }
+        #expect(engine.currentStage == .done)
+        #expect(engine.bondMatchState == nil)
+    }
+
+    @Test
     func matchPairGracefullyIgnoresUnknownPairId() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
