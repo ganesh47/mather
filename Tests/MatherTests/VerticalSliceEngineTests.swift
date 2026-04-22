@@ -301,6 +301,8 @@ struct VerticalSliceEngineTests {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
         flags.hapticsEnabled = false
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1GravitySplitEnabled = false
         let haptics = HapticsService()
 
         let engine = VerticalSliceEngine(

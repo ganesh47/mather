@@ -117,6 +117,8 @@ struct VehicleSpecTests {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
         flags.selectedThemeId = "vehicle"
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1GravitySplitEnabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
