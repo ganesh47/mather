@@ -1,18 +1,22 @@
-# Spec: Sum Sprint
+# Spec: Sum Memory (working title: Sum Sprint)
 
-**Issue**: [#179](https://github.com/ganesh47/mather/issues/179)
-**Status**: draft
+**Issue**: [#218](https://github.com/ganesh47/mather/issues/218)
+**Status**: implementation-driving draft
 **Author**: @grclaw
 **Date**: 2026-04-17
 
 ## Overview
 
-Sum Sprint is a feature-flagged fluency activity that appears after the child has shown
+Sum Memory is Mather's implementation-driving spec for the playful fact-fluency lane previously researched under the working name Sum Sprint.
+
+It is a feature-flagged fluency activity that appears after the child has shown
 conceptual readiness in VS1. It delivers short, playful retrieval sessions using streak-based
 motivation, fading pictorial support, and a lightweight spaced-repetition scheduler.
 
 The first implementation target is **addition within 10**. Later expansions may extend to
 within 20 and then within 100 with explicit place-value scaffolding.
+
+If the shipped child-facing label remains **Sum Sprint**, the mechanics below still apply. "Sum Memory" is the current product-facing framing for this spec.
 
 ## User Stories
 
@@ -147,3 +151,4 @@ Flag name: `FeatureFlags.sumSprintEnabled`
 
 - Related research: `wiki/Research/Sum-Sprint-Spaced-Repetition.md`
 - Related research: `wiki/Research/Math-App-Vision.md`
+- Related open issue history: `ganesh47/mather#179` (research) -> `ganesh47/mather#218` (implementation spec)
