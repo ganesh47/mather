@@ -21,7 +21,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf4() {
         let f = RectangleFactoryView.factorsOf(4)
-        // 1×4, 2×2
         #expect(f.count == 2)
         #expect(f.contains("1x4"))
         #expect(f.contains("2x2"))
@@ -29,7 +28,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf12() {
         let f = RectangleFactoryView.factorsOf(12)
-        // 1×12, 2×6, 3×4
         #expect(f.count == 3)
         #expect(f.contains("1x12"))
         #expect(f.contains("2x6"))
@@ -38,7 +36,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf7IsPrime() {
         let f = RectangleFactoryView.factorsOf(7)
-        // Only 1×7 — prime has a single rectangle
         #expect(f.count == 1)
         #expect(f.contains("1x7"))
     }
@@ -51,7 +48,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf16() {
         let f = RectangleFactoryView.factorsOf(16)
-        // 1×16, 2×8, 4×4
         #expect(f.count == 3)
         #expect(f.contains("1x16"))
         #expect(f.contains("2x8"))
@@ -60,7 +56,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf9() {
         let f = RectangleFactoryView.factorsOf(9)
-        // 1×9, 3×3
         #expect(f.count == 2)
         #expect(f.contains("1x9"))
         #expect(f.contains("3x3"))
@@ -68,7 +63,6 @@ struct RectangleFactoryTests {
 
     @Test func factorsOf24() {
         let f = RectangleFactoryView.factorsOf(24)
-        // 1×24, 2×12, 3×8, 4×6
         #expect(f.count == 4)
         #expect(f.contains("1x24"))
         #expect(f.contains("2x12"))
@@ -76,21 +70,39 @@ struct RectangleFactoryTests {
         #expect(f.contains("4x6"))
     }
 
-    // MARK: - Validity: width × height == N
+    // MARK: - playable grid
+
+    @Test func playableGridForFourSupportsTwoByTwo() {
+        let grid = RectangleFactoryView.playableGrid(for: 4)
+        #expect(grid.columns == 4)
+        #expect(grid.rows == 2)
+    }
+
+    @Test func playableGridForTwentyFourSupportsAllFactorPairs() {
+        let grid = RectangleFactoryView.playableGrid(for: 24)
+        #expect(grid.columns == 24)
+        #expect(grid.rows == 4)
+    }
+
+    @Test func smartStartAvoidsAlreadySolvedRectangle() {
+        let start = RectangleFactoryView.smartStartDimensions(for: 24)
+        #expect(start.width * start.height != 24)
+        #expect(start.width <= RectangleFactoryView.playableGrid(for: 24).columns)
+        #expect(start.height <= RectangleFactoryView.playableGrid(for: 24).rows)
+    }
+
+    // MARK: - Validity
 
     @Test func validRectangleDetected() {
-        // 3×4 for N=12 is valid
         #expect(3 * 4 == 12)
         #expect(RectangleFactoryView.factorsOf(12).contains(RectangleFactoryView.factorKey(3, 4)))
     }
 
     @Test func invalidRectangleRejected() {
-        // 3×5 for N=12 is not valid
         #expect(3 * 5 != 12)
     }
 
     @Test func bothOrientationsMappedToSameKey() {
-        // 3×4 and 4×3 produce identical canonical keys
         let k1 = RectangleFactoryView.factorKey(3, 4)
         let k2 = RectangleFactoryView.factorKey(4, 3)
         #expect(k1 == k2)

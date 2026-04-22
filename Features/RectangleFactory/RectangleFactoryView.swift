@@ -37,10 +37,6 @@ struct RectangleFactoryView: View {
     private let dotSize: CGFloat = 22
     private let dotSpacing: CGFloat = 10
 
-    /// Wider grid for large N so more factor pairs fit on screen.
-    private var gridColumns: Int { targetN > 12 ? 8 : 6 }
-    /// Maximum frame dimension the drag handle can reach.
-    private var maxFrameDim: Int  { targetN > 12 ? 8 : 6 }
 
     var body: some View {
         ZStack {
@@ -108,37 +104,50 @@ struct RectangleFactoryView: View {
     // MARK: - Factory body
 
     private func factoryBody(in geo: GeometryProxy) -> some View {
-        let cellSize = dotSize + dotSpacing
-        let rows = Int(ceil(Double(targetN) / Double(gridColumns)))
-        let gridW = CGFloat(gridColumns) * cellSize - dotSpacing
-        let gridH = CGFloat(rows) * cellSize - dotSpacing
-        let frameW = CGFloat(frameWidth) * cellSize - dotSpacing
-        let frameH = CGFloat(frameHeight) * cellSize - dotSpacing
-
+        let gridSize = Self.playableGrid(for: targetN)
+        let horizontalPadding: CGFloat = 12
+        let verticalPadding: CGFloat = 28
+        let availableWidth = max(geo.size.width - horizontalPadding * 2, 180)
+        let availableHeight = max(geo.size.height - verticalPadding * 2, 180)
+        let cellPitch = max(10, floor(min(availableWidth / CGFloat(gridSize.columns), availableHeight / CGFloat(gridSize.rows))))
+        let dotDiameter = max(5, min(22, cellPitch * 0.45))
+        let frameW = CGFloat(frameWidth) * cellPitch
+        let frameH = CGFloat(frameHeight) * cellPitch
         let valid = frameWidth * frameHeight == targetN
 
-        return ZStack(alignment: .topLeading) {
-            // Dot grid
-            dotGrid(rows: rows, cellSize: cellSize, valid: valid)
-                .frame(width: gridW, height: gridH)
-
-            // Selection frame overlay
-            selectionFrame(w: frameW, h: frameH, valid: valid, cellSize: cellSize)
-
-            if isDragging {
-                liveCountBadge(valid: valid)
-                    .offset(x: max(8, frameW - 96), y: max(8, frameH - 52))
-                    .transition(.scale.combined(with: .opacity))
-                    .zIndex(9)
-            }
-
-            // Equation label (floats above top-right of frame on valid snap)
+        return VStack(spacing: 14) {
             if showEquation {
-                discoveryCallout
-                    .offset(x: frameW + 6, y: 0)
+                Text(lastEquation)
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.accent)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(MatherTheme.card.opacity(0.96))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(MatherTheme.accent.opacity(0.18), lineWidth: 1)
+                    )
                     .transition(.scale.combined(with: .opacity))
-                    .zIndex(10)
             }
+
+            VStack(spacing: 10) {
+                Text("\(frameWidth) × \(frameHeight) = \(frameWidth * frameHeight)")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(valid ? MatherTheme.accent : MatherTheme.ink)
+                    .accessibilityLabel("Current rectangle \(frameWidth) by \(frameHeight) equals \(frameWidth * frameHeight)")
+
+                ZStack(alignment: .topLeading) {
+                    dotGrid(columns: gridSize.columns, rows: gridSize.rows, dotDiameter: dotDiameter, cellPitch: cellPitch, valid: valid)
+                        .frame(width: CGFloat(gridSize.columns) * cellPitch, height: CGFloat(gridSize.rows) * cellPitch)
+
+                    selectionFrame(w: frameW, h: frameH, valid: valid, cellPitch: cellPitch)
+                }
+                .padding(16)
+                .background(MatherTheme.card.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .animation(.spring(response: 0.25, dampingFraction: 0.75), value: frameWidth)
         .animation(.spring(response: 0.25, dampingFraction: 0.75), value: frameHeight)
@@ -146,50 +155,47 @@ struct RectangleFactoryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
-    private func dotGrid(rows: Int, cellSize: CGFloat, valid: Bool) -> some View {
+    private func dotGrid(columns: Int, rows: Int, dotDiameter: CGFloat, cellPitch: CGFloat, valid: Bool) -> some View {
         let activeColor: Color = valid ? MatherTheme.accent : MatherTheme.warm
-        return VStack(alignment: .leading, spacing: dotSpacing) {
+
+        return VStack(spacing: 0) {
             ForEach(0..<rows, id: \.self) { row in
-                HStack(spacing: dotSpacing) {
-                    ForEach(0..<gridColumns, id: \.self) { col in
-                        let idx = row * gridColumns + col
-                        let inFrame = col < frameWidth && row < frameHeight
+                HStack(spacing: 0) {
+                    ForEach(0..<columns, id: \.self) { col in
                         Circle()
-                            .fill(idx < targetN
-                                  ? (inFrame ? activeColor : MatherTheme.ink.opacity(0.25))
-                                  : Color.clear)
-                            .frame(width: dotSize, height: dotSize)
+                            .fill(col < frameWidth && row < frameHeight ? activeColor : MatherTheme.ink.opacity(0.18))
+                            .frame(width: dotDiameter, height: dotDiameter)
+                            .frame(width: cellPitch, height: cellPitch)
                     }
                 }
             }
         }
     }
 
-    private func selectionFrame(w: CGFloat, h: CGFloat, valid: Bool, cellSize: CGFloat) -> some View {
+    private func selectionFrame(w: CGFloat, h: CGFloat, valid: Bool, cellPitch: CGFloat) -> some View {
         let borderColor: Color = valid ? MatherTheme.accent : MatherTheme.softBlue
         let borderWidth: CGFloat = valid ? 3 : 2
+        let handleSize = max(24, min(40, cellPitch * 1.35))
 
         return ZStack(alignment: .bottomTrailing) {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: borderWidth)
                 .frame(width: w, height: h)
 
-            // Corner drag handle
             Circle()
                 .fill(borderColor)
-                .frame(width: 44, height: 44)
+                .frame(width: handleSize, height: handleSize)
                 .contentShape(Rectangle())
                 .overlay(
                     Image(systemName: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: min(14, handleSize * 0.38), weight: .bold))
                         .foregroundStyle(.white)
                 )
-                .offset(x: 16, y: 16)
-                .padding(10)
+                .offset(x: handleSize * 0.35, y: handleSize * 0.35)
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
-                            handleDrag(translation: value.translation, cellSize: cellSize)
+                            handleDrag(translation: value.translation, cellPitch: cellPitch)
                         }
                         .onEnded { _ in
                             isDragging = false
@@ -409,16 +415,18 @@ struct RectangleFactoryView: View {
     @State private var dragStartW: Int = 2
     @State private var dragStartH: Int = 1
 
-    private func handleDrag(translation: CGSize, cellSize: CGFloat) {
+    private func handleDrag(translation: CGSize, cellPitch: CGFloat) {
         if !isDragging {
             isDragging = true
             dragStartW = frameWidth
             dragStartH = frameHeight
         }
-        let newW = max(1, min(dragStartW + Int((translation.width  / cellSize).rounded()), maxFrameDim))
-        let newH = max(1, min(dragStartH + Int((translation.height / cellSize).rounded()), maxFrameDim))
+
+        let gridSize = Self.playableGrid(for: targetN)
+        let newW = max(1, min(dragStartW + Int((translation.width / cellPitch).rounded()), gridSize.columns))
+        let newH = max(1, min(dragStartH + Int((translation.height / cellPitch).rounded()), gridSize.rows))
         if newW != frameWidth || newH != frameHeight {
-            frameWidth  = newW
+            frameWidth = newW
             frameHeight = newH
             showEquation = false
         }
@@ -529,17 +537,34 @@ struct RectangleFactoryView: View {
     /// one cell shorter — visually near the centre of the dot grid but not
     /// on a valid factor pair.  Edge-case checked so it never accidentally
     /// land on the answer.
-    nonisolated static func smartStartDimensions(for n: Int) -> (width: Int, height: Int) {
-        let s = max(1, Int(sqrt(Double(n)).rounded(.down)))
-        var w = s + 1
-        var h = max(1, s - 1)
-        // Clamp to on-screen grid (8 max)
-        w = min(w, 8)
-        h = min(h, 8)
-        // If this accidentally lands on a valid answer, shift width by 1
-        if w * h == n {
-            w = min(w + 1, 8)
+    nonisolated static func playableGrid(for n: Int) -> (columns: Int, rows: Int) {
+        var maxColumns = 1
+        var maxRows = 1
+
+        for key in factorsOf(n) {
+            let parts = key.split(separator: "x").compactMap { Int($0) }
+            guard parts.count == 2 else { continue }
+            maxRows = max(maxRows, parts[0])
+            maxColumns = max(maxColumns, parts[1])
         }
-        return (width: w, height: h)
+
+        return (columns: maxColumns, rows: maxRows)
+    }
+
+    nonisolated static func smartStartDimensions(for n: Int) -> (width: Int, height: Int) {
+        let grid = playableGrid(for: n)
+        let side = max(1, Int(Double(n).squareRoot().rounded(.down)))
+        var width = min(max(2, side + 1), grid.columns)
+        var height = min(max(1, side), grid.rows)
+
+        if width * height == n {
+            if width < grid.columns {
+                width += 1
+            } else if height > 1 {
+                height -= 1
+            }
+        }
+
+        return (width: width, height: height)
     }
 }
