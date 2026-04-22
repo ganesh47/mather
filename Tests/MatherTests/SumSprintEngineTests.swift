@@ -394,6 +394,23 @@ struct SumSprintEngineTests {
     }
 
     @Test
+    func wrongAnswerNearExpiryDoesNotAlsoTriggerTimeout() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0.2)
+        engine.selectDifficulty(.standard)
+
+        engine.appendDigit(1)
+        engine.setCardTimeRemainingForTests(0.05)
+        engine.submitAnswer()
+
+        try await Task.sleep(for: .milliseconds(350))
+
+        #expect(engine.cards[0].timedOut == false)
+        #expect(engine.currentCardIndex == 0)
+        #expect(engine.showIncorrectFeedback == false)
+        #expect(engine.showTimeoutFeedback == false)
+    }
+
+    @Test
     func sprintTimeoutMarksCardForRequeueFlow() async throws {
         let (engine, _) = try makeEngine(feedbackDuration: 0)
         engine.selectDifficulty(.sprint)

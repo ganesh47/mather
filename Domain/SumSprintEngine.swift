@@ -180,8 +180,7 @@ final class SumSprintEngine {
     private func handleCorrect(isFirstTry: Bool) {
         timerTask?.cancel()
         timerTask = nil
-        feedbackTask?.cancel()
-        feedbackTask = nil
+        resetFeedbackState()
         let card = cards[currentCardIndex]
         cards[currentCardIndex].result = .correct(firstTry: isFirstTry)
 
@@ -220,8 +219,7 @@ final class SumSprintEngine {
     private func handleIncorrect() {
         timerTask?.cancel()
         timerTask = nil
-        feedbackTask?.cancel()
-        feedbackTask = nil
+        resetFeedbackState()
         let card = cards[currentCardIndex]
         let attempts = cards[currentCardIndex].attemptCount
         cards[currentCardIndex].result = .incorrect(attempts: attempts)
@@ -257,8 +255,7 @@ final class SumSprintEngine {
         guard phase == .session, currentCardIndex < cards.count else { return }
         timerTask?.cancel()
         timerTask = nil
-        feedbackTask?.cancel()
-        feedbackTask = nil
+        resetFeedbackState()
         cardTimeRemaining = 0
 
         let card = cards[currentCardIndex]
@@ -297,6 +294,14 @@ final class SumSprintEngine {
             self.feedbackTask = nil
             self.advanceCard()
         }
+    }
+
+    private func resetFeedbackState() {
+        feedbackTask?.cancel()
+        feedbackTask = nil
+        showCorrectFeedback = false
+        showIncorrectFeedback = false
+        showTimeoutFeedback = false
     }
 
     // MARK: - Private: card advancement
@@ -357,11 +362,15 @@ final class SumSprintEngine {
             cardTimeRemaining = 0
             return
         }
+        let cardID = cards.indices.contains(currentCardIndex) ? cards[currentCardIndex].id : nil
         cardTimeRemaining = secs
         timerTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self else { break }
                 try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 s tick
+                guard !Task.isCancelled else { break }
+                guard self.phase == .session, self.cards.indices.contains(self.currentCardIndex) else { break }
+                guard self.cards[self.currentCardIndex].id == cardID else { break }
                 self.cardTimeRemaining = max(0, self.cardTimeRemaining - 0.1)
                 if self.cardTimeRemaining <= 0 {
                     self.handleTimeout()
