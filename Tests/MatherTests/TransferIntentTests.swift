@@ -46,6 +46,8 @@ struct TransferIntentTests {
     private func makeEngine() -> VerticalSliceEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1GravitySplitEnabled = false
         return VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
