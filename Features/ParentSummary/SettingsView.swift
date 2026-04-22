@@ -106,7 +106,7 @@ struct SettingsView: View {
                             )
                             VS1ToggleRow(
                                 title: "Clap reaction (mic)",
-                                subtitle: "Listens for a clap to trigger celebrations (uses microphone).",
+                                subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
                                 isOn: soundReactionBinding
                             )
                         }

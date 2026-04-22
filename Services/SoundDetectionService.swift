@@ -9,7 +9,7 @@ import Observation
 ///
 /// **Privacy**: Audio data is never stored or transmitted — the tap computes
 /// only an RMS scalar. The service is started only when
-/// `featureFlags.soundReactionEnabled` is true (default: false), and stops
+/// `featureFlags.soundReactionEnabled` is true (default: true), and stops
 /// immediately when BondMatchView disappears.
 ///
 /// Requires `NSMicrophoneUsageDescription` in Info.plist.
