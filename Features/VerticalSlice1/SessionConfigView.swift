@@ -13,6 +13,7 @@ private let themeOptions: [ThemeOption] = [
 ]
 
 struct SessionConfigView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
 
     var body: some View {
@@ -73,7 +74,7 @@ struct SessionConfigView: View {
                 }
                 .font(.headline.weight(.semibold))
             }
-            .frame(maxWidth: 760)
+            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(24)
         }

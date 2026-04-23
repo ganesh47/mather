@@ -67,36 +67,38 @@ struct LabView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Explorer Lab")
-                                .font(.system(size: 36, weight: .black, design: .rounded))
-                                .foregroundStyle(MatherTheme.ink)
-                            Text("Pick a game and discover maths")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(MatherTheme.cardSubtitle)
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Explorer Lab")
+                                    .font(.system(size: 36, weight: .black, design: .rounded))
+                                    .foregroundStyle(MatherTheme.ink)
+                                Text("Pick a game and discover maths")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
+                            }
+                            Spacer()
+                            Button {
+                                appModel.engine.showHome()
+                            } label: {
+                                Image(systemName: "house.fill")
+                                    .font(.title2.weight(.semibold))
+                                    .foregroundStyle(MatherTheme.accent)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .accessibilityLabel("Home")
                         }
-                        Spacer()
-                        Button {
-                            appModel.engine.showHome()
-                        } label: {
-                            Image(systemName: "house.fill")
-                                .font(.title2.weight(.semibold))
-                                .foregroundStyle(MatherTheme.accent)
-                                .frame(width: 44, height: 44)
-                        }
-                        .accessibilityLabel("Home")
-                    }
 
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
-                        ForEach(Array(tiles.enumerated()), id: \.offset) { _, tile in
-                            gameTileButton(tile)
+                        LazyVGrid(columns: ResponsiveLayout.labColumns(for: proxy.size.width), spacing: 16) {
+                            ForEach(Array(tiles.enumerated()), id: \.offset) { _, tile in
+                                gameTileButton(tile)
+                            }
                         }
                     }
+                    .padding(24)
                 }
-                .padding(24)
             }
         }
     }
