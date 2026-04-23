@@ -72,6 +72,7 @@ struct SettingsView: View {
                             VS1ToggleRow(
                                 title: "Make & Break loop v2",
                                 subtitle: "Turns on the repeated Make it → Gravity Split → Sum Sprint → Bond Blast route for each target.",
+                                accessibilityIdentifier: "settings-loop-v2-toggle",
                                 isOn: makeBreakLoopV2Binding
                             )
 

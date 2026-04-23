@@ -203,6 +203,7 @@ final class ScreenshotTests: XCTestCase {
         // Navigate to Settings and capture the pilot runbook
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        _ = app.switches["settings-loop-v2-toggle"].waitForExistence(timeout: 5)
         _ = app.staticTexts["Pilot smoke test"].waitForExistence(timeout: 5)
         snapshot(app, "iPhone-Settings-PilotRunbook")
         app.buttons["Home"].tap()
