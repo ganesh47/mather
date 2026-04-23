@@ -162,6 +162,38 @@ struct SessionSummaryDraft: Equatable {
     var exportFileName: String
 }
 
+@Model
+final class StoredKidProfile {
+    @Attribute(.unique) var id: String
+    var name: String
+    var emoji: String
+    var createdAt: Date
+
+    init(id: String = UUID().uuidString, name: String, emoji: String, createdAt: Date = .now) {
+        self.id = id
+        self.name = name
+        self.emoji = emoji
+        self.createdAt = createdAt
+    }
+}
+
+@Model
+final class StoredTelemetryEvent {
+    var sessionId: String
+    var profileId: String
+    var typeRawValue: String
+    var timestamp: Date
+    var encodedEvent: String
+
+    init(sessionId: String, profileId: String, event: SliceEvent, encodedEvent: String) {
+        self.sessionId = sessionId
+        self.profileId = profileId
+        self.typeRawValue = event.type.rawValue
+        self.timestamp = event.timestamp
+        self.encodedEvent = encodedEvent
+    }
+}
+
 // MARK: - Gravity Split models
 
 /// State for the Gravity Split balance stage — held by `VerticalSliceEngine`.
@@ -465,7 +497,9 @@ final class StoredRoomQuestStationReference {
 
 @Model
 final class StoredFactRecord {
-    @Attribute(.unique) var factKey: String  // "\(addendA)+\(addendB)"
+    @Attribute(.unique) var uniqueKey: String
+    var profileId: String
+    var factKey: String  // "\(addendA)+\(addendB)"
     var addendA: Int
     var addendB: Int
     var boxRawValue: Int
@@ -473,7 +507,9 @@ final class StoredFactRecord {
     var correctStreak: Int
     var lastSeenAt: Date?
 
-    init(factKey: String, addendA: Int, addendB: Int) {
+    init(profileId: String, factKey: String, addendA: Int, addendB: Int) {
+        self.uniqueKey = "\(profileId)|\(factKey)"
+        self.profileId = profileId
         self.factKey = factKey
         self.addendA = addendA
         self.addendB = addendB
@@ -496,8 +532,9 @@ final class StoredSessionSummary {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
+    var profileId: String
 
-    init(from draft: SessionSummaryDraft) {
+    init(from draft: SessionSummaryDraft, profileId: String) {
         sessionId = draft.sessionId
         startedAt = draft.startedAt
         endedAt = draft.endedAt
@@ -508,5 +545,6 @@ final class StoredSessionSummary {
         medianLatencyMs = draft.medianLatencyMs
         nextTargetHint = draft.nextTargetHint
         exportFileName = draft.exportFileName
+        self.profileId = profileId
     }
 }

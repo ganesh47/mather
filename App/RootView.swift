@@ -5,6 +5,11 @@ import SwiftUI
 struct RootView: View {
     @Bindable var appModel: AppModel
     @Query(sort: \StoredSessionSummary.startedAt, order: .reverse) private var sessionSummaries: [StoredSessionSummary]
+    @Query(sort: \StoredKidProfile.createdAt) private var kidProfiles: [StoredKidProfile]
+
+    private var activeProfileSummaries: [StoredSessionSummary] {
+        sessionSummaries.filter { $0.profileId == appModel.profileStore.activeProfileId }
+    }
 
     var body: some View {
         NavigationStack {
@@ -19,9 +24,9 @@ struct RootView: View {
                 case .sessionSummary:
                     SessionSummaryView(appModel: appModel)
                 case .parentSummary:
-                    ParentSummaryView(appModel: appModel, summaries: sessionSummaries)
+                    ParentSummaryView(appModel: appModel, summaries: sessionSummaries, profiles: kidProfiles)
                 case .settings:
-                    SettingsView(appModel: appModel, summaries: sessionSummaries)
+                    SettingsView(appModel: appModel, summaries: activeProfileSummaries)
                 case .roomQuest:
                     RoomSessionView(engine: appModel.roomQuestEngine, vsEngine: appModel.engine)
                         .sheet(item: Binding(

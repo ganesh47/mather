@@ -6,6 +6,8 @@ struct SettingsView: View {
     let summaries: [StoredSessionSummary]
 
     @State private var showingClearConfirmation = false
+    @State private var newProfileName = ""
+    @State private var newProfileEmoji = KidProfileStore.emojiChoices[0]
 
     private var audioBinding: Binding<Bool> {
         Binding(
@@ -39,14 +41,6 @@ struct SettingsView: View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
             .foregroundStyle(.primary)
-    }
-
-    private var latestExportURL: URL? {
-        if let current = appModel.telemetryWriter.currentExport?.url {
-            return current
-        }
-        guard let latest = summaries.first else { return nil }
-        return appModel.telemetryWriter.exportURL(fileName: latest.exportFileName)
     }
 
     var body: some View {
@@ -101,18 +95,37 @@ struct SettingsView: View {
 
                     CardSurface {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Export and review")
+                            Text("Kid profiles")
                                 .font(.title2.weight(.bold))
-                            Text(latestExportURL == nil ? "Run a session to create the first JSONL export." : "The most recent session export is ready to share from this device.")
+                            Text("Each profile keeps session data separate. Parent summary combines all profiles.")
                                 .foregroundStyle(MatherTheme.cardSubtitle)
 
-                            if let latestExportURL, FileManager.default.fileExists(atPath: latestExportURL.path) {
-                                ShareLink(item: latestExportURL) {
-                                    Text("Share latest export")
-                                        .frame(maxWidth: .infinity)
+                            Picker("Active profile", selection: Binding(
+                                get: { appModel.profileStore.activeProfileId },
+                                set: { appModel.profileStore.setActiveProfile(id: $0) }
+                            )) {
+                                ForEach(appModel.profileStore.profiles, id: \.id) { profile in
+                                    Text("\(profile.emoji) \(profile.name)")
+                                        .tag(profile.id)
                                 }
-                                .buttonStyle(PrimaryActionButtonStyle())
                             }
+
+                            HStack {
+                                TextField("New profile name", text: $newProfileName)
+                                    .textFieldStyle(.roundedBorder)
+                                Picker("Emoji", selection: $newProfileEmoji) {
+                                    ForEach(KidProfileStore.emojiChoices, id: \.self) { emoji in
+                                        Text(emoji).tag(emoji)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
+
+                            Button("Add profile") {
+                                appModel.profileStore.addProfile(name: newProfileName, emoji: newProfileEmoji)
+                                newProfileName = ""
+                            }
+                            .buttonStyle(PrimaryActionButtonStyle())
                         }
                     }
 
@@ -134,7 +147,7 @@ struct SettingsView: View {
                                             .foregroundStyle(MatherTheme.cardSubtitle)
                                     }
                                     Spacer()
-                                    Text(summary.exportFileName)
+                                    Text(summary.exportFileName.replacingOccurrences(of: "swiftdata://session/", with: "Session ID "))
                                         .font(.caption)
                                         .foregroundStyle(MatherTheme.cardSubtitle)
                                 }
@@ -160,7 +173,7 @@ struct SettingsView: View {
                                 smokeStep("1. Tap Home → Play → Start Session.")
                                 smokeStep("2. Verify Make → Gravity Split → Sum Sprint → Bond Blast.")
                                 smokeStep("3. Confirm Session Complete screen appears.")
-                                smokeStep("4. Return here and tap Share latest export to verify JSONL.")
+                                smokeStep("4. Confirm events are writing to the on-device SwiftData telemetry store.")
                             }
                         }
                     }
@@ -193,10 +206,10 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
                 appModel.historyStore.clearAll()
-                appModel.telemetryWriter.clearExports()
+                appModel.telemetryWriter.clearEventsForActiveProfile()
             }
         } message: {
-            Text("This removes saved summaries and local JSONL exports.")
+            Text("This removes saved summaries and telemetry events for the active kid profile.")
         }
     }
 }

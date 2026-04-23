@@ -1,36 +1,32 @@
 import Foundation
-
-struct ExportArtifact: Equatable {
-    let url: URL
-    let fileName: String
-}
+import SwiftData
 
 @MainActor
 final class TelemetryWriter {
     static let schemaVersion = 1
 
     private let encoder: JSONEncoder
-    private let fileManager: FileManager
-    private let documentsDirectory: URL
-    private(set) var currentExport: ExportArtifact?
+    private let modelContext: ModelContext
+    private let activeProfileIdProvider: () -> String
 
-    init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
+    private(set) var currentSessionId: String?
+
+    convenience init() {
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        self.init(modelContext: ModelContext(container), activeProfileIdProvider: { "default-profile" })
+    }
+
+    init(modelContext: ModelContext, activeProfileIdProvider: @escaping () -> String) {
+        self.modelContext = modelContext
+        self.activeProfileIdProvider = activeProfileIdProvider
         encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 
     func beginSession(sessionId: UUID, featureFlags: FeatureFlagService) throws {
-        let fileName = "session-\(sessionId.uuidString).jsonl"
-        let exportDirectory = exportsDirectory()
-        if !fileManager.fileExists(atPath: exportDirectory.path) {
-            try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
-        }
-
-        let fileURL = exportDirectory.appendingPathComponent(fileName)
-        fileManager.createFile(atPath: fileURL.path, contents: nil)
-        currentExport = ExportArtifact(url: fileURL, fileName: fileName)
+        currentSessionId = sessionId.uuidString
 
         try append(
             SliceEvent(
@@ -46,21 +42,23 @@ final class TelemetryWriter {
     }
 
     func append(_ event: SliceEvent) throws {
-        guard let currentExport else { return }
+        guard let currentSessionId else { return }
         let data = try encoder.encode(event)
-        guard let line = String(data: data, encoding: .utf8)?.appending("\n").data(using: .utf8) else {
+        guard let encodedEvent = String(data: data, encoding: .utf8) else {
             throw CocoaError(.fileWriteUnknown)
         }
 
-        if let handle = try? FileHandle(forWritingTo: currentExport.url) {
-            try handle.seekToEnd()
-            try handle.write(contentsOf: line)
-            try handle.close()
-        }
+        let row = StoredTelemetryEvent(
+            sessionId: currentSessionId,
+            profileId: activeProfileIdProvider(),
+            event: event,
+            encodedEvent: encodedEvent
+        )
+        modelContext.insert(row)
+        try modelContext.save()
     }
 
-    @discardableResult
-    func finishSession(session: SliceSession, digest: ParentDigest, themeId: String = "classic") throws -> ExportArtifact? {
+    func finishSession(session: SliceSession, digest: ParentDigest, themeId: String = "classic") throws {
         try append(
             SliceEvent(
                 type: .sessionEnd,
@@ -74,33 +72,19 @@ final class TelemetryWriter {
                 ]
             )
         )
-        try verifyReadableJSONL()
-        return currentExport
     }
 
-    func verifyReadableJSONL() throws {
-        guard let currentExport else { return }
-        let content = try String(contentsOf: currentExport.url, encoding: .utf8)
-        for line in content.split(separator: "\n") {
-            _ = try JSONDecoder().decode(SliceEvent.self, from: Data(line.utf8))
+    func clearEventsForActiveProfile() {
+        let profileId = activeProfileIdProvider()
+        let descriptor = FetchDescriptor<StoredTelemetryEvent>(
+            predicate: #Predicate { $0.profileId == profileId }
+        )
+        guard let events = try? modelContext.fetch(descriptor) else { return }
+        for event in events {
+            modelContext.delete(event)
         }
-    }
-
-    func exportsDirectory() -> URL {
-        documentsDirectory.appendingPathComponent("SessionExports", isDirectory: true)
-    }
-
-    func exportURL(fileName: String) -> URL {
-        exportsDirectory().appendingPathComponent(fileName)
-    }
-
-    func clearExports() {
-        let directory = exportsDirectory()
-        guard let urls = try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return }
-        for url in urls {
-            try? fileManager.removeItem(at: url)
-        }
-        currentExport = nil
+        try? modelContext.save()
+        currentSessionId = nil
     }
 
     func digest(from summaries: [StoredSessionSummary]) -> ParentDigest {

@@ -8,7 +8,13 @@ struct MatherApp: App {
 
     init() {
         do {
-            container = try ModelContainer(for: StoredSessionSummary.self, StoredRoomQuestStationReference.self, StoredFactRecord.self)
+            container = try ModelContainer(
+                for: StoredSessionSummary.self,
+                StoredRoomQuestStationReference.self,
+                StoredFactRecord.self,
+                StoredKidProfile.self,
+                StoredTelemetryEvent.self
+            )
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)
             _appModel = State(initialValue: appModel)
@@ -45,7 +51,7 @@ private extension MatherApp {
               arguments.indices.contains(flagIndex + 1),
               let requestedCount = Int(arguments[flagIndex + 1]) else { return }
 
-        appModel.historyStore.clearAll()
+        appModel.historyStore.clearAllProfiles()
 
         for index in 0..<max(requestedCount, 0) {
             let startedAt = Date.now.addingTimeInterval(TimeInterval(-index * 3_600))
@@ -60,7 +66,7 @@ private extension MatherApp {
                 transferCorrectCount: 2 + (index % 2),
                 medianLatencyMs: 90_000 + (index * 15_000),
                 nextTargetHint: "UI test seeded session history.",
-                exportFileName: "session-\(sessionId).jsonl"
+                exportFileName: "swiftdata://session/\(sessionId)"
             )
             appModel.historyStore.save(draft)
         }

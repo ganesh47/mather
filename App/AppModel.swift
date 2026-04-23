@@ -5,6 +5,7 @@ import SwiftData
 @MainActor
 @Observable
 final class AppModel {
+    let profileStore: KidProfileStore
     let featureFlags: FeatureFlagService
     let speechService: SpeechService
     let telemetryWriter: TelemetryWriter
@@ -20,10 +21,11 @@ final class AppModel {
     let sumSprintEngine: SumSprintEngine
 
     init(modelContext: ModelContext) {
+        let profileStore = KidProfileStore(modelContext: modelContext)
         let featureFlags = FeatureFlagService()
         let speechService = SpeechService()
-        let telemetryWriter = TelemetryWriter()
-        let historyStore = SessionHistoryStore(modelContext: modelContext)
+        let telemetryWriter = TelemetryWriter(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
+        let historyStore = SessionHistoryStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let roomQuestStationStore = RoomQuestStationStore(modelContext: modelContext)
         let hapticsService = HapticsService()
         let motionService = MotionService()
@@ -31,6 +33,7 @@ final class AppModel {
         let roomQuestScanner = RoomQuestLiveScanner()
 
         self.featureFlags = featureFlags
+        self.profileStore = profileStore
         self.speechService = speechService
         self.telemetryWriter = telemetryWriter
         self.historyStore = historyStore
@@ -79,7 +82,7 @@ final class AppModel {
             }
         }
 
-        let factStore = FactRecordStore(modelContext: modelContext)
+        let factStore = FactRecordStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let sumSprintEngine = SumSprintEngine(
             featureFlags: featureFlags,
             telemetryWriter: telemetryWriter,

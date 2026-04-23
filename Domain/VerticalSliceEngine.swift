@@ -99,10 +99,6 @@ final class VerticalSliceEngine {
         return "\(min(currentProblemIndex + 1, problems.count)) / \(problems.count)"
     }
 
-    var exportArtifact: ExportArtifact? {
-        telemetryWriter.currentExport
-    }
-
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
     var sumSprintStageCardCount: Int { sumSprintBurstState?.cards.count ?? 0 }
 
@@ -598,7 +594,7 @@ final class VerticalSliceEngine {
     private func endSession() {
         currentSession.endedAt = .now
         let digest = buildDigest()
-        let export = try? telemetryWriter.finishSession(session: currentSession, digest: digest, themeId: featureFlags.selectedThemeId)
+        try? telemetryWriter.finishSession(session: currentSession, digest: digest, themeId: featureFlags.selectedThemeId)
         let summary = SessionSummaryDraft(
             sessionId: currentSession.sessionId.uuidString,
             startedAt: currentSession.startedAt,
@@ -609,7 +605,7 @@ final class VerticalSliceEngine {
             transferCorrectCount: digest.transferCorrectCount,
             medianLatencyMs: digest.medianLatencyMs,
             nextTargetHint: digest.nextTargetHint,
-            exportFileName: export?.fileName ?? "session-\(currentSession.sessionId.uuidString).jsonl"
+            exportFileName: "swiftdata://session/\(currentSession.sessionId.uuidString)"
         )
         saveSummary(summary)
         completedSummary = summary
