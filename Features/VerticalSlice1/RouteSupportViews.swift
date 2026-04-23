@@ -2,6 +2,7 @@ import Observation
 import SwiftUI
 
 struct VS1ParentSummaryPlaceholderView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
 
@@ -37,13 +38,14 @@ struct VS1ParentSummaryPlaceholderView: View {
                 }
             }
             .padding(24)
-            .frame(maxWidth: 760)
+            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
             .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }
 
 struct VS1SettingsPlaceholderView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
     @State private var confirmClear = false
@@ -107,7 +109,7 @@ struct VS1SettingsPlaceholderView: View {
                 }
             }
             .padding(24)
-            .frame(maxWidth: 760)
+            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .confirmationDialog("Clear all session summaries?", isPresented: $confirmClear, titleVisibility: .visible) {

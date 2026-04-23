@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ConcreteBuildView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let target: Int
     let warmCount: Int
     let accentCount: Int
@@ -48,7 +49,7 @@ struct ConcreteBuildView: View {
                             }
                     }
                 }
-                .frame(maxWidth: 400)
+                .frame(maxWidth: ResponsiveLayout.concreteGridMaxWidth(for: horizontalSizeClass))
                 .frame(maxWidth: .infinity)
 
 
