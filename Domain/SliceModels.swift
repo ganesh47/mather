@@ -149,6 +149,10 @@ struct ParentDigest: Codable, Equatable {
     var nextTargetHint: String
 }
 
+enum KidProfilePersistence {
+    static let defaultProfileId = "default-profile"
+}
+
 struct SessionSummaryDraft: Equatable {
     var sessionId: String
     var startedAt: Date
@@ -180,7 +184,7 @@ final class StoredKidProfile {
 @Model
 final class StoredTelemetryEvent {
     var sessionId: String
-    var profileId: String
+    var profileId: String = KidProfilePersistence.defaultProfileId
     var typeRawValue: String
     var timestamp: Date
     var encodedEvent: String
@@ -497,9 +501,8 @@ final class StoredRoomQuestStationReference {
 
 @Model
 final class StoredFactRecord {
-    @Attribute(.unique) var uniqueKey: String
-    var profileId: String
-    var factKey: String  // "\(addendA)+\(addendB)"
+    @Attribute(.unique) var factKey: String  // "\(addendA)+\(addendB)"
+    var profileId: String = KidProfilePersistence.defaultProfileId
     var addendA: Int
     var addendB: Int
     var boxRawValue: Int
@@ -507,10 +510,9 @@ final class StoredFactRecord {
     var correctStreak: Int
     var lastSeenAt: Date?
 
-    init(profileId: String, factKey: String, addendA: Int, addendB: Int) {
-        self.uniqueKey = "\(profileId)|\(factKey)"
-        self.profileId = profileId
+    init(profileId: String = KidProfilePersistence.defaultProfileId, factKey: String, addendA: Int, addendB: Int) {
         self.factKey = factKey
+        self.profileId = profileId
         self.addendA = addendA
         self.addendB = addendB
         self.boxRawValue = 0
@@ -532,9 +534,9 @@ final class StoredSessionSummary {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
-    var profileId: String
+    var profileId: String = KidProfilePersistence.defaultProfileId
 
-    init(from draft: SessionSummaryDraft, profileId: String) {
+    init(from draft: SessionSummaryDraft, profileId: String = KidProfilePersistence.defaultProfileId) {
         sessionId = draft.sessionId
         startedAt = draft.startedAt
         endedAt = draft.endedAt
