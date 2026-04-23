@@ -45,7 +45,7 @@ struct MemoryAnimal: Identifiable {
 struct MemoryCard: Identifiable {
     enum Content {
         case picture(MemoryAnimal)
-        case detail(MemoryAnimal, MemoryFactCard)
+        case label(MemoryAnimal)
     }
 
     let id = UUID()
@@ -220,6 +220,7 @@ struct MemoryView: View {
     @State private var showRoundComplete = false
     @State private var deckSelection: DeckSelection = .domestic
     @State private var recentPairHistory: [String] = []
+    @State private var learningAnimal: MemoryAnimal? = nil
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles
@@ -268,6 +269,9 @@ struct MemoryView: View {
             }
 
             if showRoundComplete { roundCompleteOverlay }
+        }
+        .sheet(item: $learningAnimal) { animal in
+            birdLearningSheet(for: animal)
         }
         .onAppear { dealRound() }
     }
@@ -368,6 +372,7 @@ struct MemoryView: View {
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
                 cardView(card)
+                    .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
             }
         }
@@ -395,7 +400,7 @@ struct MemoryView: View {
                 .strokeBorder(card.isSelected ? MatherTheme.accent : (card.isMatched ? Color.green : Color.clear), lineWidth: card.isSelected ? 3 : 2)
         )
         .scaleEffect(card.isMatched ? 0.92 : 1.0)
-        .opacity(card.isMatched ? 0.45 : 1.0)
+        .opacity(card.isMatched ? 0.68 : 1.0)
         .rotationEffect(isMismatch ? .degrees(-3) : .zero)
         .animation(.spring(response: 0.25, dampingFraction: 0.6), value: card.isSelected)
         .animation(.easeOut(duration: 0.3), value: card.isMatched)
@@ -444,7 +449,7 @@ struct MemoryView: View {
                     .frame(width: cardHeight * 0.64, height: cardHeight * 0.64)
             }
 
-        case .detail(_, let factCard):
+        case .label(let labelAnimal):
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(LinearGradient(colors: card.isMatched ? [Color.green.opacity(0.18), Color.green.opacity(0.08)] : [artStyle.topColor.opacity(0.30), artStyle.bottomColor.opacity(0.18)], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -453,7 +458,7 @@ struct MemoryView: View {
                     HStack(spacing: 6) {
                         Image(systemName: artStyle.ornament)
                             .font(.caption.weight(.black))
-                        Text("Clue card")
+                        Text("Match the picture")
                             .font(.caption2.weight(.bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -463,23 +468,16 @@ struct MemoryView: View {
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.45), in: Capsule())
 
-                    Text(factCard.title)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(artStyle.ornamentColor)
-                        .textCase(.uppercase)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-
-                    Text(factCard.value)
-                        .font(.system(size: Self.detailFontSize(for: difficulty), weight: .black, design: .rounded))
+                    Text(labelAnimal.name)
+                        .font(.system(size: Self.labelFontSize(for: difficulty), weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.ink)
-                        .lineLimit(3)
-                        .minimumScaleFactor(Self.detailMinimumScaleFactor(for: difficulty))
+                        .lineLimit(2)
+                        .minimumScaleFactor(Self.labelMinimumScaleFactor(for: difficulty))
                         .allowsTightening(true)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, Self.labelHorizontalPadding(for: difficulty))
-                        .frame(maxWidth: .infinity, minHeight: cardHeight * 0.40)
+                        .frame(maxWidth: .infinity, minHeight: cardHeight * 0.34)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 10)
@@ -505,7 +503,7 @@ struct MemoryView: View {
 
     private func animal(for card: MemoryCard) -> MemoryAnimal {
         switch card.content {
-        case .picture(let animal), .detail(let animal, _): return animal
+        case .picture(let animal), .label(let animal): return animal
         }
     }
 
@@ -525,21 +523,6 @@ struct MemoryView: View {
         }
     }
 
-    static func detailFontSize(for difficulty: MemoryDifficulty) -> CGFloat {
-        switch difficulty {
-        case .easy: return 15
-        case .medium: return 14
-        case .hard: return 12
-        }
-    }
-
-    static func detailMinimumScaleFactor(for difficulty: MemoryDifficulty) -> CGFloat {
-        switch difficulty {
-        case .easy: return 0.76
-        case .medium: return 0.70
-        case .hard: return 0.62
-        }
-    }
 
     static func labelHorizontalPadding(for difficulty: MemoryDifficulty) -> CGFloat {
         switch difficulty {
@@ -591,13 +574,9 @@ struct MemoryView: View {
         animals.flatMap { animal in
             [
                 MemoryCard(pairId: animal.id, content: .picture(animal)),
-                MemoryCard(pairId: animal.id, content: .detail(animal, preferredFactCard(for: animal)))
+                MemoryCard(pairId: animal.id, content: .label(animal))
             ]
         }
-    }
-
-    static func preferredFactCard(for animal: MemoryAnimal) -> MemoryFactCard {
-        animal.detailCards.randomElement() ?? MemoryFactCard(title: "Name", value: animal.name)
     }
 
     private var cardHeight: CGFloat {
@@ -617,20 +596,18 @@ struct MemoryView: View {
     }
 
     private var roundCompleteOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.35)
-                .ignoresSafeArea()
-                .onTapGesture { nextRound() }
+        VStack {
+            Spacer()
 
-            VStack(spacing: 20) {
-                Text("🎉")
-                    .font(.system(size: 72))
-                Text("All matched!")
-                    .font(.system(size: 36, weight: .black, design: .rounded))
+            VStack(spacing: 14) {
+                Text("🎉 All matched!")
+                    .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Round \(roundsPlayed) complete")
-                    .font(.title3.weight(.semibold))
+
+                Text(deckSelection == .birds ? "Double-tap any bird card to learn more, or start the next round." : "Round \(roundsPlayed) complete")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
+                    .multilineTextAlignment(.center)
 
                 Button("Next Round") {
                     nextRound()
@@ -638,10 +615,13 @@ struct MemoryView: View {
                 .buttonStyle(PrimaryActionButtonStyle())
                 .frame(maxWidth: 240)
             }
-            .padding(36)
+            .padding(24)
+            .frame(maxWidth: .infinity)
             .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(MatherTheme.card).shadow(color: .black.opacity(0.18), radius: 24, y: 8))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     static func preferredRoundAnimals(from deck: [MemoryAnimal], pairCount: Int, recentPairHistory: [String]) -> [MemoryAnimal] {
@@ -660,6 +640,70 @@ struct MemoryView: View {
     static func updatedRecentPairHistory(previous: [String], newRoundAnimals: [MemoryAnimal], pairCount: Int) -> [String] {
         let historyWindow = max(pairCount * 2, pairCount)
         return Array((previous + newRoundAnimals.map(\.id)).suffix(historyWindow))
+    }
+
+    static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, showRoundComplete: Bool) -> Bool {
+        showRoundComplete && deckSelection == .birds && card.isMatched
+    }
+
+    private func handleDoubleTap(_ card: MemoryCard) {
+        guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, showRoundComplete: showRoundComplete) else { return }
+        learningAnimal = animal(for: card)
+    }
+
+    @ViewBuilder
+    private func birdLearningSheet(for animal: MemoryAnimal) -> some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(LinearGradient(colors: [Self.artStyle(for: animal.id).topColor, Self.artStyle(for: animal.id).bottomColor], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(height: 220)
+
+                        pictureView(for: animal)
+                            .frame(width: 170, height: 170)
+                    }
+
+                    VStack(spacing: 8) {
+                        Text(animal.name)
+                            .font(.title.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("Bird details")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+
+                    VStack(spacing: 12) {
+                        ForEach(Array(animal.detailCards.enumerated()), id: \.offset) { _, fact in
+                            HStack(alignment: .top, spacing: 12) {
+                                Text(fact.title)
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(MatherTheme.accent)
+                                    .frame(width: 72, alignment: .leading)
+
+                                Text(fact.value)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(MatherTheme.ink)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(14)
+                            .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                    }
+                }
+                .padding(20)
+            }
+            .background(MatherTheme.background.ignoresSafeArea())
+            .navigationTitle("Learn")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { learningAnimal = nil }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     private func dealRound() {
@@ -730,6 +774,7 @@ struct MemoryView: View {
     }
 
     private func nextRound() {
+        learningAnimal = nil
         withAnimation(.easeOut(duration: 0.2)) {
             showRoundComplete = false
         }

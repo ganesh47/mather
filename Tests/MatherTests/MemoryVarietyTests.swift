@@ -27,7 +27,7 @@ struct MemoryVarietyTests {
         #expect(Set(round.map(\.id)).count == 6)
     }
 
-    @MainActor @Test func buildCardsCreatesExactPictureAndDetailPairs() {
+    @MainActor @Test func buildCardsCreatesExactPictureAndLabelPairs() {
         let round = Array(MemoryDeck.birds.prefix(4))
         let cards = MemoryView.buildCards(for: round)
 
@@ -36,7 +36,7 @@ struct MemoryVarietyTests {
             let matching = cards.filter { $0.pairId == animal.id }
             #expect(matching.count == 2)
             #expect(matching.contains { if case .picture = $0.content { return true } else { return false } })
-            #expect(matching.contains { if case .detail = $0.content { return true } else { return false } })
+            #expect(matching.contains { if case .label = $0.content { return true } else { return false } })
         }
     }
 
@@ -44,6 +44,17 @@ struct MemoryVarietyTests {
     @Test func birdCardsExposeRichFactSets() {
         #expect(MemoryDeck.birds.allSatisfy { $0.detailCards.count >= 6 })
         #expect(MemoryDeck.birds.allSatisfy { Set($0.detailCards.map(\.title)).isSuperset(of: ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"]) })
+    }
+
+    @Test func learningDetailsAreOnlyAvailableForCompletedBirdRounds() {
+        let bird = MemoryDeck.birds[0]
+        let matchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: true)
+        let unmatchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: false)
+
+        #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, showRoundComplete: true))
+        #expect(!MemoryView.canOpenLearningDetails(for: unmatchedBirdCard, deckSelection: .birds, showRoundComplete: true))
+        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .domestic, showRoundComplete: true))
+        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, showRoundComplete: false))
     }
 
     @MainActor @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {
