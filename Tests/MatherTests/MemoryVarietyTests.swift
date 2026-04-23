@@ -46,7 +46,7 @@ struct MemoryVarietyTests {
         #expect(MemoryDeck.birds.allSatisfy { Set($0.detailCards.map(\.title)).isSuperset(of: ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"]) })
     }
 
-    @Test func learningDetailsAreOnlyAvailableForCompletedBirdRounds() {
+    @MainActor @Test func learningDetailsAreOnlyAvailableForCompletedBirdRounds() {
         let bird = MemoryDeck.birds[0]
         let matchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: true)
         let unmatchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: false)
