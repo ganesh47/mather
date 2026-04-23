@@ -27,7 +27,7 @@ struct MemoryVarietyTests {
         #expect(Set(round.map(\.id)).count == 6)
     }
 
-    @MainActor @Test func buildCardsCreatesExactPictureAndLabelPairs() {
+    @MainActor @Test func buildCardsCreatesExactPictureAndDetailPairs() {
         let round = Array(MemoryDeck.birds.prefix(4))
         let cards = MemoryView.buildCards(for: round)
 
@@ -36,8 +36,14 @@ struct MemoryVarietyTests {
             let matching = cards.filter { $0.pairId == animal.id }
             #expect(matching.count == 2)
             #expect(matching.contains { if case .picture = $0.content { return true } else { return false } })
-            #expect(matching.contains { if case .label = $0.content { return true } else { return false } })
+            #expect(matching.contains { if case .detail = $0.content { return true } else { return false } })
         }
+    }
+
+
+    @Test func birdCardsExposeRichFactSets() {
+        #expect(MemoryDeck.birds.allSatisfy { $0.detailCards.count >= 6 })
+        #expect(MemoryDeck.birds.allSatisfy { Set($0.detailCards.map(\.title)).isSuperset(of: ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"]) })
     }
 
     @MainActor @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {

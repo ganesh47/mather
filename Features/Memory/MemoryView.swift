@@ -7,17 +7,24 @@ enum MemoryPicture {
     case asset(String)
 }
 
+struct MemoryFactCard: Equatable {
+    let title: String
+    let value: String
+}
+
 struct MemoryAnimal: Identifiable {
     let id: String
     let name: String
     let canonicalName: String
     let picture: MemoryPicture
+    let detailCards: [MemoryFactCard]
 
-    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture) {
+    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, detailCards: [MemoryFactCard] = []) {
         self.id = id
         self.name = name
         self.canonicalName = canonicalName ?? name
         self.picture = picture
+        self.detailCards = detailCards
     }
 
     var selectionKey: String {
@@ -38,7 +45,7 @@ struct MemoryAnimal: Identifiable {
 struct MemoryCard: Identifiable {
     enum Content {
         case picture(MemoryAnimal)
-        case label(MemoryAnimal)
+        case detail(MemoryAnimal, MemoryFactCard)
     }
 
     let id = UUID()
@@ -82,42 +89,42 @@ enum MemoryDeck {
     ]
 
     static let birds: [MemoryAnimal] = [
-        bird("bird-a01", "Macaw", asset: "MemoryBirdA01"),
-        bird("bird-a02", "Toucan", asset: "MemoryBirdA02"),
-        bird("bird-a03", "Cockatoo", asset: "MemoryBirdA03"),
-        bird("bird-a04", "Hummer", asset: "MemoryBirdA04"),
-        bird("bird-a05", "Blue Macaw", asset: "MemoryBirdA05"),
-        bird("bird-a06", "Kingfisher", asset: "MemoryBirdA06"),
-        bird("bird-a07", "Hummer", asset: "MemoryBirdA07"),
-        bird("bird-a08", "Kingfisher", asset: "MemoryBirdA08"),
-        bird("bird-a09", "Toucan", asset: "MemoryBirdA09"),
-        bird("bird-a10", "Parrot", asset: "MemoryBirdA10"),
-        bird("bird-a11", "Palm Bird", asset: "MemoryBirdA11"),
-        bird("bird-a12", "Flamingo", asset: "MemoryBirdA12"),
-        bird("bird-a13", "Blue Bird", asset: "MemoryBirdA13"),
-        bird("bird-a14", "Parrot", asset: "MemoryBirdA14"),
-        bird("bird-a15", "Songbird", asset: "MemoryBirdA15"),
-        bird("bird-a16", "Hoopoe", asset: "MemoryBirdA16"),
-        bird("bird-a17", "Crested Bird", asset: "MemoryBirdA17"),
-        bird("bird-a18", "Ibis", asset: "MemoryBirdA18"),
-        bird("bird-b01", "Macaw", asset: "MemoryBirdB01"),
-        bird("bird-b02", "Spoonbill", asset: "MemoryBirdB02"),
-        bird("bird-b03", "Finch", asset: "MemoryBirdB03"),
-        bird("bird-b04", "Crowned Bird", asset: "MemoryBirdB04"),
-        bird("bird-b05", "Parrot", asset: "MemoryBirdB05"),
-        bird("bird-b06", "Green Bird", asset: "MemoryBirdB06"),
-        bird("bird-b07", "Cockatoo", asset: "MemoryBirdB07"),
-        bird("bird-b08", "Parrotlet", asset: "MemoryBirdB08"),
-        bird("bird-b09", "Golden Bird", asset: "MemoryBirdB09"),
-        bird("bird-b10", "Turaco", asset: "MemoryBirdB10"),
-        bird("bird-b11", "Peafowl", asset: "MemoryBirdB11"),
-        bird("bird-b12", "Green Bird", asset: "MemoryBirdB12"),
-        bird("bird-b13", "Ibis", asset: "MemoryBirdB13"),
-        bird("bird-b14", "Pink Cockatoo", asset: "MemoryBirdB14"),
-        bird("bird-b15", "Peafowl", asset: "MemoryBirdB15"),
-        bird("bird-b16", "Puffin", asset: "MemoryBirdB16"),
-        bird("bird-b17", "Black Palm", asset: "MemoryBirdB17"),
-        bird("bird-b18", "Bee-eater", asset: "MemoryBirdB18"),
+        bird("bird-a01", name: "Macaw", asset: "MemoryBirdA01", home: "South American rainforests", lifespan: "40 to 50 years", weight: "0.9 to 1.2 kg", size: "80 to 90 cm long", colors: "red, yellow, blue"),
+        bird("bird-a02", name: "Toucan", asset: "MemoryBirdA02", home: "Central and South American forests", lifespan: "15 to 20 years", weight: "0.3 to 0.5 kg", size: "50 to 60 cm long", colors: "black, yellow, orange"),
+        bird("bird-a03", name: "Cockatoo", asset: "MemoryBirdA03", home: "Australia and nearby islands", lifespan: "40 to 70 years", weight: "0.8 to 1.0 kg", size: "45 to 55 cm long", colors: "white and yellow"),
+        bird("bird-a04", name: "Hummer", asset: "MemoryBirdA04", home: "Tropical Americas", lifespan: "3 to 5 years", weight: "3 to 6 g", size: "8 to 12 cm long", colors: "green, purple, teal"),
+        bird("bird-a05", name: "Blue Macaw", asset: "MemoryBirdA05", home: "South American forests", lifespan: "35 to 50 years", weight: "1.0 to 1.4 kg", size: "85 to 100 cm long", colors: "blue and gold"),
+        bird("bird-a06", name: "Kingfisher", asset: "MemoryBirdA06", home: "Asian and Oceanian waterways", lifespan: "6 to 10 years", weight: "30 to 45 g", size: "16 to 20 cm long", colors: "blue and orange"),
+        bird("bird-a07", name: "Hummer", asset: "MemoryBirdA07", home: "South American cloud forests", lifespan: "3 to 5 years", weight: "4 to 7 g", size: "10 to 14 cm long", colors: "gold, orange, brown"),
+        bird("bird-a08", name: "Kingfisher", asset: "MemoryBirdA08", home: "Woodland streams in Africa and Asia", lifespan: "5 to 10 years", weight: "35 to 50 g", size: "18 to 22 cm long", colors: "blue, white, black"),
+        bird("bird-a09", name: "Toucan", asset: "MemoryBirdA09", home: "Tropical South America", lifespan: "15 to 20 years", weight: "0.5 to 0.7 kg", size: "55 to 65 cm long", colors: "black, white, orange"),
+        bird("bird-a10", name: "Parrot", asset: "MemoryBirdA10", home: "Tropical forests", lifespan: "20 to 30 years", weight: "0.2 to 0.4 kg", size: "25 to 35 cm long", colors: "green, yellow, red"),
+        bird("bird-a11", name: "Palm Bird", asset: "MemoryBirdA11", home: "New Guinea and northern Australia", lifespan: "40 to 60 years", weight: "0.9 to 1.2 kg", size: "55 to 65 cm long", colors: "charcoal and red"),
+        bird("bird-a12", name: "Flamingo", asset: "MemoryBirdA12", home: "Warm lakes and lagoons", lifespan: "20 to 30 years", weight: "2 to 3 kg", size: "100 to 140 cm tall", colors: "pink and coral"),
+        bird("bird-a13", name: "Blue Bird", asset: "MemoryBirdA13", home: "Forest edges in tropical America", lifespan: "10 to 15 years", weight: "0.2 to 0.3 kg", size: "25 to 35 cm long", colors: "blue and gold"),
+        bird("bird-a14", name: "Parrot", asset: "MemoryBirdA14", home: "Oceania rainforests", lifespan: "20 to 35 years", weight: "0.2 to 0.4 kg", size: "30 to 35 cm long", colors: "green and red"),
+        bird("bird-a15", name: "Songbird", asset: "MemoryBirdA15", home: "Tropical gardens and forests", lifespan: "6 to 10 years", weight: "25 to 40 g", size: "15 to 18 cm long", colors: "green and yellow"),
+        bird("bird-a16", name: "Hoopoe", asset: "MemoryBirdA16", home: "Africa, Europe, and Asia", lifespan: "8 to 10 years", weight: "45 to 90 g", size: "25 to 32 cm long", colors: "cinnamon, black, white"),
+        bird("bird-a17", name: "Crested Bird", asset: "MemoryBirdA17", home: "Island forests", lifespan: "10 to 15 years", weight: "0.2 to 0.4 kg", size: "25 to 35 cm long", colors: "white, blue, silver"),
+        bird("bird-a18", name: "Ibis", asset: "MemoryBirdA18", home: "South American wetlands", lifespan: "15 to 20 years", weight: "0.8 to 1.2 kg", size: "55 to 65 cm long", colors: "scarlet red"),
+        bird("bird-b01", name: "Macaw", asset: "MemoryBirdB01", home: "South American rainforests", lifespan: "35 to 50 years", weight: "0.9 to 1.3 kg", size: "75 to 90 cm long", colors: "blue and gold"),
+        bird("bird-b02", name: "Spoonbill", asset: "MemoryBirdB02", home: "American marshes and coasts", lifespan: "10 to 15 years", weight: "1.2 to 1.8 kg", size: "70 to 85 cm long", colors: "pink and white"),
+        bird("bird-b03", name: "Finch", asset: "MemoryBirdB03", home: "Northern Australia", lifespan: "4 to 8 years", weight: "12 to 16 g", size: "12 to 14 cm long", colors: "green, yellow, purple"),
+        bird("bird-b04", name: "Crowned Bird", asset: "MemoryBirdB04", home: "New Guinea forests", lifespan: "15 to 25 years", weight: "2.0 to 2.5 kg", size: "65 to 75 cm tall", colors: "blue and maroon"),
+        bird("bird-b05", name: "Parrot", asset: "MemoryBirdB05", home: "South American forests", lifespan: "25 to 35 years", weight: "0.3 to 0.5 kg", size: "30 to 40 cm long", colors: "red and green"),
+        bird("bird-b06", name: "Green Bird", asset: "MemoryBirdB06", home: "African forest canopies", lifespan: "8 to 12 years", weight: "0.2 to 0.4 kg", size: "30 to 40 cm long", colors: "emerald green"),
+        bird("bird-b07", name: "Cockatoo", asset: "MemoryBirdB07", home: "Australia", lifespan: "30 to 50 years", weight: "0.5 to 0.8 kg", size: "40 to 50 cm long", colors: "white and yellow"),
+        bird("bird-b08", name: "Parrotlet", asset: "MemoryBirdB08", home: "Dry forests of the Americas", lifespan: "8 to 12 years", weight: "25 to 35 g", size: "12 to 15 cm long", colors: "green and blue"),
+        bird("bird-b09", name: "Golden Bird", asset: "MemoryBirdB09", home: "Asian mountain forests", lifespan: "6 to 10 years", weight: "0.6 to 0.8 kg", size: "90 to 110 cm long", colors: "gold, red, green"),
+        bird("bird-b10", name: "Turaco", asset: "MemoryBirdB10", home: "African forests", lifespan: "10 to 15 years", weight: "0.2 to 0.4 kg", size: "35 to 45 cm long", colors: "green and crimson"),
+        bird("bird-b11", name: "Peafowl", asset: "MemoryBirdB11", home: "India and Sri Lanka", lifespan: "15 to 20 years", weight: "4 to 6 kg", size: "90 to 115 cm body length", colors: "blue and emerald"),
+        bird("bird-b12", name: "Green Bird", asset: "MemoryBirdB12", home: "Woodland edges", lifespan: "8 to 12 years", weight: "0.2 to 0.3 kg", size: "25 to 35 cm long", colors: "green and yellow"),
+        bird("bird-b13", name: "Ibis", asset: "MemoryBirdB13", home: "Tropical wetlands", lifespan: "15 to 20 years", weight: "0.8 to 1.2 kg", size: "55 to 65 cm long", colors: "red and coral"),
+        bird("bird-b14", name: "Pink Cockatoo", asset: "MemoryBirdB14", home: "Inland Australia", lifespan: "40 to 60 years", weight: "0.3 to 0.4 kg", size: "35 to 40 cm long", colors: "pink and white"),
+        bird("bird-b15", name: "Peafowl", asset: "MemoryBirdB15", home: "Asian grasslands and gardens", lifespan: "15 to 20 years", weight: "3 to 5 kg", size: "85 to 100 cm body length", colors: "blue, green, bronze"),
+        bird("bird-b16", name: "Puffin", asset: "MemoryBirdB16", home: "North Atlantic coasts", lifespan: "20 to 25 years", weight: "0.3 to 0.5 kg", size: "28 to 34 cm long", colors: "black, white, orange"),
+        bird("bird-b17", name: "Black Palm", asset: "MemoryBirdB17", home: "New Guinea and Australia", lifespan: "40 to 60 years", weight: "0.8 to 1.1 kg", size: "55 to 65 cm long", colors: "charcoal and red"),
+        bird("bird-b18", name: "Bee-eater", asset: "MemoryBirdB18", home: "Africa and South Asia", lifespan: "5 to 8 years", weight: "20 to 35 g", size: "20 to 25 cm long", colors: "green, blue, gold"),
     ]
 
     static let vehicles: [MemoryAnimal] = [
@@ -139,8 +146,20 @@ enum MemoryDeck {
         Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles).map { ($0.id, $0) })
     }()
 
-    private static func bird(_ id: String, _ name: String, asset: String) -> MemoryAnimal {
-        MemoryAnimal(id: id, name: name, picture: .asset(asset))
+    private static func bird(_ id: String, name: String, asset: String, home: String, lifespan: String, weight: String, size: String, colors: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .asset(asset),
+            detailCards: [
+                MemoryFactCard(title: "Name", value: name),
+                MemoryFactCard(title: "Home", value: home),
+                MemoryFactCard(title: "Lifespan", value: lifespan),
+                MemoryFactCard(title: "Weight", value: weight),
+                MemoryFactCard(title: "Size", value: size),
+                MemoryFactCard(title: "Colors", value: colors)
+            ]
+        )
     }
 }
 
@@ -425,7 +444,7 @@ struct MemoryView: View {
                     .frame(width: cardHeight * 0.64, height: cardHeight * 0.64)
             }
 
-        case .label(let labelAnimal):
+        case .detail(_, let factCard):
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(LinearGradient(colors: card.isMatched ? [Color.green.opacity(0.18), Color.green.opacity(0.08)] : [artStyle.topColor.opacity(0.30), artStyle.bottomColor.opacity(0.18)], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -434,7 +453,7 @@ struct MemoryView: View {
                     HStack(spacing: 6) {
                         Image(systemName: artStyle.ornament)
                             .font(.caption.weight(.black))
-                        Text("Match the picture")
+                        Text("Clue card")
                             .font(.caption2.weight(.bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -444,16 +463,23 @@ struct MemoryView: View {
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.45), in: Capsule())
 
-                    Text(labelAnimal.name)
-                        .font(.system(size: Self.labelFontSize(for: difficulty), weight: .black, design: .rounded))
+                    Text(factCard.title)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(artStyle.ornamentColor)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    Text(factCard.value)
+                        .font(.system(size: Self.detailFontSize(for: difficulty), weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.ink)
-                        .lineLimit(2)
-                        .minimumScaleFactor(Self.labelMinimumScaleFactor(for: difficulty))
+                        .lineLimit(3)
+                        .minimumScaleFactor(Self.detailMinimumScaleFactor(for: difficulty))
                         .allowsTightening(true)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, Self.labelHorizontalPadding(for: difficulty))
-                        .frame(maxWidth: .infinity, minHeight: cardHeight * 0.34)
+                        .frame(maxWidth: .infinity, minHeight: cardHeight * 0.40)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 10)
@@ -479,7 +505,7 @@ struct MemoryView: View {
 
     private func animal(for card: MemoryCard) -> MemoryAnimal {
         switch card.content {
-        case .picture(let animal), .label(let animal): return animal
+        case .picture(let animal), .detail(let animal, _): return animal
         }
     }
 
@@ -496,6 +522,22 @@ struct MemoryView: View {
         case .easy: return 0.82
         case .medium: return 0.72
         case .hard: return 0.58
+        }
+    }
+
+    static func detailFontSize(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 15
+        case .medium: return 14
+        case .hard: return 12
+        }
+    }
+
+    static func detailMinimumScaleFactor(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 0.76
+        case .medium: return 0.70
+        case .hard: return 0.62
         }
     }
 
@@ -549,9 +591,13 @@ struct MemoryView: View {
         animals.flatMap { animal in
             [
                 MemoryCard(pairId: animal.id, content: .picture(animal)),
-                MemoryCard(pairId: animal.id, content: .label(animal))
+                MemoryCard(pairId: animal.id, content: .detail(animal, preferredFactCard(for: animal)))
             ]
         }
+    }
+
+    static func preferredFactCard(for animal: MemoryAnimal) -> MemoryFactCard {
+        animal.detailCards.randomElement() ?? MemoryFactCard(title: "Name", value: animal.name)
     }
 
     private var cardHeight: CGFloat {

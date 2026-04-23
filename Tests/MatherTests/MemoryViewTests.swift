@@ -18,6 +18,13 @@ struct MemoryViewTests {
         #expect(MemoryDeck.birds.count >= MemoryDifficulty.hard.pairCount)
     }
 
+    @Test func birdDeckCarriesFactCardsForLearningPrompts() {
+        let sample = MemoryDeck.birds.first
+        #expect(sample != nil)
+        #expect(sample?.detailCards.count == 6)
+        #expect(sample?.detailCards.map(\.title) == ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"])
+    }
+
     @Test func vehiclesDeckProvidesEnoughDistinctPairs() {
         let ids = MemoryDeck.vehicles.map(\.id)
         let emojis = MemoryDeck.vehicles.compactMap(\.emoji)
