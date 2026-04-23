@@ -14,7 +14,7 @@ final class SessionHistoryStore {
     }
 
     convenience init(modelContext: ModelContext) {
-        self.init(modelContext: modelContext, activeProfileIdProvider: { "default-profile" })
+        self.init(modelContext: modelContext, activeProfileIdProvider: { KidProfileStore.defaultProfileId })
     }
 
     func save(_ draft: SessionSummaryDraft) {

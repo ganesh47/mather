@@ -15,7 +15,7 @@ final class TelemetryWriter {
         let schema = Schema([StoredTelemetryEvent.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: schema, configurations: config)
-        self.init(modelContext: ModelContext(container), activeProfileIdProvider: { "default-profile" })
+        self.init(modelContext: ModelContext(container), activeProfileIdProvider: { KidProfileStore.defaultProfileId })
     }
 
     init(modelContext: ModelContext, activeProfileIdProvider: @escaping () -> String) {

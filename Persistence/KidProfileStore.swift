@@ -5,6 +5,7 @@ import SwiftData
 @MainActor
 @Observable
 final class KidProfileStore {
+    static let defaultProfileId = KidProfilePersistence.defaultProfileId
     static let emojiChoices = ["🦊", "🐼", "🐨", "🦖", "🦁", "🐳", "🦄", "🐸", "🐯", "🐙"]
 
     private let modelContext: ModelContext
@@ -46,7 +47,7 @@ final class KidProfileStore {
 
     private func bootstrapDefaultProfileIfNeeded() {
         if profiles.isEmpty {
-            let defaultProfile = StoredKidProfile(name: "Kiddo", emoji: "🦊")
+            let defaultProfile = StoredKidProfile(id: Self.defaultProfileId, name: "Kiddo", emoji: "🦊")
             modelContext.insert(defaultProfile)
             try? modelContext.save()
         }
