@@ -35,12 +35,12 @@ struct FeatureFlagTests {
         #expect(flags.hapticsEnabled == true)
     }
 
-    @Test func stableFeatureRolloutDefaultsAreEnabled() {
+    @Test func stableFeatureRolloutDefaultsMatchRecoveryPolicy() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         #expect(flags.verticalSlice1Enabled)
         #expect(flags.vs1BondMatchEnabled)
         #expect(flags.vs1GravitySplitEnabled)
-        #expect(flags.makeBreakLoopV2Enabled)
+        #expect(flags.makeBreakLoopV2Enabled == false)
         #expect(flags.soundReactionEnabled)
     }
 
