@@ -37,8 +37,9 @@ final class SessionHistoryStore {
     }
 
     func clearAll() {
+        let profileId = activeProfileIdProvider()
         let descriptor = FetchDescriptor<StoredSessionSummary>(
-            predicate: #Predicate { $0.profileId == activeProfileIdProvider() }
+            predicate: #Predicate { $0.profileId == profileId }
         )
         guard let sessions = try? modelContext.fetch(descriptor) else { return }
         for session in sessions {
