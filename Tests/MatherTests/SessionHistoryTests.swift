@@ -7,11 +7,11 @@ import Testing
 
 @MainActor
 private func makeInMemoryStore() throws -> (SessionHistoryStore, ModelContext) {
-    let schema = Schema([StoredSessionSummary.self])
+    let schema = Schema([StoredSessionSummary.self, StoredTelemetryEvent.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try ModelContainer(for: schema, configurations: config)
     let context = ModelContext(container)
-    return (SessionHistoryStore(modelContext: context), context)
+    return (SessionHistoryStore(modelContext: context, activeProfileIdProvider: { "test-profile" }), context)
 }
 
 private func makeDraft(
@@ -32,7 +32,7 @@ private func makeDraft(
         transferCorrectCount: transferCorrect,
         medianLatencyMs: medianLatencyMs,
         nextTargetHint: "Keep going.",
-        exportFileName: "session-\(sessionId).jsonl"
+        exportFileName: "swiftdata://session/\(sessionId)"
     )
 }
 
@@ -82,7 +82,11 @@ struct SessionHistoryStoreTests {
 struct TelemetryWriterDigestTests {
     @Test
     func digestReturnsDefaultsForEmptyHistory() {
-        let digest = TelemetryWriter().digest(from: [])
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let writer = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" })
+        let digest = writer.digest(from: [])
 
         #expect(digest.problemsCompleted == 0)
         #expect(digest.firstAttemptAccuracy == 0)
@@ -97,7 +101,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(problemsCompleted: 6, accuracy: 0.5, transferCorrect: 2, medianLatencyMs: 2000))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         #expect(digest.problemsCompleted == 10)
         #expect(digest.transferCorrectCount == 6)
@@ -113,7 +120,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(medianLatencyMs: 3000))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         #expect(digest.medianLatencyMs == 2000)
     }
@@ -124,7 +134,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(accuracy: 0.9))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         // High accuracy (>= 0.7) should give a "keep going" hint, not a "repeat" hint
         #expect(!digest.nextTargetHint.contains("Repeat"))
@@ -136,7 +149,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(accuracy: 0.4))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         #expect(digest.nextTargetHint.contains("Repeat"))
     }
@@ -150,7 +166,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(problemsCompleted: 9, accuracy: 0.0))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         // Session-average would give (1.0 + 0.0) / 2 = 0.50 — wrong.
         // Problem-weighted: (1 × 1.0 + 9 × 0.0) / 10 = 0.10 — correct.
@@ -165,7 +184,10 @@ struct TelemetryWriterDigestTests {
         store.save(makeDraft(problemsCompleted: 0, accuracy: 0.0))
 
         let summaries = try context.fetch(FetchDescriptor<StoredSessionSummary>())
-        let digest = TelemetryWriter().digest(from: summaries)
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: config)
+        let digest = TelemetryWriter(modelContext: ModelContext(container), activeProfileIdProvider: { "test-profile" }).digest(from: summaries)
 
         #expect(digest.firstAttemptAccuracy == 0)  // divide-by-zero guard
         #expect(digest.problemsCompleted == 0)

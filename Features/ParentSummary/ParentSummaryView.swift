@@ -4,6 +4,7 @@ import SwiftUI
 struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
+    let profiles: [StoredKidProfile]
 
     var body: some View {
         let digest = appModel.telemetryWriter.digest(from: summaries)
@@ -73,6 +74,22 @@ struct ParentSummaryView: View {
 
                         CardSurface {
                             VStack(alignment: .leading, spacing: 10) {
+                                Text("Profile overview")
+                                    .font(.title3.weight(.bold))
+                                ForEach(profiles, id: \.id) { profile in
+                                    let count = summaries.filter { $0.profileId == profile.id }.count
+                                    HStack {
+                                        Text("\(profile.emoji) \(profile.name)")
+                                        Spacer()
+                                        Text("\(count) sessions")
+                                            .foregroundStyle(MatherTheme.cardSubtitle)
+                                    }
+                                }
+                            }
+                        }
+
+                        CardSurface {
+                            VStack(alignment: .leading, spacing: 10) {
                                 Text("Recent sessions")
                                     .font(.title3.weight(.bold))
                                 Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
@@ -84,6 +101,11 @@ struct ParentSummaryView: View {
                                             Text("Session \(index + 1)")
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(MatherTheme.accent)
+                                            if let profile = profiles.first(where: { $0.id == summary.profileId }) {
+                                                Text("\(profile.emoji) \(profile.name)")
+                                                    .font(.caption)
+                                                    .foregroundStyle(MatherTheme.cardSubtitle)
+                                            }
                                             Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
                                                 .font(.subheadline.weight(.semibold))
                                             Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
