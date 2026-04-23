@@ -23,11 +23,31 @@ struct MemoryTextFitTests {
     }
 
     @MainActor
+    @Test func detailFontSizeStepsDownAsGridGetsTighter() {
+        #expect(MemoryView.detailFontSize(for: .easy) > MemoryView.detailFontSize(for: .medium))
+        #expect(MemoryView.detailFontSize(for: .medium) > MemoryView.detailFontSize(for: .hard))
+    }
+
+    @MainActor
+    @Test func detailMinimumScaleFactorGetsMorePermissiveInHardMode() {
+        #expect(MemoryView.detailMinimumScaleFactor(for: .easy) > MemoryView.detailMinimumScaleFactor(for: .medium))
+        #expect(MemoryView.detailMinimumScaleFactor(for: .medium) > MemoryView.detailMinimumScaleFactor(for: .hard))
+    }
+
+    @MainActor
     @Test func birdLabelsStayWithinReasonableFallbackRange() {
         let labels = (MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles).map(\.name)
         let longestLabel = labels.max { $0.count < $1.count }
         #expect(longestLabel == "Pink Cockatoo")
         #expect(longestLabel?.count == 13)
         #expect(MemoryView.labelMinimumScaleFactor(for: .hard) >= 0.58)
+
+        let longestBirdFact = MemoryDeck.birds
+            .flatMap(\.detailCards)
+            .map(\.value)
+            .max { $0.count < $1.count }
+        #expect(longestBirdFact == "Central and South American forests")
+        #expect(longestBirdFact?.count == 34)
+        #expect(MemoryView.detailMinimumScaleFactor(for: .hard) >= 0.62)
     }
 }
