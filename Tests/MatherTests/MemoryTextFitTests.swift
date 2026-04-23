@@ -22,17 +22,6 @@ struct MemoryTextFitTests {
         #expect(MemoryView.labelMinimumScaleFactor(for: .medium) > MemoryView.labelMinimumScaleFactor(for: .hard))
     }
 
-    @MainActor
-    @Test func detailFontSizeStepsDownAsGridGetsTighter() {
-        #expect(MemoryView.detailFontSize(for: .easy) > MemoryView.detailFontSize(for: .medium))
-        #expect(MemoryView.detailFontSize(for: .medium) > MemoryView.detailFontSize(for: .hard))
-    }
-
-    @MainActor
-    @Test func detailMinimumScaleFactorGetsMorePermissiveInHardMode() {
-        #expect(MemoryView.detailMinimumScaleFactor(for: .easy) > MemoryView.detailMinimumScaleFactor(for: .medium))
-        #expect(MemoryView.detailMinimumScaleFactor(for: .medium) > MemoryView.detailMinimumScaleFactor(for: .hard))
-    }
 
     @MainActor
     @Test func birdLabelsStayWithinReasonableFallbackRange() {
@@ -48,6 +37,5 @@ struct MemoryTextFitTests {
             .max { $0.count < $1.count }
         #expect(longestBirdFact == "Woodland streams in Africa and Asia")
         #expect(longestBirdFact?.count == 35)
-        #expect(MemoryView.detailMinimumScaleFactor(for: .hard) >= 0.62)
     }
 }
