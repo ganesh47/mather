@@ -43,6 +43,10 @@ final class SpeechService {
         speak(phrase, enabled: true)
     }
 
+    func speakLearningDetails(_ text: String, enabled: Bool) {
+        speak(text, enabled: enabled)
+    }
+
     func resetSession() {
         hasSpokenSessionIntro = false
     }

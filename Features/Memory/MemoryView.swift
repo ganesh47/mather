@@ -7,7 +7,7 @@ enum MemoryPicture: Equatable {
     case asset(String)
 }
 
-struct MemoryFactCard: Equatable {
+struct MemoryFactCard: Equatable, Hashable {
     let title: String
     let value: String
 }
@@ -106,7 +106,18 @@ struct MemoryCardMetadata: Equatable {
     }
 }
 
-struct MemoryAnimal: Identifiable {
+struct MemoryLearningContent: Identifiable, Equatable {
+    let animal: MemoryAnimal
+    let title: String
+    let shortDescription: String
+    let factChips: [MemoryFactCard]
+    let sourceBadge: String
+    let readAloudText: String
+
+    var id: String { animal.id }
+}
+
+struct MemoryAnimal: Identifiable, Equatable {
     let id: String
     let name: String
     let canonicalName: String
@@ -363,7 +374,7 @@ struct MemoryView: View {
     @State private var showRoundComplete = false
     @State private var deckSelection: DeckSelection = .domestic
     @State private var recentPairHistory: [String] = []
-    @State private var learningAnimal: MemoryAnimal? = nil
+    @State private var learningContent: MemoryLearningContent? = nil
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles
@@ -413,8 +424,8 @@ struct MemoryView: View {
 
             if showRoundComplete { roundCompleteOverlay }
         }
-        .sheet(item: $learningAnimal) { animal in
-            birdLearningSheet(for: animal)
+        .sheet(item: $learningContent) { content in
+            learningSheet(for: content)
         }
         .onAppear { dealRound() }
     }
@@ -515,6 +526,7 @@ struct MemoryView: View {
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
                 cardView(card)
+                    .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
             }
@@ -785,55 +797,104 @@ struct MemoryView: View {
         return Array((previous + newRoundAnimals.map(\.id)).suffix(historyWindow))
     }
 
-    static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, showRoundComplete: Bool) -> Bool {
-        showRoundComplete && deckSelection == .birds && card.isMatched
+    static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, difficulty: MemoryDifficulty, showRoundComplete: Bool) -> Bool {
+        guard deckSelection == .birds else { return false }
+        if card.isMatched { return true }
+        guard !showRoundComplete else { return false }
+        return difficulty.faceDown ? card.isSelected : true
+    }
+
+    static func learningContent(for animal: MemoryAnimal, deckSelection: DeckSelection) -> MemoryLearningContent? {
+        guard deckSelection == .birds else { return nil }
+
+        let summary = learningSummary(for: animal)
+        let sourceBadge = learningSourceBadge(for: deckSelection)
+        return MemoryLearningContent(
+            animal: animal,
+            title: animal.canonicalName,
+            shortDescription: summary,
+            factChips: animal.detailCards,
+            sourceBadge: sourceBadge,
+            readAloudText: learningReadAloudText(for: animal, summary: summary, sourceBadge: sourceBadge)
+        )
     }
 
     private func handleDoubleTap(_ card: MemoryCard) {
-        guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, showRoundComplete: showRoundComplete) else { return }
-        learningAnimal = animal(for: card)
+        guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
+        guard let content = Self.learningContent(for: animal(for: card), deckSelection: deckSelection) else { return }
+        learningContent = content
     }
 
     @ViewBuilder
-    private func birdLearningSheet(for animal: MemoryAnimal) -> some View {
+    private func learningSheet(for content: MemoryLearningContent) -> some View {
+        let animal = content.animal
+        let artStyle = Self.artStyle(for: animal.id)
+
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(LinearGradient(colors: [Self.artStyle(for: animal.id).topColor, Self.artStyle(for: animal.id).bottomColor], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(height: 220)
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .center, spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .fill(LinearGradient(colors: [artStyle.topColor, artStyle.bottomColor], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 108, height: 108)
 
-                        pictureView(for: animal)
-                            .frame(width: 170, height: 170)
+                            pictureView(for: animal)
+                                .frame(width: 80, height: 80)
+                        }
+                        .accessibilityHidden(true)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(content.title)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                                .accessibilityIdentifier("memory-learning-title")
+
+                            Text(content.shortDescription)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                                .accessibilityIdentifier("memory-learning-description")
+
+                            Text(content.sourceBadge)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(artStyle.ornamentColor)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.6), in: Capsule())
+                                .accessibilityIdentifier("memory-learning-source-badge")
+                        }
+
+                        Spacer(minLength: 0)
                     }
 
-                    VStack(spacing: 8) {
-                        Text(animal.name)
-                            .font(.title.weight(.black))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text("Bird details")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    Button {
+                        appModel.speechService.speakLearningDetails(content.readAloudText, enabled: appModel.featureFlags.audioEnabled)
+                    } label: {
+                        Label("Read Aloud", systemImage: "speaker.wave.2.fill")
+                            .font(.headline.weight(.bold))
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(PrimaryActionButtonStyle())
+                    .accessibilityIdentifier("memory-learning-read-aloud")
 
-                    VStack(spacing: 12) {
-                        ForEach(Array(animal.detailCards.enumerated()), id: \.offset) { _, fact in
-                            HStack(alignment: .top, spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                        ForEach(content.factChips, id: \.self) { fact in
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(fact.title)
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(MatherTheme.accent)
-                                    .frame(width: 72, alignment: .leading)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(artStyle.ornamentColor)
 
                                 Text(fact.value)
-                                    .font(.body.weight(.semibold))
+                                    .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(MatherTheme.ink)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
                             .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
                     }
+                    .accessibilityIdentifier("memory-learning-fact-chips")
                 }
                 .padding(20)
             }
@@ -842,7 +903,8 @@ struct MemoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { learningAnimal = nil }
+                    Button("Done") { learningContent = nil }
+                        .accessibilityIdentifier("memory-learning-done")
                 }
             }
         }
@@ -853,6 +915,7 @@ struct MemoryView: View {
         let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = Self.buildCards(for: roundAnimals).shuffled()
+        learningContent = nil
         firstSelected = nil
         matchedPairs = 0
         mismatchIds = []
@@ -917,7 +980,7 @@ struct MemoryView: View {
     }
 
     private func nextRound() {
-        learningAnimal = nil
+        learningContent = nil
         withAnimation(.easeOut(duration: 0.2)) {
             showRoundComplete = false
         }
@@ -925,5 +988,48 @@ struct MemoryView: View {
             try? await Task.sleep(for: .milliseconds(250))
             dealRound()
         }
+    }
+
+    static func accessibilityIdentifier(for card: MemoryCard) -> String {
+        let kind: String
+        switch card.content {
+        case .picture:
+            kind = "picture"
+        case .label:
+            kind = "label"
+        }
+        return "memory-card-\(card.pairId)-\(kind)"
+    }
+
+    private static func learningSourceBadge(for deckSelection: DeckSelection) -> String {
+        switch deckSelection {
+        case .birds:
+            return "Bird Guide"
+        case .domestic:
+            return "Animal Guide"
+        case .vehicles:
+            return "Vehicle Guide"
+        }
+    }
+
+    private static func learningSummary(for animal: MemoryAnimal) -> String {
+        // Keep this isolated so a future describe/Apple Intelligence service can
+        // replace summary generation without reshaping the sheet UI state.
+        let home = animal.detailCards.first(where: { $0.title == "Home" })?.value
+        let colors = animal.detailCards.first(where: { $0.title == "Colors" })?.value
+
+        switch (home, colors) {
+        case let (home?, colors?):
+            return "A colorful bird from \(home.lowercased()), often seen in shades of \(colors)."
+        case let (home?, nil):
+            return "A bird that lives around \(home.lowercased())."
+        default:
+            return "A matching-card favorite with a few quick facts to explore."
+        }
+    }
+
+    private static func learningReadAloudText(for animal: MemoryAnimal, summary: String, sourceBadge: String) -> String {
+        let facts = animal.detailCards.map { "\($0.title): \($0.value)." }.joined(separator: " ")
+        return "\(animal.canonicalName). \(summary) Source: \(sourceBadge). \(facts)"
     }
 }
