@@ -12,6 +12,7 @@ struct SumSprintDifficultyView: View {
 
     @State private var selectedDifficulty: SumSprintDifficulty? = nil
     @State private var hovered: SumSprintDifficulty? = nil
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -19,16 +20,18 @@ struct SumSprintDifficultyView: View {
 
             VStack(spacing: 0) {
                 header
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                     .padding(.top, 24)
 
                 Spacer(minLength: 20)
 
                 difficultyCards
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
 
                 Spacer()
             }
+            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -59,9 +62,19 @@ struct SumSprintDifficultyView: View {
     // MARK: - Difficulty cards
 
     private var difficultyCards: some View {
-        VStack(spacing: 14) {
-            ForEach(SumSprintDifficulty.allCases, id: \.self) { diff in
-                difficultyCard(diff)
+        Group {
+            if ResponsiveLayout.isWide(horizontalSizeClass) {
+                HStack(alignment: .top, spacing: 14) {
+                    ForEach(SumSprintDifficulty.allCases, id: \.self) { diff in
+                        difficultyCard(diff)
+                    }
+                }
+            } else {
+                VStack(spacing: 14) {
+                    ForEach(SumSprintDifficulty.allCases, id: \.self) { diff in
+                        difficultyCard(diff)
+                    }
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SumSprintSessionView: View {
     @Bindable var appModel: AppModel
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private var engine: SumSprintEngine { appModel.sumSprintEngine }
 
@@ -25,6 +26,8 @@ struct SumSprintSessionView: View {
                                 onSubmit: { engine.submitAnswer() }
                             )
                             .padding(.horizontal, 20)
+                            .frame(maxWidth: ResponsiveLayout.isWide(horizontalSizeClass) ? 700 : .infinity)
+                            .frame(maxWidth: .infinity)
                             .transition(.asymmetric(
                                 insertion: .move(edge: .trailing).combined(with: .opacity),
                                 removal: .move(edge: .leading).combined(with: .opacity)

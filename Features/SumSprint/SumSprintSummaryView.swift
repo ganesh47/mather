@@ -4,6 +4,7 @@ struct SumSprintSummaryView: View {
     let summary: SumSprintSessionSummary
     let onPlayAgain: () -> Void
     let onDone: () -> Void
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -26,7 +27,9 @@ struct SumSprintSummaryView: View {
 
                     buttonStack
                 }
-                .padding(24)
+                .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                .frame(maxWidth: ResponsiveLayout.isWide(horizontalSizeClass) ? 900 : .infinity)
+                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -133,8 +136,7 @@ struct SumSprintSummaryView: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink.opacity(0.7))
 
-                let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
-                LazyVGrid(columns: columns, spacing: 8) {
+                LazyVGrid(columns: ResponsiveLayout.summaryFactColumns(for: horizontalSizeClass), spacing: 8) {
                     ForEach(summary.cards) { card in
                         factPill(card: card)
                     }

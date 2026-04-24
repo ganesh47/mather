@@ -5,6 +5,7 @@ struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
     let profiles: [StoredKidProfile]
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         let digest = appModel.telemetryWriter.digest(from: summaries)
@@ -43,7 +44,7 @@ struct ParentSummaryView: View {
                         }
                     } else {
                         LazyVGrid(
-                            columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                            columns: ResponsiveLayout.statColumns(for: horizontalSizeClass),
                             spacing: 12
                         ) {
                             StatTile(
@@ -156,7 +157,9 @@ struct ParentSummaryView: View {
                         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
                     }
                 }
-                .padding(24)
+                .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                .frame(maxWidth: .infinity)
             }
         }
     }
