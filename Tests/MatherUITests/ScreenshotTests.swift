@@ -261,9 +261,9 @@ final class ScreenshotTests: XCTestCase {
     /// Captures deterministic evidence for the reopened issue #222 route:
     /// Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
     ///
-    /// The test clears two full loop iterations in one session so the xcresult
-    /// includes screenshots and assertions across multiple problem targets.
-    func testScreenshot_Issue222LoopV2_AcrossTwoTargets() {
+    /// The test clears four full loop iterations in one session so the xcresult
+    /// includes screenshots and assertions across both low and higher problem targets.
+    func testScreenshot_Issue222LoopV2_AcrossFourTargetsIncludingTwelve() {
         let app = launchWithLoopV2()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
 
@@ -282,8 +282,8 @@ final class ScreenshotTests: XCTestCase {
             snapshotPrefix: "Issue222-Target6"
         )
 
-        let nextProblemSubmit = app.buttons["That is 9"]
-        XCTAssertTrue(nextProblemSubmit.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
+        let target9Submit = app.buttons["That is 9"]
+        XCTAssertTrue(target9Submit.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
         snapshot(app, "Issue222-Target9-Concrete")
 
         completeLoopV2Problem(
@@ -298,6 +298,38 @@ final class ScreenshotTests: XCTestCase {
             sumSprintAnswers: ["9", "9"],
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
             snapshotPrefix: "Issue222-Target9",
+            skipInitialConcreteSnapshot: true
+        )
+
+        let target4Submit = app.buttons["That is 4"]
+        XCTAssertTrue(target4Submit.waitForExistence(timeout: 15), "Expected the third deterministic target to load after finishing the target-9 loop")
+        snapshot(app, "Issue222-Target4-Concrete")
+
+        completeLoopV2Problem(
+            in: app,
+            target: 4,
+            concreteCellIndex: 3,
+            leftPanCount: 1,
+            rightPanCount: 3,
+            sumSprintAnswers: ["4"],
+            bondPairs: [(1, 3), (2, 2)],
+            snapshotPrefix: "Issue222-Target4",
+            skipInitialConcreteSnapshot: true
+        )
+
+        let target12Submit = app.buttons["That is 12"]
+        XCTAssertTrue(target12Submit.waitForExistence(timeout: 15), "Expected a higher target above 10 to load after the target-4 loop")
+        snapshot(app, "Issue222-Target12-Concrete")
+
+        completeLoopV2Problem(
+            in: app,
+            target: 12,
+            concreteCellIndex: 11,
+            leftPanCount: 5,
+            rightPanCount: 7,
+            sumSprintAnswers: ["12", "12", "12"],
+            bondPairs: [(1, 11), (2, 10), (3, 9), (4, 8), (5, 7), (6, 6)],
+            snapshotPrefix: "Issue222-Target12",
             skipInitialConcreteSnapshot: true
         )
     }
@@ -422,6 +454,9 @@ final class ScreenshotTests: XCTestCase {
 
         for index in 0...concreteCellIndex {
             let concreteCell = app.otherElements["counter-cell-\(index)"]
+            if !concreteCell.waitForExistence(timeout: 3) {
+                app.scrollViews.firstMatch.swipeUp()
+            }
             XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(index) for target \(target)")
             concreteCell.tap()
         }
