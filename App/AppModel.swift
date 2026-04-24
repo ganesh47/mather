@@ -20,6 +20,21 @@ final class AppModel {
     let factStore: FactRecordStore
     let sumSprintEngine: SumSprintEngine
 
+    var showingProfilePicker = false
+    private var pendingGameAction: (() -> Void)?
+
+    func pickProfileThenRun(_ action: @escaping () -> Void) {
+        pendingGameAction = action
+        showingProfilePicker = true
+    }
+
+    func confirmProfilePick() {
+        showingProfilePicker = false
+        let action = pendingGameAction
+        pendingGameAction = nil
+        action?()
+    }
+
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
         let featureFlags = FeatureFlagService()

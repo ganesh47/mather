@@ -18,48 +18,50 @@ struct LabView: View {
             GameTile(emoji: "⚡", name: "Sum Sprint",
                      tagline: "Race through sums 11–20",
                      fill: MatherTheme.warm) {
-                appModel.engine.showSumSprint()
-                appModel.sumSprintEngine.showDifficultyPick()
+                appModel.pickProfileThenRun {
+                    appModel.engine.showSumSprint()
+                    appModel.sumSprintEngine.showDifficultyPick()
+                }
             },
             GameTile(emoji: "🗺️", name: "Room Quest",
                      tagline: "Collect tokens around the room",
                      fill: MatherTheme.accent) {
-                appModel.engine.showRoomQuest()
+                appModel.pickProfileThenRun { appModel.engine.showRoomQuest() }
             },
             GameTile(emoji: "🪞", name: "Symmetry Fold",
                      tagline: "Tilt to fold shapes in half",
                      fill: MatherTheme.coral) {
-                appModel.engine.showSymmetryFold()
+                appModel.pickProfileThenRun { appModel.engine.showSymmetryFold() }
             },
             GameTile(emoji: "🏭", name: "Rectangle Factory",
                      tagline: "Drag frames to find factors",
                      fill: MatherTheme.softBlue) {
-                appModel.engine.showRectangleFactory()
+                appModel.pickProfileThenRun { appModel.engine.showRectangleFactory() }
             },
             GameTile(emoji: "💥", name: "Angle Cannon",
                      tagline: "Tilt to aim — hit the target",
                      fill: MatherTheme.warm) {
-                appModel.engine.showAngleCannon()
+                appModel.pickProfileThenRun { appModel.engine.showAngleCannon() }
             },
             GameTile(emoji: "📐", name: "Protractor",
                      tagline: "Spread two fingers to measure angles",
                      fill: MatherTheme.accent) {
-                appModel.engine.showTwoFingerProtractor()
+                appModel.pickProfileThenRun { appModel.engine.showTwoFingerProtractor() }
             },
             GameTile(emoji: "🎨", name: "Gravity Artist",
                      tagline: "Predict where the ball lands",
                      fill: MatherTheme.panelDeep) {
-                appModel.engine.showGravityArtist()
+                appModel.pickProfileThenRun { appModel.engine.showGravityArtist() }
             },
             GameTile(emoji: "🧭", name: "Compass Walk",
                      tagline: "Turn your body to match the angle",
                      fill: MatherTheme.softBlue) {
-                appModel.engine.showCompassAngles()
+                appModel.pickProfileThenRun { appModel.engine.showCompassAngles() }
             },
             GameTile(emoji: "🃏", name: "Memory Match",
                      tagline: "Match animals to their names",
                      fill: MatherTheme.coral) {
-                appModel.engine.showMemory()
+                appModel.pickProfileThenRun { appModel.engine.showMemory() }
             },
         ]
     }
