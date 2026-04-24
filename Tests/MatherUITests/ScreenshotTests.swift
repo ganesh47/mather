@@ -55,11 +55,26 @@ final class ScreenshotTests: XCTestCase {
 
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
+        let rolloutToggle = app.switches["settings-loop-v2-toggle"]
+        XCTAssertTrue(rolloutToggle.waitForExistence(timeout: 5))
+        XCTAssertEqual(rolloutToggle.value as? String, "0")
         snapshot(app, "Settings-DefaultRolloutState")
 
         app.buttons["Home"].tap()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 3)
         snapshot(app, "Home-DefaultRolloutState")
+    }
+
+    func testScreenshot_Settings_LoopV2EnabledViaLaunchArgument() {
+        let app = launchWithLoopV2()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Settings"].tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
+        let rolloutToggle = app.switches["settings-loop-v2-toggle"]
+        XCTAssertTrue(rolloutToggle.waitForExistence(timeout: 5))
+        XCTAssertEqual(rolloutToggle.value as? String, "1")
+        snapshot(app, "Settings-LoopV2EnabledViaLaunchArgument")
     }
 
     // MARK: - Session Config screen
@@ -203,6 +218,7 @@ final class ScreenshotTests: XCTestCase {
         // Navigate to Settings and capture the pilot runbook
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        _ = app.switches["settings-loop-v2-toggle"].waitForExistence(timeout: 5)
         _ = app.staticTexts["Pilot smoke test"].waitForExistence(timeout: 5)
         snapshot(app, "iPhone-Settings-PilotRunbook")
         app.buttons["Home"].tap()

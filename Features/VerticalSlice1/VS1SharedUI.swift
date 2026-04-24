@@ -119,6 +119,7 @@ struct VS1SecondaryButton: View {
 struct VS1ToggleRow: View {
     let title: String
     let subtitle: String
+    var accessibilityIdentifier: String? = nil
     @Binding var isOn: Bool
 
     var body: some View {
@@ -131,6 +132,7 @@ struct VS1ToggleRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .accessibilityIdentifier(accessibilityIdentifier ?? "")
         .tint(MatherTheme.accent)
         .padding(.vertical, 10)
     }

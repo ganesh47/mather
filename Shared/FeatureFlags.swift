@@ -142,7 +142,7 @@ final class FeatureFlagService {
             Keys.selectedThemeId: "classic",
             Keys.vs1BondMatchEnabled: true,
             Keys.vs1GravitySplitEnabled: true,
-            Keys.makeBreakLoopV2Enabled: true,
+            Keys.makeBreakLoopV2Enabled: false,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: true,
             Keys.roomQuestSafetyAcknowledged: false,
