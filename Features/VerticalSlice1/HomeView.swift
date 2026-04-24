@@ -40,7 +40,7 @@ struct HomeView: View {
 
     private var makeAndBreakCard: some View {
         Button {
-            appModel.engine.showSessionConfig()
+            appModel.pickProfileThenRun { appModel.engine.showSessionConfig() }
         } label: {
             VStack(spacing: 0) {
                 ZStack {

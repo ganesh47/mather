@@ -13,7 +13,8 @@ struct MatherApp: App {
                 StoredRoomQuestStationReference.self,
                 StoredFactRecord.self,
                 StoredKidProfile.self,
-                StoredTelemetryEvent.self
+                StoredTelemetryEvent.self,
+                StoredGameSession.self
             )
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)

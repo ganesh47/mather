@@ -44,6 +44,7 @@ final class SumSprintEngine {
     // MARK: - Callback
 
     var onExitToHome: (@MainActor () -> Void)?
+    var onSessionComplete: (@MainActor (SumSprintSessionSummary) -> Void)?
 
     // MARK: - Init
 
@@ -342,6 +343,7 @@ final class SumSprintEngine {
         )
         completedSummary = summary
         phase = .summary
+        onSessionComplete?(summary)
 
         logEvent(.sumSprintCompleted, payload: [
             "session_id": sessionId.uuidString,

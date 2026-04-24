@@ -120,6 +120,7 @@ struct TwoFingerProtractorView: View {
     @State private var matched: Bool = false
     @State private var levelIndex: Int = 0
     @State private var wonCount: Int = 0
+    @State private var sessionStart: Date = .now
     @State private var showDegreeLabel: Bool = false
     @State private var canvasSize: CGSize = .zero
 
@@ -163,6 +164,16 @@ struct TwoFingerProtractorView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: showDegreeLabel)
         .animation(.easeInOut(duration: 0.15), value: matched)
+        .onAppear { sessionStart = .now }
+        .onDisappear {
+            guard wonCount > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Protractor",
+                startedAt: sessionStart,
+                scoreValue: wonCount,
+                scoreLabel: "angles matched"
+            )
+        }
     }
 
     // MARK: - Header

@@ -20,6 +20,22 @@ final class AppModel {
     let roomQuestEngine: RoomQuestEngine
     let factStore: FactRecordStore
     let sumSprintEngine: SumSprintEngine
+    let gameSessionStore: GameSessionStore
+
+    var showingProfilePicker = false
+    private var pendingGameAction: (() -> Void)?
+
+    func pickProfileThenRun(_ action: @escaping () -> Void) {
+        pendingGameAction = action
+        showingProfilePicker = true
+    }
+
+    func confirmProfilePick() {
+        showingProfilePicker = false
+        let action = pendingGameAction
+        pendingGameAction = nil
+        action?()
+    }
 
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
@@ -86,6 +102,7 @@ final class AppModel {
         }
 
         let factStore = FactRecordStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
+        let gameSessionStore = GameSessionStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let sumSprintEngine = SumSprintEngine(
             featureFlags: featureFlags,
             telemetryWriter: telemetryWriter,
@@ -94,7 +111,17 @@ final class AppModel {
             factStore: factStore
         )
         self.factStore = factStore
+        self.gameSessionStore = gameSessionStore
         self.sumSprintEngine = sumSprintEngine
         sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
+        sumSprintEngine.onSessionComplete = { [weak gameSessionStore] summary in
+            gameSessionStore?.save(
+                gameName: "Sum Sprint",
+                startedAt: summary.startedAt,
+                scoreValue: summary.correctCount,
+                scoreLabel: "correct",
+                detail: summary.difficulty.rawValue
+            )
+        }
     }
 }

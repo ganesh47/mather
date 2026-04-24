@@ -35,6 +35,18 @@ struct RootView: View {
                         )) { _ in
                             RoomQuestScannerSheet(scanner: appModel.roomQuestScanner)
                         }
+                        .onDisappear {
+                            let tokens = appModel.roomQuestEngine.stations
+                                .filter { $0.verificationMethod != nil }
+                                .map(\.quantity).reduce(0, +)
+                            guard tokens > 0 else { return }
+                            appModel.gameSessionStore.save(
+                                gameName: "Room Quest",
+                                startedAt: appModel.roomQuestEngine.sessionStartedAt,
+                                scoreValue: tokens,
+                                scoreLabel: "tokens collected"
+                            )
+                        }
                 case .rectangleFactory:
                     RectangleFactoryView(appModel: appModel)
                 case .sumSprint:
@@ -76,5 +88,10 @@ struct RootView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .background(MatherTheme.background.ignoresSafeArea())
+        .sheet(isPresented: $appModel.showingProfilePicker) {
+            ProfilePickerView(store: appModel.profileStore) {
+                appModel.confirmProfilePick()
+            }
+        }
     }
 }

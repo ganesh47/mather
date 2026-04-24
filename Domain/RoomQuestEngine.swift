@@ -48,6 +48,7 @@ final class RoomQuestEngine {
     private let scanner: RoomQuestScanner
     private let stationStore: RoomQuestStationStore
     var onExitToHome: (() -> Void)?
+    private(set) var sessionStartedAt: Date = .now
 
     private(set) var scanState: RoomQuestScanState = .idle
 
@@ -83,6 +84,7 @@ final class RoomQuestEngine {
         ]
         loadSavedReferenceState()
         setupStartedAt = .now
+        sessionStartedAt = .now
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
         feedbackMessage = "Set up the stations, then scan each one or mark it ready."
         try? telemetryWriter.append(SliceEvent(

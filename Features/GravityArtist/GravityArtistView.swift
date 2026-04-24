@@ -97,6 +97,7 @@ struct GravityArtistView: View {
     @State private var hitTarget: Bool = false
     @State private var roundsPlayed: Int = 0
     @State private var phase: GamePhase = .aim
+    @State private var sessionStart: Date = .now
 
     // Canvas geometry captured from GeometryReader
     @State private var canvasSize: CGSize = .zero
@@ -134,8 +135,20 @@ struct GravityArtistView: View {
             let raw = 45 + delta / (.pi / 4) * 35
             currentAngle = max(5, min(raw, 80))
         }
-        .onAppear { appModel.motionService.startUpdates() }
-        .onDisappear { appModel.motionService.stopUpdates() }
+        .onAppear {
+            sessionStart = .now
+            appModel.motionService.startUpdates()
+        }
+        .onDisappear {
+            appModel.motionService.stopUpdates()
+            guard roundsPlayed > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Gravity Artist",
+                startedAt: sessionStart,
+                scoreValue: roundsPlayed,
+                scoreLabel: "rounds played"
+            )
+        }
     }
 
     // MARK: - Header

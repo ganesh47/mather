@@ -32,6 +32,7 @@ struct SymmetryFoldView: View {
     @State private var holdTask: Task<Void, Never>? = nil
     @State private var playMode: PlayMode = .lesson
     @State private var challengeTimeRemaining: Double = Self.challengeDuration
+    @State private var sessionStart: Date = .now
     @State private var challengeTask: Task<Void, Never>? = nil
     @State private var challengeTimedOut = false
 
@@ -160,12 +161,20 @@ struct SymmetryFoldView: View {
             updateHoldProgress(for: newFold)
         }
         .onAppear {
+            sessionStart = .now
             appModel.motionService.startUpdates()
         }
         .onDisappear {
             holdTask?.cancel()
             challengeTask?.cancel()
             appModel.motionService.stopUpdates()
+            guard currentLevel > 1 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Symmetry Fold",
+                startedAt: sessionStart,
+                scoreValue: currentLevel - 1,
+                scoreLabel: "levels"
+            )
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(config.title)
