@@ -311,7 +311,8 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 3,
             leftPanCount: 1,
             rightPanCount: 3,
-            sumSprintAnswers: ["4"],
+            // Target 4 with decomposition (1,3) yields two Sum Sprint cards: "1+3" and "3+1"
+            sumSprintAnswers: ["4", "4"],
             bondPairs: [(1, 3), (2, 2)],
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
