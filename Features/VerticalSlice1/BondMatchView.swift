@@ -3,8 +3,9 @@ import SwiftUI
 /// Bond Blast — the sensor-powered complement-match finale stage for VS1.
 ///
 /// Displays all complement pairs for the session target (e.g. for 7:
-/// 1+6, 2+5, 3+4). The child can drag or tap a left card, then drop or tap on
-/// the matching right card to lock the pair. All pairs locked = stage done.
+/// 1+6, 2+5, 3+4). The child can tap a left card, then tap the matching
+/// right card to lock the pair. Dragging a left card previews the target lane,
+/// but correctness is only confirmed against the actual right-slot landing row.
 ///
 /// **Sensor integration** (both ambient — tap-only path always works):
 /// - Tilt drift: unselected left cards float ±6 pt with device attitude.
@@ -46,6 +47,12 @@ struct BondMatchView: View {
     @State private var shuffledRightValues: [Int] = []
     /// Right-value that is currently wobbling after a mismatch.
     @State private var mismatchedRightValue: Int? = nil
+
+    enum DragReleaseResolution: Equatable {
+        case cancel
+        case match(UUID)
+        case mismatch(Int)
+    }
 
     // MARK: - Constants
 
@@ -223,13 +230,24 @@ struct BondMatchView: View {
                 }
                 .onEnded { value in
                     guard !isMatched else { return }
-                    let horizontalTravel = value.translation.width
-                    if horizontalTravel > 90 {
+                    let resolution = Self.dragReleaseResolution(
+                        pair: pair,
+                        translation: value.translation,
+                        state: state,
+                        shuffledRightValues: shuffledRightValues,
+                        cardSize: cardSize,
+                        cardSpacing: cardSpacing
+                    )
+                    switch resolution {
+                    case .cancel:
+                        break
+                    case .match(let id):
                         onNearTarget()
-                        onMatch(pair.id)
+                        onMatch(id)
                         withAnimation(.spring(response: 0.2)) { selectedPairId = nil }
-                    } else if abs(horizontalTravel) > 40 {
+                    case .mismatch(let rightValue):
                         onMismatch()
+                        triggerMismatch(for: rightValue)
                     }
                 }
         )
@@ -301,6 +319,31 @@ struct BondMatchView: View {
     ) -> Int? {
         let isMatched = state.pairs.first(where: { $0.right == rightValue })?.isMatched == true
         return (selectedPairId != nil || isMatched) ? rightValue : nil
+    }
+
+    nonisolated static func dragReleaseResolution(
+        pair: ComplementPair,
+        translation: CGSize,
+        state: BondMatchState,
+        shuffledRightValues: [Int],
+        cardSize: CGFloat,
+        cardSpacing: CGFloat
+    ) -> DragReleaseResolution {
+        let horizontalTravel = translation.width
+        guard horizontalTravel > 90 else {
+            return .cancel
+        }
+
+        guard let sourceRow = state.pairs.firstIndex(where: { $0.id == pair.id }), !shuffledRightValues.isEmpty else {
+            return .cancel
+        }
+
+        let rowStride = cardSize + cardSpacing
+        let rowOffset = Int((translation.height / rowStride).rounded())
+        let targetRow = min(max(sourceRow + rowOffset, 0), shuffledRightValues.count - 1)
+        let droppedValue = shuffledRightValues[targetRow]
+
+        return droppedValue == pair.right ? .match(pair.id) : .mismatch(droppedValue)
     }
 
     @ViewBuilder

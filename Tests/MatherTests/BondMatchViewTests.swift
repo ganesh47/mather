@@ -22,4 +22,34 @@ struct BondMatchViewTests {
         let right = state.pairs[0].right
         #expect(BondMatchView.visibleRightValue(selectedPairId: nil, rightValue: right, state: state) == right)
     }
+
+
+    @Test func dragReleaseResolutionOnlyMatchesWhenDroppedOnCorrectRow() {
+        let state = BondMatchState(target: 6, pairs: BondMatchState.makePairs(for: 6))
+        let pair = state.pairs[0] // 1 + 5
+        let correct = BondMatchView.dragReleaseResolution(
+            pair: pair,
+            translation: CGSize(width: 120, height: 0),
+            state: state,
+            shuffledRightValues: state.pairs.map(\.right),
+            cardSize: 88,
+            cardSpacing: 12
+        )
+        #expect(correct == .match(pair.id))
+    }
+
+    @Test func dragReleaseResolutionDoesNotAutoMatchWrongLandingRow() {
+        let state = BondMatchState(target: 6, pairs: BondMatchState.makePairs(for: 6))
+        let pair = state.pairs[0] // wants 5
+        let shuffled = [4, 5, 3]
+        let wrongDrop = BondMatchView.dragReleaseResolution(
+            pair: pair,
+            translation: CGSize(width: 120, height: 0),
+            state: state,
+            shuffledRightValues: shuffled,
+            cardSize: 88,
+            cardSpacing: 12
+        )
+        #expect(wrongDrop == .mismatch(4))
+    }
 }
