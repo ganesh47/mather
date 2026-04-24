@@ -351,6 +351,7 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
         ]
         if let appearance {
             launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -366,6 +367,7 @@ final class ScreenshotTests: XCTestCase {
             "-feature.soundReactionEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.makeBreakLoopV2Enabled", "YES",
+            "-feature.skipProfilePicker", "YES",
         ]
         if let appearance {
             launchArguments += ["-uiTest.appearance", appearance.launchValue]
@@ -379,6 +381,7 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "YES",
             "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
         ]
         if let appearance {
             launchArguments += ["-uiTest.appearance", appearance.launchValue]
