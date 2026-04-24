@@ -6,6 +6,13 @@ struct RootView: View {
     @Bindable var appModel: AppModel
     @Query(sort: \StoredSessionSummary.startedAt, order: .reverse) private var sessionSummaries: [StoredSessionSummary]
 
+    private var showingProfilePicker: Binding<Bool> {
+        Binding(
+            get: { appModel.activeProfile == nil },
+            set: { if !$0 { /* dismissal only allowed once a profile is selected */ } }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -71,5 +78,8 @@ struct RootView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .background(MatherTheme.background.ignoresSafeArea())
+        .sheet(isPresented: showingProfilePicker) {
+            ProfilePickerView(appModel: appModel)
+        }
     }
 }

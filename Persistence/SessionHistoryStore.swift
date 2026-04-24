@@ -6,13 +6,16 @@ import SwiftData
 @Observable
 final class SessionHistoryStore {
     private let modelContext: ModelContext
+    var activeProfileId: UUID?
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
 
     func save(_ draft: SessionSummaryDraft) {
-        modelContext.insert(StoredSessionSummary(from: draft))
+        var stamped = draft
+        stamped.profileId = activeProfileId
+        modelContext.insert(StoredSessionSummary(from: stamped))
         try? modelContext.save()
     }
 

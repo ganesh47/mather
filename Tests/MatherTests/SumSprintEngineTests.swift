@@ -13,7 +13,7 @@ struct SumSprintEngineTests {
         flags.audioEnabled = false
         flags.hapticsEnabled = false
 
-        let schema = Schema([StoredFactRecord.self])
+        let schema = Schema([StoredFactRecord.self, StoredKidProfile.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: config)
         let store = FactRecordStore(modelContext: ModelContext(container))

@@ -9,10 +9,34 @@ struct HomeView: View {
             MatherTheme.background.ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 20) {
-                    Text("Mather")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.ink)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Mather")
+                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .foregroundStyle(MatherTheme.ink)
+                        Spacer()
+                        if let profile = appModel.activeProfile {
+                            Button {
+                                appModel.activeProfile = nil
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Text(profile.emoji)
+                                        .font(.title3)
+                                    Text(profile.name)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(MatherTheme.ink)
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(MatherTheme.card)
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Switch profile, currently \(profile.name)")
+                        }
+                    }
 
                     makeAndBreakCard
                     labCard

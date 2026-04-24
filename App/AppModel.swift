@@ -18,6 +18,21 @@ final class AppModel {
     let roomQuestEngine: RoomQuestEngine
     let factStore: FactRecordStore
     let sumSprintEngine: SumSprintEngine
+    let profileStore: KidProfileStore
+
+    var activeProfile: StoredKidProfile? {
+        didSet {
+            historyStore.activeProfileId = activeProfile?.id
+            factStore.activeProfileId = activeProfile?.id
+            if let id = activeProfile?.id {
+                UserDefaults.standard.set(id.uuidString, forKey: "lastProfileId")
+            }
+        }
+    }
+
+    func selectProfile(_ profile: StoredKidProfile) {
+        activeProfile = profile
+    }
 
     init(modelContext: ModelContext) {
         let featureFlags = FeatureFlagService()
@@ -29,6 +44,7 @@ final class AppModel {
         let motionService = MotionService()
         let soundDetectionService = SoundDetectionService()
         let roomQuestScanner = RoomQuestLiveScanner()
+        let profileStore = KidProfileStore(modelContext: modelContext)
 
         self.featureFlags = featureFlags
         self.speechService = speechService
@@ -39,6 +55,7 @@ final class AppModel {
         self.motionService = motionService
         self.soundDetectionService = soundDetectionService
         self.roomQuestScanner = roomQuestScanner
+        self.profileStore = profileStore
         roomQuestScanner.featureFlags = featureFlags
 
         let vsEngine = VerticalSliceEngine(

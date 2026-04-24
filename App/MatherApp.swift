@@ -8,7 +8,12 @@ struct MatherApp: App {
 
     init() {
         do {
-            container = try ModelContainer(for: StoredSessionSummary.self, StoredRoomQuestStationReference.self, StoredFactRecord.self)
+            container = try ModelContainer(
+                for: StoredSessionSummary.self,
+                     StoredRoomQuestStationReference.self,
+                     StoredFactRecord.self,
+                     StoredKidProfile.self
+            )
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)
             _appModel = State(initialValue: appModel)
@@ -22,11 +27,19 @@ struct MatherApp: App {
             RootView(appModel: appModel)
                 .modelContainer(container)
                 .preferredColorScheme(Self.preferredColorSchemeForUITests())
+                .task { restoreLastProfile() }
         }
     }
 }
 
 private extension MatherApp {
+    func restoreLastProfile() {
+        guard let idString = UserDefaults.standard.string(forKey: "lastProfileId"),
+              let id = UUID(uuidString: idString),
+              let profile = appModel.profileStore.profile(withId: id) else { return }
+        appModel.activeProfile = profile
+    }
+
     static func preferredColorSchemeForUITests() -> ColorScheme? {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flagIndex = arguments.firstIndex(of: "-uiTest.appearance"),

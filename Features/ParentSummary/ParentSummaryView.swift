@@ -6,8 +6,9 @@ struct ParentSummaryView: View {
     let summaries: [StoredSessionSummary]
 
     var body: some View {
-        let digest = appModel.telemetryWriter.digest(from: summaries)
-        let recentSummaries = Array(summaries.prefix(5))
+        let filtered = summaries.filter { $0.profileId == appModel.activeProfile?.id }
+        let digest = appModel.telemetryWriter.digest(from: filtered)
+        let recentSummaries = Array(filtered.prefix(5))
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -15,6 +16,15 @@ struct ParentSummaryView: View {
                 VStack(spacing: 16) {
                     CardSurface {
                         VStack(alignment: .leading, spacing: 8) {
+                            if let profile = appModel.activeProfile {
+                                HStack(spacing: 8) {
+                                    Text(profile.emoji)
+                                        .font(.title2)
+                                    Text(profile.name)
+                                        .font(.title2.weight(.black))
+                                        .foregroundStyle(MatherTheme.ink)
+                                }
+                            }
                             Text("Parent Summary")
                                 .font(.largeTitle.weight(.black))
                             Text(digest.objectiveTitle)
@@ -23,7 +33,7 @@ struct ParentSummaryView: View {
                         }
                     }
 
-                    if summaries.isEmpty {
+                    if filtered.isEmpty {
                         CardSurface {
                             VStack(spacing: 12) {
                                 Image(systemName: "chart.bar.xaxis")
@@ -75,7 +85,7 @@ struct ParentSummaryView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Recent sessions")
                                     .font(.title3.weight(.bold))
-                                Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
+                                Text(historyCaption(totalCount: filtered.count, visibleCount: recentSummaries.count))
                                     .font(.subheadline.weight(.medium))
                                     .foregroundStyle(MatherTheme.cardSubtitle)
                                 ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
@@ -91,7 +101,7 @@ struct ParentSummaryView: View {
                                                 .foregroundStyle(MatherTheme.cardSubtitle)
                                         }
                                         Spacer()
-                                        if summary.sessionId == summaries.first?.sessionId {
+                                        if summary.sessionId == filtered.first?.sessionId {
                                             Text("Latest")
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(MatherTheme.accent)
@@ -102,7 +112,7 @@ struct ParentSummaryView: View {
                                         }
                                     }
                                     .padding(10)
-                                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
+                                    .background(summary.sessionId == filtered.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                     .accessibilityElement(children: .combine)
                                     .accessibilityIdentifier("parent-summary-session-\(index)")
@@ -123,6 +133,12 @@ struct ParentSummaryView: View {
                     }
 
                     HStack(spacing: 16) {
+                        Button("Switch Profile") {
+                            appModel.activeProfile = nil
+                            appModel.engine.showHome()
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.18)))
+
                         Button("Settings") {
                             appModel.engine.showSettings()
                         }

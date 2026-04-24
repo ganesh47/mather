@@ -7,7 +7,7 @@ import Testing
 
 @MainActor
 private func makeInMemoryStore() throws -> (SessionHistoryStore, ModelContext) {
-    let schema = Schema([StoredSessionSummary.self])
+    let schema = Schema([StoredSessionSummary.self, StoredKidProfile.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try ModelContainer(for: schema, configurations: config)
     let context = ModelContext(container)
@@ -73,6 +73,19 @@ struct SessionHistoryStoreTests {
 
         let fetched = try context.fetch(FetchDescriptor<StoredSessionSummary>())
         #expect(fetched.count == 2)
+    }
+
+    @Test
+    func saveStampsProfileId() throws {
+        let (store, context) = try makeInMemoryStore()
+        let profileId = UUID()
+        store.activeProfileId = profileId
+
+        store.save(makeDraft(sessionId: "profile-test"))
+
+        let fetched = try context.fetch(FetchDescriptor<StoredSessionSummary>())
+        #expect(fetched.count == 1)
+        #expect(fetched[0].profileId == profileId)
     }
 }
 

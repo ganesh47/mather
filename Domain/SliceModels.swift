@@ -160,6 +160,7 @@ struct SessionSummaryDraft: Equatable {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
+    var profileId: UUID? = nil
 }
 
 // MARK: - Gravity Split models
@@ -464,16 +465,32 @@ final class StoredRoomQuestStationReference {
 }
 
 @Model
+final class StoredKidProfile {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var emoji: String
+    var createdAt: Date
+
+    init(name: String, emoji: String) {
+        self.id = UUID()
+        self.name = name
+        self.emoji = emoji
+        self.createdAt = .now
+    }
+}
+
+@Model
 final class StoredFactRecord {
-    @Attribute(.unique) var factKey: String  // "\(addendA)+\(addendB)"
+    @Attribute(.unique) var factKey: String  // profile-scoped: "\(profileId.uuidString):\(a)+\(b)" or legacy "\(a)+\(b)"
     var addendA: Int
     var addendB: Int
     var boxRawValue: Int
     var sessionsSinceLastSeen: Int
     var correctStreak: Int
     var lastSeenAt: Date?
+    var profileId: UUID?
 
-    init(factKey: String, addendA: Int, addendB: Int) {
+    init(factKey: String, addendA: Int, addendB: Int, profileId: UUID? = nil) {
         self.factKey = factKey
         self.addendA = addendA
         self.addendB = addendB
@@ -481,6 +498,7 @@ final class StoredFactRecord {
         self.sessionsSinceLastSeen = 0
         self.correctStreak = 0
         self.lastSeenAt = nil
+        self.profileId = profileId
     }
 }
 
@@ -496,6 +514,7 @@ final class StoredSessionSummary {
     var medianLatencyMs: Int
     var nextTargetHint: String
     var exportFileName: String
+    var profileId: UUID?
 
     init(from draft: SessionSummaryDraft) {
         sessionId = draft.sessionId
@@ -508,5 +527,6 @@ final class StoredSessionSummary {
         medianLatencyMs = draft.medianLatencyMs
         nextTargetHint = draft.nextTargetHint
         exportFileName = draft.exportFileName
+        profileId = draft.profileId
     }
 }
