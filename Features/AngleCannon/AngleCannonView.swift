@@ -30,6 +30,7 @@ struct AngleCannonView: View {
     @State private var targetAngleDeg: Double = 45
     @State private var roundsWon = 0
     @State private var level: Int = 1   // 1 or 2
+    @State private var sessionStart: Date = .now
     /// Briefly true on FIRE to animate the cannon barrel kick
     @State private var firePulse = false
     @State private var hasFiredOnce = false
@@ -91,12 +92,20 @@ struct AngleCannonView: View {
             currentAngleDeg = (clamped / snapDeg).rounded() * snapDeg
         }
         .onAppear {
+            sessionStart = .now
             appModel.motionService.startUpdates()
             pickTarget()
             autoCalibrateNeutral()
         }
         .onDisappear {
             appModel.motionService.stopUpdates()
+            guard roundsWon > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Angle Cannon",
+                startedAt: sessionStart,
+                scoreValue: roundsWon,
+                scoreLabel: "targets hit"
+            )
         }
     }
 

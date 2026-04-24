@@ -215,6 +215,7 @@ struct MemoryView: View {
     @State private var firstSelected: MemoryCard? = nil
     @State private var matchedPairs: Int = 0
     @State private var roundsPlayed: Int = 0
+    @State private var sessionStart: Date = .now
     @State private var mismatchIds: Set<UUID> = []
     @State private var isProcessingMismatch = false
     @State private var showRoundComplete = false
@@ -273,7 +274,19 @@ struct MemoryView: View {
         .sheet(item: $learningAnimal) { animal in
             birdLearningSheet(for: animal)
         }
-        .onAppear { dealRound() }
+        .onAppear {
+            sessionStart = .now
+            dealRound()
+        }
+        .onDisappear {
+            guard roundsPlayed > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Memory Match",
+                startedAt: sessionStart,
+                scoreValue: roundsPlayed,
+                scoreLabel: "rounds"
+            )
+        }
     }
 
     private var header: some View {

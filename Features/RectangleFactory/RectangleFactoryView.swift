@@ -23,6 +23,7 @@ struct RectangleFactoryView: View {
     private static let nSequence: [Int] = [4, 6, 9, 12, 7, 11, 16, 18, 13, 24]
 
     @State private var sequenceIndex: Int = 0
+    @State private var sessionStart: Date = .now
     @State private var targetN: Int = 4
     @State private var foundFactors: Set<String> = []
     @State private var frameWidth: Int = 2
@@ -55,7 +56,17 @@ struct RectangleFactoryView: View {
             if shook { resetFrame() }
         }
         .onAppear {
+            sessionStart = .now
             loadN(RectangleFactoryView.nSequence[0])
+        }
+        .onDisappear {
+            guard sequenceIndex > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Rectangle Factory",
+                startedAt: sessionStart,
+                scoreValue: sequenceIndex,
+                scoreLabel: "numbers factored"
+            )
         }
     }
 

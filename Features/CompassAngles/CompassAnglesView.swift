@@ -60,6 +60,7 @@ struct CompassAnglesView: View {
     @State private var levelIndex: Int = 0
     @State private var matched: Bool = false
     @State private var wonCount: Int = 0
+    @State private var sessionStart: Date = .now
     @State private var showDegreeLabel: Bool = false
 
     private var level: CompassLevel { levels[levelIndex % levels.count] }
@@ -84,11 +85,19 @@ struct CompassAnglesView: View {
             }
         }
         .onAppear {
+            sessionStart = .now
             appModel.motionService.startUpdates()
         }
         .onDisappear {
             appModel.motionService.stopRelativeYawTracking()
             appModel.motionService.stopUpdates()
+            guard wonCount > 0 else { return }
+            appModel.gameSessionStore.save(
+                gameName: "Compass Walk",
+                startedAt: sessionStart,
+                scoreValue: wonCount,
+                scoreLabel: "turns completed"
+            )
         }
     }
 

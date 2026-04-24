@@ -550,3 +550,37 @@ final class StoredSessionSummary {
         self.profileId = profileId
     }
 }
+
+// MARK: - StoredGameSession
+
+@Model
+final class StoredGameSession {
+    @Attribute(.unique) var id: String
+    var profileId: String
+    var gameName: String
+    var startedAt: Date
+    var durationSeconds: Double
+    var scoreValue: Int
+    var scoreLabel: String
+    var detail: String?
+
+    init(
+        id: String = UUID().uuidString,
+        profileId: String,
+        gameName: String,
+        startedAt: Date,
+        durationSeconds: Double,
+        scoreValue: Int,
+        scoreLabel: String,
+        detail: String? = nil
+    ) {
+        self.id = id
+        self.profileId = profileId
+        self.gameName = gameName
+        self.startedAt = startedAt
+        self.durationSeconds = durationSeconds
+        self.scoreValue = scoreValue
+        self.scoreLabel = scoreLabel
+        self.detail = detail
+    }
+}
