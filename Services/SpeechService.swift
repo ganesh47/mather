@@ -69,6 +69,7 @@ struct MemoryCardDescription: Equatable {
     let source: MemoryCardDescriptionSource
 }
 
+@MainActor
 protocol MemoryCardAIAdapter {
     var isAvailable: Bool { get }
     func shortDescription(for animal: MemoryAnimal) async throws -> String?
