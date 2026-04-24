@@ -49,7 +49,8 @@ struct BondMatchView: View {
 
     // MARK: - Constants
 
-    private let cardSize: CGFloat = 88
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var cardSize: CGFloat { ResponsiveLayout.isWide(horizontalSizeClass) ? 110 : 88 }
     private let cardSpacing: CGFloat = 12
 
     // MARK: - Tilt drift

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
 
     var body: some View {
@@ -14,8 +15,15 @@ struct HomeView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    makeAndBreakCard
-                    labCard
+                    if ResponsiveLayout.isWide(horizontalSizeClass) {
+                        HStack(alignment: .top, spacing: 20) {
+                            makeAndBreakCard
+                            labCard
+                        }
+                    } else {
+                        makeAndBreakCard
+                        labCard
+                    }
 
                     HStack(spacing: 14) {
                         Button("Parent Summary") {
@@ -31,7 +39,9 @@ struct HomeView: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(24)
+                .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                .frame(maxWidth: .infinity)
             }
         }
     }
