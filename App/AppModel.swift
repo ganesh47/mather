@@ -8,6 +8,7 @@ final class AppModel {
     let profileStore: KidProfileStore
     let featureFlags: FeatureFlagService
     let speechService: SpeechService
+    let memoryCardDescribeService: MemoryCardDescribeService
     let telemetryWriter: TelemetryWriter
     let historyStore: SessionHistoryStore
     let roomQuestStationStore: RoomQuestStationStore
@@ -24,6 +25,7 @@ final class AppModel {
         let profileStore = KidProfileStore(modelContext: modelContext)
         let featureFlags = FeatureFlagService()
         let speechService = SpeechService()
+        let memoryCardDescribeService = MemoryCardDescribeService(appleIntelligenceEnabled: { featureFlags.memoryCardAppleIntelligenceEnabled })
         let telemetryWriter = TelemetryWriter(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let historyStore = SessionHistoryStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let roomQuestStationStore = RoomQuestStationStore(modelContext: modelContext)
@@ -35,6 +37,7 @@ final class AppModel {
         self.featureFlags = featureFlags
         self.profileStore = profileStore
         self.speechService = speechService
+        self.memoryCardDescribeService = memoryCardDescribeService
         self.telemetryWriter = telemetryWriter
         self.historyStore = historyStore
         self.roomQuestStationStore = roomQuestStationStore

@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Data model
 
-enum MemoryPicture {
+enum MemoryPicture: Equatable {
     case emoji(String)
     case asset(String)
 }
@@ -12,23 +12,121 @@ struct MemoryFactCard: Equatable {
     let value: String
 }
 
+enum MemoryDeckKind: String, Equatable {
+    case domesticAnimals
+    case birds
+    case vehicles
+
+    var displayName: String {
+        switch self {
+        case .domesticAnimals: return "Animals"
+        case .birds: return "Birds"
+        case .vehicles: return "Vehicles"
+        }
+    }
+}
+
+struct MemoryCardMetadata: Equatable {
+    let deck: MemoryDeckKind
+    let category: String
+    let kind: String
+    let habitat: String?
+    let lifespan: String?
+    let weight: String?
+    let size: String?
+    let colors: String?
+    let use: String?
+    let movement: String?
+    let sound: String?
+    let factCards: [MemoryFactCard]
+
+    init(
+        deck: MemoryDeckKind,
+        category: String,
+        kind: String,
+        habitat: String? = nil,
+        lifespan: String? = nil,
+        weight: String? = nil,
+        size: String? = nil,
+        colors: String? = nil,
+        use: String? = nil,
+        movement: String? = nil,
+        sound: String? = nil,
+        factCards: [MemoryFactCard]? = nil
+    ) {
+        self.deck = deck
+        self.category = category
+        self.kind = kind
+        self.habitat = habitat
+        self.lifespan = lifespan
+        self.weight = weight
+        self.size = size
+        self.colors = colors
+        self.use = use
+        self.movement = movement
+        self.sound = sound
+        self.factCards = factCards ?? Self.defaultFactCards(
+            kind: kind,
+            habitat: habitat,
+            lifespan: lifespan,
+            weight: weight,
+            size: size,
+            colors: colors,
+            use: use,
+            movement: movement,
+            sound: sound
+        )
+    }
+
+    private static func defaultFactCards(
+        kind: String,
+        habitat: String?,
+        lifespan: String?,
+        weight: String?,
+        size: String?,
+        colors: String?,
+        use: String?,
+        movement: String?,
+        sound: String?
+    ) -> [MemoryFactCard] {
+        var facts: [MemoryFactCard] = [MemoryFactCard(title: "Kind", value: kind)]
+        func append(_ title: String, _ value: String?) {
+            guard let value, !value.isEmpty else { return }
+            facts.append(MemoryFactCard(title: title, value: value))
+        }
+        append("Home", habitat)
+        append("Use", use)
+        append("Moves", movement)
+        append("Sound", sound)
+        append("Lifespan", lifespan)
+        append("Weight", weight)
+        append("Size", size)
+        append("Colors", colors)
+        return facts
+    }
+}
+
 struct MemoryAnimal: Identifiable {
     let id: String
     let name: String
     let canonicalName: String
     let picture: MemoryPicture
-    let detailCards: [MemoryFactCard]
+    let metadata: MemoryCardMetadata
 
-    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, detailCards: [MemoryFactCard] = []) {
+    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, metadata: MemoryCardMetadata) {
         self.id = id
         self.name = name
         self.canonicalName = canonicalName ?? name
         self.picture = picture
-        self.detailCards = detailCards
+        self.metadata = metadata
     }
 
     var selectionKey: String {
         id
+    }
+
+    var detailCards: [MemoryFactCard] {
+        metadata.factCards
     }
 
     var emoji: String? {
@@ -68,24 +166,24 @@ struct MemoryArtStyle {
 
 enum MemoryDeck {
     static let domesticAnimals: [MemoryAnimal] = [
-        MemoryAnimal(id: "cow", name: "Cow", picture: .emoji("🐄")),
-        MemoryAnimal(id: "dog", name: "Dog", picture: .emoji("🐕")),
-        MemoryAnimal(id: "cat", name: "Cat", picture: .emoji("🐈")),
-        MemoryAnimal(id: "sheep", name: "Sheep", picture: .emoji("🐑")),
-        MemoryAnimal(id: "pig", name: "Pig", picture: .emoji("🐖")),
-        MemoryAnimal(id: "horse", name: "Horse", picture: .emoji("🐎")),
-        MemoryAnimal(id: "rabbit", name: "Rabbit", picture: .emoji("🐇")),
-        MemoryAnimal(id: "duck", name: "Duck", picture: .emoji("🦆")),
-        MemoryAnimal(id: "rooster", name: "Rooster", picture: .emoji("🐓")),
-        MemoryAnimal(id: "goat", name: "Goat", picture: .emoji("🐐")),
-        MemoryAnimal(id: "turkey", name: "Turkey", picture: .emoji("🦃")),
-        MemoryAnimal(id: "goldfish", name: "Goldfish", picture: .emoji("🐟")),
-        MemoryAnimal(id: "mouse", name: "Mouse", picture: .emoji("🐁")),
-        MemoryAnimal(id: "frog", name: "Frog", picture: .emoji("🐸")),
-        MemoryAnimal(id: "camel", name: "Camel", picture: .emoji("🐪")),
-        MemoryAnimal(id: "llama", name: "Llama", picture: .emoji("🦙")),
-        MemoryAnimal(id: "donkey", name: "Donkey", picture: .emoji("🫏")),
-        MemoryAnimal(id: "ox", name: "Ox", picture: .emoji("🐂")),
+        domesticAnimal("cow", name: "Cow", emoji: "🐄", habitat: "farms and grassy fields", colors: "black and white", sound: "gentle moo", movement: "walks on four sturdy legs"),
+        domesticAnimal("dog", name: "Dog", emoji: "🐕", habitat: "homes, parks, and farms", colors: "many coat colors", sound: "happy bark", movement: "runs and plays quickly"),
+        domesticAnimal("cat", name: "Cat", emoji: "🐈", habitat: "homes and gardens", colors: "many fur colors", sound: "soft meow", movement: "tiptoes and pounces"),
+        domesticAnimal("sheep", name: "Sheep", emoji: "🐑", habitat: "farms and open pastures", colors: "white and cream", sound: "gentle baa", movement: "walks together in flocks"),
+        domesticAnimal("pig", name: "Pig", emoji: "🐖", habitat: "barnyards and farms", colors: "pink, brown, or black", sound: "snort and oink", movement: "trots and roots around"),
+        domesticAnimal("horse", name: "Horse", emoji: "🐎", habitat: "stables, ranches, and fields", colors: "brown, black, white, or chestnut", sound: "neigh", movement: "gallops fast"),
+        domesticAnimal("rabbit", name: "Rabbit", emoji: "🐇", habitat: "gardens, meadows, and homes", colors: "white, brown, gray", sound: "quiet squeaks", movement: "hops with long back legs"),
+        domesticAnimal("duck", name: "Duck", emoji: "🦆", habitat: "ponds, lakes, and farms", colors: "white, brown, or green", sound: "quack", movement: "waddles, swims, and flies short distances"),
+        domesticAnimal("rooster", name: "Rooster", emoji: "🐓", habitat: "farmyards", colors: "red, gold, green", sound: "cock-a-doodle-doo", movement: "struts and flaps"),
+        domesticAnimal("goat", name: "Goat", emoji: "🐐", habitat: "farms and rocky hills", colors: "white, brown, black", sound: "maa", movement: "climbs and balances well"),
+        domesticAnimal("turkey", name: "Turkey", emoji: "🦃", habitat: "farms and woodlands", colors: "brown, bronze, black", sound: "gobble", movement: "walks with strong legs"),
+        domesticAnimal("goldfish", name: "Goldfish", emoji: "🐟", habitat: "ponds and aquariums", colors: "orange and gold", sound: nil, movement: "swims with a swishy tail"),
+        domesticAnimal("mouse", name: "Mouse", emoji: "🐁", habitat: "fields, barns, and homes", colors: "gray, brown, white", sound: "tiny squeak", movement: "scurries fast"),
+        domesticAnimal("frog", name: "Frog", emoji: "🐸", habitat: "ponds, streams, and wet grass", colors: "green and brown", sound: "ribbit", movement: "jumps and swims"),
+        domesticAnimal("camel", name: "Camel", emoji: "🐪", habitat: "deserts and dry plains", colors: "sand and tan", sound: "grumbly groan", movement: "walks far on long legs"),
+        domesticAnimal("llama", name: "Llama", emoji: "🦙", habitat: "mountain farms and grasslands", colors: "white, brown, black", sound: "soft hum", movement: "walks sure-footedly"),
+        domesticAnimal("donkey", name: "Donkey", emoji: "🫏", habitat: "farms and dry grasslands", colors: "gray or brown", sound: "hee-haw", movement: "walks steadily and carries loads"),
+        domesticAnimal("ox", name: "Ox", emoji: "🐂", habitat: "farms and fields", colors: "brown, black, white", sound: "deep moo", movement: "pulls and plods with strength")
     ]
 
     static let birds: [MemoryAnimal] = [
@@ -124,41 +222,86 @@ enum MemoryDeck {
         bird("bird-b15", name: "Peafowl", asset: "MemoryBirdB15", home: "Asian grasslands and gardens", lifespan: "15 to 20 years", weight: "3 to 5 kg", size: "85 to 100 cm body length", colors: "blue, green, bronze"),
         bird("bird-b16", name: "Puffin", asset: "MemoryBirdB16", home: "North Atlantic coasts", lifespan: "20 to 25 years", weight: "0.3 to 0.5 kg", size: "28 to 34 cm long", colors: "black, white, orange"),
         bird("bird-b17", name: "Black Palm", asset: "MemoryBirdB17", home: "New Guinea and Australia", lifespan: "40 to 60 years", weight: "0.8 to 1.1 kg", size: "55 to 65 cm long", colors: "charcoal and red"),
-        bird("bird-b18", name: "Bee-eater", asset: "MemoryBirdB18", home: "Africa and South Asia", lifespan: "5 to 8 years", weight: "20 to 35 g", size: "20 to 25 cm long", colors: "green, blue, gold"),
+        bird("bird-b18", name: "Bee-eater", asset: "MemoryBirdB18", home: "Africa and South Asia", lifespan: "5 to 8 years", weight: "20 to 35 g", size: "20 to 25 cm long", colors: "green, blue, gold")
     ]
 
     static let vehicles: [MemoryAnimal] = [
-        MemoryAnimal(id: "car", name: "Car", picture: .emoji("🚗")),
-        MemoryAnimal(id: "bus", name: "Bus", picture: .emoji("🚌")),
-        MemoryAnimal(id: "train", name: "Train", picture: .emoji("🚂")),
-        MemoryAnimal(id: "plane", name: "Plane", picture: .emoji("✈️")),
-        MemoryAnimal(id: "boat", name: "Boat", picture: .emoji("⛵")),
-        MemoryAnimal(id: "bike", name: "Bike", picture: .emoji("🚲")),
-        MemoryAnimal(id: "truck", name: "Truck", picture: .emoji("🚚")),
-        MemoryAnimal(id: "tractor", name: "Tractor", picture: .emoji("🚜")),
-        MemoryAnimal(id: "helicopter", name: "Copter", picture: .emoji("🚁")),
-        MemoryAnimal(id: "rocket", name: "Rocket", picture: .emoji("🚀")),
-        MemoryAnimal(id: "scooter", name: "Scooter", picture: .emoji("🛵")),
-        MemoryAnimal(id: "taxi", name: "Taxi", picture: .emoji("🚕")),
+        vehicle("car", name: "Car", emoji: "🚗", use: "takes people on road trips", movement: "rolls on four wheels", colors: "many bright paint colors", sound: "vroom"),
+        vehicle("bus", name: "Bus", emoji: "🚌", use: "carries lots of people together", movement: "drives on roads with many seats", colors: "yellow, red, blue, green", sound: "rumbling engine"),
+        vehicle("train", name: "Train", emoji: "🚂", use: "pulls people or cargo on tracks", movement: "rolls on rails", colors: "black, silver, red, blue", sound: "choo-choo"),
+        vehicle("plane", name: "Plane", emoji: "✈️", use: "flies people across the sky", movement: "zooms with wings", colors: "white, blue, silver", sound: "whooshing jet sound"),
+        vehicle("boat", name: "Boat", emoji: "⛵", use: "travels across water", movement: "floats and glides", colors: "white, blue, red", sound: "splashing water"),
+        vehicle("bike", name: "Bike", emoji: "🚲", use: "helps riders pedal from place to place", movement: "rolls on two wheels", colors: "red, blue, green, black", sound: "spinning wheels"),
+        vehicle("truck", name: "Truck", emoji: "🚚", use: "hauls heavy things", movement: "drives with a strong engine", colors: "white, blue, red", sound: "deep engine rumble"),
+        vehicle("tractor", name: "Tractor", emoji: "🚜", use: "helps farmers work in fields", movement: "rumbles over dirt with big tires", colors: "green, red, yellow", sound: "put-put engine"),
+        vehicle("helicopter", name: "Copter", emoji: "🚁", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
+        vehicle("rocket", name: "Rocket", emoji: "🚀", use: "blasts toward space", movement: "launches straight up fast", colors: "silver, white, red", sound: "roaring blast"),
+        vehicle("scooter", name: "Scooter", emoji: "🛵", use: "zips around short city trips", movement: "rolls on two small wheels", colors: "red, teal, yellow", sound: "buzzy motor"),
+        vehicle("taxi", name: "Taxi", emoji: "🚕", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
         Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles).map { ($0.id, $0) })
     }()
 
+    private static func domesticAnimal(_ id: String, name: String, emoji: String, habitat: String, colors: String, sound: String?, movement: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .domesticAnimals,
+                category: "animal",
+                kind: "domestic animal",
+                habitat: habitat,
+                colors: colors,
+                movement: movement,
+                sound: sound
+            )
+        )
+    }
+
     private static func bird(_ id: String, name: String, asset: String, home: String, lifespan: String, weight: String, size: String, colors: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: name,
             picture: .asset(asset),
-            detailCards: [
-                MemoryFactCard(title: "Name", value: name),
-                MemoryFactCard(title: "Home", value: home),
-                MemoryFactCard(title: "Lifespan", value: lifespan),
-                MemoryFactCard(title: "Weight", value: weight),
-                MemoryFactCard(title: "Size", value: size),
-                MemoryFactCard(title: "Colors", value: colors)
-            ]
+            metadata: MemoryCardMetadata(
+                deck: .birds,
+                category: "bird",
+                kind: "bird",
+                habitat: home,
+                lifespan: lifespan,
+                weight: weight,
+                size: size,
+                colors: colors,
+                movement: "flies with wings",
+                factCards: [
+                    MemoryFactCard(title: "Name", value: name),
+                    MemoryFactCard(title: "Home", value: home),
+                    MemoryFactCard(title: "Lifespan", value: lifespan),
+                    MemoryFactCard(title: "Weight", value: weight),
+                    MemoryFactCard(title: "Size", value: size),
+                    MemoryFactCard(title: "Colors", value: colors)
+                ]
+            )
+        )
+    }
+
+    private static func vehicle(_ id: String, name: String, emoji: String, use: String, movement: String, colors: String, sound: String?) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "vehicle",
+                kind: "vehicle",
+                colors: colors,
+                use: use,
+                movement: movement,
+                sound: sound
+            )
         )
     }
 }

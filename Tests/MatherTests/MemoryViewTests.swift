@@ -39,3 +39,55 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.vehicles.animals.map(\.id) == MemoryDeck.vehicles.map(\.id))
     }
 }
+
+
+@Suite("MemoryCardDescribeService")
+struct MemoryCardDescribeServiceTests {
+    private struct StubAIAdapter: MemoryCardAIAdapter {
+        let isAvailable: Bool
+        let response: String?
+
+        func shortDescription(for animal: MemoryAnimal) async throws -> String? {
+            response
+        }
+    }
+
+    @Test func allMemoryCardsExposeStructuredMetadata() {
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles
+
+        #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
+        #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
+        #expect(allAnimals.allSatisfy { !$0.detailCards.isEmpty })
+        #expect(MemoryDeck.domesticAnimals.allSatisfy { $0.metadata.deck == .domesticAnimals })
+        #expect(MemoryDeck.birds.allSatisfy { $0.metadata.deck == .birds })
+        #expect(MemoryDeck.vehicles.allSatisfy { $0.metadata.deck == .vehicles })
+    }
+
+    @MainActor @Test func fallbackDescriptionUsesCuratedBirdMetadata() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubAIAdapter(isAvailable: false, response: nil)
+        )
+
+        let description = await service.describe(MemoryDeck.birds[0])
+
+        #expect(description.title == "Macaw")
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.contains("bird"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("south american rainforests"))
+        #expect(description.factChips.map(\.title) == ["Home", "Lifespan", "Weight", "Size"])
+    }
+
+    @MainActor @Test func servicePrefersAdapterOutputWhenAvailable() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { true },
+            aiAdapter: StubAIAdapter(isAvailable: true, response: "A rocket zooms high and can reach space.")
+        )
+
+        let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+
+        #expect(description.source == .appleIntelligence)
+        #expect(description.shortDescription == "A rocket zooms high and can reach space.")
+        #expect(description.factChips.count == 4)
+    }
+}
