@@ -23,6 +23,7 @@ final class FeatureFlagService {
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
+        static let memoryCardAppleIntelligenceEnabled = "feature.memoryCardAppleIntelligenceEnabled"
     }
 
     var verticalSlice1Enabled: Bool {
@@ -92,6 +93,11 @@ final class FeatureFlagService {
         didSet { defaults.set(roomQuestReferenceCaptureEnabled, forKey: Keys.roomQuestReferenceCaptureEnabled) }
     }
 
+    /// Enables trying Apple Intelligence for Memory Match card descriptions before curated fallback.
+    var memoryCardAppleIntelligenceEnabled: Bool {
+        didSet { defaults.set(memoryCardAppleIntelligenceEnabled, forKey: Keys.memoryCardAppleIntelligenceEnabled) }
+    }
+
     // MARK: - Place-matching thresholds
 
     /// GPS match radius in metres. Default 8 m. Tighter = harder to get false match indoors.
@@ -148,6 +154,7 @@ final class FeatureFlagService {
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
+            Keys.memoryCardAppleIntelligenceEnabled: true,
             Keys.placeMatchGPSMatch:    PlaceMatchThresholds.default.gpsMatchMetres,
             Keys.placeMatchGPSClose:    PlaceMatchThresholds.default.gpsCloseMetres,
             Keys.placeMatchGPSCutoff:   PlaceMatchThresholds.default.gpsAccuracyCutoff,
@@ -167,6 +174,7 @@ final class FeatureFlagService {
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
+        memoryCardAppleIntelligenceEnabled = defaults.bool(forKey: Keys.memoryCardAppleIntelligenceEnabled)
         placeMatchGPSMatch   = defaults.double(forKey: Keys.placeMatchGPSMatch)
         placeMatchGPSClose   = defaults.double(forKey: Keys.placeMatchGPSClose)
         placeMatchGPSCutoff  = defaults.double(forKey: Keys.placeMatchGPSCutoff)

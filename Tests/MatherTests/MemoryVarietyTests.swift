@@ -51,10 +51,10 @@ struct MemoryVarietyTests {
         let matchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: true)
         let unmatchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: false)
 
-        #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, showRoundComplete: true))
-        #expect(!MemoryView.canOpenLearningDetails(for: unmatchedBirdCard, deckSelection: .birds, showRoundComplete: true))
-        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .domestic, showRoundComplete: true))
-        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, showRoundComplete: false))
+        #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, difficulty: .medium, showRoundComplete: true))
+        #expect(!MemoryView.canOpenLearningDetails(for: unmatchedBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: true))
+        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .domestic, difficulty: .medium, showRoundComplete: true))
+        #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, difficulty: .medium, showRoundComplete: false))
     }
 
     @MainActor @Test func updatedRecentPairHistoryKeepsRecentWindowBounded() {

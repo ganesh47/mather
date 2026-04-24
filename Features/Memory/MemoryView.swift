@@ -2,33 +2,142 @@ import SwiftUI
 
 // MARK: - Data model
 
-enum MemoryPicture {
+enum MemoryPicture: Equatable {
     case emoji(String)
     case asset(String)
 }
 
-struct MemoryFactCard: Equatable {
+struct MemoryFactCard: Equatable, Hashable {
     let title: String
     let value: String
 }
 
-struct MemoryAnimal: Identifiable {
+enum MemoryDeckKind: String, Equatable {
+    case domesticAnimals
+    case birds
+    case vehicles
+
+    var displayName: String {
+        switch self {
+        case .domesticAnimals: return "Animals"
+        case .birds: return "Birds"
+        case .vehicles: return "Vehicles"
+        }
+    }
+}
+
+struct MemoryCardMetadata: Equatable {
+    let deck: MemoryDeckKind
+    let category: String
+    let kind: String
+    let habitat: String?
+    let lifespan: String?
+    let weight: String?
+    let size: String?
+    let colors: String?
+    let use: String?
+    let movement: String?
+    let sound: String?
+    let factCards: [MemoryFactCard]
+
+    init(
+        deck: MemoryDeckKind,
+        category: String,
+        kind: String,
+        habitat: String? = nil,
+        lifespan: String? = nil,
+        weight: String? = nil,
+        size: String? = nil,
+        colors: String? = nil,
+        use: String? = nil,
+        movement: String? = nil,
+        sound: String? = nil,
+        factCards: [MemoryFactCard]? = nil
+    ) {
+        self.deck = deck
+        self.category = category
+        self.kind = kind
+        self.habitat = habitat
+        self.lifespan = lifespan
+        self.weight = weight
+        self.size = size
+        self.colors = colors
+        self.use = use
+        self.movement = movement
+        self.sound = sound
+        self.factCards = factCards ?? Self.defaultFactCards(
+            kind: kind,
+            habitat: habitat,
+            lifespan: lifespan,
+            weight: weight,
+            size: size,
+            colors: colors,
+            use: use,
+            movement: movement,
+            sound: sound
+        )
+    }
+
+    private static func defaultFactCards(
+        kind: String,
+        habitat: String?,
+        lifespan: String?,
+        weight: String?,
+        size: String?,
+        colors: String?,
+        use: String?,
+        movement: String?,
+        sound: String?
+    ) -> [MemoryFactCard] {
+        var facts: [MemoryFactCard] = [MemoryFactCard(title: "Kind", value: kind)]
+        func append(_ title: String, _ value: String?) {
+            guard let value, !value.isEmpty else { return }
+            facts.append(MemoryFactCard(title: title, value: value))
+        }
+        append("Home", habitat)
+        append("Use", use)
+        append("Moves", movement)
+        append("Sound", sound)
+        append("Lifespan", lifespan)
+        append("Weight", weight)
+        append("Size", size)
+        append("Colors", colors)
+        return facts
+    }
+}
+
+struct MemoryLearningContent: Identifiable, Equatable {
+    let animal: MemoryAnimal
+    let title: String
+    let shortDescription: String
+    let factChips: [MemoryFactCard]
+    let sourceBadge: String
+    let readAloudText: String
+
+    var id: String { animal.id }
+}
+
+struct MemoryAnimal: Identifiable, Equatable {
     let id: String
     let name: String
     let canonicalName: String
     let picture: MemoryPicture
-    let detailCards: [MemoryFactCard]
+    let metadata: MemoryCardMetadata
 
-    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, detailCards: [MemoryFactCard] = []) {
+    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, metadata: MemoryCardMetadata) {
         self.id = id
         self.name = name
         self.canonicalName = canonicalName ?? name
         self.picture = picture
-        self.detailCards = detailCards
+        self.metadata = metadata
     }
 
     var selectionKey: String {
         id
+    }
+
+    var detailCards: [MemoryFactCard] {
+        metadata.factCards
     }
 
     var emoji: String? {
@@ -68,24 +177,24 @@ struct MemoryArtStyle {
 
 enum MemoryDeck {
     static let domesticAnimals: [MemoryAnimal] = [
-        MemoryAnimal(id: "cow", name: "Cow", picture: .emoji("🐄")),
-        MemoryAnimal(id: "dog", name: "Dog", picture: .emoji("🐕")),
-        MemoryAnimal(id: "cat", name: "Cat", picture: .emoji("🐈")),
-        MemoryAnimal(id: "sheep", name: "Sheep", picture: .emoji("🐑")),
-        MemoryAnimal(id: "pig", name: "Pig", picture: .emoji("🐖")),
-        MemoryAnimal(id: "horse", name: "Horse", picture: .emoji("🐎")),
-        MemoryAnimal(id: "rabbit", name: "Rabbit", picture: .emoji("🐇")),
-        MemoryAnimal(id: "duck", name: "Duck", picture: .emoji("🦆")),
-        MemoryAnimal(id: "rooster", name: "Rooster", picture: .emoji("🐓")),
-        MemoryAnimal(id: "goat", name: "Goat", picture: .emoji("🐐")),
-        MemoryAnimal(id: "turkey", name: "Turkey", picture: .emoji("🦃")),
-        MemoryAnimal(id: "goldfish", name: "Goldfish", picture: .emoji("🐟")),
-        MemoryAnimal(id: "mouse", name: "Mouse", picture: .emoji("🐁")),
-        MemoryAnimal(id: "frog", name: "Frog", picture: .emoji("🐸")),
-        MemoryAnimal(id: "camel", name: "Camel", picture: .emoji("🐪")),
-        MemoryAnimal(id: "llama", name: "Llama", picture: .emoji("🦙")),
-        MemoryAnimal(id: "donkey", name: "Donkey", picture: .emoji("🫏")),
-        MemoryAnimal(id: "ox", name: "Ox", picture: .emoji("🐂")),
+        domesticAnimal("cow", name: "Cow", emoji: "🐄", habitat: "farms and grassy fields", colors: "black and white", sound: "gentle moo", movement: "walks on four sturdy legs"),
+        domesticAnimal("dog", name: "Dog", emoji: "🐕", habitat: "homes, parks, and farms", colors: "many coat colors", sound: "happy bark", movement: "runs and plays quickly"),
+        domesticAnimal("cat", name: "Cat", emoji: "🐈", habitat: "homes and gardens", colors: "many fur colors", sound: "soft meow", movement: "tiptoes and pounces"),
+        domesticAnimal("sheep", name: "Sheep", emoji: "🐑", habitat: "farms and open pastures", colors: "white and cream", sound: "gentle baa", movement: "walks together in flocks"),
+        domesticAnimal("pig", name: "Pig", emoji: "🐖", habitat: "barnyards and farms", colors: "pink, brown, or black", sound: "snort and oink", movement: "trots and roots around"),
+        domesticAnimal("horse", name: "Horse", emoji: "🐎", habitat: "stables, ranches, and fields", colors: "brown, black, white, or chestnut", sound: "neigh", movement: "gallops fast"),
+        domesticAnimal("rabbit", name: "Rabbit", emoji: "🐇", habitat: "gardens, meadows, and homes", colors: "white, brown, gray", sound: "quiet squeaks", movement: "hops with long back legs"),
+        domesticAnimal("duck", name: "Duck", emoji: "🦆", habitat: "ponds, lakes, and farms", colors: "white, brown, or green", sound: "quack", movement: "waddles, swims, and flies short distances"),
+        domesticAnimal("rooster", name: "Rooster", emoji: "🐓", habitat: "farmyards", colors: "red, gold, green", sound: "cock-a-doodle-doo", movement: "struts and flaps"),
+        domesticAnimal("goat", name: "Goat", emoji: "🐐", habitat: "farms and rocky hills", colors: "white, brown, black", sound: "maa", movement: "climbs and balances well"),
+        domesticAnimal("turkey", name: "Turkey", emoji: "🦃", habitat: "farms and woodlands", colors: "brown, bronze, black", sound: "gobble", movement: "walks with strong legs"),
+        domesticAnimal("goldfish", name: "Goldfish", emoji: "🐟", habitat: "ponds and aquariums", colors: "orange and gold", sound: nil, movement: "swims with a swishy tail"),
+        domesticAnimal("mouse", name: "Mouse", emoji: "🐁", habitat: "fields, barns, and homes", colors: "gray, brown, white", sound: "tiny squeak", movement: "scurries fast"),
+        domesticAnimal("frog", name: "Frog", emoji: "🐸", habitat: "ponds, streams, and wet grass", colors: "green and brown", sound: "ribbit", movement: "jumps and swims"),
+        domesticAnimal("camel", name: "Camel", emoji: "🐪", habitat: "deserts and dry plains", colors: "sand and tan", sound: "grumbly groan", movement: "walks far on long legs"),
+        domesticAnimal("llama", name: "Llama", emoji: "🦙", habitat: "mountain farms and grasslands", colors: "white, brown, black", sound: "soft hum", movement: "walks sure-footedly"),
+        domesticAnimal("donkey", name: "Donkey", emoji: "🫏", habitat: "farms and dry grasslands", colors: "gray or brown", sound: "hee-haw", movement: "walks steadily and carries loads"),
+        domesticAnimal("ox", name: "Ox", emoji: "🐂", habitat: "farms and fields", colors: "brown, black, white", sound: "deep moo", movement: "pulls and plods with strength")
     ]
 
     static let birds: [MemoryAnimal] = [
@@ -124,41 +233,86 @@ enum MemoryDeck {
         bird("bird-b15", name: "Peafowl", asset: "MemoryBirdB15", home: "Asian grasslands and gardens", lifespan: "15 to 20 years", weight: "3 to 5 kg", size: "85 to 100 cm body length", colors: "blue, green, bronze"),
         bird("bird-b16", name: "Puffin", asset: "MemoryBirdB16", home: "North Atlantic coasts", lifespan: "20 to 25 years", weight: "0.3 to 0.5 kg", size: "28 to 34 cm long", colors: "black, white, orange"),
         bird("bird-b17", name: "Black Palm", asset: "MemoryBirdB17", home: "New Guinea and Australia", lifespan: "40 to 60 years", weight: "0.8 to 1.1 kg", size: "55 to 65 cm long", colors: "charcoal and red"),
-        bird("bird-b18", name: "Bee-eater", asset: "MemoryBirdB18", home: "Africa and South Asia", lifespan: "5 to 8 years", weight: "20 to 35 g", size: "20 to 25 cm long", colors: "green, blue, gold"),
+        bird("bird-b18", name: "Bee-eater", asset: "MemoryBirdB18", home: "Africa and South Asia", lifespan: "5 to 8 years", weight: "20 to 35 g", size: "20 to 25 cm long", colors: "green, blue, gold")
     ]
 
     static let vehicles: [MemoryAnimal] = [
-        MemoryAnimal(id: "car", name: "Car", picture: .emoji("🚗")),
-        MemoryAnimal(id: "bus", name: "Bus", picture: .emoji("🚌")),
-        MemoryAnimal(id: "train", name: "Train", picture: .emoji("🚂")),
-        MemoryAnimal(id: "plane", name: "Plane", picture: .emoji("✈️")),
-        MemoryAnimal(id: "boat", name: "Boat", picture: .emoji("⛵")),
-        MemoryAnimal(id: "bike", name: "Bike", picture: .emoji("🚲")),
-        MemoryAnimal(id: "truck", name: "Truck", picture: .emoji("🚚")),
-        MemoryAnimal(id: "tractor", name: "Tractor", picture: .emoji("🚜")),
-        MemoryAnimal(id: "helicopter", name: "Copter", picture: .emoji("🚁")),
-        MemoryAnimal(id: "rocket", name: "Rocket", picture: .emoji("🚀")),
-        MemoryAnimal(id: "scooter", name: "Scooter", picture: .emoji("🛵")),
-        MemoryAnimal(id: "taxi", name: "Taxi", picture: .emoji("🚕")),
+        vehicle("car", name: "Car", emoji: "🚗", use: "takes people on road trips", movement: "rolls on four wheels", colors: "many bright paint colors", sound: "vroom"),
+        vehicle("bus", name: "Bus", emoji: "🚌", use: "carries lots of people together", movement: "drives on roads with many seats", colors: "yellow, red, blue, green", sound: "rumbling engine"),
+        vehicle("train", name: "Train", emoji: "🚂", use: "pulls people or cargo on tracks", movement: "rolls on rails", colors: "black, silver, red, blue", sound: "choo-choo"),
+        vehicle("plane", name: "Plane", emoji: "✈️", use: "flies people across the sky", movement: "zooms with wings", colors: "white, blue, silver", sound: "whooshing jet sound"),
+        vehicle("boat", name: "Boat", emoji: "⛵", use: "travels across water", movement: "floats and glides", colors: "white, blue, red", sound: "splashing water"),
+        vehicle("bike", name: "Bike", emoji: "🚲", use: "helps riders pedal from place to place", movement: "rolls on two wheels", colors: "red, blue, green, black", sound: "spinning wheels"),
+        vehicle("truck", name: "Truck", emoji: "🚚", use: "hauls heavy things", movement: "drives with a strong engine", colors: "white, blue, red", sound: "deep engine rumble"),
+        vehicle("tractor", name: "Tractor", emoji: "🚜", use: "helps farmers work in fields", movement: "rumbles over dirt with big tires", colors: "green, red, yellow", sound: "put-put engine"),
+        vehicle("helicopter", name: "Copter", emoji: "🚁", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
+        vehicle("rocket", name: "Rocket", emoji: "🚀", use: "blasts toward space", movement: "launches straight up fast", colors: "silver, white, red", sound: "roaring blast"),
+        vehicle("scooter", name: "Scooter", emoji: "🛵", use: "zips around short city trips", movement: "rolls on two small wheels", colors: "red, teal, yellow", sound: "buzzy motor"),
+        vehicle("taxi", name: "Taxi", emoji: "🚕", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
         Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles).map { ($0.id, $0) })
     }()
 
+    private static func domesticAnimal(_ id: String, name: String, emoji: String, habitat: String, colors: String, sound: String?, movement: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .domesticAnimals,
+                category: "animal",
+                kind: "domestic animal",
+                habitat: habitat,
+                colors: colors,
+                movement: movement,
+                sound: sound
+            )
+        )
+    }
+
     private static func bird(_ id: String, name: String, asset: String, home: String, lifespan: String, weight: String, size: String, colors: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: name,
             picture: .asset(asset),
-            detailCards: [
-                MemoryFactCard(title: "Name", value: name),
-                MemoryFactCard(title: "Home", value: home),
-                MemoryFactCard(title: "Lifespan", value: lifespan),
-                MemoryFactCard(title: "Weight", value: weight),
-                MemoryFactCard(title: "Size", value: size),
-                MemoryFactCard(title: "Colors", value: colors)
-            ]
+            metadata: MemoryCardMetadata(
+                deck: .birds,
+                category: "bird",
+                kind: "bird",
+                habitat: home,
+                lifespan: lifespan,
+                weight: weight,
+                size: size,
+                colors: colors,
+                movement: "flies with wings",
+                factCards: [
+                    MemoryFactCard(title: "Name", value: name),
+                    MemoryFactCard(title: "Home", value: home),
+                    MemoryFactCard(title: "Lifespan", value: lifespan),
+                    MemoryFactCard(title: "Weight", value: weight),
+                    MemoryFactCard(title: "Size", value: size),
+                    MemoryFactCard(title: "Colors", value: colors)
+                ]
+            )
+        )
+    }
+
+    private static func vehicle(_ id: String, name: String, emoji: String, use: String, movement: String, colors: String, sound: String?) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "vehicle",
+                kind: "vehicle",
+                colors: colors,
+                use: use,
+                movement: movement,
+                sound: sound
+            )
         )
     }
 }
@@ -220,7 +374,7 @@ struct MemoryView: View {
     @State private var showRoundComplete = false
     @State private var deckSelection: DeckSelection = .domestic
     @State private var recentPairHistory: [String] = []
-    @State private var learningAnimal: MemoryAnimal? = nil
+    @State private var learningContent: MemoryLearningContent? = nil
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles
@@ -270,8 +424,8 @@ struct MemoryView: View {
 
             if showRoundComplete { roundCompleteOverlay }
         }
-        .sheet(item: $learningAnimal) { animal in
-            birdLearningSheet(for: animal)
+        .sheet(item: $learningContent) { content in
+            learningSheet(for: content)
         }
         .onAppear { dealRound() }
     }
@@ -372,6 +526,7 @@ struct MemoryView: View {
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
                 cardView(card)
+                    .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
             }
@@ -642,55 +797,104 @@ struct MemoryView: View {
         return Array((previous + newRoundAnimals.map(\.id)).suffix(historyWindow))
     }
 
-    static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, showRoundComplete: Bool) -> Bool {
-        showRoundComplete && deckSelection == .birds && card.isMatched
+    static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, difficulty: MemoryDifficulty, showRoundComplete: Bool) -> Bool {
+        guard deckSelection == .birds else { return false }
+        if card.isMatched { return true }
+        guard !showRoundComplete else { return false }
+        return difficulty.faceDown ? card.isSelected : true
+    }
+
+    static func learningContent(for animal: MemoryAnimal, deckSelection: DeckSelection) -> MemoryLearningContent? {
+        guard deckSelection == .birds else { return nil }
+
+        let summary = learningSummary(for: animal)
+        let sourceBadge = learningSourceBadge(for: deckSelection)
+        return MemoryLearningContent(
+            animal: animal,
+            title: animal.canonicalName,
+            shortDescription: summary,
+            factChips: animal.detailCards,
+            sourceBadge: sourceBadge,
+            readAloudText: learningReadAloudText(for: animal, summary: summary, sourceBadge: sourceBadge)
+        )
     }
 
     private func handleDoubleTap(_ card: MemoryCard) {
-        guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, showRoundComplete: showRoundComplete) else { return }
-        learningAnimal = animal(for: card)
+        guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
+        guard let content = Self.learningContent(for: animal(for: card), deckSelection: deckSelection) else { return }
+        learningContent = content
     }
 
     @ViewBuilder
-    private func birdLearningSheet(for animal: MemoryAnimal) -> some View {
+    private func learningSheet(for content: MemoryLearningContent) -> some View {
+        let animal = content.animal
+        let artStyle = Self.artStyle(for: animal.id)
+
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(LinearGradient(colors: [Self.artStyle(for: animal.id).topColor, Self.artStyle(for: animal.id).bottomColor], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(height: 220)
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .center, spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .fill(LinearGradient(colors: [artStyle.topColor, artStyle.bottomColor], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 108, height: 108)
 
-                        pictureView(for: animal)
-                            .frame(width: 170, height: 170)
+                            pictureView(for: animal)
+                                .frame(width: 80, height: 80)
+                        }
+                        .accessibilityHidden(true)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(content.title)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                                .accessibilityIdentifier("memory-learning-title")
+
+                            Text(content.shortDescription)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                                .accessibilityIdentifier("memory-learning-description")
+
+                            Text(content.sourceBadge)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(artStyle.ornamentColor)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.6), in: Capsule())
+                                .accessibilityIdentifier("memory-learning-source-badge")
+                        }
+
+                        Spacer(minLength: 0)
                     }
 
-                    VStack(spacing: 8) {
-                        Text(animal.name)
-                            .font(.title.weight(.black))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text("Bird details")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    Button {
+                        appModel.speechService.speakLearningDetails(content.readAloudText, enabled: appModel.featureFlags.audioEnabled)
+                    } label: {
+                        Label("Read Aloud", systemImage: "speaker.wave.2.fill")
+                            .font(.headline.weight(.bold))
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(PrimaryActionButtonStyle())
+                    .accessibilityIdentifier("memory-learning-read-aloud")
 
-                    VStack(spacing: 12) {
-                        ForEach(Array(animal.detailCards.enumerated()), id: \.offset) { _, fact in
-                            HStack(alignment: .top, spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                        ForEach(content.factChips, id: \.self) { fact in
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(fact.title)
-                                    .font(.subheadline.weight(.bold))
-                                    .foregroundStyle(MatherTheme.accent)
-                                    .frame(width: 72, alignment: .leading)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(artStyle.ornamentColor)
 
                                 Text(fact.value)
-                                    .font(.body.weight(.semibold))
+                                    .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(MatherTheme.ink)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
                             .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
                     }
+                    .accessibilityIdentifier("memory-learning-fact-chips")
                 }
                 .padding(20)
             }
@@ -699,7 +903,8 @@ struct MemoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { learningAnimal = nil }
+                    Button("Done") { learningContent = nil }
+                        .accessibilityIdentifier("memory-learning-done")
                 }
             }
         }
@@ -710,6 +915,7 @@ struct MemoryView: View {
         let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = Self.buildCards(for: roundAnimals).shuffled()
+        learningContent = nil
         firstSelected = nil
         matchedPairs = 0
         mismatchIds = []
@@ -774,7 +980,7 @@ struct MemoryView: View {
     }
 
     private func nextRound() {
-        learningAnimal = nil
+        learningContent = nil
         withAnimation(.easeOut(duration: 0.2)) {
             showRoundComplete = false
         }
@@ -782,5 +988,48 @@ struct MemoryView: View {
             try? await Task.sleep(for: .milliseconds(250))
             dealRound()
         }
+    }
+
+    static func accessibilityIdentifier(for card: MemoryCard) -> String {
+        let kind: String
+        switch card.content {
+        case .picture:
+            kind = "picture"
+        case .label:
+            kind = "label"
+        }
+        return "memory-card-\(card.pairId)-\(kind)"
+    }
+
+    private static func learningSourceBadge(for deckSelection: DeckSelection) -> String {
+        switch deckSelection {
+        case .birds:
+            return "Bird Guide"
+        case .domestic:
+            return "Animal Guide"
+        case .vehicles:
+            return "Vehicle Guide"
+        }
+    }
+
+    private static func learningSummary(for animal: MemoryAnimal) -> String {
+        // Keep this isolated so a future describe/Apple Intelligence service can
+        // replace summary generation without reshaping the sheet UI state.
+        let home = animal.detailCards.first(where: { $0.title == "Home" })?.value
+        let colors = animal.detailCards.first(where: { $0.title == "Colors" })?.value
+
+        switch (home, colors) {
+        case let (home?, colors?):
+            return "A colorful bird from \(home.lowercased()), often seen in shades of \(colors)."
+        case let (home?, nil):
+            return "A bird that lives around \(home.lowercased())."
+        default:
+            return "A matching-card favorite with a few quick facts to explore."
+        }
+    }
+
+    private static func learningReadAloudText(for animal: MemoryAnimal, summary: String, sourceBadge: String) -> String {
+        let facts = animal.detailCards.map { "\($0.title): \($0.value)." }.joined(separator: " ")
+        return "\(animal.canonicalName). \(summary) Source: \(sourceBadge). \(facts)"
     }
 }
