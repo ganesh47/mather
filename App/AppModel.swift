@@ -26,6 +26,10 @@ final class AppModel {
     private var pendingGameAction: (() -> Void)?
 
     func pickProfileThenRun(_ action: @escaping () -> Void) {
+        if featureFlags.skipProfilePicker {
+            action()
+            return
+        }
         pendingGameAction = action
         showingProfilePicker = true
     }
