@@ -46,7 +46,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's park and split cars to ten." },
+        sessionIntroFn: { "Let's park and split cars in different ways." },
         sessionEndFn: { "Session complete. Great parking!" },
         sessionStartFeedbackFn: { "Park the cars in the garage." }
     )
@@ -71,7 +71,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's load and split trucks to ten." },
+        sessionIntroFn: { "Let's load and split trucks in different ways." },
         sessionEndFn: { "Session complete. Great hauling!" },
         sessionStartFeedbackFn: { "Load the trucks at the depot." }
     )
@@ -96,7 +96,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's deliver vans to ten." },
+        sessionIntroFn: { "Let's deliver vans in different ways." },
         sessionEndFn: { "Session complete. All delivered!" },
         sessionStartFeedbackFn: { "Send the vans to the warehouse." }
     )
@@ -121,7 +121,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's fill buses to ten." },
+        sessionIntroFn: { "Let's fill buses in different ways." },
         sessionEndFn: { "Session complete. Everyone on board!" },
         sessionStartFeedbackFn: { "Fill the buses with passengers." }
     )
@@ -146,7 +146,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's line up bulldozers to ten." },
+        sessionIntroFn: { "Let's line up bulldozers in different ways." },
         sessionEndFn: { "Session complete. Great work on the site!" },
         sessionStartFeedbackFn: { "Line up the bulldozers on the site." }
     )
@@ -171,7 +171,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's land helicopters to ten." },
+        sessionIntroFn: { "Let's land helicopters in different ways." },
         sessionEndFn: { "Session complete. Great landing!" },
         sessionStartFeedbackFn: { "Land the helicopters on the pad." }
     )
@@ -196,7 +196,7 @@ extension VehicleSpec {
             case .done:       return "Problem complete."
             }
         },
-        sessionIntroFn: { "Let's park planes to ten." },
+        sessionIntroFn: { "Let's park planes in different ways." },
         sessionEndFn: { "Session complete. Safe travels!" },
         sessionStartFeedbackFn: { "Park the planes at the gate." }
     )

@@ -72,7 +72,7 @@ struct ThemeTests {
 
     @Test func classicThemeSessionPhrases() {
         let theme = ClassicTheme()
-        #expect(theme.sessionIntroPhrase() == "Let's make and break numbers to ten.")
+        #expect(theme.sessionIntroPhrase() == "Let's make and break numbers in different ways.")
         #expect(!theme.sessionEndPhrase().isEmpty)
         #expect(!theme.sessionStartFeedback().isEmpty)
     }

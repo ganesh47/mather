@@ -37,7 +37,7 @@ struct ClassicTheme: SliceTheme {
     }
 
     func sessionIntroPhrase() -> String {
-        "Let's make and break numbers to ten."
+        "Let's make and break numbers in different ways."
     }
 
     func sessionEndPhrase() -> String {
