@@ -221,7 +221,7 @@ struct SliceSessionView: View {
 
     private func cardBackground(for card: SumSprintBurstCard) -> some ShapeStyle {
         if card.isMatched {
-            return AnyShapeStyle(MatherTheme.mint.opacity(0.22))
+            return AnyShapeStyle(MatherTheme.softBlue.opacity(0.22))
         }
         if card.isSelected {
             return AnyShapeStyle(MatherTheme.accent.opacity(0.18))
@@ -230,13 +230,13 @@ struct SliceSessionView: View {
     }
 
     private func cardBorder(for card: SumSprintBurstCard) -> Color {
-        if card.isMatched { return MatherTheme.mint }
+        if card.isMatched { return MatherTheme.softBlue }
         if card.isSelected { return MatherTheme.accent }
         return MatherTheme.accent.opacity(0.18)
     }
 
     private func cardForeground(for card: SumSprintBurstCard) -> Color {
-        card.isMatched ? MatherTheme.mint : .primary
+        card.isMatched ? MatherTheme.softBlue : .primary
     }
 
     private var header: some View {
