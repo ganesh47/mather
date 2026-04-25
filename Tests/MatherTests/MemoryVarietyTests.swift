@@ -4,9 +4,13 @@ import Testing
 @Suite("MemoryVariety")
 struct MemoryVarietyTests {
 
-    @Test func domesticAndBirdDecksHaveExpandedPools() {
+    @Test func memoryDecksCoverExpandedCategoryPools() {
         #expect(MemoryDeck.domesticAnimals.count >= 18)
         #expect(MemoryDeck.birds.count == 36)
+        #expect(MemoryDeck.planets.count >= 8)
+        #expect(MemoryDeck.fishes.count >= 8)
+        #expect(MemoryDeck.countries.count >= 8)
+        #expect(MemoryDeck.indiaStates.count >= 8)
     }
 
     @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
