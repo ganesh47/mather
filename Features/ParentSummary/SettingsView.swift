@@ -2,6 +2,7 @@ import Observation
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
 
@@ -55,141 +56,11 @@ struct SettingsView: View {
             MatherTheme.background.ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 20) {
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Settings")
-                                .font(.largeTitle.weight(.black))
-
-                            Text("Make & Break")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 4)
-                            Text("Use the rollout toggle below to keep the reopened 4-stage loop behind parent/QA control until validation is complete.")
-                                .font(.subheadline)
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            VS1ToggleRow(
-                                title: "Make & Break loop v2",
-                                subtitle: "Turns on the repeated Make it → Gravity Split → Sum Sprint → Bond Blast route for each target.",
-                                accessibilityIdentifier: "settings-loop-v2-toggle",
-                                isOn: makeBreakLoopV2Binding
-                            )
-
-                            Divider()
-
-                            RoomQuestSettingsEntry(appModel: appModel)
-
-                            Divider()
-
-                            Text("Feedback")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            Toggle("Audio prompts", isOn: audioBinding)
-                            Toggle("Haptics", isOn: hapticsBinding)
-
-                            Divider()
-
-                            Text("Advanced")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            VS1ToggleRow(
-                                title: "Motion controls",
-                                subtitle: "Lets the child wave the iPad to celebrate correct answers.",
-                                isOn: motionBinding
-                            )
-                            VS1ToggleRow(
-                                title: "Clap reaction (mic)",
-                                subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
-                                isOn: soundReactionBinding
-                            )
-                        }
-                        .font(.title3.weight(.semibold))
-                    }
-
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("Kid profiles")
-                                .font(.title2.weight(.bold))
-                            Text("Each profile keeps session data separate. Parent summary combines all profiles.")
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-
-                            Picker("Active profile", selection: Binding(
-                                get: { appModel.profileStore.activeProfileId },
-                                set: { appModel.profileStore.setActiveProfile(id: $0) }
-                            )) {
-                                ForEach(appModel.profileStore.profiles, id: \.id) { profile in
-                                    Text("\(profile.emoji) \(profile.name)")
-                                        .tag(profile.id)
-                                }
-                            }
-
-                            HStack {
-                                TextField("New profile name", text: $newProfileName)
-                                    .textFieldStyle(.roundedBorder)
-                                Picker("Emoji", selection: $newProfileEmoji) {
-                                    ForEach(KidProfileStore.emojiChoices, id: \.self) { emoji in
-                                        Text(emoji).tag(emoji)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                            }
-
-                            Button("Add profile") {
-                                appModel.profileStore.addProfile(name: newProfileName, emoji: newProfileEmoji)
-                                newProfileName = ""
-                            }
-                            .buttonStyle(PrimaryActionButtonStyle())
-                        }
-                    }
-
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Session history")
-                                .font(.title2.weight(.bold))
-                            Text("\(summaries.count) saved locally")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                            ForEach(Array(summaries.prefix(8).enumerated()), id: \.element.sessionId) { index, summary in
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Session \(index + 1)")
-                                            .font(.caption.weight(.bold))
-                                            .foregroundStyle(MatherTheme.accent)
-                                        Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
-                                        Text("Accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
-                                            .foregroundStyle(MatherTheme.cardSubtitle)
-                                    }
-                                    Spacer()
-                                    Text(summary.exportFileName.replacingOccurrences(of: "swiftdata://session/", with: "Session ID "))
-                                        .font(.caption)
-                                        .foregroundStyle(MatherTheme.cardSubtitle)
-                                }
-                                .padding(.vertical, 4)
-                                .accessibilityElement(children: .combine)
-                                .accessibilityIdentifier("settings-history-session-\(index)")
-                            }
-                            if summaries.isEmpty {
-                                Text("No history yet.")
-                                    .foregroundStyle(MatherTheme.cardSubtitle)
-                            }
-                        }
-                    }
-
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Pilot smoke test")
-                                .font(.title2.weight(.bold))
-                            Text("Run this checklist before each new pilot session:")
-                                .font(.subheadline)
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                            VStack(alignment: .leading, spacing: 8) {
-                                smokeStep("1. Tap Home → Play → Start Session.")
-                                smokeStep("2. Verify Make → Gravity Split → Sum Sprint → Bond Blast.")
-                                smokeStep("3. Confirm Session Complete screen appears.")
-                                smokeStep("4. Confirm events are writing to the on-device SwiftData telemetry store.")
-                            }
-                        }
+                    LazyVGrid(columns: ResponsiveLayout.settingsColumns(for: horizontalSizeClass), alignment: .leading, spacing: 20) {
+                        settingsCard
+                        profilesCard
+                        historyCard
+                        smokeTestCard
                     }
 
                     Button(role: .destructive) {
@@ -201,19 +72,21 @@ struct SettingsView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .tint(MatherTheme.danger)
 
-                    HStack(spacing: 16) {
-                        Button("Parent Summary") {
-                            appModel.engine.showParentSummary()
+                    Group {
+                        if ResponsiveLayout.isWide(horizontalSizeClass) {
+                            HStack(spacing: 16) {
+                                footerButtons
+                            }
+                        } else {
+                            VStack(spacing: 12) {
+                                footerButtons
+                            }
                         }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
-
-                        Button("Home") {
-                            appModel.engine.showHome()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
                     }
                 }
-                .padding(24)
+                .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                .frame(maxWidth: .infinity)
             }
         }
         .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
@@ -224,6 +97,180 @@ struct SettingsView: View {
             }
         } message: {
             Text("This removes saved summaries and telemetry events for the active kid profile.")
+        }
+    }
+
+    private var settingsCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Settings")
+                    .font(.largeTitle.weight(.black))
+
+                Text("Make & Break")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
+                Text("Use the rollout toggle below to keep the reopened 4-stage loop behind parent/QA control until validation is complete.")
+                    .font(.subheadline)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VS1ToggleRow(
+                    title: "Make & Break loop v2",
+                    subtitle: "Turns on the repeated Make it → Gravity Split → Sum Sprint → Bond Blast route for each target.",
+                    accessibilityIdentifier: "settings-loop-v2-toggle",
+                    isOn: makeBreakLoopV2Binding
+                )
+
+                Divider()
+
+                RoomQuestSettingsEntry(appModel: appModel)
+
+                Divider()
+
+                Text("Feedback")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Toggle("Audio prompts", isOn: audioBinding)
+                Toggle("Haptics", isOn: hapticsBinding)
+
+                Divider()
+
+                Text("Advanced")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                VS1ToggleRow(
+                    title: "Motion controls",
+                    subtitle: "Lets the child wave the iPad to celebrate correct answers.",
+                    isOn: motionBinding
+                )
+                VS1ToggleRow(
+                    title: "Clap reaction (mic)",
+                    subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
+                    isOn: soundReactionBinding
+                )
+            }
+            .font(.title3.weight(.semibold))
+        }
+    }
+
+    private var profilesCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Kid profiles")
+                    .font(.title2.weight(.bold))
+                Text("Each profile keeps session data separate. Parent summary combines all profiles.")
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+
+                Picker("Active profile", selection: Binding(
+                    get: { appModel.profileStore.activeProfileId },
+                    set: { appModel.profileStore.setActiveProfile(id: $0) }
+                )) {
+                    ForEach(appModel.profileStore.profiles, id: \.id) { profile in
+                        Text("\(profile.emoji) \(profile.name)")
+                            .tag(profile.id)
+                    }
+                }
+
+                Group {
+                    if ResponsiveLayout.isWide(horizontalSizeClass) {
+                        HStack(alignment: .top, spacing: 12) {
+                            profileInputs
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            profileInputs
+                        }
+                    }
+                }
+
+                Button("Add profile") {
+                    appModel.profileStore.addProfile(name: newProfileName, emoji: newProfileEmoji)
+                    newProfileName = ""
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+            }
+        }
+    }
+
+    private var profileInputs: some View {
+        Group {
+            TextField("New profile name", text: $newProfileName)
+                .textFieldStyle(.roundedBorder)
+
+            Picker("Emoji", selection: $newProfileEmoji) {
+                ForEach(KidProfileStore.emojiChoices, id: \.self) { emoji in
+                    Text(emoji).tag(emoji)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
+    private var historyCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Session history")
+                    .font(.title2.weight(.bold))
+                Text("\(summaries.count) saved locally")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                ForEach(Array(summaries.prefix(8).enumerated()), id: \.element.sessionId) { index, summary in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Session \(index + 1)")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(MatherTheme.accent)
+                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
+                            Text("Accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+                        Spacer()
+                        Text(summary.exportFileName.replacingOccurrences(of: "swiftdata://session/", with: "Session ID "))
+                            .font(.caption)
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("settings-history-session-\(index)")
+                }
+                if summaries.isEmpty {
+                    Text("No history yet.")
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+            }
+        }
+    }
+
+    private var smokeTestCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Pilot smoke test")
+                    .font(.title2.weight(.bold))
+                Text("Run this checklist before each new pilot session:")
+                    .font(.subheadline)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                VStack(alignment: .leading, spacing: 8) {
+                    smokeStep("1. Tap Home → Play → Start Session.")
+                    smokeStep("2. Verify Make → Gravity Split → Sum Sprint → Bond Blast.")
+                    smokeStep("3. Confirm Session Complete screen appears.")
+                    smokeStep("4. Confirm events are writing to the on-device SwiftData telemetry store.")
+                }
+            }
+        }
+    }
+
+    private var footerButtons: some View {
+        Group {
+            Button("Parent Summary") {
+                appModel.engine.showParentSummary()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+
+            Button("Home") {
+                appModel.engine.showHome()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
         }
     }
 }

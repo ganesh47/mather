@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProfilePickerView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var store: KidProfileStore
     let onPicked: () -> Void
 
@@ -8,7 +9,9 @@ struct ProfilePickerView: View {
     @State private var newName = ""
     @State private var newEmoji = KidProfileStore.emojiChoices[0]
 
-    private let columns = [GridItem(.adaptive(minimum: 110, maximum: 160), spacing: 16)]
+    private var columns: [GridItem] {
+        ResponsiveLayout.profileColumns(for: horizontalSizeClass)
+    }
 
     var body: some View {
         NavigationStack {
@@ -33,7 +36,9 @@ struct ProfilePickerView: View {
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
-                    .padding(24)
+                    .frame(maxWidth: ResponsiveLayout.profilePickerMaxWidth(for: horizontalSizeClass), alignment: .leading)
+                    .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                    .frame(maxWidth: .infinity)
                     .animation(.spring(duration: 0.3), value: showingAddForm)
                 }
             }
@@ -142,25 +147,39 @@ struct ProfilePickerView: View {
                 }
             }
 
-            HStack(spacing: 12) {
-                Button("Cancel") {
-                    newName = ""
-                    newEmoji = KidProfileStore.emojiChoices[0]
-                    withAnimation { showingAddForm = false }
+            Group {
+                if ResponsiveLayout.isWide(horizontalSizeClass) {
+                    HStack(spacing: 12) {
+                        actionButtons
+                    }
+                } else {
+                    VStack(spacing: 12) {
+                        actionButtons
+                    }
                 }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.card))
-
-                Button("Save & Play") {
-                    guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-                    store.addProfile(name: newName, emoji: newEmoji)
-                    onPicked()
-                }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.85)))
-                .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
         .padding(20)
         .background(MatherTheme.card)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var actionButtons: some View {
+        Group {
+            Button("Cancel") {
+                newName = ""
+                newEmoji = KidProfileStore.emojiChoices[0]
+                withAnimation { showingAddForm = false }
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.card))
+
+            Button("Save & Play") {
+                guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                store.addProfile(name: newName, emoji: newEmoji)
+                onPicked()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.accent.opacity(0.85)))
+            .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
     }
 }

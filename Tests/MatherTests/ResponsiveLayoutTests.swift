@@ -1,0 +1,26 @@
+import SwiftUI
+import Testing
+@testable import Mather
+
+@Suite("ResponsiveLayout")
+struct ResponsiveLayoutTests {
+    @MainActor @Test func settingsColumnsExpandOnRegularWidth() {
+        #expect(ResponsiveLayout.settingsColumns(for: .compact).count == 1)
+        #expect(ResponsiveLayout.settingsColumns(for: .regular).count == 2)
+    }
+
+    @MainActor @Test func profilePickerLayoutGetsWiderOnRegularWidth() {
+        #expect(ResponsiveLayout.profileColumns(for: .compact).count == 1)
+        #expect(ResponsiveLayout.profileColumns(for: .regular).count == 1)
+        #expect(ResponsiveLayout.profilePickerMaxWidth(for: .regular) == 920)
+        #expect(ResponsiveLayout.profilePickerMaxWidth(for: .compact) == .infinity)
+    }
+
+    @MainActor @Test func contentPaddingAndWidthsStayTabletAware() {
+        #expect(ResponsiveLayout.contentPadding(for: .compact) == 24)
+        #expect(ResponsiveLayout.contentPadding(for: .regular) == 48)
+        #expect(ResponsiveLayout.contentMaxWidth(for: .regular) > ResponsiveLayout.contentMaxWidth(for: .compact))
+        #expect(ResponsiveLayout.isWide(.regular))
+        #expect(!ResponsiveLayout.isWide(.compact))
+    }
+}

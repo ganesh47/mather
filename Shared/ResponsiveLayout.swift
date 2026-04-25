@@ -36,6 +36,21 @@ enum ResponsiveLayout {
         return Array(repeating: GridItem(.flexible(), spacing: 8), count: count)
     }
 
+    static func settingsColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let count = horizontalSizeClass == .regular ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 20, alignment: .top), count: count)
+    }
+
+    static func profileColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let minimum = horizontalSizeClass == .regular ? 140.0 : 110.0
+        let maximum = horizontalSizeClass == .regular ? 180.0 : 160.0
+        return [GridItem(.adaptive(minimum: minimum, maximum: maximum), spacing: 16)]
+    }
+
+    static func profilePickerMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 920 : .infinity
+    }
+
     // MARK: - Layout style
 
     static func isWide(_ horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
