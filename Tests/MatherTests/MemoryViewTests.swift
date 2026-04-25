@@ -39,6 +39,32 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.vehicles.animals.map(\.id) == MemoryDeck.vehicles.map(\.id))
     }
 
+    @Test func newDeckSelectionsExposeRequestedCategories() {
+        #expect(MemoryView.DeckSelection.allCases.contains(.planets))
+        #expect(MemoryView.DeckSelection.allCases.contains(.fishes))
+        #expect(MemoryView.DeckSelection.allCases.contains(.countries))
+        #expect(MemoryView.DeckSelection.allCases.contains(.indiaStates))
+        #expect(MemoryView.DeckSelection.planets.animals.map(\.id) == MemoryDeck.planets.map(\.id))
+        #expect(MemoryView.DeckSelection.fishes.animals.map(\.id) == MemoryDeck.fishes.map(\.id))
+        #expect(MemoryView.DeckSelection.countries.animals.map(\.id) == MemoryDeck.countries.map(\.id))
+        #expect(MemoryView.DeckSelection.indiaStates.animals.map(\.id) == MemoryDeck.indiaStates.map(\.id))
+    }
+
+    @Test func requestedDecksProvideEnoughDistinctPairs() {
+        for deck in [MemoryDeck.planets, MemoryDeck.fishes, MemoryDeck.countries, MemoryDeck.indiaStates] {
+            #expect(deck.count >= MemoryDifficulty.hard.pairCount)
+            #expect(Set(deck.map(\.id)).count == deck.count)
+        }
+    }
+
+    @Test func capitalDecksMatchPromptSideToCapitalLabel() {
+        let country = MemoryDeck.countries.first { $0.canonicalName == "India" }
+        let state = MemoryDeck.indiaStates.first { $0.canonicalName == "Kerala" }
+
+        #expect(country?.name == "New Delhi")
+        #expect(state?.name == "Thiruvananthapuram")
+    }
+
     @MainActor
     @Test func learningContentAndEligibilityFollowVisibleBirdRules() {
         let bird = MemoryDeck.birds[0]
@@ -72,7 +98,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.indiaStates
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
@@ -80,6 +106,10 @@ struct MemoryCardDescribeServiceTests {
         #expect(MemoryDeck.domesticAnimals.allSatisfy { $0.metadata.deck == .domesticAnimals })
         #expect(MemoryDeck.birds.allSatisfy { $0.metadata.deck == .birds })
         #expect(MemoryDeck.vehicles.allSatisfy { $0.metadata.deck == .vehicles })
+        #expect(MemoryDeck.planets.allSatisfy { $0.metadata.deck == .planets })
+        #expect(MemoryDeck.fishes.allSatisfy { $0.metadata.deck == .fishes })
+        #expect(MemoryDeck.countries.allSatisfy { $0.metadata.deck == .countries })
+        #expect(MemoryDeck.indiaStates.allSatisfy { $0.metadata.deck == .indiaStates })
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedBirdMetadata() async {

@@ -5,6 +5,7 @@ import SwiftUI
 enum MemoryPicture: Equatable {
     case emoji(String)
     case asset(String)
+    case text(String)
 }
 
 struct MemoryFactCard: Equatable, Hashable {
@@ -16,12 +17,20 @@ enum MemoryDeckKind: String, Equatable {
     case domesticAnimals
     case birds
     case vehicles
+    case planets
+    case fishes
+    case countries
+    case indiaStates
 
     var displayName: String {
         switch self {
         case .domesticAnimals: return "Animals"
         case .birds: return "Birds"
         case .vehicles: return "Vehicles"
+        case .planets: return "Planets"
+        case .fishes: return "Fishes"
+        case .countries: return "Countries & Capitals"
+        case .indiaStates: return "Indian States & Capitals"
         }
     }
 }
@@ -251,8 +260,52 @@ enum MemoryDeck {
         vehicle("taxi", name: "Taxi", emoji: "🚕", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
     ]
 
+    static let planets: [MemoryAnimal] = [
+        planet("planet-mercury", prompt: "☿", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
+        planet("planet-venus", prompt: "♀", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
+        planet("planet-earth", prompt: "⊕", name: "Earth", order: "3rd from the Sun", type: "rocky planet", size: "12,742 km wide", colors: "blue, green, white", funFact: "It has one moon"),
+        planet("planet-mars", prompt: "♂", name: "Mars", order: "4th from the Sun", type: "rocky planet", size: "6,779 km wide", colors: "rusty red", funFact: "It has two small moons"),
+        planet("planet-jupiter", prompt: "♃", name: "Jupiter", order: "5th from the Sun", type: "gas giant", size: "139,820 km wide", colors: "brown, cream, orange", funFact: "It is the biggest planet"),
+        planet("planet-saturn", prompt: "♄", name: "Saturn", order: "6th from the Sun", type: "gas giant", size: "116,460 km wide", colors: "gold and tan", funFact: "It is famous for bright rings"),
+        planet("planet-uranus", prompt: "⛢", name: "Uranus", order: "7th from the Sun", type: "ice giant", size: "50,724 km wide", colors: "icy blue", funFact: "It rotates on its side"),
+        planet("planet-neptune", prompt: "♆", name: "Neptune", order: "8th from the Sun", type: "ice giant", size: "49,244 km wide", colors: "deep blue", funFact: "It has very fast winds")
+    ]
+
+    static let fishes: [MemoryAnimal] = [
+        fish("fish-clownfish", prompt: "Orange reef fish", name: "Clownfish", home: "warm coral reefs", size: "10 to 18 cm long", colors: "orange, white, black", funFact: "It hides safely inside sea anemones"),
+        fish("fish-goldfish", prompt: "Golden pond fish", name: "Goldfish", home: "ponds and aquariums", size: "15 to 30 cm long", colors: "gold, orange, white", funFact: "It can remember simple routes and feeding times"),
+        fish("fish-betta", prompt: "Flowing fin fish", name: "Betta", home: "slow streams and rice fields", size: "6 to 8 cm long", colors: "red, blue, purple", funFact: "It can breathe some air from the surface"),
+        fish("fish-angelfish", prompt: "Tall fin reef fish", name: "Angelfish", home: "coral reefs", size: "15 to 25 cm long", colors: "yellow, blue, black", funFact: "It glides between corals with flat fins"),
+        fish("fish-catfish", prompt: "Whiskered river fish", name: "Catfish", home: "rivers, lakes, and ponds", size: "20 to 60 cm long", colors: "gray, brown, black", funFact: "Its whiskers help it sense food in cloudy water"),
+        fish("fish-swordtail", prompt: "Tail-sword fish", name: "Swordtail", home: "freshwater streams", size: "8 to 12 cm long", colors: "orange, green, black", funFact: "The male has a long sword-shaped tail"),
+        fish("fish-tuna", prompt: "Fast ocean fish", name: "Tuna", home: "open ocean waters", size: "1 to 2 m long", colors: "silver and blue", funFact: "It can swim very fast for long distances"),
+        fish("fish-seahorse", prompt: "Tiny upright sea swimmer", name: "Seahorse", home: "sea grass beds and reefs", size: "2 to 15 cm long", colors: "yellow, brown, orange", funFact: "It swims upright and curls its tail")
+    ]
+
+    static let countries: [MemoryAnimal] = [
+        countryCapital("country-india", country: "India", capital: "New Delhi", continent: "Asia", clue: "home of the Taj Mahal"),
+        countryCapital("country-japan", country: "Japan", capital: "Tokyo", continent: "Asia", clue: "known for cherry blossoms and bullet trains"),
+        countryCapital("country-france", country: "France", capital: "Paris", continent: "Europe", clue: "home of the Eiffel Tower"),
+        countryCapital("country-egypt", country: "Egypt", capital: "Cairo", continent: "Africa", clue: "home of the Great Pyramids"),
+        countryCapital("country-brazil", country: "Brazil", capital: "Brasília", continent: "South America", clue: "home of the Amazon rainforest"),
+        countryCapital("country-australia", country: "Australia", capital: "Canberra", continent: "Australia", clue: "home of kangaroos and koalas"),
+        countryCapital("country-canada", country: "Canada", capital: "Ottawa", continent: "North America", clue: "known for maple leaves and snowy winters"),
+        countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", clue: "known for savannas and wildlife parks")
+    ]
+
+    static let indiaStates: [MemoryAnimal] = [
+        indiaStateCapital("state-maharashtra", state: "Maharashtra", capital: "Mumbai", region: "west India", clue: "Gateway of India and Bollywood"),
+        indiaStateCapital("state-karnataka", state: "Karnataka", capital: "Bengaluru", region: "south India", clue: "gardens, rockets, and tech city"),
+        indiaStateCapital("state-tamil-nadu", state: "Tamil Nadu", capital: "Chennai", region: "south India", clue: "temples, music, and Marina Beach"),
+        indiaStateCapital("state-west-bengal", state: "West Bengal", capital: "Kolkata", region: "east India", clue: "Howrah Bridge and rasgulla"),
+        indiaStateCapital("state-gujarat", state: "Gujarat", capital: "Gandhinagar", region: "west India", clue: "Gir lions and white desert festival"),
+        indiaStateCapital("state-rajasthan", state: "Rajasthan", capital: "Jaipur", region: "northwest India", clue: "pink city and desert forts"),
+        indiaStateCapital("state-kerala", state: "Kerala", capital: "Thiruvananthapuram", region: "south India", clue: "backwaters and coconut trees"),
+        indiaStateCapital("state-assam", state: "Assam", capital: "Dispur", region: "northeast India", clue: "tea gardens and one-horned rhinos")
+    ]
+
     static let allAnimalsById: [String: MemoryAnimal] = {
-        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles).map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + indiaStates).map { ($0.id, $0) })
     }()
 
     private static func domesticAnimal(_ id: String, name: String, emoji: String, habitat: String, colors: String, sound: String?, movement: String) -> MemoryAnimal {
@@ -312,6 +365,96 @@ enum MemoryDeck {
                 use: use,
                 movement: movement,
                 sound: sound
+            )
+        )
+    }
+
+    private static func planet(_ id: String, prompt: String, name: String, order: String, type: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .text(prompt),
+            metadata: MemoryCardMetadata(
+                deck: .planets,
+                category: "planet",
+                kind: type,
+                habitat: "our solar system",
+                size: size,
+                colors: colors,
+                movement: "orbits the Sun",
+                factCards: [
+                    MemoryFactCard(title: "Name", value: name),
+                    MemoryFactCard(title: "Order", value: order),
+                    MemoryFactCard(title: "Type", value: type),
+                    MemoryFactCard(title: "Size", value: size),
+                    MemoryFactCard(title: "Fun Fact", value: funFact)
+                ]
+            )
+        )
+    }
+
+    private static func fish(_ id: String, prompt: String, name: String, home: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .text(prompt),
+            metadata: MemoryCardMetadata(
+                deck: .fishes,
+                category: "fish",
+                kind: "fish",
+                habitat: home,
+                size: size,
+                colors: colors,
+                movement: "swims with fins",
+                factCards: [
+                    MemoryFactCard(title: "Name", value: name),
+                    MemoryFactCard(title: "Home", value: home),
+                    MemoryFactCard(title: "Size", value: size),
+                    MemoryFactCard(title: "Colors", value: colors),
+                    MemoryFactCard(title: "Fun Fact", value: funFact)
+                ]
+            )
+        )
+    }
+
+    private static func countryCapital(_ id: String, country: String, capital: String, continent: String, clue: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: capital,
+            canonicalName: country,
+            picture: .text(country),
+            metadata: MemoryCardMetadata(
+                deck: .countries,
+                category: "country",
+                kind: "country and capital",
+                habitat: continent,
+                factCards: [
+                    MemoryFactCard(title: "Country", value: country),
+                    MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Continent", value: continent),
+                    MemoryFactCard(title: "Known For", value: clue)
+                ]
+            )
+        )
+    }
+
+    private static func indiaStateCapital(_ id: String, state: String, capital: String, region: String, clue: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: capital,
+            canonicalName: state,
+            picture: .text(state),
+            metadata: MemoryCardMetadata(
+                deck: .indiaStates,
+                category: "state",
+                kind: "Indian state and capital",
+                habitat: region,
+                factCards: [
+                    MemoryFactCard(title: "State", value: state),
+                    MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Region", value: region),
+                    MemoryFactCard(title: "Known For", value: clue)
+                ]
             )
         )
     }
@@ -378,13 +521,17 @@ struct MemoryView: View {
     @State private var learningContent: MemoryLearningContent? = nil
 
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles
+        case domestic, birds, vehicles, planets, fishes, countries, indiaStates
 
         var label: String {
             switch self {
             case .domestic: return "🐄 Animals"
             case .birds: return "🦜 Birds"
             case .vehicles: return "🚗 Vehicles"
+            case .planets: return "🪐 Planets"
+            case .fishes: return "🐠 Fishes"
+            case .countries: return "🌍 Countries & Capitals"
+            case .indiaStates: return "📍 India States & Capitals"
             }
         }
 
@@ -393,6 +540,10 @@ struct MemoryView: View {
             case .domestic: return "Animals"
             case .birds: return "Birds"
             case .vehicles: return "Vehicles"
+            case .planets: return "Planets"
+            case .fishes: return "Fishes"
+            case .countries: return "Countries & Capitals"
+            case .indiaStates: return "India States & Capitals"
             }
         }
 
@@ -401,6 +552,10 @@ struct MemoryView: View {
             case .domestic: return MemoryDeck.domesticAnimals
             case .birds: return MemoryDeck.birds
             case .vehicles: return MemoryDeck.vehicles
+            case .planets: return MemoryDeck.planets
+            case .fishes: return MemoryDeck.fishes
+            case .countries: return MemoryDeck.countries
+            case .indiaStates: return MemoryDeck.indiaStates
             }
         }
     }
@@ -626,7 +781,7 @@ struct MemoryView: View {
                     HStack(spacing: 6) {
                         Image(systemName: artStyle.ornament)
                             .font(.caption.weight(.black))
-                        Text("Match the picture")
+                        Text("Find the match")
                             .font(.caption2.weight(.bold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -666,6 +821,14 @@ struct MemoryView: View {
                 .scaledToFit()
                 .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
                 .padding(4)
+        case .text(let value):
+            Text(value)
+                .font(.system(size: difficulty == .hard ? 18 : 22, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.52)
+                .padding(10)
         }
     }
 
@@ -1022,6 +1185,14 @@ struct MemoryView: View {
             return "Animal Guide"
         case .vehicles:
             return "Vehicle Guide"
+        case .planets:
+            return "Planet Guide"
+        case .fishes:
+            return "Fish Guide"
+        case .countries:
+            return "Country Guide"
+        case .indiaStates:
+            return "India Guide"
         }
     }
 

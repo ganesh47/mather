@@ -117,7 +117,7 @@ final class MemoryCardDescribeService {
            let generated = try? await aiAdapter.shortDescription(for: animal),
            let sanitized = sanitizeGeneratedDescription(generated) {
             return MemoryCardDescription(
-                title: animal.name,
+                title: animal.canonicalName,
                 shortDescription: sanitized,
                 factChips: fallbackFactChips(for: animal),
                 source: .appleIntelligence
@@ -129,7 +129,7 @@ final class MemoryCardDescribeService {
 
     func fallbackDescription(for animal: MemoryAnimal) -> MemoryCardDescription {
         MemoryCardDescription(
-            title: animal.name,
+            title: animal.canonicalName,
             shortDescription: buildFallbackDescription(for: animal),
             factChips: fallbackFactChips(for: animal),
             source: .curatedFallback
@@ -142,21 +142,41 @@ final class MemoryCardDescribeService {
         switch metadata.deck {
         case .birds:
             if let habitat = metadata.habitat {
-                firstSentence = "\(animal.name) is a bird that lives in \(habitat.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a bird that lives in \(habitat.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a colorful bird."
+                firstSentence = "\(animal.canonicalName) is a colorful bird."
             }
         case .domesticAnimals:
             if let habitat = metadata.habitat {
-                firstSentence = "\(animal.name) is a domestic animal you might find in \(habitat.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a domestic animal you might find in \(habitat.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a friendly domestic animal."
+                firstSentence = "\(animal.canonicalName) is a friendly domestic animal."
             }
         case .vehicles:
             if let use = metadata.use {
-                firstSentence = "\(animal.name) is a vehicle that \(use.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a vehicle that \(use.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a helpful vehicle."
+                firstSentence = "\(animal.canonicalName) is a helpful vehicle."
+            }
+        case .planets:
+            firstSentence = "\(animal.canonicalName) is a planet in our solar system."
+        case .fishes:
+            if let habitat = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a fish that lives in \(habitat.lowercased())."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a fish that swims with fins."
+            }
+        case .countries:
+            if let continent = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a country in \(continent.lowercased()) and its capital is \(animal.name)."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a country and its capital is \(animal.name)."
+            }
+        case .indiaStates:
+            if let region = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is an Indian state in \(region.lowercased()) and its capital is \(animal.name)."
+            } else {
+                firstSentence = "\(animal.canonicalName) is an Indian state and its capital is \(animal.name)."
             }
         }
 
