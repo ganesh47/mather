@@ -46,14 +46,16 @@ struct MemoryVarietyTests {
         #expect(MemoryDeck.birds.allSatisfy { Set($0.detailCards.map(\.title)).isSuperset(of: ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"]) })
     }
 
-    @MainActor @Test func learningDetailsAreOnlyAvailableForCompletedBirdRounds() {
+    @MainActor @Test func learningDetailsRespectRevealRulesAcrossDecks() {
         let bird = MemoryDeck.birds[0]
+        let domestic = MemoryDeck.domesticAnimals[0]
         let matchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: true)
         let unmatchedBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isMatched: false)
+        let revealedDomesticCard = MemoryCard(pairId: domestic.id, content: .picture(domestic), isSelected: true)
 
         #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, difficulty: .medium, showRoundComplete: true))
         #expect(!MemoryView.canOpenLearningDetails(for: unmatchedBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: true))
-        #expect(!MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .domestic, difficulty: .medium, showRoundComplete: true))
+        #expect(MemoryView.canOpenLearningDetails(for: revealedDomesticCard, deckSelection: .domestic, difficulty: .hard, showRoundComplete: false))
         #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, difficulty: .medium, showRoundComplete: false))
     }
 

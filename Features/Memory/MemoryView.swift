@@ -811,31 +811,41 @@ struct MemoryView: View {
     }
 
     static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, difficulty: MemoryDifficulty, showRoundComplete: Bool) -> Bool {
-        guard deckSelection == .birds else { return false }
+        guard supportsLearningDetails(for: deckSelection) else { return false }
         if card.isMatched { return true }
         guard !showRoundComplete else { return false }
         return difficulty.faceDown ? card.isSelected : true
     }
 
-    static func learningContent(for animal: MemoryAnimal, deckSelection: DeckSelection) -> MemoryLearningContent? {
-        guard deckSelection == .birds else { return nil }
+    static func supportsLearningDetails(for deckSelection: DeckSelection) -> Bool {
+        !deckSelection.animals.isEmpty
+    }
 
-        let summary = learningSummary(for: animal)
-        let sourceBadge = learningSourceBadge(for: deckSelection)
+    static func learningContent(for animal: MemoryAnimal, deckSelection: DeckSelection, description: MemoryCardDescription) -> MemoryLearningContent {
+        let sourceBadge = learningSourceBadge(for: deckSelection, source: description.source)
+        let factChips = description.factChips.map { MemoryFactCard(title: $0.title, value: $0.value) }
         return MemoryLearningContent(
             animal: animal,
-            title: animal.canonicalName,
-            shortDescription: summary,
-            factChips: animal.detailCards,
+            title: description.title,
+            shortDescription: description.shortDescription,
+            factChips: factChips,
             sourceBadge: sourceBadge,
-            readAloudText: learningReadAloudText(for: animal, summary: summary, sourceBadge: sourceBadge)
+            readAloudText: learningReadAloudText(for: description.title, summary: description.shortDescription, factChips: factChips, sourceBadge: sourceBadge)
         )
     }
 
     private func handleDoubleTap(_ card: MemoryCard) {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
-        guard let content = Self.learningContent(for: animal(for: card), deckSelection: deckSelection) else { return }
-        learningContent = content
+        let selectedAnimal = animal(for: card)
+        learningContent = Self.learningContent(
+            for: selectedAnimal,
+            deckSelection: deckSelection,
+            description: appModel.memoryCardDescribeService.fallbackDescription(for: selectedAnimal)
+        )
+        Task { @MainActor in
+            let description = await appModel.memoryCardDescribeService.describe(selectedAnimal)
+            learningContent = Self.learningContent(for: selectedAnimal, deckSelection: deckSelection, description: description)
+        }
     }
 
     @ViewBuilder
@@ -1014,35 +1024,27 @@ struct MemoryView: View {
         return "memory-card-\(card.pairId)-\(kind)"
     }
 
-    private static func learningSourceBadge(for deckSelection: DeckSelection) -> String {
+    private static func learningSourceBadge(for deckSelection: DeckSelection, source: MemoryCardDescriptionSource) -> String {
+        let deckLabel: String
         switch deckSelection {
         case .birds:
-            return "Bird Guide"
+            deckLabel = "Bird Guide"
         case .domestic:
-            return "Animal Guide"
+            deckLabel = "Animal Guide"
         case .vehicles:
-            return "Vehicle Guide"
+            deckLabel = "Vehicle Guide"
+        }
+
+        switch source {
+        case .appleIntelligence:
+            return "Apple Intelligence + \(deckLabel)"
+        case .curatedFallback:
+            return deckLabel
         }
     }
 
-    private static func learningSummary(for animal: MemoryAnimal) -> String {
-        // Keep this isolated so a future describe/Apple Intelligence service can
-        // replace summary generation without reshaping the sheet UI state.
-        let home = animal.detailCards.first(where: { $0.title == "Home" })?.value
-        let colors = animal.detailCards.first(where: { $0.title == "Colors" })?.value
-
-        switch (home, colors) {
-        case let (home?, colors?):
-            return "A colorful bird from \(home.lowercased()), often seen in shades of \(colors)."
-        case let (home?, nil):
-            return "A bird that lives around \(home.lowercased())."
-        default:
-            return "A matching-card favorite with a few quick facts to explore."
-        }
-    }
-
-    private static func learningReadAloudText(for animal: MemoryAnimal, summary: String, sourceBadge: String) -> String {
-        let facts = animal.detailCards.map { "\($0.title): \($0.value)." }.joined(separator: " ")
-        return "\(animal.canonicalName). \(summary) Source: \(sourceBadge). \(facts)"
+    private static func learningReadAloudText(for title: String, summary: String, factChips: [MemoryFactCard], sourceBadge: String) -> String {
+        let facts = factChips.map { "\($0.title): \($0.value)." }.joined(separator: " ")
+        return "\(title). \(summary) Source: \(sourceBadge). \(facts)"
     }
 }
