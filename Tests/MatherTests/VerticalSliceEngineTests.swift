@@ -31,11 +31,13 @@ struct VerticalSliceEngineTests {
     }
 
     private func completeSumSprintBurst(_ engine: VerticalSliceEngine) {
-        while let card = engine.sumSprintBurstState?.currentCard {
-            for digit in String(card.answer) {
-                engine.appendSumSprintDigit(Int(String(digit))!)
-            }
-            engine.submitSumSprintCard()
+        guard let cards = engine.sumSprintBurstState?.cards else { return }
+        let pairIDs = Array(Set(cards.map(\.pairId)))
+        for pairID in pairIDs {
+            guard let pairCards = engine.sumSprintBurstState?.cards.filter({ $0.pairId == pairID }),
+                  pairCards.count == 2 else { continue }
+            engine.selectSumSprintCard(id: pairCards[0].id)
+            engine.selectSumSprintCard(id: pairCards[1].id)
         }
     }
 
@@ -77,8 +79,8 @@ struct VerticalSliceEngineTests {
         // Wait for the durable next-stage outcome instead of the transient lock bit.
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
         #expect(engine.currentStage == .sumSprint)
-        #expect((engine.sumSprintBurstState?.cards.count ?? 0) >= 1)
-        #expect((engine.sumSprintBurstState?.cards.count ?? 0) <= 3)
+        #expect((engine.sumSprintBurstState?.totalPairs ?? 0) >= 1)
+        #expect((engine.sumSprintBurstState?.totalPairs ?? 0) <= 3)
 
         completeSumSprintBurst(engine)
         await waitFor("bond blast after sum sprint") { engine.currentStage == .bondMatch }
@@ -553,14 +555,17 @@ struct VerticalSliceEngineTests {
         engine.adjustGravitySplitByTap(delta: 1, side: .left)
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
 
-        while engine.currentStage == .sumSprint, let card = engine.sumSprintBurstState?.currentCard {
-            for digit in String(card.answer).compactMap(\.wholeNumberValue) {
-                engine.appendSumSprintDigit(digit)
-            }
-            engine.submitSumSprintCard()
+        while engine.currentStage == .sumSprint,
+              let nextPair = engine.sumSprintBurstState?.cards
+                .filter({ !$0.isMatched })
+                .reduce(into: [UUID: [SumSprintBurstCard]]()) { partial, card in partial[card.pairId, default: []].append(card) }
+                .values
+                .first(where: { $0.count == 2 }) {
+            engine.selectSumSprintCard(id: nextPair[0].id)
+            engine.selectSumSprintCard(id: nextPair[1].id)
             if engine.currentStage == .sumSprint {
-                await waitFor("advance sum sprint card") {
-                    engine.sumSprintBurstState?.currentCard?.id != card.id || engine.currentStage != .sumSprint
+                await waitFor("advance sum sprint pair") {
+                    (engine.sumSprintBurstState?.matchedPairs ?? 0) > 0 || engine.currentStage != .sumSprint
                 }
             }
         }
@@ -568,6 +573,22 @@ struct VerticalSliceEngineTests {
         await waitFor("session summary after target-1 loop") { engine.route == .sessionSummary }
         #expect(engine.currentStage == .done)
         #expect(engine.bondMatchState == nil)
+    }
+
+    @Test
+    func sumSprintRequiresMatchingExpressionWithResult() {
+        let state = SumSprintBurstState.make(for: SliceProblem(target: 6, decompositionA: 2, decompositionB: 4))
+        #expect(state.cards.count == state.totalPairs * 2)
+
+        let grouped = Dictionary(grouping: state.cards, by: \.pairId)
+        let firstPair = grouped.values.first(where: { $0.count == 2 })!
+        let contents = Set(firstPair.map { card -> String in
+            switch card.content {
+            case .prompt(let value): return "p:\(value)"
+            case .sum(let value): return "s:\(value)"
+            }
+        })
+        #expect(contents.count == 2)
     }
 
     @Test
@@ -904,8 +925,8 @@ struct VerticalSliceEngineTests {
         await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
         lockGravitySplit(engine, problem: problem)
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
-        #expect((engine.sumSprintBurstState?.cards.count ?? 0) >= 1)
-        #expect((engine.sumSprintBurstState?.cards.count ?? 0) <= 3)
+        #expect((engine.sumSprintBurstState?.totalPairs ?? 0) >= 1)
+        #expect((engine.sumSprintBurstState?.totalPairs ?? 0) <= 3)
     }
 
     @Test

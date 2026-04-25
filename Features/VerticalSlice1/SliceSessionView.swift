@@ -148,36 +148,35 @@ struct SliceSessionView: View {
                 CardSurface { Text("Loading Balance...") }
             }
         case .sumSprint:
-            if let burst = appModel.engine.sumSprintBurstState,
-               let card = burst.currentCard {
+            if let burst = appModel.engine.sumSprintBurstState {
                 CardSurface {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Sum Sprint")
                             .font(.title.weight(.black))
-                        Text("Card \(burst.progressLabel)")
+                        Text("Matches \(burst.progressLabel)")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        Text(card.prompt)
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                        Text(card.typedAnswer.isEmpty ? "?" : card.typedAnswer)
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundStyle(MatherTheme.accent)
-                        VStack(spacing: 12) {
-                            ForEach([[1,2,3],[4,5,6],[7,8,9]], id: \.self) { row in
-                                HStack(spacing: 12) {
-                                    ForEach(row, id: \.self) { digit in
-                                        Button(String(digit)) { appModel.engine.appendSumSprintDigit(digit) }
-                                            .buttonStyle(PrimaryActionButtonStyle())
-                                    }
+                        Text("Tap a sum sentence, then tap its total.")
+                            .font(.headline)
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
+                            ForEach(burst.cards) { card in
+                                Button {
+                                    appModel.engine.selectSumSprintCard(id: card.id)
+                                } label: {
+                                    Text(card.content.displayText)
+                                        .font(.system(size: 26, weight: .black, design: .rounded))
+                                        .foregroundStyle(cardForeground(for: card))
+                                        .frame(maxWidth: .infinity, minHeight: 88)
+                                        .padding(.horizontal, 12)
+                                        .background(cardBackground(for: card))
+                                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                                .stroke(cardBorder(for: card), lineWidth: card.isSelected ? 4 : 2)
+                                        }
                                 }
-                            }
-                            HStack(spacing: 12) {
-                                Button("⌫") { appModel.engine.deleteSumSprintDigit() }
-                                    .buttonStyle(PrimaryActionButtonStyle())
-                                Button("0") { appModel.engine.appendSumSprintDigit(0) }
-                                    .buttonStyle(PrimaryActionButtonStyle())
-                                Button("Go") { appModel.engine.submitSumSprintCard() }
-                                    .buttonStyle(PrimaryActionButtonStyle())
+                                .buttonStyle(.plain)
+                                .disabled(card.isMatched)
                             }
                         }
                     }
@@ -218,6 +217,26 @@ struct SliceSessionView: View {
         case .done:
             CardSurface { Text("Moving to the next problem...") }
         }
+    }
+
+    private func cardBackground(for card: SumSprintBurstCard) -> some ShapeStyle {
+        if card.isMatched {
+            return AnyShapeStyle(MatherTheme.mint.opacity(0.22))
+        }
+        if card.isSelected {
+            return AnyShapeStyle(MatherTheme.accent.opacity(0.18))
+        }
+        return AnyShapeStyle(MatherTheme.panel)
+    }
+
+    private func cardBorder(for card: SumSprintBurstCard) -> Color {
+        if card.isMatched { return MatherTheme.mint }
+        if card.isSelected { return MatherTheme.accent }
+        return MatherTheme.accent.opacity(0.18)
+    }
+
+    private func cardForeground(for card: SumSprintBurstCard) -> Color {
+        card.isMatched ? MatherTheme.mint : .primary
     }
 
     private var header: some View {
