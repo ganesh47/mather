@@ -90,7 +90,7 @@ final class TelemetryWriter {
     func digest(from summaries: [StoredSessionSummary]) -> ParentDigest {
         guard !summaries.isEmpty else {
             return ParentDigest(
-                objectiveTitle: "Make & Break Numbers",
+                objectiveTitle: "Make & Break",
                 firstAttemptAccuracy: 0,
                 medianLatencyMs: 0,
                 problemsCompleted: 0,
@@ -116,7 +116,7 @@ final class TelemetryWriter {
         let transferCorrect = sorted.map(\.transferCorrectCount).reduce(0, +)
 
         return ParentDigest(
-            objectiveTitle: sorted.first?.objectiveTitle ?? "Make & Break Numbers",
+            objectiveTitle: sorted.first?.objectiveTitle ?? "Make & Break",
             firstAttemptAccuracy: accuracy,
             medianLatencyMs: median,
             problemsCompleted: completed,
