@@ -40,22 +40,31 @@ struct MemoryViewTests {
     }
 
     @MainActor
-    @Test func learningContentAndEligibilityFollowVisibleBirdRules() {
+    @Test func learningContentAndEligibilityFollowVisibleDeckRules() {
         let bird = MemoryDeck.birds[0]
-        let hiddenHardCard = MemoryCard(pairId: bird.id, content: .picture(bird))
-        let revealedHardCard = MemoryCard(pairId: bird.id, content: .picture(bird), isSelected: true)
-        let matchedBirdCard = MemoryCard(pairId: bird.id, content: .label(bird), isMatched: true)
+        let vehicle = MemoryDeck.vehicles[0]
+        let hiddenHardBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird))
+        let revealedHardBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isSelected: true)
+        let matchedVehicleCard = MemoryCard(pairId: vehicle.id, content: .label(vehicle), isMatched: true)
 
-        #expect(!MemoryView.canOpenLearningDetails(for: hiddenHardCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
-        #expect(MemoryView.canOpenLearningDetails(for: revealedHardCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
-        #expect(MemoryView.canOpenLearningDetails(for: matchedBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: true))
+        #expect(MemoryView.supportsLearningDetails(for: .birds))
+        #expect(MemoryView.supportsLearningDetails(for: .domestic))
+        #expect(MemoryView.supportsLearningDetails(for: .vehicles))
+        #expect(!MemoryView.canOpenLearningDetails(for: hiddenHardBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
+        #expect(MemoryView.canOpenLearningDetails(for: revealedHardBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
+        #expect(MemoryView.canOpenLearningDetails(for: matchedVehicleCard, deckSelection: .vehicles, difficulty: .hard, showRoundComplete: true))
 
-        let learningContent = MemoryView.learningContent(for: bird, deckSelection: .birds)
-        #expect(learningContent != nil)
-        #expect(learningContent?.title == bird.canonicalName)
-        #expect(learningContent?.sourceBadge == "Bird Guide")
-        #expect(learningContent?.factChips == bird.detailCards)
-        #expect(learningContent?.readAloudText.contains(bird.canonicalName) == true)
+        let vehicleDescription = MemoryCardDescription(
+            title: vehicle.canonicalName,
+            shortDescription: "A road vehicle for family trips.",
+            factChips: [MemoryFactChip(title: "Use", value: "family trips")],
+            source: .appleIntelligence
+        )
+        let learningContent = MemoryView.learningContent(for: vehicle, deckSelection: .vehicles, description: vehicleDescription)
+        #expect(learningContent.title == vehicle.canonicalName)
+        #expect(learningContent.sourceBadge == "Apple Intelligence + Vehicle Guide")
+        #expect(learningContent.factChips == [MemoryFactCard(title: "Use", value: "family trips")])
+        #expect(learningContent.readAloudText.contains(vehicle.canonicalName))
     }
 }
 

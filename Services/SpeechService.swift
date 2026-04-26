@@ -117,7 +117,7 @@ final class MemoryCardDescribeService {
            let generated = try? await aiAdapter.shortDescription(for: animal),
            let sanitized = sanitizeGeneratedDescription(generated) {
             return MemoryCardDescription(
-                title: animal.name,
+                title: animal.canonicalName,
                 shortDescription: sanitized,
                 factChips: fallbackFactChips(for: animal),
                 source: .appleIntelligence
@@ -129,7 +129,7 @@ final class MemoryCardDescribeService {
 
     func fallbackDescription(for animal: MemoryAnimal) -> MemoryCardDescription {
         MemoryCardDescription(
-            title: animal.name,
+            title: animal.canonicalName,
             shortDescription: buildFallbackDescription(for: animal),
             factChips: fallbackFactChips(for: animal),
             source: .curatedFallback
@@ -142,21 +142,21 @@ final class MemoryCardDescribeService {
         switch metadata.deck {
         case .birds:
             if let habitat = metadata.habitat {
-                firstSentence = "\(animal.name) is a bird that lives in \(habitat.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a bird that lives in \(habitat.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a colorful bird."
+                firstSentence = "\(animal.canonicalName) is a colorful bird."
             }
         case .domesticAnimals:
             if let habitat = metadata.habitat {
-                firstSentence = "\(animal.name) is a domestic animal you might find in \(habitat.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a domestic animal you might find in \(habitat.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a friendly domestic animal."
+                firstSentence = "\(animal.canonicalName) is a friendly domestic animal."
             }
         case .vehicles:
             if let use = metadata.use {
-                firstSentence = "\(animal.name) is a vehicle that \(use.lowercased())."
+                firstSentence = "\(animal.canonicalName) is a vehicle that \(use.lowercased())."
             } else {
-                firstSentence = "\(animal.name) is a helpful vehicle."
+                firstSentence = "\(animal.canonicalName) is a helpful vehicle."
             }
         }
 
