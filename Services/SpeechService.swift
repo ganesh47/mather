@@ -158,6 +158,26 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is a helpful vehicle."
             }
+        case .planets:
+            firstSentence = "\(animal.canonicalName) is a planet in our solar system."
+        case .fishes:
+            if let habitat = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a fish that lives in \(habitat.lowercased())."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a fish that swims with fins."
+            }
+        case .countries:
+            if let continent = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a country in \(continent.lowercased()) and its capital is \(animal.name)."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a country and its capital is \(animal.name)."
+            }
+        case .indiaStates:
+            if let region = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is an Indian state in \(region.lowercased()) and its capital is \(animal.name)."
+            } else {
+                firstSentence = "\(animal.canonicalName) is an Indian state and its capital is \(animal.name)."
+            }
         }
 
         let secondParts = [
