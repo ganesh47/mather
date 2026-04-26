@@ -506,7 +506,7 @@ final class ScreenshotTests: XCTestCase {
         let promptPrefix = "sumsprint-prompt-"
         let sumPrefix = "sumsprint-sum-"
 
-        for _ in 0..<expectedPairs {
+        for pairIndex in 0..<expectedPairs {
             let promptButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", promptPrefix))
             var selectedPrompt: XCUIElement?
             var promptToken = ""
@@ -514,14 +514,14 @@ final class ScreenshotTests: XCTestCase {
             for index in 0..<promptButtons.count {
                 let button = promptButtons.element(boundBy: index)
                 let identifier = button.identifier
-                guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1) else { continue }
+                guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1), button.isHittable else { continue }
                 promptToken = String(identifier.dropFirst(promptPrefix.count))
                 selectedPrompt = button
                 break
             }
 
             guard let promptButton = selectedPrompt else {
-                XCTFail("Expected a visible Sum Sprint prompt for target \(target)")
+                XCTFail("Expected a hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1)")
                 return
             }
             promptButton.tap()
@@ -531,13 +531,13 @@ final class ScreenshotTests: XCTestCase {
             for index in 0..<sumButtons.count {
                 let button = sumButtons.element(boundBy: index)
                 let identifier = button.identifier
-                guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1) else { continue }
+                guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1), button.isHittable else { continue }
                 selectedSum = button
                 break
             }
 
             guard let sumButton = selectedSum else {
-                XCTFail("Expected a Sum Sprint sum match for prompt token \(promptToken) on target \(target)")
+                XCTFail("Expected a hittable Sum Sprint sum match for prompt token \(promptToken) on target \(target) pair \(pairIndex + 1)")
                 return
             }
             sumButton.tap()
