@@ -505,6 +505,7 @@ final class ScreenshotTests: XCTestCase {
     private func completeVisibleSumSprintPairs(in app: XCUIApplication, target: Int, expectedPairs: Int) {
         let promptPrefix = "sumsprint-prompt-"
         let sumPrefix = "sumsprint-sum-"
+        var usedPromptTokens = Set<String>()
 
         for pairIndex in 0..<expectedPairs {
             let promptButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", promptPrefix))
@@ -515,13 +516,15 @@ final class ScreenshotTests: XCTestCase {
                 let button = promptButtons.element(boundBy: index)
                 let identifier = button.identifier
                 guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1), button.isHittable else { continue }
-                promptToken = String(identifier.dropFirst(promptPrefix.count))
+                let candidateToken = String(identifier.dropFirst(promptPrefix.count))
+                guard !usedPromptTokens.contains(candidateToken) else { continue }
+                promptToken = candidateToken
                 selectedPrompt = button
                 break
             }
 
             guard let promptButton = selectedPrompt else {
-                XCTFail("Expected a hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1)")
+                XCTFail("Expected a new hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1); already used \(usedPromptTokens)")
                 return
             }
             promptButton.tap()
@@ -541,6 +544,7 @@ final class ScreenshotTests: XCTestCase {
                 return
             }
             sumButton.tap()
+            usedPromptTokens.insert(promptToken)
         }
     }
 
