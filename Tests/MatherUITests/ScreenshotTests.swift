@@ -512,7 +512,14 @@ final class ScreenshotTests: XCTestCase {
     }
 
     private func revealButton(_ label: String, in app: XCUIApplication) -> XCUIElement {
-        let button = app.buttons[label]
+        let button: XCUIElement
+        if label == "Go" {
+            button = app.buttons["sumsprint-go-button"]
+        } else if label.count == 1, let digit = label.first, digit.isNumber {
+            button = app.buttons["sumsprint-digit-\(label)"]
+        } else {
+            button = app.buttons[label]
+        }
         if button.waitForExistence(timeout: 1) {
             return button
         }

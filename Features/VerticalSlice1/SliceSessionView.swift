@@ -167,16 +167,20 @@ struct SliceSessionView: View {
                                 HStack(spacing: 12) {
                                     ForEach(row, id: \.self) { digit in
                                         Button(String(digit)) { appModel.engine.appendSumSprintDigit(digit) }
+                                            .accessibilityIdentifier("sumsprint-digit-\(digit)")
                                             .buttonStyle(PrimaryActionButtonStyle())
                                     }
                                 }
                             }
                             HStack(spacing: 12) {
                                 Button("⌫") { appModel.engine.deleteSumSprintDigit() }
+                                    .accessibilityIdentifier("sumsprint-delete-button")
                                     .buttonStyle(PrimaryActionButtonStyle())
                                 Button("0") { appModel.engine.appendSumSprintDigit(0) }
+                                    .accessibilityIdentifier("sumsprint-digit-0")
                                     .buttonStyle(PrimaryActionButtonStyle())
                                 Button("Go") { appModel.engine.submitSumSprintCard() }
+                                    .accessibilityIdentifier("sumsprint-go-button")
                                     .buttonStyle(PrimaryActionButtonStyle())
                             }
                         }
