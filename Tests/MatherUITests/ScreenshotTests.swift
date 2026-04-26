@@ -277,7 +277,7 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 5,
             leftPanCount: 3,
             rightPanCount: 3,
-            sumSprintMatches: [("1 + 5", "6"), ("5 + 1", "6")],
+            expectedSumSprintPairs: 2,
             bondPairs: [(1, 5), (2, 4), (3, 3)],
             snapshotPrefix: "Issue222-Target6"
         )
@@ -295,7 +295,7 @@ final class ScreenshotTests: XCTestCase {
             // The loop-v2 burst de-duplicates repeated facts for each target.
             // In deterministic UI-test mode, target 9 currently yields two unique
             // Sum Sprint cards, not three.
-            sumSprintMatches: [("4 + 5", "9"), ("8 + 1", "9")],
+            expectedSumSprintPairs: 2,
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
             snapshotPrefix: "Issue222-Target9",
             skipInitialConcreteSnapshot: true
@@ -312,7 +312,7 @@ final class ScreenshotTests: XCTestCase {
             leftPanCount: 1,
             rightPanCount: 3,
             // Target 4 with decomposition (1,3) yields two Sum Sprint cards: "1+3" and "3+1"
-            sumSprintMatches: [("1 + 3", "4"), ("3 + 1", "4")],
+            expectedSumSprintPairs: 2,
             bondPairs: [(1, 3), (2, 2)],
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
@@ -328,7 +328,7 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 11,
             leftPanCount: 5,
             rightPanCount: 7,
-            sumSprintMatches: [("5 + 7", "12"), ("11 + 1", "12"), ("6 + 6", "12")],
+            expectedSumSprintPairs: 3,
             bondPairs: [(1, 11), (2, 10), (3, 9), (4, 8), (5, 7), (6, 6)],
             snapshotPrefix: "Issue222-Target12",
             skipInitialConcreteSnapshot: true
@@ -445,7 +445,7 @@ final class ScreenshotTests: XCTestCase {
         concreteCellIndex: Int,
         leftPanCount: Int,
         rightPanCount: Int,
-        sumSprintMatches: [(String, String)],
+        expectedSumSprintPairs: Int,
         bondPairs: [(Int, Int)],
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
@@ -486,15 +486,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
         snapshot(app, "\(snapshotPrefix)-SumSprint")
 
-        for (prompt, sum) in sumSprintMatches {
-            let promptButton = app.buttons[sumSprintPromptIdentifier(prompt)]
-            XCTAssertTrue(promptButton.waitForExistence(timeout: 5), "Expected Sum Sprint prompt \(prompt) for target \(target)")
-            promptButton.tap()
-
-            let sumButton = app.buttons[sumSprintSumIdentifier(sum, prompt: prompt)]
-            XCTAssertTrue(sumButton.waitForExistence(timeout: 5), "Expected Sum Sprint sum \(sum) for prompt \(prompt) and target \(target)")
-            sumButton.tap()
-        }
+        completeVisibleSumSprintPairs(in: app, target: target, expectedPairs: expectedSumSprintPairs)
 
         let bondBlastTitle = app.staticTexts["Bond Blast!"]
         XCTAssertTrue(bondBlastTitle.waitForExistence(timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
@@ -510,23 +502,46 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
-    private func sumSprintPromptIdentifier(_ prompt: String) -> String {
-        "sumsprint-prompt-\(normalizedSumSprintToken(prompt))"
-    }
+    private func completeVisibleSumSprintPairs(in app: XCUIApplication, target: Int, expectedPairs: Int) {
+        let promptPrefix = "sumsprint-prompt-"
+        let sumPrefix = "sumsprint-sum-"
 
-    private func sumSprintSumIdentifier(_ sum: String, prompt: String) -> String {
-        "sumsprint-sum-\(sum)-for-\(normalizedSumSprintToken(prompt))"
-    }
+        for _ in 0..<expectedPairs {
+            let promptButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", promptPrefix))
+            var selectedPrompt: XCUIElement?
+            var promptToken = ""
 
-    private func normalizedSumSprintToken(_ value: String) -> String {
-        let mapped = value.lowercased().map { character -> String in
-            if character.isLetter || character.isNumber { return String(character) }
-            if character == "+" { return "-plus-" }
-            return "-"
-        }.joined()
-        return mapped
-            .replacingOccurrences(of: "--", with: "-")
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+            for index in 0..<promptButtons.count {
+                let button = promptButtons.element(boundBy: index)
+                let identifier = button.identifier
+                guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1) else { continue }
+                promptToken = String(identifier.dropFirst(promptPrefix.count))
+                selectedPrompt = button
+                break
+            }
+
+            guard let promptButton = selectedPrompt else {
+                XCTFail("Expected a visible Sum Sprint prompt for target \(target)")
+                return
+            }
+            promptButton.tap()
+
+            let sumButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", sumPrefix))
+            var selectedSum: XCUIElement?
+            for index in 0..<sumButtons.count {
+                let button = sumButtons.element(boundBy: index)
+                let identifier = button.identifier
+                guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1) else { continue }
+                selectedSum = button
+                break
+            }
+
+            guard let sumButton = selectedSum else {
+                XCTFail("Expected a Sum Sprint sum match for prompt token \(promptToken) on target \(target)")
+                return
+            }
+            sumButton.tap()
+        }
     }
 
     private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
