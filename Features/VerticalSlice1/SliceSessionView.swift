@@ -175,6 +175,7 @@ struct SliceSessionView: View {
                                                 .stroke(cardBorder(for: card), lineWidth: card.isSelected ? 4 : 2)
                                         }
                                 }
+                                .accessibilityIdentifier(sumSprintCardIdentifier(for: card, in: burst))
                                 .buttonStyle(.plain)
                                 .disabled(card.isMatched)
                             }
@@ -298,6 +299,31 @@ struct SliceSessionView: View {
                     .animation(.easeInOut(duration: 0.4), value: appModel.engine.currentProblemIndex)
             }
         }
+    }
+
+    private func sumSprintCardIdentifier(for card: SumSprintBurstCard, in burst: SumSprintBurstState) -> String {
+        switch card.content {
+        case .prompt(let prompt):
+            return "sumsprint-prompt-\(normalizedSumSprintToken(prompt))"
+        case .sum(let value):
+            let prompt = burst.cards.compactMap { sibling -> String? in
+                guard sibling.pairId == card.pairId,
+                      case .prompt(let prompt) = sibling.content else { return nil }
+                return prompt
+            }.first ?? String(value)
+            return "sumsprint-sum-\(value)-for-\(normalizedSumSprintToken(prompt))"
+        }
+    }
+
+    private func normalizedSumSprintToken(_ value: String) -> String {
+        let mapped = value.lowercased().map { character -> String in
+            if character.isLetter || character.isNumber { return String(character) }
+            if character == "+" { return "-plus-" }
+            return "-"
+        }.joined()
+        return mapped
+            .replacingOccurrences(of: "--", with: "-")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
     private func stageColour(_ stage: SliceStage) -> Color {
