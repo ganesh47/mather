@@ -555,20 +555,8 @@ struct VerticalSliceEngineTests {
         engine.adjustGravitySplitByTap(delta: 1, side: .left)
         await waitFor("sum sprint after gravity split") { engine.currentStage == .sumSprint }
 
-        while engine.currentStage == .sumSprint,
-              let nextPair = engine.sumSprintBurstState?.cards
-                .filter({ !$0.isMatched })
-                .reduce(into: [UUID: [SumSprintBurstCard]]()) { partial, card in partial[card.pairId, default: []].append(card) }
-                .values
-                .first(where: { $0.count == 2 }) {
-            engine.selectSumSprintCard(id: nextPair[0].id)
-            engine.selectSumSprintCard(id: nextPair[1].id)
-            if engine.currentStage == .sumSprint {
-                await waitFor("advance sum sprint pair") {
-                    (engine.sumSprintBurstState?.matchedPairs ?? 0) > 0 || engine.currentStage != .sumSprint
-                }
-            }
-        }
+        completeSumSprintBurst(engine)
+        await waitFor("sum sprint completes") { engine.currentStage != .sumSprint }
 
         await waitFor("session summary after target-1 loop") { engine.route == .sessionSummary }
         #expect(engine.currentStage == .done)
