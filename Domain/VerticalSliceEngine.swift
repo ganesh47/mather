@@ -100,7 +100,7 @@ final class VerticalSliceEngine {
     }
 
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
-    var sumSprintStageCardCount: Int { sumSprintBurstState?.cards.count ?? 0 }
+    var sumSprintStageCardCount: Int { sumSprintBurstState?.totalPairs ?? 0 }
 
     func showSettings() { route = .settings }
     func showHome() { route = .home }
@@ -296,70 +296,66 @@ final class VerticalSliceEngine {
         speechService.speak(promptForCurrentStage(), enabled: featureFlags.audioEnabled)
     }
 
-    func appendSumSprintDigit(_ digit: Int) {
+    func selectSumSprintCard(id: UUID) {
         guard currentStage == .sumSprint, var state = sumSprintBurstState,
-              state.cards.indices.contains(state.currentCardIndex) else { return }
-        let current = state.cards[state.currentCardIndex].typedAnswer
-        guard current.count < 2 else { return }
-        state.cards[state.currentCardIndex].typedAnswer = current + String(digit)
-        sumSprintBurstState = state
-    }
+              let tappedIndex = state.cards.firstIndex(where: { $0.id == id }),
+              !state.cards[tappedIndex].isMatched else { return }
 
-    func deleteSumSprintDigit() {
-        guard currentStage == .sumSprint, var state = sumSprintBurstState,
-              state.cards.indices.contains(state.currentCardIndex) else { return }
-        let current = state.cards[state.currentCardIndex].typedAnswer
-        guard !current.isEmpty else { return }
-        state.cards[state.currentCardIndex].typedAnswer = String(current.dropLast())
-        sumSprintBurstState = state
-    }
+        recordInteraction(action: "sum_sprint_select", value: tappedIndex)
 
-    func submitSumSprintCard() {
-        guard currentStage == .sumSprint, var state = sumSprintBurstState,
-              state.cards.indices.contains(state.currentCardIndex) else { return }
-        guard let entered = Int(state.cards[state.currentCardIndex].typedAnswer) else { return }
-        let card = state.cards[state.currentCardIndex]
-        let isCorrect = entered == card.answer
-        recordInteraction(action: "sum_sprint_submit", value: entered)
+        if let selectedID = state.selectedCardID,
+           let selectedIndex = state.cards.firstIndex(where: { $0.id == selectedID }) {
+            guard selectedIndex != tappedIndex else {
+                state.cards[tappedIndex].isSelected = false
+                state.selectedCardID = nil
+                sumSprintBurstState = state
+                return
+            }
 
-        if isCorrect {
-            state.cards[state.currentCardIndex].isCorrect = true
-            try? telemetryWriter.append(
-                SliceEvent(type: .sumSprintCardAnswered, payload: [
-                    "problem_id": currentProblem?.id.uuidString ?? "",
-                    "card_index": String(state.currentCardIndex),
-                    "prompt": card.prompt,
-                    "correct": "true"
-                ])
-            )
-            state.currentCardIndex += 1
-            sumSprintBurstState = state
-            if state.isComplete, let problem = currentProblem {
-                completeStage(successMessage: successMessage(for: .sumSprint, problem: problem))
-            } else {
-                if let nextCard = state.currentCard {
-                    try? telemetryWriter.append(
-                        SliceEvent(type: .sumSprintCardShown, payload: [
-                            "problem_id": currentProblem?.id.uuidString ?? "",
-                            "card_index": String(state.currentCardIndex),
-                            "prompt": nextCard.prompt
-                        ])
-                    )
+            let selectedCard = state.cards[selectedIndex]
+            let tappedCard = state.cards[tappedIndex]
+            let isMatch = selectedCard.pairId == tappedCard.pairId
+                && selectedCard.content != tappedCard.content
+
+            state.cards[selectedIndex].isSelected = false
+            state.cards[tappedIndex].isSelected = false
+            state.selectedCardID = nil
+
+            if isMatch {
+                state.cards[selectedIndex].isMatched = true
+                state.cards[tappedIndex].isMatched = true
+                sumSprintBurstState = state
+                try? telemetryWriter.append(
+                    SliceEvent(type: .sumSprintCardAnswered, payload: [
+                        "problem_id": currentProblem?.id.uuidString ?? "",
+                        "pair_id": selectedCard.pairId.uuidString,
+                        "correct": "true"
+                    ])
+                )
+                if state.isComplete, let problem = currentProblem {
+                    completeStage(successMessage: successMessage(for: .sumSprint, problem: problem))
+                } else {
+                    feedbackMessage = promptForCurrentStage()
                 }
-                feedbackMessage = promptForCurrentStage()
+            } else {
+                sumSprintBurstState = state
+                try? telemetryWriter.append(
+                    SliceEvent(type: .sumSprintCardAnswered, payload: [
+                        "problem_id": currentProblem?.id.uuidString ?? "",
+                        "pair_id": selectedCard.pairId.uuidString,
+                        "correct": "false"
+                    ])
+                )
+                feedbackMessage = "Try again. Match the sum sentence with its total before Bond Blast."
+                speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
+                hapticsService.failure(enabled: featureFlags.hapticsEnabled)
             }
         } else {
-            try? telemetryWriter.append(
-                SliceEvent(type: .sumSprintCardAnswered, payload: [
-                    "problem_id": currentProblem?.id.uuidString ?? "",
-                    "card_index": String(state.currentCardIndex),
-                    "prompt": card.prompt,
-                    "correct": "false"
-                ])
-            )
-            feedbackMessage = "Try again. Solve this one before Bond Blast."
-            speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
-            hapticsService.failure(enabled: featureFlags.hapticsEnabled)
+            for index in state.cards.indices {
+                state.cards[index].isSelected = index == tappedIndex
+            }
+            state.selectedCardID = id
+            sumSprintBurstState = state
         }
     }
 
@@ -534,15 +530,13 @@ final class VerticalSliceEngine {
                         "card_count": String(burst.cards.count)
                     ])
                 )
-                if let card = burst.currentCard {
-                    try? telemetryWriter.append(
-                        SliceEvent(type: .sumSprintCardShown, payload: [
-                            "problem_id": problem.id.uuidString,
-                            "card_index": "0",
-                            "prompt": card.prompt
-                        ])
-                    )
-                }
+                try? telemetryWriter.append(
+                    SliceEvent(type: .sumSprintCardShown, payload: [
+                        "problem_id": problem.id.uuidString,
+                        "card_count": String(burst.cards.count),
+                        "pair_count": String(burst.totalPairs)
+                    ])
+                )
             }
         case .bondMatch:
             if let problem = currentProblem {
@@ -741,10 +735,10 @@ final class VerticalSliceEngine {
         case .pictorial, .bondMatch:
             return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
         case .sumSprint:
-            if let card = sumSprintBurstState?.currentCard {
-                return "Quick Sum Sprint. Solve \(card.prompt), then finish with Bond Blast."
+            if let burst = sumSprintBurstState {
+                return "Quick Sum Sprint. Match each sum sentence to its total: \(burst.progressLabel) pairs found."
             }
-            return "Quick Sum Sprint! Solve a tiny burst, then finish with Bond Blast."
+            return "Quick Sum Sprint! Match each sum sentence to its total, then finish with Bond Blast."
         case .abstract:
             return activeTheme.abstractPrompt()
         case .transfer:

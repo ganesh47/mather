@@ -273,42 +273,60 @@ struct BondMatchState: Equatable {
 
 // MARK: - Embedded Sum Sprint models
 
+enum SumSprintBurstCardContent: Equatable {
+    case prompt(String)
+    case sum(Int)
+
+    var displayText: String {
+        switch self {
+        case .prompt(let value):
+            return value
+        case .sum(let value):
+            return String(value)
+        }
+    }
+}
+
 struct SumSprintBurstCard: Identifiable, Equatable {
     let id: UUID
-    let prompt: String
-    let answer: Int
-    var typedAnswer: String = ""
-    var isCorrect: Bool = false
+    let pairId: UUID
+    let content: SumSprintBurstCardContent
+    var isMatched: Bool = false
+    var isSelected: Bool = false
 }
 
 struct SumSprintBurstState: Equatable {
     let target: Int
     var cards: [SumSprintBurstCard]
-    var currentCardIndex: Int = 0
+    var selectedCardID: UUID? = nil
 
-    var currentCard: SumSprintBurstCard? {
-        guard cards.indices.contains(currentCardIndex) else { return nil }
-        return cards[currentCardIndex]
+    var totalPairs: Int {
+        Set(cards.map(\.pairId)).count
+    }
+
+    var matchedPairs: Int {
+        Set(cards.filter { $0.isMatched }.map(\.pairId)).count
     }
 
     var isComplete: Bool {
-        currentCardIndex >= cards.count
+        matchedPairs == totalPairs && totalPairs > 0
     }
 
     var progressLabel: String {
-        guard !cards.isEmpty else { return "0 / 0" }
-        return "\(min(currentCardIndex + 1, cards.count)) / \(cards.count)"
+        "\(matchedPairs) / \(totalPairs)"
     }
 
     static func make(for problem: SliceProblem) -> SumSprintBurstState {
-        let cards = makeFacts(for: problem).map { fact in
-            SumSprintBurstCard(
-                id: UUID(),
-                prompt: "\(fact.0) + \(fact.1)",
-                answer: fact.0 + fact.1
-            )
+        let cards = makeFacts(for: problem).flatMap { fact -> [SumSprintBurstCard] in
+            let pairId = UUID()
+            let prompt = "\(fact.0) + \(fact.1)"
+            let sum = fact.0 + fact.1
+            return [
+                SumSprintBurstCard(id: UUID(), pairId: pairId, content: .prompt(prompt)),
+                SumSprintBurstCard(id: UUID(), pairId: pairId, content: .sum(sum))
+            ]
         }
-        return SumSprintBurstState(target: problem.target, cards: cards)
+        return SumSprintBurstState(target: problem.target, cards: cards.shuffled())
     }
 
     private static func makeFacts(for problem: SliceProblem) -> [(Int, Int)] {
