@@ -277,7 +277,7 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 5,
             leftPanCount: 3,
             rightPanCount: 3,
-            sumSprintAnswers: ["6", "6"],
+            sumSprintMatches: [("1 + 5", "6"), ("5 + 1", "6")],
             bondPairs: [(1, 5), (2, 4), (3, 3)],
             snapshotPrefix: "Issue222-Target6"
         )
@@ -295,7 +295,7 @@ final class ScreenshotTests: XCTestCase {
             // The loop-v2 burst de-duplicates repeated facts for each target.
             // In deterministic UI-test mode, target 9 currently yields two unique
             // Sum Sprint cards, not three.
-            sumSprintAnswers: ["9", "9"],
+            sumSprintMatches: [("4 + 5", "9"), ("8 + 1", "9")],
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
             snapshotPrefix: "Issue222-Target9",
             skipInitialConcreteSnapshot: true
@@ -312,7 +312,7 @@ final class ScreenshotTests: XCTestCase {
             leftPanCount: 1,
             rightPanCount: 3,
             // Target 4 with decomposition (1,3) yields two Sum Sprint cards: "1+3" and "3+1"
-            sumSprintAnswers: ["4", "4"],
+            sumSprintMatches: [("1 + 3", "4"), ("3 + 1", "4")],
             bondPairs: [(1, 3), (2, 2)],
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
@@ -328,7 +328,7 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 11,
             leftPanCount: 5,
             rightPanCount: 7,
-            sumSprintAnswers: ["12", "12", "12"],
+            sumSprintMatches: [("5 + 7", "12"), ("11 + 1", "12"), ("6 + 6", "12")],
             bondPairs: [(1, 11), (2, 10), (3, 9), (4, 8), (5, 7), (6, 6)],
             snapshotPrefix: "Issue222-Target12",
             skipInitialConcreteSnapshot: true
@@ -445,7 +445,7 @@ final class ScreenshotTests: XCTestCase {
         concreteCellIndex: Int,
         leftPanCount: Int,
         rightPanCount: Int,
-        sumSprintAnswers: [String],
+        sumSprintMatches: [(String, String)],
         bondPairs: [(Int, Int)],
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
@@ -486,15 +486,14 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
         snapshot(app, "\(snapshotPrefix)-SumSprint")
 
-        for answer in sumSprintAnswers {
-            for digit in answer {
-                let digitButton = revealButton(String(digit), in: app)
-                XCTAssertTrue(digitButton.waitForExistence(timeout: 5), "Expected Sum Sprint digit \(digit) for target \(target)")
-                digitButton.tap()
-            }
-            let goButton = revealButton("Go", in: app)
-            XCTAssertTrue(goButton.waitForExistence(timeout: 5), "Expected Sum Sprint Go button for target \(target)")
-            goButton.tap()
+        for (prompt, sum) in sumSprintMatches {
+            let promptButton = app.buttons[sumSprintPromptIdentifier(prompt)]
+            XCTAssertTrue(promptButton.waitForExistence(timeout: 5), "Expected Sum Sprint prompt \(prompt) for target \(target)")
+            promptButton.tap()
+
+            let sumButton = app.buttons[sumSprintSumIdentifier(sum, prompt: prompt)]
+            XCTAssertTrue(sumButton.waitForExistence(timeout: 5), "Expected Sum Sprint sum \(sum) for prompt \(prompt) and target \(target)")
+            sumButton.tap()
         }
 
         let bondBlastTitle = app.staticTexts["Bond Blast!"]
@@ -511,38 +510,23 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
-    private func revealButton(_ label: String, in app: XCUIApplication) -> XCUIElement {
-        let button = app.buttons[label]
-        if button.waitForExistence(timeout: 1) {
-            return button
-        }
+    private func sumSprintPromptIdentifier(_ prompt: String) -> String {
+        "sumsprint-prompt-\(normalizedSumSprintToken(prompt))"
+    }
 
-        let scrollView = app.scrollViews.firstMatch
-        let swipeUp: () -> Void = {
-            if scrollView.exists {
-                scrollView.swipeUp()
-            } else {
-                app.swipeUp()
-            }
-        }
-        let swipeDown: () -> Void = {
-            if scrollView.exists {
-                scrollView.swipeDown()
-            } else {
-                app.swipeDown()
-            }
-        }
+    private func sumSprintSumIdentifier(_ sum: String, prompt: String) -> String {
+        "sumsprint-sum-\(sum)-for-\(normalizedSumSprintToken(prompt))"
+    }
 
-        // The deterministic screenshot flow can leave the scroll position offset
-        // differently across simulator/device layouts. Search in both directions so
-        // the keypad buttons remain discoverable for the second target.
-        for action in [swipeUp, swipeUp, swipeDown, swipeDown, swipeDown] {
-            if button.exists { return button }
-            action()
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-            if button.exists { return button }
-        }
-        return button
+    private func normalizedSumSprintToken(_ value: String) -> String {
+        let mapped = value.lowercased().map { character -> String in
+            if character.isLetter || character.isNumber { return String(character) }
+            if character == "+" { return "-plus-" }
+            return "-"
+        }.joined()
+        return mapped
+            .replacingOccurrences(of: "--", with: "-")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
     private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
