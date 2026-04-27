@@ -755,6 +755,12 @@ struct MemoryView: View {
                     Text("\(matchedPairs)/\(totalPairs) pairs matched")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(MatherTheme.cardSubtitle)
+                    if Self.supportsLearningDetails(for: deckSelection) {
+                        Text(Self.learnMoreHintText(for: deckSelection))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .accessibilityIdentifier("memory-learn-more-hint")
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -830,11 +836,16 @@ struct MemoryView: View {
         let columns = [GridItem(.adaptive(minimum: ResponsiveLayout.memoryCardMinimumWidth(for: difficulty)), spacing: 14)]
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
+                let canLearn = Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete)
                 cardView(card)
                     .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
+                    .modifier(MemoryLearnMoreAccessibilityModifier(
+                        actionName: canLearn ? Self.learnAboutActionName(for: animal(for: card)) : nil,
+                        action: { handleDoubleTap(card) }
+                    ))
             }
         }
         .frame(maxWidth: ResponsiveLayout.memoryBoardMaxWidth(for: horizontalSizeClass))
@@ -1069,7 +1080,7 @@ struct MemoryView: View {
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
 
-                Text(deckSelection == .birds ? "Double-tap any bird card to learn more, or start the next round." : "Round \(roundsPlayed) complete")
+                Text(Self.roundCompleteMessage(for: deckSelection, roundsPlayed: roundsPlayed))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .multilineTextAlignment(.center)
@@ -1116,6 +1127,20 @@ struct MemoryView: View {
 
     static func supportsLearningDetails(for deckSelection: DeckSelection) -> Bool {
         !deckSelection.animals.isEmpty
+    }
+
+    static func learnMoreHintText(for deckSelection: DeckSelection) -> String {
+        supportsLearningDetails(for: deckSelection) ? "Double-tap a card to learn more" : ""
+    }
+
+    static func roundCompleteMessage(for deckSelection: DeckSelection, roundsPlayed: Int) -> String {
+        supportsLearningDetails(for: deckSelection)
+            ? "Double-tap a card to learn more, or start the next round."
+            : "Round \(roundsPlayed) complete"
+    }
+
+    static func learnAboutActionName(for animal: MemoryAnimal) -> String {
+        "Learn about \(animal.canonicalName)"
     }
 
     static func learningContent(for animal: MemoryAnimal, deckSelection: DeckSelection, description: MemoryCardDescription) -> MemoryLearningContent {
@@ -1353,5 +1378,21 @@ struct MemoryView: View {
     private static func learningReadAloudText(for title: String, summary: String, factChips: [MemoryFactCard], sourceBadge: String) -> String {
         let facts = factChips.map { "\($0.title): \($0.value)." }.joined(separator: " ")
         return "\(title). \(summary) Source: \(sourceBadge). \(facts)"
+    }
+}
+
+private struct MemoryLearnMoreAccessibilityModifier: ViewModifier {
+    let actionName: String?
+    let action: () -> Void
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let actionName {
+            content.accessibilityAction(named: Text(actionName)) {
+                action()
+            }
+        } else {
+            content
+        }
     }
 }

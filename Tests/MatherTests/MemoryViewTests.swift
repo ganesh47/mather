@@ -139,16 +139,26 @@ struct MemoryViewTests {
     @Test func learningContentAndEligibilityFollowVisibleDeckRules() {
         let bird = MemoryDeck.birds[0]
         let vehicle = MemoryDeck.vehicles[0]
+        let planet = MemoryDeck.planets[0]
         let hiddenHardBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird))
         let revealedHardBirdCard = MemoryCard(pairId: bird.id, content: .picture(bird), isSelected: true)
+        let hiddenHardPlanetCard = MemoryCard(pairId: planet.id, content: .picture(planet))
+        let revealedHardPlanetCard = MemoryCard(pairId: planet.id, content: .picture(planet), isSelected: true)
         let matchedVehicleCard = MemoryCard(pairId: vehicle.id, content: .label(vehicle), isMatched: true)
 
         #expect(MemoryView.supportsLearningDetails(for: .birds))
         #expect(MemoryView.supportsLearningDetails(for: .domestic))
         #expect(MemoryView.supportsLearningDetails(for: .vehicles))
+        #expect(MemoryView.supportsLearningDetails(for: .planets))
         #expect(!MemoryView.canOpenLearningDetails(for: hiddenHardBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
         #expect(MemoryView.canOpenLearningDetails(for: revealedHardBirdCard, deckSelection: .birds, difficulty: .hard, showRoundComplete: false))
+        #expect(!MemoryView.canOpenLearningDetails(for: hiddenHardPlanetCard, deckSelection: .planets, difficulty: .hard, showRoundComplete: false))
+        #expect(MemoryView.canOpenLearningDetails(for: revealedHardPlanetCard, deckSelection: .planets, difficulty: .hard, showRoundComplete: false))
         #expect(MemoryView.canOpenLearningDetails(for: matchedVehicleCard, deckSelection: .vehicles, difficulty: .hard, showRoundComplete: true))
+        #expect(MemoryView.learnMoreHintText(for: .vehicles) == "Double-tap a card to learn more")
+        #expect(MemoryView.roundCompleteMessage(for: .planets, roundsPlayed: 1) == "Double-tap a card to learn more, or start the next round.")
+        #expect(!MemoryView.roundCompleteMessage(for: .vehicles, roundsPlayed: 1).localizedCaseInsensitiveContains("bird"))
+        #expect(MemoryView.learnAboutActionName(for: planet) == "Learn about Mercury")
 
         let vehicleDescription = MemoryCardDescription(
             title: vehicle.canonicalName,
@@ -161,6 +171,17 @@ struct MemoryViewTests {
         #expect(learningContent.sourceBadge == "Apple Intelligence + Vehicle Guide")
         #expect(learningContent.factChips == [MemoryFactCard(title: "Use", value: "family trips")])
         #expect(learningContent.readAloudText.contains(vehicle.canonicalName))
+        #expect(learningContent.readAloudText.contains("Source: Apple Intelligence + Vehicle Guide."))
+
+        let planetDescription = MemoryCardDescription(
+            title: planet.canonicalName,
+            shortDescription: "Mercury is a planet near the Sun.",
+            factChips: [MemoryFactChip(title: "Order", value: "1st from the Sun")],
+            source: .curatedFallback
+        )
+        let planetContent = MemoryView.learningContent(for: planet, deckSelection: .planets, description: planetDescription)
+        #expect(planetContent.sourceBadge == "Planet Guide")
+        #expect(planetContent.readAloudText.contains("Source: Planet Guide."))
     }
 }
 
@@ -224,10 +245,28 @@ struct MemoryCardDescribeServiceTests {
 
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("child age 5 to 8"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("two short sentences"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("220 total characters"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("Do not ask questions"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("roleplay"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("markdown"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("emoji"))
+        #expect(prompt.userPrompt.localizedCaseInsensitiveContains("Only use these known facts"))
         #expect(prompt.userPrompt.contains("Earth"))
         #expect(prompt.userPrompt.contains("Order: 3rd from the Sun"))
         #expect(prompt.userPrompt.contains("Fun Fact: It has one moon"))
+    }
+
+    @MainActor @Test func appleIntelligenceDisabledFallsBackEvenWhenAdapterCanRespond() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubAIAdapter(isAvailable: true, response: "A rocket zooms high and can reach space.")
+        )
+
+        let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("vehicle"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("space"))
     }
 
     @MainActor @Test func generatedDescriptionsAreSanitizedBeforeUse() async {
@@ -246,16 +285,42 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @MainActor @Test func unsafeGeneratedDescriptionsFallBackToCuratedCopy() async {
+        let unsafeResponses = [
+            "As an AI language model, click here to learn about rockets.",
+            "What is a rocket? A rocket can fly high.",
+            "- A rocket blasts toward space.",
+            "A rocket blasts toward space. 🚀",
+            "Pretend you are a rocket blasting into space."
+        ]
+
+        for response in unsafeResponses {
+            let service = MemoryCardDescribeService(
+                appleIntelligenceEnabled: { true },
+                aiAdapter: StubAIAdapter(isAvailable: true, response: response)
+            )
+
+            let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+
+            #expect(description.source == .curatedFallback)
+            #expect(description.shortDescription.localizedCaseInsensitiveContains("vehicle"))
+            #expect(description.shortDescription.localizedCaseInsensitiveContains("space"))
+        }
+    }
+
+    @MainActor @Test func overlongGeneratedDescriptionsFallBackToCuratedCopy() async {
         let service = MemoryCardDescribeService(
             appleIntelligenceEnabled: { true },
-            aiAdapter: StubAIAdapter(isAvailable: true, response: "As an AI language model, click here to learn about rockets.")
+            aiAdapter: StubAIAdapter(
+                isAvailable: true,
+                response: "Earth is a rocky planet with blue oceans, green land, white clouds, one moon, a day and night cycle, many habitats, and people living on it around the world."
+            )
         )
 
-        let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+        let description = await service.describe(MemoryDeck.planets.first { $0.id == "planet-earth" }!)
 
         #expect(description.source == .curatedFallback)
-        #expect(description.shortDescription.localizedCaseInsensitiveContains("vehicle"))
-        #expect(description.shortDescription.localizedCaseInsensitiveContains("space"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("planet"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("solar system"))
     }
 
 }

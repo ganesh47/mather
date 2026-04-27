@@ -72,6 +72,7 @@ struct MemoryCardDescription: Equatable {
 struct MemoryCardAIPrompt: Equatable {
     static let maxGeneratedCharacters = 220
     static let maxGeneratedSentences = 2
+    static let maxGeneratedSentenceCharacters = 120
 
     let systemInstruction: String
     let userPrompt: String
@@ -83,8 +84,8 @@ struct MemoryCardAIPrompt: Equatable {
             .joined(separator: "; ")
         let deckName = animal.metadata.deck.displayName
         return MemoryCardAIPrompt(
-            systemInstruction: "Write for a child age 5 to 8. Be factual, warm, and concise. Use no more than two short sentences. Do not ask questions, invent facts, mention AI, or include unsafe instructions.",
-            userPrompt: "Explain this Memory Match card in simple words. Deck: \(deckName). Card: \(animal.canonicalName). Known facts: \(facts)."
+            systemInstruction: "Write for a child age 5 to 8. Be factual, warm, and concise. Use no more than two short sentences and 220 total characters. Do not ask questions, roleplay, invent facts, mention AI, use markdown, emoji, lists, or include unsafe instructions.",
+            userPrompt: "Explain this Memory Match card in simple factual words. Deck: \(deckName). Card: \(animal.canonicalName). Only use these known facts: \(facts)."
         )
     }
 }
@@ -238,6 +239,7 @@ final class MemoryCardDescribeService {
 
     private func sanitizeGeneratedDescription(_ text: String?) -> String? {
         guard let text else { return nil }
+        guard isGeneratedDescriptionAllowed(text) else { return nil }
         let collapsed = text
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
@@ -250,6 +252,7 @@ final class MemoryCardDescribeService {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         let limitedSentences = Array(sentences.prefix(MemoryCardAIPrompt.maxGeneratedSentences))
+        guard limitedSentences.allSatisfy({ $0.count <= MemoryCardAIPrompt.maxGeneratedSentenceCharacters }) else { return nil }
         let sentenceLimited = limitedSentences.isEmpty ? collapsed : limitedSentences.joined(separator: ". ") + "."
         guard sentenceLimited.count <= MemoryCardAIPrompt.maxGeneratedCharacters else {
             let endIndex = sentenceLimited.index(sentenceLimited.startIndex, offsetBy: MemoryCardAIPrompt.maxGeneratedCharacters)
@@ -272,11 +275,39 @@ final class MemoryCardDescribeService {
             "click here",
             "http://",
             "https://",
+            "pretend",
+            "roleplay",
+            "role-play",
+            "imagine you are",
+            "let's",
+            "we are going to",
             "scary",
             "violent",
             "weapon"
         ]
-        return !disallowedFragments.contains { lowercased.contains($0) }
+        guard !disallowedFragments.contains(where: { lowercased.contains($0) }) else { return false }
+        guard !text.contains("?") else { return false }
+        guard !text.unicodeScalars.contains(where: Self.isEmojiOrSymbolicPictograph) else { return false }
+
+        let lines = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let markdownPrefixes = ["#", ">", "-", "*", "•", "1.", "2.", "3."]
+        guard !lines.contains(where: { line in
+            markdownPrefixes.contains(where: { line.hasPrefix($0) })
+        }) else { return false }
+        guard !text.contains("```") && !text.contains("**") && !text.contains("__") else { return false }
+        return true
+    }
+
+    private static func isEmojiOrSymbolicPictograph(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0x1F000...0x1FAFF, 0x2600...0x27BF, 0xFE00...0xFE0F:
+            return true
+        default:
+            return false
+        }
     }
 
     private static func makeDefaultAIAdapter() -> any MemoryCardAIAdapter {
