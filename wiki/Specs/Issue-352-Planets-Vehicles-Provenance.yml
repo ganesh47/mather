@@ -1,0 +1,50 @@
+# Issue 352 pilot asset provenance.
+#
+# Scope: exactly one planet card and one vehicle card are imported in this
+# pilot. The remaining planned planet/vehicle images stay in
+# `needsVettedSource` until file-level source checks are complete.
+
+assets:
+  - assetName: MemoryPlanetEarth
+    cardId: planet-earth
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetEarth
+    sourcePageTitle: Project-owned deterministic Earth drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetEarth.png
+    originalSha256: 77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466
+    derivativeFileName: MemoryPlanetEarth.png
+    derivativeSha256: 77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466
+    derivativeChanges: Generated directly as a 512x512 transparent PNG; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleBike
+    cardId: bike
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleBike
+    sourcePageTitle: Project-owned deterministic bike drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleBike.png
+    originalSha256: e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276
+    derivativeFileName: MemoryVehicleBike.png
+    derivativeSha256: e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276
+    derivativeChanges: Generated directly as a 512x512 transparent PNG; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
