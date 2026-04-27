@@ -16,6 +16,7 @@ struct GravitySplitView: View {
     let shakeDetected: Bool
     let onAdjustTilt: (Double) -> Void
     let onTap: (Int, TransferSide) -> Void
+    let onReset: () -> Void
     let onShakeHandled: () -> Void
     let onSubmit: () -> Void
 
@@ -34,12 +35,6 @@ struct GravitySplitView: View {
 
     private var sourceCount: Int {
         max(0, state.target - state.leftCount - state.rightCount)
-    }
-
-    private var nextOpenSide: TransferSide? {
-        if state.leftCount < state.decompositionA { return .left }
-        if state.rightCount < state.decompositionB { return .right }
-        return nil
     }
 
     private var splitEquation: String {
@@ -106,11 +101,37 @@ struct GravitySplitView: View {
 
             Spacer()
 
+            compactActionRail
+        }
+    }
+
+    private var compactActionRail: some View {
+        VStack(alignment: .trailing, spacing: 8) {
             if state.isLocked {
                 Text("⭐️")
-                    .font(.system(size: 40))
+                    .font(.system(size: 34))
                     .scaleEffect(lockScale)
                     .transition(.scale.combined(with: .opacity))
+
+                Button("Next") {
+                    onSubmit()
+                }
+                .font(.caption.weight(.black))
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .accessibilityIdentifier("gravity-split-next-button")
+            } else {
+                Button {
+                    onReset()
+                } label: {
+                    Label("Clear", systemImage: "arrow.counterclockwise")
+                        .labelStyle(.titleAndIcon)
+                }
+                .font(.caption.weight(.black))
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(state.leftCount == 0 && state.rightCount == 0)
+                .accessibilityIdentifier("gravity-split-clear-button")
             }
         }
     }
@@ -178,11 +199,9 @@ struct GravitySplitView: View {
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
 
-            tokenGrid(count: sourceCount, fill: MatherTheme.softBlue, prefix: "source") { _ in
-                guard !state.isLocked, let side = nextOpenSide else { return }
-                onTap(1, side)
-            }
-            .frame(minHeight: 44)
+            tokenGrid(count: sourceCount, fill: MatherTheme.softBlue, prefix: "source", isInteractive: false) { _ in }
+                .frame(minHeight: 36)
+                .accessibilityLabel("Unused tokens: \(sourceCount)")
         }
         .padding(10)
         .background(
@@ -216,11 +235,26 @@ struct GravitySplitView: View {
                     .foregroundStyle(fill)
             }
 
-            tokenGrid(count: count, fill: fill, prefix: side == .left ? "left" : "right") { _ in
+            tokenGrid(count: count, fill: fill, prefix: side == .left ? "left" : "right", isInteractive: true) { _ in
                 guard !state.isLocked else { return }
                 onTap(-1, side)
             }
-            .frame(minHeight: 86, alignment: .topLeading)
+            .frame(minHeight: 68, alignment: .topLeading)
+
+            Button {
+                guard !state.isLocked else { return }
+                onTap(1, side)
+            } label: {
+                Label("Add \(label)", systemImage: "plus.circle.fill")
+                    .font(.caption.weight(.black))
+                    .frame(maxWidth: .infinity, minHeight: 38)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(fill)
+            .disabled(state.isLocked || sourceCount == 0 || count >= target)
+            .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-add-button")
         }
         .padding(10)
         .background(
@@ -239,27 +273,41 @@ struct GravitySplitView: View {
         count: Int,
         fill: Color,
         prefix: String,
+        isInteractive: Bool,
         action: @escaping (Int) -> Void
     ) -> some View {
-        let columns = Array(repeating: GridItem(.flexible(minimum: 22, maximum: 30), spacing: 5), count: compactColumnCount(for: max(count, 1)))
+        let columns = Array(repeating: GridItem(.fixed(34), spacing: 2), count: compactColumnCount(for: max(count, 1)))
 
-        return LazyVGrid(columns: columns, alignment: .leading, spacing: 5) {
+        return LazyVGrid(columns: columns, alignment: .leading, spacing: 2) {
             ForEach(0..<count, id: \.self) { idx in
-                Button {
-                    action(idx)
-                } label: {
-                    Circle()
-                        .fill(fill)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.75), lineWidth: 1.5))
-                        .shadow(color: fill.opacity(0.24), radius: 2, y: 1)
-                        .frame(width: 26, height: 26)
+                if isInteractive {
+                    Button {
+                        action(idx)
+                    } label: {
+                        tokenCircle(fill: fill)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(state.isLocked)
+                    .accessibilityLabel("Remove token")
+                    .accessibilityIdentifier("gravity-\(prefix)-token-\(idx)")
+                } else {
+                    tokenCircle(fill: fill)
+                        .accessibilityLabel("Unused token")
+                        .accessibilityIdentifier("gravity-\(prefix)-token-\(idx)")
                 }
-                .buttonStyle(.plain)
-                .disabled(state.isLocked)
-                .accessibilityLabel(prefix == "source" ? "Move token" : "Remove token")
-                .accessibilityIdentifier("gravity-\(prefix)-token-\(idx)")
             }
         }
+    }
+
+
+    private func tokenCircle(fill: Color) -> some View {
+        Circle()
+            .fill(fill)
+            .overlay(Circle().strokeBorder(.white.opacity(0.75), lineWidth: 1.25))
+            .shadow(color: fill.opacity(0.18), radius: 1.5, y: 1)
+            .frame(width: 24, height: 24)
+            .frame(width: 34, height: 34)
+            .contentShape(Circle())
     }
 
     private func compactColumnCount(for count: Int) -> Int {
@@ -277,7 +325,7 @@ struct GravitySplitView: View {
             Image(systemName: "hand.tap.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.coral.opacity(0.8))
-            Text(vocabulary.instruction)
+            Text("Choose which side each token belongs on. Keep \(state.leftCount) + \(state.rightCount) = \(state.target) in view.")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .lineLimit(2)

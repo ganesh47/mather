@@ -886,6 +886,40 @@ struct VerticalSliceEngineTests {
         #expect(engine.gravitySplitState?.isLocked == false)
     }
 
+
+    @Test
+    func gravitySplitSidesStayIndependentAndConserveSourceTokens() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        guard let problem = engine.currentProblem else { return }
+
+        for _ in 0..<(problem.decompositionB + 2) {
+            engine.adjustGravitySplitByTap(delta: 1, side: .right)
+        }
+
+        #expect(engine.gravitySplitState?.rightCount == problem.decompositionB)
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.target == problem.target)
+        #expect((engine.gravitySplitState?.leftCount ?? 0) + (engine.gravitySplitState?.rightCount ?? 0) <= problem.target)
+
+        engine.adjustGravitySplitByTap(delta: -1, side: .right)
+        #expect(engine.gravitySplitState?.rightCount == max(problem.decompositionB - 1, 0))
+        #expect(engine.gravitySplitState?.leftCount == 0)
+    }
+
     @Test
     func gravitySplitTiltDoesNotAutoSolveStage() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
