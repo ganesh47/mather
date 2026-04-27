@@ -86,6 +86,20 @@ struct MemoryAskConversationPolicyTests {
     }
 
     @MainActor
+    @Test func suggestedTurnSelectionReturnsOnlyTheChosenCardAnswer() async {
+        var session = await MemoryAskConversationPolicy().startSession(for: MemoryDeck.planets[4])
+        let jupiterSizeTurn = session.suggestedTurns.first { $0.id == "size" }!
+
+        let response = session.respond(to: .suggestedTurn(id: jupiterSizeTurn.id))
+
+        #expect(response.kind == .answer)
+        #expect(response.spokenText == jupiterSizeTurn.answer)
+        #expect(response.spokenText.localizedCaseInsensitiveContains("Jupiter"))
+        #expect(response.spokenText.localizedCaseInsensitiveContains("139,820 km"))
+        #expect(session.selectedTurnIDs == ["size"])
+    }
+
+    @MainActor
     @Test func policyDoesNotPermitUnrestrictedChatOrMicrophoneInput() {
         #expect(MemoryAskConversationPolicy.allowsMicrophoneInput == false)
         #expect(MemoryAskConversationPolicy.allowsFreeformTextInput == false)
