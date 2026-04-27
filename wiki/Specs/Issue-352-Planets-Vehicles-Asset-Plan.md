@@ -1,6 +1,6 @@
 # Issue 352 — Planets + Vehicles Image Asset Plan
 
-This is the safe pre-import plan for upgrading the `planets` and `vehicles` Memory Match decks to image-backed cards. It intentionally does **not** import images yet; every asset still needs a vetted source, license/reuse check, and provenance note before it can be referenced by `MemoryAnimal.picture`.
+This records the completed project-owned asset import for upgrading the `planets` and `vehicles` Memory Match decks to image-backed cards. All current Planets and Vehicles cards now reference deterministic in-repo PNG assets, with provenance recorded in `Issue-352-Planets-Vehicles-Provenance.yml` and `MemoryDeck.imageAssetProvenance`.
 
 Source-candidate and provenance checklist artifact: `wiki/Specs/Issue-352-Planets-Vehicles-Source-Candidates.md`.
 
@@ -9,16 +9,15 @@ Source-candidate and provenance checklist artifact: `wiki/Specs/Issue-352-Planet
 - Vehicles: `MemoryVehicle<Car|Bus|Train|Plane|Boat|Bike|Truck|Tractor|Helicopter|Rocket|Scooter|Taxi>`
 - Planets: `MemoryPlanet<Mercury|Venus|Earth|Mars|Jupiter|Saturn|Uranus|Neptune>`
 
-The same planned names are captured in `MemoryDeck.vehicleImageAssetPlan` and `MemoryDeck.planetImageAssetPlan` so tests can guard coverage before asset import.
+The same names are captured in `MemoryDeck.vehicleImageAssetPlan` and `MemoryDeck.planetImageAssetPlan` so tests guard coverage and imported asset status.
 
-## Source rules before import
+## Source rules
 
-1. Prefer public-domain or explicitly reusable educational sources.
-   - Planets: NASA/JPL/USGS public-domain imagery is the preferred first pass, with exact source URLs recorded per asset.
-   - Vehicles: use public-domain, CC0, project-owned, or generated-and-approved assets only; avoid trademark-heavy/logo-forward photos.
+1. Use public-domain, CC0, project-owned, or generated-and-approved assets only.
 2. Record provenance next to the imported images before switching deck cards from `.emoji`/`.text` to `.asset`.
 3. Normalize to a square crop with the subject centered and recognizable at small card sizes.
-4. Avoid visible license plates, people as the main subject, brand logos, or misleading fantasy planet art.
+4. Avoid visible license plates, people as the main subject, brand logos, watermarks, stock-photo marks, or misleading fantasy planet art.
+5. This completed import uses project-owned deterministic artwork only; no third-party/web image binaries were imported.
 
 ## Import checklist
 
@@ -33,7 +32,7 @@ For each planned asset:
 
 ## Current status
 
-- Vehicles: 12/12 cards have planned asset names and sourcing prompts.
-- Planets: 8/8 cards have planned asset names and sourcing prompts.
-- No unvetted images were imported in this slice.
-- Source-candidate/provenance checklist artifact added in `wiki/Specs/Issue-352-Planets-Vehicles-Source-Candidates.md` for the next vetted pilot import.
+- Planets: 8/8 cards use image-backed `MemoryPlanet...` assets.
+- Vehicles: 12/12 cards use image-backed `MemoryVehicle...` assets.
+- `MemoryDeck.vehicleImageAssetPlan` and `MemoryDeck.planetImageAssetPlan` mark every current card `readyForAssetImport` with project-owned provenance.
+- The imported images are project-owned deterministic drawings with provenance recorded in `Issue-352-Planets-Vehicles-Provenance.yml` and in `MemoryDeck.imageAssetProvenance`.

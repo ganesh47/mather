@@ -1,14 +1,58 @@
-# Issue 352 pilot asset provenance.
+# Issue 352 Planets + Vehicles asset provenance.
 #
-# Scope: exactly one planet card and one vehicle card are imported in this
-# pilot. The remaining planned planet/vehicle images stay in
-# `needsVettedSource` until file-level source checks are complete.
+# Scope: full current Planets and Vehicles Memory deck coverage. All assets are
+# project-owned deterministic drawings generated in-repo; no third-party web
+# images, screenshots, trademarks, logos, or identifiable people were used.
 
 assets:
+  - assetName: MemoryPlanetMercury
+    cardId: planet-mercury
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetMercury
+    sourcePageTitle: Project-owned deterministic Mercury planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetMercury.png
+    originalSha256: 9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081
+    derivativeFileName: MemoryPlanetMercury.png
+    derivativeSha256: 9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetVenus
+    cardId: planet-venus
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetVenus
+    sourcePageTitle: Project-owned deterministic Venus planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetVenus.png
+    originalSha256: 3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4
+    derivativeFileName: MemoryPlanetVenus.png
+    derivativeSha256: 3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
   - assetName: MemoryPlanetEarth
     cardId: planet-earth
     sourceUrl: project-owned://mather/issue-352/MemoryPlanetEarth
-    sourcePageTitle: Project-owned deterministic Earth drawing
+    sourcePageTitle: Project-owned deterministic Earth planet drawing
     creator: OpenAI Codex for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #352
     license: Project-owned; no third-party source material
@@ -18,7 +62,227 @@ assets:
     originalSha256: 77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466
     derivativeFileName: MemoryPlanetEarth.png
     derivativeSha256: 77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466
-    derivativeChanges: Generated directly as a 512x512 transparent PNG; no third-party material used.
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetMars
+    cardId: planet-mars
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetMars
+    sourcePageTitle: Project-owned deterministic Mars planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetMars.png
+    originalSha256: 8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e
+    derivativeFileName: MemoryPlanetMars.png
+    derivativeSha256: 8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetJupiter
+    cardId: planet-jupiter
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetJupiter
+    sourcePageTitle: Project-owned deterministic Jupiter planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetJupiter.png
+    originalSha256: 0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40
+    derivativeFileName: MemoryPlanetJupiter.png
+    derivativeSha256: 0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetSaturn
+    cardId: planet-saturn
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetSaturn
+    sourcePageTitle: Project-owned deterministic Saturn planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetSaturn.png
+    originalSha256: 798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439
+    derivativeFileName: MemoryPlanetSaturn.png
+    derivativeSha256: 798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetUranus
+    cardId: planet-uranus
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetUranus
+    sourcePageTitle: Project-owned deterministic Uranus planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetUranus.png
+    originalSha256: 88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd
+    derivativeFileName: MemoryPlanetUranus.png
+    derivativeSha256: 88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryPlanetNeptune
+    cardId: planet-neptune
+    sourceUrl: project-owned://mather/issue-352/MemoryPlanetNeptune
+    sourcePageTitle: Project-owned deterministic Neptune planet drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryPlanetNeptune.png
+    originalSha256: ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03
+    derivativeFileName: MemoryPlanetNeptune.png
+    derivativeSha256: ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleCar
+    cardId: car
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleCar
+    sourcePageTitle: Project-owned deterministic car drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleCar.png
+    originalSha256: 322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5
+    derivativeFileName: MemoryVehicleCar.png
+    derivativeSha256: 322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleBus
+    cardId: bus
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleBus
+    sourcePageTitle: Project-owned deterministic bus drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleBus.png
+    originalSha256: 850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639
+    derivativeFileName: MemoryVehicleBus.png
+    derivativeSha256: 850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleTrain
+    cardId: train
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleTrain
+    sourcePageTitle: Project-owned deterministic train drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleTrain.png
+    originalSha256: 3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60
+    derivativeFileName: MemoryVehicleTrain.png
+    derivativeSha256: 3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehiclePlane
+    cardId: plane
+    sourceUrl: project-owned://mather/issue-352/MemoryVehiclePlane
+    sourcePageTitle: Project-owned deterministic plane drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehiclePlane.png
+    originalSha256: 64109fdb182213310e6951783540fb419969b250185ac47f12085270ee07dd2f
+    derivativeFileName: MemoryVehiclePlane.png
+    derivativeSha256: 64109fdb182213310e6951783540fb419969b250185ac47f12085270ee07dd2f
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleBoat
+    cardId: boat
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleBoat
+    sourcePageTitle: Project-owned deterministic boat drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleBoat.png
+    originalSha256: 6249a276351fd91a2f81b78371c78349a5802c6de242721a8391f290ef9b5924
+    derivativeFileName: MemoryVehicleBoat.png
+    derivativeSha256: 6249a276351fd91a2f81b78371c78349a5802c6de242721a8391f290ef9b5924
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
     verification:
       sourcePageArchived: false
       licenseAllowsReuse: true
@@ -40,7 +304,139 @@ assets:
     originalSha256: e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276
     derivativeFileName: MemoryVehicleBike.png
     derivativeSha256: e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276
-    derivativeChanges: Generated directly as a 512x512 transparent PNG; no third-party material used.
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleTruck
+    cardId: truck
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleTruck
+    sourcePageTitle: Project-owned deterministic truck drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleTruck.png
+    originalSha256: daca358c96d2a4e5ecfd6a502631213a83f6628ee790e1330ce80d794af7af51
+    derivativeFileName: MemoryVehicleTruck.png
+    derivativeSha256: daca358c96d2a4e5ecfd6a502631213a83f6628ee790e1330ce80d794af7af51
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleTractor
+    cardId: tractor
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleTractor
+    sourcePageTitle: Project-owned deterministic tractor drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleTractor.png
+    originalSha256: fa46188e68866c975e751d30d4dcfbef7f5946f2fb5f7a535008f594283394fe
+    derivativeFileName: MemoryVehicleTractor.png
+    derivativeSha256: fa46188e68866c975e751d30d4dcfbef7f5946f2fb5f7a535008f594283394fe
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleHelicopter
+    cardId: helicopter
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleHelicopter
+    sourcePageTitle: Project-owned deterministic helicopter drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleHelicopter.png
+    originalSha256: b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2
+    derivativeFileName: MemoryVehicleHelicopter.png
+    derivativeSha256: b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleRocket
+    cardId: rocket
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleRocket
+    sourcePageTitle: Project-owned deterministic rocket drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleRocket.png
+    originalSha256: 329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea
+    derivativeFileName: MemoryVehicleRocket.png
+    derivativeSha256: 329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleScooter
+    cardId: scooter
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleScooter
+    sourcePageTitle: Project-owned deterministic scooter drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleScooter.png
+    originalSha256: a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492
+    derivativeFileName: MemoryVehicleScooter.png
+    derivativeSha256: a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
+    verification:
+      sourcePageArchived: false
+      licenseAllowsReuse: true
+      noThirdPartyRestrictionFound: true
+      noLogoOrEndorsementRisk: true
+      noPeopleOrPrivacyRisk: true
+      childCardLegibilityChecked: true
+
+  - assetName: MemoryVehicleTaxi
+    cardId: taxi
+    sourceUrl: project-owned://mather/issue-352/MemoryVehicleTaxi
+    sourcePageTitle: Project-owned deterministic taxi drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #352
+    license: Project-owned; no third-party source material
+    licenseUrl: ""
+    retrievedAt: 2026-04-27
+    originalFileName: MemoryVehicleTaxi.png
+    originalSha256: 3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628
+    derivativeFileName: MemoryVehicleTaxi.png
+    derivativeSha256: 3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.
     verification:
       sourcePageArchived: false
       licenseAllowsReuse: true

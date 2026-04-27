@@ -281,44 +281,44 @@ enum MemoryDeck {
     ]
 
     static let vehicles: [MemoryAnimal] = [
-        vehicle("car", name: "Car", emoji: "🚗", use: "takes people on road trips", movement: "rolls on four wheels", colors: "many bright paint colors", sound: "vroom"),
-        vehicle("bus", name: "Bus", emoji: "🚌", use: "carries lots of people together", movement: "drives on roads with many seats", colors: "yellow, red, blue, green", sound: "rumbling engine"),
-        vehicle("train", name: "Train", emoji: "🚂", use: "pulls people or cargo on tracks", movement: "rolls on rails", colors: "black, silver, red, blue", sound: "choo-choo"),
-        vehicle("plane", name: "Plane", emoji: "✈️", use: "flies people across the sky", movement: "zooms with wings", colors: "white, blue, silver", sound: "whooshing jet sound"),
-        vehicle("boat", name: "Boat", emoji: "⛵", use: "travels across water", movement: "floats and glides", colors: "white, blue, red", sound: "splashing water"),
+        vehicle("car", name: "Car", emoji: "🚗", asset: "MemoryVehicleCar", use: "takes people on road trips", movement: "rolls on four wheels", colors: "many bright paint colors", sound: "vroom"),
+        vehicle("bus", name: "Bus", emoji: "🚌", asset: "MemoryVehicleBus", use: "carries lots of people together", movement: "drives on roads with many seats", colors: "yellow, red, blue, green", sound: "rumbling engine"),
+        vehicle("train", name: "Train", emoji: "🚂", asset: "MemoryVehicleTrain", use: "pulls people or cargo on tracks", movement: "rolls on rails", colors: "black, silver, red, blue", sound: "choo-choo"),
+        vehicle("plane", name: "Plane", emoji: "✈️", asset: "MemoryVehiclePlane", use: "flies people across the sky", movement: "zooms with wings", colors: "white, blue, silver", sound: "whooshing jet sound"),
+        vehicle("boat", name: "Boat", emoji: "⛵", asset: "MemoryVehicleBoat", use: "travels across water", movement: "floats and glides", colors: "white, blue, red", sound: "splashing water"),
         vehicle("bike", name: "Bike", emoji: "🚲", asset: "MemoryVehicleBike", use: "helps riders pedal from place to place", movement: "rolls on two wheels", colors: "red, blue, green, black", sound: "spinning wheels"),
-        vehicle("truck", name: "Truck", emoji: "🚚", use: "hauls heavy things", movement: "drives with a strong engine", colors: "white, blue, red", sound: "deep engine rumble"),
-        vehicle("tractor", name: "Tractor", emoji: "🚜", use: "helps farmers work in fields", movement: "rumbles over dirt with big tires", colors: "green, red, yellow", sound: "put-put engine"),
-        vehicle("helicopter", name: "Copter", emoji: "🚁", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
-        vehicle("rocket", name: "Rocket", emoji: "🚀", use: "blasts toward space", movement: "launches straight up fast", colors: "silver, white, red", sound: "roaring blast"),
-        vehicle("scooter", name: "Scooter", emoji: "🛵", use: "zips around short city trips", movement: "rolls on two small wheels", colors: "red, teal, yellow", sound: "buzzy motor"),
-        vehicle("taxi", name: "Taxi", emoji: "🚕", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
+        vehicle("truck", name: "Truck", emoji: "🚚", asset: "MemoryVehicleTruck", use: "hauls heavy things", movement: "drives with a strong engine", colors: "white, blue, red", sound: "deep engine rumble"),
+        vehicle("tractor", name: "Tractor", emoji: "🚜", asset: "MemoryVehicleTractor", use: "helps farmers work in fields", movement: "rumbles over dirt with big tires", colors: "green, red, yellow", sound: "put-put engine"),
+        vehicle("helicopter", name: "Copter", emoji: "🚁", asset: "MemoryVehicleHelicopter", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
+        vehicle("rocket", name: "Rocket", emoji: "🚀", asset: "MemoryVehicleRocket", use: "blasts toward space", movement: "launches straight up fast", colors: "silver, white, red", sound: "roaring blast"),
+        vehicle("scooter", name: "Scooter", emoji: "🛵", asset: "MemoryVehicleScooter", use: "zips around short city trips", movement: "rolls on two small wheels", colors: "red, teal, yellow", sound: "buzzy motor"),
+        vehicle("taxi", name: "Taxi", emoji: "🚕", asset: "MemoryVehicleTaxi", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
     ]
 
     static let vehicleImageAssetPlan: [MemoryImageAssetPlan] = [
-        imagePlan("car", asset: "MemoryVehicleCar", prompt: "kid-friendly side-view car photo or illustration on a clean background", notes: "four wheels clearly visible; avoid brand logos and license plates"),
-        imagePlan("bus", asset: "MemoryVehicleBus", prompt: "bright city or school bus, side view, clean background", notes: "large windows and wheels readable at card size"),
-        imagePlan("train", asset: "MemoryVehicleTrain", prompt: "locomotive or passenger train on rails, three-quarter view", notes: "rails visible; keep silhouette distinct from bus"),
-        imagePlan("plane", asset: "MemoryVehiclePlane", prompt: "airplane in flight or on runway with full wings visible", notes: "wide wing shape must remain legible in square crop"),
-        imagePlan("boat", asset: "MemoryVehicleBoat", prompt: "small sailboat or motorboat on water, uncluttered scene", notes: "show waterline; avoid tiny distant boats"),
+        importedImagePlan("car", asset: "MemoryVehicleCar", prompt: "kid-friendly side-view car photo or illustration on a clean background", notes: "four wheels clearly visible; avoid brand logos and license plates", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("bus", asset: "MemoryVehicleBus", prompt: "bright city or school bus, side view, clean background", notes: "large windows and wheels readable at card size", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("train", asset: "MemoryVehicleTrain", prompt: "locomotive or passenger train on rails, three-quarter view", notes: "rails visible; keep silhouette distinct from bus", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("plane", asset: "MemoryVehiclePlane", prompt: "airplane in flight or on runway with full wings visible", notes: "wide wing shape must remain legible in square crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("boat", asset: "MemoryVehicleBoat", prompt: "small sailboat or motorboat on water, uncluttered scene", notes: "show waterline; avoid tiny distant boats", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         importedImagePlan("bike", asset: "MemoryVehicleBike", prompt: "bicycle side view on clean background", notes: "two wheels and handlebar readable; no rider required", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        imagePlan("truck", asset: "MemoryVehicleTruck", prompt: "box truck or delivery truck side view, clean background", notes: "large cargo box should distinguish it from car and bus"),
-        imagePlan("tractor", asset: "MemoryVehicleTractor", prompt: "farm tractor with large rear tire, field or clean background", notes: "big back wheel is the main recognition cue"),
-        imagePlan("helicopter", asset: "MemoryVehicleHelicopter", prompt: "helicopter side view with rotor visible", notes: "rotor and tail boom must fit inside crop"),
-        imagePlan("rocket", asset: "MemoryVehicleRocket", prompt: "rocket launch or upright rocket, simple high-contrast composition", notes: "flame plume optional; avoid agency logos unless public-domain provenance is documented"),
-        imagePlan("scooter", asset: "MemoryVehicleScooter", prompt: "small scooter or moped side view, clean background", notes: "keep distinct from bike using seat and motor body"),
-        imagePlan("taxi", asset: "MemoryVehicleTaxi", prompt: "yellow taxi side or three-quarter view, clean city context", notes: "taxi sign/checker cue useful; avoid visible plate numbers")
+        importedImagePlan("truck", asset: "MemoryVehicleTruck", prompt: "box truck or delivery truck side view, clean background", notes: "large cargo box should distinguish it from car and bus", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("tractor", asset: "MemoryVehicleTractor", prompt: "farm tractor with large rear tire, field or clean background", notes: "big back wheel is the main recognition cue", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("helicopter", asset: "MemoryVehicleHelicopter", prompt: "helicopter side view with rotor visible", notes: "rotor and tail boom must fit inside crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("rocket", asset: "MemoryVehicleRocket", prompt: "rocket launch or upright rocket, simple high-contrast composition", notes: "flame plume optional; avoid agency logos unless public-domain provenance is documented", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("scooter", asset: "MemoryVehicleScooter", prompt: "small scooter or moped side view, clean background", notes: "keep distinct from bike using seat and motor body", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("taxi", asset: "MemoryVehicleTaxi", prompt: "yellow taxi side or three-quarter view, clean city context", notes: "taxi sign/checker cue useful; avoid visible plate numbers", sourceName: "Project-owned deterministic drawing", license: "Project-owned")
     ]
 
     static let planetImageAssetPlan: [MemoryImageAssetPlan] = [
-        imagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "Mercury planet disk, gray cratered surface, black or transparent background", notes: "craters visible; avoid confusing with Moon unless labeled in provenance"),
-        imagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "Venus planet disk, pale yellow cloud-covered surface", notes: "soft yellow cloud bands; no surface lava imagery unless educationally intentional"),
+        importedImagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "Mercury planet disk, gray cratered surface, black or transparent background", notes: "craters visible; avoid confusing with Moon unless labeled in provenance", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "Venus planet disk, pale yellow cloud-covered surface", notes: "soft yellow cloud bands; no surface lava imagery unless educationally intentional", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         importedImagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "Earth planet disk showing blue oceans, green/brown land, white clouds", notes: "full globe preferred; keep recognizable continents/clouds", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        imagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "Mars planet disk, rusty red surface with darker markings", notes: "red/orange treatment must be distinct from Venus"),
-        imagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "Jupiter planet disk with brown cream bands and Great Red Spot", notes: "Great Red Spot is the key recognition cue"),
-        imagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "Saturn with rings, tan/gold planet, transparent or dark background", notes: "rings must fit fully inside square card crop"),
-        imagePlan("planet-uranus", asset: "MemoryPlanetUranus", prompt: "Uranus planet disk, pale cyan blue-green, minimal bands", notes: "tilted ring optional only if sourced and legible"),
-        imagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "Neptune planet disk, deep blue with subtle storm/cloud texture", notes: "deeper blue than Uranus; avoid over-saturated fantasy art")
+        importedImagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "Mars planet disk, rusty red surface with darker markings", notes: "red/orange treatment must be distinct from Venus", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "Jupiter planet disk with brown cream bands and Great Red Spot", notes: "Great Red Spot is the key recognition cue", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "Saturn with rings, tan/gold planet, transparent or dark background", notes: "rings must fit fully inside square card crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("planet-uranus", asset: "MemoryPlanetUranus", prompt: "Uranus planet disk, pale cyan blue-green, minimal bands", notes: "tilted ring optional only if sourced and legible", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "Neptune planet disk, deep blue with subtle storm/cloud texture", notes: "deeper blue than Uranus; avoid over-saturated fantasy art", sourceName: "Project-owned deterministic drawing", license: "Project-owned")
     ]
 
     static let fishImageAssetPlan: [MemoryImageAssetPlan] = [
@@ -333,14 +333,14 @@ enum MemoryDeck {
     ]
 
     static let planets: [MemoryAnimal] = [
-        planet("planet-mercury", prompt: "☿", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
-        planet("planet-venus", prompt: "♀", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
+        planet("planet-mercury", prompt: "☿", asset: "MemoryPlanetMercury", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
+        planet("planet-venus", prompt: "♀", asset: "MemoryPlanetVenus", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
         planet("planet-earth", prompt: "⊕", asset: "MemoryPlanetEarth", name: "Earth", order: "3rd from the Sun", type: "rocky planet", size: "12,742 km wide", colors: "blue, green, white", funFact: "It has one moon"),
-        planet("planet-mars", prompt: "♂", name: "Mars", order: "4th from the Sun", type: "rocky planet", size: "6,779 km wide", colors: "rusty red", funFact: "It has two small moons"),
-        planet("planet-jupiter", prompt: "♃", name: "Jupiter", order: "5th from the Sun", type: "gas giant", size: "139,820 km wide", colors: "brown, cream, orange", funFact: "It is the biggest planet"),
-        planet("planet-saturn", prompt: "♄", name: "Saturn", order: "6th from the Sun", type: "gas giant", size: "116,460 km wide", colors: "gold and tan", funFact: "It is famous for bright rings"),
-        planet("planet-uranus", prompt: "⛢", name: "Uranus", order: "7th from the Sun", type: "ice giant", size: "50,724 km wide", colors: "icy blue", funFact: "It rotates on its side"),
-        planet("planet-neptune", prompt: "♆", name: "Neptune", order: "8th from the Sun", type: "ice giant", size: "49,244 km wide", colors: "deep blue", funFact: "It has very fast winds")
+        planet("planet-mars", prompt: "♂", asset: "MemoryPlanetMars", name: "Mars", order: "4th from the Sun", type: "rocky planet", size: "6,779 km wide", colors: "rusty red", funFact: "It has two small moons"),
+        planet("planet-jupiter", prompt: "♃", asset: "MemoryPlanetJupiter", name: "Jupiter", order: "5th from the Sun", type: "gas giant", size: "139,820 km wide", colors: "brown, cream, orange", funFact: "It is the biggest planet"),
+        planet("planet-saturn", prompt: "♄", asset: "MemoryPlanetSaturn", name: "Saturn", order: "6th from the Sun", type: "gas giant", size: "116,460 km wide", colors: "gold and tan", funFact: "It is famous for bright rings"),
+        planet("planet-uranus", prompt: "⛢", asset: "MemoryPlanetUranus", name: "Uranus", order: "7th from the Sun", type: "ice giant", size: "50,724 km wide", colors: "icy blue", funFact: "It rotates on its side"),
+        planet("planet-neptune", prompt: "♆", asset: "MemoryPlanetNeptune", name: "Neptune", order: "8th from the Sun", type: "ice giant", size: "49,244 km wide", colors: "deep blue", funFact: "It has very fast winds")
     ]
 
     static let fishes: [MemoryAnimal] = [
@@ -381,46 +381,26 @@ enum MemoryDeck {
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
-        MemoryImageAssetProvenance(
-            assetName: "MemoryPlanetEarth",
-            cardId: "planet-earth",
-            sourceName: "Project-owned deterministic drawing",
-            creator: "OpenAI Codex for ganesh47/mather",
-            creditLine: "Project-owned artwork created for Mather issue #352",
-            license: "Project-owned; no third-party source material",
-            licenseUrl: "",
-            retrievedAt: "2026-04-27",
-            originalFileName: "MemoryPlanetEarth.png",
-            originalSha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
-            derivativeFileName: "MemoryPlanetEarth.png",
-            derivativeSha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
-            derivativeChanges: "Generated directly as a 512x512 transparent PNG; no third-party material used.",
-            licenseAllowsReuse: true,
-            noThirdPartyRestrictionFound: true,
-            noLogoOrEndorsementRisk: true,
-            noPeopleOrPrivacyRisk: true,
-            childCardLegibilityChecked: true
-        ),
-        MemoryImageAssetProvenance(
-            assetName: "MemoryVehicleBike",
-            cardId: "bike",
-            sourceName: "Project-owned deterministic drawing",
-            creator: "OpenAI Codex for ganesh47/mather",
-            creditLine: "Project-owned artwork created for Mather issue #352",
-            license: "Project-owned; no third-party source material",
-            licenseUrl: "",
-            retrievedAt: "2026-04-27",
-            originalFileName: "MemoryVehicleBike.png",
-            originalSha256: "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276",
-            derivativeFileName: "MemoryVehicleBike.png",
-            derivativeSha256: "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276",
-            derivativeChanges: "Generated directly as a 512x512 transparent PNG; no third-party material used.",
-            licenseAllowsReuse: true,
-            noThirdPartyRestrictionFound: true,
-            noLogoOrEndorsementRisk: true,
-            noPeopleOrPrivacyRisk: true,
-            childCardLegibilityChecked: true
-        ),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetMercury", cardId: "planet-mercury", sha256: "9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetVenus", cardId: "planet-venus", sha256: "3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetEarth", cardId: "planet-earth", sha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetMars", cardId: "planet-mars", sha256: "8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetJupiter", cardId: "planet-jupiter", sha256: "0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetSaturn", cardId: "planet-saturn", sha256: "798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetUranus", cardId: "planet-uranus", sha256: "88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd"),
+        generatedIssue352ImageProvenance(assetName: "MemoryPlanetNeptune", cardId: "planet-neptune", sha256: "ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleCar", cardId: "car", sha256: "322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleBus", cardId: "bus", sha256: "850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleTrain", cardId: "train", sha256: "3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehiclePlane", cardId: "plane", sha256: "64109fdb182213310e6951783540fb419969b250185ac47f12085270ee07dd2f"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleBoat", cardId: "boat", sha256: "6249a276351fd91a2f81b78371c78349a5802c6de242721a8391f290ef9b5924"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleBike", cardId: "bike", sha256: "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleTruck", cardId: "truck", sha256: "daca358c96d2a4e5ecfd6a502631213a83f6628ee790e1330ce80d794af7af51"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleTractor", cardId: "tractor", sha256: "fa46188e68866c975e751d30d4dcfbef7f5946f2fb5f7a535008f594283394fe"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleHelicopter", cardId: "helicopter", sha256: "b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleRocket", cardId: "rocket", sha256: "329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleScooter", cardId: "scooter", sha256: "a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492"),
+        generatedIssue352ImageProvenance(assetName: "MemoryVehicleTaxi", cardId: "taxi", sha256: "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628"),
         generatedImageProvenance(assetName: "MemoryFishClownfish", cardId: "fish-clownfish", sha256: "994003f9911cd64dae9b0b788918a64ca4bf0a9ca8c2889ecb9dfca6903d9c6b"),
         generatedImageProvenance(assetName: "MemoryFishGoldfish", cardId: "fish-goldfish", sha256: "03e5d0f461f714cff979eba3c154b3f1012f8880c88fca509cdabeb74ddc4dde"),
         generatedImageProvenance(assetName: "MemoryFishBetta", cardId: "fish-betta", sha256: "32da3532b489e9c7d20394cec5b99897c2011cc2a92809ced0b249d74e1aa200"),
@@ -449,6 +429,29 @@ enum MemoryDeck {
             searchPrompt: prompt,
             styleNotes: notes,
             status: .readyForAssetImport(sourceName: sourceName, license: license)
+        )
+    }
+
+    private static func generatedIssue352ImageProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "Project-owned deterministic drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #352",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-04-27",
+            originalFileName: "\(assetName).png",
+            originalSha256: sha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: sha256,
+            derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
         )
     }
 
