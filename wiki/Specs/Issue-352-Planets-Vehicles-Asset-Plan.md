@@ -2,6 +2,8 @@
 
 This is the safe pre-import plan for upgrading the `planets` and `vehicles` Memory Match decks to image-backed cards. It intentionally does **not** import images yet; every asset still needs a vetted source, license/reuse check, and provenance note before it can be referenced by `MemoryAnimal.picture`.
 
+Source-candidate and provenance checklist artifact: `wiki/Specs/Issue-352-Planets-Vehicles-Source-Candidates.md`.
+
 ## Asset naming
 
 - Vehicles: `MemoryVehicle<Car|Bus|Train|Plane|Boat|Bike|Truck|Tractor|Helicopter|Rocket|Scooter|Taxi>`
@@ -34,3 +36,4 @@ For each planned asset:
 - Vehicles: 12/12 cards have planned asset names and sourcing prompts.
 - Planets: 8/8 cards have planned asset names and sourcing prompts.
 - No unvetted images were imported in this slice.
+- Source-candidate/provenance checklist artifact added in `wiki/Specs/Issue-352-Planets-Vehicles-Source-Candidates.md` for the next vetted pilot import.
