@@ -22,6 +22,29 @@ struct ProblemGeneratorTests {
         #expect(config.targetRange == 1...20)
     }
 
+
+    @Test
+    func deterministicGenerationRespectsParentFacingTargetCap() {
+        let config = SliceConfig(maxProblems: 8, minTarget: 1, maxTarget: 10, showTransfer: true, audioEnabled: true, deterministicMode: true)
+
+        let problems = ProblemGenerator.generateProblems(config: config)
+
+        #expect(problems.map(\.target) == [6, 9, 4, 7, 3, 10, 1, 5])
+        #expect(problems.allSatisfy { (1...10).contains($0.target) })
+        #expect(problems.allSatisfy { $0.decompositionA + $0.decompositionB == $0.target })
+    }
+
+    @Test
+    func randomGenerationRespectsUpToTenCap() {
+        let config = SliceConfig(maxProblems: 12, minTarget: 1, maxTarget: 10, showTransfer: true, audioEnabled: true, deterministicMode: false)
+
+        let problems = ProblemGenerator.generateProblems(config: config)
+
+        #expect(problems.count == 12)
+        #expect(problems.allSatisfy { (1...10).contains($0.target) })
+        #expect(problems.allSatisfy { $0.decompositionA + $0.decompositionB == $0.target })
+    }
+
     @Test
     func randomGenerationUsesRequestedRangeAndAvoidsImmediateRepeats() {
         let config = SliceConfig(maxProblems: 12, minTarget: 1, maxTarget: 20, showTransfer: true, audioEnabled: true, deterministicMode: false)
