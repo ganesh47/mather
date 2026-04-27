@@ -53,6 +53,22 @@ struct MemoryViewTests {
         #expect(MemoryDeck.planets.allSatisfy { $0.imageAssetName == nil })
     }
 
+    @Test func issue379FishImageAssetPlanCoversFishesWithoutPrematureImports() {
+        let fishIds = MemoryDeck.fishes.map(\.id)
+        let plan = MemoryDeck.fishImageAssetPlan
+        let plannedAssets = plan.map(\.assetName)
+
+        #expect(plan.map(\.cardId) == fishIds)
+        #expect(Set(plannedAssets).count == plannedAssets.count)
+        #expect(plannedAssets.allSatisfy { $0.hasPrefix("MemoryFish") })
+        #expect(plan.allSatisfy { !$0.searchPrompt.isEmpty && !$0.styleNotes.isEmpty })
+        #expect(plan.allSatisfy { plan in
+            if case .needsVettedSource = plan.status { return true }
+            return false
+        })
+        #expect(MemoryDeck.fishes.allSatisfy { $0.imageAssetName == nil })
+    }
+
     @Test func deckSelectionExposesVehiclesDeck() {
         #expect(MemoryView.DeckSelection.allCases.contains(.vehicles))
         #expect(MemoryView.DeckSelection.vehicles.menuLabel == "Vehicles")

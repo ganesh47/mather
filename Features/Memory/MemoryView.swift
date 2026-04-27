@@ -300,6 +300,17 @@ enum MemoryDeck {
         imagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "Neptune planet disk, deep blue with subtle storm/cloud texture", notes: "deeper blue than Uranus; avoid over-saturated fantasy art")
     ]
 
+    static let fishImageAssetPlan: [MemoryImageAssetPlan] = [
+        imagePlan("fish-clownfish", asset: "MemoryFishClownfish", prompt: "clownfish with orange body and white bands near coral or sea anemone", notes: "white bands and orange body must be readable; crop out busy reef clutter"),
+        imagePlan("fish-goldfish", asset: "MemoryFishGoldfish", prompt: "goldfish side view with rounded body and flowing tail on a clean water background", notes: "orange or gold body should distinguish it from clownfish; avoid bowl-only compositions"),
+        imagePlan("fish-betta", asset: "MemoryFishBetta", prompt: "betta fish with large flowing fins, side view, clean aquatic background", notes: "flowing fins are the recognition cue; keep fin edges visible in square crop"),
+        imagePlan("fish-angelfish", asset: "MemoryFishAngelfish", prompt: "angelfish with tall triangular fins, side view, simple reef or water background", notes: "tall dorsal and anal fins must stay inside crop; avoid confusing with generic reef fish"),
+        imagePlan("fish-catfish", asset: "MemoryFishCatfish", prompt: "catfish with visible whisker-like barbels, side or three-quarter view", notes: "barbels must be clear at card size; prefer uncluttered river or aquarium background"),
+        imagePlan("fish-swordtail", asset: "MemoryFishSwordtail", prompt: "swordtail fish side view with long sword-shaped lower tail extension", notes: "tail sword is required for recognition; avoid crops that trim the tail"),
+        imagePlan("fish-tuna", asset: "MemoryFishTuna", prompt: "tuna fish with streamlined silver and blue body, side view in open water", notes: "sleek torpedo shape should read clearly; avoid fishing/deck scenes"),
+        imagePlan("fish-seahorse", asset: "MemoryFishSeahorse", prompt: "seahorse upright profile with curled tail, clean sea grass or water background", notes: "upright posture and curled tail must be visible; keep subject large in square crop")
+    ]
+
     static let planets: [MemoryAnimal] = [
         planet("planet-mercury", prompt: "☿", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
         planet("planet-venus", prompt: "♀", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
