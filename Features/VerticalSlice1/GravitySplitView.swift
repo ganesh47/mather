@@ -43,7 +43,7 @@ struct GravitySplitView: View {
     }
 
     private var splitEquation: String {
-        "Split \(state.target) into \(state.decompositionA) and \(state.decompositionB)"
+        "Split \(state.target) into two parts"
     }
 
     // MARK: - Body
@@ -117,9 +117,9 @@ struct GravitySplitView: View {
 
     private var liveCountRow: some View {
         HStack(spacing: 7) {
-            counterPill(value: state.leftCount, target: state.decompositionA, fill: MatherTheme.warm)
+            counterPill(value: state.leftCount, fill: MatherTheme.warm)
             Text("+").font(.headline.weight(.black)).foregroundStyle(.secondary)
-            counterPill(value: state.rightCount, target: state.decompositionB, fill: MatherTheme.accent)
+            counterPill(value: state.rightCount, fill: MatherTheme.accent)
             Text("=").font(.headline.weight(.black)).foregroundStyle(.secondary)
             Text("\(state.target)")
                 .font(.system(size: 24, weight: .black, design: .rounded))
@@ -127,8 +127,8 @@ struct GravitySplitView: View {
         }
     }
 
-    private func counterPill(value: Int, target: Int, fill: Color) -> some View {
-        Text("\(value)/\(target)")
+    private func counterPill(value: Int, fill: Color) -> some View {
+        Text("\(value)")
             .font(.system(size: 18, weight: .black, design: .rounded))
             .foregroundStyle(fill)
             .frame(minWidth: 58, minHeight: 36)
@@ -211,7 +211,7 @@ struct GravitySplitView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 4)
-                Text("\(count)/\(target)")
+                Text("\(count)")
                     .font(.caption.weight(.black))
                     .foregroundStyle(fill)
             }

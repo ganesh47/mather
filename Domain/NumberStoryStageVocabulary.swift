@@ -20,10 +20,10 @@ struct NumberStoryStageVocabulary: Equatable {
             return NumberStoryStageVocabulary(
                 title: "Break It",
                 targetReminder: "\(prompt.target) \(prompt.objectNoun)",
-                instruction: "Tap tokens to split \(prompt.target) \(prompt.objectNoun): \(prompt.leftPart) in \(prompt.leftContainer), \(prompt.rightPart) in \(prompt.rightContainer).",
+                instruction: "Tap tokens to split \(prompt.target) \(prompt.objectNoun) into two parts.",
                 leftLabel: prompt.leftContainer.capitalized,
                 rightLabel: prompt.rightContainer.capitalized,
-                accessibilityLabel: "Break It. Split \(prompt.target) \(prompt.objectNoun). \(prompt.leftPart) in \(prompt.leftContainer). \(prompt.rightPart) in \(prompt.rightContainer)."
+                accessibilityLabel: "Break It. Split \(prompt.target) \(prompt.objectNoun) into two parts."
             )
         case .sumSprint:
             return NumberStoryStageVocabulary(

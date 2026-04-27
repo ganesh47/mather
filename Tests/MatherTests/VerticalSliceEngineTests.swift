@@ -740,6 +740,79 @@ struct VerticalSliceEngineTests {
         #expect(engine.currentStage == .gravitySplit)
     }
 
+
+    @Test
+    func freshBreakItPresentationIsEmptyAndDoesNotRenderCompletedAnswer() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+        flags.selectedThemeId = "space"
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+        engine.startBuildingFromStoryAnchor()
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+
+        let prompt = NumberStoryGenerator.prompt(for: problem, themeId: "space")
+        let vocabulary = NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .gravitySplit)
+        let visibleText = [
+            vocabulary.title,
+            vocabulary.targetReminder,
+            vocabulary.instruction,
+            vocabulary.leftLabel,
+            vocabulary.rightLabel,
+            vocabulary.accessibilityLabel,
+        ].joined(separator: " ")
+
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.rightCount == 0)
+        #expect(engine.gravitySplitState?.isLocked == false)
+        #expect(!visibleText.contains("\(problem.decompositionA) in \(prompt.leftContainer)"))
+        #expect(!visibleText.contains("\(problem.decompositionB) in \(prompt.rightContainer)"))
+    }
+
+    @Test
+    func resetBreakItPresentationClearsPriorAnswerState() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+        engine.startBuildingFromStoryAnchor()
+        engine.adjustConcrete(by: problem.target)
+        engine.submitCurrentStage()
+        await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
+
+        engine.adjustGravitySplitByTap(delta: 1, side: .left)
+        engine.adjustGravitySplitByTap(delta: 1, side: .right)
+        #expect((engine.gravitySplitState?.leftCount ?? 0) + (engine.gravitySplitState?.rightCount ?? 0) > 0)
+
+        engine.resetGravitySplit()
+
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.rightCount == 0)
+        #expect(engine.gravitySplitState?.isLocked == false)
+    }
+
     @Test
     func gravitySplitStateInitialisedOnStageEntry() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
