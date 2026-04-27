@@ -19,17 +19,35 @@ struct SumSprintSummaryView: View {
                 VStack(spacing: 28) {
                     Spacer(minLength: 20)
 
-                    celebrationBlock
-
-                    statsRow
-
-                    factsPracticedGrid
-
-                    buttonStack
+                    summaryContent
                 }
                 .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
-                .frame(maxWidth: ResponsiveLayout.isWide(horizontalSizeClass) ? 900 : .infinity)
+                .frame(maxWidth: ResponsiveLayout.sumSprintSummaryMaxWidth(for: horizontalSizeClass))
                 .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var summaryContent: some View {
+        if ResponsiveLayout.isWide(horizontalSizeClass) {
+            HStack(alignment: .top, spacing: 24) {
+                celebrationBlock
+                    .frame(maxWidth: 340)
+
+                VStack(spacing: 20) {
+                    statsRow
+                    factsPracticedGrid
+                    buttonStack
+                }
+                .frame(maxWidth: .infinity)
+            }
+        } else {
+            VStack(spacing: 28) {
+                celebrationBlock
+                statsRow
+                factsPracticedGrid
+                buttonStack
             }
         }
     }
@@ -136,7 +154,7 @@ struct SumSprintSummaryView: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink.opacity(0.7))
 
-                LazyVGrid(columns: ResponsiveLayout.summaryFactColumns(for: horizontalSizeClass), spacing: 8) {
+                LazyVGrid(columns: ResponsiveLayout.sumSprintSummaryFactColumns(for: horizontalSizeClass), spacing: 8) {
                     ForEach(summary.cards) { card in
                         factPill(card: card)
                     }
@@ -178,13 +196,27 @@ struct SumSprintSummaryView: View {
 
     // MARK: - Buttons
 
+    @ViewBuilder
     private var buttonStack: some View {
-        VStack(spacing: 12) {
-            Button("Play again") { onPlayAgain() }
-                .buttonStyle(PrimaryActionButtonStyle())
-
-            Button("Done") { onDone() }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
+        if ResponsiveLayout.isWide(horizontalSizeClass) {
+            HStack(spacing: 12) {
+                summaryButtons
+            }
+            .frame(maxWidth: .infinity)
+        } else {
+            VStack(spacing: 12) {
+                summaryButtons
+            }
+            .frame(maxWidth: .infinity)
         }
+    }
+
+    @ViewBuilder
+    private var summaryButtons: some View {
+        Button("Play again") { onPlayAgain() }
+            .buttonStyle(PrimaryActionButtonStyle())
+
+        Button("Done") { onDone() }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
     }
 }

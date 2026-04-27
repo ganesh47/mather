@@ -33,6 +33,15 @@ struct ResponsiveLayoutTests {
         #expect(ResponsiveLayout.roomQuestStationColumns(for: .regular).count == 1)
     }
 
+    @MainActor @Test func sumSprintUsesDedicatedRegularWidthCaps() {
+        #expect(ResponsiveLayout.sumSprintSessionMaxWidth(for: .compact) == CGFloat.infinity)
+        #expect(ResponsiveLayout.sumSprintSessionMaxWidth(for: .regular) == 820)
+        #expect(ResponsiveLayout.sumSprintSummaryMaxWidth(for: .compact) == CGFloat.infinity)
+        #expect(ResponsiveLayout.sumSprintSummaryMaxWidth(for: .regular) == 980)
+        #expect(ResponsiveLayout.sumSprintSummaryFactColumns(for: .compact).count == 2)
+        #expect(ResponsiveLayout.sumSprintSummaryFactColumns(for: .regular).count == 2)
+    }
+
     @MainActor @Test func memoryLayoutAdaptsBoardAndLearningSheetForTablets() {
         #expect(ResponsiveLayout.memoryBoardMaxWidth(for: .regular) == 920)
         #expect(ResponsiveLayout.memoryBoardMaxWidth(for: .compact) == CGFloat.infinity)
