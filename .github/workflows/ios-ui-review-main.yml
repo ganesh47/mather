@@ -10,9 +10,15 @@ permissions:
 
 jobs:
   ui-review:
-    name: UI Screenshot Review
+    name: UI Screenshot Review (${{ matrix.device-family }})
     runs-on: macos-15
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        device-family: [iphone, ipad]
+    env:
+      DEVICE_FAMILY: ${{ matrix.device-family }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -33,25 +39,36 @@ jobs:
       - name: Choose simulator destination
         run: |
           set -euo pipefail
-          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15"; do
+
+          if [[ "$DEVICE_FAMILY" == "ipad" ]]; then
+            preferred=("iPad Pro 11-inch (M4)" "iPad Air 11-inch (M2)" "iPad (10th generation)" "iPad Pro (11-inch) (4th generation)")
+            fallback=("iPad")
+          else
+            preferred=("iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15")
+            fallback=("iPhone 16 Pro" "iPhone 16" "iPhone 15" "iPhone 17")
+          fi
+
+          for name in "${preferred[@]}"; do
             line="$(xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
             if [[ -n "$line" ]]; then
               id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
               echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
-              echo "Using simulator: $name ($id)"
+              echo "Using $DEVICE_FAMILY simulator: $name ($id)"
               exit 0
             fi
           done
-          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15" "iPhone 17"; do
-            line="$(xcrun simctl list devices available | grep -F "$name (" | head -n 1 || true)"
+
+          for name in "${fallback[@]}"; do
+            line="$(xcrun simctl list devices available | grep -F "$name" | head -n 1 || true)"
             if [[ -n "$line" ]]; then
               id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
               echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
-              echo "Using simulator (fallback): $name ($id)"
+              echo "Using $DEVICE_FAMILY simulator (fallback): $name ($id)"
               exit 0
             fi
           done
-          echo "No preferred iPhone simulator found" >&2
+
+          echo "No preferred $DEVICE_FAMILY simulator found" >&2
           xcrun simctl list devices available
           exit 1
 
@@ -93,7 +110,7 @@ jobs:
           SIM_ID="${SIM_DESTINATION#id=}"
 
           xcrun simctl io "$SIM_ID" recordVideo --codec hevc \
-            ci-videos/ui-tests.mp4 &
+            "ci-videos/ui-tests-${DEVICE_FAMILY}.mp4" &
           VIDEO_PID=$!
 
           # Keep screenshot review focused on artifact-producing flows.
@@ -105,12 +122,12 @@ jobs:
             -only-testing MatherUITests/ScreenshotTests \
             -skip-testing MatherUITests/ScreenshotTests/testConcreteBuild_AccentRowLockedUntilWarmFull \
             -skip-testing MatherUITests/ScreenshotTests/testSessionHistoryShowsMultipleSavedSessionsInParentSummaryAndSettings \
-            -resultBundlePath UITestResults.xcresult \
+            -resultBundlePath "UITestResults-${DEVICE_FAMILY}.xcresult" \
             CODE_SIGNING_ALLOWED=NO
           XCODE_EXIT=$?
 
           kill -INT "$VIDEO_PID" && wait "$VIDEO_PID" 2>/dev/null || true
-          exit $XCODE_EXIT
+          exit "$XCODE_EXIT"
 
       - name: Extract screenshots from result bundle
         if: always()
@@ -121,7 +138,7 @@ jobs:
           cat > /tmp/extract_screenshots.py << 'PYEOF'
           import sys, json, subprocess, pathlib, shutil, plistlib
 
-          bundle = pathlib.Path("UITestResults.xcresult")
+          bundle = pathlib.Path(f"UITestResults-{__import__('os').environ.get('DEVICE_FAMILY', 'device')}.xcresult")
           out    = pathlib.Path("ci-screenshots")
           out.mkdir(exist_ok=True)
 
@@ -205,15 +222,15 @@ jobs:
             | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
           if [[ -n "$SIM_ID" ]]; then
             xcrun simctl io "$SIM_ID" screenshot \
-              ci-screenshots/simulator-final-state.png 2>/dev/null || true
+              "ci-screenshots/simulator-final-state-${DEVICE_FAMILY}.png" 2>/dev/null || true
           fi
 
       - name: Upload UI result bundle
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ui-review-results-${{ github.run_number }}
-          path: UITestResults.xcresult
+          name: ui-review-results-${{ matrix.device-family }}-${{ github.run_number }}
+          path: UITestResults-${{ matrix.device-family }}.xcresult
           if-no-files-found: ignore
           retention-days: 30
 
@@ -221,7 +238,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ui-review-screenshots-${{ github.run_number }}
+          name: ui-review-screenshots-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-screenshots/
           if-no-files-found: ignore
           retention-days: 30
@@ -230,7 +247,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ui-review-video-${{ github.run_number }}
+          name: ui-review-video-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-videos/
           if-no-files-found: ignore
           retention-days: 30
