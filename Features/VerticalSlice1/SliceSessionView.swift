@@ -154,6 +154,7 @@ struct SliceSessionView: View {
                     shakeDetected: appModel.motionService.shakeDetected,
                     onAdjustTilt: appModel.engine.adjustGravitySplitByTilt,
                     onTap: appModel.engine.adjustGravitySplitByTap,
+                    onReset: appModel.engine.resetGravitySplit,
                     onShakeHandled: { appModel.motionService.resetShake(); appModel.engine.resetGravitySplit() },
                     onSubmit: appModel.engine.submitCurrentStage
                 )
