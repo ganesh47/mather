@@ -269,10 +269,6 @@ final class ScreenshotTests: XCTestCase {
             snapshotPrefix: "Issue222-Target6"
         )
 
-        let target9Submit = app.buttons["That is 9"]
-        XCTAssertTrue(target9Submit.waitForExistence(timeout: 15), "Expected the second deterministic target to load after finishing the first loop")
-        snapshot(app, "Issue222-Target9-Concrete")
-
         completeLoopV2Problem(
             in: app,
             target: 9,
@@ -288,10 +284,6 @@ final class ScreenshotTests: XCTestCase {
             skipInitialConcreteSnapshot: true
         )
 
-        let target4Submit = app.buttons["That is 4"]
-        XCTAssertTrue(target4Submit.waitForExistence(timeout: 15), "Expected the third deterministic target to load after finishing the target-9 loop")
-        snapshot(app, "Issue222-Target4-Concrete")
-
         completeLoopV2Problem(
             in: app,
             target: 4,
@@ -304,10 +296,6 @@ final class ScreenshotTests: XCTestCase {
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
         )
-
-        let target12Submit = app.buttons["That is 12"]
-        XCTAssertTrue(target12Submit.waitForExistence(timeout: 15), "Expected a higher target above 10 to load after the target-4 loop")
-        snapshot(app, "Issue222-Target12-Concrete")
 
         completeLoopV2Problem(
             in: app,
@@ -451,13 +439,7 @@ final class ScreenshotTests: XCTestCase {
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
-        let storyAnchorStart = app.buttons["story-anchor-start-button"]
-        if storyAnchorStart.waitForExistence(timeout: 5) {
-            if !skipInitialConcreteSnapshot {
-                snapshot(app, "\(snapshotPrefix)-StoryAnchor")
-            }
-            storyAnchorStart.tap()
-        }
+        advanceStoryAnchorIfPresent(in: app, snapshotPrefix: snapshotPrefix, shouldSnapshot: !skipInitialConcreteSnapshot)
 
         let concreteSubmit = app.buttons["That is \(target)"]
         XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
@@ -513,6 +495,34 @@ final class ScreenshotTests: XCTestCase {
             leftCard.tap()
             rightCard.tap()
         }
+    }
+
+    private func advanceStoryAnchorIfPresent(in app: XCUIApplication, snapshotPrefix: String, shouldSnapshot: Bool) {
+        let storyAnchorCard = app.otherElements["story-anchor-card"]
+        let storyAnchorStart = app.buttons["story-anchor-start-button"]
+        let storyAnchorStartLabel = app.buttons["Start building"]
+
+        guard storyAnchorCard.waitForExistence(timeout: 5) || storyAnchorStart.exists || storyAnchorStartLabel.exists else {
+            return
+        }
+
+        if shouldSnapshot {
+            snapshot(app, "\(snapshotPrefix)-StoryAnchor")
+        }
+
+        for _ in 0..<4 {
+            if storyAnchorStart.exists && storyAnchorStart.isHittable {
+                storyAnchorStart.tap()
+                return
+            }
+            if storyAnchorStartLabel.exists && storyAnchorStartLabel.isHittable {
+                storyAnchorStartLabel.tap()
+                return
+            }
+            app.scrollViews.firstMatch.swipeUp()
+        }
+
+        XCTFail("Expected Story Anchor start button before concrete stage")
     }
 
     private func completeVisibleSumSprintPairs(in app: XCUIApplication, target: Int, expectedPairs: Int) {
