@@ -52,6 +52,21 @@ struct SessionConfigView: View {
                                 .font(.title3.weight(.semibold))
                         }
 
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Target numbers")
+                                .font(.title3.weight(.semibold))
+                            Text("Choose the largest number this session can ask for.")
+                                .font(.subheadline)
+                                .foregroundStyle(MatherTheme.ink.opacity(0.6))
+
+                            HStack(spacing: 12) {
+                                targetCapButton(maxTarget: 10)
+                                targetCapButton(maxTarget: 20)
+                            }
+                        }
+
                         Toggle("Speak prompts", isOn: Binding(
                             get: { appModel.featureFlags.audioEnabled },
                             set: {
@@ -78,6 +93,36 @@ struct SessionConfigView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(24)
         }
+    }
+
+    private func targetCapButton(maxTarget: Int) -> some View {
+        let isSelected = appModel.engine.config.targetRange.upperBound == maxTarget
+        return Button {
+            appModel.engine.updateConfig(minTarget: 1, maxTarget: maxTarget)
+        } label: {
+            VStack(spacing: 6) {
+                Text("Up to")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink.opacity(0.55))
+                Text("\(maxTarget)")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(isSelected ? MatherTheme.warm : MatherTheme.ink)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(isSelected ? MatherTheme.warm.opacity(0.12) : Color.secondary.opacity(0.07))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(isSelected ? MatherTheme.warm : Color.clear, lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("target-cap-up-to-\(maxTarget)")
+        .accessibilityLabel("Target numbers up to \(maxTarget)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private func themeCard(_ option: ThemeOption) -> some View {
