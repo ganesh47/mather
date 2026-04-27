@@ -38,7 +38,7 @@
 | Sum Sprint appears in every loop in short form | Done in repo | `Domain/VerticalSliceEngine.swift`, `Domain/SliceModels.swift`, `Tests/MatherTests/VerticalSliceEngineTests.swift` | No pacing evidence across at least 5 loops |
 | Bond Blast appears in every loop as short capstone | Done in repo | `Domain/SliceStateMachine.swift`, `Domain/VerticalSliceEngine.swift`, `Tests/MatherTests/VerticalSliceEngineTests.swift` | No pacing evidence from a longer session run |
 | Session pacing still feels good | Missing closeout evidence | existing smoke-test checklist in `Features/ParentSummary/SettingsView.swift` | No measured session-duration or pilot note in repo |
-| Rollout remains gated until QA signoff | Done in repo | `makeBreakLoopV2Enabled` defaults to off in `Shared/FeatureFlags.swift`; settings expose the gate in `Features/ParentSummary/SettingsView.swift` | No explicit rollout recommendation note yet |
+| Make & Break loop graduated/default-on | Done in repo | `makeBreakLoopV2Enabled` now defaults on in `Shared/FeatureFlags.swift`, stale standard defaults are migrated on, and `Features/ParentSummary/SettingsView.swift` no longer exposes a parent-visible rollout toggle. Legacy route coverage remains available through explicit test/launch overrides. | Fresh device/Xcode proof should still be attached by the validation lane. |
 | Honest re-close backed by release-truth evidence | Missing | none beyond source/test audit and prior issue comments | Need a concise validation note with CI result, simulator/device evidence, pacing signoff, and close recommendation |
 
 ## Missing Artifacts Blocking Honest Close
