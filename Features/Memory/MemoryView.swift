@@ -555,6 +555,7 @@ enum MemoryDifficulty: CaseIterable {
 
 struct MemoryView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
 
     @State private var deck: [MemoryAnimal] = MemoryDeck.domesticAnimals
@@ -741,48 +742,53 @@ struct MemoryView: View {
     }
 
     private var cardGrid: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: difficulty.columns)
+        let columns = [GridItem(.adaptive(minimum: ResponsiveLayout.memoryCardMinimumWidth(for: difficulty)), spacing: 14)]
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
                 cardView(card)
+                    .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
             }
         }
+        .frame(maxWidth: ResponsiveLayout.memoryBoardMaxWidth(for: horizontalSizeClass))
+        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
     private func cardView(_ card: MemoryCard) -> some View {
-        let isMismatch = mismatchIds.contains(card.id)
-        let isFlipped = difficulty.faceDown && !card.isSelected && !card.isMatched
+        GeometryReader { proxy in
+            let cardHeight = proxy.size.height
+            let isMismatch = mismatchIds.contains(card.id)
+            let isFlipped = difficulty.faceDown && !card.isSelected && !card.isMatched
 
-        ZStack {
-            if isFlipped {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(LinearGradient(colors: [MatherTheme.accent.opacity(0.7), MatherTheme.softBlue.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                Text("?")
-                    .font(.system(size: 40, weight: .black, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
-            } else {
-                cardFace(card)
+            ZStack {
+                if isFlipped {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LinearGradient(colors: [MatherTheme.accent.opacity(0.7), MatherTheme.softBlue.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    Text("?")
+                        .font(.system(size: min(44, max(32, cardHeight * 0.34)), weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.6))
+                } else {
+                    cardFace(card, cardHeight: cardHeight)
+                }
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(card.isSelected ? MatherTheme.accent : (card.isMatched ? Color.green : Color.clear), lineWidth: card.isSelected ? 3 : 2)
+            )
+            .scaleEffect(card.isMatched ? 0.92 : 1.0)
+            .opacity(card.isMatched ? 0.68 : 1.0)
+            .rotationEffect(isMismatch ? .degrees(-3) : .zero)
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: card.isSelected)
+            .animation(.easeOut(duration: 0.3), value: card.isMatched)
+            .animation(isMismatch ? .easeInOut(duration: 0.08).repeatCount(3, autoreverses: true) : .default, value: isMismatch)
         }
-        .frame(height: cardHeight)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(card.isSelected ? MatherTheme.accent : (card.isMatched ? Color.green : Color.clear), lineWidth: card.isSelected ? 3 : 2)
-        )
-        .scaleEffect(card.isMatched ? 0.92 : 1.0)
-        .opacity(card.isMatched ? 0.68 : 1.0)
-        .rotationEffect(isMismatch ? .degrees(-3) : .zero)
-        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: card.isSelected)
-        .animation(.easeOut(duration: 0.3), value: card.isMatched)
-        .animation(isMismatch ? .easeInOut(duration: 0.08).repeatCount(3, autoreverses: true) : .default, value: isMismatch)
     }
 
     @ViewBuilder
-    private func cardFace(_ card: MemoryCard) -> some View {
+    private func cardFace(_ card: MemoryCard, cardHeight: CGFloat) -> some View {
         let animal = animal(for: card)
         let artStyle = Self.artStyle(for: animal.id)
 
@@ -819,7 +825,7 @@ struct MemoryView: View {
                     .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.55), lineWidth: 3)
                     .frame(width: cardHeight * 0.62, height: cardHeight * 0.62)
 
-                pictureView(for: pictureAnimal)
+                pictureView(for: pictureAnimal, emojiSize: min(58, max(34, cardHeight * 0.42)))
                     .frame(width: cardHeight * 0.64, height: cardHeight * 0.64)
             }
 
@@ -860,11 +866,11 @@ struct MemoryView: View {
     }
 
     @ViewBuilder
-    private func pictureView(for animal: MemoryAnimal) -> some View {
+    private func pictureView(for animal: MemoryAnimal, emojiSize preferredEmojiSize: CGFloat? = nil) -> some View {
         switch animal.picture {
         case .emoji(let emoji):
             Text(emoji)
-                .font(.system(size: emojiSize))
+                .font(.system(size: preferredEmojiSize ?? emojiSize))
                 .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
         case .asset(let assetName):
             Image(assetName)
@@ -958,14 +964,6 @@ struct MemoryView: View {
                 MemoryCard(pairId: animal.id, content: .picture(animal)),
                 MemoryCard(pairId: animal.id, content: .label(animal))
             ]
-        }
-    }
-
-    private var cardHeight: CGFloat {
-        switch difficulty {
-        case .easy: return 140
-        case .medium: return 130
-        case .hard: return 110
         }
     }
 
@@ -1114,7 +1112,7 @@ struct MemoryView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
 
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
                         ForEach(content.factChips, id: \.self) { fact in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(fact.title)
@@ -1134,6 +1132,8 @@ struct MemoryView: View {
                     .accessibilityIdentifier("memory-learning-fact-chips")
                 }
                 .padding(20)
+                .frame(maxWidth: ResponsiveLayout.memoryLearningSheetMaxWidth(for: horizontalSizeClass), alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
             .background(MatherTheme.background.ignoresSafeArea())
             .navigationTitle("Learn")
