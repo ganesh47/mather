@@ -41,4 +41,15 @@ struct ResponsiveLayoutTests {
         #expect(ResponsiveLayout.sumSprintSummaryFactColumns(for: .compact).count == 2)
         #expect(ResponsiveLayout.sumSprintSummaryFactColumns(for: .regular).count == 2)
     }
+
+    @MainActor @Test func memoryLayoutAdaptsBoardAndLearningSheetForTablets() {
+        #expect(ResponsiveLayout.memoryBoardMaxWidth(for: .regular) == 920)
+        #expect(ResponsiveLayout.memoryBoardMaxWidth(for: .compact) == CGFloat.infinity)
+        #expect(ResponsiveLayout.memoryCardMinimumWidth(for: .easy) > ResponsiveLayout.memoryCardMinimumWidth(for: .hard))
+        #expect(ResponsiveLayout.memoryCardAspectRatio(for: .easy) > ResponsiveLayout.memoryCardAspectRatio(for: .hard))
+        #expect(ResponsiveLayout.memoryLearningSheetMaxWidth(for: .regular) == 760)
+        #expect(ResponsiveLayout.memoryLearningSheetMaxWidth(for: .compact) == CGFloat.infinity)
+        #expect(ResponsiveLayout.memoryLearningFactMinimumWidth(for: .regular) > ResponsiveLayout.memoryLearningFactMinimumWidth(for: .compact))
+    }
+
 }

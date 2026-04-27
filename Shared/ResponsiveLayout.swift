@@ -63,6 +63,35 @@ enum ResponsiveLayout {
         return [GridItem(.adaptive(minimum: minimum, maximum: maximum), spacing: 16)]
     }
 
+
+    static func memoryCardMinimumWidth(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 136
+        case .medium: return 124
+        case .hard: return 112
+        }
+    }
+
+    static func memoryBoardMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 920 : .infinity
+    }
+
+    static func memoryCardAspectRatio(for difficulty: MemoryDifficulty) -> CGFloat {
+        switch difficulty {
+        case .easy: return 0.96
+        case .medium: return 0.92
+        case .hard: return 0.86
+        }
+    }
+
+    static func memoryLearningSheetMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 760 : .infinity
+    }
+
+    static func memoryLearningFactMinimumWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 180 : 140
+    }
+
     static func roomQuestStationMinimumWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
         horizontalSizeClass == .regular ? 240 : 170
     }
