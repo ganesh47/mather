@@ -79,6 +79,8 @@ Acceptance:
 
 **Goal:** Every `SliceProblem` has a deterministic story prompt whose numbers exactly match the problem.
 
+**Implementation status:** Landed in Lane C / `feat/issue-400-c-story-prompts` as deterministic story-domain code only. Story Anchor UI/routing and AI variation remain in later milestones.
+
 Add:
 
 - `Domain/NumberStoryModels.swift`
@@ -86,7 +88,8 @@ Add:
   - `NumberStoryTemplateID`
 - `Domain/NumberStoryGenerator.swift`
   - `static func prompt(for problem: SliceProblem, themeId: String) -> NumberStoryPrompt`
-  - Curated templates for classic/vehicle themes.
+  - Curated packs for Space Cargo, Vehicle Garage, Garden Seed Shop, and Festival Prep.
+  - Number-band representation hints for singles, ten-frames, tens/ones, hundreds/tens/ones, and 1000 blocks.
 
 Rules:
 
@@ -95,13 +98,15 @@ Rules:
 - `prompt.rightPart == problem.decompositionB`.
 - Spoken intro is short, concrete, and reading-light.
 - No generated text in this milestone.
+- Theme selection is deterministic. Vehicle theme maps to Vehicle Garage; classic uses curated non-vehicle packs by target band; explicit pack IDs can request Space, Garden, or Festival.
 
 Tests:
 
 - `Tests/MatherTests/NumberStoryGeneratorTests.swift`
-  - Story numbers match `SliceProblem` for representative targets 6, 10, 14, 20.
+  - Story numbers match `SliceProblem` for representative targets 6, 10, 14, 20, 37, 100, 250, and 1000.
   - Generated story contains the exact target and both parts.
   - Deterministic output is stable for the same problem/theme.
+  - Prompt language avoids timer, pressure, shame, danger, punishment, scarcity panic, and rescue-in-danger terms.
 
 Acceptance:
 
