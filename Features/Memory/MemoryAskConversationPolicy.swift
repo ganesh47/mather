@@ -110,7 +110,8 @@ final class MemoryAskConversationPolicy {
         let cardWords = Set(Self.words(in: cardText.joined(separator: " ")).filter { $0.count > 2 })
 
         var seenIDs = Set<String>()
-        let sanitizedTurns: [MemoryAskSuggestedTurn] = turns.compactMap { turn -> MemoryAskSuggestedTurn? in
+        var sanitizedTurns: [MemoryAskSuggestedTurn] = []
+        for turn in turns {
             let cleanQuestion = Self.clean(turn.question)
             let cleanAnswer = Self.clean(turn.answer)
             guard !turn.id.isEmpty,
@@ -118,14 +119,15 @@ final class MemoryAskConversationPolicy {
                   !cleanQuestion.isEmpty,
                   !cleanAnswer.isEmpty,
                   cleanQuestion.count <= 90,
-                  cleanAnswer.count <= 220 else { return nil }
+                  cleanAnswer.count <= 220 else { continue }
 
             let turnWords = Set(Self.words(in: cleanQuestion + " " + cleanAnswer))
-            guard !cardWords.isDisjoint(with: turnWords) else { return nil }
-            return MemoryAskSuggestedTurn(id: turn.id, question: cleanQuestion, answer: cleanAnswer)
-        }
+            guard !cardWords.isDisjoint(with: turnWords) else { continue }
 
-        return Array(sanitizedTurns.prefix(3))
+            sanitizedTurns.append(MemoryAskSuggestedTurn(id: turn.id, question: cleanQuestion, answer: cleanAnswer))
+            if sanitizedTurns.count == 3 { break }
+        }
+        return sanitizedTurns
     }
 
     private static func fallbackTurns(for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
