@@ -1,6 +1,7 @@
 name: iOS UI Review (main)
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 
