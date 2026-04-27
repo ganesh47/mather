@@ -107,7 +107,10 @@ final class MemoryAskConversationPolicy {
             animal.metadata.category,
             animal.metadata.kind
         ] + animal.detailCards.flatMap { [$0.title, $0.value] }
-        let cardWords = Set(Self.words(in: cardText.joined(separator: " ")).filter { $0.count > 2 })
+        let genericWords: Set<String> = ["about", "card", "current", "question", "tell", "this", "turn"]
+        let cardWords = Set(Self.words(in: cardText.joined(separator: " ")).filter { word in
+            word.count > 2 && !genericWords.contains(word)
+        })
 
         var seenIDs = Set<String>()
         var sanitizedTurns: [MemoryAskSuggestedTurn] = []
