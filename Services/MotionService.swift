@@ -98,6 +98,12 @@ final class MotionService {
         }
     }
 
+    /// Convert CoreMotion relative yaw into Mather's body-relative convention:
+    /// positive degrees means the child turned right, negative means left.
+    nonisolated static func bodyRelativeYawDegrees(fromCoreMotionDeltaYawRadians yaw: Double) -> Double {
+        -yaw * 180 / .pi
+    }
+
     // MARK: - Private helpers
 
     private func applyMotion(_ motion: CMDeviceMotion) {
@@ -116,7 +122,7 @@ final class MotionService {
         if let ref = referenceAttitude {
             let current = motion.attitude.copy() as! CMAttitude
             current.multiply(byInverseOf: ref)
-            relativeYaw = current.yaw * 180 / .pi
+            relativeYaw = Self.bodyRelativeYawDegrees(fromCoreMotionDeltaYawRadians: current.yaw)
         }
     }
 

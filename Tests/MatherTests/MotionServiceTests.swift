@@ -34,6 +34,20 @@ struct MotionServiceTests {
         #expect(service.tiltRoll  == -0.5)
     }
 
+    // MARK: - Relative yaw conversion
+
+    @Test
+    func coreMotionNegativeYawMapsToRightTurn() {
+        let degrees = MotionService.bodyRelativeYawDegrees(fromCoreMotionDeltaYawRadians: -.pi / 2)
+        #expect(abs(degrees - 90) < 0.01)
+    }
+
+    @Test
+    func coreMotionPositiveYawMapsToLeftTurn() {
+        let degrees = MotionService.bodyRelativeYawDegrees(fromCoreMotionDeltaYawRadians: .pi / 2)
+        #expect(abs(degrees - (-90)) < 0.01)
+    }
+
     // MARK: - Shake detection
 
     @Test
