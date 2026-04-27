@@ -2,7 +2,7 @@
 
 **Status:** Implementation-ready plan for issue #400  
 **Issue:** https://github.com/ganesh47/mather/issues/400  
-**Lane:** mather-124dc7028c  
+**Lane:** lane-e-story-vocabulary in progress
 **Last updated:** 2026-04-27
 
 ## Scope lock
@@ -146,6 +146,8 @@ Acceptance:
 - Story Anchor is not a quiz/failure gate.
 
 ### M3 — Story-aware Sum Sprint and Bond Blast recall
+
+**Lane E status:** Gravity Split, embedded Sum Sprint, and Bond Blast now use `NumberStoryStageVocabulary` to derive child-facing story labels, instructions, and accessibility reminders from `NumberStoryPrompt`. Math truth remains owned by `SliceProblem`, `SumSprintBurstState.make(for:)`, and `BondMatchState.makePairs(for:)`.
 
 **Goal:** Reinforce the same story target during recall stages.
 

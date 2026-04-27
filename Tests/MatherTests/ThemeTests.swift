@@ -277,7 +277,7 @@ struct ThemeTests {
         // The pictorial slot now uses Bond Blast copy rather than the theme-specific split prompt.
         engine.adjustConcrete(by: engine.currentProblem?.target ?? 0)
         engine.submitCurrentStage()
-        let expected = "Bond Blast! Match the pairs that make 6!"
+        let expected = "Match pairs that make 6 seeds."
         await waitFor("bond blast prompt after concrete submit") {
             engine.feedbackMessage == expected
         }

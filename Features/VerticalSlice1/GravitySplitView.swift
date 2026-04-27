@@ -10,6 +10,7 @@ struct GravitySplitView: View {
     // MARK: - Inputs
 
     let state: GravitySplitState
+    let storyPrompt: NumberStoryPrompt?
     let tiltRoll: Double
     let shakeDetected: Bool
     let onAdjustTilt: (Double) -> Void
@@ -36,6 +37,13 @@ struct GravitySplitView: View {
         let solvedBias = Double(state.decompositionA - state.decompositionB) / Double(max(state.target, 1))
         let builtBias = Double(state.leftCount - state.rightCount) / Double(max(state.target, 1))
         return (solvedBias - builtBias) * maxBeamAngle
+    }
+
+    private var vocabulary: NumberStoryStageVocabulary {
+        if let storyPrompt {
+            return NumberStoryStageVocabulary.vocabulary(for: storyPrompt, stage: .gravitySplit)
+        }
+        return NumberStoryStageVocabulary.fallback(stage: .gravitySplit, target: state.target)
     }
 
     // MARK: - Body
@@ -75,7 +83,7 @@ struct GravitySplitView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "Balance scale. Make \(state.target). Left: \(state.leftCount). Right: \(state.rightCount)."
+            "\(vocabulary.accessibilityLabel) \(vocabulary.leftLabel): \(state.leftCount). \(vocabulary.rightLabel): \(state.rightCount)."
         )
     }
 
@@ -84,9 +92,13 @@ struct GravitySplitView: View {
     private var headerRow: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Gravity Split")
+                Text(vocabulary.title)
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.coral)
+
+                Text(vocabulary.targetReminder)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(MatherTheme.warm)
 
                 HStack(spacing: 8) {
                     counterPill(value: state.leftCount, fill: MatherTheme.warm)
@@ -240,7 +252,7 @@ struct GravitySplitView: View {
     private var tapControlRow: some View {
         HStack(spacing: 12) {
             panControlButtons(
-                label: "Left",
+                label: vocabulary.leftLabel,
                 fill: MatherTheme.warm,
                 side: "left",
                 canDecrement: state.leftCount > 0 && !state.isLocked,
@@ -251,7 +263,7 @@ struct GravitySplitView: View {
             }
 
             panControlButtons(
-                label: "Right",
+                label: vocabulary.rightLabel,
                 fill: MatherTheme.accent,
                 side: "right",
                 canDecrement: state.rightCount > 0 && !state.isLocked,
@@ -280,6 +292,9 @@ struct GravitySplitView: View {
             Text(label)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(fill)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.75)
                 .frame(minWidth: 38)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: state.target <= 20 ? 48 : 82), spacing: 6)], spacing: 6) {
                 ForEach(steps, id: \.self) { step in
@@ -327,7 +342,7 @@ struct GravitySplitView: View {
             Image(systemName: "gyroscope")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.coral.opacity(0.8))
-            Text("Use plus and minus to build the split from zero")
+            Text(vocabulary.instruction)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
         }
