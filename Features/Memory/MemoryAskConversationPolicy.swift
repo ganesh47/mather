@@ -107,7 +107,11 @@ final class MemoryAskConversationPolicy {
             animal.metadata.category,
             animal.metadata.kind
         ] + animal.detailCards.flatMap { [$0.title, $0.value] }
-        let genericWords: Set<String> = ["about", "card", "current", "question", "tell", "this", "turn"]
+        let genericWords: Set<String> = [
+            "about", "and", "are", "because", "but", "can", "card", "current", "for", "from",
+            "has", "have", "how", "into", "its", "not", "one", "our", "question", "that", "the",
+            "their", "them", "this", "turn", "tell", "was", "what", "when", "where", "who", "why", "with"
+        ]
         let cardWords = Set(Self.words(in: cardText.joined(separator: " ")).filter { word in
             word.count > 2 && !genericWords.contains(word)
         })
