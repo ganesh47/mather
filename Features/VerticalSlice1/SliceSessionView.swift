@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SliceSessionView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     @State private var celebrationScale: CGFloat = 0.3
 
@@ -18,7 +19,8 @@ struct SliceSessionView: View {
 
             VStack(spacing: 0) {
                 header
-                    .padding(.horizontal, 20)
+                    .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
+                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                     .padding(.top, 20)
 
                 ScrollView {
@@ -31,9 +33,11 @@ struct SliceSessionView: View {
                             CardSurface { Text("No problem loaded.") }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
+                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                     .padding(.top, 12)
                     .padding(.bottom, 20)
+                    .frame(maxWidth: .infinity)
                 }
             }
 
@@ -352,7 +356,8 @@ struct SliceSessionView: View {
                 appModel.engine.submitCurrentStage()
             }
             .buttonStyle(PrimaryActionButtonStyle())
-            .padding(.horizontal, 20)
+            .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
+            .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
             .padding(.top, 12)
             .padding(.bottom, 8)
         }

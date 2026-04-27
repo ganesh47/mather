@@ -4,6 +4,7 @@ import UIKit
 /// Parent setup screen shown before the room phase begins.
 /// Displays the spot quantities and safety reminder; parent taps "Ready" when spots are placed.
 struct RoomSetupView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var engine: RoomQuestEngine
     @State private var showingConfiguration = false
 
@@ -25,7 +26,7 @@ struct RoomSetupView: View {
                 )
 
                 if let p = engine.problem {
-                    HStack(spacing: 16) {
+                    LazyVGrid(columns: ResponsiveLayout.roomQuestStationColumns(for: horizontalSizeClass), spacing: 16) {
                         ForEach(engine.stations) { station in
                             stationCard(for: station)
                         }
@@ -94,7 +95,9 @@ struct RoomSetupView: View {
                 .disabled(!engine.allStationsRegistered)
                 .opacity(engine.allStationsRegistered ? 1 : 0.55)
             }
-            .padding(24)
+            .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+            .frame(maxWidth: .infinity)
         }
         .sheet(isPresented: $showingConfiguration) {
             RoomQuestConfigurationScreen(featureFlags: engine.settings)
