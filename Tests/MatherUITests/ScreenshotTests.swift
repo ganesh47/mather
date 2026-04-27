@@ -451,6 +451,14 @@ final class ScreenshotTests: XCTestCase {
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
+        let storyAnchorStart = app.buttons["story-anchor-start-button"]
+        if storyAnchorStart.waitForExistence(timeout: 5) {
+            if !skipInitialConcreteSnapshot {
+                snapshot(app, "\(snapshotPrefix)-StoryAnchor")
+            }
+            storyAnchorStart.tap()
+        }
+
         let concreteSubmit = app.buttons["That is \(target)"]
         XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
         if !skipInitialConcreteSnapshot {
