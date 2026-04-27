@@ -98,6 +98,16 @@ final class MotionService {
         }
     }
 
+    /// Convert CoreMotion's reference-relative attitude yaw to the app's
+    /// child-facing body-turn convention: positive means the child turned right.
+    ///
+    /// `CMAttitude.yaw` increases in the opposite direction from the Compass
+    /// Angles UI/copy contract, so keep the sign flip at the sensor boundary
+    /// instead of mirroring individual game views.
+    nonisolated static func bodyRelativeYawDegrees(fromCoreMotionYawRadians yaw: Double) -> Double {
+        -(yaw * 180 / .pi)
+    }
+
     // MARK: - Private helpers
 
     private func applyMotion(_ motion: CMDeviceMotion) {
@@ -116,7 +126,7 @@ final class MotionService {
         if let ref = referenceAttitude {
             let current = motion.attitude.copy() as! CMAttitude
             current.multiply(byInverseOf: ref)
-            relativeYaw = current.yaw * 180 / .pi
+            relativeYaw = Self.bodyRelativeYawDegrees(fromCoreMotionYawRadians: current.yaw)
         }
     }
 
