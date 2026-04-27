@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
+    let gameSessions: [StoredGameSession]
 
     @State private var showingClearConfirmation = false
     @State private var newProfileName = ""
@@ -86,6 +87,7 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
                 appModel.historyStore.clearAll()
+                appModel.gameSessionStore.clearAll()
                 appModel.telemetryWriter.clearEventsForActiveProfile()
             }
         } message: {
@@ -198,29 +200,30 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session history")
                     .font(.title2.weight(.bold))
-                Text("\(summaries.count) saved locally")
+                let rows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 8)
+                Text("\(summaries.count + gameSessions.count) saved locally across all games")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                ForEach(Array(summaries.prefix(8).enumerated()), id: \.element.sessionId) { index, summary in
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                     HStack {
                         VStack(alignment: .leading) {
                             Text("Session \(index + 1)")
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(MatherTheme.accent)
-                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
-                            Text("Accuracy \(Int(summary.firstAttemptAccuracy * 100))%")
+                            Text(row.title)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                            Text(row.startedAt.formatted(date: .abbreviated, time: .shortened))
+                            Text(row.detail)
                                 .foregroundStyle(MatherTheme.cardSubtitle)
                         }
                         Spacer()
-                        Text(summary.exportFileName.replacingOccurrences(of: "swiftdata://session/", with: "Session ID "))
-                            .font(.caption)
-                            .foregroundStyle(MatherTheme.cardSubtitle)
                     }
                     .padding(.vertical, 4)
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("settings-history-session-\(index)")
                 }
-                if summaries.isEmpty {
+                if rows.isEmpty {
                     Text("No history yet.")
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }

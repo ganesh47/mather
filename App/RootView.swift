@@ -5,10 +5,15 @@ import SwiftUI
 struct RootView: View {
     @Bindable var appModel: AppModel
     @Query(sort: \StoredSessionSummary.startedAt, order: .reverse) private var sessionSummaries: [StoredSessionSummary]
+    @Query(sort: \StoredGameSession.startedAt, order: .reverse) private var gameSessions: [StoredGameSession]
     @Query(sort: \StoredKidProfile.createdAt) private var kidProfiles: [StoredKidProfile]
 
     private var activeProfileSummaries: [StoredSessionSummary] {
         sessionSummaries.filter { $0.profileId == appModel.profileStore.activeProfileId }
+    }
+
+    private var activeProfileGameSessions: [StoredGameSession] {
+        gameSessions.filter { $0.profileId == appModel.profileStore.activeProfileId }
     }
 
     var body: some View {
@@ -24,9 +29,9 @@ struct RootView: View {
                 case .sessionSummary:
                     SessionSummaryView(appModel: appModel)
                 case .parentSummary:
-                    ParentSummaryView(appModel: appModel, summaries: sessionSummaries, profiles: kidProfiles)
+                    ParentSummaryView(appModel: appModel, summaries: sessionSummaries, gameSessions: gameSessions, profiles: kidProfiles)
                 case .settings:
-                    SettingsView(appModel: appModel, summaries: activeProfileSummaries)
+                    SettingsView(appModel: appModel, summaries: activeProfileSummaries, gameSessions: activeProfileGameSessions)
                 case .roomQuest:
                     RoomSessionView(engine: appModel.roomQuestEngine, vsEngine: appModel.engine)
                         .sheet(item: Binding(

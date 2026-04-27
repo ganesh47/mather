@@ -4,12 +4,13 @@ import SwiftUI
 struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
+    let gameSessions: [StoredGameSession]
     let profiles: [StoredKidProfile]
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         let digest = appModel.telemetryWriter.digest(from: summaries)
-        let recentSummaries = Array(summaries.prefix(5))
+        let recentRows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 5)
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -25,7 +26,7 @@ struct ParentSummaryView: View {
                         }
                     }
 
-                    if summaries.isEmpty {
+                    if summaries.isEmpty && gameSessions.isEmpty {
                         CardSurface {
                             VStack(spacing: 12) {
                                 Image(systemName: "chart.bar.xaxis")
@@ -79,13 +80,13 @@ struct ParentSummaryView: View {
                                 alignment: .leading,
                                 spacing: 16
                             ) {
-                                profileOverviewCard(summaries: summaries)
+                                profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
                                 nextTargetCard(digest: digest)
                             }
-                            recentSessionsCard(summaries: summaries, recentSummaries: recentSummaries)
+                            recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
                         } else {
-                            profileOverviewCard(summaries: summaries)
-                            recentSessionsCard(summaries: summaries, recentSummaries: recentSummaries)
+                            profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
+                            recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
                             nextTargetCard(digest: digest)
                         }
                     }
@@ -121,18 +122,18 @@ struct ParentSummaryView: View {
     private func historyCaption(totalCount: Int, visibleCount: Int) -> String {
         guard totalCount > 0 else { return "No saved sessions yet." }
         if totalCount == visibleCount {
-            return "\(totalCount) saved locally"
+            return "\(totalCount) saved locally across all games"
         }
-        return "Showing latest \(visibleCount) of \(totalCount) saved locally"
+        return "Showing latest \(visibleCount) of \(totalCount) saved locally across all games"
     }
 
-    private func profileOverviewCard(summaries: [StoredSessionSummary]) -> some View {
+    private func profileOverviewCard(summaries: [StoredSessionSummary], gameSessions: [StoredGameSession]) -> some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Profile overview")
                     .font(.title3.weight(.bold))
                 ForEach(profiles, id: \.id) { profile in
-                    let count = summaries.filter { $0.profileId == profile.id }.count
+                    let count = summaries.filter { $0.profileId == profile.id }.count + gameSessions.filter { $0.profileId == profile.id }.count
                     HStack {
                         Text("\(profile.emoji) \(profile.name)")
                         Spacer()
@@ -157,33 +158,36 @@ struct ParentSummaryView: View {
         }
     }
 
-    private func recentSessionsCard(summaries: [StoredSessionSummary], recentSummaries: [StoredSessionSummary]) -> some View {
+    private func recentSessionsCard(rows: [ParentSummaryHistoryRow], totalCount: Int) -> some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Recent sessions")
                     .font(.title3.weight(.bold))
-                Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
+                Text(historyCaption(totalCount: totalCount, visibleCount: rows.count))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Session \(index + 1)")
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(MatherTheme.accent)
-                            if let profile = profiles.first(where: { $0.id == summary.profileId }) {
+                            Text(row.title)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                            if let profile = profiles.first(where: { $0.id == row.profileId }) {
                                 Text("\(profile.emoji) \(profile.name)")
                                     .font(.caption)
                                     .foregroundStyle(MatherTheme.cardSubtitle)
                             }
-                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
+                            Text(row.startedAt.formatted(date: .abbreviated, time: .shortened))
                                 .font(.subheadline.weight(.semibold))
-                            Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
+                            Text(row.detail)
                                 .font(.caption)
                                 .foregroundStyle(MatherTheme.cardSubtitle)
                         }
                         Spacer()
-                        if summary.sessionId == summaries.first?.sessionId {
+                        if index == 0 {
                             Text("Latest")
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(MatherTheme.accent)
@@ -194,13 +198,62 @@ struct ParentSummaryView: View {
                         }
                     }
                     .padding(10)
-                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
+                    .background(index == 0 ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("parent-summary-session-\(index)")
                 }
             }
         }
+    }
+
+}
+
+
+struct ParentSummaryHistoryRow: Identifiable, Equatable {
+    enum Source: Equatable {
+        case makeAndBreak
+        case game
+    }
+
+    var id: String
+    var source: Source
+    var profileId: String
+    var title: String
+    var startedAt: Date
+    var detail: String
+
+    static func recentRows(
+        summaries: [StoredSessionSummary],
+        gameSessions: [StoredGameSession],
+        limit: Int
+    ) -> [ParentSummaryHistoryRow] {
+        let makeAndBreakRows = summaries.map { summary in
+            ParentSummaryHistoryRow(
+                id: "make-break-\(summary.sessionId)",
+                source: .makeAndBreak,
+                profileId: summary.profileId,
+                title: summary.objectiveTitle,
+                startedAt: summary.startedAt,
+                detail: "\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try"
+            )
+        }
+
+        let gameRows = gameSessions.map { session in
+            ParentSummaryHistoryRow(
+                id: "game-\(session.id)",
+                source: .game,
+                profileId: session.profileId,
+                title: session.gameName,
+                startedAt: session.startedAt,
+                detail: "\(session.scoreValue) \(session.scoreLabel)"
+            )
+        }
+
+        return (makeAndBreakRows + gameRows)
+            .sorted { $0.startedAt > $1.startedAt }
+            .prefix(limit)
+            .map { $0 }
     }
 }
 

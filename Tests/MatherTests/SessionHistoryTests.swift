@@ -193,3 +193,72 @@ struct TelemetryWriterDigestTests {
         #expect(digest.problemsCompleted == 0)
     }
 }
+
+// MARK: - Parent summary history row tests
+
+@MainActor
+struct ParentSummaryHistoryRowTests {
+    @Test
+    func recentRowsMergeMakeAndBreakAndExplorerGameSessions() throws {
+        let now = Date(timeIntervalSinceReferenceDate: 10_000)
+        let makeAndBreak = StoredSessionSummary(
+            from: makeDraft(sessionId: "make-break-old", problemsCompleted: 2, startedAt: now.addingTimeInterval(-120)),
+            profileId: "test-profile"
+        )
+        let sumSprint = StoredGameSession(
+            id: "sum-sprint-new",
+            profileId: "test-profile",
+            gameName: "Sum Sprint",
+            startedAt: now,
+            durationSeconds: 30,
+            scoreValue: 8,
+            scoreLabel: "correct"
+        )
+
+        let rows = ParentSummaryHistoryRow.recentRows(
+            summaries: [makeAndBreak],
+            gameSessions: [sumSprint],
+            limit: 5
+        )
+
+        #expect(rows.map(\.title) == ["Sum Sprint", "Make & Break"])
+        #expect(rows.map(\.source) == [.game, .makeAndBreak])
+        #expect(rows[0].detail == "8 correct")
+        #expect(rows[1].detail == "2 problems · 80% first try")
+    }
+
+    @Test
+    func recentRowsRespectsLimitAfterSortingAllSessionTypes() throws {
+        let now = Date(timeIntervalSinceReferenceDate: 20_000)
+        let oldest = StoredSessionSummary(
+            from: makeDraft(sessionId: "oldest", startedAt: now.addingTimeInterval(-300)),
+            profileId: "test-profile"
+        )
+        let newest = StoredGameSession(
+            id: "newest",
+            profileId: "test-profile",
+            gameName: "Angle Cannon",
+            startedAt: now,
+            durationSeconds: 10,
+            scoreValue: 3,
+            scoreLabel: "hits"
+        )
+        let middle = StoredGameSession(
+            id: "middle",
+            profileId: "test-profile",
+            gameName: "Memory",
+            startedAt: now.addingTimeInterval(-60),
+            durationSeconds: 20,
+            scoreValue: 6,
+            scoreLabel: "matches"
+        )
+
+        let rows = ParentSummaryHistoryRow.recentRows(
+            summaries: [oldest],
+            gameSessions: [middle, newest],
+            limit: 2
+        )
+
+        #expect(rows.map(\.title) == ["Angle Cannon", "Memory"])
+    }
+}
