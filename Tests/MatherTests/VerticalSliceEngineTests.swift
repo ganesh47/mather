@@ -219,6 +219,7 @@ struct VerticalSliceEngineTests {
     func hapticsStageSuccessFiredOnConcreteStageClear() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -310,6 +311,7 @@ struct VerticalSliceEngineTests {
     func hapticsFailureFiredOnWrongAnswer() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 

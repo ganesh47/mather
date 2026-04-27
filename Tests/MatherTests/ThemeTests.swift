@@ -175,6 +175,7 @@ struct ThemeTests {
     @Test func startSessionWithVehicleThemeIdActivatesVehicleTheme() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.selectedThemeId = "vehicle"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -195,6 +196,7 @@ struct ThemeTests {
     @Test func startSessionWithClassicThemeIdActivatesClassicTheme() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.selectedThemeId = "classic"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -232,6 +234,7 @@ struct ThemeTests {
     @Test func engineUsesInjectedThemeSessionStartFeedback() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
@@ -248,6 +251,7 @@ struct ThemeTests {
     @Test func engineUsesClassicThemeSessionStartFeedbackByDefault() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
@@ -299,6 +303,7 @@ struct ThemeTests {
     @Test func engineConcreteFailureHintUsesThemeCounterNoun() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
