@@ -76,6 +76,15 @@ struct SliceSessionView: View {
     @ViewBuilder
     private func stageView(for problem: SliceProblem) -> some View {
         switch appModel.engine.currentStage {
+        case .storyAnchor:
+            if let prompt = appModel.engine.currentStoryPrompt {
+                StoryAnchorView(
+                    prompt: prompt,
+                    onStartBuilding: appModel.engine.startBuildingFromStoryAnchor
+                )
+            } else {
+                CardSurface { Text("Loading Story...") }
+            }
         case .concrete:
             ConcreteBuildView(
                 target: problem.target,
@@ -354,6 +363,7 @@ struct SliceSessionView: View {
 
     private func stageColour(_ stage: SliceStage) -> Color {
         switch stage {
+        case .storyAnchor:   MatherTheme.accent
         case .concrete:  MatherTheme.warm
         case .pictorial: MatherTheme.softBlue
         case .abstract:  MatherTheme.accent

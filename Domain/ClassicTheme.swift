@@ -25,6 +25,7 @@ struct ClassicTheme: SliceTheme {
 
     func stageSuccessPhrase(for stage: SliceStage, target: Int) -> String {
         switch stage {
+        case .storyAnchor: return "Story ready."
         case .concrete:   return "Yes. You made \(target)."
         case .pictorial:  return "That break still makes \(target)."
         case .abstract:   return "Your equation matches the split."

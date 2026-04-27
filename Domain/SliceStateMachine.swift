@@ -11,6 +11,7 @@ enum SliceStateMachine {
         switch routeMode {
         case .makeBreakLoopV2:
             switch stage {
+            case .storyAnchor: return .concrete
             case .concrete: return .gravitySplit
             case .gravitySplit: return .sumSprint
             case .sumSprint: return .bondMatch
@@ -51,6 +52,8 @@ enum SliceStateMachine {
         guard success else { return stage }
 
         switch stage {
+        case .storyAnchor:
+            return .concrete
         case .concrete:
             if makeBreakLoopV2Enabled { return .gravitySplit }
             return .pictorial

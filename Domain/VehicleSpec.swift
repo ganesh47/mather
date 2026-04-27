@@ -36,6 +36,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Park the cars to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "You filled the garage!"
             case .pictorial:  return "Both zones together make the same number."
             case .abstract:   return "Your equation matches the split."
@@ -61,6 +62,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Park the trucks to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "All trucks loaded!"
             case .pictorial:  return "Both groups add up to the same number."
             case .abstract:   return "Your equation matches the split."
@@ -86,6 +88,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Park the vans to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "Warehouse full!"
             case .pictorial:  return "Both routes carry the same total."
             case .abstract:   return "Your equation matches the split."
@@ -111,6 +114,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Park the buses to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "All aboard!"
             case .pictorial:  return "Both stops total the same."
             case .abstract:   return "Your equation matches the split."
@@ -136,6 +140,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Place the bulldozers to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "Site ready!"
             case .pictorial:  return "Both zones cover the same total."
             case .abstract:   return "Your equation matches the split."
@@ -161,6 +166,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Land the helicopters to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "All landed!"
             case .pictorial:  return "Both pads together hold the same total."
             case .abstract:   return "Your equation matches the split."
@@ -186,6 +192,7 @@ extension VehicleSpec {
         transferPromptFn: { _, _ in "Park the planes to show the same total from memory." },
         stageSuccessFn: { stage, _ in
             switch stage {
+            case .storyAnchor: return "Story ready."
             case .concrete:   return "All planes at the gate!"
             case .pictorial:  return "Both terminals hold the same total."
             case .abstract:   return "Your equation matches the split."
