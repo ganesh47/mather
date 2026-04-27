@@ -28,63 +28,90 @@ struct MemoryViewTests {
 
     @Test func vehiclesDeckProvidesEnoughDistinctPairs() {
         let ids = MemoryDeck.vehicles.map(\.id)
-        let emojis = MemoryDeck.vehicles.compactMap(\.emoji)
+        let assets = MemoryDeck.vehicles.compactMap(\.imageAssetName)
         #expect(MemoryDeck.vehicles.count >= MemoryDifficulty.hard.pairCount)
         #expect(Set(ids).count == ids.count)
-        #expect(Set(emojis).count == emojis.count)
+        #expect(assets.count == MemoryDeck.vehicles.count)
+        #expect(Set(assets).count == assets.count)
     }
 
-    @Test func issue352ImageAssetPlansTrackPilotImportsAndRemainingBacklog() {
+    @Test func issue352ImageAssetPlansTrackFullDeckImports() {
         let vehicleIds = MemoryDeck.vehicles.map(\.id)
         let planetIds = MemoryDeck.planets.map(\.id)
         let vehiclePlan = MemoryDeck.vehicleImageAssetPlan
         let planetPlan = MemoryDeck.planetImageAssetPlan
         let plannedAssets = (vehiclePlan + planetPlan).map(\.assetName)
-        let importedPlans = (vehiclePlan + planetPlan).filter { plan in
-            if case .readyForAssetImport = plan.status { return true }
-            return false
-        }
-        let importedAssetNames = Set(importedPlans.map(\.assetName))
+        let importedAssetNames = Set((vehiclePlan + planetPlan).compactMap { plan in
+            if case .readyForAssetImport = plan.status { return plan.assetName }
+            return nil
+        })
+        let vehicleAssets = MemoryDeck.vehicles.compactMap(\.imageAssetName)
+        let planetAssets = MemoryDeck.planets.compactMap(\.imageAssetName)
 
         #expect(vehiclePlan.map(\.cardId) == vehicleIds)
         #expect(planetPlan.map(\.cardId) == planetIds)
         #expect(Set(plannedAssets).count == plannedAssets.count)
         #expect(plannedAssets.allSatisfy { $0.hasPrefix("MemoryVehicle") || $0.hasPrefix("MemoryPlanet") })
         #expect((vehiclePlan + planetPlan).allSatisfy { !$0.searchPrompt.isEmpty && !$0.styleNotes.isEmpty })
-        #expect(importedAssetNames == ["MemoryPlanetEarth", "MemoryVehicleBike"])
-        #expect((vehiclePlan + planetPlan).allSatisfy { plan in
-            if importedAssetNames.contains(plan.assetName) {
-                if case .readyForAssetImport = plan.status { return true }
-                return false
-            }
-            if case .needsVettedSource = plan.status { return true }
-            return false
-        })
-        #expect(MemoryDeck.vehicles.first { $0.id == "bike" }?.imageAssetName == "MemoryVehicleBike")
-        #expect(MemoryDeck.planets.first { $0.id == "planet-earth" }?.imageAssetName == "MemoryPlanetEarth")
-        #expect(MemoryDeck.vehicles.filter { $0.id != "bike" }.allSatisfy { $0.imageAssetName == nil })
-        #expect(MemoryDeck.planets.filter { $0.id != "planet-earth" }.allSatisfy { $0.imageAssetName == nil })
+        #expect(importedAssetNames == Set(plannedAssets))
+        #expect(vehicleAssets == vehiclePlan.map(\.assetName))
+        #expect(planetAssets == planetPlan.map(\.assetName))
+        #expect(MemoryDeck.vehicles.allSatisfy { $0.imageAssetName != nil })
+        #expect(MemoryDeck.planets.allSatisfy { $0.imageAssetName != nil })
     }
 
-    @Test func issue352ImportedAssetsHaveReuseSafeProvenance() {
+    @Test func issue352ImportedAssetsHaveReuseSafeProvenanceAndCatalogs() {
+        let expectedHashes = [
+            "MemoryPlanetMercury": "9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081",
+            "MemoryPlanetVenus": "3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4",
+            "MemoryPlanetEarth": "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
+            "MemoryPlanetMars": "8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e",
+            "MemoryPlanetJupiter": "0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40",
+            "MemoryPlanetSaturn": "798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439",
+            "MemoryPlanetUranus": "88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd",
+            "MemoryPlanetNeptune": "ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03",
+            "MemoryVehicleCar": "322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5",
+            "MemoryVehicleBus": "850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639",
+            "MemoryVehicleTrain": "3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60",
+            "MemoryVehiclePlane": "64109fdb182213310e6951783540fb419969b250185ac47f12085270ee07dd2f",
+            "MemoryVehicleBoat": "6249a276351fd91a2f81b78371c78349a5802c6de242721a8391f290ef9b5924",
+            "MemoryVehicleBike": "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276",
+            "MemoryVehicleTruck": "daca358c96d2a4e5ecfd6a502631213a83f6628ee790e1330ce80d794af7af51",
+            "MemoryVehicleTractor": "fa46188e68866c975e751d30d4dcfbef7f5946f2fb5f7a535008f594283394fe",
+            "MemoryVehicleHelicopter": "b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2",
+            "MemoryVehicleRocket": "329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea",
+            "MemoryVehicleScooter": "a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492",
+            "MemoryVehicleTaxi": "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628"
+        ]
         let importedAssetNames = Set(
             (MemoryDeck.vehicles + MemoryDeck.planets)
                 .compactMap(\.imageAssetName)
                 .filter { $0.hasPrefix("MemoryVehicle") || $0.hasPrefix("MemoryPlanet") }
         )
         let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
 
-        #expect(importedAssetNames == ["MemoryPlanetEarth", "MemoryVehicleBike"])
-        #expect(provenanceByAsset["MemoryPlanetEarth"]?.cardId == "planet-earth")
-        #expect(provenanceByAsset["MemoryVehicleBike"]?.cardId == "bike")
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { !$0.creator.isEmpty && !$0.creditLine.isEmpty && !$0.license.isEmpty })
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.licenseAllowsReuse })
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noThirdPartyRestrictionFound })
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noLogoOrEndorsementRisk })
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noPeopleOrPrivacyRisk })
-        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.childCardLegibilityChecked })
-        #expect(provenanceByAsset["MemoryPlanetEarth"]?.derivativeSha256 == "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466")
-        #expect(provenanceByAsset["MemoryVehicleBike"]?.derivativeSha256 == "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276")
+        #expect(importedAssetNames == Set(expectedHashes.keys))
+        for assetName in importedAssetNames {
+            let provenance = provenanceByAsset[assetName]
+            let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
+            let image = imageset.appendingPathComponent("\(assetName).png")
+            let contents = imageset.appendingPathComponent("Contents.json")
+
+            #expect(provenance?.sourceName == "Project-owned deterministic drawing")
+            #expect(provenance?.creator.isEmpty == false)
+            #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #352")
+            #expect(provenance?.licenseAllowsReuse == true)
+            #expect(provenance?.noThirdPartyRestrictionFound == true)
+            #expect(provenance?.noLogoOrEndorsementRisk == true)
+            #expect(provenance?.noPeopleOrPrivacyRisk == true)
+            #expect(provenance?.childCardLegibilityChecked == true)
+            #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
+            #expect(FileManager.default.fileExists(atPath: image.path))
+            #expect(FileManager.default.fileExists(atPath: contents.path))
+        }
     }
 
     @Test func issue379FishDeckUsesVettedImageAssets() {
