@@ -94,6 +94,11 @@ final class VerticalSliceEngine {
         return problems[currentProblemIndex]
     }
 
+    var currentNumberStoryPrompt: NumberStoryPrompt? {
+        guard let currentProblem else { return nil }
+        return NumberStoryGenerator.prompt(for: currentProblem, themeId: featureFlags.selectedThemeId)
+    }
+
     var progressLabel: String {
         guard !problems.isEmpty else { return "0 / 0" }
         return "\(min(currentProblemIndex + 1, problems.count)) / \(problems.count)"
@@ -737,17 +742,30 @@ final class VerticalSliceEngine {
         case .concrete:
             return activeTheme.concretePrompt(target: currentProblem.target)
         case .pictorial, .bondMatch:
+            if let prompt = currentNumberStoryPrompt {
+                return NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .bondBlast).instruction
+            }
             return "Bond Blast! Match the pairs that make \(currentProblem.target)!"
         case .sumSprint:
-            if let burst = sumSprintBurstState {
-                return "Quick Sum Sprint. Match each sum sentence to its total: \(burst.progressLabel) pairs found."
+            if let prompt = currentNumberStoryPrompt {
+                let vocabulary = NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .sumSprint)
+                if let burst = sumSprintBurstState {
+                    return "\(vocabulary.instruction) Matches \(burst.progressLabel)."
+                }
+                return vocabulary.instruction
             }
-            return "Quick Sum Sprint! Match each sum sentence to its total, then finish with Bond Blast."
+            if let burst = sumSprintBurstState {
+                return "Sum Sprint. Match each sum sentence to its total: \(burst.progressLabel) pairs found."
+            }
+            return "Sum Sprint. Match each sum sentence to its total, then finish with Bond Blast."
         case .abstract:
             return activeTheme.abstractPrompt()
         case .transfer:
             return "Show the same two parts with counters."
         case .gravitySplit:
+            if let prompt = currentNumberStoryPrompt {
+                return NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .gravitySplit).instruction
+            }
             let a = currentProblem.decompositionA
             let b = currentProblem.decompositionB
             return "Use plus and minus to build \(a) on one side and \(b) on the other."
@@ -775,7 +793,10 @@ final class VerticalSliceEngine {
 
     private func successMessage(for stage: SliceStage, problem: SliceProblem) -> String {
         if stage == .sumSprint {
-            return "Nice burst! Now finish with Bond Blast for \(problem.target)."
+            if let prompt = currentNumberStoryPrompt {
+                return "Nice match. Now make pairs for \(prompt.target) \(prompt.objectNoun)."
+            }
+            return "Nice match. Now finish with Bond Blast for \(problem.target)."
         }
         return activeTheme.stageSuccessPhrase(for: stage, target: problem.target)
     }
@@ -792,6 +813,9 @@ final class VerticalSliceEngine {
                 return "Try tapping the \(activeTheme.counterNoun) one by one until you reach \(problem.target)."
             }
         case .pictorial, .bondMatch:
+            if let prompt = currentNumberStoryPrompt {
+                return "Try another pair that makes \(prompt.target) \(prompt.objectNoun)."
+            }
             return "Try another pair. Look for two numbers that add up to \(problem.target)."
         case .abstract:
             if attempts == 1 {
@@ -810,9 +834,15 @@ final class VerticalSliceEngine {
                 return "Build the same equation again with counters, one group on each side."
             }
         case .gravitySplit:
+            if let prompt = currentNumberStoryPrompt {
+                return "Keep building the split. Put \(prompt.leftPart) in \(prompt.leftContainer) and \(prompt.rightPart) in \(prompt.rightContainer)."
+            }
             return "Keep building the split. Put \(problem.decompositionA) on one side and \(problem.decompositionB) on the other."
         case .sumSprint:
-            return "Keep going. Finish this quick sprint before Bond Blast."
+            if let prompt = currentNumberStoryPrompt {
+                return "Keep matching story sentences for \(prompt.target) \(prompt.objectNoun)."
+            }
+            return "Keep matching sum sentences before Bond Blast."
         case .done:
             return "Try again."
         }

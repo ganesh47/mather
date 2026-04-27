@@ -21,6 +21,7 @@ struct BondMatchView: View {
     // MARK: - Inputs
 
     let state: BondMatchState
+    let storyPrompt: NumberStoryPrompt?
     let tiltPitch: Double
     let tiltRoll: Double
     let shakeDetected: Bool
@@ -60,6 +61,13 @@ struct BondMatchView: View {
     private var cardSize: CGFloat { ResponsiveLayout.isWide(horizontalSizeClass) ? 110 : 88 }
     private let cardSpacing: CGFloat = 12
 
+    private var vocabulary: NumberStoryStageVocabulary {
+        if let storyPrompt {
+            return NumberStoryStageVocabulary.vocabulary(for: storyPrompt, stage: .bondBlast)
+        }
+        return NumberStoryStageVocabulary.fallback(stage: .bondBlast, target: state.target)
+    }
+
     // MARK: - Tilt drift
 
     /// Subtle positional drift applied to unselected, unmatched left cards.
@@ -96,21 +104,21 @@ struct BondMatchView: View {
             onClapHandled()
         }
         .sensoryFeedback(.success, trigger: state.matchCount)
-        .accessibilityLabel("Bond Blast matching board. Make \(state.target). \(state.matchCount) of \(state.pairs.count) matched.")
+        .accessibilityLabel("\(vocabulary.accessibilityLabel) \(state.matchCount) of \(state.pairs.count) matched.")
     }
 
     // MARK: - Subviews
 
     private var headerView: some View {
         VStack(spacing: 6) {
-            Text("Bond Blast!")
+            Text(vocabulary.title)
                 .font(.system(size: 28, weight: .black, design: .rounded))
                 .foregroundStyle(MatherTheme.accent)
                 .accessibilityAddTraits(.isHeader)
-            Text("Make \(state.target)")
+            Text(vocabulary.targetReminder)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(MatherTheme.warm)
-            Text(selectedPairId == nil ? "Pick a number first" : "Now find its match")
+            Text(selectedPairId == nil ? vocabulary.instruction : "Now find its match")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
@@ -121,7 +129,7 @@ struct BondMatchView: View {
         HStack(alignment: .top, spacing: 16) {
             // Left column: selectable source cards
             VStack(spacing: cardSpacing) {
-                columnLabel("Pick")
+                columnLabel(vocabulary.leftLabel)
                 ForEach(state.pairs) { pair in
                     leftCard(pair: pair)
                 }
@@ -138,7 +146,7 @@ struct BondMatchView: View {
 
             // Right column: shuffle targets (complement values)
             VStack(spacing: cardSpacing) {
-                columnLabel("Match")
+                columnLabel(vocabulary.rightLabel)
                 ForEach(shuffledRightValues, id: \.self) { rightVal in
                     rightCard(value: rightVal)
                 }

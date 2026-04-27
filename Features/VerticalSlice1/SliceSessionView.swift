@@ -89,6 +89,7 @@ struct SliceSessionView: View {
             if let bondState = appModel.engine.bondMatchState {
                 BondMatchView(
                     state: bondState,
+                    storyPrompt: appModel.engine.currentNumberStoryPrompt,
                     tiltPitch: appModel.motionService.tiltPitch,
                     tiltRoll: appModel.motionService.tiltRoll,
                     shakeDetected: appModel.motionService.shakeDetected,
@@ -139,6 +140,7 @@ struct SliceSessionView: View {
             if let splitState = appModel.engine.gravitySplitState {
                 GravitySplitView(
                     state: splitState,
+                    storyPrompt: appModel.engine.currentNumberStoryPrompt,
                     tiltRoll: appModel.motionService.tiltRoll,
                     shakeDetected: appModel.motionService.shakeDetected,
                     onAdjustTilt: appModel.engine.adjustGravitySplitByTilt,
@@ -153,14 +155,18 @@ struct SliceSessionView: View {
             }
         case .sumSprint:
             if let burst = appModel.engine.sumSprintBurstState {
+                let vocabulary = sumSprintVocabulary(target: burst.target)
                 CardSurface {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Sum Sprint")
+                        Text(vocabulary.title)
                             .font(.title.weight(.black))
+                        Text(vocabulary.targetReminder)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(MatherTheme.warm)
                         Text("Matches \(burst.progressLabel)")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        Text("Tap a sum sentence, then tap its total.")
+                        Text(vocabulary.instruction)
                             .font(.headline)
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
                             ForEach(burst.cards) { card in
@@ -180,6 +186,7 @@ struct SliceSessionView: View {
                                         }
                                 }
                                 .accessibilityIdentifier(sumSprintCardIdentifier(for: card, in: burst))
+                                .accessibilityLabel(sumSprintCardAccessibilityLabel(for: card, vocabulary: vocabulary))
                                 .buttonStyle(.plain)
                                 .disabled(card.isMatched)
                             }
@@ -193,6 +200,7 @@ struct SliceSessionView: View {
             if let bondState = appModel.engine.bondMatchState {
                 BondMatchView(
                     state: bondState,
+                    storyPrompt: appModel.engine.currentNumberStoryPrompt,
                     tiltPitch: appModel.motionService.tiltPitch,
                     tiltRoll: appModel.motionService.tiltRoll,
                     shakeDetected: appModel.motionService.shakeDetected,
@@ -242,6 +250,20 @@ struct SliceSessionView: View {
 
     private func cardForeground(for card: SumSprintBurstCard) -> Color {
         card.isMatched ? MatherTheme.softBlue : .primary
+    }
+
+    private func sumSprintVocabulary(target: Int) -> NumberStoryStageVocabulary {
+        if let prompt = appModel.engine.currentNumberStoryPrompt {
+            return NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .sumSprint)
+        }
+        return NumberStoryStageVocabulary.fallback(stage: .sumSprint, target: target)
+    }
+
+    private func sumSprintCardAccessibilityLabel(
+        for card: SumSprintBurstCard,
+        vocabulary: NumberStoryStageVocabulary
+    ) -> String {
+        "\(vocabulary.accessibilityLabel) Card \(card.content.displayText)\(card.isMatched ? ", matched" : "")"
     }
 
     private var header: some View {
