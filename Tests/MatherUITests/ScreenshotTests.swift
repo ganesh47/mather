@@ -476,11 +476,15 @@ final class ScreenshotTests: XCTestCase {
             gravityGoButton.tap()
         }
 
+        let leftPlus = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "gravity-left-plus")).firstMatch
+        let rightPlus = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "gravity-right-plus")).firstMatch
         for _ in 0..<leftPanCount {
-            app.buttons["gravity-left-plus"].tap()
+            XCTAssertTrue(leftPlus.waitForExistence(timeout: 5), "Expected a left gravity increment button")
+            leftPlus.tap()
         }
         for _ in 0..<rightPanCount {
-            app.buttons["gravity-right-plus"].tap()
+            XCTAssertTrue(rightPlus.waitForExistence(timeout: 5), "Expected a right gravity increment button")
+            rightPlus.tap()
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
