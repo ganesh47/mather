@@ -322,14 +322,14 @@ enum MemoryDeck {
     ]
 
     static let fishImageAssetPlan: [MemoryImageAssetPlan] = [
-        imagePlan("fish-clownfish", asset: "MemoryFishClownfish", prompt: "clownfish with orange body and white bands near coral or sea anemone", notes: "white bands and orange body must be readable; crop out busy reef clutter"),
-        imagePlan("fish-goldfish", asset: "MemoryFishGoldfish", prompt: "goldfish side view with rounded body and flowing tail on a clean water background", notes: "orange or gold body should distinguish it from clownfish; avoid bowl-only compositions"),
-        imagePlan("fish-betta", asset: "MemoryFishBetta", prompt: "betta fish with large flowing fins, side view, clean aquatic background", notes: "flowing fins are the recognition cue; keep fin edges visible in square crop"),
-        imagePlan("fish-angelfish", asset: "MemoryFishAngelfish", prompt: "angelfish with tall triangular fins, side view, simple reef or water background", notes: "tall dorsal and anal fins must stay inside crop; avoid confusing with generic reef fish"),
-        imagePlan("fish-catfish", asset: "MemoryFishCatfish", prompt: "catfish with visible whisker-like barbels, side or three-quarter view", notes: "barbels must be clear at card size; prefer uncluttered river or aquarium background"),
-        imagePlan("fish-swordtail", asset: "MemoryFishSwordtail", prompt: "swordtail fish side view with long sword-shaped lower tail extension", notes: "tail sword is required for recognition; avoid crops that trim the tail"),
-        imagePlan("fish-tuna", asset: "MemoryFishTuna", prompt: "tuna fish with streamlined silver and blue body, side view in open water", notes: "sleek torpedo shape should read clearly; avoid fishing/deck scenes"),
-        imagePlan("fish-seahorse", asset: "MemoryFishSeahorse", prompt: "seahorse upright profile with curled tail, clean sea grass or water background", notes: "upright posture and curled tail must be visible; keep subject large in square crop")
+        importedImagePlan("fish-clownfish", asset: "MemoryFishClownfish", prompt: "clownfish with orange body and white bands near coral or sea anemone", notes: "white bands and orange body must be readable; crop out busy reef clutter", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-goldfish", asset: "MemoryFishGoldfish", prompt: "goldfish side view with rounded body and flowing tail on a clean water background", notes: "orange or gold body should distinguish it from clownfish; avoid bowl-only compositions", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-betta", asset: "MemoryFishBetta", prompt: "betta fish with large flowing fins, side view, clean aquatic background", notes: "flowing fins are the recognition cue; keep fin edges visible in square crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-angelfish", asset: "MemoryFishAngelfish", prompt: "angelfish with tall triangular fins, side view, simple reef or water background", notes: "tall dorsal and anal fins must stay inside crop; avoid confusing with generic reef fish", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-catfish", asset: "MemoryFishCatfish", prompt: "catfish with visible whisker-like barbels, side or three-quarter view", notes: "barbels must be clear at card size; prefer uncluttered river or aquarium background", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-swordtail", asset: "MemoryFishSwordtail", prompt: "swordtail fish side view with long sword-shaped lower tail extension", notes: "tail sword is required for recognition; avoid crops that trim the tail", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-tuna", asset: "MemoryFishTuna", prompt: "tuna fish with streamlined silver and blue body, side view in open water", notes: "sleek torpedo shape should read clearly; avoid fishing/deck scenes", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("fish-seahorse", asset: "MemoryFishSeahorse", prompt: "seahorse upright profile with curled tail, clean sea grass or water background", notes: "upright posture and curled tail must be visible; keep subject large in square crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned")
     ]
 
     static let planets: [MemoryAnimal] = [
@@ -344,14 +344,14 @@ enum MemoryDeck {
     ]
 
     static let fishes: [MemoryAnimal] = [
-        fish("fish-clownfish", prompt: "Orange reef fish", name: "Clownfish", home: "warm coral reefs", size: "10 to 18 cm long", colors: "orange, white, black", funFact: "It hides safely inside sea anemones"),
-        fish("fish-goldfish", prompt: "Golden pond fish", name: "Goldfish", home: "ponds and aquariums", size: "15 to 30 cm long", colors: "gold, orange, white", funFact: "It can remember simple routes and feeding times"),
-        fish("fish-betta", prompt: "Flowing fin fish", name: "Betta", home: "slow streams and rice fields", size: "6 to 8 cm long", colors: "red, blue, purple", funFact: "It can breathe some air from the surface"),
-        fish("fish-angelfish", prompt: "Tall fin reef fish", name: "Angelfish", home: "coral reefs", size: "15 to 25 cm long", colors: "yellow, blue, black", funFact: "It glides between corals with flat fins"),
-        fish("fish-catfish", prompt: "Whiskered river fish", name: "Catfish", home: "rivers, lakes, and ponds", size: "20 to 60 cm long", colors: "gray, brown, black", funFact: "Its whiskers help it sense food in cloudy water"),
-        fish("fish-swordtail", prompt: "Tail-sword fish", name: "Swordtail", home: "freshwater streams", size: "8 to 12 cm long", colors: "orange, green, black", funFact: "The male has a long sword-shaped tail"),
-        fish("fish-tuna", prompt: "Fast ocean fish", name: "Tuna", home: "open ocean waters", size: "1 to 2 m long", colors: "silver and blue", funFact: "It can swim very fast for long distances"),
-        fish("fish-seahorse", prompt: "Tiny upright sea swimmer", name: "Seahorse", home: "sea grass beds and reefs", size: "2 to 15 cm long", colors: "yellow, brown, orange", funFact: "It swims upright and curls its tail")
+        fish("fish-clownfish", prompt: "Orange reef fish", asset: "MemoryFishClownfish", name: "Clownfish", home: "warm coral reefs", size: "10 to 18 cm long", colors: "orange, white, black", funFact: "It hides safely inside sea anemones"),
+        fish("fish-goldfish", prompt: "Golden pond fish", asset: "MemoryFishGoldfish", name: "Goldfish", home: "ponds and aquariums", size: "15 to 30 cm long", colors: "gold, orange, white", funFact: "It can remember simple routes and feeding times"),
+        fish("fish-betta", prompt: "Flowing fin fish", asset: "MemoryFishBetta", name: "Betta", home: "slow streams and rice fields", size: "6 to 8 cm long", colors: "red, blue, purple", funFact: "It can breathe some air from the surface"),
+        fish("fish-angelfish", prompt: "Tall fin reef fish", asset: "MemoryFishAngelfish", name: "Angelfish", home: "coral reefs", size: "15 to 25 cm long", colors: "yellow, blue, black", funFact: "It glides between corals with flat fins"),
+        fish("fish-catfish", prompt: "Whiskered river fish", asset: "MemoryFishCatfish", name: "Catfish", home: "rivers, lakes, and ponds", size: "20 to 60 cm long", colors: "gray, brown, black", funFact: "Its whiskers help it sense food in cloudy water"),
+        fish("fish-swordtail", prompt: "Tail-sword fish", asset: "MemoryFishSwordtail", name: "Swordtail", home: "freshwater streams", size: "8 to 12 cm long", colors: "orange, green, black", funFact: "The male has a long sword-shaped tail"),
+        fish("fish-tuna", prompt: "Fast ocean fish", asset: "MemoryFishTuna", name: "Tuna", home: "open ocean waters", size: "1 to 2 m long", colors: "silver and blue", funFact: "It can swim very fast for long distances"),
+        fish("fish-seahorse", prompt: "Tiny upright sea swimmer", asset: "MemoryFishSeahorse", name: "Seahorse", home: "sea grass beds and reefs", size: "2 to 15 cm long", colors: "yellow, brown, orange", funFact: "It swims upright and curls its tail")
     ]
 
     static let countries: [MemoryAnimal] = [
@@ -420,7 +420,15 @@ enum MemoryDeck {
             noLogoOrEndorsementRisk: true,
             noPeopleOrPrivacyRisk: true,
             childCardLegibilityChecked: true
-        )
+        ),
+        generatedImageProvenance(assetName: "MemoryFishClownfish", cardId: "fish-clownfish", sha256: "994003f9911cd64dae9b0b788918a64ca4bf0a9ca8c2889ecb9dfca6903d9c6b"),
+        generatedImageProvenance(assetName: "MemoryFishGoldfish", cardId: "fish-goldfish", sha256: "03e5d0f461f714cff979eba3c154b3f1012f8880c88fca509cdabeb74ddc4dde"),
+        generatedImageProvenance(assetName: "MemoryFishBetta", cardId: "fish-betta", sha256: "32da3532b489e9c7d20394cec5b99897c2011cc2a92809ced0b249d74e1aa200"),
+        generatedImageProvenance(assetName: "MemoryFishAngelfish", cardId: "fish-angelfish", sha256: "8da0cff35ded5222747f099b3ca785719c9700c17514aa2f69fd3ff5b5b904c6"),
+        generatedImageProvenance(assetName: "MemoryFishCatfish", cardId: "fish-catfish", sha256: "e2d712233b9fd1d4f5fa5d3c167329d19784fb72784ce062ee8231cc7e19a1fe"),
+        generatedImageProvenance(assetName: "MemoryFishSwordtail", cardId: "fish-swordtail", sha256: "decdde0bb9874d8d7b5f3c07c544f342dd339c69c42f135eee8f134a1ea18a19"),
+        generatedImageProvenance(assetName: "MemoryFishTuna", cardId: "fish-tuna", sha256: "d9716931aba86201236c724311c5b8fae07b6dca705ca059cd9c7247b33b67a3"),
+        generatedImageProvenance(assetName: "MemoryFishSeahorse", cardId: "fish-seahorse", sha256: "90a58259c3a44be96017c86b1d4a165fc507ba24d9baf2c53b9dad23c1ff50a0")
     ]
 
 
@@ -441,6 +449,29 @@ enum MemoryDeck {
             searchPrompt: prompt,
             styleNotes: notes,
             status: .readyForAssetImport(sourceName: sourceName, license: license)
+        )
+    }
+
+    private static func generatedImageProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "Project-owned deterministic drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #379",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-04-27",
+            originalFileName: "\(assetName).png",
+            originalSha256: sha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: sha256,
+            derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
         )
     }
 
@@ -529,11 +560,11 @@ enum MemoryDeck {
         )
     }
 
-    private static func fish(_ id: String, prompt: String, name: String, home: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
+    private static func fish(_ id: String, prompt: String, asset: String? = nil, name: String, home: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: name,
-            picture: .text(prompt),
+            picture: asset.map { .asset($0) } ?? .text(prompt),
             metadata: MemoryCardMetadata(
                 deck: .fishes,
                 category: "fish",
@@ -656,6 +687,8 @@ struct MemoryView: View {
     @State private var deckSelection: DeckSelection = .domestic
     @State private var recentPairHistory: [String] = []
     @State private var learningContent: MemoryLearningContent? = nil
+    @State private var askSession: MemoryAskConversationSession? = nil
+    @State private var latestAskResponse: MemoryAskResponse? = nil
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles, planets, fishes, countries, indiaStates
@@ -1159,6 +1192,8 @@ struct MemoryView: View {
     private func handleDoubleTap(_ card: MemoryCard) {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
         let selectedAnimal = animal(for: card)
+        askSession = nil
+        latestAskResponse = nil
         learningContent = Self.learningContent(
             for: selectedAnimal,
             deckSelection: deckSelection,
@@ -1222,6 +1257,28 @@ struct MemoryView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
 
+                    MemoryAskConversationSection(
+                        session: askSession,
+                        latestResponse: latestAskResponse,
+                        startConversation: {
+                            Task { @MainActor in
+                                askSession = await MemoryAskConversationPolicy().startSession(for: animal)
+                                latestAskResponse = nil
+                            }
+                        },
+                        selectTurn: { turn in
+                            guard var session = askSession else { return }
+                            let response = session.respond(to: .suggestedTurn(id: turn.id))
+                            askSession = session
+                            latestAskResponse = response
+                            appModel.speechService.speakLearningDetails(response.spokenText, enabled: appModel.featureFlags.audioEnabled)
+                        },
+                        replayLatestAnswer: {
+                            guard let latestAskResponse else { return }
+                            appModel.speechService.speakLearningDetails(latestAskResponse.spokenText, enabled: appModel.featureFlags.audioEnabled)
+                        }
+                    )
+
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
                         ForEach(content.factChips, id: \.self) { fact in
                             VStack(alignment: .leading, spacing: 4) {
@@ -1250,7 +1307,11 @@ struct MemoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { learningContent = nil }
+                    Button("Done") {
+                        learningContent = nil
+                        askSession = nil
+                        latestAskResponse = nil
+                    }
                         .accessibilityIdentifier("memory-learning-done")
                 }
             }
@@ -1263,6 +1324,8 @@ struct MemoryView: View {
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = Self.buildCards(for: roundAnimals).shuffled()
         learningContent = nil
+        askSession = nil
+        latestAskResponse = nil
         firstSelected = nil
         matchedPairs = 0
         mismatchIds = []
@@ -1393,6 +1456,75 @@ private struct MemoryLearnMoreAccessibilityModifier: ViewModifier {
             }
         } else {
             content
+        }
+    }
+}
+
+private struct MemoryAskConversationSection: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let session: MemoryAskConversationSession?
+    let latestResponse: MemoryAskResponse?
+    let startConversation: () -> Void
+    let selectTurn: (MemoryAskSuggestedTurn) -> Void
+    let replayLatestAnswer: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let session {
+                Text("Ask about this card")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+
+                VStack(spacing: 10) {
+                    ForEach(session.suggestedTurns) { turn in
+                        Button {
+                            selectTurn(turn)
+                        } label: {
+                            Label(turn.question, systemImage: "questionmark.circle.fill")
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.78)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.34 : 0.62)))
+                        .accessibilityIdentifier("memory-ask-suggested-turn-\(turn.id)")
+                    }
+                }
+
+                if let latestResponse {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(latestResponse.spokenText)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("memory-ask-latest-answer")
+
+                        Button {
+                            replayLatestAnswer()
+                        } label: {
+                            Label("Replay answer", systemImage: "speaker.wave.2.fill")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity, minHeight: 52)
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(colorScheme == .dark ? 0.28 : 0.52)))
+                        .accessibilityIdentifier("memory-ask-replay-answer")
+                    }
+                    .padding(12)
+                    .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+            } else {
+                Button {
+                    startConversation()
+                } label: {
+                    Label("Ask about this card", systemImage: "questionmark.bubble.fill")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, minHeight: 80)
+                }
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.34 : 0.62)))
+                .accessibilityIdentifier("memory-ask-about-this-card")
+            }
         }
     }
 }

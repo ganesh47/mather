@@ -1,7 +1,7 @@
 # Spec: Memory Ask About This Card
 
 **Issue**: #380  
-**Status**: draft  
+**Status**: UI slice implemented
 **Author**: Codex  
 **Date**: 2026-04-27
 
@@ -17,20 +17,20 @@ Memory Match should let a child ask a few safe, card-grounded questions from the
 
 ## Acceptance Criteria
 
-- [ ] The child can only choose from app-provided suggested turns for the visible Memory card.
-- [ ] Jupiter and other planet cards have deterministic fallback turns for order/type, size, and a special fact when metadata exists.
-- [ ] If Apple Intelligence or a future suggested-turn provider is unavailable, empty, or unsafe, the app uses curated metadata fallback.
-- [ ] Off-card or unsupported requests receive a short refusal that redirects the child to card questions.
-- [ ] The app stores only lightweight session state such as `cardId` and selected turn IDs; it does not retain a conversation transcript.
-- [ ] The child flow has no freeform text input, no microphone input, and no unrestricted generated chat.
-- [ ] Spoken answers use `SpeechService` read-aloud behavior and respect the existing parent audio toggle for in-session prompts.
+- [x] The child can only choose from app-provided suggested turns for the visible Memory card.
+- [x] Jupiter and other planet cards have deterministic fallback turns for order/type, size, and a special fact when metadata exists.
+- [x] If Apple Intelligence or a future suggested-turn provider is unavailable, empty, or unsafe, the app uses curated metadata fallback.
+- [x] Off-card or unsupported requests receive a short refusal that redirects the child to card questions.
+- [x] The app stores only lightweight session state such as `cardId` and selected turn IDs; it does not retain a conversation transcript.
+- [x] The child flow has no freeform text input, no microphone input, and no unrestricted generated chat.
+- [x] Spoken answers use `SpeechService` read-aloud behavior and respect the existing parent audio toggle for in-session prompts.
 
 ## Design
 
 ### SwiftUI Views
 
 - `MemoryView.learningSheet(for:)`: adds an "Ask about this card" entry point below existing Learn content.
-- `MemoryAskConversationView`: shows 2-3 large suggested-question buttons and a replay button for the latest spoken answer. Buttons must meet the 80 pt touch target guidance.
+- `MemoryAskConversationSection`: shows 2-3 large suggested-question buttons and a replay button for the latest spoken answer. Buttons must meet the 80 pt touch target guidance.
 - No keyboard, dictation button, chat transcript, or microphone affordance appears in the child flow.
 
 ### Data Model
@@ -63,7 +63,6 @@ Flag name: `FeatureFlags.memoryCardAppleIntelligenceEnabled` gates any future Ap
 
 ## Open Questions
 
-- [ ] Should the first UI slice ship the conversation view immediately, or keep this as tested policy scaffolding until the next Memory UI issue?
 - [ ] Should parent settings expose a separate Ask toggle, or is the existing Learn/Apple Intelligence flag enough for the first implementation?
 - [ ] What telemetry event names should be used if aggregate turn-selection analytics are added?
 

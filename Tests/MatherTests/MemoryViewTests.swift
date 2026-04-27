@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Mather
 
@@ -74,7 +75,6 @@ struct MemoryViewTests {
         let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
 
         #expect(importedAssetNames == ["MemoryPlanetEarth", "MemoryVehicleBike"])
-        #expect(Set(provenanceByAsset.keys) == importedAssetNames)
         #expect(provenanceByAsset["MemoryPlanetEarth"]?.cardId == "planet-earth")
         #expect(provenanceByAsset["MemoryVehicleBike"]?.cardId == "bike")
         #expect(MemoryDeck.imageAssetProvenance.allSatisfy { !$0.creator.isEmpty && !$0.creditLine.isEmpty && !$0.license.isEmpty })
@@ -87,20 +87,60 @@ struct MemoryViewTests {
         #expect(provenanceByAsset["MemoryVehicleBike"]?.derivativeSha256 == "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276")
     }
 
-    @Test func issue379FishImageAssetPlanCoversFishesWithoutPrematureImports() {
+    @Test func issue379FishDeckUsesVettedImageAssets() {
         let fishIds = MemoryDeck.fishes.map(\.id)
         let plan = MemoryDeck.fishImageAssetPlan
         let plannedAssets = plan.map(\.assetName)
+        let fishAssets = MemoryDeck.fishes.compactMap(\.imageAssetName)
+        let importedAssetNames = Set(plan.compactMap { plan in
+            if case .readyForAssetImport = plan.status { return plan.assetName }
+            return nil
+        })
 
         #expect(plan.map(\.cardId) == fishIds)
         #expect(Set(plannedAssets).count == plannedAssets.count)
         #expect(plannedAssets.allSatisfy { $0.hasPrefix("MemoryFish") })
         #expect(plan.allSatisfy { !$0.searchPrompt.isEmpty && !$0.styleNotes.isEmpty })
-        #expect(plan.allSatisfy { plan in
-            if case .needsVettedSource = plan.status { return true }
-            return false
-        })
-        #expect(MemoryDeck.fishes.allSatisfy { $0.imageAssetName == nil })
+        #expect(importedAssetNames == Set(plannedAssets))
+        #expect(fishAssets == plannedAssets)
+        #expect(MemoryDeck.fishes.allSatisfy { $0.imageAssetName != nil })
+    }
+
+    @Test func issue379FishAssetsHaveReuseSafeProvenanceAndCatalogs() {
+        let fishAssets = Set(MemoryDeck.fishes.compactMap(\.imageAssetName))
+        let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+        let expectedHashes = [
+            "MemoryFishClownfish": "994003f9911cd64dae9b0b788918a64ca4bf0a9ca8c2889ecb9dfca6903d9c6b",
+            "MemoryFishGoldfish": "03e5d0f461f714cff979eba3c154b3f1012f8880c88fca509cdabeb74ddc4dde",
+            "MemoryFishBetta": "32da3532b489e9c7d20394cec5b99897c2011cc2a92809ced0b249d74e1aa200",
+            "MemoryFishAngelfish": "8da0cff35ded5222747f099b3ca785719c9700c17514aa2f69fd3ff5b5b904c6",
+            "MemoryFishCatfish": "e2d712233b9fd1d4f5fa5d3c167329d19784fb72784ce062ee8231cc7e19a1fe",
+            "MemoryFishSwordtail": "decdde0bb9874d8d7b5f3c07c544f342dd339c69c42f135eee8f134a1ea18a19",
+            "MemoryFishTuna": "d9716931aba86201236c724311c5b8fae07b6dca705ca059cd9c7247b33b67a3",
+            "MemoryFishSeahorse": "90a58259c3a44be96017c86b1d4a165fc507ba24d9baf2c53b9dad23c1ff50a0"
+        ]
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
+
+        #expect(fishAssets == Set(expectedHashes.keys))
+        for assetName in fishAssets {
+            let provenance = provenanceByAsset[assetName]
+            let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
+            let image = imageset.appendingPathComponent("\(assetName).png")
+            let contents = imageset.appendingPathComponent("Contents.json")
+
+            #expect(provenance?.cardId.hasPrefix("fish-") == true)
+            #expect(provenance?.sourceName == "Project-owned deterministic drawing")
+            #expect(provenance?.licenseAllowsReuse == true)
+            #expect(provenance?.noThirdPartyRestrictionFound == true)
+            #expect(provenance?.noLogoOrEndorsementRisk == true)
+            #expect(provenance?.noPeopleOrPrivacyRisk == true)
+            #expect(provenance?.childCardLegibilityChecked == true)
+            #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
+            #expect(FileManager.default.fileExists(atPath: image.path))
+            #expect(FileManager.default.fileExists(atPath: contents.path))
+        }
     }
 
     @Test func deckSelectionExposesVehiclesDeck() {
