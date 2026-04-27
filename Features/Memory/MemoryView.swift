@@ -126,6 +126,20 @@ struct MemoryLearningContent: Identifiable, Equatable {
     var id: String { animal.id }
 }
 
+
+struct MemoryImageAssetPlan: Equatable {
+    enum Status: Equatable {
+        case needsVettedSource
+        case readyForAssetImport(sourceName: String, license: String)
+    }
+
+    let cardId: String
+    let assetName: String
+    let searchPrompt: String
+    let styleNotes: String
+    let status: Status
+}
+
 struct MemoryAnimal: Identifiable, Equatable {
     let id: String
     let name: String
@@ -260,6 +274,32 @@ enum MemoryDeck {
         vehicle("taxi", name: "Taxi", emoji: "🚕", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
     ]
 
+    static let vehicleImageAssetPlan: [MemoryImageAssetPlan] = [
+        imagePlan("car", asset: "MemoryVehicleCar", prompt: "kid-friendly side-view car photo or illustration on a clean background", notes: "four wheels clearly visible; avoid brand logos and license plates"),
+        imagePlan("bus", asset: "MemoryVehicleBus", prompt: "bright city or school bus, side view, clean background", notes: "large windows and wheels readable at card size"),
+        imagePlan("train", asset: "MemoryVehicleTrain", prompt: "locomotive or passenger train on rails, three-quarter view", notes: "rails visible; keep silhouette distinct from bus"),
+        imagePlan("plane", asset: "MemoryVehiclePlane", prompt: "airplane in flight or on runway with full wings visible", notes: "wide wing shape must remain legible in square crop"),
+        imagePlan("boat", asset: "MemoryVehicleBoat", prompt: "small sailboat or motorboat on water, uncluttered scene", notes: "show waterline; avoid tiny distant boats"),
+        imagePlan("bike", asset: "MemoryVehicleBike", prompt: "bicycle side view on clean background", notes: "two wheels and handlebar readable; no rider required"),
+        imagePlan("truck", asset: "MemoryVehicleTruck", prompt: "box truck or delivery truck side view, clean background", notes: "large cargo box should distinguish it from car and bus"),
+        imagePlan("tractor", asset: "MemoryVehicleTractor", prompt: "farm tractor with large rear tire, field or clean background", notes: "big back wheel is the main recognition cue"),
+        imagePlan("helicopter", asset: "MemoryVehicleHelicopter", prompt: "helicopter side view with rotor visible", notes: "rotor and tail boom must fit inside crop"),
+        imagePlan("rocket", asset: "MemoryVehicleRocket", prompt: "rocket launch or upright rocket, simple high-contrast composition", notes: "flame plume optional; avoid agency logos unless public-domain provenance is documented"),
+        imagePlan("scooter", asset: "MemoryVehicleScooter", prompt: "small scooter or moped side view, clean background", notes: "keep distinct from bike using seat and motor body"),
+        imagePlan("taxi", asset: "MemoryVehicleTaxi", prompt: "yellow taxi side or three-quarter view, clean city context", notes: "taxi sign/checker cue useful; avoid visible plate numbers")
+    ]
+
+    static let planetImageAssetPlan: [MemoryImageAssetPlan] = [
+        imagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "Mercury planet disk, gray cratered surface, black or transparent background", notes: "craters visible; avoid confusing with Moon unless labeled in provenance"),
+        imagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "Venus planet disk, pale yellow cloud-covered surface", notes: "soft yellow cloud bands; no surface lava imagery unless educationally intentional"),
+        imagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "Earth planet disk showing blue oceans, green/brown land, white clouds", notes: "full globe preferred; keep recognizable continents/clouds"),
+        imagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "Mars planet disk, rusty red surface with darker markings", notes: "red/orange treatment must be distinct from Venus"),
+        imagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "Jupiter planet disk with brown cream bands and Great Red Spot", notes: "Great Red Spot is the key recognition cue"),
+        imagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "Saturn with rings, tan/gold planet, transparent or dark background", notes: "rings must fit fully inside square card crop"),
+        imagePlan("planet-uranus", asset: "MemoryPlanetUranus", prompt: "Uranus planet disk, pale cyan blue-green, minimal bands", notes: "tilted ring optional only if sourced and legible"),
+        imagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "Neptune planet disk, deep blue with subtle storm/cloud texture", notes: "deeper blue than Uranus; avoid over-saturated fantasy art")
+    ]
+
     static let planets: [MemoryAnimal] = [
         planet("planet-mercury", prompt: "☿", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
         planet("planet-venus", prompt: "♀", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
@@ -307,6 +347,17 @@ enum MemoryDeck {
     static let allAnimalsById: [String: MemoryAnimal] = {
         Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + indiaStates).map { ($0.id, $0) })
     }()
+
+
+    private static func imagePlan(_ cardId: String, asset: String, prompt: String, notes: String) -> MemoryImageAssetPlan {
+        MemoryImageAssetPlan(
+            cardId: cardId,
+            assetName: asset,
+            searchPrompt: prompt,
+            styleNotes: notes,
+            status: .needsVettedSource
+        )
+    }
 
     private static func domesticAnimal(_ id: String, name: String, emoji: String, habitat: String, colors: String, sound: String?, movement: String) -> MemoryAnimal {
         MemoryAnimal(

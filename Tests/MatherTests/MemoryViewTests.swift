@@ -33,6 +33,26 @@ struct MemoryViewTests {
         #expect(Set(emojis).count == emojis.count)
     }
 
+    @Test func issue352ImageAssetPlansCoverPlanetsAndVehiclesWithoutPrematureImports() {
+        let vehicleIds = MemoryDeck.vehicles.map(\.id)
+        let planetIds = MemoryDeck.planets.map(\.id)
+        let vehiclePlan = MemoryDeck.vehicleImageAssetPlan
+        let planetPlan = MemoryDeck.planetImageAssetPlan
+        let plannedAssets = (vehiclePlan + planetPlan).map(\.assetName)
+
+        #expect(vehiclePlan.map(\.cardId) == vehicleIds)
+        #expect(planetPlan.map(\.cardId) == planetIds)
+        #expect(Set(plannedAssets).count == plannedAssets.count)
+        #expect(plannedAssets.allSatisfy { $0.hasPrefix("MemoryVehicle") || $0.hasPrefix("MemoryPlanet") })
+        #expect((vehiclePlan + planetPlan).allSatisfy { !$0.searchPrompt.isEmpty && !$0.styleNotes.isEmpty })
+        #expect((vehiclePlan + planetPlan).allSatisfy { plan in
+            if case .needsVettedSource = plan.status { return true }
+            return false
+        })
+        #expect(MemoryDeck.vehicles.allSatisfy { $0.imageAssetName == nil })
+        #expect(MemoryDeck.planets.allSatisfy { $0.imageAssetName == nil })
+    }
+
     @Test func deckSelectionExposesVehiclesDeck() {
         #expect(MemoryView.DeckSelection.allCases.contains(.vehicles))
         #expect(MemoryView.DeckSelection.vehicles.menuLabel == "Vehicles")
