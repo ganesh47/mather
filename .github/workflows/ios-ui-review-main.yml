@@ -104,7 +104,11 @@ jobs:
           exit 1
 
       - name: Run UI screenshot tests
-        timeout-minutes: 15
+        # The iPad matrix leg runs the same artifact-producing screenshots on a
+        # slower simulator and can exceed 15 minutes after the Issue #222 loop
+        # coverage. Keep the step bounded, but give it enough room to finish and
+        # upload review artifacts instead of being killed mid-run.
+        timeout-minutes: 25
         run: |
           mkdir -p ci-videos
           SIM_ID="${SIM_DESTINATION#id=}"
