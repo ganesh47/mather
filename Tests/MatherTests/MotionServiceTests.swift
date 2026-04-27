@@ -69,6 +69,17 @@ struct MotionServiceTests {
         #expect(!service.shakeDetected)
     }
 
+    // MARK: - Compass Angles relative yaw convention
+
+    @Test
+    func coreMotionYawIsInvertedToBodyRelativeRightPositiveDegrees() {
+        let rightTurn = MotionService.bodyRelativeYawDegrees(fromCoreMotionYawRadians: -.pi / 2)
+        let leftTurn = MotionService.bodyRelativeYawDegrees(fromCoreMotionYawRadians: .pi / 2)
+
+        #expect(abs(rightTurn - 90) < 0.01)
+        #expect(abs(leftTurn - (-90)) < 0.01)
+    }
+
     // MARK: - stopUpdates resets state
 
     @Test
