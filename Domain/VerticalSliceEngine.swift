@@ -99,6 +99,10 @@ final class VerticalSliceEngine {
         return NumberStoryGenerator.prompt(for: currentProblem, themeId: featureFlags.selectedThemeId)
     }
 
+    var currentStoryPrompt: NumberStoryPrompt? {
+        currentNumberStoryPrompt
+    }
+
     var progressLabel: String {
         guard !problems.isEmpty else { return "0 / 0" }
         return "\(min(currentProblemIndex + 1, problems.count)) / \(problems.count)"
@@ -147,8 +151,8 @@ final class VerticalSliceEngine {
             problems = ProblemGenerator.generateProblems(config: config)
         }
         currentProblemIndex = 0
-        currentStage = .concrete
-        currentProblemState = ProblemState()
+        currentStage = initialStageForCurrentRoute()
+        currentProblemState = ProblemState(stage: currentStage)
         currentSession = SliceSession(
             sessionId: UUID(),
             startedAt: .now,
@@ -167,13 +171,17 @@ final class VerticalSliceEngine {
         gravitySplitState = nil
         sumSprintBurstState = nil
         gravitySplitNeutralRoll = nil
-        feedbackMessage = activeTheme.sessionStartFeedback()
+        feedbackMessage = promptForCurrentStage()
         showCelebration = false
         completedSummary = nil
         sessionStartedAt = .now
         problemStartedAt = .now
         speechService.resetSession()
-        speechService.speakSessionIntro(activeTheme.sessionIntroPhrase())
+        if currentStage == .storyAnchor, let currentStoryPrompt {
+            speechService.speak(currentStoryPrompt.spokenIntro, enabled: featureFlags.audioEnabled)
+        } else {
+            speechService.speakSessionIntro(activeTheme.sessionIntroPhrase())
+        }
 
         do {
             try telemetryWriter.beginSession(sessionId: currentSession.sessionId, featureFlags: featureFlags)
@@ -270,6 +278,8 @@ final class VerticalSliceEngine {
 
         let isCorrect: Bool
         switch currentStage {
+        case .storyAnchor:
+            isCorrect = true
         case .concrete:
             isCorrect = concreteCount == currentProblem.target
         case .pictorial:
@@ -303,6 +313,15 @@ final class VerticalSliceEngine {
 
     func replayPrompt() {
         speechService.speak(promptForCurrentStage(), enabled: featureFlags.audioEnabled)
+    }
+
+    func startBuildingFromStoryAnchor() {
+        guard currentStage == .storyAnchor else { return }
+        let next = resolvedNextStage(after: currentStage)
+        recordStageTransition(from: currentStage, to: next)
+        currentStage = next
+        currentProblemState.stage = next
+        prepareForStage(next)
     }
 
     func selectSumSprintCard(id: UUID) {
@@ -502,6 +521,8 @@ final class VerticalSliceEngine {
 
     private func prepareForStage(_ stage: SliceStage) {
         switch stage {
+        case .storyAnchor:
+            break
         case .pictorial:
             if let problem = currentProblem {
                 bondMatchState = BondMatchState(
@@ -574,8 +595,8 @@ final class VerticalSliceEngine {
             if !problemThemes.isEmpty {
                 activeTheme = problemThemes[currentProblemIndex % problemThemes.count]
             }
-            currentStage = .concrete
-            currentProblemState = ProblemState()
+            currentStage = initialStageForCurrentRoute()
+            currentProblemState = ProblemState(stage: currentStage)
             concreteWarmCount = 0
             concreteAccentCount = 0
             splitLeftCount = 0
@@ -588,6 +609,7 @@ final class VerticalSliceEngine {
             sumSprintBurstState = nil
             problemStartedAt = .now
             feedbackMessage = promptForCurrentStage()
+            speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
             logProblemPresented()
         } else {
             endSession()
@@ -739,6 +761,8 @@ final class VerticalSliceEngine {
     private func promptForCurrentStage() -> String {
         guard let currentProblem else { return "Start a session to play." }
         switch currentStage {
+        case .storyAnchor:
+            return currentStoryPrompt?.spokenIntro ?? activeTheme.sessionStartFeedback()
         case .concrete:
             return activeTheme.concretePrompt(target: currentProblem.target)
         case .pictorial, .bondMatch:
@@ -792,6 +816,9 @@ final class VerticalSliceEngine {
     }
 
     private func successMessage(for stage: SliceStage, problem: SliceProblem) -> String {
+        if stage == .storyAnchor, let currentStoryPrompt {
+            return currentStoryPrompt.successLine
+        }
         if stage == .sumSprint {
             if let prompt = currentNumberStoryPrompt {
                 return "Nice match. Now make pairs for \(prompt.target) \(prompt.objectNoun)."
@@ -804,6 +831,8 @@ final class VerticalSliceEngine {
     private func feedbackMessageForFailure(stage: SliceStage, problem: SliceProblem) -> String {
         let attempts = currentProblemState.attempts
         switch stage {
+        case .storyAnchor:
+            return currentStoryPrompt?.spokenIntro ?? activeTheme.sessionStartFeedback()
         case .concrete:
             if attempts == 1 {
                 return "Keep counting. Make exactly \(problem.target)."
@@ -902,6 +931,10 @@ final class VerticalSliceEngine {
             showGravitySplit: featureFlags.vs1GravitySplitEnabled,
             showBondMatch: featureFlags.vs1BondMatchEnabled && isLastProblem
         )
+    }
+
+    private func initialStageForCurrentRoute() -> SliceStage {
+        featureFlags.makeBreakLoopV2Enabled ? .storyAnchor : .concrete
     }
 
 }

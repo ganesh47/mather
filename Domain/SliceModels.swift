@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 
 enum SliceStage: String, Codable, CaseIterable, Identifiable {
+    case storyAnchor
     case concrete
     case pictorial
     case abstract
@@ -15,6 +16,7 @@ enum SliceStage: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .storyAnchor: "Story"
         case .concrete:     "Make it"
         case .pictorial:    "Bond Blast!"
         case .abstract:     "Write it"

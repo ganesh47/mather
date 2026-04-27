@@ -2,7 +2,7 @@
 
 **Status:** Implementation-ready plan for issue #400  
 **Issue:** https://github.com/ganesh47/mather/issues/400  
-**Lane:** lane-e-story-vocabulary in progress
+**Lane:** Lane D story anchor merged with Lane E story vocabulary follow-up
 **Last updated:** 2026-04-27
 
 ## Scope lock
@@ -29,8 +29,8 @@ Out of scope for #400:
 ## Current repo truth inspected
 
 - `Domain/SliceModels.swift`
-  - `SliceConfig` already carries `minTarget` / `maxTarget` and clamps to `1...20`.
-  - `SliceStage` currently starts at `.concrete`; no story stage exists yet.
+  - `SliceConfig` already carries `minTarget` / `maxTarget` and clamps to `1...1_000`.
+  - Lane D adds `.storyAnchor` for the Make & Break V2 route; legacy flow still starts at `.concrete`.
 - `Domain/ProblemGenerator.swift`
   - Deterministic seed spans `1...20`.
   - Generation already filters by `config.targetRange`.
@@ -38,7 +38,7 @@ Out of scope for #400:
   - Exposes theme, problem count, and speech prompts.
   - Does not expose target cap before this issue slice.
 - `Domain/SliceStateMachine.swift`
-  - Make & Break V2 route is `concrete -> gravitySplit -> sumSprint -> bondMatch -> done`.
+  - Lane D updates Make & Break V2 route to `storyAnchor -> concrete -> gravitySplit -> sumSprint -> bondMatch -> done`.
 - `Domain/VerticalSliceEngine.swift`
   - `updateConfig(minTarget:maxTarget:)` already exists.
   - Embedded Sum Sprint/Bond Blast state is initialized from `currentProblem`.
@@ -116,6 +116,8 @@ Acceptance:
 ### M2 — Story Anchor pre-stage
 
 **Goal:** Add a short encoding stage before Make It.
+
+**Implementation status:** Landed in Lane D / `feat/issue-400-story-anchor`. Story Anchor is deterministic, reading-light, and advances with one touch; it is not a quiz or failure gate. AI variation and stage vocabulary are intentionally left out of this lane.
 
 Files:
 

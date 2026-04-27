@@ -4,6 +4,7 @@ import Testing
 struct SliceStateMachineTests {
     @Test
     func loopV2TransitionsAdvanceInRecoveryOrder() {
+        #expect(SliceStateMachine.nextStage(after: .storyAnchor, success: true, routeMode: .makeBreakLoopV2) == .concrete)
         #expect(SliceStateMachine.nextStage(after: .concrete, success: true, routeMode: .makeBreakLoopV2) == .gravitySplit)
         #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, routeMode: .makeBreakLoopV2) == .sumSprint)
         #expect(SliceStateMachine.nextStage(after: .sumSprint, success: true, routeMode: .makeBreakLoopV2) == .bondMatch)
@@ -23,6 +24,7 @@ struct SliceStateMachineTests {
         #expect(SliceStateMachine.canTransition(from: .concrete, to: .abstract, showTransfer: true) == false)
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: true) == false)
         #expect(SliceStateMachine.canTransition(from: .abstract, to: .done, showTransfer: false))
+        #expect(SliceStateMachine.canTransition(from: .storyAnchor, to: .concrete, routeMode: .makeBreakLoopV2))
         #expect(SliceStateMachine.canTransition(from: .concrete, to: .abstract, routeMode: .makeBreakLoopV2) == false)
         #expect(SliceStateMachine.canTransition(from: .gravitySplit, to: .bondMatch, routeMode: .makeBreakLoopV2) == false)
     }
@@ -85,6 +87,7 @@ struct SliceStateMachineTests {
 
     @Test
     func makeBreakLoopV2UsesFourStagePerTargetRoute() {
+        #expect(SliceStateMachine.nextStage(after: .storyAnchor, success: true, showTransfer: true, makeBreakLoopV2Enabled: true) == .concrete)
         #expect(SliceStateMachine.nextStage(after: .concrete, success: true, showTransfer: true, makeBreakLoopV2Enabled: true) == .gravitySplit)
         #expect(SliceStateMachine.nextStage(after: .gravitySplit, success: true, showTransfer: true, showBondMatch: true, makeBreakLoopV2Enabled: true) == .sumSprint)
         #expect(SliceStateMachine.nextStage(after: .sumSprint, success: true, showTransfer: true, showBondMatch: true, makeBreakLoopV2Enabled: true) == .bondMatch)

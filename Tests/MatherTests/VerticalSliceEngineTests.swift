@@ -67,6 +67,9 @@ struct VerticalSliceEngineTests {
 
         engine.startSession()
         guard let problem = engine.currentProblem else { return }
+        #expect(engine.currentStage == .storyAnchor)
+        engine.startBuildingFromStoryAnchor()
+        #expect(engine.currentStage == .concrete)
 
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
@@ -93,10 +96,38 @@ struct VerticalSliceEngineTests {
         }
 
         await waitFor("advance to next problem after loop v2 bond blast") {
-            engine.currentProblemIndex == 1 && engine.currentStage == .concrete
+            engine.currentProblemIndex == 1 && engine.currentStage == .storyAnchor
         }
         #expect(engine.currentProblemIndex == 1)
+        #expect(engine.currentStage == .storyAnchor)
+    }
+
+    @Test
+    func loopV2StartsWithDeterministicStoryAnchorPrompt() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+        flags.selectedThemeId = "vehicle"
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+        let expectedPrompt = NumberStoryGenerator.prompt(for: problem, themeId: "vehicle")
+
+        #expect(engine.currentStage == .storyAnchor)
+        #expect(engine.currentStoryPrompt == expectedPrompt)
+
+        engine.startBuildingFromStoryAnchor()
         #expect(engine.currentStage == .concrete)
+        #expect(engine.currentProblem == problem)
+        #expect(engine.currentStoryPrompt == expectedPrompt)
     }
 
     @Test
@@ -188,6 +219,7 @@ struct VerticalSliceEngineTests {
     func hapticsStageSuccessFiredOnConcreteStageClear() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -279,6 +311,7 @@ struct VerticalSliceEngineTests {
     func hapticsFailureFiredOnWrongAnswer() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.hapticsEnabled = true
         let haptics = HapticsService()
 
@@ -547,6 +580,9 @@ struct VerticalSliceEngineTests {
         engine.startSession()
 
         #expect(engine.currentProblem?.target == 1)
+        #expect(engine.currentStage == .storyAnchor)
+        engine.startBuildingFromStoryAnchor()
+        #expect(engine.currentStage == .concrete)
 
         engine.adjustConcrete(by: 1)
         engine.submitCurrentStage()
@@ -872,6 +908,9 @@ struct VerticalSliceEngineTests {
 
         engine.startSession()
         guard let problem = engine.currentProblem else { return }
+        #expect(engine.currentStage == .storyAnchor)
+        engine.startBuildingFromStoryAnchor()
+        #expect(engine.currentStage == .concrete)
 
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
@@ -908,6 +947,9 @@ struct VerticalSliceEngineTests {
 
         engine.startSession()
         guard let problem = engine.currentProblem else { return }
+        #expect(engine.currentStage == .storyAnchor)
+        engine.startBuildingFromStoryAnchor()
+        #expect(engine.currentStage == .concrete)
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
         await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }
@@ -933,6 +975,9 @@ struct VerticalSliceEngineTests {
 
         engine.startSession()
         guard let problem = engine.currentProblem else { return }
+        #expect(engine.currentStage == .storyAnchor)
+        engine.startBuildingFromStoryAnchor()
+        #expect(engine.currentStage == .concrete)
         engine.adjustConcrete(by: problem.target)
         engine.submitCurrentStage()
         await waitFor("gravity split after concrete") { engine.currentStage == .gravitySplit }

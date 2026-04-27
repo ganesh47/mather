@@ -175,6 +175,7 @@ struct ThemeTests {
     @Test func startSessionWithVehicleThemeIdActivatesVehicleTheme() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.selectedThemeId = "vehicle"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -184,7 +185,7 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         engine.startSession()
-        #expect(engine.feedbackMessage == "Park the cars in the garage.")
+        #expect(engine.feedbackMessage == "Park 6 cars in the garage.")
         #expect(engine.activeTheme.celebrationEmoji == "🚗")
         if case .vehicle = engine.activeTheme.counterKind { } else {
             Issue.record("Expected .vehicle counter kind after startSession with selectedThemeId=vehicle")
@@ -195,6 +196,7 @@ struct ThemeTests {
     @Test func startSessionWithClassicThemeIdActivatesClassicTheme() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         flags.selectedThemeId = "classic"
         let engine = VerticalSliceEngine(
             featureFlags: flags,
@@ -204,7 +206,7 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         engine.startSession()
-        #expect(engine.feedbackMessage == "Make the target number with the big counters.")
+        #expect(engine.feedbackMessage == "Make 6 with the counters.")
         #expect(engine.activeTheme.celebrationEmoji == "⭐️")
         if case .circle = engine.activeTheme.counterKind { } else {
             Issue.record("Expected .circle counter kind after startSession with selectedThemeId=classic")
@@ -232,6 +234,7 @@ struct ThemeTests {
     @Test func engineUsesInjectedThemeSessionStartFeedback() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
@@ -241,13 +244,14 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         engine.startSession()
-        #expect(engine.feedbackMessage == "Place the rockets on the pad.")
+        #expect(engine.feedbackMessage == "Launch 6 rockets.")
     }
 
     @MainActor
     @Test func engineUsesClassicThemeSessionStartFeedbackByDefault() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
@@ -256,7 +260,7 @@ struct ThemeTests {
             saveSummary: { _ in }
         )
         engine.startSession()
-        #expect(engine.feedbackMessage == "Make the target number with the big counters.")
+        #expect(engine.feedbackMessage == "Make 6 with the counters.")
     }
 
     @MainActor
@@ -299,6 +303,7 @@ struct ThemeTests {
     @Test func engineConcreteFailureHintUsesThemeCounterNoun() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
         let engine = VerticalSliceEngine(
             featureFlags: flags,
             telemetryWriter: TelemetryWriter(),
