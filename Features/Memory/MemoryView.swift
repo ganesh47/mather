@@ -140,6 +140,27 @@ struct MemoryImageAssetPlan: Equatable {
     let status: Status
 }
 
+struct MemoryImageAssetProvenance: Equatable {
+    let assetName: String
+    let cardId: String
+    let sourceName: String
+    let creator: String
+    let creditLine: String
+    let license: String
+    let licenseUrl: String
+    let retrievedAt: String
+    let originalFileName: String
+    let originalSha256: String
+    let derivativeFileName: String
+    let derivativeSha256: String
+    let derivativeChanges: String
+    let licenseAllowsReuse: Bool
+    let noThirdPartyRestrictionFound: Bool
+    let noLogoOrEndorsementRisk: Bool
+    let noPeopleOrPrivacyRisk: Bool
+    let childCardLegibilityChecked: Bool
+}
+
 struct MemoryAnimal: Identifiable, Equatable {
     let id: String
     let name: String
@@ -265,7 +286,7 @@ enum MemoryDeck {
         vehicle("train", name: "Train", emoji: "🚂", use: "pulls people or cargo on tracks", movement: "rolls on rails", colors: "black, silver, red, blue", sound: "choo-choo"),
         vehicle("plane", name: "Plane", emoji: "✈️", use: "flies people across the sky", movement: "zooms with wings", colors: "white, blue, silver", sound: "whooshing jet sound"),
         vehicle("boat", name: "Boat", emoji: "⛵", use: "travels across water", movement: "floats and glides", colors: "white, blue, red", sound: "splashing water"),
-        vehicle("bike", name: "Bike", emoji: "🚲", use: "helps riders pedal from place to place", movement: "rolls on two wheels", colors: "red, blue, green, black", sound: "spinning wheels"),
+        vehicle("bike", name: "Bike", emoji: "🚲", asset: "MemoryVehicleBike", use: "helps riders pedal from place to place", movement: "rolls on two wheels", colors: "red, blue, green, black", sound: "spinning wheels"),
         vehicle("truck", name: "Truck", emoji: "🚚", use: "hauls heavy things", movement: "drives with a strong engine", colors: "white, blue, red", sound: "deep engine rumble"),
         vehicle("tractor", name: "Tractor", emoji: "🚜", use: "helps farmers work in fields", movement: "rumbles over dirt with big tires", colors: "green, red, yellow", sound: "put-put engine"),
         vehicle("helicopter", name: "Copter", emoji: "🚁", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
@@ -280,7 +301,7 @@ enum MemoryDeck {
         imagePlan("train", asset: "MemoryVehicleTrain", prompt: "locomotive or passenger train on rails, three-quarter view", notes: "rails visible; keep silhouette distinct from bus"),
         imagePlan("plane", asset: "MemoryVehiclePlane", prompt: "airplane in flight or on runway with full wings visible", notes: "wide wing shape must remain legible in square crop"),
         imagePlan("boat", asset: "MemoryVehicleBoat", prompt: "small sailboat or motorboat on water, uncluttered scene", notes: "show waterline; avoid tiny distant boats"),
-        imagePlan("bike", asset: "MemoryVehicleBike", prompt: "bicycle side view on clean background", notes: "two wheels and handlebar readable; no rider required"),
+        importedImagePlan("bike", asset: "MemoryVehicleBike", prompt: "bicycle side view on clean background", notes: "two wheels and handlebar readable; no rider required", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         imagePlan("truck", asset: "MemoryVehicleTruck", prompt: "box truck or delivery truck side view, clean background", notes: "large cargo box should distinguish it from car and bus"),
         imagePlan("tractor", asset: "MemoryVehicleTractor", prompt: "farm tractor with large rear tire, field or clean background", notes: "big back wheel is the main recognition cue"),
         imagePlan("helicopter", asset: "MemoryVehicleHelicopter", prompt: "helicopter side view with rotor visible", notes: "rotor and tail boom must fit inside crop"),
@@ -292,7 +313,7 @@ enum MemoryDeck {
     static let planetImageAssetPlan: [MemoryImageAssetPlan] = [
         imagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "Mercury planet disk, gray cratered surface, black or transparent background", notes: "craters visible; avoid confusing with Moon unless labeled in provenance"),
         imagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "Venus planet disk, pale yellow cloud-covered surface", notes: "soft yellow cloud bands; no surface lava imagery unless educationally intentional"),
-        imagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "Earth planet disk showing blue oceans, green/brown land, white clouds", notes: "full globe preferred; keep recognizable continents/clouds"),
+        importedImagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "Earth planet disk showing blue oceans, green/brown land, white clouds", notes: "full globe preferred; keep recognizable continents/clouds", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         imagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "Mars planet disk, rusty red surface with darker markings", notes: "red/orange treatment must be distinct from Venus"),
         imagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "Jupiter planet disk with brown cream bands and Great Red Spot", notes: "Great Red Spot is the key recognition cue"),
         imagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "Saturn with rings, tan/gold planet, transparent or dark background", notes: "rings must fit fully inside square card crop"),
@@ -303,7 +324,7 @@ enum MemoryDeck {
     static let planets: [MemoryAnimal] = [
         planet("planet-mercury", prompt: "☿", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
         planet("planet-venus", prompt: "♀", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
-        planet("planet-earth", prompt: "⊕", name: "Earth", order: "3rd from the Sun", type: "rocky planet", size: "12,742 km wide", colors: "blue, green, white", funFact: "It has one moon"),
+        planet("planet-earth", prompt: "⊕", asset: "MemoryPlanetEarth", name: "Earth", order: "3rd from the Sun", type: "rocky planet", size: "12,742 km wide", colors: "blue, green, white", funFact: "It has one moon"),
         planet("planet-mars", prompt: "♂", name: "Mars", order: "4th from the Sun", type: "rocky planet", size: "6,779 km wide", colors: "rusty red", funFact: "It has two small moons"),
         planet("planet-jupiter", prompt: "♃", name: "Jupiter", order: "5th from the Sun", type: "gas giant", size: "139,820 km wide", colors: "brown, cream, orange", funFact: "It is the biggest planet"),
         planet("planet-saturn", prompt: "♄", name: "Saturn", order: "6th from the Sun", type: "gas giant", size: "116,460 km wide", colors: "gold and tan", funFact: "It is famous for bright rings"),
@@ -348,6 +369,49 @@ enum MemoryDeck {
         Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + indiaStates).map { ($0.id, $0) })
     }()
 
+    static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
+        MemoryImageAssetProvenance(
+            assetName: "MemoryPlanetEarth",
+            cardId: "planet-earth",
+            sourceName: "Project-owned deterministic drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #352",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-04-27",
+            originalFileName: "MemoryPlanetEarth.png",
+            originalSha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
+            derivativeFileName: "MemoryPlanetEarth.png",
+            derivativeSha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
+            derivativeChanges: "Generated directly as a 512x512 transparent PNG; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        ),
+        MemoryImageAssetProvenance(
+            assetName: "MemoryVehicleBike",
+            cardId: "bike",
+            sourceName: "Project-owned deterministic drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #352",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-04-27",
+            originalFileName: "MemoryVehicleBike.png",
+            originalSha256: "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276",
+            derivativeFileName: "MemoryVehicleBike.png",
+            derivativeSha256: "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276",
+            derivativeChanges: "Generated directly as a 512x512 transparent PNG; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    ]
+
 
     private static func imagePlan(_ cardId: String, asset: String, prompt: String, notes: String) -> MemoryImageAssetPlan {
         MemoryImageAssetPlan(
@@ -356,6 +420,16 @@ enum MemoryDeck {
             searchPrompt: prompt,
             styleNotes: notes,
             status: .needsVettedSource
+        )
+    }
+
+    private static func importedImagePlan(_ cardId: String, asset: String, prompt: String, notes: String, sourceName: String, license: String) -> MemoryImageAssetPlan {
+        MemoryImageAssetPlan(
+            cardId: cardId,
+            assetName: asset,
+            searchPrompt: prompt,
+            styleNotes: notes,
+            status: .readyForAssetImport(sourceName: sourceName, license: license)
         )
     }
 
@@ -403,11 +477,11 @@ enum MemoryDeck {
         )
     }
 
-    private static func vehicle(_ id: String, name: String, emoji: String, use: String, movement: String, colors: String, sound: String?) -> MemoryAnimal {
+    private static func vehicle(_ id: String, name: String, emoji: String, asset: String? = nil, use: String, movement: String, colors: String, sound: String?) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: name,
-            picture: .emoji(emoji),
+            picture: asset.map { .asset($0) } ?? .emoji(emoji),
             metadata: MemoryCardMetadata(
                 deck: .vehicles,
                 category: "vehicle",
@@ -420,11 +494,11 @@ enum MemoryDeck {
         )
     }
 
-    private static func planet(_ id: String, prompt: String, name: String, order: String, type: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
+    private static func planet(_ id: String, prompt: String, asset: String? = nil, name: String, order: String, type: String, size: String, colors: String, funFact: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: name,
-            picture: .text(prompt),
+            picture: asset.map { .asset($0) } ?? .text(prompt),
             metadata: MemoryCardMetadata(
                 deck: .planets,
                 category: "planet",

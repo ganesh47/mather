@@ -33,24 +33,58 @@ struct MemoryViewTests {
         #expect(Set(emojis).count == emojis.count)
     }
 
-    @Test func issue352ImageAssetPlansCoverPlanetsAndVehiclesWithoutPrematureImports() {
+    @Test func issue352ImageAssetPlansTrackPilotImportsAndRemainingBacklog() {
         let vehicleIds = MemoryDeck.vehicles.map(\.id)
         let planetIds = MemoryDeck.planets.map(\.id)
         let vehiclePlan = MemoryDeck.vehicleImageAssetPlan
         let planetPlan = MemoryDeck.planetImageAssetPlan
         let plannedAssets = (vehiclePlan + planetPlan).map(\.assetName)
+        let importedPlans = (vehiclePlan + planetPlan).filter { plan in
+            if case .readyForAssetImport = plan.status { return true }
+            return false
+        }
+        let importedAssetNames = Set(importedPlans.map(\.assetName))
 
         #expect(vehiclePlan.map(\.cardId) == vehicleIds)
         #expect(planetPlan.map(\.cardId) == planetIds)
         #expect(Set(plannedAssets).count == plannedAssets.count)
         #expect(plannedAssets.allSatisfy { $0.hasPrefix("MemoryVehicle") || $0.hasPrefix("MemoryPlanet") })
         #expect((vehiclePlan + planetPlan).allSatisfy { !$0.searchPrompt.isEmpty && !$0.styleNotes.isEmpty })
+        #expect(importedAssetNames == ["MemoryPlanetEarth", "MemoryVehicleBike"])
         #expect((vehiclePlan + planetPlan).allSatisfy { plan in
+            if importedAssetNames.contains(plan.assetName) {
+                if case .readyForAssetImport = plan.status { return true }
+                return false
+            }
             if case .needsVettedSource = plan.status { return true }
             return false
         })
-        #expect(MemoryDeck.vehicles.allSatisfy { $0.imageAssetName == nil })
-        #expect(MemoryDeck.planets.allSatisfy { $0.imageAssetName == nil })
+        #expect(MemoryDeck.vehicles.first { $0.id == "bike" }?.imageAssetName == "MemoryVehicleBike")
+        #expect(MemoryDeck.planets.first { $0.id == "planet-earth" }?.imageAssetName == "MemoryPlanetEarth")
+        #expect(MemoryDeck.vehicles.filter { $0.id != "bike" }.allSatisfy { $0.imageAssetName == nil })
+        #expect(MemoryDeck.planets.filter { $0.id != "planet-earth" }.allSatisfy { $0.imageAssetName == nil })
+    }
+
+    @Test func issue352ImportedAssetsHaveReuseSafeProvenance() {
+        let importedAssetNames = Set(
+            (MemoryDeck.vehicles + MemoryDeck.planets)
+                .compactMap(\.imageAssetName)
+                .filter { $0.hasPrefix("MemoryVehicle") || $0.hasPrefix("MemoryPlanet") }
+        )
+        let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+
+        #expect(importedAssetNames == ["MemoryPlanetEarth", "MemoryVehicleBike"])
+        #expect(Set(provenanceByAsset.keys) == importedAssetNames)
+        #expect(provenanceByAsset["MemoryPlanetEarth"]?.cardId == "planet-earth")
+        #expect(provenanceByAsset["MemoryVehicleBike"]?.cardId == "bike")
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { !$0.creator.isEmpty && !$0.creditLine.isEmpty && !$0.license.isEmpty })
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.licenseAllowsReuse })
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noThirdPartyRestrictionFound })
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noLogoOrEndorsementRisk })
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.noPeopleOrPrivacyRisk })
+        #expect(MemoryDeck.imageAssetProvenance.allSatisfy { $0.childCardLegibilityChecked })
+        #expect(provenanceByAsset["MemoryPlanetEarth"]?.derivativeSha256 == "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466")
+        #expect(provenanceByAsset["MemoryVehicleBike"]?.derivativeSha256 == "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276")
     }
 
     @Test func deckSelectionExposesVehiclesDeck() {
