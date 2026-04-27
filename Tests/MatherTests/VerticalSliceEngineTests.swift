@@ -131,6 +131,32 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func speakerButtonEnablesAudioAndReplaysCurrentPrompt() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+        flags.audioEnabled = false
+        let speechService = SpeechService()
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: speechService,
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+
+        engine.startSession()
+        #expect(flags.audioEnabled == false)
+
+        engine.playPromptFromSpeakerButton()
+
+        #expect(flags.audioEnabled == true)
+        #expect(speechService.lastSpokenText == engine.feedbackMessage)
+        #expect(speechService.lastSpeechDiagnostic == nil)
+    }
+
+    @Test
     func sessionRoutesThroughBondBlastThenWriteItThenTransfer() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true

@@ -315,6 +315,13 @@ final class VerticalSliceEngine {
         speechService.speak(promptForCurrentStage(), enabled: featureFlags.audioEnabled)
     }
 
+    func playPromptFromSpeakerButton() {
+        if !featureFlags.audioEnabled {
+            featureFlags.audioEnabled = true
+        }
+        replayPrompt()
+    }
+
     func startBuildingFromStoryAnchor() {
         guard currentStage == .storyAnchor else { return }
         let next = resolvedNextStage(after: currentStage)
