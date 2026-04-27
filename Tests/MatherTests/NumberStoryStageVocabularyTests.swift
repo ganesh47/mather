@@ -3,7 +3,7 @@ import Testing
 
 struct NumberStoryStageVocabularyTests {
     @Test
-    func gravitySplitVocabularyUsesExactStoryTargetAndParts() {
+    func gravitySplitVocabularyUsesStoryTargetWithoutPrefillingAnswerParts() {
         let problem = SliceProblem(target: 14, decompositionA: 8, decompositionB: 6)
         let prompt = NumberStoryGenerator.prompt(for: problem, themeId: "space")
 
@@ -11,8 +11,8 @@ struct NumberStoryStageVocabularyTests {
         let searchableText = vocabulary.searchableText
 
         #expect(searchableText.contains("14"))
-        #expect(searchableText.contains("8"))
-        #expect(searchableText.contains("6"))
+        #expect(!searchableText.contains("8"))
+        #expect(!searchableText.contains("6"))
         #expect(searchableText.contains(prompt.objectNoun))
         #expect(searchableText.contains(prompt.leftContainer))
         #expect(searchableText.contains(prompt.rightContainer))

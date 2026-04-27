@@ -790,9 +790,7 @@ final class VerticalSliceEngine {
             if let prompt = currentNumberStoryPrompt {
                 return NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .gravitySplit).instruction
             }
-            let a = currentProblem.decompositionA
-            let b = currentProblem.decompositionB
-            return "Use plus and minus to build \(a) on one side and \(b) on the other."
+            return "Use plus and minus to split \(currentProblem.target) into two parts."
         case .done:
             return "Nice work."
         }
