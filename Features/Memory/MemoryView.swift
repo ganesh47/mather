@@ -656,6 +656,8 @@ struct MemoryView: View {
     @State private var deckSelection: DeckSelection = .domestic
     @State private var recentPairHistory: [String] = []
     @State private var learningContent: MemoryLearningContent? = nil
+    @State private var askSession: MemoryAskConversationSession? = nil
+    @State private var latestAskResponse: MemoryAskResponse? = nil
 
     enum DeckSelection: CaseIterable {
         case domestic, birds, vehicles, planets, fishes, countries, indiaStates
@@ -1134,6 +1136,8 @@ struct MemoryView: View {
     private func handleDoubleTap(_ card: MemoryCard) {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
         let selectedAnimal = animal(for: card)
+        askSession = nil
+        latestAskResponse = nil
         learningContent = Self.learningContent(
             for: selectedAnimal,
             deckSelection: deckSelection,
@@ -1197,6 +1201,28 @@ struct MemoryView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
 
+                    MemoryAskConversationSection(
+                        session: askSession,
+                        latestResponse: latestAskResponse,
+                        startConversation: {
+                            Task { @MainActor in
+                                askSession = await MemoryAskConversationPolicy().startSession(for: animal)
+                                latestAskResponse = nil
+                            }
+                        },
+                        selectTurn: { turn in
+                            guard var session = askSession else { return }
+                            let response = session.respond(to: .suggestedTurn(id: turn.id))
+                            askSession = session
+                            latestAskResponse = response
+                            appModel.speechService.speakLearningDetails(response.spokenText, enabled: appModel.featureFlags.audioEnabled)
+                        },
+                        replayLatestAnswer: {
+                            guard let latestAskResponse else { return }
+                            appModel.speechService.speakLearningDetails(latestAskResponse.spokenText, enabled: appModel.featureFlags.audioEnabled)
+                        }
+                    )
+
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
                         ForEach(content.factChips, id: \.self) { fact in
                             VStack(alignment: .leading, spacing: 4) {
@@ -1225,7 +1251,11 @@ struct MemoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { learningContent = nil }
+                    Button("Done") {
+                        learningContent = nil
+                        askSession = nil
+                        latestAskResponse = nil
+                    }
                         .accessibilityIdentifier("memory-learning-done")
                 }
             }
@@ -1238,6 +1268,8 @@ struct MemoryView: View {
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = Self.buildCards(for: roundAnimals).shuffled()
         learningContent = nil
+        askSession = nil
+        latestAskResponse = nil
         firstSelected = nil
         matchedPairs = 0
         mismatchIds = []
@@ -1353,5 +1385,74 @@ struct MemoryView: View {
     private static func learningReadAloudText(for title: String, summary: String, factChips: [MemoryFactCard], sourceBadge: String) -> String {
         let facts = factChips.map { "\($0.title): \($0.value)." }.joined(separator: " ")
         return "\(title). \(summary) Source: \(sourceBadge). \(facts)"
+    }
+}
+
+private struct MemoryAskConversationSection: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let session: MemoryAskConversationSession?
+    let latestResponse: MemoryAskResponse?
+    let startConversation: () -> Void
+    let selectTurn: (MemoryAskSuggestedTurn) -> Void
+    let replayLatestAnswer: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let session {
+                Text("Ask about this card")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+
+                VStack(spacing: 10) {
+                    ForEach(session.suggestedTurns) { turn in
+                        Button {
+                            selectTurn(turn)
+                        } label: {
+                            Label(turn.question, systemImage: "questionmark.circle.fill")
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.78)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.34 : 0.62)))
+                        .accessibilityIdentifier("memory-ask-suggested-turn-\(turn.id)")
+                    }
+                }
+
+                if let latestResponse {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(latestResponse.spokenText)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("memory-ask-latest-answer")
+
+                        Button {
+                            replayLatestAnswer()
+                        } label: {
+                            Label("Replay answer", systemImage: "speaker.wave.2.fill")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity, minHeight: 52)
+                        }
+                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(colorScheme == .dark ? 0.28 : 0.52)))
+                        .accessibilityIdentifier("memory-ask-replay-answer")
+                    }
+                    .padding(12)
+                    .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+            } else {
+                Button {
+                    startConversation()
+                } label: {
+                    Label("Ask about this card", systemImage: "questionmark.bubble.fill")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, minHeight: 80)
+                }
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.34 : 0.62)))
+                .accessibilityIdentifier("memory-ask-about-this-card")
+            }
+        }
     }
 }
