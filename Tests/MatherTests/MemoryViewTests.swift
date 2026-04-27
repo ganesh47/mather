@@ -121,7 +121,7 @@ struct MemoryCardDescribeServiceTests {
         let isAvailable: Bool
         let response: String?
 
-        func shortDescription(for animal: MemoryAnimal) async throws -> String? {
+        func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String? {
             response
         }
     }
@@ -168,4 +168,44 @@ struct MemoryCardDescribeServiceTests {
         #expect(description.shortDescription == "A rocket zooms high and can reach space.")
         #expect(description.factChips.count == 4)
     }
+
+    @Test func appleIntelligencePromptStaysChildSafeAndFactBound() {
+        let prompt = MemoryCardAIPrompt.childSafePrompt(for: MemoryDeck.planets.first { $0.id == "planet-earth" }!)
+
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("child age 5 to 8"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("two short sentences"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("Do not ask questions"))
+        #expect(prompt.userPrompt.contains("Earth"))
+        #expect(prompt.userPrompt.contains("Order: 3rd from the Sun"))
+        #expect(prompt.userPrompt.contains("Fun Fact: It has one moon"))
+    }
+
+    @MainActor @Test func generatedDescriptionsAreSanitizedBeforeUse() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { true },
+            aiAdapter: StubAIAdapter(
+                isAvailable: true,
+                response: "  Earth is our home planet.  It has blue oceans and white clouds. Extra sentence should not be read.  "
+            )
+        )
+
+        let description = await service.describe(MemoryDeck.planets.first { $0.id == "planet-earth" }!)
+
+        #expect(description.source == .appleIntelligence)
+        #expect(description.shortDescription == "Earth is our home planet. It has blue oceans and white clouds.")
+    }
+
+    @MainActor @Test func unsafeGeneratedDescriptionsFallBackToCuratedCopy() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { true },
+            aiAdapter: StubAIAdapter(isAvailable: true, response: "As an AI language model, click here to learn about rockets.")
+        )
+
+        let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("vehicle"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("space"))
+    }
+
 }

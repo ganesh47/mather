@@ -69,15 +69,35 @@ struct MemoryCardDescription: Equatable {
     let source: MemoryCardDescriptionSource
 }
 
+struct MemoryCardAIPrompt: Equatable {
+    static let maxGeneratedCharacters = 220
+    static let maxGeneratedSentences = 2
+
+    let systemInstruction: String
+    let userPrompt: String
+
+    static func childSafePrompt(for animal: MemoryAnimal) -> MemoryCardAIPrompt {
+        let facts = animal.detailCards
+            .prefix(5)
+            .map { "\($0.title): \($0.value)" }
+            .joined(separator: "; ")
+        let deckName = animal.metadata.deck.displayName
+        return MemoryCardAIPrompt(
+            systemInstruction: "Write for a child age 5 to 8. Be factual, warm, and concise. Use no more than two short sentences. Do not ask questions, invent facts, mention AI, or include unsafe instructions.",
+            userPrompt: "Explain this Memory Match card in simple words. Deck: \(deckName). Card: \(animal.canonicalName). Known facts: \(facts)."
+        )
+    }
+}
+
 @MainActor
 protocol MemoryCardAIAdapter {
     var isAvailable: Bool { get }
-    func shortDescription(for animal: MemoryAnimal) async throws -> String?
+    func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String?
 }
 
 private struct NullMemoryCardAIAdapter: MemoryCardAIAdapter {
     var isAvailable: Bool { false }
-    func shortDescription(for animal: MemoryAnimal) async throws -> String? { nil }
+    func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String? { nil }
 }
 
 #if canImport(FoundationModels)
@@ -89,11 +109,13 @@ private struct FoundationModelsMemoryCardAIAdapter: MemoryCardAIAdapter {
         return false
     }
 
-    func shortDescription(for animal: MemoryAnimal) async throws -> String? {
+    func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String? {
         guard isAvailable else { return nil }
-        // Intentionally guarded and fallback-first for Slice A. A future slice can
-        // replace this stub with a live Foundation Models request without changing
-        // the service API or the curated fallback path.
+        _ = prompt
+        // Intentionally guarded and fallback-first until the FoundationModels API
+        // is enabled for this app target. The prompt and sanitizer are production
+        // boundaries: short, factual, child-safe copy in; deterministic fallback out
+        // whenever the platform model is unavailable or returns unsuitable text.
         return nil
     }
 }
@@ -113,8 +135,9 @@ final class MemoryCardDescribeService {
     }
 
     func describe(_ animal: MemoryAnimal) async -> MemoryCardDescription {
+        let prompt = MemoryCardAIPrompt.childSafePrompt(for: animal)
         if appleIntelligenceEnabled(), aiAdapter.isAvailable,
-           let generated = try? await aiAdapter.shortDescription(for: animal),
+           let generated = try? await aiAdapter.shortDescription(for: animal, prompt: prompt),
            let sanitized = sanitizeGeneratedDescription(generated) {
             return MemoryCardDescription(
                 title: animal.canonicalName,
@@ -219,7 +242,41 @@ final class MemoryCardDescribeService {
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return collapsed.isEmpty ? nil : collapsed
+        guard !collapsed.isEmpty else { return nil }
+        guard isGeneratedDescriptionAllowed(collapsed) else { return nil }
+
+        let sentences = collapsed
+            .split(whereSeparator: { ".!?".contains($0) })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let limitedSentences = Array(sentences.prefix(MemoryCardAIPrompt.maxGeneratedSentences))
+        let sentenceLimited = limitedSentences.isEmpty ? collapsed : limitedSentences.joined(separator: ". ") + "."
+        guard sentenceLimited.count <= MemoryCardAIPrompt.maxGeneratedCharacters else {
+            let endIndex = sentenceLimited.index(sentenceLimited.startIndex, offsetBy: MemoryCardAIPrompt.maxGeneratedCharacters)
+            let clipped = String(sentenceLimited[..<endIndex])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: ",;:-"))
+            return clipped.isEmpty ? nil : clipped + "…"
+        }
+        return sentenceLimited
+    }
+
+    private func isGeneratedDescriptionAllowed(_ text: String) -> Bool {
+        let lowercased = text.lowercased()
+        let disallowedFragments = [
+            "as an ai",
+            "language model",
+            "i cannot",
+            "i can't",
+            "ask an adult",
+            "click here",
+            "http://",
+            "https://",
+            "scary",
+            "violent",
+            "weapon"
+        ]
+        return !disallowedFragments.contains { lowercased.contains($0) }
     }
 
     private static func makeDefaultAIAdapter() -> any MemoryCardAIAdapter {
