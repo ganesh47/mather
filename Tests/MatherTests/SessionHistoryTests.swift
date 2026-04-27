@@ -262,3 +262,58 @@ struct ParentSummaryHistoryRowTests {
         #expect(rows.map(\.title) == ["Angle Cannon", "Memory"])
     }
 }
+
+// MARK: - Parent summary trend tests
+
+@MainActor
+struct ParentSummaryTrendPointTests {
+    @Test
+    func recentPointsReturnsEmptyForEmptyHistory() {
+        let points = ParentSummaryTrendPoint.recentPoints(from: [])
+
+        #expect(points.isEmpty)
+    }
+
+    @Test
+    func recentPointsOrdersOldestToLatestAfterTakingRecentLimit() {
+        let base = Date(timeIntervalSinceReferenceDate: 30_000)
+        let old = StoredSessionSummary(
+            from: makeDraft(sessionId: "old", problemsCompleted: 2, accuracy: 0.5, startedAt: base.addingTimeInterval(-300)),
+            profileId: "test-profile"
+        )
+        let middle = StoredSessionSummary(
+            from: makeDraft(sessionId: "middle", problemsCompleted: 4, accuracy: 0.75, startedAt: base.addingTimeInterval(-120)),
+            profileId: "test-profile"
+        )
+        let latest = StoredSessionSummary(
+            from: makeDraft(sessionId: "latest", problemsCompleted: 6, accuracy: 1.0, startedAt: base),
+            profileId: "test-profile"
+        )
+
+        let points = ParentSummaryTrendPoint.recentPoints(from: [latest, old, middle], limit: 2)
+
+        #expect(points.map(\.id) == ["middle", "latest"])
+        #expect(points.map(\.accuracyLabel) == ["75%", "100%"])
+        #expect(points.last?.problemsCompleted == 6)
+    }
+
+    @Test
+    func recentPointsFiltersByProfileAndClampsLegacyValues() {
+        let base = Date(timeIntervalSinceReferenceDate: 40_000)
+        let selected = StoredSessionSummary(
+            from: makeDraft(sessionId: "selected", problemsCompleted: -2, accuracy: 1.4, medianLatencyMs: -100, startedAt: base),
+            profileId: "profile-a"
+        )
+        let otherProfile = StoredSessionSummary(
+            from: makeDraft(sessionId: "other", problemsCompleted: 5, accuracy: 0.8, startedAt: base.addingTimeInterval(60)),
+            profileId: "profile-b"
+        )
+
+        let points = ParentSummaryTrendPoint.recentPoints(from: [otherProfile, selected], profileId: "profile-a")
+
+        #expect(points.map(\.id) == ["selected"])
+        #expect(points[0].accuracy == 1)
+        #expect(points[0].problemsCompleted == 0)
+        #expect(points[0].paceLabel == "—")
+    }
+}

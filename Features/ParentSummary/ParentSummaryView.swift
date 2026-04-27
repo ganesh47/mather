@@ -11,6 +11,7 @@ struct ParentSummaryView: View {
     var body: some View {
         let digest = appModel.telemetryWriter.digest(from: summaries)
         let recentRows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 5)
+        let trendPoints = ParentSummaryTrendPoint.recentPoints(from: summaries, limit: 6)
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -73,6 +74,9 @@ struct ParentSummaryView: View {
                                 color: Color.purple.opacity(0.7)
                             )
                         }
+                        .accessibilityIdentifier("parent-summary-scorecard")
+
+                        recentProgressCard(points: trendPoints)
 
                         if ResponsiveLayout.isWide(horizontalSizeClass) {
                             LazyVGrid(
@@ -207,6 +211,66 @@ struct ParentSummaryView: View {
         }
     }
 
+    private func recentProgressCard(points: [ParentSummaryTrendPoint]) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Recent progress")
+                            .font(.title3.weight(.bold))
+                        Text("Local, on-device history from recent Make & Break sessions.")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                }
+
+                if points.count < 2 {
+                    Text("Complete more sessions to see a trend.")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.ink)
+                        .frame(maxWidth: .infinity, minHeight: 96, alignment: .center)
+                        .background(MatherTheme.panel.opacity(0.55))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                } else {
+                    TrendSparkline(points: points)
+                        .frame(height: 132)
+                        .accessibilityIdentifier("parent-summary-recent-progress-chart")
+                    HStack(alignment: .top, spacing: 12) {
+                        trendSummary(label: "First try", value: points.last?.accuracyLabel ?? "—")
+                        trendSummary(label: "Latest pace", value: points.last?.paceLabel ?? "—")
+                        trendSummary(label: "Problems", value: points.last.map { "\($0.problemsCompleted)" } ?? "—")
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("parent-summary-recent-progress")
+        }
+    }
+
+    private func trendSummary(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label.uppercased())
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .tracking(1.1)
+            Text(value)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(MatherTheme.panel.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
 }
 
 
@@ -257,6 +321,109 @@ struct ParentSummaryHistoryRow: Identifiable, Equatable {
     }
 }
 
+struct ParentSummaryTrendPoint: Identifiable, Equatable {
+    var id: String
+    var startedAt: Date
+    var accuracy: Double
+    var problemsCompleted: Int
+    var medianLatencyMs: Int
+    var profileId: String
+
+    var accuracyLabel: String {
+        "\(Int((accuracy * 100).rounded()))%"
+    }
+
+    var paceLabel: String {
+        guard medianLatencyMs > 0 else { return "—" }
+        let seconds = medianLatencyMs / 1000
+        return seconds < 60 ? "\(seconds)s" : "\(seconds / 60)m \(seconds % 60)s"
+    }
+
+    static func recentPoints(
+        from summaries: [StoredSessionSummary],
+        limit: Int = 6,
+        profileId: String? = nil
+    ) -> [ParentSummaryTrendPoint] {
+        summaries
+            .filter { profileId == nil || $0.profileId == profileId }
+            .sorted { $0.startedAt < $1.startedAt }
+            .suffix(limit)
+            .map {
+                ParentSummaryTrendPoint(
+                    id: $0.sessionId,
+                    startedAt: $0.startedAt,
+                    accuracy: min(max($0.firstAttemptAccuracy, 0), 1),
+                    problemsCompleted: max($0.problemsCompleted, 0),
+                    medianLatencyMs: max($0.medianLatencyMs, 0),
+                    profileId: $0.profileId
+                )
+            }
+    }
+}
+
+private struct TrendSparkline: View {
+    let points: [ParentSummaryTrendPoint]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            GeometryReader { proxy in
+                let size = proxy.size
+                let coordinates = chartCoordinates(in: size)
+
+                ZStack(alignment: .bottomLeading) {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(MatherTheme.panel.opacity(0.55))
+
+                    Path { path in
+                        guard let first = coordinates.first else { return }
+                        path.move(to: first)
+                        coordinates.dropFirst().forEach { path.addLine(to: $0) }
+                    }
+                    .stroke(MatherTheme.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+                    ForEach(Array(coordinates.enumerated()), id: \.offset) { index, coordinate in
+                        Circle()
+                            .fill(index == coordinates.count - 1 ? MatherTheme.warm : MatherTheme.accent)
+                            .overlay(Circle().stroke(MatherTheme.card, lineWidth: 3))
+                            .frame(width: 15, height: 15)
+                            .position(coordinate)
+                    }
+                }
+            }
+            .frame(minHeight: 84)
+
+            HStack {
+                Text("Oldest")
+                Spacer()
+                Text("Latest")
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(MatherTheme.cardSubtitle)
+        }
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var accessibilityLabel: String {
+        let labels = points.map { "\($0.startedAt.formatted(date: .abbreviated, time: .omitted)): \($0.accuracyLabel) first try, \($0.problemsCompleted) problems, \($0.paceLabel) pace" }
+        return "Recent progress trend. " + labels.joined(separator: "; ")
+    }
+
+    private func chartCoordinates(in size: CGSize) -> [CGPoint] {
+        let inset: CGFloat = 16
+        let width = max(size.width - inset * 2, 1)
+        let height = max(size.height - inset * 2, 1)
+        let maxProblems = max(points.map(\.problemsCompleted).max() ?? 1, 1)
+
+        return points.enumerated().map { index, point in
+            let xProgress = points.count <= 1 ? 0.5 : CGFloat(index) / CGFloat(points.count - 1)
+            let accuracyWeight = CGFloat(point.accuracy) * 0.72
+            let progressWeight = (CGFloat(point.problemsCompleted) / CGFloat(maxProblems)) * 0.28
+            let yProgress = min(max(accuracyWeight + progressWeight, 0), 1)
+            return CGPoint(x: inset + width * xProgress, y: inset + height * (1 - yProgress))
+        }
+    }
+}
+
 private struct StatTile: View {
     let value: String
     let label: String
@@ -264,20 +431,39 @@ private struct StatTile: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(color)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(color)
+                    .accessibilityHidden(true)
+                Spacer(minLength: 0)
+            }
             Text(value)
-                .font(.system(size: 34, weight: .black, design: .rounded))
+                .font(.system(.title, design: .rounded).weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .minimumScaleFactor(0.72)
+                .lineLimit(1)
             Text(label)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(color.opacity(0.1))
+        .frame(minHeight: 118, alignment: .topLeading)
+        .padding(16)
+        .background(MatherTheme.card)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(color.opacity(0.36), lineWidth: 1.5)
+        )
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(color.opacity(0.9))
+                .frame(width: 5)
+        }
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("parent-summary-stat-\(label.lowercased().replacingOccurrences(of: " ", with: "-"))")
     }
 }

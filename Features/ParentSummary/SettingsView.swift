@@ -50,21 +50,21 @@ struct SettingsView: View {
             MatherTheme.background.ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 20) {
-                    LazyVGrid(columns: ResponsiveLayout.settingsColumns(for: horizontalSizeClass), alignment: .leading, spacing: 20) {
-                        settingsCard
-                        profilesCard
-                        historyCard
-                        smokeTestCard
+                    if ResponsiveLayout.isWide(horizontalSizeClass) {
+                        LazyVGrid(columns: ResponsiveLayout.settingsColumns(for: horizontalSizeClass), alignment: .leading, spacing: 20) {
+                            settingsCard
+                            profilesCard
+                            historyCard
+                            smokeTestCard
+                        }
+                    } else {
+                        VStack(spacing: 16) {
+                            settingsCard
+                            profilesCard
+                            historyCard
+                            smokeTestCard
+                        }
                     }
-
-                    Button(role: .destructive) {
-                        showingClearConfirmation = true
-                    } label: {
-                        Text("Clear session history")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryActionButtonStyle())
-                    .tint(MatherTheme.danger)
 
                     Group {
                         if ResponsiveLayout.isWide(horizontalSizeClass) {
@@ -97,49 +97,60 @@ struct SettingsView: View {
 
     private var settingsCard: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Settings")
-                    .font(.largeTitle.weight(.black))
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Settings")
+                        .font(.largeTitle.weight(.black))
+                    Text("Child experience, profiles, and local history controls.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
-                Text("Make & Break")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-                Text("The repeated Make it → Gravity Split → Sum Sprint → Bond Blast route is now built in for every target.")
-                    .font(.subheadline)
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .fixedSize(horizontal: false, vertical: true)
+                settingsSection(title: "Child experience", systemImage: "sparkles") {
+                    Text("Make & Break route")
+                        .font(.headline.weight(.bold))
+                    Text("Make it → Gravity Split → Sum Sprint → Bond Blast is built in for every target.")
+                        .font(.subheadline)
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    RoomQuestSettingsEntry(appModel: appModel)
+                }
 
-                Divider()
+                settingsSection(title: "Feedback", systemImage: "speaker.wave.2.fill") {
+                    Toggle("Audio prompts", isOn: audioBinding)
+                        .tint(MatherTheme.accent)
+                    Toggle("Haptics", isOn: hapticsBinding)
+                        .tint(MatherTheme.accent)
+                }
 
-                RoomQuestSettingsEntry(appModel: appModel)
-
-                Divider()
-
-                Text("Feedback")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Toggle("Audio prompts", isOn: audioBinding)
-                Toggle("Haptics", isOn: hapticsBinding)
-
-                Divider()
-
-                Text("Advanced")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                VS1ToggleRow(
-                    title: "Motion controls",
-                    subtitle: "Lets the child wave the iPad to celebrate correct answers.",
-                    isOn: motionBinding
-                )
-                VS1ToggleRow(
-                    title: "Clap reaction (mic)",
-                    subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
-                    isOn: soundReactionBinding
-                )
-            }
-            .font(.title3.weight(.semibold))
+                settingsSection(title: "Advanced controls", systemImage: "slider.horizontal.3") {
+                    VS1ToggleRow(
+                        title: "Motion controls",
+                        subtitle: "Lets the child wave the iPad to celebrate correct answers.",
+                        isOn: motionBinding
+                    )
+                    VS1ToggleRow(
+                        title: "Clap reaction (mic)",
+                        subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
+                        isOn: soundReactionBinding
+                    )
+                 }
+             }
         }
+    }
+
+    private func settingsSection<Content: View>(title: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(title, systemImage: systemImage)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            content()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MatherTheme.panel.opacity(0.45))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var profilesCard: some View {
@@ -177,6 +188,7 @@ struct SettingsView: View {
                     newProfileName = ""
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier("settings-add-profile")
             }
         }
     }
@@ -227,6 +239,29 @@ struct SettingsView: View {
                     Text("No history yet.")
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
+
+                Divider()
+                    .padding(.top, 4)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Data reset")
+                        .font(.headline.weight(.bold))
+                    Text("Use only when you want to remove saved summaries and events from this device.")
+                        .font(.caption)
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(role: .destructive) {
+                        showingClearConfirmation = true
+                    } label: {
+                        Label("Clear session history", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(DestructiveOutlineButtonStyle())
+                    .accessibilityIdentifier("settings-clear-history")
+                }
+                .padding(12)
+                .background(MatherTheme.danger.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
     }
@@ -280,10 +315,12 @@ private struct RoomQuestSettingsEntry: View {
             Button("Open Room Quest setup") {
                 appModel.engine.showRoomQuest()
             }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(MatherTheme.accent)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 4)
+            .font(.headline.weight(.bold))
+            .foregroundStyle(MatherTheme.ink)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .padding(.horizontal, 12)
+            .background(MatherTheme.softBlue.opacity(0.45))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .accessibilityIdentifier("settings-roomquest-open")
 
             Text(appModel.featureFlags.roomQuestSafetyAcknowledged ? "Safety checklist already acknowledged on this device." : "The one-time safety checklist appears when you open Room Quest.")
@@ -291,5 +328,22 @@ private struct RoomQuestSettingsEntry: View {
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+
+private struct DestructiveOutlineButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline.weight(.bold))
+            .foregroundStyle(MatherTheme.danger)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(configuration.isPressed ? MatherTheme.danger.opacity(0.16) : MatherTheme.danger.opacity(0.08))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(MatherTheme.danger.opacity(0.55), lineWidth: 1.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
