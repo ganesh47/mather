@@ -621,7 +621,7 @@ final class VerticalSliceEngine {
         let accuracy = completed == 0 ? 0 : Double(firstTryCount) / Double(completed)
 
         return ParentDigest(
-            objectiveTitle: "Make & Break 1–20",
+            objectiveTitle: "Make & Break up to \(config.parentTargetCap)",
             firstAttemptAccuracy: accuracy,
             medianLatencyMs: median,
             problemsCompleted: completed,
@@ -641,7 +641,7 @@ final class VerticalSliceEngine {
             return "Your child found the reverse (equation → counters) harder. Try this at home: write '3 + 4 =' on paper and ask them to show it with grapes or blocks."
         }
         if accuracy < 0.5 {
-            return "The concept is still new. Keep sessions short, use physical objects at home (up to 20 buttons or pebbles), and don't rush to the written equation."
+            return "The concept is still new. Keep sessions short, use a small set of physical objects at home, and don't rush to the written equation."
         }
         if accuracy < 0.7 {
             return "Repeat the same range with spoken prompts. At home, practise splitting groups of 4–12 objects into two parts and counting each."
@@ -649,7 +649,7 @@ final class VerticalSliceEngine {
         if accuracy < 0.9 {
             return "Solid progress! Try increasing to 7–8 problems next session when they seem relaxed."
         }
-        return "Excellent mastery. Try the full 1–20 range or introduce writing the equation on paper first before using the app."
+        return "Excellent mastery. Try a slightly larger target cap or introduce writing the equation on paper first before using the app."
     }
 
     private func logProblemPresented() {

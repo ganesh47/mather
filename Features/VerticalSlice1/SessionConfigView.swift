@@ -61,10 +61,22 @@ struct SessionConfigView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(MatherTheme.ink.opacity(0.6))
 
-                            HStack(spacing: 12) {
-                                targetCapButton(maxTarget: 10)
-                                targetCapButton(maxTarget: 20)
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 12) {
+                                ForEach(ParentTargetCap.quickPicks, id: \.self) { maxTarget in
+                                    targetCapButton(maxTarget: maxTarget)
+                                }
                             }
+
+                            Stepper(
+                                value: targetCapBinding,
+                                in: ParentTargetCap.minimum...ParentTargetCap.maximum,
+                                step: ParentTargetCap.step
+                            ) {
+                                Text(ParentTargetCap.displayLabel(for: appModel.engine.config.parentTargetCap))
+                                    .font(.headline.weight(.semibold))
+                                    .accessibilityIdentifier("target-cap-current-value")
+                            }
+                            .accessibilityIdentifier("target-cap-stepper")
                         }
 
                         Toggle("Speak prompts", isOn: Binding(
@@ -95,16 +107,24 @@ struct SessionConfigView: View {
         }
     }
 
+    private var targetCapBinding: Binding<Int> {
+        Binding(
+            get: { appModel.engine.config.parentTargetCap },
+            set: { appModel.engine.updateConfig(minTarget: 1, maxTarget: ParentTargetCap.normalize($0)) }
+        )
+    }
+
     private func targetCapButton(maxTarget: Int) -> some View {
-        let isSelected = appModel.engine.config.targetRange.upperBound == maxTarget
+        let normalizedTarget = ParentTargetCap.normalize(maxTarget)
+        let isSelected = appModel.engine.config.parentTargetCap == normalizedTarget
         return Button {
-            appModel.engine.updateConfig(minTarget: 1, maxTarget: maxTarget)
+            appModel.engine.updateConfig(minTarget: 1, maxTarget: normalizedTarget)
         } label: {
             VStack(spacing: 6) {
                 Text("Up to")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(MatherTheme.ink.opacity(0.55))
-                Text("\(maxTarget)")
+                Text("\(normalizedTarget)")
                     .font(.title2.weight(.black))
                     .foregroundStyle(isSelected ? MatherTheme.warm : MatherTheme.ink)
             }
@@ -120,8 +140,8 @@ struct SessionConfigView: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("target-cap-up-to-\(maxTarget)")
-        .accessibilityLabel("Target numbers up to \(maxTarget)")
+        .accessibilityIdentifier("target-cap-up-to-\(normalizedTarget)")
+        .accessibilityLabel("Target numbers up to \(normalizedTarget)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
