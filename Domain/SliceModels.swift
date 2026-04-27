@@ -54,20 +54,65 @@ enum SliceEventType: String, Codable {
     case sumSprintCompleted = "sum_sprint_completed"
 }
 
+enum ParentTargetCap {
+    static let minimum = 10
+    static let maximum = 1_000
+    static let step = 10
+    static let quickPicks = [10, 20, 50, 100, 1_000]
+
+    static func normalize(_ value: Int) -> Int {
+        let clamped = min(max(value, minimum), maximum)
+        return (clamped / step) * step
+    }
+
+    static func displayLabel(for value: Int) -> String {
+        "Up to \(normalize(value))"
+    }
+}
+
 struct SliceConfig: Codable, Equatable {
-    private static let allowedTargets = 1...20
+    private static let allowedTargets = 1...1_000
 
     var maxProblems: Int = 6
-    var minTarget: Int = allowedTargets.lowerBound
-    var maxTarget: Int = allowedTargets.upperBound
+    var minTarget: Int = allowedTargets.lowerBound {
+        didSet { minTarget = Self.clampTarget(minTarget) }
+    }
+    var maxTarget: Int = 20 {
+        didSet { maxTarget = Self.clampTarget(maxTarget) }
+    }
     var showTransfer: Bool = true
     var audioEnabled: Bool = true
     var deterministicMode: Bool = true
 
+    init(
+        maxProblems: Int = 6,
+        minTarget: Int = allowedTargets.lowerBound,
+        maxTarget: Int = 20,
+        showTransfer: Bool = true,
+        audioEnabled: Bool = true,
+        deterministicMode: Bool = true
+    ) {
+        self.maxProblems = maxProblems
+        self.minTarget = Self.clampTarget(minTarget)
+        self.maxTarget = Self.clampTarget(maxTarget)
+        self.showTransfer = showTransfer
+        self.audioEnabled = audioEnabled
+        self.deterministicMode = deterministicMode
+    }
+
+    var parentTargetCap: Int {
+        get { ParentTargetCap.normalize(maxTarget) }
+        set { maxTarget = ParentTargetCap.normalize(newValue) }
+    }
+
     var targetRange: ClosedRange<Int> {
-        let lower = min(max(minTarget, Self.allowedTargets.lowerBound), Self.allowedTargets.upperBound)
-        let upper = min(max(maxTarget, Self.allowedTargets.lowerBound), Self.allowedTargets.upperBound)
+        let lower = Self.clampTarget(minTarget)
+        let upper = Self.clampTarget(maxTarget)
         return min(lower, upper)...max(lower, upper)
+    }
+
+    private static func clampTarget(_ value: Int) -> Int {
+        min(max(value, allowedTargets.lowerBound), allowedTargets.upperBound)
     }
 }
 

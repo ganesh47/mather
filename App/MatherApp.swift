@@ -61,7 +61,7 @@ private extension MatherApp {
                 sessionId: sessionId,
                 startedAt: startedAt,
                 endedAt: startedAt.addingTimeInterval(300),
-                objectiveTitle: "Make & Break 1–20",
+                objectiveTitle: "Make & Break",
                 problemsCompleted: 4 + index,
                 firstAttemptAccuracy: index == 0 ? 0.75 : 0.5,
                 transferCorrectCount: 2 + (index % 2),

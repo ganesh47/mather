@@ -79,7 +79,7 @@ struct HomeView: View {
                             Text("Make & Break")
                                 .font(.title3.weight(.black))
                                 .foregroundStyle(.white)
-                            Text("1–20")
+                            Text("Targets")
                                 .font(.system(size: 36, weight: .black, design: .rounded))
                                 .foregroundStyle(.white)
                         }
@@ -141,7 +141,7 @@ struct HomeView: View {
     private var lockedActivityCard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Make & Break 1–20")
+                Text("Make & Break")
                     .font(.title2.weight(.bold))
                 Text("Enable the activity in Settings before handing the iPad to your child.")
                     .font(.headline)

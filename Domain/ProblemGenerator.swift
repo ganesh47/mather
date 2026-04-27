@@ -30,7 +30,7 @@ enum ProblemGenerator {
     static func generateProblems(config: SliceConfig) -> [SliceProblem] {
         let tuples: [(Int, Int, Int)]
         if config.deterministicMode {
-            tuples = deterministicSeed.filter { config.targetRange.contains($0.0) }
+            tuples = deterministicTuples(in: config.targetRange, count: max(config.maxProblems, 6))
         } else {
             tuples = randomTuples(in: config.targetRange, count: max(config.maxProblems, 6))
         }
@@ -43,6 +43,44 @@ enum ProblemGenerator {
                 difficultyTier: difficultyTier(for: tuple.0, index: index)
             )
         }
+    }
+
+    private static func deterministicTuples(in range: ClosedRange<Int>, count: Int) -> [(Int, Int, Int)] {
+        let fixture = deterministicSeed.filter { range.contains($0.0) }
+        guard range.upperBound > 20 else { return fixture }
+
+        var tuples: [(Int, Int, Int)] = []
+        var usedTargets = Set<Int>()
+
+        func appendTarget(_ target: Int) {
+            guard range.contains(target), !usedTargets.contains(target) else { return }
+            usedTargets.insert(target)
+
+            if let seeded = deterministicSeed.first(where: { $0.0 == target }) {
+                tuples.append(seeded)
+            } else {
+                let decomposition = deterministicDecomposition(for: target, index: tuples.count)
+                tuples.append((target, decomposition.0, decomposition.1))
+            }
+        }
+
+        appendTarget(fixture.first?.0 ?? range.lowerBound)
+        appendTarget(fixture.dropFirst().first?.0 ?? min(range.lowerBound + 1, range.upperBound))
+
+        let highTargets = [
+            max(21, range.upperBound / 2),
+            range.upperBound,
+            max(21, (range.upperBound * 3) / 4),
+            max(21, range.upperBound / 3),
+        ]
+        highTargets.forEach(appendTarget)
+        fixture.dropFirst(2).forEach { appendTarget($0.0) }
+
+        for target in range where tuples.count < count {
+            appendTarget(target)
+        }
+
+        return tuples
     }
 
     private static func randomTuples(in range: ClosedRange<Int>, count: Int) -> [(Int, Int, Int)] {
@@ -94,6 +132,15 @@ enum ProblemGenerator {
         }
 
         return Bool.random() ? basePair : (basePair.1, basePair.0)
+    }
+
+    private static func deterministicDecomposition(for target: Int, index: Int) -> (Int, Int) {
+        guard target > 0 else { return (0, 0) }
+        guard target > 1 else { return (1, 0) }
+
+        let offset = index % 4
+        let left = min(max((target / 2) - offset, 1), target - 1)
+        return (left, target - left)
     }
 
     private static func difficultyTier(for target: Int, index: Int) -> Int {

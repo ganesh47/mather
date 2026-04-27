@@ -22,6 +22,41 @@ struct ProblemGeneratorTests {
         #expect(config.targetRange == 1...20)
     }
 
+    @Test
+    func maxTargetClampsToOneThousand() {
+        var config = SliceConfig(maxTarget: 1_200)
+
+        #expect(config.maxTarget == 1_000)
+        #expect(config.targetRange == 1...1_000)
+
+        config.maxTarget = 2_000
+
+        #expect(config.maxTarget == 1_000)
+        #expect(config.targetRange == 1...1_000)
+    }
+
+    @Test
+    func parentTargetCapsNormalizeToMultiplesOfTen() {
+        var config = SliceConfig(maxTarget: 57)
+
+        #expect(config.maxTarget == 57)
+        #expect(config.parentTargetCap == 50)
+
+        config.parentTargetCap = 96
+
+        #expect(config.maxTarget == 90)
+        #expect(config.parentTargetCap == 90)
+
+        config.parentTargetCap = 9
+
+        #expect(config.maxTarget == 10)
+        #expect(config.parentTargetCap == 10)
+
+        config.parentTargetCap = 1_200
+
+        #expect(config.maxTarget == 1_000)
+        #expect(config.parentTargetCap == 1_000)
+    }
 
     @Test
     func deterministicGenerationRespectsParentFacingTargetCap() {
@@ -35,6 +70,18 @@ struct ProblemGeneratorTests {
     }
 
     @Test
+    func deterministicGenerationRespectsExpandedParentFacingTargetCap() {
+        let config = SliceConfig(maxProblems: 8, minTarget: 1, maxTarget: 50, showTransfer: true, audioEnabled: true, deterministicMode: true)
+
+        let problems = ProblemGenerator.generateProblems(config: config)
+
+        #expect(problems.count == 8)
+        #expect(problems.allSatisfy { (1...50).contains($0.target) })
+        #expect(problems.contains { $0.target > 20 })
+        #expect(problems.allSatisfy { $0.decompositionA + $0.decompositionB == $0.target })
+    }
+
+    @Test
     func randomGenerationRespectsUpToTenCap() {
         let config = SliceConfig(maxProblems: 12, minTarget: 1, maxTarget: 10, showTransfer: true, audioEnabled: true, deterministicMode: false)
 
@@ -42,6 +89,17 @@ struct ProblemGeneratorTests {
 
         #expect(problems.count == 12)
         #expect(problems.allSatisfy { (1...10).contains($0.target) })
+        #expect(problems.allSatisfy { $0.decompositionA + $0.decompositionB == $0.target })
+    }
+
+    @Test
+    func randomGenerationRespectsExpandedParentFacingTargetCap() {
+        let config = SliceConfig(maxProblems: 12, minTarget: 1, maxTarget: 100, showTransfer: true, audioEnabled: true, deterministicMode: false)
+
+        let problems = ProblemGenerator.generateProblems(config: config)
+
+        #expect(problems.count == 12)
+        #expect(problems.allSatisfy { (1...100).contains($0.target) })
         #expect(problems.allSatisfy { $0.decompositionA + $0.decompositionB == $0.target })
     }
 
