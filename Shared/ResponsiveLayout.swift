@@ -48,6 +48,16 @@ enum ResponsiveLayout {
         return Array(repeating: GridItem(.flexible(), spacing: 8), count: count)
     }
 
+    static func parentSummarySupportingColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let count = horizontalSizeClass == .regular ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 16, alignment: .top), count: count)
+    }
+
+    static func parentActionColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let count = horizontalSizeClass == .regular ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 16), count: count)
+    }
+
     static func sumSprintSummaryFactColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
     }
