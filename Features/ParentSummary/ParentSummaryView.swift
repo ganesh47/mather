@@ -73,79 +73,27 @@ struct ParentSummaryView: View {
                             )
                         }
 
-                        CardSurface {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Profile overview")
-                                    .font(.title3.weight(.bold))
-                                ForEach(profiles, id: \.id) { profile in
-                                    let count = summaries.filter { $0.profileId == profile.id }.count
-                                    HStack {
-                                        Text("\(profile.emoji) \(profile.name)")
-                                        Spacer()
-                                        Text("\(count) sessions")
-                                            .foregroundStyle(MatherTheme.cardSubtitle)
-                                    }
-                                }
+                        if ResponsiveLayout.isWide(horizontalSizeClass) {
+                            LazyVGrid(
+                                columns: ResponsiveLayout.parentSummarySupportingColumns(for: horizontalSizeClass),
+                                alignment: .leading,
+                                spacing: 16
+                            ) {
+                                profileOverviewCard(summaries: summaries)
+                                nextTargetCard(digest: digest)
                             }
-                        }
-
-                        CardSurface {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Recent sessions")
-                                    .font(.title3.weight(.bold))
-                                Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(MatherTheme.cardSubtitle)
-                                ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("Session \(index + 1)")
-                                                .font(.caption.weight(.bold))
-                                                .foregroundStyle(MatherTheme.accent)
-                                            if let profile = profiles.first(where: { $0.id == summary.profileId }) {
-                                                Text("\(profile.emoji) \(profile.name)")
-                                                    .font(.caption)
-                                                    .foregroundStyle(MatherTheme.cardSubtitle)
-                                            }
-                                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
-                                                .font(.subheadline.weight(.semibold))
-                                            Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
-                                                .font(.caption)
-                                                .foregroundStyle(MatherTheme.cardSubtitle)
-                                        }
-                                        Spacer()
-                                        if summary.sessionId == summaries.first?.sessionId {
-                                            Text("Latest")
-                                                .font(.caption.weight(.bold))
-                                                .foregroundStyle(MatherTheme.accent)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(MatherTheme.accent.opacity(0.12))
-                                                .clipShape(Capsule())
-                                        }
-                                    }
-                                    .padding(10)
-                                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                    .accessibilityElement(children: .combine)
-                                    .accessibilityIdentifier("parent-summary-session-\(index)")
-                                }
-                            }
-                        }
-
-                        CardSurface {
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "lightbulb.fill")
-                                    .foregroundStyle(MatherTheme.warm)
-                                    .font(.title3)
-                                Text(digest.nextTargetHint)
-                                    .font(.subheadline.weight(.medium))
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                            recentSessionsCard(summaries: summaries, recentSummaries: recentSummaries)
+                        } else {
+                            profileOverviewCard(summaries: summaries)
+                            recentSessionsCard(summaries: summaries, recentSummaries: recentSummaries)
+                            nextTargetCard(digest: digest)
                         }
                     }
 
-                    HStack(spacing: 16) {
+                    LazyVGrid(
+                        columns: ResponsiveLayout.parentActionColumns(for: horizontalSizeClass),
+                        spacing: 16
+                    ) {
                         Button("Settings") {
                             appModel.engine.showSettings()
                         }
@@ -176,6 +124,83 @@ struct ParentSummaryView: View {
             return "\(totalCount) saved locally"
         }
         return "Showing latest \(visibleCount) of \(totalCount) saved locally"
+    }
+
+    private func profileOverviewCard(summaries: [StoredSessionSummary]) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Profile overview")
+                    .font(.title3.weight(.bold))
+                ForEach(profiles, id: \.id) { profile in
+                    let count = summaries.filter { $0.profileId == profile.id }.count
+                    HStack {
+                        Text("\(profile.emoji) \(profile.name)")
+                        Spacer()
+                        Text("\(count) sessions")
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                }
+            }
+        }
+    }
+
+    private func nextTargetCard(digest: ParentDigest) -> some View {
+        CardSurface {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "lightbulb.fill")
+                    .foregroundStyle(MatherTheme.warm)
+                    .font(.title3)
+                Text(digest.nextTargetHint)
+                    .font(.subheadline.weight(.medium))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func recentSessionsCard(summaries: [StoredSessionSummary], recentSummaries: [StoredSessionSummary]) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Recent sessions")
+                    .font(.title3.weight(.bold))
+                Text(historyCaption(totalCount: summaries.count, visibleCount: recentSummaries.count))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                ForEach(Array(recentSummaries.enumerated()), id: \.element.sessionId) { index, summary in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Session \(index + 1)")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(MatherTheme.accent)
+                            if let profile = profiles.first(where: { $0.id == summary.profileId }) {
+                                Text("\(profile.emoji) \(profile.name)")
+                                    .font(.caption)
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
+                            }
+                            Text(summary.startedAt.formatted(date: .abbreviated, time: .shortened))
+                                .font(.subheadline.weight(.semibold))
+                            Text("\(summary.problemsCompleted) problems · \(Int(summary.firstAttemptAccuracy * 100))% first try")
+                                .font(.caption)
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+                        Spacer()
+                        if summary.sessionId == summaries.first?.sessionId {
+                            Text("Latest")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(MatherTheme.accent)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(MatherTheme.accent.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .padding(10)
+                    .background(summary.sessionId == summaries.first?.sessionId ? MatherTheme.warm.opacity(0.2) : Color.secondary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("parent-summary-session-\(index)")
+                }
+            }
+        }
     }
 }
 

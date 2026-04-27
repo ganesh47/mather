@@ -24,6 +24,13 @@ struct ResponsiveLayoutTests {
         #expect(!ResponsiveLayout.isWide(.compact))
     }
 
+    @MainActor @Test func parentSummaryUsesRegularWidthSupportingAndActionColumns() {
+        #expect(ResponsiveLayout.parentSummarySupportingColumns(for: .compact).count == 1)
+        #expect(ResponsiveLayout.parentSummarySupportingColumns(for: .regular).count == 2)
+        #expect(ResponsiveLayout.parentActionColumns(for: .compact).count == 1)
+        #expect(ResponsiveLayout.parentActionColumns(for: .regular).count == 2)
+    }
+
     @MainActor @Test func childShellsUseAdaptiveWidthRules() {
         #expect(ResponsiveLayout.childSessionMaxWidth(for: .regular) == 940)
         #expect(ResponsiveLayout.childSessionMaxWidth(for: .compact) == CGFloat.infinity)
