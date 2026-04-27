@@ -18,12 +18,12 @@ struct NumberStoryStageVocabulary: Equatable {
         switch stage {
         case .gravitySplit:
             return NumberStoryStageVocabulary(
-                title: "Gravity Split",
+                title: "Break It",
                 targetReminder: "\(prompt.target) \(prompt.objectNoun)",
-                instruction: "Split \(prompt.target) \(prompt.objectNoun): \(prompt.leftPart) in \(prompt.leftContainer), \(prompt.rightPart) in \(prompt.rightContainer).",
+                instruction: "Tap tokens to split \(prompt.target) \(prompt.objectNoun): \(prompt.leftPart) in \(prompt.leftContainer), \(prompt.rightPart) in \(prompt.rightContainer).",
                 leftLabel: prompt.leftContainer.capitalized,
                 rightLabel: prompt.rightContainer.capitalized,
-                accessibilityLabel: "Gravity Split. Split \(prompt.target) \(prompt.objectNoun). \(prompt.leftPart) in \(prompt.leftContainer). \(prompt.rightPart) in \(prompt.rightContainer)."
+                accessibilityLabel: "Break It. Split \(prompt.target) \(prompt.objectNoun). \(prompt.leftPart) in \(prompt.leftContainer). \(prompt.rightPart) in \(prompt.rightContainer)."
             )
         case .sumSprint:
             return NumberStoryStageVocabulary(
@@ -50,12 +50,12 @@ struct NumberStoryStageVocabulary: Equatable {
         switch stage {
         case .gravitySplit:
             return NumberStoryStageVocabulary(
-                title: "Gravity Split",
-                targetReminder: "Make \(target)",
-                instruction: "Use plus and minus to build the split from zero.",
+                title: "Break It",
+                targetReminder: "Made \(target)",
+                instruction: "Tap tokens to split \(target) into the two parts.",
                 leftLabel: "Left",
                 rightLabel: "Right",
-                accessibilityLabel: "Balance scale. Make \(target)."
+                accessibilityLabel: "Break It board. Split \(target)."
             )
         case .sumSprint:
             return NumberStoryStageVocabulary(

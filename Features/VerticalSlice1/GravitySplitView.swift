@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Balance-scale stage where the child uses plus and minus controls to build
-/// the requested split from zero.
+/// Break It proof stage where the child partitions the already-made target by
+/// directly moving compact tokens between a source tray and two independent zones.
 ///
-/// Tilt is ignored in V1 loop mode and kept only for future polish hooks.
+/// Tilt callbacks are retained for the route contract, but the main child path is
+/// touch-first: tap a source token to place it, tap a zone token to send it back.
 /// When `state.isLocked` becomes true the view auto-advances after 0.6 s.
 struct GravitySplitView: View {
 
@@ -21,23 +22,8 @@ struct GravitySplitView: View {
     // MARK: - Local animation state
 
     @State private var lockScale: CGFloat = 1.0
-    /// True until the child taps GO, keeping tilt locked while they get steady.
-    @State private var showGoScrim = true
-
-    // MARK: - Constants
-
-    private let maxBeamAngle: Double = 0.22   // radians ≈ 12.6°
 
     // MARK: - Derived
-
-    /// Beam rotation in radians. Left-heavy → clockwise (left pan descends).
-    private var beamAngle: Double {
-        guard state.target > 0 else { return 0 }
-        if state.isLocked { return 0 }
-        let solvedBias = Double(state.decompositionA - state.decompositionB) / Double(max(state.target, 1))
-        let builtBias = Double(state.leftCount - state.rightCount) / Double(max(state.target, 1))
-        return (solvedBias - builtBias) * maxBeamAngle
-    }
 
     private var vocabulary: NumberStoryStageVocabulary {
         if let storyPrompt {
@@ -46,30 +32,38 @@ struct GravitySplitView: View {
         return NumberStoryStageVocabulary.fallback(stage: .gravitySplit, target: state.target)
     }
 
+    private var sourceCount: Int {
+        max(0, state.target - state.leftCount - state.rightCount)
+    }
+
+    private var nextOpenSide: TransferSide? {
+        if state.leftCount < state.decompositionA { return .left }
+        if state.rightCount < state.decompositionB { return .right }
+        return nil
+    }
+
+    private var splitEquation: String {
+        "Split \(state.target) into \(state.decompositionA) and \(state.decompositionB)"
+    }
+
     // MARK: - Body
 
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 headerRow
-                balanceSceneView
-                tapControlRow
+                tokenBoard
                 if !state.isLocked {
                     instructionText
                 }
             }
         }
         .onChange(of: tiltRoll) { _, roll in
-            guard !showGoScrim else { return }
             onAdjustTilt(roll)
         }
         .onChange(of: shakeDetected) { _, shook in
             guard shook else { return }
             onShakeHandled()
-        }
-        .onChange(of: state.decompositionA) { _, _ in
-            // New problem arrived — show GO scrim again for the fresh stage.
-            showGoScrim = true
         }
         .onChange(of: state.isLocked) { _, locked in
             guard locked else { return }
@@ -83,7 +77,7 @@ struct GravitySplitView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "\(vocabulary.accessibilityLabel) \(vocabulary.leftLabel): \(state.leftCount). \(vocabulary.rightLabel): \(state.rightCount)."
+            "Break It. \(splitEquation). \(vocabulary.leftLabel): \(state.leftCount). \(vocabulary.rightLabel): \(state.rightCount). \(sourceCount) left to place."
         )
     }
 
@@ -96,255 +90,198 @@ struct GravitySplitView: View {
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.coral)
 
-                Text(vocabulary.targetReminder)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(MatherTheme.warm)
+                Text(splitEquation)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                    .accessibilityIdentifier("gravity-split-equation")
 
-                HStack(spacing: 8) {
-                    counterPill(value: state.leftCount, fill: MatherTheme.warm)
-                    Text("+").font(.title3.weight(.black)).foregroundStyle(.secondary)
-                    counterPill(value: state.rightCount, fill: MatherTheme.accent)
-                    Text("/").font(.title3.weight(.black)).foregroundStyle(.secondary)
-                    Text("\(state.decompositionA) + \(state.decompositionB)")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.ink)
-                }
+                Text(vocabulary.targetReminder)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.warm)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                liveCountRow
             }
 
             Spacer()
 
             if state.isLocked {
                 Text("⭐️")
-                    .font(.system(size: 44))
+                    .font(.system(size: 40))
                     .scaleEffect(lockScale)
                     .transition(.scale.combined(with: .opacity))
             }
         }
     }
 
-    private func counterPill(value: Int, fill: Color) -> some View {
-        Text("\(value)")
-            .font(.system(size: 26, weight: .black, design: .rounded))
+    private var liveCountRow: some View {
+        HStack(spacing: 7) {
+            counterPill(value: state.leftCount, target: state.decompositionA, fill: MatherTheme.warm)
+            Text("+").font(.headline.weight(.black)).foregroundStyle(.secondary)
+            counterPill(value: state.rightCount, target: state.decompositionB, fill: MatherTheme.accent)
+            Text("=").font(.headline.weight(.black)).foregroundStyle(.secondary)
+            Text("\(state.target)")
+                .font(.system(size: 24, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+        }
+    }
+
+    private func counterPill(value: Int, target: Int, fill: Color) -> some View {
+        Text("\(value)/\(target)")
+            .font(.system(size: 18, weight: .black, design: .rounded))
             .foregroundStyle(fill)
-            .frame(minWidth: 52, minHeight: 52)
+            .frame(minWidth: 58, minHeight: 36)
             .background(fill.opacity(0.13))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(fill.opacity(0.28), lineWidth: 1.5)
             )
     }
 
-    // MARK: - Balance scene
+    // MARK: - Direct manipulation board
 
-    private var balanceSceneView: some View {
-        ZStack(alignment: .bottom) {
-            // Pivot triangle
-            pivotTriangle
-                .frame(width: 32, height: 22)
-                .offset(y: 0)
+    private var tokenBoard: some View {
+        VStack(spacing: 10) {
+            sourceTray
 
-            // Beam + pans, rotated as a unit
-            HStack(spacing: 0) {
-                panView(count: state.leftCount, fill: MatherTheme.warm, side: "left")
-                    .frame(maxWidth: .infinity)
-
-                // Beam bar
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(MatherTheme.ink.opacity(0.72))
-                    .frame(width: 44, height: 10)
-
-                panView(count: state.rightCount, fill: MatherTheme.accent, side: "right")
-                    .frame(maxWidth: .infinity)
-            }
-            .rotationEffect(.radians(beamAngle), anchor: .bottom)
-            .animation(.interpolatingSpring(stiffness: 100, damping: 16), value: beamAngle)
-            .offset(y: -22)
-
-            // "Hold steady — GO!" overlay. Blocks tilt until the child is ready,
-            // preventing accidental solves before they understand the mechanic.
-            if showGoScrim {
-                goScrimOverlay
+            HStack(alignment: .top, spacing: 10) {
+                destinationZone(
+                    label: vocabulary.leftLabel,
+                    count: state.leftCount,
+                    target: state.decompositionA,
+                    fill: MatherTheme.warm,
+                    side: .left
+                )
+                destinationZone(
+                    label: vocabulary.rightLabel,
+                    count: state.rightCount,
+                    target: state.decompositionB,
+                    fill: MatherTheme.accent,
+                    side: .right
+                )
             }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 160)
-        .padding(.vertical, 4)
+        .accessibilityIdentifier("gravity-direct-token-board")
     }
 
-    private var goScrimOverlay: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.ultraThinMaterial)
-            VStack(spacing: 10) {
-                Text("Hold steady…")
-                    .font(.subheadline.weight(.semibold))
+    private var sourceTray: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Made set")
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text("\(sourceCount) left")
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Button {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        showGoScrim = false
-                    }
-                } label: {
-                    Label("GO!", systemImage: "gyroscope")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.white)
-                        .frame(minWidth: 120, minHeight: 52)
-                        .background(MatherTheme.coral, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("gravity-go-button")
             }
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-    }
 
-    private var pivotTriangle: some View {
-        Canvas { context, size in
-            var path = Path()
-            path.move(to: CGPoint(x: size.width / 2, y: 0))
-            path.addLine(to: CGPoint(x: 0, y: size.height))
-            path.addLine(to: CGPoint(x: size.width, y: size.height))
-            path.closeSubpath()
-            context.fill(path, with: .color(MatherTheme.ink.opacity(0.55)))
-        }
-    }
-
-    private func panView(count: Int, fill: Color, side: String) -> some View {
-        VStack(spacing: 6) {
-            if state.target <= 20 {
-                let display = min(state.target, 20)
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5),
-                    spacing: 4
-                ) {
-                    ForEach(0..<display, id: \.self) { idx in
-                        Circle()
-                            .fill(idx < count ? fill : fill.opacity(0.15))
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(fill.opacity(idx < count ? 0.3 : 0.4), lineWidth: 1.5)
-                            )
-                            .shadow(color: idx < count ? fill.opacity(0.3) : .clear, radius: 3, y: 1)
-                            .aspectRatio(1, contentMode: .fit)
-                            .accessibilityIdentifier("gravity-\(side)-dot-\(idx)")
-                    }
-                }
-            } else {
-                GroupedNumberView(value: count, fill: fill)
-                    .frame(minHeight: 74)
-                    .accessibilityIdentifier("gravity-\(side)-grouped-representation")
+            tokenGrid(count: sourceCount, fill: MatherTheme.softBlue, prefix: "source") { _ in
+                guard !state.isLocked, let side = nextOpenSide else { return }
+                onTap(1, side)
             }
+            .frame(minHeight: 44)
         }
-        .padding(8)
+        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(fill.opacity(0.10))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(MatherTheme.softBlue.opacity(0.10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(fill.opacity(0.22), lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(MatherTheme.softBlue.opacity(0.22), lineWidth: 1.5)
                 )
         )
-        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("gravity-source-tray")
     }
 
-    // MARK: - Tap fallback
-
-    private var tapControlRow: some View {
-        HStack(spacing: 12) {
-            panControlButtons(
-                label: vocabulary.leftLabel,
-                fill: MatherTheme.warm,
-                side: "left",
-                canDecrement: state.leftCount > 0 && !state.isLocked,
-                canIncrement: state.leftCount < state.decompositionA && !state.isLocked,
-                steps: gravitySteps
-            ) { delta in
-                onTap(delta, .left)
-            }
-
-            panControlButtons(
-                label: vocabulary.rightLabel,
-                fill: MatherTheme.accent,
-                side: "right",
-                canDecrement: state.rightCount > 0 && !state.isLocked,
-                canIncrement: state.rightCount < state.decompositionB && !state.isLocked,
-                steps: gravitySteps
-            ) { delta in
-                onTap(delta, .right)
-            }
-        }
-    }
-
-    private var gravitySteps: [Int] {
-        state.target <= 20 ? [1] : GroupedNumberRepresentation(state.target).suggestedSteps
-    }
-
-    private func panControlButtons(
+    private func destinationZone(
         label: String,
+        count: Int,
+        target: Int,
         fill: Color,
-        side: String,
-        canDecrement: Bool,
-        canIncrement: Bool,
-        steps: [Int],
-        action: @escaping (Int) -> Void
+        side: TransferSide
     ) -> some View {
-        VStack(spacing: 8) {
-            Text(label)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(fill)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.75)
-                .frame(minWidth: 38)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: state.target <= 20 ? 48 : 82), spacing: 6)], spacing: 6) {
-                ForEach(steps, id: \.self) { step in
-                    gravityStepButton(step: -step, fill: fill, side: side, isEnabled: canDecrement, action: action)
-                    gravityStepButton(step: step, fill: fill, side: side, isEnabled: canIncrement, action: action)
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(label)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(fill)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Text("\(count)/\(target)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(fill)
             }
+
+            tokenGrid(count: count, fill: fill, prefix: side == .left ? "left" : "right") { _ in
+                guard !state.isLocked else { return }
+                onTap(-1, side)
+            }
+            .frame(minHeight: 86, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
+        .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(fill.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(fill.opacity(count == target ? 0.45 : 0.20), lineWidth: 1.5)
+                )
         )
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-zone")
     }
 
-    private func gravityStepButton(
-        step: Int,
+    private func tokenGrid(
+        count: Int,
         fill: Color,
-        side: String,
-        isEnabled: Bool,
+        prefix: String,
         action: @escaping (Int) -> Void
     ) -> some View {
-        Button {
-            action(step)
-        } label: {
-            Label("\(step > 0 ? "+" : "-")\(abs(step))", systemImage: step > 0 ? "plus.circle.fill" : "minus.circle.fill")
-                .font(.subheadline.weight(.black))
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-                .frame(minWidth: state.target <= 20 ? 48 : 80, minHeight: state.target <= 20 ? 48 : 80)
+        let columns = Array(repeating: GridItem(.flexible(minimum: 22, maximum: 30), spacing: 5), count: compactColumnCount(for: max(count, 1)))
+
+        return LazyVGrid(columns: columns, alignment: .leading, spacing: 5) {
+            ForEach(0..<count, id: \.self) { idx in
+                Button {
+                    action(idx)
+                } label: {
+                    Circle()
+                        .fill(fill)
+                        .overlay(Circle().strokeBorder(.white.opacity(0.75), lineWidth: 1.5))
+                        .shadow(color: fill.opacity(0.24), radius: 2, y: 1)
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.plain)
+                .disabled(state.isLocked)
+                .accessibilityLabel(prefix == "source" ? "Move token" : "Remove token")
+                .accessibilityIdentifier("gravity-\(prefix)-token-\(idx)")
+            }
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(isEnabled ? fill : fill.opacity(0.3))
-        .disabled(!isEnabled)
-        .accessibilityLabel(step > 0 ? "Add \(step)" : "Remove \(abs(step))")
-        .accessibilityIdentifier("gravity-\(side)-\(step > 0 ? "plus" : "minus")-\(abs(step))")
+    }
+
+    private func compactColumnCount(for count: Int) -> Int {
+        switch state.target {
+        case 0...6: return min(max(count, 1), 6)
+        case 7...12: return 6
+        default: return 8
+        }
     }
 
     // MARK: - Instruction
 
     private var instructionText: some View {
         HStack(spacing: 8) {
-            Image(systemName: "gyroscope")
+            Image(systemName: "hand.tap.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.coral.opacity(0.8))
             Text(vocabulary.instruction)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }

@@ -763,6 +763,31 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func gravitySplitRightSideTokenTapDoesNotAutoFillLeftSide() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        let expectedRight = min(1, engine.gravitySplitState?.decompositionB ?? 0)
+        engine.adjustGravitySplitByTap(delta: 1, side: .right)
+
+        #expect(engine.gravitySplitState?.rightCount == expectedRight)
+        #expect(engine.gravitySplitState?.leftCount == 0)
+        #expect(engine.gravitySplitState?.isLocked == false)
+    }
+
+    @Test
     func gravitySplitTiltDoesNotAutoSolveStage() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
