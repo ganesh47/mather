@@ -17,6 +17,14 @@ enum ResponsiveLayout {
         horizontalSizeClass == .regular ? 940 : CGFloat.infinity
     }
 
+    static func sumSprintSessionMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 820 : CGFloat.infinity
+    }
+
+    static func sumSprintSummaryMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 980 : CGFloat.infinity
+    }
+
     // MARK: - Padding
 
     static func contentPadding(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
@@ -38,6 +46,10 @@ enum ResponsiveLayout {
     static func summaryFactColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
         let count = horizontalSizeClass == .regular ? 3 : 2
         return Array(repeating: GridItem(.flexible(), spacing: 8), count: count)
+    }
+
+    static func sumSprintSummaryFactColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
     }
 
     static func settingsColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {

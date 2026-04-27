@@ -12,8 +12,10 @@ struct SumSprintSessionView: View {
 
             VStack(spacing: 0) {
                 header
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                     .padding(.top, 12)
+                    .frame(maxWidth: ResponsiveLayout.sumSprintSessionMaxWidth(for: horizontalSizeClass))
+                    .frame(maxWidth: .infinity)
 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -26,7 +28,7 @@ struct SumSprintSessionView: View {
                                 onSubmit: { engine.submitAnswer() }
                             )
                             .padding(.horizontal, 20)
-                            .frame(maxWidth: ResponsiveLayout.isWide(horizontalSizeClass) ? 700 : .infinity)
+                            .frame(maxWidth: ResponsiveLayout.sumSprintSessionMaxWidth(for: horizontalSizeClass))
                             .frame(maxWidth: .infinity)
                             .transition(.asymmetric(
                                 insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -35,6 +37,8 @@ struct SumSprintSessionView: View {
                             .id(engine.currentCardIndex)
                         }
                     }
+                    .frame(maxWidth: ResponsiveLayout.sumSprintSessionMaxWidth(for: horizontalSizeClass))
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                 }
             }
@@ -46,7 +50,7 @@ struct SumSprintSessionView: View {
                         Spacer()
                         countdownRing
                             .padding(.top, 12)
-                            .padding(.trailing, 20)
+                            .padding(.trailing, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                     }
                     Spacer()
                 }
