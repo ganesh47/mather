@@ -199,34 +199,39 @@ struct GravitySplitView: View {
 
     private func panView(count: Int, fill: Color, side: String) -> some View {
         VStack(spacing: 6) {
-            // Counter dots in the pan (up to target, max display 10)
-            let display = min(state.target, 20)
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5),
-                spacing: 4
-            ) {
-                ForEach(0..<display, id: \.self) { idx in
-                    Circle()
-                        .fill(idx < count ? fill : fill.opacity(0.15))
-                        .overlay(
-                            Circle()
-                                .strokeBorder(fill.opacity(idx < count ? 0.3 : 0.4), lineWidth: 1.5)
-                        )
-                        .shadow(color: idx < count ? fill.opacity(0.3) : .clear, radius: 3, y: 1)
-                        .aspectRatio(1, contentMode: .fit)
-                        .accessibilityIdentifier("gravity-\(side)-dot-\(idx)")
+            if state.target <= 20 {
+                let display = min(state.target, 20)
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5),
+                    spacing: 4
+                ) {
+                    ForEach(0..<display, id: \.self) { idx in
+                        Circle()
+                            .fill(idx < count ? fill : fill.opacity(0.15))
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(fill.opacity(idx < count ? 0.3 : 0.4), lineWidth: 1.5)
+                            )
+                            .shadow(color: idx < count ? fill.opacity(0.3) : .clear, radius: 3, y: 1)
+                            .aspectRatio(1, contentMode: .fit)
+                            .accessibilityIdentifier("gravity-\(side)-dot-\(idx)")
+                    }
                 }
+            } else {
+                GroupedNumberView(value: count, fill: fill)
+                    .frame(minHeight: 74)
+                    .accessibilityIdentifier("gravity-\(side)-grouped-representation")
             }
-            .padding(8)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(fill.opacity(0.10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(fill.opacity(0.22), lineWidth: 1.5)
-                    )
-            )
         }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(fill.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(fill.opacity(0.22), lineWidth: 1.5)
+                )
+        )
         .frame(maxWidth: .infinity)
     }
 
@@ -239,7 +244,8 @@ struct GravitySplitView: View {
                 fill: MatherTheme.warm,
                 side: "left",
                 canDecrement: state.leftCount > 0 && !state.isLocked,
-                canIncrement: state.leftCount < state.decompositionA && !state.isLocked
+                canIncrement: state.leftCount < state.decompositionA && !state.isLocked,
+                steps: gravitySteps
             ) { delta in
                 onTap(delta, .left)
             }
@@ -249,11 +255,16 @@ struct GravitySplitView: View {
                 fill: MatherTheme.accent,
                 side: "right",
                 canDecrement: state.rightCount > 0 && !state.isLocked,
-                canIncrement: state.rightCount < state.decompositionB && !state.isLocked
+                canIncrement: state.rightCount < state.decompositionB && !state.isLocked,
+                steps: gravitySteps
             ) { delta in
                 onTap(delta, .right)
             }
         }
+    }
+
+    private var gravitySteps: [Int] {
+        state.target <= 20 ? [1] : GroupedNumberRepresentation(state.target).suggestedSteps
     }
 
     private func panControlButtons(
@@ -262,39 +273,20 @@ struct GravitySplitView: View {
         side: String,
         canDecrement: Bool,
         canIncrement: Bool,
+        steps: [Int],
         action: @escaping (Int) -> Void
     ) -> some View {
-        HStack(spacing: 8) {
-            Button {
-                action(-1)
-            } label: {
-                Image(systemName: "minus.circle.fill")
-                    .font(.title.weight(.bold))
-                    .frame(minWidth: 48, minHeight: 48)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(canDecrement ? fill : fill.opacity(0.3))
-            .disabled(!canDecrement)
-            .accessibilityLabel("Remove from \(label.lowercased()) pan")
-            .accessibilityIdentifier("gravity-\(side)-minus")
-
+        VStack(spacing: 8) {
             Text(label)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(fill)
                 .frame(minWidth: 38)
-
-            Button {
-                action(1)
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title.weight(.bold))
-                    .frame(minWidth: 48, minHeight: 48)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: state.target <= 20 ? 48 : 82), spacing: 6)], spacing: 6) {
+                ForEach(steps, id: \.self) { step in
+                    gravityStepButton(step: -step, fill: fill, side: side, isEnabled: canDecrement, action: action)
+                    gravityStepButton(step: step, fill: fill, side: side, isEnabled: canIncrement, action: action)
+                }
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(canIncrement ? fill : fill.opacity(0.3))
-            .disabled(!canIncrement)
-            .accessibilityLabel("Add to \(label.lowercased()) pan")
-            .accessibilityIdentifier("gravity-\(side)-plus")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
@@ -303,6 +295,29 @@ struct GravitySplitView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(fill.opacity(0.08))
         )
+    }
+
+    private func gravityStepButton(
+        step: Int,
+        fill: Color,
+        side: String,
+        isEnabled: Bool,
+        action: @escaping (Int) -> Void
+    ) -> some View {
+        Button {
+            action(step)
+        } label: {
+            Label("\(step > 0 ? "+" : "-")\(abs(step))", systemImage: step > 0 ? "plus.circle.fill" : "minus.circle.fill")
+                .font(.subheadline.weight(.black))
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+                .frame(minWidth: state.target <= 20 ? 48 : 80, minHeight: state.target <= 20 ? 48 : 80)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(isEnabled ? fill : fill.opacity(0.3))
+        .disabled(!isEnabled)
+        .accessibilityLabel(step > 0 ? "Add \(step)" : "Remove \(abs(step))")
+        .accessibilityIdentifier("gravity-\(side)-\(step > 0 ? "plus" : "minus")-\(abs(step))")
     }
 
     // MARK: - Instruction

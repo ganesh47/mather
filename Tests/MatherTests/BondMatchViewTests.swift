@@ -52,4 +52,21 @@ struct BondMatchViewTests {
         )
         #expect(wrongDrop == .mismatch(4))
     }
+
+    @Test func lowTargetsKeepAllUniquePairs() {
+        let pairs = BondMatchState.makePairs(for: 20)
+
+        #expect(pairs.count == 10)
+        #expect(pairs.map(\.left) == Array(1...10))
+        #expect(pairs.allSatisfy { $0.left + $0.right == 20 })
+    }
+
+    @Test func highTargetsUseSmallExactPairSample() {
+        let pairs = BondMatchState.makePairs(for: 1000)
+
+        #expect(pairs.count <= BondMatchState.highTargetPairLimit)
+        #expect(!pairs.isEmpty)
+        #expect(pairs.allSatisfy { $0.left <= $0.right })
+        #expect(pairs.allSatisfy { $0.left + $0.right == 1000 })
+    }
 }

@@ -300,17 +300,45 @@ struct BondMatchState: Equatable {
     let target: Int
     /// Canonical pair list ordered by ascending left value.
     var pairs: [ComplementPair]
+    static let highTargetPairLimit = 10
 
     var matchCount: Int { pairs.filter(\.isMatched).count }
     var isComplete: Bool { pairs.allSatisfy(\.isMatched) }
 
     /// Generate all unique complement pairs (a, b) where a ≤ b and a + b == target.
     /// Excludes (0, target) — zero is not a meaningful addend in this context.
+    /// For targets above 20, returns a small deterministic sample of exact pairs
+    /// so Bond Blast never creates hundreds of cards.
     static func makePairs(for target: Int) -> [ComplementPair] {
         guard target >= 2 else { return [] }
-        return (1...(target - 1))
+        if target <= 20 {
+            return allPairLeftValues(for: target)
+                .map { a in ComplementPair(left: a, right: target - a) }
+        }
+
+        let midpoint = target / 2
+        let candidateLeftValues = [
+            1,
+            2,
+            5,
+            10,
+            max(1, target / 10),
+            max(1, target / 4),
+            max(1, target / 3),
+            max(1, midpoint - 10),
+            max(1, midpoint - 1),
+            midpoint
+        ]
+
+        return Array(Set(candidateLeftValues))
             .filter { $0 <= target - $0 }
+            .sorted()
+            .prefix(highTargetPairLimit)
             .map { a in ComplementPair(left: a, right: target - a) }
+    }
+
+    private static func allPairLeftValues(for target: Int) -> [Int] {
+        (1...(target - 1)).filter { $0 <= target - $0 }
     }
 }
 
