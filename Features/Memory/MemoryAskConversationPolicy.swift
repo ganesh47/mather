@@ -101,15 +101,16 @@ final class MemoryAskConversationPolicy {
     }
 
     private func sanitize(_ turns: [MemoryAskSuggestedTurn], for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
-        let cardWords = Set(
-            ([animal.canonicalName, animal.name, animal.metadata.category, animal.metadata.kind] + animal.detailCards.flatMap { [$0.title, $0.value] })
-                .flatMap { $0.lowercased().split { !$0.isLetter && !$0.isNumber } }
-                .map(String.init)
-                .filter { $0.count > 2 }
-        )
+        let cardText: [String] = [
+            animal.canonicalName,
+            animal.name,
+            animal.metadata.category,
+            animal.metadata.kind
+        ] + animal.detailCards.flatMap { [$0.title, $0.value] }
+        let cardWords = Set(Self.words(in: cardText.joined(separator: " ")).filter { $0.count > 2 })
 
         var seenIDs = Set<String>()
-        return turns.compactMap { turn in
+        let sanitizedTurns: [MemoryAskSuggestedTurn] = turns.compactMap { turn -> MemoryAskSuggestedTurn? in
             let cleanQuestion = Self.clean(turn.question)
             let cleanAnswer = Self.clean(turn.answer)
             guard !turn.id.isEmpty,
@@ -119,12 +120,12 @@ final class MemoryAskConversationPolicy {
                   cleanQuestion.count <= 90,
                   cleanAnswer.count <= 220 else { return nil }
 
-            let turnWords = Set((cleanQuestion + " " + cleanAnswer).lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init))
+            let turnWords = Set(Self.words(in: cleanQuestion + " " + cleanAnswer))
             guard !cardWords.isDisjoint(with: turnWords) else { return nil }
             return MemoryAskSuggestedTurn(id: turn.id, question: cleanQuestion, answer: cleanAnswer)
         }
-        .prefix(3)
-        .map { $0 }
+
+        return Array(sanitizedTurns.prefix(3))
     }
 
     private static func fallbackTurns(for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
@@ -189,5 +190,11 @@ final class MemoryAskConversationPolicy {
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func words(in text: String) -> [String] {
+        text.lowercased()
+            .split { !$0.isLetter && !$0.isNumber }
+            .map(String.init)
     }
 }
