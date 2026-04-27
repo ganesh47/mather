@@ -291,7 +291,7 @@ struct SliceSessionView: View {
                     }
                     Spacer()
                     Button {
-                        appModel.featureFlags.audioEnabled.toggle()
+                        appModel.engine.playPromptFromSpeakerButton()
                     } label: {
                         Image(systemName: appModel.featureFlags.audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                             .font(.title2.weight(.bold))
@@ -301,9 +301,10 @@ struct SliceSessionView: View {
                             .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
                             .clipShape(Circle())
                     }
-                    .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Mute audio" : "Enable audio")
+                    .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Play prompt" : "Enable audio and play prompt")
+                    .accessibilityHint("Speaks the current instruction aloud.")
                     Button {
-                        appModel.engine.replayPrompt()
+                        appModel.engine.playPromptFromSpeakerButton()
                     } label: {
                         Image(systemName: "arrow.counterclockwise.circle.fill")
                             .font(.title2.weight(.bold))
@@ -314,6 +315,7 @@ struct SliceSessionView: View {
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Replay prompt")
+                    .accessibilityHint("Speaks the current instruction aloud.")
                     // Adult escape hatch — secondary styling so child ignores it
                     Button {
                         appModel.engine.showHome()

@@ -9,6 +9,8 @@ import FoundationModels
 final class SpeechService {
     private let synthesizer = AVSpeechSynthesizer()
     private var lastUtteranceID = UUID()
+    private(set) var lastSpokenText: String?
+    private(set) var lastSpeechDiagnostic: String?
     var hasSpokenSessionIntro = false
 
     init() {
@@ -16,16 +18,29 @@ final class SpeechService {
         // ringer/silent switch is off. .spokenAudio mode pauses other audio
         // during speech; .duckOthers lowers (rather than cuts) background audio.
         // The in-app audio toggle (speak(_:enabled:)) remains the parent's control.
-        try? AVAudioSession.sharedInstance().setCategory(
-            .playback,
-            mode: .spokenAudio,
-            options: .duckOthers
-        )
-        try? AVAudioSession.sharedInstance().setActive(true)
+        do {
+            try AVAudioSession.sharedInstance().setCategory(
+                .playback,
+                mode: .spokenAudio,
+                options: .duckOthers
+            )
+            try AVAudioSession.sharedInstance().setActive(true)
+            lastSpeechDiagnostic = nil
+        } catch {
+            lastSpeechDiagnostic = "Audio session setup failed: \(error.localizedDescription)"
+            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+        }
     }
 
     func speak(_ text: String, enabled: Bool) {
-        guard enabled, !text.isEmpty else { return }
+        guard !text.isEmpty else { return }
+        guard enabled else {
+            lastSpeechDiagnostic = "Speech skipped because audio prompts are disabled."
+            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            return
+        }
+        lastSpokenText = text
+        lastSpeechDiagnostic = nil
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = 0.45
