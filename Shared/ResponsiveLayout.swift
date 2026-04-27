@@ -13,6 +13,10 @@ enum ResponsiveLayout {
         horizontalSizeClass == .regular ? 560 : 400
     }
 
+    static func childSessionMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 940 : CGFloat.infinity
+    }
+
     // MARK: - Padding
 
     static func contentPadding(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
@@ -45,6 +49,16 @@ enum ResponsiveLayout {
         let minimum = horizontalSizeClass == .regular ? 140.0 : 110.0
         let maximum = horizontalSizeClass == .regular ? 180.0 : 160.0
         return [GridItem(.adaptive(minimum: minimum, maximum: maximum), spacing: 16)]
+    }
+
+    static func roomQuestStationMinimumWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
+        horizontalSizeClass == .regular ? 240 : 170
+    }
+
+    static func roomQuestStationColumns(for horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        let minimum = roomQuestStationMinimumWidth(for: horizontalSizeClass)
+        let maximum: CGFloat = horizontalSizeClass == .regular ? 320 : CGFloat.infinity
+        return [GridItem(.adaptive(minimum: minimum, maximum: maximum), spacing: 16, alignment: .top)]
     }
 
     static func profilePickerMaxWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
