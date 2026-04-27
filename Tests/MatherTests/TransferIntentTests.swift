@@ -15,17 +15,51 @@ struct TransferIntentTests {
     }
 
     @Test
-    func transferPromptReferencesShowingTheSameEquationAgain() async throws {
+    func transferPromptReferencesTheExactEquationToRebuild() async throws {
         let engine = makeEngine()
         engine.startSession()
 
         guard let problem = engine.currentProblem else { return }
         try await advanceToTransfer(engine, problem: problem)
 
-        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("same two"))
-        #expect(!engine.feedbackMessage.contains("\(problem.decompositionA)"))
-        #expect(!engine.feedbackMessage.contains("\(problem.decompositionB)"))
-        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("counters"))
+        #expect(engine.feedbackMessage.contains("\(problem.decompositionA)"))
+        #expect(engine.feedbackMessage.contains("\(problem.decompositionB)"))
+        #expect(engine.feedbackMessage.contains("left"))
+        #expect(engine.feedbackMessage.contains("right"))
+    }
+
+    @Test
+    func transferEquationCopyMakesEquationAssociationExplicit() {
+        let copy = TransferEquationCopy(problem: SliceProblem(target: 9, decompositionA: 4, decompositionB: 5))
+
+        #expect(copy.recap == "Rebuild your equation: 4 + 5 = 9")
+        #expect(copy.instruction == "Tap counters to make 4 on the left and 5 on the right.")
+    }
+
+
+    @Test
+    func transferCounterTapAddsOrRemovesThroughTappedBubble() {
+        #expect(TransferCounterTap(index: 0, currentCount: 0).nextCount == 1)
+        #expect(TransferCounterTap(index: 3, currentCount: 1).delta == 3)
+        #expect(TransferCounterTap(index: 2, currentCount: 5).nextCount == 2)
+        #expect(TransferCounterTap(index: 2, currentCount: 5).delta == -3)
+    }
+
+    @Test
+    func transferSideAdjustmentClampsEachSideIndependently() {
+        let engine = makeEngine()
+        engine.startSession()
+        guard let problem = engine.currentProblem else { return }
+
+        engine.adjustTransfer(by: problem.target + 5, side: .left)
+        engine.adjustTransfer(by: -3, side: .left)
+        engine.adjustTransfer(by: problem.target + 2, side: .right)
+
+        #expect(engine.transferLeftCount == max(problem.target - 3, 0))
+        #expect(engine.transferRightCount == problem.target)
+
+        engine.adjustTransfer(by: -(problem.target + 10), side: .right)
+        #expect(engine.transferRightCount == 0)
     }
 
     @Test

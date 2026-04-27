@@ -259,6 +259,8 @@ final class VerticalSliceEngine {
 
     func adjustTransfer(by delta: Int, side: TransferSide) {
         guard let currentProblem else { return }
+        let previousLeft = transferLeftCount
+        let previousRight = transferRightCount
         switch side {
         case .left:
             transferLeftCount = min(max(transferLeftCount + delta, 0), currentProblem.target)
@@ -266,6 +268,10 @@ final class VerticalSliceEngine {
         case .right:
             transferRightCount = min(max(transferRightCount + delta, 0), currentProblem.target)
             recordInteraction(action: "transfer_right_place", value: transferRightCount)
+        }
+
+        if transferLeftCount != previousLeft || transferRightCount != previousRight {
+            hapticsService.counterSettle(enabled: featureFlags.hapticsEnabled)
         }
     }
 
@@ -792,7 +798,7 @@ final class VerticalSliceEngine {
         case .abstract:
             return activeTheme.abstractPrompt()
         case .transfer:
-            return "Show the same two parts with counters."
+            return TransferEquationCopy(problem: currentProblem).instruction
         case .gravitySplit:
             if let prompt = currentNumberStoryPrompt {
                 return NumberStoryStageVocabulary.vocabulary(for: prompt, stage: .gravitySplit).instruction
@@ -860,12 +866,13 @@ final class VerticalSliceEngine {
                 return "Type \(problem.decompositionA) on the left and \(problem.decompositionB) on the right."
             }
         case .transfer:
+            let copy = TransferEquationCopy(problem: problem)
             if attempts == 1 {
-                return "Show the same two parts with counters."
+                return "Keep rebuilding: \(copy.left) on the left and \(copy.right) on the right."
             } else if attempts == 2 {
-                return "Use the same two numbers you wrote and build them with counters."
+                return "Use the exact equation you wrote: \(copy.left) + \(copy.right) = \(copy.target)."
             } else {
-                return "Build the same equation again with counters, one group on each side."
+                return "Tap counters to rebuild \(copy.left) on the left and \(copy.right) on the right."
             }
         case .gravitySplit:
             if let prompt = currentNumberStoryPrompt {
