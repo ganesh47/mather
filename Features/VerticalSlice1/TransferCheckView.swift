@@ -9,64 +9,38 @@ struct TransferCheckView: View {
     let onSubmit: () -> Void
     var theme: any SliceTheme = ClassicTheme()
 
+    private var equationCopy: TransferEquationCopy {
+        TransferEquationCopy(problem: problem)
+    }
+
     var body: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Show it")
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Show it again")
                         .font(.title.weight(.bold))
-                        .foregroundStyle(MatherTheme.coral)
+                        .foregroundStyle(MatherTheme.ink)
 
-                    ViewThatFits {
-                        HStack(spacing: 10) {
-                            hiddenEquationPill(fill: MatherTheme.warm)
-                            Text("+")
-                                .font(.title.weight(.black))
-                                .foregroundStyle(.secondary)
-                            hiddenEquationPill(fill: MatherTheme.accent)
-                            Text("=")
-                                .font(.title.weight(.black))
-                                .foregroundStyle(.secondary)
-                            Text("\(problem.target)")
-                                .font(.system(size: 34, weight: .black, design: .rounded))
-                                .foregroundStyle(MatherTheme.ink)
-                        }
+                    equationRecap
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 10) {
-                                hiddenEquationPill(fill: MatherTheme.warm)
-                                Text("+")
-                                    .font(.title2.weight(.black))
-                                    .foregroundStyle(.secondary)
-                                hiddenEquationPill(fill: MatherTheme.accent)
-                            }
-                            HStack(spacing: 10) {
-                                Text("=")
-                                    .font(.title2.weight(.black))
-                                    .foregroundStyle(.secondary)
-                                Text("\(problem.target)")
-                                    .font(.system(size: 34, weight: .black, design: .rounded))
-                                    .foregroundStyle(MatherTheme.ink)
-                            }
-                        }
-                    }
-                    .accessibilityIdentifier("transfer-equation")
-
-                    Text("Build the same two parts.")
+                    Text(equationCopy.instruction)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 ViewThatFits {
                     HStack(spacing: 12) {
                         transferBucket(
                             title: "Left side",
+                            targetCount: problem.decompositionA,
                             count: leftCount,
                             fill: MatherTheme.warm,
                             side: .left
                         )
                         transferBucket(
                             title: "Right side",
+                            targetCount: problem.decompositionB,
                             count: rightCount,
                             fill: MatherTheme.accent,
                             side: .right
@@ -76,12 +50,14 @@ struct TransferCheckView: View {
                     VStack(spacing: 12) {
                         transferBucket(
                             title: "Left side",
+                            targetCount: problem.decompositionA,
                             count: leftCount,
                             fill: MatherTheme.warm,
                             side: .left
                         )
                         transferBucket(
                             title: "Right side",
+                            targetCount: problem.decompositionB,
                             count: rightCount,
                             fill: MatherTheme.accent,
                             side: .right
@@ -89,7 +65,7 @@ struct TransferCheckView: View {
                     }
                 }
 
-                Button("Check my groups") {
+                Button("Check my equation") {
                     onSubmit()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
@@ -97,78 +73,103 @@ struct TransferCheckView: View {
         }
     }
 
-    private func hiddenEquationPill(fill: Color) -> some View {
-        Text("?")
-            .font(.system(size: 28, weight: .black, design: .rounded))
-            .foregroundStyle(fill)
-            .frame(minWidth: 58, minHeight: 58)
-            .background(fill.opacity(0.14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(fill.opacity(colorScheme == .dark ? 0.35 : 0.2), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .accessibilityLabel("Hidden part")
+    private var equationRecap: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Rebuild your equation")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .textCase(.uppercase)
+                .tracking(1.1)
+
+            ViewThatFits {
+                HStack(spacing: 10) {
+                    equationNumber("\(problem.decompositionA)", fill: MatherTheme.warm, label: "left part")
+                    equationOperator("+")
+                    equationNumber("\(problem.decompositionB)", fill: MatherTheme.accent, label: "right part")
+                    equationOperator("=")
+                    equationNumber("\(problem.target)", fill: MatherTheme.softBlue, label: "target")
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) {
+                        equationNumber("\(problem.decompositionA)", fill: MatherTheme.warm, label: "left part")
+                        equationOperator("+")
+                        equationNumber("\(problem.decompositionB)", fill: MatherTheme.accent, label: "right part")
+                    }
+                    HStack(spacing: 10) {
+                        equationOperator("=")
+                        equationNumber("\(problem.target)", fill: MatherTheme.softBlue, label: "target")
+                    }
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(equationCopy.recap)
+            .accessibilityIdentifier("transfer-equation-recap")
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 0.98 : 0.72))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : MatherTheme.panelDeep.opacity(0.42), lineWidth: 1)
+        )
     }
 
-    private func transferBucket(title: String, count: Int, fill: Color, side: TransferSide) -> some View {
-        let bucketBackground = colorScheme == .dark ? MatherTheme.panel.opacity(0.94) : MatherTheme.card
-        let bucketBorder = colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : fill.opacity(0.18)
+    private func equationNumber(_ value: String, fill: Color, label: String) -> some View {
+        Text(value)
+            .font(.system(size: 28, weight: .black, design: .rounded))
+            .foregroundStyle(MatherTheme.ink)
+            .frame(minWidth: 54, minHeight: 48)
+            .background(fill.opacity(colorScheme == .dark ? 0.28 : 0.20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(fill.opacity(colorScheme == .dark ? 0.55 : 0.38), lineWidth: 1.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .accessibilityLabel("\(label) \(value)")
+    }
 
-        return VStack(spacing: 8) {
-            Text(title)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(MatherTheme.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
+    private func equationOperator(_ symbol: String) -> some View {
+        Text(symbol)
+            .font(.title2.weight(.black))
+            .foregroundStyle(MatherTheme.ink.opacity(0.78))
+            .accessibilityLabel(symbol == "+" ? "plus" : "equals")
+    }
+
+    private func transferBucket(title: String, targetCount: Int, count: Int, fill: Color, side: TransferSide) -> some View {
+        let sideName = side == .left ? "left" : "right"
+        let bucketBackground = colorScheme == .dark ? MatherTheme.panel.opacity(0.96) : MatherTheme.card
+        let bucketBorder = colorScheme == .dark ? MatherTheme.panelDeep.opacity(0.78) : fill.opacity(0.24)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Make \(targetCount) here")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5),
                 spacing: 6
             ) {
                 ForEach(0..<problem.target, id: \.self) { idx in
-                    CounterView(
-                        index: idx,
-                        filled: idx < count,
-                        theme: theme,
-                        overrideColor: fill
-                    )
-                    .frame(maxWidth: 44, maxHeight: 44)
-                    .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-cell-\(idx)")
+                    counterButton(index: idx, count: count, fill: fill, side: side)
                 }
             }
-            .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-group")
+            .accessibilityIdentifier("transfer-\(sideName)-group")
 
-            HStack(spacing: 10) {
-                Button {
-                    onAdjust(-1, side)
-                } label: {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.title.weight(.bold))
-                        .frame(minWidth: 44, minHeight: 44)
-                        .background(fill.opacity(0.15))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Remove from \(side == .left ? "left" : "right") group")
-                .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-minus")
-
-                Button {
-                    onAdjust(1, side)
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title.weight(.bold))
-                        .frame(minWidth: 44, minHeight: 44)
-                        .background(fill.opacity(0.15))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Add to \(side == .left ? "left" : "right") group")
-                .accessibilityIdentifier("transfer-\(side == .left ? "left" : "right")-plus")
-            }
-            .foregroundStyle(fill)
+            Text("\(count) of \(targetCount)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(count == targetCount ? MatherTheme.accent : MatherTheme.cardSubtitle)
+                .accessibilityIdentifier("transfer-\(sideName)-count")
         }
         .padding(12)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(bucketBackground)
@@ -181,5 +182,63 @@ struct TransferCheckView: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
         )
+    }
+
+    private func counterButton(index idx: Int, count: Int, fill: Color, side: TransferSide) -> some View {
+        let sideName = side == .left ? "left" : "right"
+        let tap = TransferCounterTap(index: idx, currentCount: count)
+        let nextCount = tap.nextCount
+        let delta = tap.delta
+
+        return Button {
+            guard delta != 0 else { return }
+            onAdjust(delta, side)
+        } label: {
+            CounterView(
+                index: idx,
+                filled: idx < count,
+                theme: theme,
+                overrideColor: fill
+            )
+            .frame(maxWidth: 44, maxHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Set \(sideName) side to \(nextCount)")
+        .accessibilityValue(idx < count ? "filled" : "empty")
+        .accessibilityIdentifier("transfer-\(sideName)-counter-\(idx)")
+    }
+}
+
+struct TransferCounterTap: Equatable {
+    let index: Int
+    let currentCount: Int
+
+    var nextCount: Int {
+        index < currentCount ? index : index + 1
+    }
+
+    var delta: Int {
+        nextCount - currentCount
+    }
+}
+
+struct TransferEquationCopy: Equatable {
+    let left: Int
+    let right: Int
+    let target: Int
+
+    init(problem: SliceProblem) {
+        left = problem.decompositionA
+        right = problem.decompositionB
+        target = problem.target
+    }
+
+    var recap: String {
+        "Rebuild your equation: \(left) + \(right) = \(target)"
+    }
+
+    var instruction: String {
+        "Tap counters to make \(left) on the left and \(right) on the right."
     }
 }
