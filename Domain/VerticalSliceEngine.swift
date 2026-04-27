@@ -197,6 +197,10 @@ final class VerticalSliceEngine {
 
     func adjustConcrete(by delta: Int, side: ConcreteGroup) {
         guard let currentProblem else { return }
+        guard currentProblem.target <= 20 else {
+            setConcreteTotal(concreteCount + delta)
+            return
+        }
         switch side {
         case .warm:
             let maxWarm = min(10, max(currentProblem.target - concreteAccentCount, 0))
@@ -834,6 +838,15 @@ final class VerticalSliceEngine {
     private func setConcreteTotal(_ total: Int) {
         let maxTotal = currentProblem?.target ?? 10
         let clamped = min(max(total, 0), maxTotal)
+        if maxTotal > 20 {
+            concreteWarmCount = clamped
+            concreteAccentCount = 0
+            recordInteraction(action: "place", value: concreteCount)
+            #if targetEnvironment(simulator)
+            print("[Mather][concrete] warm=\(concreteWarmCount) accent=\(concreteAccentCount) total=\(concreteCount)")
+            #endif
+            return
+        }
         concreteWarmCount = min(clamped, 10)
         concreteAccentCount = max(clamped - concreteWarmCount, 0)
         recordInteraction(action: "place", value: concreteCount)

@@ -13,6 +13,10 @@ struct ConcreteBuildView: View {
     // We keep 5 columns so the child still sees familiar subitizing-friendly rows,
     // but expand the surface to 4 rows when needed.
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+    private var currentCount: Int { warmCount + accentCount }
+    private var representation: GroupedNumberRepresentation {
+        GroupedNumberRepresentation(target)
+    }
 
     var body: some View {
         CardSurface {
@@ -26,31 +30,11 @@ struct ConcreteBuildView: View {
                         .foregroundStyle(MatherTheme.accent)
                 }
 
-                // Color.clear with aspectRatio is the reliable SwiftUI idiom for
-                // square grid cells — it constrains height = width without fighting
-                // the grid's flexible column width calculation.
-                // Cells are capped at 72pt so on wide screens (iPad) they don't grow
-                // to 130pt+ — "bigger circles" feedback and scrolling are eliminated.
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(0..<min(max(target, 1), 20), id: \.self) { index in
-                        counterCell(index: index)
-                            .frame(maxWidth: 72, maxHeight: 72)
-                            .accessibilityIdentifier("counter-cell-\(index)")
-                            .accessibilityLabel("Counter \(index + 1)")
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                guard let tap = Self.tapAction(
-                                    for: index,
-                                    target: target,
-                                    warmCount: warmCount,
-                                    accentCount: accentCount
-                                ) else { return }
-                                onAdjust(tap.delta, tap.group)
-                            }
-                    }
+                if target <= 20 {
+                    tapCounterGrid
+                } else {
+                    groupedBuildControls
                 }
-                .frame(maxWidth: ResponsiveLayout.concreteGridMaxWidth(for: horizontalSizeClass))
-                .frame(maxWidth: .infinity)
 
 
                 // Number-bond display: live A + B = target as circles are tapped.
@@ -84,6 +68,70 @@ struct ConcreteBuildView: View {
                 .buttonStyle(PrimaryActionButtonStyle())
             }
         }
+    }
+
+    private var tapCounterGrid: some View {
+        LazyVGrid(columns: columns, spacing: 10) {
+            ForEach(0..<min(max(target, 1), 20), id: \.self) { index in
+                counterCell(index: index)
+                    .frame(maxWidth: 72, maxHeight: 72)
+                    .accessibilityIdentifier("counter-cell-\(index)")
+                    .accessibilityLabel("Counter \(index + 1)")
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard let tap = Self.tapAction(
+                            for: index,
+                            target: target,
+                            warmCount: warmCount,
+                            accentCount: accentCount
+                        ) else { return }
+                        onAdjust(tap.delta, tap.group)
+                    }
+            }
+        }
+        .frame(maxWidth: ResponsiveLayout.concreteGridMaxWidth(for: horizontalSizeClass))
+        .frame(maxWidth: .infinity)
+    }
+
+    private var groupedBuildControls: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                GroupedNumberView(value: currentCount, fill: MatherTheme.warm)
+                    .accessibilityIdentifier("concrete-current-grouped-representation")
+                Image(systemName: "arrow.right")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(.secondary)
+                GroupedNumberView(value: target, fill: MatherTheme.accent)
+                    .accessibilityIdentifier("concrete-target-grouped-representation")
+            }
+            .frame(maxWidth: .infinity)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
+                ForEach(representation.suggestedSteps, id: \.self) { step in
+                    groupedStepButton(step: -step)
+                    groupedStepButton(step: step)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func groupedStepButton(step: Int) -> some View {
+        let canApply = step < 0 ? currentCount > 0 : currentCount < target
+        let clampedStep = step < 0 ? max(step, -currentCount) : min(step, target - currentCount)
+
+        return Button {
+            onAdjust(clampedStep, .warm)
+        } label: {
+            Label("\(step > 0 ? "+" : "-")\(abs(step))", systemImage: step > 0 ? "plus.circle.fill" : "minus.circle.fill")
+                .font(.headline.weight(.black))
+                .frame(minWidth: 88, minHeight: 80)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(canApply ? MatherTheme.warm : MatherTheme.warm.opacity(0.28))
+        .disabled(!canApply)
+        .accessibilityLabel(step > 0 ? "Add \(step)" : "Remove \(abs(step))")
+        .accessibilityIdentifier("concrete-step-\(step > 0 ? "plus" : "minus")-\(abs(step))")
     }
 
     nonisolated static func tapAction(
