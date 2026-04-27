@@ -31,13 +31,6 @@ struct SettingsView: View {
         )
     }
 
-    private var makeBreakLoopV2Binding: Binding<Bool> {
-        Binding(
-            get: { appModel.featureFlags.makeBreakLoopV2Enabled },
-            set: { appModel.featureFlags.makeBreakLoopV2Enabled = $0 }
-        )
-    }
-
     private var soundReactionBinding: Binding<Bool> {
         Binding(
             get: { appModel.featureFlags.soundReactionEnabled },
@@ -110,17 +103,10 @@ struct SettingsView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
-                Text("Use the rollout toggle below to keep the reopened 4-stage loop behind parent/QA control until validation is complete.")
+                Text("The repeated Make it → Gravity Split → Sum Sprint → Bond Blast route is now built in for every target.")
                     .font(.subheadline)
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)
-
-                VS1ToggleRow(
-                    title: "Make & Break loop v2",
-                    subtitle: "Turns on the repeated Make it → Gravity Split → Sum Sprint → Bond Blast route for each target.",
-                    accessibilityIdentifier: "settings-loop-v2-toggle",
-                    isOn: makeBreakLoopV2Binding
-                )
 
                 Divider()
 

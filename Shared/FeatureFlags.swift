@@ -60,8 +60,8 @@ final class FeatureFlagService {
         didSet { defaults.set(vs1GravitySplitEnabled, forKey: Keys.vs1GravitySplitEnabled) }
     }
 
-    /// Enables the issue #222 per-target loop:
-    /// Make it -> Gravity Split -> Sum Sprint -> Bond Blast.
+    /// Controls the issue #222 per-target loop for explicit test/rollback coverage.
+    /// Default is built-in/on; Settings no longer exposes this as a parent rollout toggle.
     var makeBreakLoopV2Enabled: Bool {
         didSet { defaults.set(makeBreakLoopV2Enabled, forKey: Keys.makeBreakLoopV2Enabled) }
     }
@@ -141,6 +141,11 @@ final class FeatureFlagService {
 
     private let defaults: UserDefaults
 
+    private static func hasLaunchArgumentOverride(for key: String) -> Bool {
+        ProcessInfo.processInfo.arguments.contains(key) ||
+            ProcessInfo.processInfo.arguments.contains("-\(key)")
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         // Register fallback defaults so bool(forKey:) returns the correct value
@@ -155,7 +160,7 @@ final class FeatureFlagService {
             Keys.selectedThemeId: "classic",
             Keys.vs1BondMatchEnabled: true,
             Keys.vs1GravitySplitEnabled: true,
-            Keys.makeBreakLoopV2Enabled: false,
+            Keys.makeBreakLoopV2Enabled: true,
             Keys.motionControlsEnabled: true,
             Keys.soundReactionEnabled: true,
             Keys.roomQuestSafetyAcknowledged: false,
@@ -176,6 +181,10 @@ final class FeatureFlagService {
         selectedThemeId = defaults.string(forKey: Keys.selectedThemeId) ?? "classic"
         vs1BondMatchEnabled = defaults.bool(forKey: Keys.vs1BondMatchEnabled)
         vs1GravitySplitEnabled = defaults.bool(forKey: Keys.vs1GravitySplitEnabled)
+        if defaults === UserDefaults.standard, !Self.hasLaunchArgumentOverride(for: Keys.makeBreakLoopV2Enabled) {
+            // Graduate issue #222: ignore any stale parent-toggle value from pre-cutover builds.
+            defaults.set(true, forKey: Keys.makeBreakLoopV2Enabled)
+        }
         makeBreakLoopV2Enabled = defaults.bool(forKey: Keys.makeBreakLoopV2Enabled)
         motionControlsEnabled = defaults.bool(forKey: Keys.motionControlsEnabled)
         soundReactionEnabled = defaults.bool(forKey: Keys.soundReactionEnabled)

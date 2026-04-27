@@ -35,22 +35,22 @@ struct FeatureFlagTests {
         #expect(flags.hapticsEnabled == true)
     }
 
-    @Test func stableFeatureRolloutDefaultsMatchRecoveryPolicy() {
+    @Test func stableFeatureRolloutDefaultsMatchGraduatedPolicy() {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         #expect(flags.verticalSlice1Enabled)
         #expect(flags.vs1BondMatchEnabled)
         #expect(flags.vs1GravitySplitEnabled)
-        #expect(flags.makeBreakLoopV2Enabled == false)
+        #expect(flags.makeBreakLoopV2Enabled)
         #expect(flags.soundReactionEnabled)
     }
 
-    @Test func makeBreakLoopV2PersistsAcrossInstances() {
+    @Test func makeBreakLoopV2CanBeDisabledExplicitlyForLegacyCoverage() {
         let defaults = UserDefaults(suiteName: #function)!
         let flags1 = FeatureFlagService(defaults: defaults)
-        flags1.makeBreakLoopV2Enabled = true
+        flags1.makeBreakLoopV2Enabled = false
 
         let flags2 = FeatureFlagService(defaults: defaults)
-        #expect(flags2.makeBreakLoopV2Enabled)
+        #expect(!flags2.makeBreakLoopV2Enabled)
     }
 
     @Test func soundReactionPreferencePersistsAcrossInstances() {

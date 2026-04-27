@@ -49,32 +49,19 @@ final class ScreenshotTests: XCTestCase {
 
     // MARK: - Settings screen
 
-    func testScreenshot_Settings_DefaultRolloutState() {
+    func testScreenshot_Settings_MakeBreakLoopBuiltIn() {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
-        let rolloutToggle = app.switches["settings-loop-v2-toggle"]
-        XCTAssertTrue(rolloutToggle.waitForExistence(timeout: 5))
-        XCTAssertEqual(rolloutToggle.value as? String, "0")
-        snapshot(app, "Settings-DefaultRolloutState")
+        XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
+        XCTAssertTrue(app.staticTexts["The repeated Make it → Gravity Split → Sum Sprint → Bond Blast route is now built in for every target."].waitForExistence(timeout: 5))
+        snapshot(app, "Settings-MakeBreakLoopBuiltIn")
 
         app.buttons["Home"].tap()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 3)
-        snapshot(app, "Home-DefaultRolloutState")
-    }
-
-    func testScreenshot_Settings_LoopV2EnabledViaLaunchArgument() {
-        let app = launchWithLoopV2()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
-
-        app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
-        let rolloutToggle = app.switches["settings-loop-v2-toggle"]
-        XCTAssertTrue(rolloutToggle.waitForExistence(timeout: 5))
-        XCTAssertEqual(rolloutToggle.value as? String, "1")
-        snapshot(app, "Settings-LoopV2EnabledViaLaunchArgument")
+        snapshot(app, "Home-MakeBreakLoopBuiltIn")
     }
 
     // MARK: - Session Config screen
@@ -116,7 +103,7 @@ final class ScreenshotTests: XCTestCase {
     /// Exercises the failure-then-success path so the screen recording captures
     /// both the failure feedback banner and the celebration state.
     func testScreenshot_ConcreteBuild_FailureThenSuccess() {
-        let app = launchWithVS1AndHaptics()
+        let app = launchWithLegacyVS1AndHaptics()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
 
         let playButton = app.buttons["Play"]
@@ -211,14 +198,14 @@ final class ScreenshotTests: XCTestCase {
     /// Verifies the full session flow renders without crash and screenshots the
     /// pilot runbook in Settings — covers the M8 smoke-test acceptance criterion.
     func testScreenshot_PilotRunbook() {
-        let app = launchWithVS1()
+        let app = launchWithLegacyVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
         snapshot(app, "iPhone-Home")
 
         // Navigate to Settings and capture the pilot runbook
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
-        _ = app.switches["settings-loop-v2-toggle"].waitForExistence(timeout: 5)
+        XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
         _ = app.staticTexts["Pilot smoke test"].waitForExistence(timeout: 5)
         snapshot(app, "iPhone-Settings-PilotRunbook")
         app.buttons["Home"].tap()
@@ -366,7 +353,6 @@ final class ScreenshotTests: XCTestCase {
             "-feature.motionControlsEnabled", "NO",
             "-feature.soundReactionEnabled", "NO",
             "-feature.testModeEnabled", "YES",
-            "-feature.makeBreakLoopV2Enabled", "YES",
             "-feature.skipProfilePicker", "YES",
         ]
         if let appearance {
@@ -375,11 +361,26 @@ final class ScreenshotTests: XCTestCase {
         return launchApp(with: launchArguments)
     }
 
-    /// Launches with VS1 pre-enabled and haptics on — use for tests that exercise success/failure feedback.
-    private func launchWithVS1AndHaptics(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
+    private func launchWithLegacyVS1(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
+        var launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.makeBreakLoopV2Enabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+        ]
+        if let appearance {
+            launchArguments += ["-uiTest.appearance", appearance.launchValue]
+        }
+        return launchApp(with: launchArguments)
+    }
+
+    /// Launches the explicit legacy route with haptics on — use for tests that exercise success/failure feedback.
+    private func launchWithLegacyVS1AndHaptics(appearance: UIAppearanceMode? = nil) -> XCUIApplication {
         var launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "YES",
+            "-feature.makeBreakLoopV2Enabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.skipProfilePicker", "YES",
         ]
