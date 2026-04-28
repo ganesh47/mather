@@ -56,7 +56,7 @@ final class ScreenshotTests: XCTestCase {
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
         XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
-        XCTAssertTrue(app.staticTexts["The repeated Make it → Gravity Split → Sum Sprint → Bond Blast route is now built in for every target."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Make it → Gravity Split → Sum Sprint → Bond Blast is built in for every target."].waitForExistence(timeout: 5))
         snapshot(app, "Settings-MakeBreakLoopBuiltIn")
 
         app.buttons["Home"].tap()
@@ -466,15 +466,23 @@ final class ScreenshotTests: XCTestCase {
             gravityGoButton.tap()
         }
 
-        let leftPlus = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "gravity-left-plus")).firstMatch
-        let rightPlus = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "gravity-right-plus")).firstMatch
+        let leftAdd = firstExistingButton(
+            in: app,
+            identifiers: ["gravity-left-add-button", "gravity-left-plus"],
+            timeout: 5
+        )
+        let rightAdd = firstExistingButton(
+            in: app,
+            identifiers: ["gravity-right-add-button", "gravity-right-plus"],
+            timeout: 5
+        )
         for _ in 0..<leftPanCount {
-            XCTAssertTrue(leftPlus.waitForExistence(timeout: 5), "Expected a left gravity increment button")
-            leftPlus.tap()
+            XCTAssertTrue(leftAdd.waitForExistence(timeout: 5), "Expected a left gravity increment button")
+            leftAdd.tap()
         }
         for _ in 0..<rightPanCount {
-            XCTAssertTrue(rightPlus.waitForExistence(timeout: 5), "Expected a right gravity increment button")
-            rightPlus.tap()
+            XCTAssertTrue(rightAdd.waitForExistence(timeout: 5), "Expected a right gravity increment button")
+            rightAdd.tap()
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
@@ -495,6 +503,21 @@ final class ScreenshotTests: XCTestCase {
             leftCard.tap()
             rightCard.tap()
         }
+    }
+
+
+    private func firstExistingButton(in app: XCUIApplication, identifiers: [String], timeout: TimeInterval) -> XCUIElement {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for identifier in identifiers {
+                let exact = app.buttons[identifier]
+                if exact.exists { return exact }
+                let prefixed = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", identifier)).firstMatch
+                if prefixed.exists { return prefixed }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return app.buttons[identifiers[0]]
     }
 
     private func advanceStoryAnchorIfPresent(in app: XCUIApplication, snapshotPrefix: String, shouldSnapshot: Bool) {
