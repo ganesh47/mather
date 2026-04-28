@@ -141,6 +141,12 @@ struct RectangleFactoryTests {
         #expect(RectangleFactoryView.completionSpeech(for: 12) == "You found all 3 rectangles for 12!")
     }
 
+    @Test func instructionTextExplainsDragAndExactDotGoal() {
+        let text = RectangleFactoryView.instructionText(for: 4)
+        #expect(text.contains("Drag the blue corner"))
+        #expect(text.contains("Cover exactly 4 dots"))
+    }
+
     @Test func advanceButtonTitleReflectsSequenceEnd() {
         #expect(RectangleFactoryView.advanceButtonTitle(hasNext: true) == "Next Number →")
         #expect(RectangleFactoryView.advanceButtonTitle(hasNext: false) == "All done! 🎉")
