@@ -79,12 +79,12 @@ struct SliceSessionView: View {
         if appModel.featureFlags.testModeEnabled {
             HStack(spacing: 32) {
                 Button("Add left") {
-                    appModel.engine.adjustGravitySplitByTap(1, .left)
+                    appModel.engine.adjustGravitySplitByTap(delta: 1, side: .left)
                 }
                 .accessibilityIdentifier("gravity-left-add-button")
 
                 Button("Add right") {
-                    appModel.engine.adjustGravitySplitByTap(1, .right)
+                    appModel.engine.adjustGravitySplitByTap(delta: 1, side: .right)
                 }
                 .accessibilityIdentifier("gravity-right-add-button")
             }
