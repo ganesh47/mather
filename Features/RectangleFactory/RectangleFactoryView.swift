@@ -78,23 +78,30 @@ struct RectangleFactoryView: View {
                 Text("Rectangle Factory")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                HStack(spacing: 6) {
-                    Text("Make \(targetN) dots fit perfectly")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    // Star progress: one star per factor pair
-                    let total = Self.factorsOf(targetN).count
-                    HStack(spacing: 3) {
-                        ForEach(0..<total, id: \.self) { i in
-                            Image(systemName: i < foundFactors.count ? "star.fill" : "star")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(
-                                    i < foundFactors.count ? MatherTheme.warm : MatherTheme.warm.opacity(0.3)
-                                )
-                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: foundFactors.count)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("Make \(targetN) dots fit perfectly")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        // Star progress: one star per factor pair
+                        let total = Self.factorsOf(targetN).count
+                        HStack(spacing: 3) {
+                            ForEach(0..<total, id: \.self) { i in
+                                Image(systemName: i < foundFactors.count ? "star.fill" : "star")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(
+                                        i < foundFactors.count ? MatherTheme.warm : MatherTheme.warm.opacity(0.3)
+                                    )
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: foundFactors.count)
+                            }
                         }
                     }
+
+                    Text(Self.instructionText(for: targetN))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer(minLength: 12)
@@ -538,6 +545,10 @@ struct RectangleFactoryView: View {
         return completionStyle(for: n) == .prime
             ? "\(n) is prime. Only one rectangle works!"
             : "You found all \(count) \(noun) for \(n)!"
+    }
+
+    nonisolated static func instructionText(for n: Int) -> String {
+        "Drag the blue corner to resize the box. Cover exactly \(n) dots."
     }
 
     nonisolated static func advanceButtonTitle(hasNext: Bool) -> String {
