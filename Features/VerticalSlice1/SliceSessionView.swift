@@ -102,6 +102,18 @@ struct SliceSessionView: View {
         }
     }
 
+    private var shouldAutoCompleteGravitySplitForUITests: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTest.autoCompleteGravitySplit")
+    }
+
+    private func scheduleGravitySplitUITestAutoComplete() {
+        guard shouldAutoCompleteGravitySplitForUITests else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            appModel.engine.completeGravitySplitForUITest()
+        }
+    }
+
     @ViewBuilder
     private func stageView(for problem: SliceProblem) -> some View {
         switch appModel.engine.currentStage {
@@ -190,7 +202,10 @@ struct SliceSessionView: View {
                 .overlay(alignment: .bottom) {
                     gravitySplitUITestControls
                 }
-                .onAppear { appModel.motionService.startUpdates() }
+                .onAppear {
+                    appModel.motionService.startUpdates()
+                    scheduleGravitySplitUITestAutoComplete()
+                }
                 .onDisappear { appModel.motionService.stopUpdates() }
             } else {
                 CardSurface { Text("Loading Balance...") }
