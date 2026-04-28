@@ -342,6 +342,7 @@ final class ScreenshotTests: XCTestCase {
             "-feature.soundReactionEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.skipProfilePicker", "YES",
+            "-uiTest.autoCompleteGravitySplit",
         ]
         if let appearance {
             launchArguments += ["-uiTest.appearance", appearance.launchValue]
