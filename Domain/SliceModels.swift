@@ -360,6 +360,20 @@ enum SumSprintBurstCardContent: Equatable {
             return String(value)
         }
     }
+
+    var promptTotal: Int? {
+        guard case .prompt(let value) = self else { return nil }
+        let addends = value
+            .split(separator: "+")
+            .compactMap { Int(String($0).trimmingCharacters(in: .whitespacesAndNewlines)) }
+        guard addends.count == 2 else { return nil }
+        return addends.reduce(0, +)
+    }
+
+    var sumValue: Int? {
+        guard case .sum(let value) = self else { return nil }
+        return value
+    }
 }
 
 struct SumSprintBurstCard: Identifiable, Equatable {
@@ -380,15 +394,25 @@ struct SumSprintBurstState: Equatable {
     }
 
     var matchedPairs: Int {
-        Set(cards.filter { $0.isMatched }.map(\.pairId)).count
+        cards.filter(\.isMatched).count / 2
     }
 
     var isComplete: Bool {
-        matchedPairs == totalPairs && totalPairs > 0
+        cards.allSatisfy(\.isMatched) && totalPairs > 0
     }
 
     var progressLabel: String {
         "\(matchedPairs) / \(totalPairs)"
+    }
+
+    static func cardsFormValidMatch(_ lhs: SumSprintBurstCard, _ rhs: SumSprintBurstCard) -> Bool {
+        if let promptTotal = lhs.content.promptTotal, let sumValue = rhs.content.sumValue {
+            return promptTotal == sumValue
+        }
+        if let promptTotal = rhs.content.promptTotal, let sumValue = lhs.content.sumValue {
+            return promptTotal == sumValue
+        }
+        return false
     }
 
     static func make(for problem: SliceProblem) -> SumSprintBurstState {

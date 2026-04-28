@@ -355,8 +355,7 @@ final class VerticalSliceEngine {
 
             let selectedCard = state.cards[selectedIndex]
             let tappedCard = state.cards[tappedIndex]
-            let isMatch = selectedCard.pairId == tappedCard.pairId
-                && selectedCard.content != tappedCard.content
+            let isMatch = SumSprintBurstState.cardsFormValidMatch(selectedCard, tappedCard)
 
             state.cards[selectedIndex].isSelected = false
             state.cards[tappedIndex].isSelected = false
