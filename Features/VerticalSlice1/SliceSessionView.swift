@@ -73,6 +73,30 @@ struct SliceSessionView: View {
         .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
     }
 
+
+    @ViewBuilder
+    private var gravitySplitUITestControls: some View {
+        if appModel.featureFlags.testModeEnabled {
+            HStack(spacing: 32) {
+                Button("Add left") {
+                    appModel.engine.adjustGravitySplitByTap(delta: 1, side: .left)
+                }
+                .accessibilityIdentifier("gravity-left-add-button")
+
+                Button("Add right") {
+                    appModel.engine.adjustGravitySplitByTap(delta: 1, side: .right)
+                }
+                .accessibilityIdentifier("gravity-right-add-button")
+            }
+            .buttonStyle(.plain)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.clear)
+            .frame(height: 44)
+            .padding(.horizontal, 24)
+            .background(Color.clear.contentShape(Rectangle()))
+        }
+    }
+
     @ViewBuilder
     private func stageView(for problem: SliceProblem) -> some View {
         switch appModel.engine.currentStage {
@@ -158,6 +182,9 @@ struct SliceSessionView: View {
                     onShakeHandled: { appModel.motionService.resetShake(); appModel.engine.resetGravitySplit() },
                     onSubmit: appModel.engine.submitCurrentStage
                 )
+                .overlay(alignment: .bottom) {
+                    gravitySplitUITestControls
+                }
                 .onAppear { appModel.motionService.startUpdates() }
                 .onDisappear { appModel.motionService.stopUpdates() }
             } else {
