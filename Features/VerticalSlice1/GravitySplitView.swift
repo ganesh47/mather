@@ -266,16 +266,21 @@ struct GravitySplitView: View {
         let canAdd = !state.isLocked && sourceCount > 0 && count < target
         let sideName = side == .left ? "left" : "right"
 
-        return HStack(spacing: 6) {
-            Image(systemName: "plus.circle.fill")
-                .imageScale(.medium)
-            Text("Add \(label)")
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
+        return Button {
+            onTap(1, side)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus.circle.fill")
+                    .imageScale(.medium)
+                Text("Add \(label)")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity, minHeight: 38)
+            .contentShape(Rectangle())
         }
         .font(.caption.weight(.black))
         .foregroundStyle(canAdd ? fill : MatherTheme.cardSubtitle.opacity(0.55))
-        .frame(maxWidth: .infinity, minHeight: 38)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(canAdd ? fill.opacity(0.10) : Color.secondary.opacity(0.08))
@@ -284,21 +289,13 @@ struct GravitySplitView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(canAdd ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1)
         )
-        .contentShape(Rectangle())
+        .buttonStyle(.plain)
+        .disabled(!canAdd)
         .opacity(canAdd ? 1 : 0.72)
-        .onTapGesture {
-            guard canAdd else { return }
-            onTap(1, side)
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Add \(label)")
         .accessibilityHint(canAdd ? "Adds one token to the \(label) side." : "This side cannot accept more tokens right now.")
-        .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("gravity-\(sideName)-add-button")
-        .accessibilityAction {
-            guard canAdd else { return }
-            onTap(1, side)
-        }
     }
 
     private func tokenGrid(
