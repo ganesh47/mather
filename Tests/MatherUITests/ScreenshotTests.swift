@@ -466,23 +466,19 @@ final class ScreenshotTests: XCTestCase {
             gravityGoButton.tap()
         }
 
-        let leftAdd = firstExistingButton(
-            in: app,
-            identifiers: ["gravity-left-add-button", "gravity-left-plus"],
-            timeout: 5
-        )
-        let rightAdd = firstExistingButton(
-            in: app,
-            identifiers: ["gravity-right-add-button", "gravity-right-plus"],
-            timeout: 5
-        )
         for _ in 0..<leftPanCount {
-            XCTAssertTrue(leftAdd.waitForExistence(timeout: 5), "Expected a left gravity increment button")
-            leftAdd.tap()
+            tapGravityIncrement(
+                in: app,
+                identifiers: ["gravity-left-add-button", "gravity-left-plus"],
+                failureMessage: "Expected a left gravity increment control"
+            )
         }
         for _ in 0..<rightPanCount {
-            XCTAssertTrue(rightAdd.waitForExistence(timeout: 5), "Expected a right gravity increment button")
-            rightAdd.tap()
+            tapGravityIncrement(
+                in: app,
+                identifiers: ["gravity-right-add-button", "gravity-right-plus"],
+                failureMessage: "Expected a right gravity increment control"
+            )
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
@@ -506,18 +502,43 @@ final class ScreenshotTests: XCTestCase {
     }
 
 
-    private func firstExistingButton(in app: XCUIApplication, identifiers: [String], timeout: TimeInterval) -> XCUIElement {
+    private func tapGravityIncrement(in app: XCUIApplication, identifiers: [String], failureMessage: String) {
+        guard let control = firstExistingControl(in: app, identifiers: identifiers, timeout: 5) else {
+            XCTFail(failureMessage)
+            return
+        }
+        control.tap()
+    }
+
+    /// Gravity Split is intentionally touch-first now. SwiftUI can expose the
+    /// compact bordered add controls as generic accessibility descendants rather
+    /// than `XCUIElementTypeButton` on some simulator/device combinations, so the
+    /// issue #222 UI review should honor the accessibility identifier contract
+    /// across all descendant types while keeping the legacy button lookup first.
+    private func firstExistingControl(in app: XCUIApplication, identifiers: [String], timeout: TimeInterval) -> XCUIElement? {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             for identifier in identifiers {
-                let exact = app.buttons[identifier]
-                if exact.exists { return exact }
-                let prefixed = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", identifier)).firstMatch
-                if prefixed.exists { return prefixed }
+                if let button = firstExistingElement(in: app.buttons, identifier: identifier) {
+                    return button
+                }
+                if let descendant = firstExistingElement(in: app.descendants(matching: .any), identifier: identifier) {
+                    return descendant
+                }
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        return app.buttons[identifiers[0]]
+        return nil
+    }
+
+    private func firstExistingElement(in query: XCUIElementQuery, identifier: String) -> XCUIElement? {
+        let exact = query[identifier]
+        if exact.exists { return exact }
+
+        let prefixed = query.matching(NSPredicate(format: "identifier BEGINSWITH %@", identifier)).firstMatch
+        if prefixed.exists { return prefixed }
+
+        return nil
     }
 
     private func advanceStoryAnchorIfPresent(in app: XCUIApplication, snapshotPrefix: String, shouldSnapshot: Bool) {
