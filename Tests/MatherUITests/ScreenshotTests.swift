@@ -467,10 +467,12 @@ final class ScreenshotTests: XCTestCase {
             gravityGoButton.tap()
         }
 
+        let sumSprintTitle = app.staticTexts["Sum Sprint"]
         if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3) {
             completeSplit.tap()
         } else {
             for _ in 0..<leftPanCount {
+                if sumSprintTitle.exists { break }
                 tapGravityIncrement(
                     in: app,
                     identifiers: ["gravity-left-add-button", "gravity-left-plus"],
@@ -480,6 +482,7 @@ final class ScreenshotTests: XCTestCase {
                 )
             }
             for _ in 0..<rightPanCount {
+                if sumSprintTitle.exists { break }
                 tapGravityIncrement(
                     in: app,
                     identifiers: ["gravity-right-add-button", "gravity-right-plus"],
@@ -490,7 +493,6 @@ final class ScreenshotTests: XCTestCase {
             }
         }
 
-        let sumSprintTitle = app.staticTexts["Sum Sprint"]
         XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
         snapshot(app, "\(snapshotPrefix)-SumSprint")
 
@@ -535,6 +537,10 @@ final class ScreenshotTests: XCTestCase {
             // contract above, then fall back to the user-visible interaction point:
             // the add affordance is rendered at the bottom center of each zone.
             zone.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.86)).tap()
+            return
+        }
+
+        if app.staticTexts["Sum Sprint"].exists {
             return
         }
 
