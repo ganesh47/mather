@@ -492,13 +492,10 @@ final class VerticalSliceEngine {
               currentStage == .gravitySplit,
               let problem = currentProblem else { return }
 
-        gravitySplitState = GravitySplitState(
-            target: problem.target,
-            decompositionA: problem.decompositionA,
-            decompositionB: problem.decompositionB,
-            leftCount: problem.decompositionA,
-            rightCount: problem.decompositionB
-        )
+        var state = GravitySplitState(problem: problem)
+        state.adjustLeft(by: problem.decompositionA)
+        state.adjustRight(by: problem.decompositionB)
+        gravitySplitState = state
         completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
     }
 
