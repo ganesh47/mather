@@ -466,23 +466,27 @@ final class ScreenshotTests: XCTestCase {
             gravityGoButton.tap()
         }
 
-        for _ in 0..<leftPanCount {
-            tapGravityIncrement(
-                in: app,
-                identifiers: ["gravity-left-add-button", "gravity-left-plus"],
-                zoneIdentifier: "gravity-left-zone",
-                fallbackSide: .left,
-                failureMessage: "Expected a left gravity increment control or zone"
-            )
-        }
-        for _ in 0..<rightPanCount {
-            tapGravityIncrement(
-                in: app,
-                identifiers: ["gravity-right-add-button", "gravity-right-plus"],
-                zoneIdentifier: "gravity-right-zone",
-                fallbackSide: .right,
-                failureMessage: "Expected a right gravity increment control or zone"
-            )
+        if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3) {
+            completeSplit.tap()
+        } else {
+            for _ in 0..<leftPanCount {
+                tapGravityIncrement(
+                    in: app,
+                    identifiers: ["gravity-left-add-button", "gravity-left-plus"],
+                    zoneIdentifier: "gravity-left-zone",
+                    fallbackSide: .left,
+                    failureMessage: "Expected a left gravity increment control or zone"
+                )
+            }
+            for _ in 0..<rightPanCount {
+                tapGravityIncrement(
+                    in: app,
+                    identifiers: ["gravity-right-add-button", "gravity-right-plus"],
+                    zoneIdentifier: "gravity-right-zone",
+                    fallbackSide: .right,
+                    failureMessage: "Expected a right gravity increment control or zone"
+                )
+            }
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]

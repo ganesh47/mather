@@ -487,6 +487,18 @@ final class VerticalSliceEngine {
         gravitySplitNeutralRoll = nil
     }
 
+    func completeGravitySplitForUITest() {
+        guard featureFlags.testModeEnabled,
+              currentStage == .gravitySplit,
+              let problem = currentProblem else { return }
+
+        var state = GravitySplitState(problem: problem)
+        state.adjustLeft(by: problem.decompositionA)
+        state.adjustRight(by: problem.decompositionB)
+        gravitySplitState = state
+        completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
+    }
+
     private func validateEquation(for problem: SliceProblem) -> Bool {
         guard let left = Int(equationLeftInput), let right = Int(equationRightInput) else { return false }
         return left + right == problem.target

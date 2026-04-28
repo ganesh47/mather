@@ -87,6 +87,11 @@ struct SliceSessionView: View {
                     appModel.engine.adjustGravitySplitByTap(delta: 1, side: .right)
                 }
                 .accessibilityIdentifier("gravity-right-add-button")
+
+                Button("Complete split") {
+                    appModel.engine.completeGravitySplitForUITest()
+                }
+                .accessibilityIdentifier("gravity-complete-split-button")
             }
             .buttonStyle(.plain)
             .font(.caption2.weight(.bold))
