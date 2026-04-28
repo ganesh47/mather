@@ -642,6 +642,32 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func sumSprintAcceptsEquivalentTotalCardsWhenTotalsRepeat() {
+        let state = SumSprintBurstState.make(for: SliceProblem(target: 5, decompositionA: 1, decompositionB: 4))
+
+        let prompt = state.cards.first { card in
+            if case .prompt("1 + 4") = card.content { return true }
+            return false
+        }!
+        let equivalentTotalFromOtherPair = state.cards.first { card in
+            guard card.pairId != prompt.pairId,
+                  case .sum(5) = card.content else { return false }
+            return true
+        }!
+
+        #expect(SumSprintBurstState.cardsFormValidMatch(prompt, equivalentTotalFromOtherPair))
+
+        var crossMatchedState = state
+        let promptIndex = crossMatchedState.cards.firstIndex(where: { $0.id == prompt.id })!
+        let totalIndex = crossMatchedState.cards.firstIndex(where: { $0.id == equivalentTotalFromOtherPair.id })!
+        crossMatchedState.cards[promptIndex].isMatched = true
+        crossMatchedState.cards[totalIndex].isMatched = true
+
+        #expect(crossMatchedState.matchedPairs == 1)
+        #expect(!crossMatchedState.isComplete)
+    }
+
+    @Test
     func matchPairGracefullyIgnoresUnknownPairId() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
