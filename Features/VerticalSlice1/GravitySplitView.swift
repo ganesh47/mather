@@ -253,7 +253,7 @@ struct GravitySplitView: View {
                 )
         )
         .frame(maxWidth: .infinity)
-        .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-zone")
+        .accessibilityElement(children: .contain)
     }
 
     private func addTokenControl(
