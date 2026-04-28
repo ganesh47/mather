@@ -544,7 +544,12 @@ final class ScreenshotTests: XCTestCase {
         // visible add affordance area by screen position only after all identifier
         // lookups fail and the Gravity Split title proves we are on the right stage.
         let xOffset: CGFloat = fallbackSide == .left ? 0.32 : 0.68
-        app.coordinate(withNormalizedOffset: CGVector(dx: xOffset, dy: 0.57)).tap()
+        // The direct-token board sits below the source tray; the add affordance
+        // is in the lower half of each destination zone. Earlier center-zone
+        // screen taps hit the empty token grid on hosted runners and left the
+        // split unlocked, so use the same lower visible target as the zone
+        // fallback when the whole subtree is missing from XCUI.
+        app.coordinate(withNormalizedOffset: CGVector(dx: xOffset, dy: 0.68)).tap()
     }
 
     /// Gravity Split is intentionally touch-first now. SwiftUI can expose the
