@@ -241,20 +241,7 @@ struct GravitySplitView: View {
             }
             .frame(minHeight: 68, alignment: .topLeading)
 
-            Button {
-                guard !state.isLocked else { return }
-                onTap(1, side)
-            } label: {
-                Label("Add \(label)", systemImage: "plus.circle.fill")
-                    .font(.caption.weight(.black))
-                    .frame(maxWidth: .infinity, minHeight: 38)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(fill)
-            .disabled(state.isLocked || sourceCount == 0 || count >= target)
-            .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-add-button")
+            addTokenControl(label: label, count: count, target: target, fill: fill, side: side)
         }
         .padding(10)
         .background(
@@ -267,6 +254,51 @@ struct GravitySplitView: View {
         )
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-zone")
+    }
+
+    private func addTokenControl(
+        label: String,
+        count: Int,
+        target: Int,
+        fill: Color,
+        side: TransferSide
+    ) -> some View {
+        let canAdd = !state.isLocked && sourceCount > 0 && count < target
+        let sideName = side == .left ? "left" : "right"
+
+        return HStack(spacing: 6) {
+            Image(systemName: "plus.circle.fill")
+                .imageScale(.medium)
+            Text("Add \(label)")
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .font(.caption.weight(.black))
+        .foregroundStyle(canAdd ? fill : MatherTheme.cardSubtitle.opacity(0.55))
+        .frame(maxWidth: .infinity, minHeight: 38)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(canAdd ? fill.opacity(0.10) : Color.secondary.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(canAdd ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .opacity(canAdd ? 1 : 0.72)
+        .onTapGesture {
+            guard canAdd else { return }
+            onTap(1, side)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Add \(label)")
+        .accessibilityHint(canAdd ? "Adds one token to the \(label) side." : "This side cannot accept more tokens right now.")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("gravity-\(sideName)-add-button")
+        .accessibilityAction {
+            guard canAdd else { return }
+            onTap(1, side)
+        }
     }
 
     private func tokenGrid(
