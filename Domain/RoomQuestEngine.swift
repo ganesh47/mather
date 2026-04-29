@@ -4,6 +4,7 @@ import Observation
 enum RoomPhase: Equatable {
     case safetyAck                          // one-time parent safety acknowledgement
     case setup                              // parent placing station markers, sees quantities
+    case routeNode(index: Int)              // scripted Route Quest node
     case spot(index: Int)                   // child walking to station i
     case returning                          // child walking back to iPad
     case onScreenPictorial                  // SplitView (pre-populated from room phase)
@@ -24,6 +25,8 @@ final class RoomQuestEngine {
     private(set) var stations: [RoomQuestStation] = []
     var feedbackMessage = ""
     var showCelebration = false
+    private(set) var route: RouteQuestRoute?
+    private(set) var routeProgress: RouteQuestProgress?
 
     // On-screen CPA state — mirrors VerticalSliceEngine's public fields
     private(set) var splitLeftCount = 0
@@ -37,6 +40,7 @@ final class RoomQuestEngine {
     private var setupStartedAt: Date?
     private var roomPhaseStartedAt: Date?
     private var roomPhaseTimer: Task<Void, Never>?
+    private var routeNodeStartedAt: Date?
 
     // MARK: - Dependencies
 
@@ -45,6 +49,7 @@ final class RoomQuestEngine {
     private let telemetryWriter: TelemetryWriter
     private let speechService: SpeechService
     private let hapticsService: HapticsService
+    private let motionService: MotionService?
     private let scanner: RoomQuestScanner
     private let stationStore: RoomQuestStationStore
     var onExitToHome: (() -> Void)?
@@ -61,6 +66,7 @@ final class RoomQuestEngine {
         telemetryWriter: TelemetryWriter,
         speechService: SpeechService,
         hapticsService: HapticsService = HapticsService(),
+        motionService: MotionService? = nil,
         scanner: RoomQuestScanner = NoopRoomQuestScanner(),
         stationStore: RoomQuestStationStore
     ) {
@@ -68,6 +74,7 @@ final class RoomQuestEngine {
         self.telemetryWriter = telemetryWriter
         self.speechService = speechService
         self.hapticsService = hapticsService
+        self.motionService = motionService
         self.scanner = scanner
         self.stationStore = stationStore
     }
@@ -85,8 +92,13 @@ final class RoomQuestEngine {
         loadSavedReferenceState()
         setupStartedAt = .now
         sessionStartedAt = .now
+        route = nil
+        routeProgress = nil
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
         feedbackMessage = "Set up the stations, then scan each one or mark it ready."
+        if telemetryWriter.currentSessionId == nil {
+            try? telemetryWriter.beginSession(sessionId: UUID(), featureFlags: featureFlags)
+        }
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestStarted,
             payload: [
@@ -190,8 +202,44 @@ final class RoomQuestEngine {
     }
 
     var currentStation: RoomQuestStation? {
-        guard case .spot(let index) = phase, stations.indices.contains(index) else { return nil }
-        return stations[index]
+        switch phase {
+        case .spot(let index):
+            guard stations.indices.contains(index) else { return nil }
+            return stations[index]
+        case .routeNode:
+            guard let node = currentRouteNode,
+                  case .station(let role, _) = node.kind
+            else { return nil }
+            return stations.first { $0.role == role }
+        default:
+            return nil
+        }
+    }
+
+    var currentRouteNode: RouteQuestNode? {
+        guard let route, let routeProgress else { return nil }
+        return routeProgress.currentNode(in: route)
+    }
+
+    var currentRouteYaw: Double {
+        motionService?.relativeYaw ?? 0
+    }
+
+    var routeNodeCount: Int {
+        route?.nodes.count ?? 0
+    }
+
+    var currentRouteNodeNumber: Int {
+        guard let routeProgress else { return 0 }
+        return min(routeProgress.currentNodeIndex + 1, routeNodeCount)
+    }
+
+    var currentRouteTurnProgressText: String {
+        guard let node = currentRouteNode,
+              case .turn(let targetDegrees, _) = node.kind
+        else { return "" }
+        let remaining = CompassMath.angularDistance(currentRouteYaw, targetDegrees)
+        return "\(Int(remaining.rounded()))° to go"
     }
 
     var currentSpotReferenceLabel: String {
@@ -277,10 +325,17 @@ final class RoomQuestEngine {
     }
 
     func acceptCurrentSpotWithParentConsent() {
-        guard case .spot(let index) = phase,
-              let station = stations[safe: index],
-              shouldShowSpotManualFallback
-        else { return }
+        let routeStation = currentRouteStationContext()
+        let legacyIndex: Int?
+        let station: RoomQuestStation?
+        if case .spot(let index) = phase {
+            legacyIndex = index
+            station = stations[safe: index]
+        } else {
+            legacyIndex = nil
+            station = routeStation?.station
+        }
+        guard let station, shouldShowSpotManualFallback else { return }
 
         let scanOutcome: String = {
             switch scanState {
@@ -296,13 +351,17 @@ final class RoomQuestEngine {
             payload: [
                 "action": "room_quest_parent_consent_accept",
                 "station_role": station.role.rawValue,
-                "spot_index": String(index),
+                "spot_index": legacyIndex.map(String.init) ?? String(routeStation?.node.order ?? 0),
                 "scan_outcome": scanOutcome
             ]
         ))
         feedbackMessage = "Grown-up confirmed this place. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
         scanState = .idle
-        markSpotVisited(index: index)
+        if let legacyIndex {
+            markSpotVisited(index: legacyIndex)
+        } else {
+            completeCurrentRouteNode(method: .fallback)
+        }
     }
 
     func markSetupComplete() {
@@ -317,9 +376,53 @@ final class RoomQuestEngine {
             payload: ["setup_time_ms": String(setupMs)]
         ))
         roomPhaseStartedAt = .now
-        phase = .spot(index: 0)
-        speechService.speak("Let's make \(p.target)! Find the Red Rocket station and pick up everything there.", enabled: featureFlags.audioEnabled)
+        if featureFlags.routeQuestEnabled {
+            startRouteQuest(problem: p)
+        } else {
+            phase = .spot(index: 0)
+            speechService.speak("Let's make \(p.target)! Find the Red Rocket station and pick up everything there.", enabled: featureFlags.audioEnabled)
+        }
         startRoomPhaseTimer()
+    }
+
+    private func startRouteQuest(problem: SliceProblem) {
+        let nextRoute = routeForCurrentProblem(problem)
+        route = nextRoute
+        routeProgress = RouteQuestProgress(routeId: nextRoute.id, routeStartedAt: .now)
+        try? telemetryWriter.append(SliceEvent(
+            type: .routeQuestStarted,
+            payload: [
+                "route_id": nextRoute.id.uuidString,
+                "route_template": nextRoute.templateName,
+                "node_count": String(nextRoute.nodes.count)
+            ]
+        ))
+        enterRouteNode(index: 0)
+    }
+
+    private func routeForCurrentProblem(_ problem: SliceProblem) -> RouteQuestRoute {
+        let baseRoute = RouteQuestRoute.twoStationMVP()
+        let nodes = baseRoute.nodes.map { node in
+            switch node.kind {
+            case .station(.redRocket, _):
+                return RouteQuestNode(
+                    id: node.id,
+                    order: node.order,
+                    kind: .station(role: .redRocket, quantity: problem.decompositionA),
+                    prompt: "Find Red Rocket and collect \(problem.decompositionA)."
+                )
+            case .station(.blueBubble, _):
+                return RouteQuestNode(
+                    id: node.id,
+                    order: node.order,
+                    kind: .station(role: .blueBubble, quantity: problem.decompositionB),
+                    prompt: "Find Blue Bubble and collect \(problem.decompositionB)."
+                )
+            default:
+                return node
+            }
+        }
+        return RouteQuestRoute(id: baseRoute.id, templateName: baseRoute.templateName, nodes: nodes)
     }
 
     func markSpotVisited(index: Int) {
@@ -343,9 +446,17 @@ final class RoomQuestEngine {
     }
 
     func verifyCurrentSpotWithCamera() {
-        guard case .spot(let index) = phase,
-              let station = stations[safe: index]
-        else { return }
+        let routeStation = currentRouteStationContext()
+        let legacyIndex: Int?
+        let station: RoomQuestStation?
+        if case .spot(let index) = phase {
+            legacyIndex = index
+            station = stations[safe: index]
+        } else {
+            legacyIndex = nil
+            station = routeStation?.station
+        }
+        guard let station else { return }
 
         guard !isScanActive else { return }
 
@@ -399,7 +510,11 @@ final class RoomQuestEngine {
                 self.feedbackMessage = "Found it. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
                 try? await Task.sleep(for: .seconds(1.0))
                 self.scanState = .idle
-                self.markSpotVisited(index: index)
+                if let legacyIndex {
+                    self.markSpotVisited(index: legacyIndex)
+                } else {
+                    self.completeCurrentRouteNode(method: .scan)
+                }
             } catch let error as RoomQuestScannerError {
                 switch error {
                 case .cancelled:
@@ -415,6 +530,39 @@ final class RoomQuestEngine {
                 self.scanState = .failed(role: station.role, message: self.feedbackMessage)
             }
         }
+    }
+
+    func confirmRouteStart() {
+        guard let node = currentRouteNode, case .start = node.kind else { return }
+        completeCurrentRouteNode(method: .manual)
+    }
+
+    func checkRouteTurn() {
+        guard let node = currentRouteNode,
+              case .turn(let targetDegrees, let toleranceDegrees) = node.kind
+        else { return }
+        if CompassMath.isInSnapZone(yaw: currentRouteYaw, target: targetDegrees, tolerance: toleranceDegrees) {
+            hapticsService.success(enabled: featureFlags.hapticsEnabled)
+            completeCurrentRouteNode(method: .motion, sensorAvailable: motionService != nil)
+        } else {
+            hapticsService.failure(enabled: featureFlags.hapticsEnabled)
+            feedbackMessage = "Turn a little more slowly. \(currentRouteTurnProgressText)."
+        }
+    }
+
+    func confirmRouteTurnWithParentAssist() {
+        guard let node = currentRouteNode, case .turn(_, _) = node.kind else { return }
+        completeCurrentRouteNode(method: .parentAssist, sensorAvailable: motionService != nil)
+    }
+
+    func confirmRouteSteps() {
+        guard let node = currentRouteNode, case .step(_, _) = node.kind else { return }
+        completeCurrentRouteNode(method: .manual)
+    }
+
+    func confirmRouteReturnHome() {
+        guard let node = currentRouteNode, case .returnHome = node.kind else { return }
+        completeCurrentRouteNode(method: .manual)
     }
 
     func markReturned() {
@@ -459,6 +607,7 @@ final class RoomQuestEngine {
         let current = phase
         phase = .paused(resumingTo: current)
         roomPhaseTimer?.cancel()
+        motionService?.stopRelativeYawTracking()
         showCelebration = false
         feedbackMessage = "Paused. Tap Resume when ready."
     }
@@ -467,14 +616,24 @@ final class RoomQuestEngine {
         guard case .paused(let resumeTo) = phase else { return }
         phase = resumeTo
         if case .spot(_) = resumeTo { startRoomPhaseTimer() }
+        if case .routeNode(_) = resumeTo {
+            prepareCurrentRouteNodeForEntry()
+            startRoomPhaseTimer()
+        }
         if case .returning = resumeTo { startRoomPhaseTimer() }
     }
 
     func abandonSession(reason: String) {
         roomPhaseTimer?.cancel()
+        motionService?.stopRelativeYawTracking()
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestAbandoned, payload: ["reason": reason]
         ))
+        if routeProgress != nil {
+            try? telemetryWriter.append(SliceEvent(
+                type: .routeQuestAbandoned, payload: ["reason": reason]
+            ))
+        }
         phase = .complete
         onExitToHome?()
     }
@@ -505,6 +664,11 @@ final class RoomQuestEngine {
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestAbandoned, payload: ["reason": "timeout"]
         ))
+        if routeProgress != nil {
+            try? telemetryWriter.append(SliceEvent(
+                type: .routeQuestAbandoned, payload: ["reason": "timeout"]
+            ))
+        }
     }
 
     private func finishSession(abstractCorrect: Bool) {
@@ -519,6 +683,109 @@ final class RoomQuestEngine {
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
             flashCelebration()
         }
+    }
+
+    private func enterRouteNode(index: Int) {
+        guard let route, route.nodes.indices.contains(index) else {
+            markReturned()
+            return
+        }
+        routeProgress?.currentNodeIndex = index
+        phase = .routeNode(index: index)
+        prepareCurrentRouteNodeForEntry()
+    }
+
+    private func prepareCurrentRouteNodeForEntry() {
+        guard let route, let node = currentRouteNode else { return }
+        routeNodeStartedAt = .now
+        scanState = .idle
+        feedbackMessage = node.prompt
+        if case .turn(_, _) = node.kind {
+            motionService?.startUpdates()
+            motionService?.startRelativeYawTracking()
+        } else {
+            motionService?.stopRelativeYawTracking()
+        }
+        try? telemetryWriter.append(SliceEvent(
+            type: .routeQuestNodeStarted,
+            payload: RouteQuestTelemetry.payload(
+                route: route,
+                node: node,
+                method: .manual,
+                elapsedMilliseconds: 0,
+                sensorAvailable: motionService != nil
+            )
+        ))
+        speechService.speak(node.prompt, enabled: featureFlags.audioEnabled)
+    }
+
+    private func completeCurrentRouteNode(method: RouteQuestCompletionMethod, sensorAvailable: Bool? = nil) {
+        guard let route, var progress = routeProgress, let node = progress.currentNode(in: route) else { return }
+        let elapsedMs = routeNodeStartedAt.map { Int(Date.now.timeIntervalSince($0) * 1000) } ?? 0
+        let completed = progress.completeCurrentNode(in: route, method: method)
+        routeProgress = progress
+        motionService?.stopRelativeYawTracking()
+
+        if method == .fallback {
+            try? telemetryWriter.append(SliceEvent(
+                type: .routeQuestFallbackUsed,
+                payload: RouteQuestTelemetry.payload(
+                    route: route,
+                    node: node,
+                    method: method,
+                    elapsedMilliseconds: elapsedMs,
+                    sensorAvailable: sensorAvailable
+                )
+            ))
+        }
+        if completed != nil {
+            let completionPayload = RouteQuestTelemetry.payload(
+                route: route,
+                node: node,
+                method: method,
+                elapsedMilliseconds: elapsedMs,
+                sensorAvailable: sensorAvailable
+            )
+            let completionEvent: SliceEvent
+            switch node.kind {
+            case .turn:
+                completionEvent = SliceEvent(type: .routeQuestTurnCompleted, payload: completionPayload)
+            case .step:
+                completionEvent = SliceEvent(type: .routeQuestStepCompleted, payload: completionPayload)
+            case .station:
+                completionEvent = SliceEvent(type: .routeQuestStationConfirmed, payload: completionPayload)
+            case .start, .returnHome:
+                var payload = completionPayload
+                payload["action"] = "route_quest_node_completed"
+                completionEvent = SliceEvent(type: .interaction, payload: payload)
+            }
+            try? telemetryWriter.append(completionEvent)
+        }
+
+        if progress.isComplete(for: route) {
+            let routeElapsedMs = Int(Date.now.timeIntervalSince(progress.routeStartedAt) * 1000)
+            try? telemetryWriter.append(SliceEvent(
+                type: .routeQuestCompleted,
+                payload: [
+                    "route_id": route.id.uuidString,
+                    "route_template": route.templateName,
+                    "elapsed_ms": String(routeElapsedMs),
+                    "fallback_count": String(progress.fallbackCount)
+                ]
+            ))
+            markReturned()
+        } else {
+            enterRouteNode(index: progress.currentNodeIndex)
+        }
+    }
+
+    private func currentRouteStationContext() -> (node: RouteQuestNode, station: RoomQuestStation)? {
+        guard case .routeNode(_) = phase,
+              let node = currentRouteNode,
+              case .station(let role, _) = node.kind,
+              let station = stations.first(where: { $0.role == role })
+        else { return nil }
+        return (node, station)
     }
 
     private func captureReference(for result: RoomQuestMarkerScanResult) -> Bool {
