@@ -54,15 +54,21 @@ struct SettingsView: View {
                         LazyVGrid(columns: ResponsiveLayout.settingsColumns(for: horizontalSizeClass), alignment: .leading, spacing: 20) {
                             settingsCard
                             profilesCard
-                            historyCard
-                            smokeTestCard
+                            historySummaryCard
+                            dataResetCard
+                            if appModel.featureFlags.testModeEnabled {
+                                smokeTestCard
+                            }
                         }
                     } else {
                         VStack(spacing: 16) {
                             settingsCard
                             profilesCard
-                            historyCard
-                            smokeTestCard
+                            historySummaryCard
+                            dataResetCard
+                            if appModel.featureFlags.testModeEnabled {
+                                smokeTestCard
+                            }
                         }
                     }
 
@@ -101,7 +107,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Settings")
                         .font(.largeTitle.weight(.black))
-                    Text("Child experience, profiles, and local history controls.")
+                    Text("Quick parent controls. History and data actions stay compact here.")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
@@ -207,61 +213,50 @@ struct SettingsView: View {
         }
     }
 
-    private var historyCard: some View {
+    private var historySummaryCard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session history")
                     .font(.title2.weight(.bold))
-                let rows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 8)
-                Text("\(summaries.count + gameSessions.count) saved locally across all games")
+                let savedCount = summaries.count + gameSessions.count
+                Text(savedCount == 0 ? "No history saved yet." : "\(savedCount) saved locally across all games")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Session \(index + 1)")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(MatherTheme.accent)
-                            Text(row.title)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                            Text(row.startedAt.formatted(date: .abbreviated, time: .shortened))
-                            Text(row.detail)
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                        }
-                        Spacer()
-                    }
-                    .padding(.vertical, 4)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityIdentifier("settings-history-session-\(index)")
-                }
-                if rows.isEmpty {
-                    Text("No history yet.")
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                }
+                    .accessibilityIdentifier("settings-history-summary")
+                Text("Open Parent Summary for the full timeline, trends, and next-step guidance.")
+                    .font(.caption)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Divider()
-                    .padding(.top, 4)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Data reset")
-                        .font(.headline.weight(.bold))
-                    Text("Use only when you want to remove saved summaries and events from this device.")
-                        .font(.caption)
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button(role: .destructive) {
-                        showingClearConfirmation = true
-                    } label: {
-                        Label("Clear session history", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(DestructiveOutlineButtonStyle())
-                    .accessibilityIdentifier("settings-clear-history")
+                Button {
+                    appModel.engine.showParentSummary()
+                } label: {
+                    Label("View full history", systemImage: "chart.line.uptrend.xyaxis")
+                        .frame(maxWidth: .infinity)
                 }
-                .padding(12)
-                .background(MatherTheme.danger.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+                .accessibilityIdentifier("settings-view-full-history")
+            }
+        }
+    }
+
+    private var dataResetCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Data reset")
+                    .font(.title2.weight(.bold))
+                Text("Clears saved summaries, cross-game sessions, and telemetry events for the active kid profile on this device.")
+                    .font(.subheadline)
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(role: .destructive) {
+                    showingClearConfirmation = true
+                } label: {
+                    Label("Clear session history", systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(DestructiveOutlineButtonStyle())
+                .accessibilityIdentifier("settings-clear-history")
             }
         }
     }

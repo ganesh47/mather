@@ -190,19 +190,35 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
-        XCTAssertTrue(waitForHistoryRow(app, identifier: "settings-history-session-1", fallbackLabel: "Session 2", timeout: 5))
+        XCTAssertTrue(app.buttons["settings-view-full-history"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.otherElements["settings-history-session-1"].exists)
+    }
+
+
+    func testFamilySettingsHidesPilotRunbookAndInlineHistoryRows() {
+        let app = launchFamilySettingsWithSeededHistory(count: 7)
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Settings"].tap()
+        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.staticTexts["7 saved locally across all games"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["settings-view-full-history"].exists)
+        XCTAssertTrue(app.buttons["settings-clear-history"].exists)
+        XCTAssertFalse(app.staticTexts["Pilot smoke test"].exists)
+        XCTAssertFalse(app.otherElements["settings-history-session-0"].exists)
+        snapshot(app, "Settings-FamilySimplified")
     }
 
     // MARK: - iPhone layout / pilot runbook
 
     /// Verifies the full session flow renders without crash and screenshots the
-    /// pilot runbook in Settings — covers the M8 smoke-test acceptance criterion.
+    /// pilot-only runbook. Family Settings keeps this hidden unless test mode is active.
     func testScreenshot_PilotRunbook() {
         let app = launchWithLegacyVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
         snapshot(app, "iPhone-Home")
 
-        // Navigate to Settings and capture the pilot runbook
+        // Navigate to Settings and capture the pilot-only runbook
         app.buttons["Settings"].tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
@@ -384,6 +400,16 @@ final class ScreenshotTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-uiTest.seedHistory", "\(count)"
+        ])
+    }
+
+
+    private func launchFamilySettingsWithSeededHistory(count: Int) -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.skipProfilePicker", "YES",
             "-uiTest.seedHistory", "\(count)"
         ])
     }
