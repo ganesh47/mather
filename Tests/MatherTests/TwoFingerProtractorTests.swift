@@ -161,3 +161,82 @@ struct ProtractorSceneTests {
         }
     }
 }
+
+@Suite("AngleMatchPrelude")
+struct AngleMatchPreludeTests {
+    @Test func preludeBuildsVisualAndValueCardsFromProtractorLevels() {
+        let state = AngleMatchState.prelude(from: protractorLevels, pairCount: 3)
+
+        #expect(state.pairs.count == 3)
+        #expect(state.cards.count == 6)
+        #expect(Set(state.pairs.map(\.id)).count == 3)
+        #expect(Set(state.cards.map(\.id)).count == 6)
+        #expect(state.pairs.map(\.targetAngle) == Array(protractorLevels.prefix(3).map(\.targetAngle)))
+
+        for pair in state.pairs {
+            let pairCards = state.cards.filter { $0.pairID == pair.id }
+            #expect(pairCards.count == 2)
+            #expect(pairCards.contains { $0.side == .visual })
+            #expect(pairCards.contains { $0.side == .value })
+            #expect(!pair.mission.isEmpty)
+            #expect(!pair.sceneName.isEmpty)
+            #expect(pair.valueLabel == "\(Int(pair.targetAngle))°")
+        }
+    }
+
+    @Test func correctVisualAndValueSelectionMarksThePairMatched() {
+        var state = AngleMatchState.prelude(from: protractorLevels, pairCount: 2)
+        let pair = state.pairs[0]
+        let visual = state.cards.first { $0.pairID == pair.id && $0.side == .visual }!
+        let value = state.cards.first { $0.pairID == pair.id && $0.side == .value }!
+
+        #expect(state.select(cardID: visual.id) == .selected)
+        #expect(state.select(cardID: value.id) == .matched(pairID: pair.id, completed: false))
+
+        let matchedCards = state.cards.filter { $0.pairID == pair.id }
+        #expect(matchedCards.allSatisfy { $0.isMatched })
+        #expect(state.completedLevelIndex == pair.levelIndex)
+        #expect(!state.isComplete)
+    }
+
+    @Test func mismatchClearsSelectionWithoutMatchingCards() {
+        var state = AngleMatchState.prelude(from: protractorLevels, pairCount: 2)
+        let firstVisual = state.cards.first { $0.pairID == state.pairs[0].id && $0.side == .visual }!
+        let secondValue = state.cards.first { $0.pairID == state.pairs[1].id && $0.side == .value }!
+
+        #expect(state.select(cardID: firstVisual.id) == .selected)
+        #expect(state.select(cardID: secondValue.id) == .mismatched)
+
+        #expect(state.selectedCardID == nil)
+        #expect(!state.cards.contains { $0.isMatched })
+        #expect(!state.isComplete)
+    }
+
+    @Test func completionHappensOnlyAfterAllPairsMatch() {
+        var state = AngleMatchState.prelude(from: protractorLevels, pairCount: 2)
+        let pairs = state.pairs
+
+        for (index, pair) in pairs.enumerated() {
+            let visual = state.cards.first { $0.pairID == pair.id && $0.side == .visual }!
+            let value = state.cards.first { $0.pairID == pair.id && $0.side == .value }!
+            #expect(state.select(cardID: visual.id) == .selected)
+            let expectedCompleted = index == pairs.count - 1
+            #expect(state.select(cardID: value.id) == .matched(pairID: pair.id, completed: expectedCompleted))
+        }
+
+        #expect(state.isComplete)
+        #expect(state.completedLevelIndex == state.pairs.last?.levelIndex)
+    }
+
+    @Test func childFacingAngleMatchCopyAvoidsPressureWords() {
+        let state = AngleMatchState.prelude(from: protractorLevels, pairCount: 3)
+        let blockedWords = ["hurry", "timer", "score", "wrong", "beat"]
+
+        for pair in state.pairs {
+            let copy = "\(pair.mission) \(pair.sceneName) \(pair.valueLabel)"
+            for blockedWord in blockedWords {
+                #expect(!copy.localizedCaseInsensitiveContains(blockedWord))
+            }
+        }
+    }
+}
