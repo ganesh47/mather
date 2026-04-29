@@ -111,7 +111,7 @@ struct ProtractorLevel {
     let snapTolerance: Double     // degrees
 }
 
-let levels: [ProtractorLevel] = [
+let protractorLevels: [ProtractorLevel] = [
     ProtractorLevel(targetAngle: 90,  sceneName: "a right angle — like opening a gate", mission: "Open the garden gate to a square corner.", sceneKind: .doorGate, snapTolerance: 5),
     ProtractorLevel(targetAngle: 45,  sceneName: "a half-right angle — like a ramp", mission: "Set the ramp so the marble can roll.", sceneKind: .clockRamp, snapTolerance: 5),
     ProtractorLevel(targetAngle: 60,  sceneName: "a triangle corner — like a tent roof", mission: "Raise the tent roof to a strong triangle.", sceneKind: .triangleRoof, snapTolerance: 5),
@@ -134,7 +134,7 @@ struct TwoFingerProtractorView: View {
     @State private var showDegreeLabel: Bool = false
     @State private var canvasSize: CGSize = .zero
 
-    private var level: ProtractorLevel { levels[levelIndex % levels.count] }
+    private var level: ProtractorLevel { protractorLevels[levelIndex % protractorLevels.count] }
 
     var body: some View {
         ZStack {
@@ -220,7 +220,7 @@ struct TwoFingerProtractorView: View {
         VStack(spacing: 8) {
             if matched {
                 Button(action: advanceLevel) {
-                    Text(wonCount >= levels.count ? "All done!" : "Next angle →")
+                    Text(wonCount >= protractorLevels.count ? "All done!" : "Next angle →")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -453,7 +453,7 @@ struct TwoFingerProtractorView: View {
     }
 
     private func advanceLevel() {
-        if wonCount >= levels.count {
+        if wonCount >= protractorLevels.count {
             appModel.engine.showHome()
             return
         }

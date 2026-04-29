@@ -150,8 +150,8 @@ struct TwoFingerProtractorTests {
 @Suite("ProtractorScenes")
 struct ProtractorSceneTests {
     @Test func scenesConnectEveryTargetToAVisibleContext() {
-        #expect(levels.count >= 5)
-        #expect(Set(levels.map(\.sceneKind)).count == levels.count)
+        #expect(protractorLevels.count >= 5)
+        #expect(Set(protractorLevels.map(\.sceneKind)).count == protractorLevels.count)
         for level in levels {
             #expect(!level.sceneName.isEmpty)
             #expect(!level.mission.isEmpty)
