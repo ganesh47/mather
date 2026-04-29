@@ -260,6 +260,8 @@ final class StoredTelemetryEvent {
 /// The child tilts the device; counters slide under simulated gravity between two pans.
 /// `isLocked` becomes true when the split matches the problem's decomposition exactly.
 struct GravitySplitState: Equatable {
+    static let individualTokenLimit = 20
+
     let target: Int
     let decompositionA: Int   // expected left-pan count
     let decompositionB: Int   // expected right-pan count
@@ -268,6 +270,32 @@ struct GravitySplitState: Equatable {
 
     var isLocked: Bool {
         leftCount == decompositionA && rightCount == decompositionB
+    }
+
+    var usesGroupedRepresentation: Bool {
+        target > Self.individualTokenLimit
+    }
+
+    var groupedStepValues: [Int] {
+        GroupedNumberRepresentation(target).suggestedSteps
+    }
+
+    func remainingCapacity(for side: TransferSide) -> Int {
+        switch side {
+        case .left:
+            max(0, decompositionA - leftCount)
+        case .right:
+            max(0, decompositionB - rightCount)
+        }
+    }
+
+    func currentCount(for side: TransferSide) -> Int {
+        switch side {
+        case .left:
+            leftCount
+        case .right:
+            rightCount
+        }
     }
 
     init(problem: SliceProblem) {
