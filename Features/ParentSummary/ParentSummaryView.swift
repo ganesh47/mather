@@ -18,12 +18,14 @@ struct ParentSummaryView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     CardSurface {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Parent Summary")
                                 .font(.largeTitle.weight(.black))
                             Text(digest.objectiveTitle)
                                 .font(.headline.weight(.semibold))
                                 .foregroundStyle(MatherTheme.cardSubtitle)
+
+                            parentActionButtons
                         }
                     }
 
@@ -94,26 +96,29 @@ struct ParentSummaryView: View {
                             nextTargetCard(digest: digest)
                         }
                     }
-
-                    LazyVGrid(
-                        columns: ResponsiveLayout.parentActionColumns(for: horizontalSizeClass),
-                        spacing: 16
-                    ) {
-                        Button("Settings") {
-                            appModel.engine.showSettings()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
-
-                        Button("Home") {
-                            appModel.engine.showHome()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
-                    }
                 }
                 .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                 .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
                 .frame(maxWidth: .infinity)
             }
+        }
+    }
+
+
+    private var parentActionButtons: some View {
+        LazyVGrid(
+            columns: ResponsiveLayout.parentActionColumns(for: horizontalSizeClass),
+            spacing: 16
+        ) {
+            Button("Settings") {
+                appModel.engine.showSettings()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+
+            Button("Home") {
+                appModel.engine.showHome()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
         }
     }
 
