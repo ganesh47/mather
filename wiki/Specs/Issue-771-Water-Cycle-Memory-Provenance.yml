@@ -1,0 +1,107 @@
+issue: 771
+title: Water Cycle Memory deck asset provenance
+createdAt: 2026-04-29
+retrievedAt: 2026-04-29
+assets:
+  - assetName: MemoryWaterCycleEvaporation
+    cardId: water-cycle-evaporation
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleEvaporation
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleEvaporation.png
+    originalSha256: 744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c
+    derivativeFileName: MemoryWaterCycleEvaporation.png
+    derivativeSha256: 744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCycleCondensation
+    cardId: water-cycle-condensation
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCondensation
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleCondensation.png
+    originalSha256: 1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f
+    derivativeFileName: MemoryWaterCycleCondensation.png
+    derivativeSha256: 1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCyclePrecipitation
+    cardId: water-cycle-precipitation
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCyclePrecipitation
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCyclePrecipitation.png
+    originalSha256: 4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5
+    derivativeFileName: MemoryWaterCyclePrecipitation.png
+    derivativeSha256: 4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCycleCollection
+    cardId: water-cycle-collection
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCollection
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleCollection.png
+    originalSha256: 2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6
+    derivativeFileName: MemoryWaterCycleCollection.png
+    derivativeSha256: 2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCycleSunHeat
+    cardId: water-cycle-sun-heat
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleSunHeat
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleSunHeat.png
+    originalSha256: 85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012
+    derivativeFileName: MemoryWaterCycleSunHeat.png
+    derivativeSha256: 85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCycleVapor
+    cardId: water-cycle-vapor
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleVapor
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleVapor.png
+    originalSha256: dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087
+    derivativeFileName: MemoryWaterCycleVapor.png
+    derivativeSha256: dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCycleCloud
+    cardId: water-cycle-cloud
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCloud
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCycleCloud.png
+    originalSha256: 61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c
+    derivativeFileName: MemoryWaterCycleCloud.png
+    derivativeSha256: 61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+  - assetName: MemoryWaterCyclePond
+    cardId: water-cycle-pond
+    sourceUrl: project-owned://mather/issue-771/MemoryWaterCyclePond
+    sourcePageTitle: Project-owned deterministic water cycle drawing
+    creator: OpenAI Codex for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    originalFileName: MemoryWaterCyclePond.png
+    originalSha256: ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51
+    derivativeFileName: MemoryWaterCyclePond.png
+    derivativeSha256: ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51
+    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+verification:
+  licenseAllowsReuse: true
+  noThirdPartyRestrictionFound: true
+  noLogoOrEndorsementRisk: true
+  noPeopleOrPrivacyRisk: true
+  childCardLegibilityChecked: true

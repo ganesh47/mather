@@ -182,15 +182,17 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.allCases.contains(.countries))
         #expect(MemoryView.DeckSelection.allCases.contains(.countryFlags))
         #expect(MemoryView.DeckSelection.allCases.contains(.indiaStates))
+        #expect(MemoryView.DeckSelection.allCases.contains(.waterCycle))
         #expect(MemoryView.DeckSelection.planets.animals.map(\.id) == MemoryDeck.planets.map(\.id))
         #expect(MemoryView.DeckSelection.fishes.animals.map(\.id) == MemoryDeck.fishes.map(\.id))
         #expect(MemoryView.DeckSelection.countries.animals.map(\.id) == MemoryDeck.countries.map(\.id))
         #expect(MemoryView.DeckSelection.countryFlags.animals.map(\.id) == MemoryDeck.countryFlags.map(\.id))
         #expect(MemoryView.DeckSelection.indiaStates.animals.map(\.id) == MemoryDeck.indiaStates.map(\.id))
+        #expect(MemoryView.DeckSelection.waterCycle.animals.map(\.id) == MemoryDeck.waterCycle.map(\.id))
     }
 
     @Test func requestedDecksProvideEnoughDistinctPairs() {
-        for deck in [MemoryDeck.planets, MemoryDeck.fishes, MemoryDeck.countries, MemoryDeck.countryFlags, MemoryDeck.indiaStates] {
+        for deck in [MemoryDeck.planets, MemoryDeck.fishes, MemoryDeck.countries, MemoryDeck.countryFlags, MemoryDeck.indiaStates, MemoryDeck.waterCycle] {
             #expect(deck.count >= MemoryDifficulty.hard.pairCount)
             #expect(Set(deck.map(\.id)).count == deck.count)
         }
@@ -297,6 +299,94 @@ struct MemoryViewTests {
         }
     }
 
+    @Test func waterCycleDeckUsesVettedImageAssets() {
+        let expectedNames = ["Evaporation", "Condensation", "Precipitation", "Collection", "Sun Heat", "Vapor", "Cloud", "Pond"]
+        let ids = MemoryDeck.waterCycle.map(\.id)
+        let assets = MemoryDeck.waterCycle.compactMap(\.imageAssetName)
+        let plan = MemoryDeck.waterCycleImageAssetPlan
+        let importedAssetNames = Set(plan.compactMap { plan in
+            if case .readyForAssetImport = plan.status { return plan.assetName }
+            return nil
+        })
+
+        #expect(MemoryView.DeckSelection.waterCycle.menuLabel == "Water Cycle")
+        #expect(MemoryView.DeckSelection.waterCycle.label == "💧 Water Cycle")
+        #expect(MemoryDeck.waterCycle.map(\.name) == expectedNames)
+        #expect(Set(ids).count == ids.count)
+        #expect(ids.allSatisfy { $0.hasPrefix("water-cycle-") })
+        #expect(Set(assets).count == MemoryDeck.waterCycle.count)
+        #expect(assets.allSatisfy { $0.hasPrefix("MemoryWaterCycle") })
+        #expect(plan.map(\.cardId) == ids)
+        #expect(plan.map(\.assetName) == assets)
+        #expect(importedAssetNames == Set(assets))
+        #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
+        #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.category == "water cycle concept" })
+        #expect(MemoryDeck.waterCycle.allSatisfy { animal in
+            Set(animal.detailCards.map(\.title)).isSuperset(of: ["Concept", "Action", "Where", "Everyday Words", "Cycle Step"])
+        })
+    }
+
+    @MainActor
+    @Test func waterCycleBuildsPictureAndConceptLabelCards() {
+        let evaporation = MemoryDeck.waterCycle.first { $0.id == "water-cycle-evaporation" }!
+        let cards = MemoryView.buildCards(for: [evaporation])
+        let picture = cards.first { card in
+            if case .picture = card.content { return true }
+            return false
+        }!
+        let label = cards.first { card in
+            if case .label = card.content { return true }
+            return false
+        }!
+
+        #expect(picture.pairId == "water-cycle-evaporation")
+        #expect(label.pairId == "water-cycle-evaporation")
+        #expect(MemoryView.accessibilityLabel(for: picture) == "Evaporation")
+        #expect(MemoryView.accessibilityLabel(for: label) == "Evaporation")
+        if case let .picture(animal) = picture.content {
+            #expect(animal.imageAssetName == "MemoryWaterCycleEvaporation")
+        } else {
+            Issue.record("Expected picture card")
+        }
+    }
+
+    @Test func waterCycleAssetsHaveProvenanceAndCatalogs() {
+        let expectedHashes = [
+            "MemoryWaterCycleEvaporation": "744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c",
+            "MemoryWaterCycleCondensation": "1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f",
+            "MemoryWaterCyclePrecipitation": "4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5",
+            "MemoryWaterCycleCollection": "2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6",
+            "MemoryWaterCycleSunHeat": "85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012",
+            "MemoryWaterCycleVapor": "dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087",
+            "MemoryWaterCycleCloud": "61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c",
+            "MemoryWaterCyclePond": "ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51"
+        ]
+        let waterCycleAssets = Set(MemoryDeck.waterCycle.compactMap(\.imageAssetName))
+        let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
+
+        #expect(waterCycleAssets == Set(expectedHashes.keys))
+        for assetName in waterCycleAssets {
+            let provenance = provenanceByAsset[assetName]
+            let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
+            let image = imageset.appendingPathComponent("\(assetName).png")
+            let contents = imageset.appendingPathComponent("Contents.json")
+
+            #expect(provenance?.sourceName == "Project-owned deterministic water cycle drawing")
+            #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #771")
+            #expect(provenance?.licenseAllowsReuse == true)
+            #expect(provenance?.noThirdPartyRestrictionFound == true)
+            #expect(provenance?.noLogoOrEndorsementRisk == true)
+            #expect(provenance?.noPeopleOrPrivacyRisk == true)
+            #expect(provenance?.childCardLegibilityChecked == true)
+            #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
+            #expect(FileManager.default.fileExists(atPath: image.path))
+            #expect(FileManager.default.fileExists(atPath: contents.path))
+        }
+    }
+
     @MainActor
     @Test func learningContentAndEligibilityFollowVisibleDeckRules() {
         let bird = MemoryDeck.birds[0]
@@ -354,6 +444,16 @@ struct MemoryViewTests {
         let flagContent = MemoryView.learningContent(for: MemoryDeck.countryFlags[0], deckSelection: .countryFlags, description: flagDescription)
         #expect(flagContent.sourceBadge == "Flag Guide")
         #expect(flagContent.readAloudText.contains("Source: Flag Guide."))
+
+        let waterCycleDescription = MemoryCardDescription(
+            title: "Evaporation",
+            shortDescription: "Evaporation is warm water going up.",
+            factChips: [MemoryFactChip(title: "Action", value: "warm water goes up")],
+            source: .curatedFallback
+        )
+        let waterCycleContent = MemoryView.learningContent(for: MemoryDeck.waterCycle[0], deckSelection: .waterCycle, description: waterCycleDescription)
+        #expect(waterCycleContent.sourceBadge == "Water Cycle Guide")
+        #expect(waterCycleContent.readAloudText.contains("Source: Water Cycle Guide."))
     }
 }
 
@@ -370,7 +470,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
@@ -383,6 +483,7 @@ struct MemoryCardDescribeServiceTests {
         #expect(MemoryDeck.countries.allSatisfy { $0.metadata.deck == .countries })
         #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
         #expect(MemoryDeck.indiaStates.allSatisfy { $0.metadata.deck == .indiaStates })
+        #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedFlagMetadata() async {
@@ -413,6 +514,22 @@ struct MemoryCardDescribeServiceTests {
         #expect(description.shortDescription.contains("bird"))
         #expect(description.shortDescription.localizedCaseInsensitiveContains("south american rainforests"))
         #expect(description.factChips.map(\.title) == ["Home", "Lifespan", "Weight", "Size"])
+    }
+
+    @MainActor @Test func fallbackDescriptionUsesCuratedWaterCycleMetadata() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubAIAdapter(isAvailable: false, response: nil)
+        )
+
+        let description = await service.describe(MemoryDeck.waterCycle.first { $0.id == "water-cycle-evaporation" }!)
+
+        #expect(description.title == "Evaporation")
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("water cycle"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("warm water goes up"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("sun warms water into vapor"))
+        #expect(Array(description.factChips.map(\.title).prefix(4)) == ["Concept", "Action", "Where", "Everyday Words"])
     }
 
     @MainActor @Test func servicePrefersAdapterOutputWhenAvailable() async {

@@ -223,13 +223,27 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is an Indian state and its capital is \(animal.name)."
             }
+        case .waterCycle:
+            if let action = metadata.movement {
+                firstSentence = "\(animal.canonicalName) is part of the water cycle: \(action.lowercased())."
+            } else {
+                firstSentence = "\(animal.canonicalName) is part of the water cycle."
+            }
         }
 
-        let secondParts = [
-            metadata.colors.map { "It can show \($0.lowercased()) colors" },
-            metadata.movement.map { "It often \($0.lowercased())" },
-            metadata.size.map { "It can be about \($0.lowercased())" }
-        ].compactMap { $0 }
+        let secondParts: [String]
+        if metadata.deck == .waterCycle {
+            secondParts = [
+                metadata.habitat.map { "You can notice it \($0.lowercased())" },
+                animal.detailCards.first { $0.title == "Everyday Words" }.map(\.value)
+            ].compactMap { $0 }
+        } else {
+            secondParts = [
+                metadata.colors.map { "It can show \($0.lowercased()) colors" },
+                metadata.movement.map { "It often \($0.lowercased())" },
+                metadata.size.map { "It can be about \($0.lowercased())" }
+            ].compactMap { $0 }
+        }
 
         let secondSentence: String
         if secondParts.count >= 2 {
