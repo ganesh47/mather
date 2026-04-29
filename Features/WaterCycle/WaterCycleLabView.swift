@@ -273,7 +273,8 @@ struct WaterCycleLabView: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
         }
-        .frame(width: 140, minHeight: 138)
+        .frame(width: 140)
+        .frame(minHeight: 138)
     }
 
     private var rainColumn: some View {
@@ -287,7 +288,8 @@ struct WaterCycleLabView: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
         }
-        .frame(width: 140, minHeight: 138)
+        .frame(width: 140)
+        .frame(minHeight: 138)
     }
 
     private var pondView: some View {
