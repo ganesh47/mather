@@ -57,7 +57,7 @@ struct RectangleFactoryView: View {
         }
         .onAppear {
             sessionStart = .now
-            loadN(RectangleFactoryView.nSequence[0])
+            loadN(RectangleFactoryView.nSequence[0], speakPrompt: true)
         }
         .onDisappear {
             guard sequenceIndex > 0 else { return }
@@ -102,6 +102,15 @@ struct RectangleFactoryView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Label(Self.missionText(for: targetN), systemImage: "shippingbox.fill")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(MatherTheme.coral)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(MatherTheme.coral.opacity(0.12))
+                        .clipShape(Capsule())
+                        .accessibilityLabel("Factory story: \(Self.missionText(for: targetN))")
                 }
             }
             Spacer(minLength: 12)
@@ -156,10 +165,21 @@ struct RectangleFactoryView: View {
                     .accessibilityLabel("Current rectangle \(frameWidth) by \(frameHeight) equals \(frameWidth * frameHeight)")
 
                 ZStack(alignment: .topLeading) {
+                    factoryFloor(cellPitch: cellPitch)
+                        .frame(width: CGFloat(gridSize.columns) * cellPitch, height: CGFloat(gridSize.rows) * cellPitch)
+
                     dotGrid(columns: gridSize.columns, rows: gridSize.rows, dotDiameter: dotDiameter, cellPitch: cellPitch, valid: valid)
                         .frame(width: CGFloat(gridSize.columns) * cellPitch, height: CGFloat(gridSize.rows) * cellPitch)
 
                     selectionFrame(w: frameW, h: frameH, valid: valid, cellPitch: cellPitch)
+                        .scaleEffect(celebratingFactorKey != nil ? 1.035 : 1, anchor: .topLeading)
+                        .animation(.spring(response: 0.22, dampingFraction: 0.55), value: celebratingFactorKey)
+
+                    if celebratingFactorKey != nil {
+                        factorySparkles(width: frameW, height: frameH, cellPitch: cellPitch)
+                            .allowsHitTesting(false)
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
                 .padding(16)
                 .background(MatherTheme.card.opacity(0.8))
@@ -171,6 +191,31 @@ struct RectangleFactoryView: View {
         .animation(.spring(response: 0.25, dampingFraction: 0.75), value: frameHeight)
         .animation(.easeInOut(duration: 0.2), value: showEquation)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+
+    private func factoryFloor(cellPitch: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        MatherTheme.warm.opacity(0.10),
+                        MatherTheme.softBlue.opacity(0.08)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(alignment: .bottomTrailing) {
+                Label("factory floor", systemImage: "wrench.and.screwdriver.fill")
+                    .font(.system(size: max(8, min(12, cellPitch * 0.34)), weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.cardSubtitle.opacity(0.65))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(MatherTheme.card.opacity(0.82))
+                    .clipShape(Capsule())
+                    .padding(8)
+            }
+            .accessibilityHidden(true)
     }
 
     private func dotGrid(columns: Int, rows: Int, dotDiameter: CGFloat, cellPitch: CGFloat, valid: Bool) -> some View {
@@ -188,6 +233,24 @@ struct RectangleFactoryView: View {
                 }
             }
         }
+    }
+
+    private func factorySparkles(width: CGFloat, height: CGFloat, cellPitch: CGFloat) -> some View {
+        let size = max(16, min(28, cellPitch * 0.9))
+
+        return ZStack {
+            Image(systemName: "sparkles")
+                .font(.system(size: size, weight: .black))
+                .foregroundStyle(MatherTheme.warm)
+                .offset(x: max(8, width - size * 0.2), y: -size * 0.45)
+
+            Image(systemName: "shippingbox.fill")
+                .font(.system(size: size * 0.8, weight: .black))
+                .foregroundStyle(MatherTheme.coral)
+                .offset(x: max(12, width * 0.5), y: max(12, height + size * 0.25))
+        }
+        .frame(width: width, height: height, alignment: .topLeading)
+        .accessibilityHidden(true)
     }
 
     private func selectionFrame(w: CGFloat, h: CGFloat, valid: Bool, cellPitch: CGFloat) -> some View {
@@ -462,7 +525,7 @@ struct RectangleFactoryView: View {
         showEquation = true
         appModel.hapticsService.cardSnapCorrect(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
-            "\(min(frameWidth, frameHeight)) times \(max(frameWidth, frameHeight)) equals \(targetN)!",
+            Self.discoverySpeech(width: frameWidth, height: frameHeight, target: targetN),
             enabled: appModel.featureFlags.audioEnabled
         )
         Task { @MainActor in
@@ -490,13 +553,18 @@ struct RectangleFactoryView: View {
             appModel.engine.showHome()
             return
         }
+        let previousN = targetN
         sequenceIndex = next
-        loadN(RectangleFactoryView.nSequence[next])
+        loadN(RectangleFactoryView.nSequence[next], speakPrompt: false)
+        appModel.speechService.speak(
+            Self.transitionSpeech(from: previousN, to: targetN),
+            enabled: appModel.featureFlags.audioEnabled
+        )
     }
 
     /// Load a new target N, starting the frame near √N so the child
     /// makes small adjustments rather than dragging from 1×1.
-    private func loadN(_ n: Int) {
+    private func loadN(_ n: Int, speakPrompt: Bool = false) {
         targetN = n
         foundFactors = []
         allFoundForN = false
@@ -505,6 +573,9 @@ struct RectangleFactoryView: View {
         let start = Self.smartStartDimensions(for: n)
         frameWidth  = start.width
         frameHeight = start.height
+        if speakPrompt {
+            appModel.speechService.speak(Self.openingSpeech(for: n), enabled: appModel.featureFlags.audioEnabled)
+        }
     }
 
     private func resetFrame() {
@@ -543,12 +614,30 @@ struct RectangleFactoryView: View {
         let count = factorsOf(n).count
         let noun = count == 1 ? "rectangle" : "rectangles"
         return completionStyle(for: n) == .prime
-            ? "\(n) is prime. Only one rectangle works!"
-            : "You found all \(count) \(noun) for \(n)!"
+            ? "\(n) is prime. Only one factory box works!"
+            : "Factory complete! You found all \(count) \(noun) for \(n)!"
     }
 
     nonisolated static func instructionText(for n: Int) -> String {
         "Drag the blue corner to resize the box. Cover exactly \(n) dots."
+    }
+
+    nonisolated static func missionText(for n: Int) -> String {
+        "Factory order: pack \(n) dots with no gaps"
+    }
+
+    nonisolated static func openingSpeech(for n: Int) -> String {
+        "Factory order! Can you pack \(n) dots into a perfect rectangle?"
+    }
+
+    nonisolated static func discoverySpeech(width: Int, height: Int, target: Int) -> String {
+        let rows = min(width, height)
+        let columns = max(width, height)
+        return "Nice packing! \(rows) rows of \(columns) makes \(target)."
+    }
+
+    nonisolated static func transitionSpeech(from previous: Int, to next: Int) -> String {
+        "Order \(previous) shipped! Next factory order: \(next) dots."
     }
 
     nonisolated static func advanceButtonTitle(hasNext: Bool) -> String {
