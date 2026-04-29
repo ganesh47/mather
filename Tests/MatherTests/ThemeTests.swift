@@ -112,13 +112,13 @@ struct ThemeTests {
 
     // MARK: - VehicleTheme (PR4)
 
-    @Test func vehicleThemeCounterKindIsVehicle() {
+    @Test func vehicleThemeCounterKindIsThemedSymbol() {
         let theme = VehicleTheme()
-        if case .vehicle(let sym, let assetName) = theme.counterKind {
+        if case .themedSymbol(let sym, let assetName) = theme.counterKind {
             #expect(sym == "car.fill")
             #expect(assetName == "VS1VehicleCar")
         } else {
-            Issue.record("Expected .vehicle counter kind with 'car.fill' symbol")
+            Issue.record("Expected themed symbol counter kind with 'car.fill' symbol")
         }
     }
 
@@ -160,11 +160,42 @@ struct ThemeTests {
         #expect(prompt.localizedCaseInsensitiveContains("memory"))
     }
 
+    // MARK: - SpaceTheme
+
+    @Test func spaceThemeCounterKindIsThemedSymbol() {
+        let theme = SpaceTheme()
+        if case .themedSymbol(let sym, let assetName) = theme.counterKind {
+            #expect(sym == "sparkles")
+            #expect(assetName == nil)
+        } else {
+            Issue.record("Expected themed symbol counter kind for SpaceTheme")
+        }
+    }
+
+    @Test func spaceThemePromptsAreDistinctFromClassic() {
+        let classic = ClassicTheme()
+        let space = SpaceTheme()
+        #expect(space.concretePrompt(target: 7) != classic.concretePrompt(target: 7))
+        #expect(space.pictorialPrompt(target: 5) != classic.pictorialPrompt(target: 5))
+        #expect(space.abstractPrompt() != classic.abstractPrompt())
+        #expect(space.transferPrompt(decompositionA: 3, decompositionB: 4) != classic.transferPrompt(decompositionA: 3, decompositionB: 4))
+        #expect(space.celebrationEmoji != classic.celebrationEmoji)
+    }
+
+    @Test func spaceTransferPromptDoesNotRevealDecompositionNumbers() {
+        let prompt = SpaceTheme().transferPrompt(decompositionA: 2, decompositionB: 5)
+        #expect(!prompt.contains("2"))
+        #expect(!prompt.contains("5"))
+        #expect(prompt.localizedCaseInsensitiveContains("memory"))
+    }
+
     // MARK: - Celebration emoji (PR8)
 
     @Test func celebrationEmojiDistinctBetweenThemes() {
         #expect(VehicleTheme().celebrationEmoji != ClassicTheme().celebrationEmoji)
+        #expect(SpaceTheme().celebrationEmoji != ClassicTheme().celebrationEmoji)
         #expect(!VehicleTheme().celebrationEmoji.isEmpty)
+        #expect(!SpaceTheme().celebrationEmoji.isEmpty)
         #expect(!ClassicTheme().celebrationEmoji.isEmpty)
     }
 
@@ -188,9 +219,52 @@ struct ThemeTests {
         engine.startSession()
         #expect(engine.feedbackMessage == "Park 6 cars in the garage.")
         #expect(engine.activeTheme.celebrationEmoji == "🚗")
-        if case .vehicle = engine.activeTheme.counterKind { } else {
-            Issue.record("Expected .vehicle counter kind after startSession with selectedThemeId=vehicle")
+        if case .themedSymbol = engine.activeTheme.counterKind { } else {
+            Issue.record("Expected themed symbol counter kind after startSession with selectedThemeId=vehicle")
         }
+    }
+
+    @MainActor
+    @Test func startSessionWithSpaceThemeIdActivatesSpaceTheme() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.selectedThemeId = "space"
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.feedbackMessage == "Load 6 star bolts for the rocket.")
+        #expect(engine.activeTheme.counterNoun == "star bolts")
+        #expect(engine.activeTheme.celebrationEmoji == "🚀")
+        if case .themedSymbol(let sym, let assetName) = engine.activeTheme.counterKind {
+            #expect(sym == "sparkles")
+            #expect(assetName == nil)
+        } else {
+            Issue.record("Expected themed symbol counter kind after startSession with selectedThemeId=space")
+        }
+    }
+
+    @MainActor
+    @Test func startSessionWithPlanetsAliasActivatesSpaceTheme() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.selectedThemeId = "planets"
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.activeTheme.counterNoun == "star bolts")
+        #expect(engine.activeTheme.celebrationEmoji == "🚀")
     }
 
     @MainActor
@@ -299,6 +373,10 @@ struct ThemeTests {
         #expect(VehicleTheme().counterNoun == "cars")
     }
 
+    @Test func spaceThemeCounterNounIsStarBolts() {
+        #expect(SpaceTheme().counterNoun == "star bolts")
+    }
+
     /// After 3 concrete failures with VehicleTheme, the feedback hint must say "cars" not "circles".
     @MainActor
     @Test func engineConcreteFailureHintUsesThemeCounterNoun() {
@@ -319,6 +397,27 @@ struct ThemeTests {
         engine.submitCurrentStage() // attempt 2
         engine.submitCurrentStage() // attempt 3 → counterNoun hint
         #expect(engine.feedbackMessage.contains("cars"))
+        #expect(!engine.feedbackMessage.contains("circles"))
+    }
+
+    @MainActor
+    @Test func engineConcreteFailureHintUsesSpaceCounterNoun() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            activeTheme: SpaceTheme(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        engine.submitCurrentStage()
+        engine.submitCurrentStage()
+        engine.submitCurrentStage()
+        #expect(engine.feedbackMessage.contains("star bolts"))
         #expect(!engine.feedbackMessage.contains("circles"))
     }
 }

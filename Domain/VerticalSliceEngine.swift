@@ -132,7 +132,8 @@ final class VerticalSliceEngine {
         // Freeze the active theme from the user's current selection — unless a custom
         // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
         if !hasInjectedTheme {
-            if featureFlags.selectedThemeId == "vehicle" {
+            switch featureFlags.selectedThemeId {
+            case "vehicle":
                 config.audioEnabled = featureFlags.audioEnabled
                 config.deterministicMode = featureFlags.testModeEnabled
                 problems = ProblemGenerator.generateProblems(config: config)
@@ -141,7 +142,13 @@ final class VerticalSliceEngine {
                     : Self.randomizedVehiclePool(from: VehicleSpec.pool)
                 problemThemes = problems.indices.map { i in VehicleTheme(spec: pool[i % pool.count]) }
                 activeTheme = problemThemes[0]
-            } else {
+            case "space", "planets":
+                activeTheme = SpaceTheme()
+                problemThemes = []
+                config.audioEnabled = featureFlags.audioEnabled
+                config.deterministicMode = featureFlags.testModeEnabled
+                problems = ProblemGenerator.generateProblems(config: config)
+            default:
                 activeTheme = ClassicTheme()
                 problemThemes = []
                 config.audioEnabled = featureFlags.audioEnabled

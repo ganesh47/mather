@@ -78,6 +78,17 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "SessionConfig")
     }
 
+    func testScreenshot_SessionConfig_PlanetsTheme() {
+        let app = launchWithVS1()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        app.buttons["Play"].tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.buttons["theme-card-space"].waitForExistence(timeout: 5))
+        app.buttons["theme-card-space"].tap()
+        snapshot(app, "SessionConfig-PlanetsTheme")
+    }
+
     // MARK: - Concrete stage
 
     func testScreenshot_ConcreteBuildView() {

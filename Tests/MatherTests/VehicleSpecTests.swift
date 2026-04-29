@@ -101,11 +101,11 @@ struct VehicleSpecTests {
         let theme = VehicleTheme()
         #expect(theme.counterNoun == "cars")
         #expect(theme.celebrationEmoji == "🚗")
-        if case .vehicle(let sym, let assetName) = theme.counterKind {
+        if case .themedSymbol(let sym, let assetName) = theme.counterKind {
             #expect(sym == "car.fill")
             #expect(assetName == "VS1VehicleCar")
         } else {
-            Issue.record("Expected .vehicle counterKind for default VehicleTheme")
+            Issue.record("Expected themed symbol counterKind for default VehicleTheme")
         }
     }
 
@@ -113,11 +113,11 @@ struct VehicleSpecTests {
         let theme = VehicleTheme(spec: .helicopter)
         #expect(theme.counterNoun == "helicopters")
         #expect(theme.celebrationEmoji == "🚁")
-        if case .vehicle(let sym, let assetName) = theme.counterKind {
+        if case .themedSymbol(let sym, let assetName) = theme.counterKind {
             #expect(sym == "helicopter")
             #expect(assetName == nil)
         } else {
-            Issue.record("Expected .vehicle counterKind for helicopter spec")
+            Issue.record("Expected themed symbol counterKind for helicopter spec")
         }
     }
 

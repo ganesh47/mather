@@ -45,7 +45,7 @@ final class FeatureFlagService {
     }
 
     /// Identifies the active theme for the next session.
-    /// Valid values: `"classic"` (default), `"vehicle"`.
+    /// Valid values: `"classic"` (default), `"vehicle"`, `"space"` (`"planets"` alias).
     /// Injected via launch argument `-feature.selectedThemeId classic` in UI tests.
     var selectedThemeId: String {
         didSet { defaults.set(selectedThemeId, forKey: Keys.selectedThemeId) }
