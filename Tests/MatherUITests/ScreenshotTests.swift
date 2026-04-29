@@ -270,12 +270,7 @@ final class ScreenshotTests: XCTestCase {
     }
 
     func testScreenshot_WaterCycleCompactCompletion() {
-        let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-
-        app.buttons["ExplorerLab"].tap()
-        _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
-        tapWhenReachable(app.buttons["Water Cycle Lab"], in: app, scrollDirection: .up)
+        let app = launchWaterCycleLab()
         XCTAssertTrue(app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10))
 
         let primaryAction = app.buttons["water-cycle-primary-action"]
@@ -415,6 +410,16 @@ final class ScreenshotTests: XCTestCase {
                 app.swipeDown()
             }
         }
+    }
+
+    private func launchWaterCycleLab() -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "waterCycle"
+        ])
     }
 
     private func launch() -> XCUIApplication {
