@@ -89,12 +89,7 @@ final class ScreenshotTests: XCTestCase {
         playButton.tap()
         _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
 
-        let startButton = app.buttons["Start Session"]
-        _ = startButton.waitForExistence(timeout: 5)
-        startButton.tap()
-
-        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
-        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+        startSessionAndWaitForConcrete(in: app)
         snapshot(app, "ConcreteBuild-Initial")
     }
 
@@ -111,12 +106,7 @@ final class ScreenshotTests: XCTestCase {
         playButton.tap()
         _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
 
-        let startButton = app.buttons["Start Session"]
-        _ = startButton.waitForExistence(timeout: 5)
-        startButton.tap()
-
-        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
-        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+        startSessionAndWaitForConcrete(in: app)
         snapshot(app, "ConcreteBuild-BeforeInput")
 
         // Submit with count at 0 to trigger failure feedback
@@ -232,11 +222,7 @@ final class ScreenshotTests: XCTestCase {
         _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
         snapshot(app, "iPhone-SessionConfig")
 
-        _ = app.buttons["Start Session"].waitForExistence(timeout: 5)
-        app.buttons["Start Session"].tap()
-
-        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
-        _ = app.staticTexts.element(matching: makePredicate).waitForExistence(timeout: 15)
+        startSessionAndWaitForConcrete(in: app)
         snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
 
         // Fill the deterministic target of 6 with five warm counters plus one accent counter.
@@ -272,7 +258,7 @@ final class ScreenshotTests: XCTestCase {
 
         app.buttons["Play"].tap()
         _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
-        app.buttons["Start Session"].tap()
+        startSessionAndWaitForConcrete(in: app)
 
         completeLoopV2Problem(
             in: app,
@@ -444,6 +430,21 @@ final class ScreenshotTests: XCTestCase {
         }
         app.launch()
         return app
+    }
+
+    private func startSessionAndWaitForConcrete(in app: XCUIApplication) {
+        let makePredicate = NSPredicate(format: "label BEGINSWITH 'Make '")
+        let makePrompt = app.staticTexts.element(matching: makePredicate)
+        let startButton = app.buttons["start-session-button"]
+
+        XCTAssertTrue(startButton.waitForExistence(timeout: 5), "Expected Start Session button before entering concrete stage")
+        startButton.tap()
+
+        if !makePrompt.waitForExistence(timeout: 8), startButton.exists {
+            startButton.tap()
+        }
+
+        XCTAssertTrue(makePrompt.waitForExistence(timeout: 15), "Expected concrete stage after tapping Start Session")
     }
 
     /// Attaches a full-screen screenshot to the test result with `.keepAlways` lifetime.
