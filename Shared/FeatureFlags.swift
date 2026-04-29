@@ -23,6 +23,7 @@ final class FeatureFlagService {
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
+        static let routeQuestEnabled = "feature.routeQuestEnabled"
         static let memoryCardAppleIntelligenceEnabled = "feature.memoryCardAppleIntelligenceEnabled"
         static let skipProfilePicker = "feature.skipProfilePicker"
     }
@@ -92,6 +93,11 @@ final class FeatureFlagService {
     /// Enables saving a lightweight station reference during camera verification.
     var roomQuestReferenceCaptureEnabled: Bool {
         didSet { defaults.set(roomQuestReferenceCaptureEnabled, forKey: Keys.roomQuestReferenceCaptureEnabled) }
+    }
+
+    /// Gates the Route Quest route-mode MVP while step/turn proof is gathered.
+    var routeQuestEnabled: Bool {
+        didSet { defaults.set(routeQuestEnabled, forKey: Keys.routeQuestEnabled) }
     }
 
     /// Enables trying Apple Intelligence for Memory Match card descriptions before curated fallback.
@@ -166,6 +172,7 @@ final class FeatureFlagService {
             Keys.roomQuestSafetyAcknowledged: false,
             Keys.roomQuestMarkerSetupEnabled: true,
             Keys.roomQuestReferenceCaptureEnabled: true,
+            Keys.routeQuestEnabled: false,
             Keys.memoryCardAppleIntelligenceEnabled: true,
             Keys.skipProfilePicker: false,
             Keys.placeMatchGPSMatch:    PlaceMatchThresholds.default.gpsMatchMetres,
@@ -191,6 +198,7 @@ final class FeatureFlagService {
         roomQuestSafetyAcknowledged = defaults.bool(forKey: Keys.roomQuestSafetyAcknowledged)
         roomQuestMarkerSetupEnabled = defaults.bool(forKey: Keys.roomQuestMarkerSetupEnabled)
         roomQuestReferenceCaptureEnabled = defaults.bool(forKey: Keys.roomQuestReferenceCaptureEnabled)
+        routeQuestEnabled = defaults.bool(forKey: Keys.routeQuestEnabled)
         memoryCardAppleIntelligenceEnabled = defaults.bool(forKey: Keys.memoryCardAppleIntelligenceEnabled)
         skipProfilePicker = defaults.bool(forKey: Keys.skipProfilePicker)
         placeMatchGPSMatch   = defaults.double(forKey: Keys.placeMatchGPSMatch)
