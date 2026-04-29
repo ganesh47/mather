@@ -20,6 +20,7 @@ enum MemoryDeckKind: String, Equatable {
     case planets
     case fishes
     case countries
+    case countryFlags
     case indiaStates
 
     var displayName: String {
@@ -30,6 +31,7 @@ enum MemoryDeckKind: String, Equatable {
         case .planets: return "Planets"
         case .fishes: return "Fishes"
         case .countries: return "Countries & Capitals"
+        case .countryFlags: return "Countries & Flags"
         case .indiaStates: return "Indian States & Capitals"
         }
     }
@@ -365,6 +367,17 @@ enum MemoryDeck {
         countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", clue: "known for savannas and wildlife parks")
     ]
 
+    static let countryFlags: [MemoryAnimal] = [
+        flagCountry("country-flag-india", country: "India", asset: "MemoryFlagIndia", isoAlpha2: "IN", continent: "Asia", capital: "New Delhi", colors: "saffron, white, green, navy blue", clue: "home of the Taj Mahal"),
+        flagCountry("country-flag-japan", country: "Japan", asset: "MemoryFlagJapan", isoAlpha2: "JP", continent: "Asia", capital: "Tokyo", colors: "white and red", clue: "known for cherry blossoms and bullet trains"),
+        flagCountry("country-flag-france", country: "France", asset: "MemoryFlagFrance", isoAlpha2: "FR", continent: "Europe", capital: "Paris", colors: "blue, white, red", clue: "home of the Eiffel Tower"),
+        flagCountry("country-flag-egypt", country: "Egypt", asset: "MemoryFlagEgypt", isoAlpha2: "EG", continent: "Africa", capital: "Cairo", colors: "red, white, black, gold", clue: "home of the Great Pyramids"),
+        flagCountry("country-flag-brazil", country: "Brazil", asset: "MemoryFlagBrazil", isoAlpha2: "BR", continent: "South America", capital: "Brasília", colors: "green, yellow, blue, white", clue: "home of the Amazon rainforest"),
+        flagCountry("country-flag-australia", country: "Australia", asset: "MemoryFlagAustralia", isoAlpha2: "AU", continent: "Australia", capital: "Canberra", colors: "blue, red, white", clue: "home of kangaroos and koalas"),
+        flagCountry("country-flag-canada", country: "Canada", asset: "MemoryFlagCanada", isoAlpha2: "CA", continent: "North America", capital: "Ottawa", colors: "red and white", clue: "known for maple leaves and snowy winters"),
+        flagCountry("country-flag-kenya", country: "Kenya", asset: "MemoryFlagKenya", isoAlpha2: "KE", continent: "Africa", capital: "Nairobi", colors: "black, red, green, white", clue: "known for savannas and wildlife parks")
+    ]
+
     static let indiaStates: [MemoryAnimal] = [
         indiaStateCapital("state-maharashtra", state: "Maharashtra", capital: "Mumbai", region: "west India", clue: "Gateway of India and Bollywood"),
         indiaStateCapital("state-karnataka", state: "Karnataka", capital: "Bengaluru", region: "south India", clue: "gardens, rockets, and tech city"),
@@ -377,7 +390,7 @@ enum MemoryDeck {
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
-        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + indiaStates).map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates).map { ($0.id, $0) })
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
@@ -408,7 +421,15 @@ enum MemoryDeck {
         generatedImageProvenance(assetName: "MemoryFishCatfish", cardId: "fish-catfish", sha256: "e2d712233b9fd1d4f5fa5d3c167329d19784fb72784ce062ee8231cc7e19a1fe"),
         generatedImageProvenance(assetName: "MemoryFishSwordtail", cardId: "fish-swordtail", sha256: "decdde0bb9874d8d7b5f3c07c544f342dd339c69c42f135eee8f134a1ea18a19"),
         generatedImageProvenance(assetName: "MemoryFishTuna", cardId: "fish-tuna", sha256: "d9716931aba86201236c724311c5b8fae07b6dca705ca059cd9c7247b33b67a3"),
-        generatedImageProvenance(assetName: "MemoryFishSeahorse", cardId: "fish-seahorse", sha256: "90a58259c3a44be96017c86b1d4a165fc507ba24d9baf2c53b9dad23c1ff50a0")
+        generatedImageProvenance(assetName: "MemoryFishSeahorse", cardId: "fish-seahorse", sha256: "90a58259c3a44be96017c86b1d4a165fc507ba24d9baf2c53b9dad23c1ff50a0"),
+        generatedFlagProvenance(assetName: "MemoryFlagIndia", cardId: "country-flag-india", sha256: "532012f66641b8e0ddd64628305810178bd97bb35e13086c00ee2ba597ae45f2"),
+        generatedFlagProvenance(assetName: "MemoryFlagJapan", cardId: "country-flag-japan", sha256: "b2d751e8a2b4a7987c5268b5edb12b45a5cdda7dd9977d027311aba9401b39ef"),
+        generatedFlagProvenance(assetName: "MemoryFlagFrance", cardId: "country-flag-france", sha256: "c9912731f78d48a59bcad43a2e0014ac83ef7887277b8a4ad8728803a3c74ff4"),
+        generatedFlagProvenance(assetName: "MemoryFlagEgypt", cardId: "country-flag-egypt", sha256: "f307582ff40e2c27ebf25e244fa34330b671f30cf44df07e75fc122f3402ddd8"),
+        generatedFlagProvenance(assetName: "MemoryFlagBrazil", cardId: "country-flag-brazil", sha256: "ac1235d39036fd5ed000a10dd0e49d939eda8db1632c831d8453be301aa6c272"),
+        generatedFlagProvenance(assetName: "MemoryFlagAustralia", cardId: "country-flag-australia", sha256: "07e169c5a54af9027fbafe0348e4505b09112cd077d1e3fbcf37a206be37c119"),
+        generatedFlagProvenance(assetName: "MemoryFlagCanada", cardId: "country-flag-canada", sha256: "b3712b0ba8bb6c0bb9d40878b9ba8af8dfcd42f5fc35823472d4324ef580132c"),
+        generatedFlagProvenance(assetName: "MemoryFlagKenya", cardId: "country-flag-kenya", sha256: "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9")
     ]
 
 
@@ -470,6 +491,29 @@ enum MemoryDeck {
             derivativeFileName: "\(assetName).png",
             derivativeSha256: sha256,
             derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
+    private static func generatedFlagProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "Project-owned deterministic educational flag drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #744",
+            license: "Project-owned; no third-party source files or copied artwork",
+            licenseUrl: "",
+            retrievedAt: "2026-04-29",
+            originalFileName: "\(assetName).png",
+            originalSha256: sha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: sha256,
+            derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands from basic flag geometry and colors; no third-party image file was imported.",
             licenseAllowsReuse: true,
             noThirdPartyRestrictionFound: true,
             noLogoOrEndorsementRisk: true,
@@ -608,6 +652,31 @@ enum MemoryDeck {
         )
     }
 
+    private static func flagCountry(_ id: String, country: String, asset: String, isoAlpha2: String, continent: String, capital: String, colors: String, clue: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: country,
+            canonicalName: country,
+            picture: .asset(asset),
+            metadata: MemoryCardMetadata(
+                deck: .countryFlags,
+                category: "country flag",
+                kind: "country flag",
+                habitat: continent,
+                colors: colors,
+                factCards: [
+                    MemoryFactCard(title: "Country", value: country),
+                    MemoryFactCard(title: "Flag", value: "Flag of \(country)"),
+                    MemoryFactCard(title: "ISO Code", value: isoAlpha2),
+                    MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Continent", value: continent),
+                    MemoryFactCard(title: "Colors", value: colors),
+                    MemoryFactCard(title: "Known For", value: clue)
+                ]
+            )
+        )
+    }
+
     private static func indiaStateCapital(_ id: String, state: String, capital: String, region: String, clue: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
@@ -694,7 +763,7 @@ struct MemoryView: View {
     @State private var latestAskResponse: MemoryAskResponse? = nil
 
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles, planets, fishes, countries, indiaStates
+        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates
 
         var label: String {
             switch self {
@@ -704,6 +773,7 @@ struct MemoryView: View {
             case .planets: return "🪐 Planets"
             case .fishes: return "🐠 Fishes"
             case .countries: return "🌍 Countries & Capitals"
+            case .countryFlags: return "🏳️ Countries & Flags"
             case .indiaStates: return "📍 India States & Capitals"
             }
         }
@@ -716,6 +786,7 @@ struct MemoryView: View {
             case .planets: return "Planets"
             case .fishes: return "Fishes"
             case .countries: return "Countries & Capitals"
+            case .countryFlags: return "Countries & Flags"
             case .indiaStates: return "India States & Capitals"
             }
         }
@@ -728,6 +799,7 @@ struct MemoryView: View {
             case .planets: return MemoryDeck.planets
             case .fishes: return MemoryDeck.fishes
             case .countries: return MemoryDeck.countries
+            case .countryFlags: return MemoryDeck.countryFlags
             case .indiaStates: return MemoryDeck.indiaStates
             }
         }
@@ -876,6 +948,7 @@ struct MemoryView: View {
                 cardView(card)
                     .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
+                    .accessibilityLabel(Self.accessibilityLabel(for: card))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
                     .modifier(MemoryLearnMoreAccessibilityModifier(
@@ -1414,6 +1487,18 @@ struct MemoryView: View {
         return "memory-card-\(card.pairId)-\(kind)"
     }
 
+    static func accessibilityLabel(for card: MemoryCard) -> String {
+        switch card.content {
+        case .picture(let animal):
+            if animal.metadata.deck == .countryFlags {
+                return "Flag of \(animal.canonicalName)"
+            }
+            return animal.canonicalName
+        case .label(let animal):
+            return animal.name
+        }
+    }
+
     private static func learningSourceBadge(for deckSelection: DeckSelection, source: MemoryCardDescriptionSource) -> String {
         let deckLabel: String
         switch deckSelection {
@@ -1429,6 +1514,8 @@ struct MemoryView: View {
             deckLabel = "Fish Guide"
         case .countries:
             deckLabel = "Country Guide"
+        case .countryFlags:
+            deckLabel = "Flag Guide"
         case .indiaStates:
             deckLabel = "India Guide"
         }

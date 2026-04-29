@@ -211,6 +211,12 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is a country and its capital is \(animal.name)."
             }
+        case .countryFlags:
+            if let continent = metadata.habitat {
+                firstSentence = "This card shows the flag of \(animal.canonicalName), a country in \(continent.lowercased())."
+            } else {
+                firstSentence = "This card shows the flag of \(animal.canonicalName)."
+            }
         case .indiaStates:
             if let region = metadata.habitat {
                 firstSentence = "\(animal.canonicalName) is an Indian state in \(region.lowercased()) and its capital is \(animal.name)."
