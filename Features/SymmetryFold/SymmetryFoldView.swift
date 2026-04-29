@@ -4,8 +4,8 @@ import SwiftUI
 /// onto the left half along a vertical axis of symmetry.
 ///
 /// UX improvements over v1:
-///  • 5 shapes (heart → star → hexagon → diamond → triangle) with
-///    progressively reduced guide opacity (0.28 → 0 on final level).
+///  • Creative bilateral motifs (heart → butterfly → flower → kite → leaf → badge) with
+///    progressively reduced guide opacity (0.30 → 0 on final level).
 ///  • Hold-to-lock mechanic: child must hold ≥ 0.85 fold for 0.8 s — shown
 ///    as a circular progress ring.  Prevents accidental solves and creates
 ///    a satisfying "snap" moment.
@@ -26,7 +26,7 @@ struct SymmetryFoldView: View {
     /// 0 = shape open; 1 = right half fully folded onto left.
     @State private var foldAngle: Double = 0
     @State private var success = false
-    @State private var currentLevel: Int = 1   // 1–5
+    @State private var currentLevel: Int = 1   // 1–6
     /// 0–1 progress filled by holding the shape in the folded zone.
     @State private var holdProgress: Double = 0
     @State private var holdTask: Task<Void, Never>? = nil
@@ -35,11 +35,22 @@ struct SymmetryFoldView: View {
     @State private var sessionStart: Date = .now
     @State private var challengeTask: Task<Void, Never>? = nil
     @State private var challengeTimedOut = false
+    @State private var wrongDirectionCue = false
+    @State private var lastWrongDirectionPrompt: Date = .distantPast
 
     // MARK: - Level config
 
+    fileprivate enum Motif: String, CaseIterable {
+        case heart
+        case butterfly
+        case flower
+        case kite
+        case leaf
+        case badge
+    }
+
     private struct LevelConfig {
-        let symbolName: String
+        let motif: Motif
         let color: Color
         let guideOpacity: Double
         let title: String
@@ -52,46 +63,56 @@ struct SymmetryFoldView: View {
         case timedChallenge
     }
 
-    private let levels: [LevelConfig] = [
+    private let levels: [LevelConfig] = Self.creativeLevels
+
+    private static let creativeLevels: [LevelConfig] = [
         LevelConfig(
-            symbolName: "heart.fill",
+            motif: .heart,
             color: MatherTheme.coral,
-            guideOpacity: 0.28,
+            guideOpacity: 0.30,
             title: "Fold the heart",
             shapeName: "heart",
-            speechPrompt: "Tilt left to fold the heart in half!"
+            speechPrompt: "Tilt left to fold the heart in half. Make both sides match!"
         ),
         LevelConfig(
-            symbolName: "star.fill",
+            motif: .butterfly,
             color: MatherTheme.warm,
-            guideOpacity: 0.28,
-            title: "Fold the star",
-            shapeName: "star",
-            speechPrompt: "Tilt left to fold the star!"
+            guideOpacity: 0.26,
+            title: "Fold the butterfly",
+            shapeName: "butterfly",
+            speechPrompt: "Tilt left to close the butterfly wings. Match both sides!"
         ),
         LevelConfig(
-            symbolName: "hexagon.fill",
+            motif: .flower,
             color: MatherTheme.accent,
-            guideOpacity: 0.18,
-            title: "Fold the hexagon",
-            shapeName: "hexagon",
-            speechPrompt: "Tilt left to fold the hexagon. Lighter guide this time!"
+            guideOpacity: 0.20,
+            title: "Fold the flower",
+            shapeName: "flower",
+            speechPrompt: "Tilt left to fold the flower on its middle line."
         ),
         LevelConfig(
-            symbolName: "diamond.fill",
+            motif: .kite,
             color: MatherTheme.softBlue,
-            guideOpacity: 0.10,
-            title: "Fold the diamond",
-            shapeName: "diamond",
-            speechPrompt: "Tiny guide now — use what you remember!"
+            guideOpacity: 0.14,
+            title: "Fold the kite",
+            shapeName: "kite",
+            speechPrompt: "Tiny guide now. Tilt left and make the kite halves match."
         ),
         LevelConfig(
-            symbolName: "triangle.fill",
-            color: MatherTheme.warm,
+            motif: .leaf,
+            color: MatherTheme.accent,
+            guideOpacity: 0.08,
+            title: "Fold the leaf",
+            shapeName: "leaf",
+            speechPrompt: "Use the center vein as the fold line. Tilt left!"
+        ),
+        LevelConfig(
+            motif: .badge,
+            color: MatherTheme.coral,
             guideOpacity: 0.0,
-            title: "No guide — you've got this!",
-            shapeName: "triangle",
-            speechPrompt: "No guide! You know where the fold goes. Tilt left!"
+            title: "No guide — fold the badge",
+            shapeName: "badge",
+            speechPrompt: "No guide! Find the line of symmetry and tilt left."
         ),
     ]
 
@@ -158,6 +179,7 @@ struct SymmetryFoldView: View {
             let delta = roll - neutral
             let newFold = max(0.0, min(-delta / maxTiltRadians, 1.0))
             foldAngle = newFold
+            updateWrongDirectionCue(delta: delta)
             updateHoldProgress(for: newFold)
         }
         .onAppear {
@@ -208,7 +230,7 @@ struct SymmetryFoldView: View {
             }
             .font(.headline.weight(.semibold))
             .foregroundStyle(.white)
-            .frame(minWidth: 88, minHeight: 44)
+            .frame(minWidth: 88, minHeight: 72)
             .background(
                 MatherTheme.ink.opacity(0.65),
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -259,11 +281,9 @@ struct SymmetryFoldView: View {
 
                 // Success: bilateral flash — full shape glows
                 if success {
-                    Image(systemName: config.symbolName)
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundStyle(config.color)
+                    SymmetryMotifView(motif: config.motif, color: config.color)
                         .frame(width: size, height: size)
+                        .shadow(color: config.color.opacity(0.35), radius: 18)
                         .transition(.scale(scale: 0.7).combined(with: .opacity))
                 }
 
@@ -296,10 +316,7 @@ struct SymmetryFoldView: View {
     // MARK: - Scene sub-views
 
     private func ghostHalf(size: CGFloat) -> some View {
-        Image(systemName: config.symbolName)
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(config.color.opacity(config.guideOpacity))
+        SymmetryMotifView(motif: config.motif, color: config.color.opacity(config.guideOpacity))
             .frame(width: size, height: size)
             .mask(
                 HStack(spacing: 0) {
@@ -319,20 +336,18 @@ struct SymmetryFoldView: View {
                 path.addLine(to: CGPoint(x: x, y: min(y + 10, canvasSize.height)))
                 y += 18
             }
+            let isTeachingMoment = foldAngle >= 0.72 || success
             ctx.stroke(
                 path,
-                with: .color(MatherTheme.ink.opacity(0.3)),
-                style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                with: .color((isTeachingMoment ? config.color : MatherTheme.ink).opacity(isTeachingMoment ? 0.62 : 0.3)),
+                style: StrokeStyle(lineWidth: isTeachingMoment ? 3 : 2, lineCap: .round)
             )
         }
         .frame(width: size, height: size)
     }
 
     private func foldableRightHalf(size: CGFloat) -> some View {
-        Image(systemName: config.symbolName)
-            .resizable()
-            .scaledToFit()
-            .foregroundStyle(config.color)
+        SymmetryMotifView(motif: config.motif, color: config.color)
             .frame(width: size, height: size)
             .mask(
                 HStack(spacing: 0) {
@@ -370,6 +385,10 @@ struct SymmetryFoldView: View {
             Text(playMode == .timedChallenge ? "Timed challenge cleared!" : Self.successTitle(for: config.shapeName))
                 .font(.title2.weight(.black))
                 .foregroundStyle(MatherTheme.accent)
+                .multilineTextAlignment(.center)
+            Text("Line of symmetry: both sides match.")
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.center)
             Text(successBodyText)
                 .font(.subheadline.weight(.semibold))
@@ -417,6 +436,14 @@ struct SymmetryFoldView: View {
                         Text("Hold steady…")
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(config.color)
+                    } else if wrongDirectionCue {
+                        Text(Self.wrongDirectionHint)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(MatherTheme.danger)
+                    } else if foldAngle >= 0.72 {
+                        Text(Self.nearMatchHint)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(config.color)
                     } else if playMode == .timedChallenge {
                         Text(Self.challengeCountdownText(for: challengeTimeRemaining))
                             .font(.subheadline.weight(.bold))
@@ -428,6 +455,7 @@ struct SymmetryFoldView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: holdProgress > 0)
+                .animation(.easeInOut(duration: 0.2), value: wrongDirectionCue)
             }
 
             // Level progress dots (5) — active dot is slightly larger
@@ -478,6 +506,22 @@ struct SymmetryFoldView: View {
             holdTask?.cancel()
             holdTask = nil
             holdProgress = 0
+        }
+    }
+
+    private func updateWrongDirectionCue(delta: Double) {
+        guard delta > 0.12, foldAngle < 0.08 else {
+            wrongDirectionCue = false
+            return
+        }
+
+        wrongDirectionCue = true
+        if Date().timeIntervalSince(lastWrongDirectionPrompt) >= 3.0 {
+            lastWrongDirectionPrompt = .now
+            appModel.speechService.speak(
+                Self.wrongDirectionSpeech(for: config.shapeName),
+                enabled: appModel.featureFlags.audioEnabled
+            )
         }
     }
 
@@ -568,6 +612,7 @@ struct SymmetryFoldView: View {
         success = false
         neutralRoll = nil
         holdProgress = 0
+        wrongDirectionCue = false
         challengeTimedOut = markTimedOut
         challengeTimeRemaining = markTimedOut ? 0 : Self.challengeDuration
     }
@@ -584,8 +629,22 @@ struct SymmetryFoldView: View {
     }
 
     nonisolated static func successSpeech(for shapeName: String) -> String {
-        "Perfectly folded! You made a symmetric \(shapeName)."
+        "Perfectly folded! The line of symmetry makes both sides of the \(shapeName) match."
     }
+
+    nonisolated static var nearMatchHint: String {
+        "Almost there — line up both halves"
+    }
+
+    nonisolated static var wrongDirectionHint: String {
+        "Other way — tilt left"
+    }
+
+    nonisolated static func wrongDirectionSpeech(for shapeName: String) -> String {
+        "Try the other way. Tilt left to fold the \(shapeName)."
+    }
+
+    nonisolated static let creativeLevelNames = ["heart", "butterfly", "flower", "kite", "leaf", "badge"]
 
     nonisolated static func challengeCountdownText(for secondsRemaining: Double) -> String {
         "\(max(0, Int(ceil(secondsRemaining))))s left"
@@ -612,5 +671,175 @@ struct SymmetryFoldView: View {
         } else {
             appModel.engine.showHome()
         }
+    }
+}
+
+
+private struct SymmetryMotifView: View {
+    let motif: SymmetryFoldView.Motif
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            switch motif {
+            case .heart:
+                Image(systemName: "heart.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(color)
+                    .padding(8)
+            case .butterfly:
+                butterfly
+            case .flower:
+                flower
+            case .kite:
+                kite
+            case .leaf:
+                leaf
+            case .badge:
+                badge
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var butterfly: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                Capsule()
+                    .fill(color.opacity(0.95))
+                    .frame(width: w * 0.12, height: h * 0.62)
+                wing(x: -w * 0.18, y: -h * 0.11, rotation: -26, width: w * 0.36, height: h * 0.38)
+                wing(x: -w * 0.18, y: h * 0.16, rotation: 24, width: w * 0.32, height: h * 0.30)
+                wing(x: w * 0.18, y: -h * 0.11, rotation: 26, width: w * 0.36, height: h * 0.38)
+                wing(x: w * 0.18, y: h * 0.16, rotation: -24, width: w * 0.32, height: h * 0.30)
+                Circle().fill(.white.opacity(0.58)).frame(width: w * 0.07, height: w * 0.07).offset(x: -w * 0.22, y: -h * 0.11)
+                Circle().fill(.white.opacity(0.58)).frame(width: w * 0.07, height: w * 0.07).offset(x: w * 0.22, y: -h * 0.11)
+            }
+            .frame(width: w, height: h)
+        }
+    }
+
+    private func wing(x: CGFloat, y: CGFloat, rotation: Double, width: CGFloat, height: CGFloat) -> some View {
+        Ellipse()
+            .fill(color)
+            .frame(width: width, height: height)
+            .rotationEffect(.degrees(rotation))
+            .offset(x: x, y: y)
+    }
+
+    private var flower: some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            ZStack {
+                ForEach(0..<8, id: \.self) { index in
+                    Capsule()
+                        .fill(color.opacity(index.isMultiple(of: 2) ? 0.95 : 0.72))
+                        .frame(width: side * 0.18, height: side * 0.42)
+                        .offset(y: -side * 0.22)
+                        .rotationEffect(.degrees(Double(index) * 45))
+                }
+                Circle()
+                    .fill(MatherTheme.warm)
+                    .frame(width: side * 0.25, height: side * 0.25)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+
+    private var kite: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                DiamondShape()
+                    .fill(color)
+                    .frame(width: w * 0.62, height: h * 0.76)
+                Path { path in
+                    path.move(to: CGPoint(x: w / 2, y: h * 0.12))
+                    path.addLine(to: CGPoint(x: w / 2, y: h * 0.88))
+                    path.move(to: CGPoint(x: w * 0.19, y: h * 0.5))
+                    path.addLine(to: CGPoint(x: w * 0.81, y: h * 0.5))
+                }
+                .stroke(.white.opacity(0.55), style: StrokeStyle(lineWidth: max(3, w * 0.025), lineCap: .round))
+                Circle().fill(.white.opacity(0.5)).frame(width: w * 0.12, height: w * 0.12)
+            }
+        }
+    }
+
+    private var leaf: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                LeafShape()
+                    .fill(color)
+                    .frame(width: w * 0.58, height: h * 0.82)
+                Capsule()
+                    .fill(.white.opacity(0.55))
+                    .frame(width: max(4, w * 0.025), height: h * 0.65)
+                ForEach([-1.0, 1.0], id: \.self) { side in
+                    ForEach(0..<3, id: \.self) { index in
+                        Capsule()
+                            .fill(.white.opacity(0.38))
+                            .frame(width: w * 0.18, height: max(3, h * 0.018))
+                            .rotationEffect(.degrees(side * Double(index == 0 ? 32 : index == 1 ? 18 : -8)))
+                            .offset(x: side * w * 0.09, y: CGFloat(index - 1) * h * 0.14)
+                    }
+                }
+            }
+        }
+    }
+
+    private var badge: some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            ZStack {
+                Circle()
+                    .fill(color)
+                    .frame(width: side * 0.72, height: side * 0.72)
+                Circle()
+                    .stroke(.white.opacity(0.55), lineWidth: side * 0.045)
+                    .frame(width: side * 0.52, height: side * 0.52)
+                Image(systemName: "sparkles")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(.white.opacity(0.72))
+                    .frame(width: side * 0.28, height: side * 0.28)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+}
+
+private struct DiamondShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct LeafShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.maxY),
+            control1: CGPoint(x: rect.maxX, y: rect.minY + rect.height * 0.18),
+            control2: CGPoint(x: rect.maxX, y: rect.minY + rect.height * 0.72)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control1: CGPoint(x: rect.minX, y: rect.minY + rect.height * 0.72),
+            control2: CGPoint(x: rect.minX, y: rect.minY + rect.height * 0.18)
+        )
+        return path
     }
 }
