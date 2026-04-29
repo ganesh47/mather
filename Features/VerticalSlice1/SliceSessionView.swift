@@ -25,7 +25,7 @@ struct SliceSessionView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        FeedbackBannerView(message: appModel.engine.feedbackMessage, isCelebrating: appModel.engine.showCelebration)
+                        FeedbackBannerView(message: childFacingBannerMessage, isCelebrating: appModel.engine.showCelebration)
 
                         if let currentProblem = appModel.engine.currentProblem {
                             stageView(for: currentProblem)
@@ -73,6 +73,15 @@ struct SliceSessionView: View {
         .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
     }
 
+
+    private var childFacingBannerMessage: String {
+        if appModel.engine.currentStage == .storyAnchor,
+           appModel.engine.currentStoryPrompt != nil,
+           !appModel.engine.showCelebration {
+            return "Listen for the numbers, then start building."
+        }
+        return appModel.engine.feedbackMessage
+    }
 
     @ViewBuilder
     private var gravitySplitUITestControls: some View {

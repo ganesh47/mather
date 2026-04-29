@@ -105,6 +105,7 @@ struct SplitView: View {
             dotGrid(rows: rows, fill: fill, delta: delta)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityLabel("\(count) of \(target)")
     }
 
     @ViewBuilder
@@ -134,12 +135,14 @@ struct SplitView: View {
         .onTapGesture { onAdjust(delta) }
     }
 
-    // Lay out `count` filled dots and (capacity - count) empty dots in rows of 5.
+    // Lay out filled dots in rows of 5. Very large story targets can otherwise
+    // create 7+ rows per bucket on phone screens; cap the visual scaffold at
+    // 20 slots and keep the exact amount in the large numeric label above.
     private func dotRows(count: Int, capacity: Int) -> [[Bool]] {
-        let total = max(capacity, 1)
+        let total = min(max(capacity, 1), 20)
         var rows: [[Bool]] = []
         var remaining = total
-        var filled = count
+        var filled = min(count, total)
         while remaining > 0 {
             let rowSize = min(remaining, 5)
             let row = (0..<rowSize).map { i -> Bool in
