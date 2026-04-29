@@ -101,6 +101,46 @@ struct WaterCycleLabState: Equatable {
     }
 }
 
+struct WaterCycleSceneMetrics: Equatable {
+    let availableWidth: CGFloat
+    let scale: CGFloat
+    let horizontalInset: CGFloat
+    let sunHaloSize: CGFloat
+    let sunCoreSize: CGFloat
+    let sunIconSize: CGFloat
+    let cloudCapsuleWidth: CGFloat
+    let cloudCapsuleHeight: CGFloat
+    let cloudCircleSizes: [CGFloat]
+    let cloudDropSize: CGFloat
+    let columnWidth: CGFloat
+    let columnMinHeight: CGFloat
+    let vaporBaseIconSize: CGFloat
+    let rainIconSize: CGFloat
+    let pondHorizontalInset: CGFloat
+    let pondHeight: CGFloat
+    let pondDropSize: CGFloat
+
+    init(availableWidth: CGFloat) {
+        self.availableWidth = availableWidth
+        scale = min(max(availableWidth / 430, 0.72), 1.0)
+        horizontalInset = max(12, 30 * scale)
+        sunHaloSize = 136 * scale
+        sunCoreSize = 92 * scale
+        sunIconSize = 52 * scale
+        cloudCapsuleWidth = 172 * scale
+        cloudCapsuleHeight = 78 * scale
+        cloudCircleSizes = [72 * scale, 96 * scale, 70 * scale]
+        cloudDropSize = 18 * scale
+        columnWidth = min(140 * scale, max(112, (availableWidth - horizontalInset * 2 - 24) / 2))
+        columnMinHeight = 138 * scale
+        vaporBaseIconSize = 26 * scale
+        rainIconSize = 28 * scale
+        pondHorizontalInset = max(12, 34 * scale)
+        pondHeight = 92 * scale
+        pondDropSize = 18 * scale
+    }
+}
+
 struct WaterCycleLabView: View {
     @Bindable var appModel: AppModel
     @State private var state = WaterCycleLabState()
@@ -111,14 +151,23 @@ struct WaterCycleLabView: View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
             GeometryReader { proxy in
+                let horizontalPadding = proxy.size.width < 390 ? 16.0 : 24.0
+                let contentWidth = max(proxy.size.width - horizontalPadding * 2, 0)
+                let sceneHeight = contentWidth < 340
+                    ? min(max(proxy.size.height * 0.32, 260), 330)
+                    : min(max(proxy.size.height * 0.46, 320), 520)
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        header
+                        header(availableWidth: contentWidth)
                         inquiryCard
-                        waterCycleScene(height: min(max(proxy.size.height * 0.46, 360), 520))
-                        actionControls
+                        waterCycleScene(width: contentWidth, height: sceneHeight)
+                        actionControls(availableWidth: contentWidth)
                     }
-                    .padding(24)
+                    .frame(width: contentWidth, alignment: .leading)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.vertical, 24)
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
@@ -128,15 +177,18 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private var header: some View {
+    private func header(availableWidth: CGFloat) -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Water Cycle Lab")
-                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .font(.system(size: availableWidth < 340 ? 32 : 36, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.86)
                 Text("Predict, try, observe, name")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             Button {
@@ -154,14 +206,17 @@ struct WaterCycleLabView: View {
     private var inquiryCard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Label(state.stage.title, systemImage: stageIcon)
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
-                    Spacer()
-                    Text("Cycle \(state.cyclesCompleted + 1)")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        stageLabel
+                        Spacer()
+                        cycleLabel
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        stageLabel
+                        cycleLabel
+                    }
                 }
 
                 Text(state.prompt)
@@ -176,6 +231,18 @@ struct WaterCycleLabView: View {
         }
     }
 
+    private var stageLabel: some View {
+        Label(state.stage.title, systemImage: stageIcon)
+            .font(.headline.weight(.black))
+            .foregroundStyle(MatherTheme.ink)
+    }
+
+    private var cycleLabel: some View {
+        Text("Cycle \(state.cyclesCompleted + 1)")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(MatherTheme.cardSubtitle)
+    }
+
     private var stageIcon: String {
         switch state.stage {
         case .wonder: "questionmark.bubble.fill"
@@ -187,8 +254,10 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private func waterCycleScene(height: CGFloat) -> some View {
-        ZStack {
+    private func waterCycleScene(width: CGFloat, height: CGFloat) -> some View {
+        let metrics = WaterCycleSceneMetrics(availableWidth: width)
+
+        return ZStack {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -204,54 +273,54 @@ struct WaterCycleLabView: View {
 
             VStack(spacing: 0) {
                 HStack(alignment: .top) {
-                    sunView
+                    sunView(metrics)
                     Spacer()
-                    cloudView
+                    cloudView(metrics)
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, metrics.horizontalInset)
                 .padding(.top, 28)
 
                 Spacer()
 
                 HStack(alignment: .bottom) {
-                    vaporColumn
+                    vaporColumn(metrics)
                     Spacer()
-                    rainColumn
+                    rainColumn(metrics)
                 }
-                .padding(.horizontal, 44)
+                .padding(.horizontal, metrics.horizontalInset)
 
-                pondView
-                    .padding(.horizontal, 34)
+                pondView(metrics)
+                    .padding(.horizontal, metrics.pondHorizontalInset)
                     .padding(.bottom, 24)
             }
         }
-        .frame(height: height)
+        .frame(width: width, height: height)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Water cycle picture with sun, vapor, cloud, rain, and pond")
     }
 
-    private var sunView: some View {
+    private func sunView(_ metrics: WaterCycleSceneMetrics) -> some View {
         ZStack {
-            Circle().fill(MatherTheme.warm.opacity(0.28)).frame(width: 136, height: 136)
-            Circle().fill(MatherTheme.warm).frame(width: 92, height: 92)
+            Circle().fill(MatherTheme.warm.opacity(0.28)).frame(width: metrics.sunHaloSize, height: metrics.sunHaloSize)
+            Circle().fill(MatherTheme.warm).frame(width: metrics.sunCoreSize, height: metrics.sunCoreSize)
             Image(systemName: "sun.max.fill")
-                .font(.system(size: 52, weight: .bold))
+                .font(.system(size: metrics.sunIconSize, weight: .bold))
                 .foregroundStyle(.white)
         }
     }
 
-    private var cloudView: some View {
+    private func cloudView(_ metrics: WaterCycleSceneMetrics) -> some View {
         VStack(spacing: 8) {
             ZStack {
-                Capsule().fill(MatherTheme.card).frame(width: 172, height: 78)
-                HStack(spacing: -18) {
-                    Circle().fill(MatherTheme.card).frame(width: 72, height: 72)
-                    Circle().fill(MatherTheme.card).frame(width: 96, height: 96)
-                    Circle().fill(MatherTheme.card).frame(width: 70, height: 70)
+                Capsule().fill(MatherTheme.card).frame(width: metrics.cloudCapsuleWidth, height: metrics.cloudCapsuleHeight)
+                HStack(spacing: -18 * metrics.scale) {
+                    Circle().fill(MatherTheme.card).frame(width: metrics.cloudCircleSizes[0], height: metrics.cloudCircleSizes[0])
+                    Circle().fill(MatherTheme.card).frame(width: metrics.cloudCircleSizes[1], height: metrics.cloudCircleSizes[1])
+                    Circle().fill(MatherTheme.card).frame(width: metrics.cloudCircleSizes[2], height: metrics.cloudCircleSizes[2])
                 }
                 HStack(spacing: 10) {
                     ForEach(0..<state.cloudDrops, id: \.self) { _ in
-                        Circle().fill(MatherTheme.softBlue).frame(width: 18, height: 18)
+                        Circle().fill(MatherTheme.softBlue).frame(width: metrics.cloudDropSize, height: metrics.cloudDropSize)
                     }
                 }
                 .offset(y: 18)
@@ -262,43 +331,49 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private var vaporColumn: some View {
+    private func vaporColumn(_ metrics: WaterCycleSceneMetrics) -> some View {
         VStack(spacing: 12) {
             ForEach(0..<state.vaporDrops, id: \.self) { index in
                 Image(systemName: "drop.fill")
-                    .font(.system(size: 26 + CGFloat(index * 3), weight: .bold))
+                    .font(.system(size: metrics.vaporBaseIconSize + CGFloat(index * 3), weight: .bold))
                     .foregroundStyle(MatherTheme.softBlue.opacity(0.72))
             }
             Text("water goes up")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.86)
+                .multilineTextAlignment(.center)
         }
-        .frame(width: 140)
-        .frame(minHeight: 138)
+        .frame(width: metrics.columnWidth)
+        .frame(minHeight: metrics.columnMinHeight)
     }
 
-    private var rainColumn: some View {
+    private func rainColumn(_ metrics: WaterCycleSceneMetrics) -> some View {
         VStack(spacing: 10) {
             ForEach(0..<state.rainDrops, id: \.self) { _ in
                 Image(systemName: "drop.fill")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: metrics.rainIconSize, weight: .bold))
                     .foregroundStyle(MatherTheme.accent)
             }
             Text("rain falls down")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.86)
+                .multilineTextAlignment(.center)
         }
-        .frame(width: 140)
-        .frame(minHeight: 138)
+        .frame(width: metrics.columnWidth)
+        .frame(minHeight: metrics.columnMinHeight)
     }
 
-    private var pondView: some View {
+    private func pondView(_ metrics: WaterCycleSceneMetrics) -> some View {
         ZStack(alignment: .bottom) {
-            Capsule().fill(MatherTheme.softBlue.opacity(0.25)).frame(height: 92)
-            Capsule().fill(MatherTheme.softBlue).frame(height: CGFloat(32 + state.pondDrops * 10))
+            Capsule().fill(MatherTheme.softBlue.opacity(0.25)).frame(height: metrics.pondHeight)
+            Capsule().fill(MatherTheme.softBlue).frame(height: CGFloat(32 + state.pondDrops * 10) * metrics.scale)
             HStack(spacing: 12) {
                 ForEach(0..<state.pondDrops, id: \.self) { _ in
-                    Circle().fill(.white.opacity(0.65)).frame(width: 18, height: 18)
+                    Circle().fill(.white.opacity(0.65)).frame(width: metrics.pondDropSize, height: metrics.pondDropSize)
                 }
             }
             .padding(.bottom, 28)
@@ -312,7 +387,7 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private var actionControls: some View {
+    private func actionControls(availableWidth: CGFloat) -> some View {
         VStack(spacing: 12) {
             Button {
                 state.advance()
@@ -324,22 +399,53 @@ struct WaterCycleLabView: View {
             .buttonStyle(PrimaryActionButtonStyle())
             .accessibilityIdentifier("water-cycle-primary-action")
 
-            HStack(spacing: 12) {
-                Button {
-                    speakPrompt()
-                } label: {
-                    Label("Replay prompt", systemImage: "speaker.wave.2.fill")
+            if availableWidth < 280 {
+                VStack(spacing: 12) {
+                    replayPromptButton(compact: false)
+                    resetButton(compact: false)
                 }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
-
-                Button {
-                    state.reset()
-                    speakPrompt()
-                } label: {
-                    Label("Reset", systemImage: "arrow.counterclockwise")
+            } else {
+                HStack(spacing: 12) {
+                    replayPromptButton(compact: availableWidth < 360)
+                    resetButton(compact: availableWidth < 360)
                 }
-                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.coral.opacity(0.42)))
             }
+        }
+    }
+
+    private func replayPromptButton(compact: Bool) -> some View {
+        Button {
+            speakPrompt()
+        } label: {
+            secondaryActionLabel("Replay prompt", systemImage: "speaker.wave.2.fill", compact: compact)
+        }
+        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+        .accessibilityIdentifier("water-cycle-replay-prompt")
+    }
+
+    private func resetButton(compact: Bool) -> some View {
+        Button {
+            state.reset()
+            speakPrompt()
+        } label: {
+            secondaryActionLabel("Reset", systemImage: "arrow.counterclockwise", compact: compact)
+        }
+        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.coral.opacity(0.42)))
+        .accessibilityIdentifier("water-cycle-reset")
+    }
+
+    @ViewBuilder
+    private func secondaryActionLabel(_ title: String, systemImage: String, compact: Bool) -> some View {
+        if compact {
+            VStack(spacing: 6) {
+                Image(systemName: systemImage)
+                Text(title)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.86)
+                    .multilineTextAlignment(.center)
+            }
+        } else {
+            Label(title, systemImage: systemImage)
         }
     }
 

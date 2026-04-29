@@ -269,6 +269,27 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "iPhone-SplitView")
     }
 
+    func testScreenshot_WaterCycleCompactCompletion() {
+        let app = launch()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        app.buttons["ExplorerLab"].tap()
+        _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
+        app.buttons["Water Cycle Lab"].tap()
+        _ = app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10)
+
+        let primaryAction = app.buttons["water-cycle-primary-action"]
+        XCTAssertTrue(primaryAction.waitForExistence(timeout: 5))
+        for _ in 0..<5 {
+            primaryAction.tap()
+        }
+
+        XCTAssertTrue(app.staticTexts["Cycle complete"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+        snapshot(app, "WaterCycle-Complete-Compact")
+    }
+
     // MARK: - Issue #222 validation lane
 
     /// Captures deterministic evidence for the reopened issue #222 route:
