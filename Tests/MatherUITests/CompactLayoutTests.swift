@@ -42,6 +42,41 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(rightFive.isHittable, "Expected Bond Blast actions to be reachable without additional scrolling")
     }
 
+
+    func testSessionSetupCompactTargetCapUsesSingleScrollablePresetControl() {
+        let app = launchWithVS1()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        app.buttons["Play"].tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+
+        XCTAssertTrue(app.buttons["theme-card-vehicle"].waitForExistence(timeout: 5))
+        app.buttons["theme-card-vehicle"].tap()
+
+        let targetCap50 = app.buttons["target-cap-up-to-50"]
+        if !targetCap50.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(targetCap50.waitForExistence(timeout: 5))
+        XCTAssertTrue(targetCap50.isHittable, "Expected target-cap preset cards to be reachable on compact setup")
+        targetCap50.tap()
+        XCTAssertFalse(app.steppers["target-cap-stepper"].exists, "Expected setup to expose only preset target-cap cards, not duplicate plus/minus controls")
+
+        let start = app.buttons["start-session-button"]
+        if !start.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        XCTAssertTrue(start.isHittable, "Expected Start Session to be reachable by scrolling on compact setup")
+
+        let back = app.buttons["back-to-home-button"]
+        if !back.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        XCTAssertTrue(back.isHittable, "Expected Back to Home to remain reachable by scrolling on compact setup")
+    }
+
     func testRoomQuestCompactSpotScreenKeepsPrimaryActionReachableWithoutSwipe() {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)

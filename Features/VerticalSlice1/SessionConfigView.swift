@@ -19,99 +19,92 @@ struct SessionConfigView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            VStack(spacing: 20) {
-                CardSurface {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Session setup")
-                            .font(.title.weight(.black))
-                        Text("Keep sessions short and consistent.")
-                            .font(.headline)
-                            .foregroundStyle(MatherTheme.ink.opacity(0.6))
-                            .fixedSize(horizontal: false, vertical: true)
 
-                        Divider()
-
-                        Text("Theme")
-                            .font(.title3.weight(.semibold))
-
-                        // Theme picker — two cards, selected card gets accent border.
-                        // Tapping sets selectedThemeId; engine reads it at startSession().
-                        HStack(spacing: 12) {
-                            ForEach(themeOptions) { option in
-                                themeCard(option)
-                            }
-                        }
-
-                        Divider()
-
-                        Stepper(value: Binding(
-                            get: { appModel.engine.config.maxProblems },
-                            set: { appModel.engine.updateConfig(problemCount: $0) }
-                        ), in: 4...8) {
-                            Text("Problems: \(appModel.engine.config.maxProblems)")
-                                .font(.title3.weight(.semibold))
-                        }
-
-                        Divider()
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Target numbers")
-                                .font(.title3.weight(.semibold))
-                            Text("Choose the largest number this session can ask for.")
-                                .font(.subheadline)
+            ScrollView {
+                VStack(spacing: 20) {
+                    CardSurface {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Session setup")
+                                .font(.title.weight(.black))
+                            Text("Keep sessions short and consistent.")
+                                .font(.headline)
                                 .foregroundStyle(MatherTheme.ink.opacity(0.6))
+                                .fixedSize(horizontal: false, vertical: true)
 
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 12) {
-                                ForEach(ParentTargetCap.quickPicks, id: \.self) { maxTarget in
-                                    targetCapButton(maxTarget: maxTarget)
+                            Divider()
+
+                            Text("Theme")
+                                .font(.title3.weight(.semibold))
+                                .accessibilityIdentifier("session-setup-theme-section")
+
+                            // Theme picker — two cards, selected card gets accent border.
+                            // Tapping sets selectedThemeId; engine reads it at startSession().
+                            HStack(spacing: 12) {
+                                ForEach(themeOptions) { option in
+                                    themeCard(option)
                                 }
                             }
 
-                            Stepper(
-                                value: targetCapBinding,
-                                in: ParentTargetCap.minimum...ParentTargetCap.maximum,
-                                step: ParentTargetCap.step
-                            ) {
-                                Text(ParentTargetCap.displayLabel(for: appModel.engine.config.parentTargetCap))
-                                    .font(.headline.weight(.semibold))
-                                    .accessibilityIdentifier("target-cap-current-value")
-                            }
-                            .accessibilityIdentifier("target-cap-stepper")
-                        }
+                            Divider()
 
-                        Toggle("Speak prompts", isOn: Binding(
-                            get: { appModel.featureFlags.audioEnabled },
-                            set: {
-                                appModel.featureFlags.audioEnabled = $0
-                                appModel.engine.updateConfig(audioEnabled: $0)
+                            Stepper(value: Binding(
+                                get: { appModel.engine.config.maxProblems },
+                                set: { appModel.engine.updateConfig(problemCount: $0) }
+                            ), in: 4...8) {
+                                Text("Problems: \(appModel.engine.config.maxProblems)")
+                                    .font(.title3.weight(.semibold))
                             }
-                        ))
-                        .font(.title3.weight(.semibold))
+                            .accessibilityIdentifier("problems-stepper")
 
-                        Button("Start Session") {
-                            appModel.engine.startSession()
+                            Divider()
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Target numbers")
+                                    .font(.title3.weight(.semibold))
+                                Text("Choose the largest number this session can ask for.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(MatherTheme.ink.opacity(0.6))
+
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 12) {
+                                    ForEach(ParentTargetCap.quickPicks, id: \.self) { maxTarget in
+                                        targetCapButton(maxTarget: maxTarget)
+                                    }
+                                }
+                            }
+                            .accessibilityIdentifier("target-cap-section")
+
+                            Toggle("Speak prompts", isOn: Binding(
+                                get: { appModel.featureFlags.audioEnabled },
+                                set: {
+                                    appModel.featureFlags.audioEnabled = $0
+                                    appModel.engine.updateConfig(audioEnabled: $0)
+                                }
+                            ))
+                            .font(.title3.weight(.semibold))
+                            .accessibilityIdentifier("speak-prompts-toggle")
+
+                            Button("Start Session") {
+                                appModel.engine.startSession()
+                            }
+                            .buttonStyle(PrimaryActionButtonStyle())
+                            .accessibilityIdentifier("start-session-button")
                         }
-                        .buttonStyle(PrimaryActionButtonStyle())
-                        .accessibilityIdentifier("start-session-button")
                     }
-                }
 
-                Button("Back to Home") {
-                    appModel.engine.showHome()
+                    Button("Back to Home") {
+                        appModel.engine.showHome()
+                    }
+                    .font(.headline.weight(.semibold))
+                    .accessibilityIdentifier("back-to-home-button")
                 }
-                .font(.headline.weight(.semibold))
+                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 32)
             }
-            .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .padding(24)
+            .scrollIndicators(.visible)
         }
-    }
-
-    private var targetCapBinding: Binding<Int> {
-        Binding(
-            get: { appModel.engine.config.parentTargetCap },
-            set: { appModel.engine.updateConfig(minTarget: 1, maxTarget: ParentTargetCap.normalize($0)) }
-        )
     }
 
     private func targetCapButton(maxTarget: Int) -> some View {
@@ -141,7 +134,7 @@ struct SessionConfigView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("target-cap-up-to-\(normalizedTarget)")
-        .accessibilityLabel("Target numbers up to \(normalizedTarget)")
+        .accessibilityLabel("Target numbers up to \(normalizedTarget)\(isSelected ? ", selected" : "")")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 

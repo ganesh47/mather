@@ -6,22 +6,27 @@ struct StoryAnchorView: View {
 
     var body: some View {
         VS1Card {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 18) {
                 Text(prompt.title)
-                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(prompt.spokenIntro)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.78)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("story-anchor-spoken-intro")
 
                 Text(prompt.reminder)
                     .font(.headline.weight(.black))
                     .foregroundStyle(MatherTheme.accent)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
                     .background(
                         Capsule(style: .continuous)
                             .fill(MatherTheme.accent.opacity(0.14))
