@@ -17,7 +17,7 @@ struct VehicleTheme: SliceTheme {
 
     init(spec: VehicleSpec = .car) { self.spec = spec }
 
-    var counterKind: CounterKind { .vehicle(symbolName: spec.symbolName, assetName: spec.assetName) }
+    var counterKind: CounterKind { .themedSymbol(symbolName: spec.symbolName, assetName: spec.assetName) }
     var celebrationEmoji: String { spec.celebrationEmoji }
     var counterNoun: String { spec.counterNoun }
 

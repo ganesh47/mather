@@ -10,6 +10,7 @@ private struct ThemeOption: Identifiable {
 private let themeOptions: [ThemeOption] = [
     ThemeOption(id: "classic", name: "Classic", iconSystemName: "circle.fill", color: MatherTheme.warm),
     ThemeOption(id: "vehicle", name: "Vehicles", iconSystemName: "car.fill", color: MatherTheme.softBlue),
+    ThemeOption(id: "space", name: "Planets", iconSystemName: "sparkles", color: MatherTheme.accent),
 ]
 
 struct SessionConfigView: View {
@@ -37,7 +38,7 @@ struct SessionConfigView: View {
                                 .font(.title3.weight(.semibold))
                                 .accessibilityIdentifier("session-setup-theme-section")
 
-                            // Theme picker — two cards, selected card gets accent border.
+                            // Theme picker — selected card gets accent border.
                             // Tapping sets selectedThemeId; engine reads it at startSession().
                             HStack(spacing: 12) {
                                 ForEach(themeOptions) { option in
@@ -167,6 +168,7 @@ struct SessionConfigView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("theme-card-\(option.id)")
+        .accessibilityLabel("\(option.name) theme")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

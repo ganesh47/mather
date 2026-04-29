@@ -52,6 +52,8 @@ final class CompactLayoutTests: XCTestCase {
 
         XCTAssertTrue(app.buttons["theme-card-vehicle"].waitForExistence(timeout: 5))
         app.buttons["theme-card-vehicle"].tap()
+        XCTAssertTrue(app.buttons["theme-card-space"].waitForExistence(timeout: 5))
+        app.buttons["theme-card-space"].tap()
 
         let targetCap50 = app.buttons["target-cap-up-to-50"]
         if !targetCap50.waitForExistence(timeout: 3) {

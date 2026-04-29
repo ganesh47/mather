@@ -64,6 +64,7 @@ struct NumberStoryGeneratorTests {
         let large = SliceProblem(target: 250, decompositionA: 100, decompositionB: 150)
 
         #expect(NumberStoryGenerator.prompt(for: small, themeId: "space").templateID == .spaceCargo)
+        #expect(NumberStoryGenerator.prompt(for: small, themeId: "planets").templateID == .spaceCargo)
         #expect(NumberStoryGenerator.prompt(for: small, themeId: "vehicle").templateID == .vehicleGarage)
         #expect(NumberStoryGenerator.prompt(for: small, themeId: "garden").templateID == .gardenSeedShop)
         #expect(NumberStoryGenerator.prompt(for: hundred, themeId: "festival").templateID == .festivalPrep)
@@ -99,7 +100,7 @@ struct NumberStoryGeneratorTests {
             SliceProblem(target: 250, decompositionA: 100, decompositionB: 150),
             SliceProblem(target: 1_000, decompositionA: 400, decompositionB: 600),
         ]
-        let themeIds = ["classic", "space", "vehicle", "garden", "festival"]
+        let themeIds = ["classic", "space", "planets", "vehicle", "garden", "festival"]
 
         for problem in problems {
             for themeId in themeIds {

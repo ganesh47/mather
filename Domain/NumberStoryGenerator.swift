@@ -17,7 +17,7 @@ enum NumberStoryGenerator {
             preferred = .gardenSeedShop
         case "festival", "festival_prep":
             preferred = .festivalPrep
-        case "space", "space_cargo":
+        case "space", "planets", "space_cargo":
             preferred = .spaceCargo
         default:
             preferred = classicTemplate(for: target)

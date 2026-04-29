@@ -2,8 +2,8 @@ import SwiftUI
 
 /// A single counter cell in the 2×5 ten-frame grid.
 ///
-/// Renders as a filled/empty circle (ClassicTheme) or a local generated vehicle asset
-/// with SF Symbol fallback (VehicleTheme) depending on the active theme's `counterKind`.
+/// Renders as a filled/empty circle (ClassicTheme) or a local generated theme asset
+/// with SF Symbol fallback depending on the active theme's `counterKind`.
 /// The 2×5 grid structure is preserved regardless of theme — subitising
 /// depends on spatial arrangement, not object shape (Clements, 2002).
 ///
@@ -35,8 +35,8 @@ struct CounterView: View {
         switch theme.counterKind {
         case .circle:
             circleCounter
-        case .vehicle(let symbolName, let assetName):
-            vehicleCounter(symbolName: symbolName, assetName: assetName)
+        case .themedSymbol(let symbolName, let assetName):
+            themedCounter(symbolName: symbolName, assetName: assetName)
         }
     }
 
@@ -57,7 +57,7 @@ struct CounterView: View {
     }
 
     @ViewBuilder
-    private func vehicleCounter(symbolName: String, assetName: String?) -> some View {
+    private func themedCounter(symbolName: String, assetName: String?) -> some View {
         if filled {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -78,8 +78,6 @@ struct CounterView: View {
                 }
             }
         } else {
-            // Dashed parking-space outline — clearly signals an empty slot
-            // without the ghost-car silhouette that reads as decorative background.
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(
                     Color.secondary.opacity(0.3),
