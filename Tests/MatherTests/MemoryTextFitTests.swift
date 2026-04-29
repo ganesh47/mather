@@ -25,10 +25,12 @@ struct MemoryTextFitTests {
 
     @MainActor
     @Test func birdLabelsStayWithinReasonableFallbackRange() {
-        let labels = (MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates).map(\.name)
+        let labels = (MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle).map(\.name)
         let longestLabel = labels.max { $0.count < $1.count }
         #expect(longestLabel == "Thiruvananthapuram")
         #expect(longestLabel?.count == 18)
+        #expect(MemoryDeck.waterCycle.map(\.name).contains("Condensation"))
+        #expect(MemoryDeck.waterCycle.map(\.name).contains("Precipitation"))
         #expect(MemoryView.labelMinimumScaleFactor(for: .hard) >= 0.58)
 
         let longestBirdFact = MemoryDeck.birds

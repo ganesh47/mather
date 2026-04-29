@@ -22,6 +22,7 @@ enum MemoryDeckKind: String, Equatable {
     case countries
     case countryFlags
     case indiaStates
+    case waterCycle
 
     var displayName: String {
         switch self {
@@ -33,6 +34,7 @@ enum MemoryDeckKind: String, Equatable {
         case .countries: return "Countries & Capitals"
         case .countryFlags: return "Countries & Flags"
         case .indiaStates: return "Indian States & Capitals"
+        case .waterCycle: return "Water Cycle"
         }
     }
 }
@@ -389,8 +391,30 @@ enum MemoryDeck {
         indiaStateCapital("state-assam", state: "Assam", capital: "Dispur", region: "northeast India", clue: "tea gardens and one-horned rhinos")
     ]
 
+    static let waterCycle: [MemoryAnimal] = [
+        waterCycleConcept("water-cycle-evaporation", name: "Evaporation", asset: "MemoryWaterCycleEvaporation", action: "warm water goes up", whereSeen: "above warm ponds, lakes, and puddles", everydayWords: "The sun warms water into vapor", cycleStep: "Water rises into the air"),
+        waterCycleConcept("water-cycle-condensation", name: "Condensation", asset: "MemoryWaterCycleCondensation", action: "tiny drops make a cloud", whereSeen: "inside cool clouds", everydayWords: "Vapor cools and gathers as tiny drops", cycleStep: "Drops gather together"),
+        waterCycleConcept("water-cycle-precipitation", name: "Precipitation", asset: "MemoryWaterCyclePrecipitation", action: "rain falls down", whereSeen: "under heavy clouds", everydayWords: "Cloud drops get heavy and fall", cycleStep: "Rain returns to the ground"),
+        waterCycleConcept("water-cycle-collection", name: "Collection", asset: "MemoryWaterCycleCollection", action: "water gathers again", whereSeen: "in ponds, lakes, rivers, and puddles", everydayWords: "Fallen water gathers in low places", cycleStep: "Water waits for the sun again"),
+        waterCycleConcept("water-cycle-sun-heat", name: "Sun Heat", asset: "MemoryWaterCycleSunHeat", action: "the sun warms water", whereSeen: "where sunlight touches water", everydayWords: "Warm sunlight starts the cycle", cycleStep: "Heat helps water rise"),
+        waterCycleConcept("water-cycle-vapor", name: "Vapor", asset: "MemoryWaterCycleVapor", action: "water is in the air", whereSeen: "above warm water", everydayWords: "Vapor is water we cannot easily see", cycleStep: "Vapor moves upward"),
+        waterCycleConcept("water-cycle-cloud", name: "Cloud", asset: "MemoryWaterCycleCloud", action: "drops gather together", whereSeen: "up in the sky", everydayWords: "A cloud holds many tiny drops", cycleStep: "Clouds can grow heavy"),
+        waterCycleConcept("water-cycle-pond", name: "Pond", asset: "MemoryWaterCyclePond", action: "water waits here", whereSeen: "on the ground after rain", everydayWords: "A pond can collect rain water", cycleStep: "Collected water can rise again")
+    ]
+
+    static let waterCycleImageAssetPlan: [MemoryImageAssetPlan] = [
+        importedImagePlan("water-cycle-evaporation", asset: "MemoryWaterCycleEvaporation", prompt: "warm sun over pond with vapor rising", notes: "rising vapor must be readable at card size", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-condensation", asset: "MemoryWaterCycleCondensation", prompt: "vapor dots gathering into a cloud", notes: "cloud and gathered drops should be visually central", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-precipitation", asset: "MemoryWaterCyclePrecipitation", prompt: "rain falling from a cloud into a pond", notes: "falling rain should be distinct from vapor", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-collection", asset: "MemoryWaterCycleCollection", prompt: "rain water collecting in pond or lake", notes: "pond should read as the destination for rain", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-sun-heat", asset: "MemoryWaterCycleSunHeat", prompt: "sun warming water", notes: "sun rays should clearly touch water", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-vapor", asset: "MemoryWaterCycleVapor", prompt: "water vapor rising from a pond", notes: "vapor arrows should differ from rain drops", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-cloud", asset: "MemoryWaterCycleCloud", prompt: "cloud with tiny gathered drops", notes: "cloud should be clear without needing text", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-pond", asset: "MemoryWaterCyclePond", prompt: "pond holding collected water after rain", notes: "pond should be large and high contrast", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned")
+    ]
+
     static let allAnimalsById: [String: MemoryAnimal] = {
-        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates).map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates + waterCycle).map { ($0.id, $0) })
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
@@ -429,7 +453,15 @@ enum MemoryDeck {
         generatedFlagProvenance(assetName: "MemoryFlagBrazil", cardId: "country-flag-brazil", sha256: "ac1235d39036fd5ed000a10dd0e49d939eda8db1632c831d8453be301aa6c272"),
         generatedFlagProvenance(assetName: "MemoryFlagAustralia", cardId: "country-flag-australia", sha256: "07e169c5a54af9027fbafe0348e4505b09112cd077d1e3fbcf37a206be37c119"),
         generatedFlagProvenance(assetName: "MemoryFlagCanada", cardId: "country-flag-canada", sha256: "b3712b0ba8bb6c0bb9d40878b9ba8af8dfcd42f5fc35823472d4324ef580132c"),
-        generatedFlagProvenance(assetName: "MemoryFlagKenya", cardId: "country-flag-kenya", sha256: "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9")
+        generatedFlagProvenance(assetName: "MemoryFlagKenya", cardId: "country-flag-kenya", sha256: "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleEvaporation", cardId: "water-cycle-evaporation", sha256: "5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCondensation", cardId: "water-cycle-condensation", sha256: "9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePrecipitation", cardId: "water-cycle-precipitation", sha256: "5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCollection", cardId: "water-cycle-collection", sha256: "cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleSunHeat", cardId: "water-cycle-sun-heat", sha256: "78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleVapor", cardId: "water-cycle-vapor", sha256: "b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCloud", cardId: "water-cycle-cloud", sha256: "9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePond", cardId: "water-cycle-pond", sha256: "97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce")
     ]
 
 
@@ -514,6 +546,29 @@ enum MemoryDeck {
             derivativeFileName: "\(assetName).png",
             derivativeSha256: sha256,
             derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands from basic flag geometry and colors; no third-party image file was imported.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
+    private static func generatedWaterCycleProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "Codex CLI image generation water cycle prompt family",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for Mather issue #771",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-04-29",
+            originalFileName: "\(assetName).png",
+            originalSha256: sha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: sha256,
+            derivativeChanges: "Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally; no third-party material used.",
             licenseAllowsReuse: true,
             noThirdPartyRestrictionFound: true,
             noLogoOrEndorsementRisk: true,
@@ -697,6 +752,28 @@ enum MemoryDeck {
             )
         )
     }
+
+    private static func waterCycleConcept(_ id: String, name: String, asset: String, action: String, whereSeen: String, everydayWords: String, cycleStep: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .asset(asset),
+            metadata: MemoryCardMetadata(
+                deck: .waterCycle,
+                category: "water cycle concept",
+                kind: "water cycle concept",
+                habitat: whereSeen,
+                movement: action,
+                factCards: [
+                    MemoryFactCard(title: "Concept", value: name),
+                    MemoryFactCard(title: "Action", value: action),
+                    MemoryFactCard(title: "Where", value: whereSeen),
+                    MemoryFactCard(title: "Everyday Words", value: everydayWords),
+                    MemoryFactCard(title: "Cycle Step", value: cycleStep)
+                ]
+            )
+        )
+    }
 }
 
 // MARK: - Game difficulty
@@ -763,7 +840,7 @@ struct MemoryView: View {
     @State private var latestAskResponse: MemoryAskResponse? = nil
 
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates
+        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle
 
         var label: String {
             switch self {
@@ -775,6 +852,7 @@ struct MemoryView: View {
             case .countries: return "🌍 Countries & Capitals"
             case .countryFlags: return "🏳️ Countries & Flags"
             case .indiaStates: return "📍 India States & Capitals"
+            case .waterCycle: return "💧 Water Cycle"
             }
         }
 
@@ -788,6 +866,7 @@ struct MemoryView: View {
             case .countries: return "Countries & Capitals"
             case .countryFlags: return "Countries & Flags"
             case .indiaStates: return "India States & Capitals"
+            case .waterCycle: return "Water Cycle"
             }
         }
 
@@ -801,6 +880,7 @@ struct MemoryView: View {
             case .countries: return MemoryDeck.countries
             case .countryFlags: return MemoryDeck.countryFlags
             case .indiaStates: return MemoryDeck.indiaStates
+            case .waterCycle: return MemoryDeck.waterCycle
             }
         }
     }
@@ -1518,6 +1598,8 @@ struct MemoryView: View {
             deckLabel = "Flag Guide"
         case .indiaStates:
             deckLabel = "India Guide"
+        case .waterCycle:
+            deckLabel = "Water Cycle Guide"
         }
 
         switch source {

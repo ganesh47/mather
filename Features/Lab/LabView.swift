@@ -69,7 +69,7 @@ struct LabView: View {
                 appModel.pickProfileThenRun { appModel.engine.showWaterCycle() }
             },
             GameTile(emoji: "🃏", name: "Memory Match",
-                     tagline: "Match animals to their names",
+                     tagline: "Match pictures and words",
                      fill: MatherTheme.coral) {
                 appModel.pickProfileThenRun { appModel.engine.showMemory() }
             },

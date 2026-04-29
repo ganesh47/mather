@@ -12,6 +12,7 @@ struct MemoryVarietyTests {
         #expect(MemoryDeck.countries.count >= 8)
         #expect(MemoryDeck.countryFlags.count >= 8)
         #expect(MemoryDeck.indiaStates.count >= 8)
+        #expect(MemoryDeck.waterCycle.count >= 8)
     }
 
     @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {

@@ -1,0 +1,120 @@
+issue: 771
+title: Water Cycle Memory deck asset provenance
+createdAt: 2026-04-29
+retrievedAt: 2026-04-29
+promptFamily: Codex CLI image generation child-friendly water cycle memory-card prompt family
+generationMethod: Codex CLI image-generation capability via built-in image_gen tool; local chroma-key background removal and 512x512 PNG resizing
+codexGeneratedImageBatchId: 019dda39-bb70-7223-b073-d8cd0e80353a
+assets:
+  - assetName: MemoryWaterCycleEvaporation
+    cardId: water-cycle-evaporation
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleEvaporation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c1783cc81919b5169c3e625ff10.png
+    originalFileName: MemoryWaterCycleEvaporation.png
+    originalSha256: 5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569
+    derivativeFileName: MemoryWaterCycleEvaporation.png
+    derivativeSha256: 5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCycleCondensation
+    cardId: water-cycle-condensation
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCondensation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c393d988191a2e71c72e4cef81e.png
+    originalFileName: MemoryWaterCycleCondensation.png
+    originalSha256: 9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2
+    derivativeFileName: MemoryWaterCycleCondensation.png
+    derivativeSha256: 9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCyclePrecipitation
+    cardId: water-cycle-precipitation
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCyclePrecipitation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c959b88819188b74bb057d990b6.png
+    originalFileName: MemoryWaterCyclePrecipitation.png
+    originalSha256: 5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1
+    derivativeFileName: MemoryWaterCyclePrecipitation.png
+    derivativeSha256: 5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCycleCollection
+    cardId: water-cycle-collection
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCollection
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23ce0ef688191afb50d545c99fe70.png
+    originalFileName: MemoryWaterCycleCollection.png
+    originalSha256: cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31
+    derivativeFileName: MemoryWaterCycleCollection.png
+    derivativeSha256: cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCycleSunHeat
+    cardId: water-cycle-sun-heat
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleSunHeat
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23e1143688191b25fdd77b118255f.png
+    originalFileName: MemoryWaterCycleSunHeat.png
+    originalSha256: 78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621
+    derivativeFileName: MemoryWaterCycleSunHeat.png
+    derivativeSha256: 78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCycleVapor
+    cardId: water-cycle-vapor
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleVapor
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23d3f20f4819199673ecd272fc0a3.png
+    originalFileName: MemoryWaterCycleVapor.png
+    originalSha256: b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b
+    derivativeFileName: MemoryWaterCycleVapor.png
+    derivativeSha256: b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCycleCloud
+    cardId: water-cycle-cloud
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCloud
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23d619b148191b4727d1ae8dc6094.png
+    originalFileName: MemoryWaterCycleCloud.png
+    originalSha256: 9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9
+    derivativeFileName: MemoryWaterCycleCloud.png
+    derivativeSha256: 9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+  - assetName: MemoryWaterCyclePond
+    cardId: water-cycle-pond
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCyclePond
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
+    creditLine: Project-owned artwork created for Mather issue #771
+    license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23da2fec88191889bbe36891a10a0.png
+    originalFileName: MemoryWaterCyclePond.png
+    originalSha256: 97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce
+    derivativeFileName: MemoryWaterCyclePond.png
+    derivativeSha256: 97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
+verification:
+  licenseAllowsReuse: true
+  noThirdPartyRestrictionFound: true
+  noLogoOrEndorsementRisk: true
+  noPeopleOrPrivacyRisk: true
+  childCardLegibilityChecked: true
+  noHiddenText: true
+  noFacesOrIdentifyingData: true
