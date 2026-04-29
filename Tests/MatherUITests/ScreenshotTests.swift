@@ -275,18 +275,18 @@ final class ScreenshotTests: XCTestCase {
 
         app.buttons["ExplorerLab"].tap()
         _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
-        app.buttons["Water Cycle Lab"].tap()
-        _ = app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10)
+        tapWhenReachable(app.buttons["Water Cycle Lab"], in: app, scrollDirection: .up)
+        XCTAssertTrue(app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10))
 
         let primaryAction = app.buttons["water-cycle-primary-action"]
-        XCTAssertTrue(primaryAction.waitForExistence(timeout: 5))
+        XCTAssertTrue(scrollUntilExists(primaryAction, in: app, direction: .up, maxSwipes: 6))
         for _ in 0..<5 {
-            primaryAction.tap()
+            tapWhenReachable(primaryAction, in: app, scrollDirection: .up)
         }
 
         XCTAssertTrue(app.staticTexts["Cycle complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-replay-prompt"], in: app, direction: .up, maxSwipes: 4))
+        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-reset"], in: app, direction: .up, maxSwipes: 4))
         snapshot(app, "WaterCycle-Complete-Compact")
     }
 
@@ -360,6 +360,63 @@ final class ScreenshotTests: XCTestCase {
     // MARK: - Helpers
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.
+    private enum ScrollDirection {
+        case up
+        case down
+    }
+
+    private func tapWhenReachable(_ element: XCUIElement, in app: XCUIApplication, scrollDirection: ScrollDirection, maxSwipes: Int = 8) {
+        XCTAssertTrue(scrollUntilExists(element, in: app, direction: scrollDirection, maxSwipes: maxSwipes))
+
+        for _ in 0...maxSwipes {
+            if element.isHittable {
+                element.tap()
+                return
+            }
+            scroll(app, direction: scrollDirection)
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+
+        if element.exists {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            return
+        }
+
+        XCTFail("Expected element to become reachable: \(element)")
+    }
+
+    private func scrollUntilExists(_ element: XCUIElement, in app: XCUIApplication, direction: ScrollDirection, maxSwipes: Int) -> Bool {
+        if element.waitForExistence(timeout: 1) { return true }
+
+        for _ in 0..<maxSwipes {
+            scroll(app, direction: direction)
+            if element.waitForExistence(timeout: 1) {
+                return true
+            }
+        }
+
+        return element.exists
+    }
+
+    private func scroll(_ app: XCUIApplication, direction: ScrollDirection) {
+        let scrollView = app.scrollViews.firstMatch
+        if scrollView.exists {
+            switch direction {
+            case .up:
+                scrollView.swipeUp()
+            case .down:
+                scrollView.swipeDown()
+            }
+        } else {
+            switch direction {
+            case .up:
+                app.swipeUp()
+            case .down:
+                app.swipeDown()
+            }
+        }
+    }
+
     private func launch() -> XCUIApplication {
         launchApp(with: [
             "-feature.audioEnabled", "NO",
