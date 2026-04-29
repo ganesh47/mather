@@ -2,8 +2,8 @@ import SwiftUI
 
 /// A single counter cell in the 2×5 ten-frame grid.
 ///
-/// Renders as a filled/empty circle (ClassicTheme) or a car SF Symbol
-/// (VehicleTheme) depending on the active theme's `counterKind`.
+/// Renders as a filled/empty circle (ClassicTheme) or a local generated vehicle asset
+/// with SF Symbol fallback (VehicleTheme) depending on the active theme's `counterKind`.
 /// The 2×5 grid structure is preserved regardless of theme — subitising
 /// depends on spatial arrangement, not object shape (Clements, 2002).
 ///
@@ -35,8 +35,8 @@ struct CounterView: View {
         switch theme.counterKind {
         case .circle:
             circleCounter
-        case .vehicle(let symbolName):
-            vehicleCounter(symbolName: symbolName)
+        case .vehicle(let symbolName, let assetName):
+            vehicleCounter(symbolName: symbolName, assetName: assetName)
         }
     }
 
@@ -57,17 +57,26 @@ struct CounterView: View {
     }
 
     @ViewBuilder
-    private func vehicleCounter(symbolName: String) -> some View {
+    private func vehicleCounter(symbolName: String, assetName: String?) -> some View {
         if filled {
-            Image(systemName: symbolName)
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(filledColor)
-                .padding(6)
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(filledColor.opacity(0.12))
-                )
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(filledColor.opacity(0.12))
+
+                if let assetName {
+                    Image(assetName)
+                        .resizable()
+                        .renderingMode(.original)
+                        .scaledToFit()
+                        .padding(4)
+                } else {
+                    Image(systemName: symbolName)
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(filledColor)
+                        .padding(6)
+                }
+            }
         } else {
             // Dashed parking-space outline — clearly signals an empty slot
             // without the ghost-car silhouette that reads as decorative background.

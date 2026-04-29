@@ -136,7 +136,9 @@ final class VerticalSliceEngine {
                 config.audioEnabled = featureFlags.audioEnabled
                 config.deterministicMode = featureFlags.testModeEnabled
                 problems = ProblemGenerator.generateProblems(config: config)
-                let pool = VehicleSpec.pool
+                let pool = featureFlags.testModeEnabled
+                    ? VehicleSpec.pool
+                    : Self.randomizedVehiclePool(from: VehicleSpec.pool)
                 problemThemes = problems.indices.map { i in VehicleTheme(spec: pool[i % pool.count]) }
                 activeTheme = problemThemes[0]
             } else {
@@ -192,6 +194,17 @@ final class VerticalSliceEngine {
             feedbackMessage = "Telemetry setup failed, but play can continue."
         }
         route = .session
+    }
+
+    private static func randomizedVehiclePool(from pool: [VehicleSpec]) -> [VehicleSpec] {
+        guard pool.count > 1 else { return pool }
+        var shuffled = pool.shuffled()
+        // Build 58 feedback showed the first vehicle always as cars. Keep non-test
+        // sessions fresh by preventing the first problem from defaulting to car.
+        if shuffled.first?.counterNoun == VehicleSpec.car.counterNoun {
+            shuffled.append(shuffled.removeFirst())
+        }
+        return shuffled
     }
 
     func updateConfig(
