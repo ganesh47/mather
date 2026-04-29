@@ -180,15 +180,17 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.allCases.contains(.planets))
         #expect(MemoryView.DeckSelection.allCases.contains(.fishes))
         #expect(MemoryView.DeckSelection.allCases.contains(.countries))
+        #expect(MemoryView.DeckSelection.allCases.contains(.countryFlags))
         #expect(MemoryView.DeckSelection.allCases.contains(.indiaStates))
         #expect(MemoryView.DeckSelection.planets.animals.map(\.id) == MemoryDeck.planets.map(\.id))
         #expect(MemoryView.DeckSelection.fishes.animals.map(\.id) == MemoryDeck.fishes.map(\.id))
         #expect(MemoryView.DeckSelection.countries.animals.map(\.id) == MemoryDeck.countries.map(\.id))
+        #expect(MemoryView.DeckSelection.countryFlags.animals.map(\.id) == MemoryDeck.countryFlags.map(\.id))
         #expect(MemoryView.DeckSelection.indiaStates.animals.map(\.id) == MemoryDeck.indiaStates.map(\.id))
     }
 
     @Test func requestedDecksProvideEnoughDistinctPairs() {
-        for deck in [MemoryDeck.planets, MemoryDeck.fishes, MemoryDeck.countries, MemoryDeck.indiaStates] {
+        for deck in [MemoryDeck.planets, MemoryDeck.fishes, MemoryDeck.countries, MemoryDeck.countryFlags, MemoryDeck.indiaStates] {
             #expect(deck.count >= MemoryDifficulty.hard.pairCount)
             #expect(Set(deck.map(\.id)).count == deck.count)
         }
@@ -200,6 +202,99 @@ struct MemoryViewTests {
 
         #expect(country?.name == "New Delhi")
         #expect(state?.name == "Thiruvananthapuram")
+    }
+
+    @Test func countryFlagsDeckIsSeparateFlagToCountryMatchDeck() {
+        let expectedCountries = ["India", "Japan", "France", "Egypt", "Brazil", "Australia", "Canada", "Kenya"]
+        let ids = MemoryDeck.countryFlags.map(\.id)
+        let assets = MemoryDeck.countryFlags.compactMap(\.imageAssetName)
+
+        #expect(MemoryView.DeckSelection.countryFlags.menuLabel == "Countries & Flags")
+        #expect(MemoryView.DeckSelection.countryFlags.label == "🏳️ Countries & Flags")
+        #expect(MemoryDeck.countryFlags.map(\.canonicalName) == expectedCountries)
+        #expect(MemoryDeck.countryFlags.map(\.name) == expectedCountries)
+        #expect(Set(ids).count == ids.count)
+        #expect(ids.allSatisfy { $0.hasPrefix("country-flag-") })
+        #expect(Set(assets).count == MemoryDeck.countryFlags.count)
+        #expect(assets.allSatisfy { $0.hasPrefix("MemoryFlag") })
+        #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
+        #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.category == "country flag" })
+        #expect(MemoryDeck.countryFlags.allSatisfy { animal in
+            animal.detailCards.contains { $0.title == "Flag" && $0.value == "Flag of \(animal.canonicalName)" }
+        })
+
+        let indiaCapital = MemoryDeck.countries.first { $0.canonicalName == "India" }
+        let indiaFlag = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }
+        #expect(indiaCapital?.id == "country-india")
+        #expect(indiaCapital?.name == "New Delhi")
+        #expect(indiaFlag?.id == "country-flag-india")
+        #expect(indiaFlag?.name == "India")
+    }
+
+    @MainActor
+    @Test func countryFlagsBuildFlagPictureAndCountryLabelCards() {
+        let india = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!
+        let cards = MemoryView.buildCards(for: [india])
+        let picture = cards.first { card in
+            if case .picture = card.content { return true }
+            return false
+        }!
+        let label = cards.first { card in
+            if case .label = card.content { return true }
+            return false
+        }!
+
+        #expect(picture.pairId == "country-flag-india")
+        #expect(label.pairId == "country-flag-india")
+        #expect(MemoryView.accessibilityLabel(for: picture) == "Flag of India")
+        #expect(MemoryView.accessibilityLabel(for: label) == "India")
+        if case let .picture(animal) = picture.content {
+            #expect(animal.imageAssetName == "MemoryFlagIndia")
+        } else {
+            Issue.record("Expected picture card")
+        }
+        if case let .label(animal) = label.content {
+            #expect(animal.name == "India")
+        } else {
+            Issue.record("Expected label card")
+        }
+    }
+
+    @Test func countryFlagAssetsHaveProvenanceAndCatalogs() {
+        let expectedHashes = [
+            "MemoryFlagIndia": "532012f66641b8e0ddd64628305810178bd97bb35e13086c00ee2ba597ae45f2",
+            "MemoryFlagJapan": "b2d751e8a2b4a7987c5268b5edb12b45a5cdda7dd9977d027311aba9401b39ef",
+            "MemoryFlagFrance": "c9912731f78d48a59bcad43a2e0014ac83ef7887277b8a4ad8728803a3c74ff4",
+            "MemoryFlagEgypt": "f307582ff40e2c27ebf25e244fa34330b671f30cf44df07e75fc122f3402ddd8",
+            "MemoryFlagBrazil": "ac1235d39036fd5ed000a10dd0e49d939eda8db1632c831d8453be301aa6c272",
+            "MemoryFlagAustralia": "07e169c5a54af9027fbafe0348e4505b09112cd077d1e3fbcf37a206be37c119",
+            "MemoryFlagCanada": "b3712b0ba8bb6c0bb9d40878b9ba8af8dfcd42f5fc35823472d4324ef580132c",
+            "MemoryFlagKenya": "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9"
+        ]
+        let flagAssets = Set(MemoryDeck.countryFlags.compactMap(\.imageAssetName))
+        let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
+
+        #expect(flagAssets == Set(expectedHashes.keys))
+        for assetName in flagAssets {
+            let provenance = provenanceByAsset[assetName]
+            let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
+            let image = imageset.appendingPathComponent("\(assetName).png")
+            let contents = imageset.appendingPathComponent("Contents.json")
+
+            #expect(provenance?.sourceName == "Project-owned deterministic educational flag drawing")
+            #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #744")
+            #expect(provenance?.licenseAllowsReuse == true)
+            #expect(provenance?.noThirdPartyRestrictionFound == true)
+            #expect(provenance?.noLogoOrEndorsementRisk == true)
+            #expect(provenance?.noPeopleOrPrivacyRisk == true)
+            #expect(provenance?.childCardLegibilityChecked == true)
+            #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
+            #expect(FileManager.default.fileExists(atPath: image.path))
+            #expect(FileManager.default.fileExists(atPath: contents.path))
+        }
     }
 
     @MainActor
@@ -249,6 +344,16 @@ struct MemoryViewTests {
         let planetContent = MemoryView.learningContent(for: planet, deckSelection: .planets, description: planetDescription)
         #expect(planetContent.sourceBadge == "Planet Guide")
         #expect(planetContent.readAloudText.contains("Source: Planet Guide."))
+
+        let flagDescription = MemoryCardDescription(
+            title: "India",
+            shortDescription: "This card shows the flag of India.",
+            factChips: [MemoryFactChip(title: "Flag", value: "Flag of India")],
+            source: .curatedFallback
+        )
+        let flagContent = MemoryView.learningContent(for: MemoryDeck.countryFlags[0], deckSelection: .countryFlags, description: flagDescription)
+        #expect(flagContent.sourceBadge == "Flag Guide")
+        #expect(flagContent.readAloudText.contains("Source: Flag Guide."))
     }
 }
 
@@ -265,7 +370,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.indiaStates
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
@@ -276,7 +381,23 @@ struct MemoryCardDescribeServiceTests {
         #expect(MemoryDeck.planets.allSatisfy { $0.metadata.deck == .planets })
         #expect(MemoryDeck.fishes.allSatisfy { $0.metadata.deck == .fishes })
         #expect(MemoryDeck.countries.allSatisfy { $0.metadata.deck == .countries })
+        #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
         #expect(MemoryDeck.indiaStates.allSatisfy { $0.metadata.deck == .indiaStates })
+    }
+
+    @MainActor @Test func fallbackDescriptionUsesCuratedFlagMetadata() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubAIAdapter(isAvailable: false, response: nil)
+        )
+
+        let description = await service.describe(MemoryDeck.countryFlags[0])
+
+        #expect(description.title == "India")
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("flag of india"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("country in asia"))
+        #expect(Array(description.factChips.map(\.title).prefix(4)) == ["Country", "Flag", "ISO Code", "Capital"])
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedBirdMetadata() async {
