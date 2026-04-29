@@ -19,6 +19,7 @@ struct MatherApp: App {
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)
             Self.seedGameHistoryIfRequested(using: appModel)
+            Self.applyUITestStartRouteIfRequested(using: appModel)
             _appModel = State(initialValue: appModel)
         } catch {
             fatalError("Failed to create model container: \(error)")
@@ -44,6 +45,21 @@ private extension MatherApp {
         case "light": return .light
         case "dark": return .dark
         default: return nil
+        }
+    }
+
+    static func applyUITestStartRouteIfRequested(using appModel: AppModel) {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-uiTest.startRoute"),
+              arguments.indices.contains(flagIndex + 1) else { return }
+
+        switch arguments[flagIndex + 1].lowercased() {
+        case "lab", "explorerlab", "explorer-lab":
+            appModel.engine.showLab()
+        case "watercycle", "water-cycle", "watercyclelab", "water-cycle-lab":
+            appModel.engine.showWaterCycle()
+        default:
+            break
         }
     }
 
