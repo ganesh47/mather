@@ -81,6 +81,7 @@ final class AppModel {
             telemetryWriter: telemetryWriter,
             speechService: speechService,
             hapticsService: hapticsService,
+            motionService: motionService,
             scanner: roomQuestScanner,
             stationStore: roomQuestStationStore
         )

@@ -20,12 +20,16 @@ struct RoomQuestEngineTests {
 
     private func makeEngine(
         safetyAcknowledged: Bool = true,
+        routeQuestEnabled: Bool = false,
         scanner: RoomQuestScanner = NoopRoomQuestScanner(),
         stationStore: RoomQuestStationStore? = nil,
-        defaultsSuiteName: String = #function
+        defaultsSuiteName: String = #function,
+        telemetryWriter: TelemetryWriter = TelemetryWriter(),
+        motionService: MotionService? = nil
     ) -> RoomQuestEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: defaultsSuiteName)!)
         flags.roomQuestSafetyAcknowledged = safetyAcknowledged
+        flags.routeQuestEnabled = routeQuestEnabled
         let resolvedStationStore: RoomQuestStationStore
         if let stationStore {
             resolvedStationStore = stationStore
@@ -35,8 +39,9 @@ struct RoomQuestEngineTests {
         }
         return RoomQuestEngine(
             featureFlags: flags,
-            telemetryWriter: TelemetryWriter(),
+            telemetryWriter: telemetryWriter,
             speechService: SpeechService(),
+            motionService: motionService,
             scanner: scanner,
             stationStore: resolvedStationStore
         )
@@ -90,6 +95,114 @@ struct RoomQuestEngineTests {
         engine.confirmStationManually(.blueBubble)
         engine.markSetupComplete()
         #expect(engine.phase == .spot(index: 0))
+    }
+
+    @Test
+    func routeQuestStartsScriptedRouteWhenFeatureFlagEnabled() {
+        let engine = makeEngine(routeQuestEnabled: true)
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        #expect(engine.phase == .routeNode(index: 0))
+        #expect(engine.currentRouteNode?.kind == .start)
+        #expect(engine.routeNodeCount == RouteQuestRoute.twoStationMVP().nodes.count)
+    }
+
+    @Test
+    func routeQuestCompletesStartTurnStepsStationAndReturnsToCPA() {
+        let motionService = MotionService()
+        let engine = makeEngine(routeQuestEnabled: true, motionService: motionService)
+        engine.startSession()
+        guard let p = engine.problem else { return }
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+
+        engine.confirmRouteStart()
+        if let node = engine.currentRouteNode, case .turn(let target, _) = node.kind {
+            #expect(target == 45)
+        } else {
+            Issue.record("Expected first Route Quest turn node")
+        }
+
+        motionService.applyRelativeYaw(45)
+        engine.checkRouteTurn()
+        if let node = engine.currentRouteNode, case .step(let count, let validation) = node.kind {
+            #expect(count == 5)
+            #expect(validation == .manualConfirm)
+        } else {
+            Issue.record("Expected manual step node after turn")
+        }
+
+        engine.confirmRouteSteps()
+        #expect(engine.currentStation?.role == .redRocket)
+        #expect(engine.shouldShowSpotManualFallback)
+        engine.acceptCurrentSpotWithParentConsent()
+
+        if let node = engine.currentRouteNode, case .turn(let target, _) = node.kind {
+            #expect(target == -90)
+        } else {
+            Issue.record("Expected second Route Quest turn node")
+        }
+
+        motionService.applyRelativeYaw(-90)
+        engine.checkRouteTurn()
+        engine.confirmRouteSteps()
+        #expect(engine.currentStation?.role == .blueBubble)
+        engine.acceptCurrentSpotWithParentConsent()
+        #expect(engine.currentRouteNode?.kind == .returnHome)
+
+        engine.confirmRouteReturnHome()
+        #expect(engine.phase == .onScreenPictorial)
+        #expect(engine.splitLeftCount == p.decompositionA)
+    }
+
+    @Test
+    func routeQuestTurnRequiresYawWithinNodeTolerance() {
+        let motionService = MotionService()
+        let engine = makeEngine(routeQuestEnabled: true, motionService: motionService)
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+        engine.confirmRouteStart()
+
+        motionService.applyRelativeYaw(20)
+        engine.checkRouteTurn()
+
+        #expect(engine.phase == .routeNode(index: 1))
+        #expect(engine.feedbackMessage.localizedCaseInsensitiveContains("turn"))
+    }
+
+    @Test
+    func routeQuestTelemetryBeginsSessionAndPersistsRouteEvents() throws {
+        let schema = Schema([StoredTelemetryEvent.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: config)
+        let context = ModelContext(container)
+        let writer = TelemetryWriter(modelContext: context, activeProfileIdProvider: { "test-profile" })
+        let motionService = MotionService()
+        let engine = makeEngine(
+            routeQuestEnabled: true,
+            telemetryWriter: writer,
+            motionService: motionService
+        )
+
+        engine.startSession()
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+        engine.confirmRouteStart()
+        motionService.applyRelativeYaw(45)
+        engine.checkRouteTurn()
+
+        let events = try context.fetch(FetchDescriptor<StoredTelemetryEvent>())
+        #expect(events.contains { $0.typeRawValue == SliceEventType.sessionStart.rawValue })
+        #expect(events.contains { $0.typeRawValue == SliceEventType.routeQuestStarted.rawValue })
+        #expect(events.contains { $0.typeRawValue == SliceEventType.routeQuestNodeStarted.rawValue })
+        #expect(events.contains { $0.typeRawValue == SliceEventType.routeQuestTurnCompleted.rawValue })
     }
 
     @Test

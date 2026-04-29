@@ -41,6 +41,21 @@ struct RoomSessionView: View {
             }
             .padding(24)
 
+        case .routeNode:
+            if let node = engine.currentRouteNode, case .station(_, _) = node.kind {
+                EmptyView()
+            } else {
+                HStack(spacing: 12) {
+                    roomLightChromeButton(title: "Pause", systemImage: "pause.circle.fill", accessibilityID: "room-pause-route") {
+                        engine.pauseSession()
+                    }
+                    roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-route") {
+                        engine.abandonSession(reason: "parent_home")
+                    }
+                }
+                .padding(24)
+            }
+
         case .paused:
             roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-paused") {
                 engine.abandonSession(reason: "parent_home")
@@ -61,6 +76,9 @@ struct RoomSessionView: View {
 
         case .setup:
             RoomSetupView(engine: engine)
+
+        case .routeNode(let idx):
+            RouteQuestNodeView(engine: engine, nodeIndex: idx)
 
         case .spot(let idx):
             SpotPromptView(engine: engine, spotIndex: idx)
@@ -206,6 +224,152 @@ struct RoomSessionView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
+            }
+        }
+    }
+}
+
+private struct RouteQuestNodeView: View {
+    @Bindable var engine: RoomQuestEngine
+    let nodeIndex: Int
+
+    private var node: RouteQuestNode? {
+        engine.currentRouteNode
+    }
+
+    var body: some View {
+        if let node {
+            switch node.kind {
+            case .station:
+                SpotPromptView(engine: engine, spotIndex: nodeIndex)
+            default:
+                routeInstructionView(for: node)
+            }
+        } else {
+            ProgressView()
+                .controlSize(.large)
+        }
+    }
+
+    private func routeInstructionView(for node: RouteQuestNode) -> some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                Color.clear.frame(height: 64)
+
+                Text("Route Quest")
+                    .font(.title.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+
+                Text("Step \(engine.currentRouteNodeNumber) of \(engine.routeNodeCount)")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+
+                routeCue(for: node)
+
+                Text(node.prompt)
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.78)
+                    .padding(.horizontal, 12)
+
+                actionPanel(for: node)
+
+                Spacer(minLength: 40)
+            }
+            .frame(maxWidth: 720)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 32)
+        }
+    }
+
+    @ViewBuilder
+    private func routeCue(for node: RouteQuestNode) -> some View {
+        switch node.kind {
+        case .start:
+            Image(systemName: "house.circle.fill")
+                .font(.system(size: 96))
+                .foregroundStyle(MatherTheme.accent)
+        case .turn(let targetDegrees, _):
+            VStack(spacing: 12) {
+                Image(systemName: targetDegrees < 0 ? "arrow.turn.up.left" : "arrow.turn.up.right")
+                    .font(.system(size: 96, weight: .bold))
+                    .foregroundStyle(MatherTheme.accent)
+                Text(engine.currentRouteTurnProgressText)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.warm)
+            }
+        case .step(let count, _):
+            HStack(spacing: 10) {
+                ForEach(0..<count, id: \.self) { _ in
+                    Image(systemName: "shoeprints.fill")
+                        .font(.system(size: 34))
+                        .foregroundStyle(MatherTheme.accent)
+                }
+            }
+            .frame(minHeight: 96)
+        case .returnHome:
+            Image(systemName: "arrow.uturn.backward.circle.fill")
+                .font(.system(size: 96))
+                .foregroundStyle(MatherTheme.accent)
+        case .station:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private func actionPanel(for node: RouteQuestNode) -> some View {
+        CardSurface {
+            VStack(spacing: 14) {
+                switch node.kind {
+                case .start:
+                    Button {
+                        engine.confirmRouteStart()
+                    } label: {
+                        Label("Start route", systemImage: "play.fill")
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+
+                case .turn:
+                    Button {
+                        engine.checkRouteTurn()
+                    } label: {
+                        Label("Check turn", systemImage: "scope")
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+
+                    Button("Grown-up confirms turn") {
+                        engine.confirmRouteTurnWithParentAssist()
+                    }
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+
+                case .step:
+                    Button {
+                        engine.confirmRouteSteps()
+                    } label: {
+                        Label("Careful steps done", systemImage: "checkmark.circle.fill")
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+
+                case .returnHome:
+                    Button {
+                        engine.confirmRouteReturnHome()
+                    } label: {
+                        Label("We're back", systemImage: "checkmark.circle.fill")
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+
+                case .station:
+                    EmptyView()
+                }
+
+                Text(engine.feedbackMessage)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
