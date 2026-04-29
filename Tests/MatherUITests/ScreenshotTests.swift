@@ -439,9 +439,11 @@ final class ScreenshotTests: XCTestCase {
 
         XCTAssertTrue(startButton.waitForExistence(timeout: 5), "Expected Start Session button before entering concrete stage")
         startButton.tap()
+        advanceStoryAnchorIfPresent(in: app, snapshotPrefix: "SessionStart", shouldSnapshot: false)
 
         if !makePrompt.waitForExistence(timeout: 8), startButton.exists {
             startButton.tap()
+            advanceStoryAnchorIfPresent(in: app, snapshotPrefix: "SessionStart-Retry", shouldSnapshot: false)
         }
 
         XCTAssertTrue(makePrompt.waitForExistence(timeout: 15), "Expected concrete stage after tapping Start Session")
