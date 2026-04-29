@@ -108,8 +108,24 @@ struct SymmetryFoldTests {
     }
 
     @Test
-    func successSpeechUsesShapeName() {
-        #expect(SymmetryFoldView.successSpeech(for: "star") == "Perfectly folded! You made a symmetric star.")
+    func successSpeechNamesLineOfSymmetry() {
+        #expect(
+            SymmetryFoldView.successSpeech(for: "butterfly")
+                == "Perfectly folded! The line of symmetry makes both sides of the butterfly match."
+        )
+    }
+
+    @Test
+    func creativeContentPackUsesDistinctBilateralMotifs() {
+        #expect(SymmetryFoldView.creativeLevelNames == ["heart", "butterfly", "flower", "kite", "leaf", "badge"])
+        #expect(Set(SymmetryFoldView.creativeLevelNames).count == SymmetryFoldView.creativeLevelNames.count)
+    }
+
+    @Test
+    func coachingCopySupportsDirectionAndNearMatch() {
+        #expect(SymmetryFoldView.nearMatchHint == "Almost there — line up both halves")
+        #expect(SymmetryFoldView.wrongDirectionHint == "Other way — tilt left")
+        #expect(SymmetryFoldView.wrongDirectionSpeech(for: "kite") == "Try the other way. Tilt left to fold the kite.")
     }
 
     @Test
