@@ -137,3 +137,25 @@ struct AngleCannonTests {
         }
     }
 }
+
+@Suite("AngleCannonScenario")
+struct AngleCannonScenarioTests {
+    @Test func scenariosAreShortSafeAndMappedToTargets() {
+        let scenarios = AngleCannonScenario.defaultScenarios
+        #expect(scenarios.count >= 4)
+        for scenario in scenarios {
+            #expect(!scenario.id.isEmpty)
+            #expect(!scenario.missionSpeech.isEmpty)
+            #expect(scenario.missionSpeech.count <= 80)
+            #expect(!scenario.successSpeech.localizedCaseInsensitiveContains("fail"))
+            #expect([15.0, 30, 45, 60, 75].contains(scenario.targetAngleDeg))
+        }
+    }
+
+    @Test func projectilePointInterpolatesDeterministically() {
+        let points = [CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 10), CGPoint(x: 20, y: 0)]
+        #expect(AngleCannonView.projectilePoint(on: points, progress: 0) == CGPoint(x: 0, y: 0))
+        #expect(AngleCannonView.projectilePoint(on: points, progress: 0.5) == CGPoint(x: 10, y: 10))
+        #expect(AngleCannonView.projectilePoint(on: points, progress: 1) == CGPoint(x: 20, y: 0))
+    }
+}

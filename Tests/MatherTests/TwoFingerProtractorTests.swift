@@ -146,3 +146,18 @@ struct TwoFingerProtractorTests {
         #expect(!drifted.newlyMatched)
     }
 }
+
+@Suite("ProtractorScenes")
+struct ProtractorSceneTests {
+    @Test func scenesConnectEveryTargetToAVisibleContext() {
+        #expect(protractorLevels.count >= 5)
+        #expect(Set(protractorLevels.map(\.sceneKind)).count == protractorLevels.count)
+        for level in protractorLevels {
+            #expect(!level.sceneName.isEmpty)
+            #expect(!level.mission.isEmpty)
+            #expect(!level.mission.localizedCaseInsensitiveContains("hurry"))
+            #expect(level.targetAngle > 0 && level.targetAngle <= 180)
+            #expect(level.snapTolerance > 0 && level.snapTolerance <= 5)
+        }
+    }
+}

@@ -34,6 +34,9 @@ struct AngleCannonView: View {
     /// Briefly true on FIRE to animate the cannon barrel kick
     @State private var firePulse = false
     @State private var hasFiredOnce = false
+    @State private var projectileProgress: Double = 0
+    @State private var projectileAnimating = false
+    @State private var pendingHit: Bool? = nil
 
     // MARK: - Constants
 
@@ -42,8 +45,8 @@ struct AngleCannonView: View {
     private let angleRange: ClosedRange<Double> = 10...80
     private let targetPool: [Double] = [15, 30, 45, 60, 75]
     /// Target symbols — rendered at the landing position for delight
-    private let targetSymbols = ["🎈", "⭐️", "🎯", "🍎", "🪁"]
-    @State private var targetSymbol = "🎯"
+    private let scenarios = AngleCannonScenario.defaultScenarios
+    @State private var scenario = AngleCannonScenario.defaultScenarios[0]
 
     private var hitTolerance: Double { level == 1 ? 15 : 10 }
 
@@ -240,12 +243,26 @@ struct AngleCannonView: View {
             )
 
             // Target symbol (bounces before firing)
-            Text(targetSymbol)
+            Text(scenario.targetSymbol)
                 .font(.system(size: 30))
                 .position(target)
                 .opacity(hitTarget ? 0 : 1)
                 .scaleEffect(hitTarget ? 2.0 : 1.0)
                 .animation(.spring(response: 0.4, dampingFraction: 0.5), value: hitTarget)
+
+            if let fired = firedAngleDeg, projectileAnimating || projectileProgress < 1 {
+                let pts = Self.arcPoints(angleDeg: fired, cannon: cannon, size: canvasSize)
+                if let projectile = Self.projectilePoint(on: pts, progress: projectileProgress) {
+                    Text(scenario.projectileSymbol)
+                        .font(.system(size: 26))
+                        .position(projectile)
+                        .shadow(color: MatherTheme.warm.opacity(0.45), radius: 8)
+                        .accessibilityIdentifier("angle-cannon-projectile")
+                }
+            }
+
+            missionChip
+                .position(x: canvasSize.width / 2, y: canvasSize.height * 0.10)
 
             // Hit celebration burst
             if hitTarget {
@@ -312,7 +329,7 @@ struct AngleCannonView: View {
             }
 
             // "Too high / Too low" miss hint
-            if let fired = firedAngleDeg, !hitTarget {
+            if let fired = firedAngleDeg, !hitTarget, !projectileAnimating, pendingHit == nil {
                 let tooHigh = fired > targetAngleDeg
                 HStack(spacing: 6) {
                     Image(systemName: tooHigh ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
@@ -350,7 +367,11 @@ struct AngleCannonView: View {
         HStack {
             Spacer()
 
-            if hitTarget {
+            if projectileAnimating {
+                ProgressView("Watching the arc…")
+                    .font(.headline.weight(.bold))
+                    .frame(minWidth: 180, minHeight: 60)
+            } else if hitTarget {
                 Button("Next →") {
                     advanceRound()
                 }
@@ -432,6 +453,20 @@ struct AngleCannonView: View {
         abs(firedDeg - targetDeg) <= toleranceDeg
     }
 
+    nonisolated static func projectilePoint(on points: [CGPoint], progress: Double) -> CGPoint? {
+        guard !points.isEmpty else { return nil }
+        let clamped = max(0, min(progress, 1))
+        let exactIndex = clamped * Double(points.count - 1)
+        let lower = Int(floor(exactIndex))
+        let upper = min(points.count - 1, lower + 1)
+        guard lower != upper else { return points[lower] }
+        let t = exactIndex - Double(lower)
+        let a = points[lower]
+        let b = points[upper]
+        return CGPoint(x: a.x + (b.x - a.x) * t,
+                       y: a.y + (b.y - a.y) * t)
+    }
+
     // MARK: - Layout helpers
 
     private func cannonOrigin(in size: CGSize) -> CGPoint {
@@ -484,24 +519,15 @@ struct AngleCannonView: View {
 
         hasFiredOnce = true
         firedAngleDeg = currentAngleDeg
-        let hit = Self.isHit(firedDeg: currentAngleDeg, targetDeg: targetAngleDeg,
-                             toleranceDeg: hitTolerance)
-        hitTarget = hit
-        if hit {
-            appModel.hapticsService.balanceLock(enabled: appModel.featureFlags.hapticsEnabled)
-            appModel.speechService.speak(
-                "\(Int(currentAngleDeg)) degrees — bullseye!",
-                enabled: appModel.featureFlags.audioEnabled
-            )
-            roundsWon += 1
-        } else {
-            appModel.hapticsService.failure(enabled: appModel.featureFlags.hapticsEnabled)
-            let tooHigh = currentAngleDeg > targetAngleDeg
-            appModel.speechService.speak(
-                tooHigh ? "Too high — tilt a little less next time!"
-                        : "Too low — tilt a bit more!",
-                enabled: appModel.featureFlags.audioEnabled
-            )
+        pendingHit = Self.isHit(firedDeg: currentAngleDeg, targetDeg: targetAngleDeg,
+                                toleranceDeg: hitTolerance)
+        hitTarget = false
+        projectileAnimating = true
+        projectileProgress = 0
+        withAnimation(.linear(duration: 0.9)) { projectileProgress = 1 }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            resolveShotFeedback()
         }
     }
 
@@ -509,6 +535,9 @@ struct AngleCannonView: View {
     private func resetShot() {
         firedAngleDeg = nil
         hitTarget = false
+        projectileProgress = 0
+        projectileAnimating = false
+        pendingHit = nil
         // Deliberately NOT resetting neutralRoll — keeps aim baseline between retries.
     }
 
@@ -533,7 +562,61 @@ struct AngleCannonView: View {
         var candidates = targetPool.filter { abs($0 - targetAngleDeg) > 5 }
         if candidates.isEmpty { candidates = targetPool }
         targetAngleDeg = candidates.randomElement() ?? 45
-        targetSymbol = targetSymbols.randomElement() ?? "🎯"
+        scenario = scenarios.first(where: { $0.targetAngleDeg == targetAngleDeg }) ?? scenarios.randomElement() ?? AngleCannonScenario.defaultScenarios[0]
         currentAngleDeg = 45
     }
+
+    private func resolveShotFeedback() {
+        guard let hit = pendingHit else { return }
+        projectileAnimating = false
+        pendingHit = nil
+        hitTarget = hit
+        if hit {
+            appModel.hapticsService.balanceLock(enabled: appModel.featureFlags.hapticsEnabled)
+            appModel.speechService.speak(
+                scenario.successSpeech,
+                enabled: appModel.featureFlags.audioEnabled
+            )
+            roundsWon += 1
+        } else {
+            appModel.hapticsService.failure(enabled: appModel.featureFlags.hapticsEnabled)
+            let tooHigh = currentAngleDeg > targetAngleDeg
+            appModel.speechService.speak(
+                tooHigh ? "Too high — tilt a little less next time!"
+                        : "Too low — tilt a bit more!",
+                enabled: appModel.featureFlags.audioEnabled
+            )
+        }
+    }
+
+    private var missionChip: some View {
+        HStack(spacing: 8) {
+            Text(scenario.environmentSymbol)
+            Text(scenario.missionSpeech)
+                .font(.caption.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(2)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(Capsule().stroke(MatherTheme.softBlue.opacity(0.35), lineWidth: 1))
+    }
+}
+
+struct AngleCannonScenario: Equatable {
+    let id: String
+    let targetAngleDeg: Double
+    let environmentSymbol: String
+    let targetSymbol: String
+    let projectileSymbol: String
+    let missionSpeech: String
+    let successSpeech: String
+
+    static let defaultScenarios: [AngleCannonScenario] = [
+        .init(id: "seed-pod", targetAngleDeg: 30, environmentSymbol: "🌱", targetSymbol: "🌿", projectileSymbol: "🫘", missionSpeech: "Send the seed pod to the hill ledge.", successSpeech: "The seed pod landed on the ledge!"),
+        .init(id: "moon-gate", targetAngleDeg: 45, environmentSymbol: "🌙", targetSymbol: "🏮", projectileSymbol: "✨", missionSpeech: "Launch the lantern to the moon gate.", successSpeech: "The lantern reached the moon gate!"),
+        .init(id: "festival-bell", targetAngleDeg: 60, environmentSymbol: "🎪", targetSymbol: "🔔", projectileSymbol: "⭐️", missionSpeech: "Ring the festival bell.", successSpeech: "You rang the festival bell!"),
+        .init(id: "treehouse", targetAngleDeg: 75, environmentSymbol: "🌳", targetSymbol: "🏠", projectileSymbol: "📦", missionSpeech: "Toss the package to the treehouse.", successSpeech: "Package delivered to the treehouse!")
+    ]
 }
