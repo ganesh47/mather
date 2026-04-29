@@ -257,7 +257,7 @@ struct WaterCycleLabView: View {
     private func waterCycleScene(width: CGFloat, height: CGFloat) -> some View {
         let metrics = WaterCycleSceneMetrics(availableWidth: width)
 
-        ZStack {
+        return ZStack {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .fill(
                     LinearGradient(
