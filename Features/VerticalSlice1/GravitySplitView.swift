@@ -199,9 +199,14 @@ struct GravitySplitView: View {
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
 
-            tokenGrid(count: sourceCount, fill: MatherTheme.softBlue, prefix: "source", isInteractive: false) { _ in }
-                .frame(minHeight: 36)
-                .accessibilityLabel("Unused tokens: \(sourceCount)")
+            quantityDisplay(
+                count: sourceCount,
+                fill: MatherTheme.softBlue,
+                prefix: "source",
+                isInteractive: false
+            ) { _ in }
+            .frame(minHeight: state.usesGroupedRepresentation ? 50 : 36)
+            .accessibilityLabel("Unused tokens: \(sourceCount)")
         }
         .padding(10)
         .background(
@@ -235,11 +240,11 @@ struct GravitySplitView: View {
                     .foregroundStyle(fill)
             }
 
-            tokenGrid(count: count, fill: fill, prefix: side == .left ? "left" : "right", isInteractive: true) { _ in
+            quantityDisplay(count: count, fill: fill, prefix: side == .left ? "left" : "right", isInteractive: true) { _ in
                 guard !state.isLocked else { return }
                 onTap(-1, side)
             }
-            .frame(minHeight: 68, alignment: .topLeading)
+            .frame(minHeight: state.usesGroupedRepresentation ? 54 : 68, alignment: .topLeading)
 
             addTokenControl(label: label, count: count, target: target, fill: fill, side: side)
         }
@@ -263,39 +268,111 @@ struct GravitySplitView: View {
         fill: Color,
         side: TransferSide
     ) -> some View {
-        let canAdd = !state.isLocked && sourceCount > 0 && count < target
         let sideName = side == .left ? "left" : "right"
 
-        return Button {
-            onTap(1, side)
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "plus.circle.fill")
-                    .imageScale(.medium)
-                Text("Add \(label)")
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+        return Group {
+            if state.usesGroupedRepresentation {
+                groupedStepControls(label: label, fill: fill, side: side)
+            } else {
+                let canAdd = !state.isLocked && sourceCount > 0 && count < target
+
+                Button {
+                    onTap(1, side)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .imageScale(.medium)
+                        Text("Add \(label)")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 38)
+                    .contentShape(Rectangle())
+                }
+                .font(.caption.weight(.black))
+                .foregroundStyle(canAdd ? fill : MatherTheme.cardSubtitle.opacity(0.55))
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(canAdd ? fill.opacity(0.10) : Color.secondary.opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(canAdd ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1)
+                )
+                .buttonStyle(.plain)
+                .disabled(!canAdd)
+                .opacity(canAdd ? 1 : 0.72)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Add \(label)")
+                .accessibilityHint(canAdd ? "Adds one token to the \(label) side." : "This side cannot accept more tokens right now.")
+                .accessibilityIdentifier("gravity-\(sideName)-add-button")
             }
-            .frame(maxWidth: .infinity, minHeight: 38)
-            .contentShape(Rectangle())
         }
-        .font(.caption.weight(.black))
-        .foregroundStyle(canAdd ? fill : MatherTheme.cardSubtitle.opacity(0.55))
+    }
+
+    private func groupedStepControls(label: String, fill: Color, side: TransferSide) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                ForEach(state.groupedStepValues, id: \.self) { step in
+                    stepButton(
+                        label: "+\(step)",
+                        accessibilityLabel: "Add \(step) to \(label)",
+                        enabled: groupedStepDelta(step, side: side) == step,
+                        fill: fill
+                    ) {
+                        onTap(step, side)
+                    }
+                }
+            }
+
+            HStack(spacing: 6) {
+                ForEach(state.groupedStepValues, id: \.self) { step in
+                    stepButton(
+                        label: "-\(step)",
+                        accessibilityLabel: "Remove \(step) from \(label)",
+                        enabled: state.currentCount(for: side) >= step && !state.isLocked,
+                        fill: fill
+                    ) {
+                        onTap(-step, side)
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("gravity-\(side == .left ? "left" : "right")-grouped-controls")
+    }
+
+    private func groupedStepDelta(_ step: Int, side: TransferSide) -> Int {
+        guard !state.isLocked else { return 0 }
+        return min(step, sourceCount, state.remainingCapacity(for: side))
+    }
+
+    private func stepButton(
+        label: String,
+        accessibilityLabel: String,
+        enabled: Bool,
+        fill: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(.black))
+                .frame(maxWidth: .infinity, minHeight: 38)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(enabled ? fill : MatherTheme.cardSubtitle.opacity(0.55))
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(canAdd ? fill.opacity(0.10) : Color.secondary.opacity(0.08))
+                .fill(enabled ? fill.opacity(0.10) : Color.secondary.opacity(0.08))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(canAdd ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1)
+                .strokeBorder(enabled ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1)
         )
-        .buttonStyle(.plain)
-        .disabled(!canAdd)
-        .opacity(canAdd ? 1 : 0.72)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.72)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Add \(label)")
-        .accessibilityHint(canAdd ? "Adds one token to the \(label) side." : "This side cannot accept more tokens right now.")
-        .accessibilityIdentifier("gravity-\(sideName)-add-button")
+        .accessibilityLabel(accessibilityLabel)
     }
 
     private func tokenGrid(
@@ -325,6 +402,23 @@ struct GravitySplitView: View {
                         .accessibilityIdentifier("gravity-\(prefix)-token-\(idx)")
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func quantityDisplay(
+        count: Int,
+        fill: Color,
+        prefix: String,
+        isInteractive: Bool,
+        action: @escaping (Int) -> Void
+    ) -> some View {
+        if state.usesGroupedRepresentation {
+            GroupedNumberView(value: count, fill: fill)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("gravity-\(prefix)-grouped-number")
+        } else {
+            tokenGrid(count: count, fill: fill, prefix: prefix, isInteractive: isInteractive, action: action)
         }
     }
 
