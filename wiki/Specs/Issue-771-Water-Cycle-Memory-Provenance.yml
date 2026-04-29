@@ -2,106 +2,119 @@ issue: 771
 title: Water Cycle Memory deck asset provenance
 createdAt: 2026-04-29
 retrievedAt: 2026-04-29
+promptFamily: Codex CLI image generation child-friendly water cycle memory-card prompt family
+generationMethod: Codex CLI image-generation capability via built-in image_gen tool; local chroma-key background removal and 512x512 PNG resizing
+codexGeneratedImageBatchId: 019dda39-bb70-7223-b073-d8cd0e80353a
 assets:
   - assetName: MemoryWaterCycleEvaporation
     cardId: water-cycle-evaporation
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleEvaporation
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleEvaporation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c1783cc81919b5169c3e625ff10.png
     originalFileName: MemoryWaterCycleEvaporation.png
-    originalSha256: 744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c
+    originalSha256: 5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569
     derivativeFileName: MemoryWaterCycleEvaporation.png
-    derivativeSha256: 744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCycleCondensation
     cardId: water-cycle-condensation
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCondensation
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCondensation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c393d988191a2e71c72e4cef81e.png
     originalFileName: MemoryWaterCycleCondensation.png
-    originalSha256: 1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f
+    originalSha256: 9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2
     derivativeFileName: MemoryWaterCycleCondensation.png
-    derivativeSha256: 1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCyclePrecipitation
     cardId: water-cycle-precipitation
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCyclePrecipitation
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCyclePrecipitation
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23c959b88819188b74bb057d990b6.png
     originalFileName: MemoryWaterCyclePrecipitation.png
-    originalSha256: 4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5
+    originalSha256: 5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1
     derivativeFileName: MemoryWaterCyclePrecipitation.png
-    derivativeSha256: 4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCycleCollection
     cardId: water-cycle-collection
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCollection
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCollection
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23ce0ef688191afb50d545c99fe70.png
     originalFileName: MemoryWaterCycleCollection.png
-    originalSha256: 2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6
+    originalSha256: cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31
     derivativeFileName: MemoryWaterCycleCollection.png
-    derivativeSha256: 2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCycleSunHeat
     cardId: water-cycle-sun-heat
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleSunHeat
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleSunHeat
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23e1143688191b25fdd77b118255f.png
     originalFileName: MemoryWaterCycleSunHeat.png
-    originalSha256: 85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012
+    originalSha256: 78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621
     derivativeFileName: MemoryWaterCycleSunHeat.png
-    derivativeSha256: 85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCycleVapor
     cardId: water-cycle-vapor
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleVapor
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleVapor
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23d3f20f4819199673ecd272fc0a3.png
     originalFileName: MemoryWaterCycleVapor.png
-    originalSha256: dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087
+    originalSha256: b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b
     derivativeFileName: MemoryWaterCycleVapor.png
-    derivativeSha256: dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCycleCloud
     cardId: water-cycle-cloud
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCycleCloud
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCycleCloud
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23d619b148191b4727d1ae8dc6094.png
     originalFileName: MemoryWaterCycleCloud.png
-    originalSha256: 61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c
+    originalSha256: 9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9
     derivativeFileName: MemoryWaterCycleCloud.png
-    derivativeSha256: 61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
   - assetName: MemoryWaterCyclePond
     cardId: water-cycle-pond
-    sourceUrl: project-owned://mather/issue-771/MemoryWaterCyclePond
-    sourcePageTitle: Project-owned deterministic water cycle drawing
-    creator: OpenAI Codex for ganesh47/mather
+    sourceUrl: project-owned://mather/issue-771/codex-imagegen/MemoryWaterCyclePond
+    sourcePageTitle: Codex CLI image generation water cycle prompt family
+    creator: OpenAI Codex image generation for ganesh47/mather
     creditLine: Project-owned artwork created for Mather issue #771
     license: Project-owned; no third-party source material
+    generatedSourceFileName: ig_0693221e12b785410169f23da2fec88191889bbe36891a10a0.png
     originalFileName: MemoryWaterCyclePond.png
-    originalSha256: ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51
+    originalSha256: 97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce
     derivativeFileName: MemoryWaterCyclePond.png
-    derivativeSha256: ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51
-    derivativeChanges: Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands.
+    derivativeSha256: 97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce
+    derivativeChanges: Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally.
 verification:
   licenseAllowsReuse: true
   noThirdPartyRestrictionFound: true
   noLogoOrEndorsementRisk: true
   noPeopleOrPrivacyRisk: true
   childCardLegibilityChecked: true
+  noHiddenText: true
+  noFacesOrIdentifyingData: true

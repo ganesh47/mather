@@ -352,14 +352,14 @@ struct MemoryViewTests {
 
     @Test func waterCycleAssetsHaveProvenanceAndCatalogs() {
         let expectedHashes = [
-            "MemoryWaterCycleEvaporation": "744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c",
-            "MemoryWaterCycleCondensation": "1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f",
-            "MemoryWaterCyclePrecipitation": "4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5",
-            "MemoryWaterCycleCollection": "2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6",
-            "MemoryWaterCycleSunHeat": "85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012",
-            "MemoryWaterCycleVapor": "dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087",
-            "MemoryWaterCycleCloud": "61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c",
-            "MemoryWaterCyclePond": "ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51"
+            "MemoryWaterCycleEvaporation": "5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569",
+            "MemoryWaterCycleCondensation": "9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2",
+            "MemoryWaterCyclePrecipitation": "5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1",
+            "MemoryWaterCycleCollection": "cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31",
+            "MemoryWaterCycleSunHeat": "78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621",
+            "MemoryWaterCycleVapor": "b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b",
+            "MemoryWaterCycleCloud": "9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9",
+            "MemoryWaterCyclePond": "97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce"
         ]
         let waterCycleAssets = Set(MemoryDeck.waterCycle.compactMap(\.imageAssetName))
         let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
@@ -374,7 +374,7 @@ struct MemoryViewTests {
             let image = imageset.appendingPathComponent("\(assetName).png")
             let contents = imageset.appendingPathComponent("Contents.json")
 
-            #expect(provenance?.sourceName == "Project-owned deterministic water cycle drawing")
+            #expect(provenance?.sourceName == "Codex CLI image generation water cycle prompt family")
             #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #771")
             #expect(provenance?.licenseAllowsReuse == true)
             #expect(provenance?.noThirdPartyRestrictionFound == true)

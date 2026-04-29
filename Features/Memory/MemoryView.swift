@@ -403,14 +403,14 @@ enum MemoryDeck {
     ]
 
     static let waterCycleImageAssetPlan: [MemoryImageAssetPlan] = [
-        importedImagePlan("water-cycle-evaporation", asset: "MemoryWaterCycleEvaporation", prompt: "warm sun over pond with vapor rising", notes: "rising vapor must be readable at card size", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-condensation", asset: "MemoryWaterCycleCondensation", prompt: "vapor dots gathering into a cloud", notes: "cloud and gathered drops should be visually central", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-precipitation", asset: "MemoryWaterCyclePrecipitation", prompt: "rain falling from a cloud into a pond", notes: "falling rain should be distinct from vapor", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-collection", asset: "MemoryWaterCycleCollection", prompt: "rain water collecting in pond or lake", notes: "pond should read as the destination for rain", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-sun-heat", asset: "MemoryWaterCycleSunHeat", prompt: "sun warming water", notes: "sun rays should clearly touch water", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-vapor", asset: "MemoryWaterCycleVapor", prompt: "water vapor rising from a pond", notes: "vapor arrows should differ from rain drops", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-cloud", asset: "MemoryWaterCycleCloud", prompt: "cloud with tiny gathered drops", notes: "cloud should be clear without needing text", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned"),
-        importedImagePlan("water-cycle-pond", asset: "MemoryWaterCyclePond", prompt: "pond holding collected water after rain", notes: "pond should be large and high contrast", sourceName: "Project-owned deterministic water cycle drawing", license: "Project-owned")
+        importedImagePlan("water-cycle-evaporation", asset: "MemoryWaterCycleEvaporation", prompt: "warm sun over pond with vapor rising", notes: "rising vapor must be readable at card size", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-condensation", asset: "MemoryWaterCycleCondensation", prompt: "vapor dots gathering into a cloud", notes: "cloud and gathered drops should be visually central", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-precipitation", asset: "MemoryWaterCyclePrecipitation", prompt: "rain falling from a cloud into a pond", notes: "falling rain should be distinct from vapor", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-collection", asset: "MemoryWaterCycleCollection", prompt: "rain water collecting in pond or lake", notes: "pond should read as the destination for rain", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-sun-heat", asset: "MemoryWaterCycleSunHeat", prompt: "sun warming water", notes: "sun rays should clearly touch water", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-vapor", asset: "MemoryWaterCycleVapor", prompt: "water vapor rising from a pond", notes: "vapor arrows should differ from rain drops", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-cloud", asset: "MemoryWaterCycleCloud", prompt: "cloud with tiny gathered drops", notes: "cloud should be clear without needing text", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-pond", asset: "MemoryWaterCyclePond", prompt: "pond holding collected water after rain", notes: "pond should be large and high contrast", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned")
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
@@ -454,14 +454,14 @@ enum MemoryDeck {
         generatedFlagProvenance(assetName: "MemoryFlagAustralia", cardId: "country-flag-australia", sha256: "07e169c5a54af9027fbafe0348e4505b09112cd077d1e3fbcf37a206be37c119"),
         generatedFlagProvenance(assetName: "MemoryFlagCanada", cardId: "country-flag-canada", sha256: "b3712b0ba8bb6c0bb9d40878b9ba8af8dfcd42f5fc35823472d4324ef580132c"),
         generatedFlagProvenance(assetName: "MemoryFlagKenya", cardId: "country-flag-kenya", sha256: "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleEvaporation", cardId: "water-cycle-evaporation", sha256: "744fb457cc7de8f543de90dec1ff73b5884cfcd427a75f02af8c498ed8161e8c"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCondensation", cardId: "water-cycle-condensation", sha256: "1ab55eb469edd2ce41020f36e7df5dd7c29ef02de22af420825ed0415d8efd6f"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePrecipitation", cardId: "water-cycle-precipitation", sha256: "4d5b76836457e0e9fb8eb490a5d927a1618537e1e8de04d1c61551a1326e27d5"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCollection", cardId: "water-cycle-collection", sha256: "2ce78ab20cf4ea8ea1a99092599d3e68b422197aa71afab2f92140b899774ea6"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleSunHeat", cardId: "water-cycle-sun-heat", sha256: "85a16b5a2262142207b029e1f8ae3759b9503f6fefdd0704e15f1d46de68c012"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleVapor", cardId: "water-cycle-vapor", sha256: "dd55c7428eb2ae21135715463a1d640d71f6fdb37f697f39f23adb27d3d8e087"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCloud", cardId: "water-cycle-cloud", sha256: "61fa1a0829bfb795f044d31cec8642746112485f7cce25099ad057730582e06c"),
-        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePond", cardId: "water-cycle-pond", sha256: "ae2f85e90577afb451f143be49e30cfd90751e84f255afcfa00dedc5dd5aed51")
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleEvaporation", cardId: "water-cycle-evaporation", sha256: "5f7571966da3b6242143f3a44e73c41ee81f1085849a32f9a067b6124a996569"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCondensation", cardId: "water-cycle-condensation", sha256: "9698adba516d56e3f4b9f30465630b4af094a03a6f111fde71622b02df2e7fe2"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePrecipitation", cardId: "water-cycle-precipitation", sha256: "5cd079edf33046af063ad95cdc34d75d1783c2af5561b6478d4cbf39fb0b5dc1"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCollection", cardId: "water-cycle-collection", sha256: "cc5e445e06d97f817e01bfc1977621fd68259f0620b43c1fc57fba3c5e612a31"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleSunHeat", cardId: "water-cycle-sun-heat", sha256: "78eda4860d8e9a467e59cd74fb857aa01745adbdfab504b1acc4049c15743621"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleVapor", cardId: "water-cycle-vapor", sha256: "b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCloud", cardId: "water-cycle-cloud", sha256: "9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9"),
+        generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePond", cardId: "water-cycle-pond", sha256: "97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce")
     ]
 
 
@@ -558,7 +558,7 @@ enum MemoryDeck {
         MemoryImageAssetProvenance(
             assetName: assetName,
             cardId: cardId,
-            sourceName: "Project-owned deterministic water cycle drawing",
+            sourceName: "Codex CLI image generation water cycle prompt family",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for Mather issue #771",
             license: "Project-owned; no third-party source material",
@@ -568,7 +568,7 @@ enum MemoryDeck {
             originalSha256: sha256,
             derivativeFileName: "\(assetName).png",
             derivativeSha256: sha256,
-            derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands for simple sun, cloud, water, vapor, and rain shapes; no third-party material used.",
+            derivativeChanges: "Generated with Codex CLI image generation on 2026-04-29 using the child-friendly water cycle memory-card prompt family; resized to 512x512 PNG and chroma-key background removed locally; no third-party material used.",
             licenseAllowsReuse: true,
             noThirdPartyRestrictionFound: true,
             noLogoOrEndorsementRisk: true,
