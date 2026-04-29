@@ -18,6 +18,7 @@ struct MatherApp: App {
             )
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)
+            Self.seedGameHistoryIfRequested(using: appModel)
             _appModel = State(initialValue: appModel)
         } catch {
             fatalError("Failed to create model container: \(error)")
@@ -53,6 +54,7 @@ private extension MatherApp {
               let requestedCount = Int(arguments[flagIndex + 1]) else { return }
 
         appModel.historyStore.clearAllProfiles()
+        appModel.gameSessionStore.clearAllProfiles()
 
         for index in 0..<max(requestedCount, 0) {
             let startedAt = Date.now.addingTimeInterval(TimeInterval(-index * 3_600))
@@ -70,6 +72,33 @@ private extension MatherApp {
                 exportFileName: "swiftdata://session/\(sessionId)"
             )
             appModel.historyStore.save(draft)
+        }
+    }
+
+    static func seedGameHistoryIfRequested(using appModel: AppModel) {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-uiTest.seedGameHistory"),
+              arguments.indices.contains(flagIndex + 1),
+              let requestedCount = Int(arguments[flagIndex + 1]) else { return }
+
+        appModel.historyStore.clearAllProfiles()
+        appModel.gameSessionStore.clearAllProfiles()
+
+        let fixtures = [
+            ("Sum Sprint", "correct", "Fluency practice"),
+            ("Angle Cannon", "targets hit", "Angle practice"),
+            ("Memory", "rounds", "Pattern recall")
+        ]
+
+        for index in 0..<max(requestedCount, 0) {
+            let fixture = fixtures[index % fixtures.count]
+            appModel.gameSessionStore.save(
+                gameName: fixture.0,
+                startedAt: Date.now.addingTimeInterval(TimeInterval(-index * 2_400)),
+                scoreValue: 6 + index,
+                scoreLabel: fixture.1,
+                detail: fixture.2
+            )
         }
     }
 }

@@ -9,9 +9,10 @@ struct ParentSummaryView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
-        let digest = appModel.telemetryWriter.digest(from: summaries)
+        let overview = ParentSummaryOverview.make(summaries: summaries, gameSessions: gameSessions)
+        let digest = appModel.telemetryWriter.digest(from: overview.validMakeBreakSummaries)
         let recentRows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 5)
-        let trendPoints = ParentSummaryTrendPoint.recentPoints(from: summaries, limit: 6)
+        let trendPoints = ParentSummaryTrendPoint.recentPoints(from: overview.validMakeBreakSummaries, limit: 6)
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -21,7 +22,7 @@ struct ParentSummaryView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Parent Summary")
                                 .font(.largeTitle.weight(.black))
-                            Text(digest.objectiveTitle)
+                            Text(overview.hasValidMakeBreakProgress ? digest.objectiveTitle : overview.headerSubtitle)
                                 .font(.headline.weight(.semibold))
                                 .foregroundStyle(MatherTheme.cardSubtitle)
 
@@ -29,7 +30,7 @@ struct ParentSummaryView: View {
                         }
                     }
 
-                    if summaries.isEmpty && gameSessions.isEmpty {
+                    if !overview.hasAnyHistory {
                         CardSurface {
                             VStack(spacing: 12) {
                                 Image(systemName: "chart.bar.xaxis")
@@ -47,38 +48,19 @@ struct ParentSummaryView: View {
                             .padding(.vertical, 8)
                         }
                     } else {
-                        LazyVGrid(
-                            columns: ResponsiveLayout.statColumns(for: horizontalSizeClass),
-                            spacing: 12
-                        ) {
-                            StatTile(
-                                value: "\(digest.problemsCompleted)",
-                                label: "Problems done",
-                                icon: "checkmark.circle.fill",
-                                color: MatherTheme.accent
-                            )
-                            StatTile(
-                                value: "\(Int(digest.firstAttemptAccuracy * 100))%",
-                                label: "First try",
-                                icon: "star.fill",
-                                color: MatherTheme.warm
-                            )
-                            StatTile(
-                                value: "\(digest.transferCorrectCount)",
-                                label: "Transfers",
-                                icon: "arrow.triangle.2.circlepath",
-                                color: MatherTheme.softBlue
-                            )
-                            StatTile(
-                                value: paceLabel(digest.medianLatencyMs),
-                                label: "Avg pace",
-                                icon: "clock.fill",
-                                color: Color.purple.opacity(0.7)
-                            )
+                        if overview.hasValidMakeBreakProgress {
+                            makeBreakScorecard(digest: digest)
+                        } else {
+                            makeBreakInsufficientProgressCard(hasGameScores: overview.hasGameScores)
                         }
-                        .accessibilityIdentifier("parent-summary-scorecard")
 
-                        recentProgressCard(points: trendPoints)
+                        if overview.hasGameScores {
+                            recentGameScoresCard(scores: overview.gameScores)
+                        }
+
+                        if overview.hasValidMakeBreakProgress {
+                            recentProgressCard(points: trendPoints)
+                        }
 
                         if ResponsiveLayout.isWide(horizontalSizeClass) {
                             LazyVGrid(
@@ -87,13 +69,17 @@ struct ParentSummaryView: View {
                                 spacing: 16
                             ) {
                                 profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
-                                nextTargetCard(digest: digest)
+                                if overview.hasValidMakeBreakProgress {
+                                    nextTargetCard(digest: digest)
+                                }
                             }
                             recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
                         } else {
                             profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
                             recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
-                            nextTargetCard(digest: digest)
+                            if overview.hasValidMakeBreakProgress {
+                                nextTargetCard(digest: digest)
+                            }
                         }
                     }
                 }
@@ -128,12 +114,111 @@ struct ParentSummaryView: View {
         return seconds < 60 ? "\(seconds)s" : "\(seconds / 60)m \(seconds % 60)s"
     }
 
+    private func makeBreakScorecard(digest: ParentDigest) -> some View {
+        LazyVGrid(
+            columns: ResponsiveLayout.statColumns(for: horizontalSizeClass),
+            spacing: 12
+        ) {
+            StatTile(
+                value: "\(digest.problemsCompleted)",
+                label: "Problems done",
+                icon: "checkmark.circle.fill",
+                color: MatherTheme.accent
+            )
+            StatTile(
+                value: "\(Int(digest.firstAttemptAccuracy * 100))%",
+                label: "First try",
+                icon: "star.fill",
+                color: MatherTheme.warm
+            )
+            StatTile(
+                value: "\(digest.transferCorrectCount)",
+                label: "Transfers",
+                icon: "arrow.triangle.2.circlepath",
+                color: MatherTheme.softBlue
+            )
+            StatTile(
+                value: paceLabel(digest.medianLatencyMs),
+                label: "Avg pace",
+                icon: "clock.fill",
+                color: Color.purple.opacity(0.7)
+            )
+        }
+        .accessibilityIdentifier("parent-summary-scorecard")
+    }
+
+    private func makeBreakInsufficientProgressCard(hasGameScores: Bool) -> some View {
+        CardSurface {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "chart.bar.doc.horizontal")
+                    .foregroundStyle(MatherTheme.accent)
+                    .font(.title3.weight(.bold))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("No completed Make & Break practice yet")
+                        .font(.title3.weight(.bold))
+                    Text(hasGameScores ? "Make & Break mastery scores appear after a completed Make & Break session. Recent game scores are shown below." : "Complete Make & Break to see mastery scores here.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("parent-summary-make-break-insufficient-progress")
+        }
+    }
+
     private func historyCaption(totalCount: Int, visibleCount: Int) -> String {
         guard totalCount > 0 else { return "No saved sessions yet." }
         if totalCount == visibleCount {
             return "\(totalCount) saved locally across all games"
         }
         return "Showing latest \(visibleCount) of \(totalCount) saved locally across all games"
+    }
+
+    private func recentGameScoresCard(scores: [ParentSummaryGameScore]) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Game scores")
+                    .font(.title3.weight(.bold))
+                Text("Recent scores saved locally across non-Make & Break games.")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(scores) { score in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(MatherTheme.warm)
+                            .frame(width: 28, height: 28)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(score.gameName)
+                                .font(.headline.weight(.bold))
+                            Text(score.scoreText)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if let detail = score.detail {
+                                Text(detail)
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(MatherTheme.cardSubtitle)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Text(score.startedAt.formatted(date: .abbreviated, time: .shortened))
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(12)
+                    .background(MatherTheme.panel.opacity(0.55))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .accessibilityIdentifier("parent-summary-game-scores")
+        }
     }
 
     private func profileOverviewCard(summaries: [StoredSessionSummary], gameSessions: [StoredGameSession]) -> some View {
@@ -278,6 +363,64 @@ struct ParentSummaryView: View {
 
 }
 
+
+struct ParentSummaryOverview {
+    var hasAnyHistory: Bool
+    var validMakeBreakSummaries: [StoredSessionSummary]
+    var gameScores: [ParentSummaryGameScore]
+
+    var hasValidMakeBreakProgress: Bool {
+        !validMakeBreakSummaries.isEmpty
+    }
+
+    var hasGameScores: Bool {
+        !gameScores.isEmpty
+    }
+
+    var headerSubtitle: String {
+        hasGameScores ? "Game scores" : "Make & Break"
+    }
+
+    static func make(
+        summaries: [StoredSessionSummary],
+        gameSessions: [StoredGameSession],
+        gameScoreLimit: Int = 3
+    ) -> ParentSummaryOverview {
+        ParentSummaryOverview(
+            hasAnyHistory: !summaries.isEmpty || !gameSessions.isEmpty,
+            validMakeBreakSummaries: summaries.filter { $0.problemsCompleted > 0 },
+            gameScores: ParentSummaryGameScore.recentScores(from: gameSessions, limit: gameScoreLimit)
+        )
+    }
+}
+
+struct ParentSummaryGameScore: Identifiable, Equatable {
+    var id: String
+    var profileId: String
+    var gameName: String
+    var startedAt: Date
+    var scoreText: String
+    var detail: String?
+
+    static func recentScores(
+        from gameSessions: [StoredGameSession],
+        limit: Int
+    ) -> [ParentSummaryGameScore] {
+        gameSessions
+            .sorted { $0.startedAt > $1.startedAt }
+            .prefix(limit)
+            .map {
+                ParentSummaryGameScore(
+                    id: $0.id,
+                    profileId: $0.profileId,
+                    gameName: $0.gameName,
+                    startedAt: $0.startedAt,
+                    scoreText: "\($0.scoreValue) \($0.scoreLabel)",
+                    detail: $0.detail
+                )
+            }
+    }
+}
 
 struct ParentSummaryHistoryRow: Identifiable, Equatable {
     enum Source: Equatable {
