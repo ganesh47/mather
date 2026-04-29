@@ -184,6 +184,19 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertFalse(app.otherElements["settings-history-session-1"].exists)
     }
 
+    func testParentSummaryShowsGameScoresWhenMakeBreakHasNoProgress() {
+        let app = launchWithSeededGameHistory(count: 2)
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        app.buttons["Parent Summary"].tap()
+        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+
+        XCTAssertTrue(app.staticTexts["No completed Make & Break practice yet"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Game scores"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Sum Sprint"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.otherElements["parent-summary-scorecard"].exists)
+    }
+
 
     func testFamilySettingsHidesPilotRunbookAndInlineHistoryRows() {
         let app = launchFamilySettingsWithSeededHistory(count: 7)
@@ -387,6 +400,15 @@ final class ScreenshotTests: XCTestCase {
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-uiTest.seedHistory", "\(count)"
+        ])
+    }
+
+    private func launchWithSeededGameHistory(count: Int) -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-uiTest.seedGameHistory", "\(count)"
         ])
     }
 

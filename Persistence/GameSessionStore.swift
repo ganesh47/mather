@@ -60,4 +60,11 @@ final class GameSessionStore {
         sessions.forEach { modelContext.delete($0) }
         try? modelContext.save()
     }
+
+    func clearAllProfiles() {
+        let descriptor = FetchDescriptor<StoredGameSession>()
+        guard let sessions = try? modelContext.fetch(descriptor) else { return }
+        sessions.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+    }
 }

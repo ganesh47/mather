@@ -36,6 +36,27 @@ private func makeDraft(
     )
 }
 
+private func makeGameSession(
+    id: String = UUID().uuidString,
+    profileId: String = "test-profile",
+    gameName: String = "Sum Sprint",
+    startedAt: Date = .now,
+    scoreValue: Int = 8,
+    scoreLabel: String = "correct",
+    detail: String? = nil
+) -> StoredGameSession {
+    StoredGameSession(
+        id: id,
+        profileId: profileId,
+        gameName: gameName,
+        startedAt: startedAt,
+        durationSeconds: 45,
+        scoreValue: scoreValue,
+        scoreLabel: scoreLabel,
+        detail: detail
+    )
+}
+
 // MARK: - SessionHistoryStore tests
 
 @MainActor
@@ -197,6 +218,62 @@ struct TelemetryWriterDigestTests {
 // MARK: - Parent summary history row tests
 
 @MainActor
+struct ParentSummaryOverviewTests {
+    @Test
+    func overviewTreatsGameOnlyHistoryAsScoresWithoutMakeBreakProgress() {
+        let game = makeGameSession(scoreValue: 7, scoreLabel: "correct", detail: "Level 2")
+
+        let overview = ParentSummaryOverview.make(summaries: [], gameSessions: [game])
+
+        #expect(overview.hasAnyHistory)
+        #expect(!overview.hasValidMakeBreakProgress)
+        #expect(overview.hasGameScores)
+        #expect(overview.headerSubtitle == "Game scores")
+        #expect(overview.gameScores.map(\.scoreText) == ["7 correct"])
+        #expect(overview.gameScores.first?.detail == "Level 2")
+    }
+
+    @Test
+    func overviewIgnoresZeroProblemMakeBreakForMasteryScores() {
+        let zeroProblem = StoredSessionSummary(
+            from: makeDraft(sessionId: "zero", problemsCompleted: 0, accuracy: 0, medianLatencyMs: 0),
+            profileId: "test-profile"
+        )
+
+        let overview = ParentSummaryOverview.make(summaries: [zeroProblem], gameSessions: [])
+
+        #expect(overview.hasAnyHistory)
+        #expect(!overview.hasValidMakeBreakProgress)
+        #expect(!overview.hasGameScores)
+        #expect(overview.validMakeBreakSummaries.isEmpty)
+    }
+
+    @Test
+    func overviewKeepsValidMakeBreakProgressSeparateFromGameScores() {
+        let base = Date(timeIntervalSinceReferenceDate: 50_000)
+        let makeAndBreak = StoredSessionSummary(
+            from: makeDraft(sessionId: "valid", problemsCompleted: 4, startedAt: base.addingTimeInterval(-120)),
+            profileId: "test-profile"
+        )
+        let latestGame = makeGameSession(id: "latest-game", gameName: "Angle Cannon", startedAt: base, scoreValue: 5, scoreLabel: "targets hit")
+        let olderGame = makeGameSession(id: "older-game", gameName: "Memory", startedAt: base.addingTimeInterval(-60), scoreValue: 3, scoreLabel: "rounds")
+
+        let overview = ParentSummaryOverview.make(
+            summaries: [makeAndBreak],
+            gameSessions: [olderGame, latestGame],
+            gameScoreLimit: 1
+        )
+
+        #expect(overview.hasValidMakeBreakProgress)
+        #expect(overview.validMakeBreakSummaries.map(\.sessionId) == ["valid"])
+        #expect(overview.gameScores.map(\.gameName) == ["Angle Cannon"])
+        #expect(overview.gameScores.map(\.scoreText) == ["5 targets hit"])
+    }
+}
+
+// MARK: - Parent summary history row tests
+
+@MainActor
 struct ParentSummaryHistoryRowTests {
     @Test
     func recentRowsMergeMakeAndBreakAndExplorerGameSessions() throws {
@@ -205,15 +282,7 @@ struct ParentSummaryHistoryRowTests {
             from: makeDraft(sessionId: "make-break-old", problemsCompleted: 2, startedAt: now.addingTimeInterval(-120)),
             profileId: "test-profile"
         )
-        let sumSprint = StoredGameSession(
-            id: "sum-sprint-new",
-            profileId: "test-profile",
-            gameName: "Sum Sprint",
-            startedAt: now,
-            durationSeconds: 30,
-            scoreValue: 8,
-            scoreLabel: "correct"
-        )
+        let sumSprint = makeGameSession(id: "sum-sprint-new", startedAt: now)
 
         let rows = ParentSummaryHistoryRow.recentRows(
             summaries: [makeAndBreak],
@@ -234,24 +303,8 @@ struct ParentSummaryHistoryRowTests {
             from: makeDraft(sessionId: "oldest", startedAt: now.addingTimeInterval(-300)),
             profileId: "test-profile"
         )
-        let newest = StoredGameSession(
-            id: "newest",
-            profileId: "test-profile",
-            gameName: "Angle Cannon",
-            startedAt: now,
-            durationSeconds: 10,
-            scoreValue: 3,
-            scoreLabel: "hits"
-        )
-        let middle = StoredGameSession(
-            id: "middle",
-            profileId: "test-profile",
-            gameName: "Memory",
-            startedAt: now.addingTimeInterval(-60),
-            durationSeconds: 20,
-            scoreValue: 6,
-            scoreLabel: "matches"
-        )
+        let newest = makeGameSession(id: "newest", gameName: "Angle Cannon", startedAt: now, scoreValue: 3, scoreLabel: "hits")
+        let middle = makeGameSession(id: "middle", gameName: "Memory", startedAt: now.addingTimeInterval(-60), scoreValue: 6, scoreLabel: "matches")
 
         let rows = ParentSummaryHistoryRow.recentRows(
             summaries: [oldest],
