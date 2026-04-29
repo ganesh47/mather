@@ -1,9 +1,9 @@
 import Foundation
 
-/// Describes how a counter cell is rendered — shape or SF Symbol.
+/// Describes how a counter cell is rendered — shape, SF Symbol, or local image asset.
 enum CounterKind: Equatable {
     case circle
-    case vehicle(symbolName: String)
+    case vehicle(symbolName: String, assetName: String?)
 }
 
 /// A theme controls the vocabulary and counter appearance for a VS1 session.

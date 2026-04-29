@@ -1,7 +1,7 @@
 import Foundation
 
-/// A vehicle-themed session — replaces abstract circles with a vehicle SF Symbol
-/// and uses scenario-specific vocabulary throughout the CPA loop.
+/// A vehicle-themed session — replaces abstract circles with local generated vehicle assets
+/// when available, falling back to SF Symbols, and uses scenario-specific vocabulary throughout the CPA loop.
 ///
 /// The active `VehicleSpec` determines which vehicle appears and what language is
 /// used. The engine cycles through `VehicleSpec.pool` one per problem so each
@@ -17,7 +17,7 @@ struct VehicleTheme: SliceTheme {
 
     init(spec: VehicleSpec = .car) { self.spec = spec }
 
-    var counterKind: CounterKind { .vehicle(symbolName: spec.symbolName) }
+    var counterKind: CounterKind { .vehicle(symbolName: spec.symbolName, assetName: spec.assetName) }
     var celebrationEmoji: String { spec.celebrationEmoji }
     var counterNoun: String { spec.counterNoun }
 

@@ -20,8 +20,10 @@ struct VehicleSpecTests {
         #expect(!VehicleSpec.pool.isEmpty)
     }
 
-    @Test func vehicleSpecPoolHasSevenEntries() {
-        #expect(VehicleSpec.pool.count == 7)
+    @Test func vehicleSpecPoolHasExpandedConstructionEntries() {
+        #expect(VehicleSpec.pool.count == 10)
+        let nouns = Set(VehicleSpec.pool.map(\.counterNoun))
+        #expect(nouns.isSuperset(of: ["bulldozers", "dump trucks", "cement mixers", "mining trucks"]))
     }
 
     @Test func vehicleSpecPoolAllHaveNonEmptySymbolAndNoun() {
@@ -29,6 +31,39 @@ struct VehicleSpecTests {
             #expect(!spec.symbolName.isEmpty)
             #expect(!spec.counterNoun.isEmpty)
             #expect(!spec.celebrationEmoji.isEmpty)
+        }
+    }
+
+    @Test func vehicleSpecsExposeGeneratedAssetsForRequestedConstructionVehicles() {
+        func assetName(for noun: String) -> String? {
+            VehicleSpec.pool.first { $0.counterNoun == noun }.flatMap(\.assetName)
+        }
+
+        #expect(assetName(for: "cars") == "VS1VehicleCar")
+        #expect(assetName(for: "trucks") == "VS1VehiclePickupTruck")
+        #expect(assetName(for: "bulldozers") == "VS1VehicleBulldozer")
+        #expect(assetName(for: "dump trucks") == "VS1VehicleDumpTruck")
+        #expect(assetName(for: "cement mixers") == "VS1VehicleCementMixer")
+        #expect(assetName(for: "mining trucks") == "VS1VehicleMiningTruck")
+    }
+
+    @Test func generatedVS1VehicleAssetCatalogsExist() {
+        let expectedAssets = [
+            "VS1VehicleCar",
+            "VS1VehiclePickupTruck",
+            "VS1VehicleBulldozer",
+            "VS1VehicleDumpTruck",
+            "VS1VehicleCementMixer",
+            "VS1VehicleMiningTruck"
+        ]
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
+
+        for assetName in expectedAssets {
+            let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
+            #expect(FileManager.default.fileExists(atPath: imageset.appendingPathComponent("\(assetName).png").path))
+            #expect(FileManager.default.fileExists(atPath: imageset.appendingPathComponent("Contents.json").path))
         }
     }
 
@@ -66,8 +101,9 @@ struct VehicleSpecTests {
         let theme = VehicleTheme()
         #expect(theme.counterNoun == "cars")
         #expect(theme.celebrationEmoji == "🚗")
-        if case .vehicle(let sym) = theme.counterKind {
+        if case .vehicle(let sym, let assetName) = theme.counterKind {
             #expect(sym == "car.fill")
+            #expect(assetName == "VS1VehicleCar")
         } else {
             Issue.record("Expected .vehicle counterKind for default VehicleTheme")
         }
@@ -77,8 +113,9 @@ struct VehicleSpecTests {
         let theme = VehicleTheme(spec: .helicopter)
         #expect(theme.counterNoun == "helicopters")
         #expect(theme.celebrationEmoji == "🚁")
-        if case .vehicle(let sym) = theme.counterKind {
+        if case .vehicle(let sym, let assetName) = theme.counterKind {
             #expect(sym == "helicopter")
+            #expect(assetName == nil)
         } else {
             Issue.record("Expected .vehicle counterKind for helicopter spec")
         }
@@ -151,6 +188,25 @@ struct VehicleSpecTests {
         // Engine has advanced to problem 2 — second spec in VehicleSpec.pool (pickupTruck → "trucks")
         let secondNoun = engine.activeTheme.counterNoun
         #expect(secondNoun != firstNoun, "Theme noun should change after first problem completes")
+    }
+
+
+    @MainActor
+    @Test func engineNonTestVehicleSessionStartsWithRandomizedNonCarTheme() {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = false
+        flags.selectedThemeId = "vehicle"
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1GravitySplitEnabled = false
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        #expect(engine.activeTheme.counterNoun != "cars")
     }
 
     @MainActor

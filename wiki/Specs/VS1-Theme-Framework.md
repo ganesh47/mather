@@ -7,7 +7,7 @@
 
 ## Overview
 
-The VS1 theme framework lets a parent select a visual and vocabulary theme for a session before it starts. The first content pack is **Vehicles** — car SF Symbols and parking-lot vocabulary replace the default abstract circles and neutral prompts.
+The VS1 theme framework lets a parent select a visual and vocabulary theme for a session before it starts. The first content pack is **Vehicles** — generated local vehicle assets with SF Symbol fallback and vehicle/worksite vocabulary replace the default abstract circles and neutral prompts.
 
 Themes are a purely additive layer. The CPA learning loop, stage rules, equation logic, and scoring are completely unchanged.
 
@@ -37,8 +37,8 @@ protocol SliceTheme {
 
 ```swift
 enum CounterKind: Equatable {
-    case circle                          // filled/empty circle (ClassicTheme)
-    case vehicle(symbolName: String)     // SF Symbol (VehicleTheme uses "car.fill")
+    case circle                                      // filled/empty circle (ClassicTheme)
+    case vehicle(symbolName: String, assetName: String?) // local asset with SF Symbol fallback
 }
 ```
 
@@ -59,9 +59,15 @@ enum CounterKind: Equatable {
 | ID | Struct | Counter | Emoji | Intro phrase |
 |---|---|---|---|---|
 | `classic` | `ClassicTheme` | Circle | ⭐️ | "Let's make and break numbers to ten." |
-| `vehicle` | `VehicleTheme` | car.fill SF Symbol | 🚗 | "Let's park and split cars to ten." |
+| `vehicle` | `VehicleTheme` | Generated vehicle asset with SF Symbol fallback | 🚗 / per-vehicle | Per-problem vehicle/worksite intro |
 
 ---
+
+## Vehicle asset pool and randomization
+
+Vehicle sessions use `VehicleSpec.pool` one spec per problem, preserving a stable noun/image/prompt within that problem. In test mode the pool order is deterministic for screenshot and unit-test stability. In normal play the pool is shuffled per session and avoids starting with the default car, so build-58-style sessions do not always open on repeated car counters.
+
+Issue #750 added local generated 512×512 transparent PNG counter assets for car, pickup truck, bulldozer, dump truck, cement mixer, and mining haul truck. Provenance is recorded in `wiki/Specs/Issue-750-VS1-Vehicle-Counter-Provenance.yml`; assets without a local PNG continue to use their SF Symbol fallback.
 
 ## CounterView
 
@@ -83,7 +89,7 @@ For the two-tone ten-frame: index 0–4 → warm amber, index 5–9 → vivid ac
 
 ## Subitising preservation
 
-Replacing circles with SF Symbols preserves all subitising benefits. Subitising depends on **spatial arrangement**, not object shape (Clements, 2002). The 2×5 ten-frame grid structure is invariant across themes. A child still instantly reads "a full top row of 5 plus 2 in the bottom row = 7" regardless of the counter shape.
+Replacing circles with generated vehicle assets or SF Symbols preserves all subitising benefits. Subitising depends on **spatial arrangement**, not object shape (Clements, 2002). The 2×5 ten-frame grid structure is invariant across themes. A child still instantly reads "a full top row of 5 plus 2 in the bottom row = 7" regardless of the counter shape.
 
 ---
 
@@ -94,6 +100,6 @@ Replacing circles with SF Symbols preserves all subitising benefits. Subitising 
 3. Add a card to `themeOptions` in `SessionConfigView.swift`
 4. Add vocabulary tests in `ThemeTests.swift`
 
-No changes to `CounterKind`, `SliceStateMachine`, or any engine logic are required for a theme that uses an existing SF Symbol.
+No changes to `CounterKind`, `SliceStateMachine`, or any engine logic are required for a theme that uses an existing vehicle asset/SF Symbol counter path.
 
 To add a new counter shape, extend `CounterKind` and handle the new case in `CounterView.counterShape`.

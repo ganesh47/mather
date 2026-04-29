@@ -8,6 +8,7 @@ import Foundation
 /// vehicle on every question without breaking CPA coherence within a problem.
 struct VehicleSpec: Sendable {
     let symbolName: String
+    let assetName: String?
     let counterNoun: String
     let celebrationEmoji: String
     let concretePromptFn: @Sendable (Int) -> String
@@ -23,11 +24,12 @@ struct VehicleSpec: Sendable {
 extension VehicleSpec {
     /// Ordered pool — engine iterates through this list, one per problem, wrapping around.
     static let pool: [VehicleSpec] = [
-        .car, .pickupTruck, .boxTruck, .bus, .bulldozer, .helicopter, .airplane,
+        .car, .pickupTruck, .boxTruck, .bus, .bulldozer, .dumpTruck, .cementMixer, .miningTruck, .helicopter, .airplane,
     ]
 
     static let car = VehicleSpec(
         symbolName: "car.fill",
+        assetName: "VS1VehicleCar",
         counterNoun: "cars",
         celebrationEmoji: "🚗",
         concretePromptFn: { "Park \($0) cars in the garage." },
@@ -54,6 +56,7 @@ extension VehicleSpec {
 
     static let pickupTruck = VehicleSpec(
         symbolName: "truck.pickup.side.fill",
+        assetName: "VS1VehiclePickupTruck",
         counterNoun: "trucks",
         celebrationEmoji: "🛻",
         concretePromptFn: { "Load \($0) trucks at the depot." },
@@ -80,6 +83,7 @@ extension VehicleSpec {
 
     static let boxTruck = VehicleSpec(
         symbolName: "truck.box.fill",
+        assetName: nil,
         counterNoun: "vans",
         celebrationEmoji: "🚚",
         concretePromptFn: { "Send \($0) vans to the warehouse." },
@@ -106,6 +110,7 @@ extension VehicleSpec {
 
     static let bus = VehicleSpec(
         symbolName: "bus.fill",
+        assetName: nil,
         counterNoun: "buses",
         celebrationEmoji: "🚌",
         concretePromptFn: { "Fill \($0) buses with passengers." },
@@ -132,6 +137,7 @@ extension VehicleSpec {
 
     static let bulldozer = VehicleSpec(
         symbolName: "bulldozer.fill",
+        assetName: "VS1VehicleBulldozer",
         counterNoun: "bulldozers",
         celebrationEmoji: "🚧",
         concretePromptFn: { "Line up \($0) bulldozers on the site." },
@@ -156,8 +162,91 @@ extension VehicleSpec {
         sessionStartFeedbackFn: { "Line up the bulldozers on the site." }
     )
 
+    static let dumpTruck = VehicleSpec(
+        symbolName: "truck.box.fill",
+        assetName: "VS1VehicleDumpTruck",
+        counterNoun: "dump trucks",
+        celebrationEmoji: "🚚",
+        concretePromptFn: { "Load \($0) dump trucks at the quarry." },
+        pictorialPromptFn: { _ in "Split the dump trucks into two work zones." },
+        abstractPromptFn: { "Write the split as an equation." },
+        transferPromptFn: { _, _ in "Place the dump trucks to show the same total from memory." },
+        stageSuccessFn: { stage, _ in
+            switch stage {
+            case .storyAnchor: return "Story ready."
+            case .concrete:   return "Quarry crew ready!"
+            case .pictorial:  return "Both work zones add up to the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Dump trucks in position!"
+            case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
+            }
+        },
+        sessionIntroFn: { "Let's load dump trucks in different ways." },
+        sessionEndFn: { "Session complete. Great hauling!" },
+        sessionStartFeedbackFn: { "Load the dump trucks at the quarry." }
+    )
+
+    static let cementMixer = VehicleSpec(
+        symbolName: "cement.truck.fill",
+        assetName: "VS1VehicleCementMixer",
+        counterNoun: "cement mixers",
+        celebrationEmoji: "🚛",
+        concretePromptFn: { "Roll out \($0) cement mixers for the pour." },
+        pictorialPromptFn: { _ in "Split the cement mixers into two crews." },
+        abstractPromptFn: { "Write the split as an equation." },
+        transferPromptFn: { _, _ in "Place the cement mixers to show the same total from memory." },
+        stageSuccessFn: { stage, _ in
+            switch stage {
+            case .storyAnchor: return "Story ready."
+            case .concrete:   return "Mixer crew ready!"
+            case .pictorial:  return "Both crews add up to the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Cement mixers lined up!"
+            case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
+            }
+        },
+        sessionIntroFn: { "Let's roll cement mixers in different ways." },
+        sessionEndFn: { "Session complete. Smooth work!" },
+        sessionStartFeedbackFn: { "Roll out the cement mixers for the pour." }
+    )
+
+    static let miningTruck = VehicleSpec(
+        symbolName: "truck.box.fill",
+        assetName: "VS1VehicleMiningTruck",
+        counterNoun: "mining trucks",
+        celebrationEmoji: "⛏️",
+        concretePromptFn: { "Send \($0) mining trucks to the pit." },
+        pictorialPromptFn: { _ in "Split the mining trucks into two roads." },
+        abstractPromptFn: { "Write the split as an equation." },
+        transferPromptFn: { _, _ in "Place the mining trucks to show the same total from memory." },
+        stageSuccessFn: { stage, _ in
+            switch stage {
+            case .storyAnchor: return "Story ready."
+            case .concrete:   return "Heavy trucks ready!"
+            case .pictorial:  return "Both roads carry the same total."
+            case .abstract:   return "Your equation matches the split."
+            case .transfer:   return "Mining trucks lined up!"
+            case .gravitySplit: return "Perfect balance!"
+            case .sumSprint:  return "Nice sprint!"
+            case .bondMatch:  return "Bond Blast complete!"
+            case .done:       return "Problem complete."
+            }
+        },
+        sessionIntroFn: { "Let's send mining trucks in different ways." },
+        sessionEndFn: { "Session complete. Mighty hauling!" },
+        sessionStartFeedbackFn: { "Send the mining trucks to the pit." }
+    )
+
+
     static let helicopter = VehicleSpec(
         symbolName: "helicopter",
+        assetName: nil,
         counterNoun: "helicopters",
         celebrationEmoji: "🚁",
         concretePromptFn: { "Land \($0) helicopters on the pad." },
@@ -184,6 +273,7 @@ extension VehicleSpec {
 
     static let airplane = VehicleSpec(
         symbolName: "airplane",
+        assetName: nil,
         counterNoun: "planes",
         celebrationEmoji: "✈️",
         concretePromptFn: { "Park \($0) planes at the gate." },

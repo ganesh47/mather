@@ -114,8 +114,9 @@ struct ThemeTests {
 
     @Test func vehicleThemeCounterKindIsVehicle() {
         let theme = VehicleTheme()
-        if case .vehicle(let sym) = theme.counterKind {
+        if case .vehicle(let sym, let assetName) = theme.counterKind {
             #expect(sym == "car.fill")
+            #expect(assetName == "VS1VehicleCar")
         } else {
             Issue.record("Expected .vehicle counter kind with 'car.fill' symbol")
         }
