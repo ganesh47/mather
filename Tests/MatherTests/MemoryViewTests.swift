@@ -231,6 +231,7 @@ struct MemoryViewTests {
         #expect(indiaFlag?.name == "India")
     }
 
+    @MainActor
     @Test func countryFlagsBuildFlagPictureAndCountryLabelCards() {
         let india = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!
         let cards = MemoryView.buildCards(for: [india])
