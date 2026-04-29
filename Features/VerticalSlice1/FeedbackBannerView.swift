@@ -34,6 +34,7 @@ struct FeedbackBannerView: View {
                     lineWidth: 1.5
                 )
         )
+        .accessibilityIdentifier("feedback-banner")
         .animation(.easeInOut(duration: 0.2), value: isCelebrating)
         .onChange(of: isCelebrating) { _, celebrating in
             guard celebrating else { return }

@@ -77,6 +77,55 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(back.isHittable, "Expected Back to Home to remain reachable by scrolling on compact setup")
     }
 
+    func testStoryAnchorCompactVehicleSessionKeepsBannerAndStorySeparated() {
+        let app = launchWithVS1()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        app.buttons["Play"].tap()
+        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+
+        XCTAssertTrue(app.buttons["theme-card-vehicle"].waitForExistence(timeout: 5))
+        app.buttons["theme-card-vehicle"].tap()
+
+        let targetCap50 = app.buttons["target-cap-up-to-50"]
+        if !targetCap50.waitForExistence(timeout: 3) {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(targetCap50.waitForExistence(timeout: 5))
+        targetCap50.tap()
+
+        let startSession = app.buttons["start-session-button"]
+        if !startSession.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(startSession.waitForExistence(timeout: 5))
+        startSession.tap()
+
+        let banner = app.otherElements["feedback-banner"]
+        let storyCard = app.otherElements["story-anchor-card"]
+        let spokenIntro = app.descendants(matching: .any)["story-anchor-spoken-intro"]
+        let reminder = app.descendants(matching: .any)["story-anchor-reminder-pill"]
+        let startBuilding = app.buttons["story-anchor-start-button"]
+
+        XCTAssertTrue(banner.waitForExistence(timeout: 5), "Expected story-stage feedback banner before the Story Anchor card")
+        XCTAssertTrue(storyCard.waitForExistence(timeout: 5), "Expected Story Anchor card before advancing to concrete")
+        XCTAssertTrue(spokenIntro.waitForExistence(timeout: 5), "Expected visible story copy on the Story Anchor card")
+        XCTAssertTrue(reminder.waitForExistence(timeout: 5), "Expected reminder pill on the Story Anchor card")
+        XCTAssertTrue(startBuilding.waitForExistence(timeout: 5), "Expected Start building button on the Story Anchor card")
+        XCTAssertTrue(startBuilding.isHittable, "Expected Start building to be reachable on compact Story Anchor")
+
+        XCTAssertGreaterThanOrEqual(
+            storyCard.frame.minY,
+            banner.frame.maxY,
+            "Expected the content-sized Story Anchor card to be laid out below the feedback banner"
+        )
+        XCTAssertGreaterThanOrEqual(
+            spokenIntro.frame.minY,
+            banner.frame.maxY,
+            "Expected the story sentence to stay out of the feedback banner area"
+        )
+    }
+
     func testRoomQuestCompactSpotScreenKeepsPrimaryActionReachableWithoutSwipe() {
         let app = launch()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)

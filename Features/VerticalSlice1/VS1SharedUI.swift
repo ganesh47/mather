@@ -9,8 +9,13 @@ struct VS1Card<Content: View>: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 0.96 : 0.72))
+        content
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(MatherTheme.panel.opacity(colorScheme == .dark ? 0.96 : 0.72))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(
@@ -23,7 +28,6 @@ struct VS1Card<Content: View>: View {
                     .strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
             )
             .shadow(color: .black.opacity(colorScheme == .dark ? 0.22 : 0.08), radius: colorScheme == .dark ? 22 : 18, x: 0, y: colorScheme == .dark ? 10 : 8)
-            .overlay(content.padding(24))
     }
 }
 
