@@ -103,11 +103,13 @@ struct ParentSummaryView: View {
                             appModel.engine.showSettings()
                         }
                         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+                        .accessibilityIdentifier("parent-summary-settings")
 
                         Button("Home") {
                             appModel.engine.showHome()
                         }
                         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
+                        .accessibilityIdentifier("parent-summary-home")
                     }
                 }
                 .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))

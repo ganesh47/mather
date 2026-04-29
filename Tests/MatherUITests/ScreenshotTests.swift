@@ -158,16 +158,12 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "ParentSummary-Empty")
 
         // Navigate to Settings from Parent Summary
-        let settingsButton = app.buttons["Settings"]
-        _ = settingsButton.waitForExistence(timeout: 5)
-        settingsButton.tap()
+        tapWhenHittable(app.buttons["parent-summary-settings"], in: app)
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         snapshot(app, "Settings-FromParentSummary")
 
         // Tap clear — confirm dialog should appear
-        let clearButton = app.buttons["Clear session history"]
-        _ = clearButton.waitForExistence(timeout: 5)
-        clearButton.tap()
+        tapWhenHittable(app.buttons["settings-clear-history"], in: app)
         _ = app.alerts["Clear all session data?"].waitForExistence(timeout: 5)
         snapshot(app, "Settings-ClearConfirmDialog")
 
@@ -453,6 +449,24 @@ final class ScreenshotTests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(element.waitForExistence(timeout: 5))
+        for _ in 0..<6 {
+            if element.isHittable {
+                element.tap()
+                return
+            }
+            app.scrollViews.firstMatch.swipeUp()
+        }
+
+        if element.exists {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            return
+        }
+
+        XCTFail("Expected element to exist before tap fallback: \(element)")
     }
 
     private func completeLoopV2Problem(
