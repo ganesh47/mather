@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Explorer Lab — a game picker for all physics and geometry activities.
+/// The Explorer Lab — a game picker for maths, physics, geometry, and science inquiry activities.
 struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
@@ -58,6 +58,11 @@ struct LabView: View {
                      fill: MatherTheme.softBlue) {
                 appModel.pickProfileThenRun { appModel.engine.showCompassAngles() }
             },
+            GameTile(emoji: "💧", name: "Water Cycle Lab",
+                     tagline: "Predict, make clouds, then rain",
+                     fill: MatherTheme.accent) {
+                appModel.pickProfileThenRun { appModel.engine.showWaterCycle() }
+            },
             GameTile(emoji: "🃏", name: "Memory Match",
                      tagline: "Match animals to their names",
                      fill: MatherTheme.coral) {
@@ -77,7 +82,7 @@ struct LabView: View {
                                 Text("Explorer Lab")
                                     .font(.system(size: 36, weight: .black, design: .rounded))
                                     .foregroundStyle(MatherTheme.ink)
-                                Text("Pick a game and discover maths")
+                                Text("Pick a game and discover maths and science")
                                     .font(.subheadline.weight(.medium))
                                     .foregroundStyle(MatherTheme.cardSubtitle)
                             }
