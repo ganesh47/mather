@@ -95,18 +95,28 @@ struct MultiTouchCanvas: UIViewRepresentable {
 
 // MARK: - Level config
 
-private struct ProtractorLevel {
+enum ProtractorSceneKind: String, CaseIterable {
+    case doorGate
+    case clockRamp
+    case triangleRoof
+    case roadBend
+    case trailSwitchback
+}
+
+struct ProtractorLevel {
     let targetAngle: Double       // degrees
     let sceneName: String         // spoken description
+    let mission: String           // visible real-world reason
+    let sceneKind: ProtractorSceneKind
     let snapTolerance: Double     // degrees
 }
 
-private let levels: [ProtractorLevel] = [
-    ProtractorLevel(targetAngle: 90,  sceneName: "a right angle — like a door corner", snapTolerance: 5),
-    ProtractorLevel(targetAngle: 45,  sceneName: "half a right angle", snapTolerance: 5),
-    ProtractorLevel(targetAngle: 60,  sceneName: "an equilateral triangle corner", snapTolerance: 5),
-    ProtractorLevel(targetAngle: 120, sceneName: "an obtuse angle", snapTolerance: 5),
-    ProtractorLevel(targetAngle: 30,  sceneName: "a sharp acute angle", snapTolerance: 4),
+let levels: [ProtractorLevel] = [
+    ProtractorLevel(targetAngle: 90,  sceneName: "a right angle — like opening a gate", mission: "Open the garden gate to a square corner.", sceneKind: .doorGate, snapTolerance: 5),
+    ProtractorLevel(targetAngle: 45,  sceneName: "a half-right angle — like a ramp", mission: "Set the ramp so the marble can roll.", sceneKind: .clockRamp, snapTolerance: 5),
+    ProtractorLevel(targetAngle: 60,  sceneName: "a triangle corner — like a tent roof", mission: "Raise the tent roof to a strong triangle.", sceneKind: .triangleRoof, snapTolerance: 5),
+    ProtractorLevel(targetAngle: 120, sceneName: "a wide turn — like a bridge road", mission: "Bend the bridge road into a gentle turn.", sceneKind: .roadBend, snapTolerance: 5),
+    ProtractorLevel(targetAngle: 30,  sceneName: "a sharp turn — like a hill trail", mission: "Trace the switchback trail on the hill map.", sceneKind: .trailSwitchback, snapTolerance: 4),
 ]
 
 // MARK: - Main view
@@ -184,9 +194,10 @@ struct TwoFingerProtractorView: View {
                 Text("Two-Finger Protractor")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Make \(Int(level.targetAngle))°")
+                Text(level.mission)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
             Spacer()
             Button {
@@ -252,11 +263,12 @@ struct TwoFingerProtractorView: View {
             Image(systemName: "hand.draw.fill")
                 .font(.system(size: 44))
                 .foregroundStyle(MatherTheme.softBlue)
-            Text("Place two fingers anywhere")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Text("Target: \(Int(level.targetAngle))°")
-                .font(.title.weight(.black))
+            Text(level.mission)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .multilineTextAlignment(.center)
+            Text("Use two fingers to make \(Int(level.targetAngle))°")
+                .font(.title3.weight(.black))
                 .foregroundStyle(MatherTheme.accent)
         }
         .padding(24)
@@ -267,6 +279,7 @@ struct TwoFingerProtractorView: View {
     // MARK: - Canvas drawing
 
     private func drawScene(ctx: GraphicsContext, size: CGSize) {
+        drawRealWorldScene(ctx: ctx, size: size)
         let pivot = CGPoint(x: size.width / 2, y: size.height / 2)
         guard let p1 = touch1, let p2 = touch2 else {
             // Draw ghost wedge centred in canvas showing target angle
@@ -312,8 +325,39 @@ struct TwoFingerProtractorView: View {
                  with: .color(fillColor.opacity(0.7)))
     }
 
-    private func drawGhostWedge(ctx: GraphicsContext, size: CGSize) {
-        let pivot = CGPoint(x: size.width / 2, y: size.height * 0.55)
+
+    private func drawRealWorldScene(ctx: GraphicsContext, size: CGSize) {
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        let accent = matched ? MatherTheme.accent : MatherTheme.softBlue
+        switch level.sceneKind {
+        case .doorGate:
+            let wall = CGRect(x: center.x - 120, y: center.y - 90, width: 240, height: 180)
+            ctx.stroke(RoundedRectangle(cornerRadius: 18).path(in: wall), with: .color(MatherTheme.ink.opacity(0.14)), lineWidth: 5)
+            var gate = Path(); gate.move(to: center); gate.addLine(to: CGPoint(x: center.x + 120, y: center.y))
+            gate.move(to: center); gate.addLine(to: CGPoint(x: center.x, y: center.y - 120))
+            ctx.stroke(gate, with: .color(accent.opacity(0.45)), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+        case .clockRamp:
+            ctx.stroke(Circle().path(in: CGRect(x: center.x - 110, y: center.y - 110, width: 220, height: 220)), with: .color(MatherTheme.ink.opacity(0.10)), lineWidth: 6)
+            var ramp = Path(); ramp.move(to: CGPoint(x: center.x - 115, y: center.y + 70)); ramp.addLine(to: CGPoint(x: center.x + 115, y: center.y - 40))
+            ctx.stroke(ramp, with: .color(accent.opacity(0.45)), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+        case .triangleRoof:
+            var roof = Path(); roof.move(to: CGPoint(x: center.x - 130, y: center.y + 80)); roof.addLine(to: CGPoint(x: center.x, y: center.y - 115)); roof.addLine(to: CGPoint(x: center.x + 130, y: center.y + 80))
+            ctx.stroke(roof, with: .color(accent.opacity(0.45)), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+        case .roadBend:
+            var road = Path(); road.move(to: CGPoint(x: center.x - 150, y: center.y + 80)); road.addQuadCurve(to: CGPoint(x: center.x + 150, y: center.y - 70), control: CGPoint(x: center.x - 10, y: center.y + 130))
+            ctx.stroke(road, with: .color(accent.opacity(0.40)), style: StrokeStyle(lineWidth: 34, lineCap: .round))
+            ctx.stroke(road, with: .color(.white.opacity(0.7)), style: StrokeStyle(lineWidth: 3, dash: [12, 10]))
+        case .trailSwitchback:
+            for i in 0..<5 {
+                let inset = CGFloat(i) * 24
+                ctx.stroke(Ellipse().path(in: CGRect(x: center.x - 160 + inset, y: center.y - 115 + inset * 0.45, width: 320 - inset * 2, height: 210 - inset)), with: .color(MatherTheme.ink.opacity(0.07)), lineWidth: 2)
+            }
+            var trail = Path(); trail.move(to: CGPoint(x: center.x - 130, y: center.y + 80)); trail.addLine(to: CGPoint(x: center.x - 10, y: center.y - 10)); trail.addLine(to: CGPoint(x: center.x + 115, y: center.y - 55))
+            ctx.stroke(trail, with: .color(accent.opacity(0.48)), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+        }
+    }
+
+    private func drawGhostWedge(ctx: GraphicsContext, size: CGSize) {        let pivot = CGPoint(x: size.width / 2, y: size.height * 0.55)
         let armLen: CGFloat = 100
         let targetRad = level.targetAngle * .pi / 180
         let baseAngle: Double = -.pi / 2   // arms open upward

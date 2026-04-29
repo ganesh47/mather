@@ -115,3 +115,27 @@ struct GravityArtistTests {
         #expect(tx < canvasW)
     }
 }
+
+@Suite("GravitySensorPhysics")
+struct GravitySensorPhysicsTests {
+    @Test func normalizedVectorPointsDownAtNeutral() {
+        let vector = GravitySensorPhysics.normalizedVector(roll: 0, neutralRoll: 0)
+        #expect(abs(vector.dx) < 0.001)
+        #expect(abs(vector.dy - 1) < 0.001)
+    }
+
+    @Test func normalizedVectorRespondsToRollDirection() {
+        let right = GravitySensorPhysics.normalizedVector(roll: .pi / 6, neutralRoll: 0)
+        let left = GravitySensorPhysics.normalizedVector(roll: -.pi / 6, neutralRoll: 0)
+        #expect(right.dx > 0)
+        #expect(left.dx < 0)
+        #expect(abs(right.dy - left.dy) < 0.001)
+    }
+
+    @Test func pebblePositionClampsToTrayBounds() {
+        let bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let pos = GravitySensorPhysics.pebblePosition(origin: CGPoint(x: 50, y: 50), vector: CGVector(dx: 4, dy: 4), distance: 100, bounds: bounds)
+        #expect(pos.x == 100)
+        #expect(pos.y == 100)
+    }
+}

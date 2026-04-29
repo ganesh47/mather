@@ -1,13 +1,27 @@
 import SwiftUI
 
-// Gravity Artist — ages 8–10
-// Two-phase activity: first PREDICT the arc (tap PREDICT to freeze your guess),
-// then FIRE and compare where the ball actually lands.
-// Tilt controls the launch angle; a power selector (1/2/3) changes initial velocity.
-// Landing the ball within the hit radius of a target earns a star and reveals
-// the angle label — the abstract CPA step.
+// Gravity Sensor Lab — ages 8–10
+// Tilt controls a screen-down gravity vector. The legacy predict/fire controls
+// remain as a small comparison loop, but the first-read experience now teaches
+// gravity direction with a tray, arrow, and rolling pebbles instead of another cannon.
 
 // MARK: - Physics helpers (pure — testable)
+
+enum GravitySensorPhysics {
+    nonisolated static func normalizedVector(roll: Double, neutralRoll: Double = 0) -> CGVector {
+        let delta = max(-Double.pi / 3, min(roll - neutralRoll, Double.pi / 3))
+        let dx = sin(delta)
+        let dy = cos(delta)
+        let length = max(0.0001, sqrt(dx * dx + dy * dy))
+        return CGVector(dx: dx / length, dy: dy / length)
+    }
+
+    nonisolated static func pebblePosition(origin: CGPoint, vector: CGVector, distance: Double, bounds: CGRect) -> CGPoint {
+        let unclamped = CGPoint(x: origin.x + vector.dx * distance, y: origin.y + vector.dy * distance)
+        return CGPoint(x: min(max(unclamped.x, bounds.minX), bounds.maxX),
+                       y: min(max(unclamped.y, bounds.minY), bounds.maxY))
+    }
+}
 
 enum GravityArtistPhysics {
     static let gravity: Double = 900   // pt/s²
@@ -156,7 +170,7 @@ struct GravityArtistView: View {
     private var headerBar: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Gravity Artist")
+                Text("Gravity Sensor Lab")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Text(phaseHint)
@@ -180,9 +194,9 @@ struct GravityArtistView: View {
 
     private var phaseHint: String {
         switch phase {
-        case .aim:       return "Tilt to aim, then PREDICT"
-        case .predicted: return "Prediction locked — now FIRE!"
-        case .fired:     return hitTarget ? "You hit it! \(Int(currentAngle.rounded()))°" : "Close! Try again."
+        case .aim:       return "Tilt to find which way gravity pulls"
+        case .predicted: return "Prediction locked — now observe the roll"
+        case .fired:     return hitTarget ? "Pebble followed gravity!" : "Try a new tilt direction."
         }
     }
 
@@ -193,11 +207,13 @@ struct GravityArtistView: View {
             let cannon = cannonOrigin(in: canvasSize)
             let groundY = canvasSize.height * 0.88
 
-            // Ground line
+            drawGravityTray(ctx: ctx, size: canvasSize)
+
+            // Ground line for the small legacy compare loop
             var ground = Path()
             ground.move(to: CGPoint(x: 0, y: groundY))
             ground.addLine(to: CGPoint(x: canvasSize.width, y: groundY))
-            ctx.stroke(ground, with: .color(MatherTheme.ink.opacity(0.15)), lineWidth: 2)
+            ctx.stroke(ground, with: .color(MatherTheme.ink.opacity(0.10)), lineWidth: 2)
 
             // Target marker
             let ty = groundY
@@ -274,6 +290,31 @@ struct GravityArtistView: View {
                  with: .color(MatherTheme.ink.opacity(0.8)))
     }
 
+    private func drawGravityTray(ctx: GraphicsContext, size: CGSize) {
+        let tray = CGRect(x: size.width * 0.18, y: size.height * 0.13,
+                          width: size.width * 0.64, height: size.height * 0.44)
+        ctx.fill(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.10)))
+        ctx.stroke(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.45)), lineWidth: 4)
+
+        let neutral = neutralRoll ?? appModel.motionService.tiltRoll
+        let vector = GravitySensorPhysics.normalizedVector(roll: appModel.motionService.tiltRoll, neutralRoll: neutral)
+        let center = CGPoint(x: tray.midX, y: tray.midY)
+        let arrowEnd = CGPoint(x: center.x + vector.dx * 90, y: center.y + vector.dy * 90)
+        var arrow = Path(); arrow.move(to: center); arrow.addLine(to: arrowEnd)
+        ctx.stroke(arrow, with: .color(MatherTheme.accent), style: StrokeStyle(lineWidth: 9, lineCap: .round))
+        ctx.fill(Circle().path(in: CGRect(x: arrowEnd.x - 10, y: arrowEnd.y - 10, width: 20, height: 20)), with: .color(MatherTheme.accent))
+
+        let pebbleBounds = tray.insetBy(dx: 34, dy: 34)
+        for (index, offset) in [CGPoint(x: -48, y: -18), CGPoint(x: 0, y: 10), CGPoint(x: 44, y: -8)].enumerated() {
+            let start = CGPoint(x: center.x + offset.x, y: center.y + offset.y)
+            let pos = GravitySensorPhysics.pebblePosition(origin: start, vector: vector, distance: 54 + Double(index * 18), bounds: pebbleBounds)
+            ctx.fill(Circle().path(in: CGRect(x: pos.x - 11, y: pos.y - 11, width: 22, height: 22)), with: .color(MatherTheme.warm.opacity(0.85)))
+        }
+
+        let label = ctx.resolve(Text("gravity pulls this way").font(.caption.bold()).foregroundStyle(MatherTheme.ink.opacity(0.70)))
+        ctx.draw(label, at: CGPoint(x: tray.midX, y: tray.minY + 26))
+    }
+
     // MARK: - Power selector
 
     private var powerSelector: some View {
@@ -323,7 +364,7 @@ struct GravityArtistView: View {
             HStack(spacing: 16) {
                 switch phase {
                 case .aim:
-                    Button("PREDICT") {
+                    Button("PREDICT ROLL") {
                         handlePredict()
                     }
                     .font(.headline.weight(.bold))
@@ -334,7 +375,7 @@ struct GravityArtistView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 case .predicted:
-                    Button("FIRE!") {
+                    Button("OBSERVE") {
                         handleFire()
                     }
                     .font(.headline.weight(.bold))
@@ -358,7 +399,7 @@ struct GravityArtistView: View {
             }
             .padding(.horizontal, 24)
 
-            Text("Tilt to change angle • Tap dot to change power")
+            Text("Tilt the device: the arrow shows screen-down gravity • no camera or location")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
