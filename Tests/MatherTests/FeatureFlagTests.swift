@@ -42,6 +42,7 @@ struct FeatureFlagTests {
         #expect(flags.vs1GravitySplitEnabled)
         #expect(flags.makeBreakLoopV2Enabled)
         #expect(flags.soundReactionEnabled)
+        #expect(!flags.routeQuestEnabled)
     }
 
     @Test func makeBreakLoopV2CanBeDisabledExplicitlyForLegacyCoverage() {
@@ -60,5 +61,18 @@ struct FeatureFlagTests {
 
         let flags2 = FeatureFlagService(defaults: defaults)
         #expect(!flags2.soundReactionEnabled)
+    }
+}
+
+// MARK: - Route Quest rollout
+
+extension FeatureFlagTests {
+    @Test func routeQuestFlagPersistsAcrossInstances() {
+        let defaults = UserDefaults(suiteName: #function)!
+        let flags1 = FeatureFlagService(defaults: defaults)
+        flags1.routeQuestEnabled = true
+
+        let flags2 = FeatureFlagService(defaults: defaults)
+        #expect(flags2.routeQuestEnabled)
     }
 }
