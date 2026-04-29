@@ -54,6 +54,8 @@ struct RootView: View {
                         }
                 case .rectangleFactory:
                     RectangleFactoryView(appModel: appModel)
+                case .factoryCards:
+                    FactoryCardsView(appModel: appModel)
                 case .sumSprint:
                     switch appModel.sumSprintEngine.phase {
                     case .idle:

@@ -38,6 +38,11 @@ struct LabView: View {
                      fill: MatherTheme.softBlue) {
                 appModel.pickProfileThenRun { appModel.engine.showRectangleFactory() }
             },
+            GameTile(emoji: "📦", name: "Packing Cards",
+                     tagline: "Practice equal rows first",
+                     fill: MatherTheme.panelDeep) {
+                appModel.pickProfileThenRun { appModel.engine.showFactoryCards() }
+            },
             GameTile(emoji: "💥", name: "Angle Cannon",
                      tagline: "Tilt to aim — hit the target",
                      fill: MatherTheme.warm) {

@@ -12,6 +12,7 @@ enum AppRoute {
     case sumSprint
     case symmetryFold
     case rectangleFactory
+    case factoryCards
     case angleCannon
     case twoFingerProtractor
     case gravityArtist
@@ -120,6 +121,7 @@ final class VerticalSliceEngine {
     func showSumSprint() { route = .sumSprint }
     func showSymmetryFold() { route = .symmetryFold }
     func showRectangleFactory() { route = .rectangleFactory }
+    func showFactoryCards() { route = .factoryCards }
     func showAngleCannon() { route = .angleCannon }
     func showTwoFingerProtractor() { route = .twoFingerProtractor }
     func showGravityArtist() { route = .gravityArtist }
