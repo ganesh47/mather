@@ -421,7 +421,8 @@ final class ScreenshotTests: XCTestCase {
         launchApp(with: [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES"
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES"
         ])
     }
 
