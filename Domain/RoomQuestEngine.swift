@@ -263,6 +263,48 @@ final class RoomQuestEngine {
         }
     }
 
+    var currentSpotParentConsentTitle: String {
+        switch scanState {
+        case .almost:
+            return "Grown-up confirms this is the place"
+        case .failed:
+            return "Grown-up confirms fallback"
+        case .idle:
+            return currentStation?.role.fallbackButtonTitle ?? "I found it"
+        case .scanning, .celebrating:
+            return currentStation?.role.fallbackButtonTitle ?? "I found it"
+        }
+    }
+
+    func acceptCurrentSpotWithParentConsent() {
+        guard case .spot(let index) = phase,
+              let station = stations[safe: index],
+              shouldShowSpotManualFallback
+        else { return }
+
+        let scanOutcome: String = {
+            switch scanState {
+            case .almost: return "almost"
+            case .failed: return "failed"
+            case .idle: return "manual_fallback"
+            case .scanning: return "scanning"
+            case .celebrating: return "celebrating"
+            }
+        }()
+        try? telemetryWriter.append(SliceEvent(
+            type: .interaction,
+            payload: [
+                "action": "room_quest_parent_consent_accept",
+                "station_role": station.role.rawValue,
+                "spot_index": String(index),
+                "scan_outcome": scanOutcome
+            ]
+        ))
+        feedbackMessage = "Grown-up confirmed this place. Collect \(station.quantity) \(station.quantity == 1 ? "token" : "tokens")."
+        scanState = .idle
+        markSpotVisited(index: index)
+    }
+
     func markSetupComplete() {
         guard let p = problem else { return }
         guard allStationsRegistered else {

@@ -306,9 +306,13 @@ struct RoomQuestEngineTests {
             #expect(recheckingEngine.currentSpotReferenceLabel.localizedCaseInsensitiveContains("saved camera place"))
             #expect(recheckingEngine.currentSpotStatusTitle.localizedCaseInsensitiveContains("almost there"))
             #expect(recheckingEngine.currentSpotSearchGuidance.localizedCaseInsensitiveContains("move a little closer"))
+            #expect(recheckingEngine.currentSpotParentConsentTitle.localizedCaseInsensitiveContains("grown-up confirms"))
         } else {
             Issue.record("Expected almost scan state after saved-reference payload mismatch")
         }
+
+        recheckingEngine.acceptCurrentSpotWithParentConsent()
+        #expect(recheckingEngine.phase == .spot(index: 1))
     }
 
     @Test

@@ -129,7 +129,7 @@ struct SpotPromptView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.ink)
                 Text(engine.shouldShowSpotManualFallback
-                     ? "The camera missed this place. A grown-up can use fallback now."
+                     ? "If the child is at the right place, a grown-up can consent and accept it now."
                      : "Start with a camera check. Fallback stays hidden unless the scan misses, so the camera feels like the real helper.")
                     .font(.subheadline)
                     .foregroundStyle(MatherTheme.cardSubtitle)
@@ -161,8 +161,8 @@ struct SpotPromptView: View {
             }
 
             if engine.shouldShowSpotManualFallback {
-                Button(station?.role.fallbackButtonTitle ?? "I found it") {
-                    engine.markSpotVisited(index: spotIndex)
+                Button(engine.currentSpotParentConsentTitle) {
+                    engine.acceptCurrentSpotWithParentConsent()
                 }
                 .accessibilityIdentifier("room-spot-confirm-button")
                 .buttonStyle(.plain)
