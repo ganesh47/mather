@@ -119,6 +119,27 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(difficultyMenu.isHittable, "Expected Memory difficulty control to remain reachable on compact layouts")
     }
 
+    func testWaterCycleCompactCompletionKeepsControlsReachable() {
+        let app = launch()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+
+        openExplorerLab(app)
+        app.buttons["Water Cycle Lab"].tap()
+        XCTAssertTrue(app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10))
+
+        let primaryAction = app.buttons["water-cycle-primary-action"]
+        XCTAssertTrue(primaryAction.waitForExistence(timeout: 5))
+        for _ in 0..<5 {
+            XCTAssertTrue(primaryAction.isHittable, "Expected Water Cycle primary action to remain reachable")
+            primaryAction.tap()
+        }
+
+        XCTAssertTrue(app.staticTexts["Cycle complete"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-primary-action"].isHittable)
+        XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+    }
+
     private func configureRoomQuestSetupViaManualFallback(_ app: XCUIApplication) {
         let redCard = app.otherElements["room-station-card-redRocket"]
         let blueCard = app.otherElements["room-station-card-blueBubble"]

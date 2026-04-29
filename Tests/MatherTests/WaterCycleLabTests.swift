@@ -59,4 +59,20 @@ struct WaterCycleLabTests {
         #expect(state.cyclesCompleted == 1)
         #expect(state.progress == 0.0)
     }
+
+    @Test func sceneMetricsFitCompactPhoneWidth() {
+        let metrics = WaterCycleSceneMetrics(availableWidth: 288)
+
+        #expect(abs(metrics.scale - 0.72) < 0.001)
+        #expect(metrics.sunHaloSize < 100)
+        #expect(metrics.cloudCapsuleWidth < 124)
+        #expect(metrics.columnWidth <= 116)
+        #expect(metrics.horizontalInset >= 21)
+
+        let topRowMinimum = metrics.sunHaloSize + metrics.cloudCapsuleWidth + metrics.horizontalInset * 2
+        #expect(topRowMinimum < metrics.availableWidth)
+
+        let middleRowMinimum = metrics.columnWidth * 2 + metrics.horizontalInset * 2
+        #expect(middleRowMinimum < metrics.availableWidth)
+    }
 }
