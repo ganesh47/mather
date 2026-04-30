@@ -125,7 +125,7 @@ struct CapabilityLaneProgress: Equatable {
 
     init(masteryState: LaneMasteryState) {
         self.init(
-            laneID: masteryState.laneID,
+            laneID: masteryState.id,
             availableModes: masteryState.availableModes,
             completedModes: masteryState.completedModes,
             reviewedCardIDs: masteryState.reviewedCardIDs
