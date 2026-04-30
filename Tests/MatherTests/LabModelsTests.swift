@@ -162,7 +162,7 @@ extension LabModelsTests {
         XCTAssertTrue(numbers.accessibilityLabel.contains("Numbers Lab"))
         XCTAssertTrue(numbers.accessibilityLabel.contains("Ages 4–12"))
         XCTAssertEqual(numbers.accessibilityHint, "Choose an activity or review cards.")
-        XCTAssertTrue(numbers.recallAccessibilityLabel.contains("8 Mix-Match cards ready"))
+        XCTAssertTrue(numbers.recallAccessibilityLabel.contains("1 recall card + 8 Mix-Match ready"))
         XCTAssertTrue(numbers.recallAccessibilityLabel.contains("number-bond"))
         XCTAssertEqual(sumSprint.accessibilityLabel, "Sum Sprint. Race through sums 11–20")
         XCTAssertTrue(sumSprint.accessibilityHint.contains("Modes: Challenge, Timed, Review"))
