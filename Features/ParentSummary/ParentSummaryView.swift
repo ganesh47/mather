@@ -13,6 +13,7 @@ struct ParentSummaryView: View {
         let digest = appModel.telemetryWriter.digest(from: overview.validMakeBreakSummaries)
         let recentRows = ParentSummaryHistoryRow.recentRows(summaries: summaries, gameSessions: gameSessions, limit: 5)
         let trendPoints = ParentSummaryTrendPoint.recentPoints(from: overview.validMakeBreakSummaries, limit: 6)
+        let explorerLabSummary = ParentSummaryExplorerLabSummary.make(profile: appModel.explorerLabMasteryProfile)
 
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -47,6 +48,7 @@ struct ParentSummaryView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                         }
+                        explorerLabProgressCard(summary: explorerLabSummary)
                     } else {
                         if overview.hasValidMakeBreakProgress {
                             makeBreakScorecard(digest: digest)
@@ -69,6 +71,7 @@ struct ParentSummaryView: View {
                                 spacing: 16
                             ) {
                                 profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
+                                explorerLabProgressCard(summary: explorerLabSummary)
                                 if overview.hasValidMakeBreakProgress {
                                     nextTargetCard(digest: digest)
                                 }
@@ -76,6 +79,7 @@ struct ParentSummaryView: View {
                             recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
                         } else {
                             profileOverviewCard(summaries: summaries, gameSessions: gameSessions)
+                            explorerLabProgressCard(summary: explorerLabSummary)
                             recentSessionsCard(rows: recentRows, totalCount: summaries.count + gameSessions.count)
                             if overview.hasValidMakeBreakProgress {
                                 nextTargetCard(digest: digest)
@@ -87,6 +91,64 @@ struct ParentSummaryView: View {
                 .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
                 .frame(maxWidth: .infinity)
             }
+        }
+    }
+
+    private func explorerLabProgressCard(summary: ParentSummaryExplorerLabSummary) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Explorer Lab")
+                            .font(.title3.weight(.bold))
+                        Text(summary.subtitle)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "sparkles")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                }
+
+                if summary.rows.isEmpty {
+                    Text("No Explorer Lab practice yet. Lane progress appears after a mode, card, or concept is practiced.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MatherTheme.panel.opacity(0.55))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                } else {
+                    ForEach(summary.rows) { row in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(row.laneTitle)
+                                    .font(.headline.weight(.bold))
+                                Spacer(minLength: 8)
+                                Text(row.masteryLabel)
+                                    .font(.subheadline.weight(.black))
+                                    .foregroundStyle(MatherTheme.accent)
+                                    .minimumScaleFactor(0.8)
+                                    .lineLimit(1)
+                            }
+                            Text(row.detailLabel)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12)
+                        .background(MatherTheme.panel.opacity(0.55))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("parent-summary-explorer-lab")
         }
     }
 
@@ -506,6 +568,96 @@ struct ParentSummaryTrendPoint: Identifiable, Equatable {
                     profileId: $0.profileId
                 )
             }
+    }
+}
+
+struct ParentSummaryExplorerLabSummary: Equatable {
+    var rows: [ParentSummaryExplorerLabLaneRow]
+    var activeLaneCount: Int
+    var completedModeCount: Int
+
+    var subtitle: String {
+        guard activeLaneCount > 0 else {
+            return "Lane, mode, concept, and mastery signals from Explorer Lab."
+        }
+        let laneNoun = activeLaneCount == 1 ? "lane" : "lanes"
+        return "\(activeLaneCount) active \(laneNoun) · \(completedModeCount) modes completed"
+    }
+
+    static func make(
+        profile: ExplorerLabMasteryProfile,
+        limit: Int = 3
+    ) -> ParentSummaryExplorerLabSummary {
+        let orderedRows = CapabilityLaneRegistry.all.compactMap { descriptor -> ParentSummaryExplorerLabLaneRow? in
+            guard let state = profile[descriptor.id],
+                  ParentSummaryExplorerLabLaneRow.hasParentVisibleProgress(state)
+            else {
+                return nil
+            }
+            return ParentSummaryExplorerLabLaneRow(descriptor: descriptor, state: state)
+        }
+        .sorted { lhs, rhs in
+            if lhs.masteryFraction == rhs.masteryFraction {
+                return lhs.registryOrder < rhs.registryOrder
+            }
+            return lhs.masteryFraction > rhs.masteryFraction
+        }
+
+        return ParentSummaryExplorerLabSummary(
+            rows: Array(orderedRows.prefix(limit)),
+            activeLaneCount: orderedRows.count,
+            completedModeCount: orderedRows.reduce(0) { $0 + $1.completedModeCount }
+        )
+    }
+}
+
+struct ParentSummaryExplorerLabLaneRow: Identifiable, Equatable {
+    var id: CapabilityLaneID
+    var registryOrder: Int
+    var laneTitle: String
+    var completedModeCount: Int
+    var availableModeCount: Int
+    var masteryFraction: Double
+    var masteryLabel: String
+    var nextModeLabel: String
+    var conceptLabel: String
+
+    var detailLabel: String {
+        "\(completedModeCount) / \(availableModeCount) modes · \(nextModeLabel) · \(conceptLabel)"
+    }
+
+    init(descriptor: CapabilityLaneDescriptor, state: LaneMasteryState) {
+        let registryOrder = CapabilityLaneRegistry.all.firstIndex { $0.id == descriptor.id } ?? 0
+        let completedModeCount = state.completedModeCount
+        self.id = descriptor.id
+        self.registryOrder = registryOrder
+        self.laneTitle = descriptor.title
+        self.completedModeCount = completedModeCount
+        self.availableModeCount = state.availableModes.count
+        self.masteryFraction = state.masteryFraction
+        self.masteryLabel = "\(Int((state.masteryFraction * 100).rounded()))% ready"
+        self.nextModeLabel = state.nextRecommendedMode.map { "Try \($0.rawValue) next" } ?? "Choose any mode"
+        self.conceptLabel = Self.conceptLabel(for: state)
+    }
+
+    static func hasParentVisibleProgress(_ state: LaneMasteryState) -> Bool {
+        state.completedModeCount > 0
+            || !state.reviewedCardIDs.isEmpty
+            || state.conceptConfidence.values.contains { $0 > .introduced }
+    }
+
+    private static func conceptLabel(for state: LaneMasteryState) -> String {
+        let steadyOrMastered = state.conceptConfidence.values.filter { $0 >= .steady }.count
+        if steadyOrMastered > 0 {
+            return "\(steadyOrMastered) steady concepts"
+        }
+        if state.conceptConfidence.values.contains(where: { $0 == .practicing }) {
+            return "Concepts practicing"
+        }
+        if !state.reviewedCardIDs.isEmpty {
+            return "\(state.reviewedCardIDs.count) cards reviewed"
+        }
+        return "Concepts introduced"
     }
 }
 
