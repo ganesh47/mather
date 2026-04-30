@@ -51,12 +51,63 @@ final class ExplorerLabMasteryStore {
         storage.set(data, forKey: storageKey)
     }
 
+    @discardableResult
+    func update(_ mutation: (inout ExplorerLabMasteryProfile) -> Void) -> ExplorerLabMasteryProfile {
+        var profile = load()
+        mutation(&profile)
+        profile = profile.withSeededExplorerLanes()
+        try? save(profile)
+        return profile
+    }
+
+    @discardableResult
+    func markCompleted(laneID: CapabilityLaneID, mode: PlayMode) -> ExplorerLabMasteryProfile {
+        update { profile in
+            profile.updateLane(laneID) { lane in
+                lane.markCompleted(mode)
+            }
+        }
+    }
+
+    @discardableResult
+    func markReviewedCard(laneID: CapabilityLaneID, cardID: String) -> ExplorerLabMasteryProfile {
+        update { profile in
+            profile.updateLane(laneID) { lane in
+                lane.markReviewedCard(id: cardID)
+            }
+        }
+    }
+
+    @discardableResult
+    func setConfidence(
+        _ confidence: ConceptConfidence,
+        for conceptID: ConceptId,
+        laneID: CapabilityLaneID
+    ) -> ExplorerLabMasteryProfile {
+        update { profile in
+            profile.updateLane(laneID) { lane in
+                lane.setConfidence(confidence, for: conceptID)
+            }
+        }
+    }
+
     func reset() {
         storage.removeObject(forKey: storageKey)
     }
 }
 
 extension ExplorerLabMasteryProfile {
+    mutating func updateLane(_ laneID: CapabilityLaneID, _ mutation: (inout LaneMasteryState) -> Void) {
+        guard let descriptor = CapabilityLaneRegistry.all.first(where: { $0.id == laneID }) else { return }
+        var lane = lanes[laneID] ?? LaneMasteryState(
+            laneID: descriptor.id,
+            availableModes: descriptor.supportedPlayModes,
+            conceptConfidence: Dictionary(uniqueKeysWithValues: descriptor.starterConcepts.map { ($0, .introduced) })
+        )
+        mutation(&lane)
+        lanes[laneID] = lane
+    }
+
     func withSeededExplorerLanes() -> ExplorerLabMasteryProfile {
         var profile = self
         for descriptor in CapabilityLaneRegistry.all {
