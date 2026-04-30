@@ -150,7 +150,21 @@ extension LabModelsTests {
         XCTAssertTrue(allCards.allSatisfy { !$0.concept.isEmpty })
         XCTAssertTrue(allCards.allSatisfy { !$0.prompt.isEmpty })
         XCTAssertTrue(allCards.allSatisfy { !$0.match.isEmpty })
+        XCTAssertTrue(allCards.allSatisfy { $0.accessibilityLabel.contains("matches") })
         XCTAssertEqual(Set(allCards.map(\.id)).count, allCards.count)
+    }
+
+    func testLabLaneActivityAndRecallAccessibilityCopyExposeCriticalContext() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        let sumSprint = try XCTUnwrap(numbers.activities.first { $0.id == .sumSprint })
+
+        XCTAssertTrue(numbers.accessibilityLabel.contains("Numbers Lab"))
+        XCTAssertTrue(numbers.accessibilityLabel.contains("Ages 4–12"))
+        XCTAssertEqual(numbers.accessibilityHint, "Choose an activity or review cards.")
+        XCTAssertTrue(numbers.recallAccessibilityLabel.contains("8 Mix-Match cards ready"))
+        XCTAssertTrue(numbers.recallAccessibilityLabel.contains("number-bond"))
+        XCTAssertEqual(sumSprint.accessibilityLabel, "Sum Sprint. Race through sums 11–20")
+        XCTAssertTrue(sumSprint.accessibilityHint.contains("Modes: Challenge, Timed, Review"))
     }
 
     func testActivitySensorNeedsMapToHonestLaneAffordances() {
@@ -172,6 +186,7 @@ extension LabModelsTests {
                 "Haptics unavailable: Visual feedback stays available",
             ]
         )
+        XCTAssertEqual(affordances.map(\.accessibilityHint), ["Use tap-to-place stations", "Visual feedback stays available"])
         XCTAssertTrue(affordances.allSatisfy { !$0.isAvailable })
     }
 

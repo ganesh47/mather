@@ -262,6 +262,18 @@ struct MemoryViewTests {
         }
     }
 
+    @MainActor
+    @Test func faceDownMemoryCardsDoNotExposeHiddenAnswerToAccessibility() {
+        let bird = MemoryDeck.birds[0]
+        let hidden = MemoryCard(pairId: bird.id, content: .picture(bird))
+        let selected = MemoryCard(pairId: bird.id, content: .picture(bird), isSelected: true)
+
+        #expect(MemoryView.accessibilityLabel(for: hidden, difficulty: .hard) == "Face down memory card")
+        #expect(MemoryView.accessibilityHint(for: hidden, difficulty: .hard) == "Tap to turn this card over.")
+        #expect(MemoryView.accessibilityLabel(for: selected, difficulty: .hard).contains(bird.canonicalName))
+        #expect(MemoryView.accessibilityLabel(for: selected, difficulty: .hard).contains("selected"))
+    }
+
     @Test func countryFlagAssetsHaveProvenanceAndCatalogs() {
         let expectedHashes = [
             "MemoryFlagIndia": "532012f66641b8e0ddd64628305810178bd97bb35e13086c00ee2ba597ae45f2",

@@ -52,7 +52,7 @@ struct LabView: View {
                 Image(systemName: "house.fill")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(MatherTheme.accent)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 56, height: 56)
             }
             .accessibilityLabel("Home")
         }
@@ -125,7 +125,8 @@ struct LabView: View {
             radius: 8, y: 4
         )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(lane.title)
+        .accessibilityLabel(lane.accessibilityLabel)
+        .accessibilityHint(lane.accessibilityHint)
     }
 
     private func modeChoicePreview(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -148,6 +149,9 @@ struct LabView: View {
                             .foregroundStyle(tint)
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(card.accessibilityLabel)
+                .accessibilityHint(card.policy.usesTimer ? "Timer starts only after this mode is chosen." : "No timer in this mode.")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -224,15 +228,19 @@ struct LabView: View {
                     .font(.caption2.weight(.black))
                     .foregroundStyle(tint)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, 8)
+                    .frame(minWidth: 120, minHeight: 56)
                     .background(MatherTheme.card.opacity(0.8), in: Capsule())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Review \(lane.title) Mix-Match cards")
+            .accessibilityHint(expandedReviewLaneID == lane.id ? "Hides the sample review cards." : "Shows sample cards for quick recall practice.")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(lane.recallAccessibilityLabel)
     }
 
     private func mixMatchSampler(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -262,6 +270,8 @@ struct LabView: View {
                 }
                 .padding(8)
                 .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(card.accessibilityLabel)
             }
         }
         .padding(10)
@@ -309,11 +319,12 @@ struct LabView: View {
                     .foregroundStyle(tint)
             }
             .padding(10)
+            .frame(maxWidth: .infinity, minHeight: 80)
             .background(MatherTheme.panel.opacity(0.72), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(activity.title)
-        .accessibilityHint(activity.modes.map(\.rawValue).joined(separator: ", "))
+        .accessibilityLabel(activity.accessibilityLabel)
+        .accessibilityHint(activity.accessibilityHint)
     }
 
     private func sensorAffordanceRow(_ activity: LabActivity, tint: Color) -> some View {
@@ -335,6 +346,7 @@ struct LabView: View {
                     in: Capsule()
                 )
                 .accessibilityLabel(affordance.accessibilityLabel)
+                .accessibilityHint(affordance.accessibilityHint)
             }
         }
     }
