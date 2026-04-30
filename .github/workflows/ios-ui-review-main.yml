@@ -98,8 +98,7 @@ jobs:
           if command -v xbox >/dev/null 2>&1; then
             xbox --version 2>/dev/null || xbox version 2>/dev/null || true
           else
-            echo "xbox utility not found on PATH" >&2
-            exit 1
+            echo "xbox utility not found on PATH; continuing because it is optional"
           fi
           SANDBOX_SCRIPT
 
