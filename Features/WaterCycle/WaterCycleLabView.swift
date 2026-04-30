@@ -20,6 +20,53 @@ enum WaterCycleStage: String, CaseIterable, Equatable {
     }
 }
 
+
+struct WaterCycleConceptFlashcard: Equatable, Identifiable {
+    let id: String
+    let concept: String
+    let question: String
+    let answer: String
+    let connection: String
+
+    static let reviewDeck: [WaterCycleConceptFlashcard] = [
+        WaterCycleConceptFlashcard(
+            id: "sun-heat",
+            concept: "Sun Heat",
+            question: "What gives pond water the energy to start moving?",
+            answer: "The sun warms the water.",
+            connection: "Warm water can change into vapor and rise."
+        ),
+        WaterCycleConceptFlashcard(
+            id: "evaporation",
+            concept: "Evaporation",
+            question: "What do we call water going up as tiny vapor?",
+            answer: "Evaporation.",
+            connection: "The vapor leaves the pond and travels into the air."
+        ),
+        WaterCycleConceptFlashcard(
+            id: "condensation",
+            concept: "Condensation",
+            question: "What happens when tiny vapor drops gather together?",
+            answer: "They make a cloud.",
+            connection: "This gathering step is condensation."
+        ),
+        WaterCycleConceptFlashcard(
+            id: "precipitation",
+            concept: "Precipitation",
+            question: "What happens when a cloud gets heavy with drops?",
+            answer: "Rain falls down.",
+            connection: "Rain, snow, sleet, and hail are precipitation."
+        ),
+        WaterCycleConceptFlashcard(
+            id: "collection",
+            concept: "Collection",
+            question: "Where does rainwater wait after it falls?",
+            answer: "It gathers in ponds, lakes, rivers, puddles, and the ground.",
+            connection: "Then the sun can warm it and the cycle begins again."
+        )
+    ]
+}
+
 struct WaterCycleLabState: Equatable {
     private(set) var stage: WaterCycleStage = .wonder
     private(set) var vaporDrops = 0
@@ -27,6 +74,16 @@ struct WaterCycleLabState: Equatable {
     private(set) var rainDrops = 0
     private(set) var pondDrops = 4
     private(set) var cyclesCompleted = 0
+    private(set) var flashcardIndex = 0
+    private(set) var isFlashcardAnswerRevealed = false
+
+    var currentFlashcard: WaterCycleConceptFlashcard {
+        WaterCycleConceptFlashcard.reviewDeck[flashcardIndex % WaterCycleConceptFlashcard.reviewDeck.count]
+    }
+
+    var flashcardProgressLabel: String {
+        "Card \(flashcardIndex + 1) of \(WaterCycleConceptFlashcard.reviewDeck.count)"
+    }
 
     var progress: Double {
         switch stage {
@@ -86,10 +143,23 @@ struct WaterCycleLabState: Equatable {
             pondDrops = 4
             rainDrops = 0
             cyclesCompleted += 1
+            flashcardIndex = 0
+            isFlashcardAnswerRevealed = false
             stage = .complete
         case .complete:
             reset()
         }
+    }
+
+    mutating func revealFlashcardAnswer() {
+        guard stage == .complete else { return }
+        isFlashcardAnswerRevealed = true
+    }
+
+    mutating func advanceFlashcard() {
+        guard stage == .complete else { return }
+        flashcardIndex = (flashcardIndex + 1) % WaterCycleConceptFlashcard.reviewDeck.count
+        isFlashcardAnswerRevealed = false
     }
 
     mutating func reset() {
@@ -98,6 +168,8 @@ struct WaterCycleLabState: Equatable {
         cloudDrops = 0
         rainDrops = 0
         pondDrops = 4
+        flashcardIndex = 0
+        isFlashcardAnswerRevealed = false
     }
 }
 
@@ -162,6 +234,9 @@ struct WaterCycleLabView: View {
                         header(availableWidth: contentWidth)
                         inquiryCard
                         waterCycleScene(width: contentWidth, height: sceneHeight)
+                        if state.stage == .complete {
+                            flashcardReviewCard
+                        }
                         actionControls(availableWidth: contentWidth)
                     }
                     .frame(maxWidth: contentWidth, alignment: .leading)
@@ -395,6 +470,69 @@ struct WaterCycleLabView: View {
         }
     }
 
+    private var flashcardReviewCard: some View {
+        let flashcard = state.currentFlashcard
+
+        return CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    Label("Flash card review", systemImage: "rectangle.stack.fill")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Spacer()
+                    Text(state.flashcardProgressLabel)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+
+                Text(flashcard.concept)
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.accent)
+
+                Text(flashcard.question)
+                    .font(.system(size: 19, weight: .semibold, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if state.isFlashcardAnswerRevealed {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(flashcard.answer)
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(flashcard.connection)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                    .accessibilityIdentifier("water-cycle-flashcard-answer")
+                } else {
+                    Text("Ask your child to guess, then reveal the answer.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+
+                HStack(spacing: 12) {
+                    Button {
+                        state.revealFlashcardAnswer()
+                        speakFlashcard()
+                    } label: {
+                        Label("Reveal", systemImage: "sparkles")
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.32)))
+                    .accessibilityIdentifier("water-cycle-flashcard-reveal")
+
+                    Button {
+                        state.advanceFlashcard()
+                        speakFlashcard()
+                    } label: {
+                        Label("Next card", systemImage: "arrow.right.circle.fill")
+                    }
+                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+                    .accessibilityIdentifier("water-cycle-flashcard-next")
+                }
+            }
+        }
+    }
+
     private func actionControls(availableWidth: CGFloat) -> some View {
         VStack(spacing: 12) {
             Button {
@@ -459,6 +597,14 @@ struct WaterCycleLabView: View {
 
     private func speakPrompt() {
         appModel.speechService.speak(state.prompt, enabled: appModel.featureFlags.audioEnabled)
+    }
+
+    private func speakFlashcard() {
+        let flashcard = state.currentFlashcard
+        let spokenText = state.isFlashcardAnswerRevealed
+            ? "\(flashcard.question) \(flashcard.answer) \(flashcard.connection)"
+            : flashcard.question
+        appModel.speechService.speak(spokenText, enabled: appModel.featureFlags.audioEnabled)
     }
 
     private func saveIfCompleted() {
