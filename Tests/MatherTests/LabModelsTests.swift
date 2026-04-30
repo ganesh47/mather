@@ -127,6 +127,22 @@ extension LabModelsTests {
         XCTAssertEqual(progress.reviewedCardIDs.count, 1)
     }
 
+    func testCapabilityLaneProgressCanRenderPersistedMasteryState() {
+        var masteryState = LaneMasteryState(
+            laneID: .numbers,
+            availableModes: [.learn, .challenge, .timed, .review]
+        )
+        masteryState.markCompleted(.learn)
+        masteryState.markCompleted(.timed)
+        masteryState.markReviewedCard(id: "numbers-number-bond-five-and-five")
+
+        let progress = CapabilityLaneProgress(masteryState: masteryState)
+
+        XCTAssertEqual(progress.progressSummaryLabel, "2 / 4 modes • 50% ready")
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Challenge next")
+        XCTAssertEqual(progress.reviewedCardIDs, ["numbers-number-bond-five-and-five"])
+    }
+
     func testStarterMixMatchCardsHaveChildReadablePromptsAndMatches() {
         let allCards = CapabilityLane.defaultExplorerLanes.flatMap(\.starterMixMatchCards)
 
