@@ -104,6 +104,106 @@ struct LabActivity: Identifiable, Equatable {
     }
 }
 
+enum LabSensorNeed: CaseIterable, Equatable {
+    case noSpecialSensor
+    case motion
+    case compass
+    case cameraMarkerMode
+    case haptics
+
+    func isAvailable(with capabilities: DeviceSensorCapabilities) -> Bool {
+        switch self {
+        case .noSpecialSensor:
+            return true
+        case .motion:
+            return capabilities.supportsMotion
+        case .compass:
+            return capabilities.supportsHeading
+        case .cameraMarkerMode:
+            return capabilities.supportsCamera
+        case .haptics:
+            return capabilities.supportsHaptics
+        }
+    }
+
+    func copy(with capabilities: DeviceSensorCapabilities) -> LabSensorAffordance {
+        let available = isAvailable(with: capabilities)
+        switch self {
+        case .noSpecialSensor:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: true,
+                label: "No special sensor needed",
+                fallback: nil
+            )
+        case .motion:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: available,
+                label: available ? "Motion ready" : "Motion unavailable",
+                fallback: available ? nil : "Touch fallback available"
+            )
+        case .compass:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: available,
+                label: available ? "Compass ready" : "Compass unavailable",
+                fallback: available ? nil : "Use on-screen turns"
+            )
+        case .cameraMarkerMode:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: available,
+                label: available ? "Camera marker mode ready" : "Camera marker mode unavailable",
+                fallback: available ? nil : "Use tap-to-place stations"
+            )
+        case .haptics:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: available,
+                label: available ? "Haptics ready" : "Haptics unavailable",
+                fallback: available ? nil : "Visual feedback stays available"
+            )
+        }
+    }
+}
+
+struct LabSensorAffordance: Identifiable, Equatable {
+    var id: LabSensorNeed { need }
+    let need: LabSensorNeed
+    let isAvailable: Bool
+    let label: String
+    let fallback: String?
+
+    var displayLabel: String {
+        guard let fallback else { return label }
+        return "\(label): \(fallback)"
+    }
+
+    var accessibilityLabel: String {
+        displayLabel
+    }
+}
+
+extension LabActivityID {
+    var sensorNeeds: [LabSensorNeed] {
+        switch self {
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .waterCycle, .memoryMatch:
+            return [.noSpecialSensor]
+        case .symmetryFold, .angleCannon, .gravityArtist:
+            return [.motion]
+        case .roomQuest:
+            return [.cameraMarkerMode, .haptics]
+        case .compassAngles:
+            return [.compass]
+        }
+    }
+
+    func sensorAffordances(with capabilities: DeviceSensorCapabilities) -> [LabSensorAffordance] {
+        sensorNeeds.map { $0.copy(with: capabilities) }
+    }
+}
+
 
 struct CapabilityLaneProgress: Equatable {
     let laneID: CapabilityLaneID

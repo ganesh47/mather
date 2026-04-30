@@ -152,4 +152,56 @@ extension LabModelsTests {
         XCTAssertTrue(allCards.allSatisfy { !$0.match.isEmpty })
         XCTAssertEqual(Set(allCards.map(\.id)).count, allCards.count)
     }
+
+    func testActivitySensorNeedsMapToHonestLaneAffordances() {
+        XCTAssertEqual(LabActivityID.sumSprint.sensorNeeds, [.noSpecialSensor])
+        XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.motion])
+        XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
+        XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass])
+        XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
+        XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
+    }
+
+    func testUnavailableSensorAffordancesExposeVisibleFallbackCopy() {
+        let affordances = LabActivityID.roomQuest.sensorAffordances(with: .unavailable)
+
+        XCTAssertEqual(
+            affordances.map(\.displayLabel),
+            [
+                "Camera marker mode unavailable: Use tap-to-place stations",
+                "Haptics unavailable: Visual feedback stays available",
+            ]
+        )
+        XCTAssertTrue(affordances.allSatisfy { !$0.isAvailable })
+    }
+
+    func testAvailableCapabilitiesUseReadyCopyWithoutFallbacks() {
+        let capabilities = DeviceSensorCapabilities(
+            supportsMotion: true,
+            supportsHeading: true,
+            supportsCamera: true,
+            supportsMicrophone: false,
+            supportsHaptics: true,
+            supportsBarometer: false,
+            supportsLiDAR: false,
+            supportsApplePencil: false
+        )
+
+        XCTAssertEqual(
+            LabActivityID.angleCannon.sensorAffordances(with: capabilities).map(\.displayLabel),
+            ["Motion ready"]
+        )
+        XCTAssertEqual(
+            LabActivityID.compassAngles.sensorAffordances(with: capabilities).map(\.displayLabel),
+            ["Compass ready"]
+        )
+        XCTAssertEqual(
+            LabActivityID.roomQuest.sensorAffordances(with: capabilities).map(\.displayLabel),
+            ["Camera marker mode ready", "Haptics ready"]
+        )
+        XCTAssertEqual(
+            LabActivityID.twoFingerProtractor.sensorAffordances(with: capabilities).map(\.displayLabel),
+            ["No special sensor needed"]
+        )
+    }
 }
