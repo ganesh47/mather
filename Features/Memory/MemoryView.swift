@@ -1044,33 +1044,7 @@ struct MemoryView: View {
 
     @ViewBuilder
     private func cardView(_ card: MemoryCard) -> some View {
-        GeometryReader { proxy in
-            let cardHeight = proxy.size.height
-            let isMismatch = mismatchIds.contains(card.id)
-            let isFlipped = difficulty.faceDown && !card.isSelected && !card.isMatched
-
-            ZStack {
-                if isFlipped {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LinearGradient(colors: [MatherTheme.accent.opacity(0.7), MatherTheme.softBlue.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    Text("?")
-                        .font(.system(size: min(44, max(32, cardHeight * 0.34)), weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.6))
-                } else {
-                    cardFace(card, cardHeight: cardHeight)
-                }
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(card.isSelected ? MatherTheme.accent : (card.isMatched ? Color.green : Color.clear), lineWidth: card.isSelected ? 3 : 2)
-            )
-            .scaleEffect(card.isMatched ? 0.92 : 1.0)
-            .opacity(card.isMatched ? 0.68 : 1.0)
-            .rotationEffect(isMismatch ? .degrees(-3) : .zero)
-            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: card.isSelected)
-            .animation(.easeOut(duration: 0.3), value: card.isMatched)
-            .animation(isMismatch ? .easeInOut(duration: 0.08).repeatCount(3, autoreverses: true) : .default, value: isMismatch)
-        }
+        LearningCardView(model: Self.learningCardModel(for: card, difficulty: difficulty, isIncorrect: mismatchIds.contains(card.id)))
     }
 
     @ViewBuilder
@@ -1604,6 +1578,38 @@ struct MemoryView: View {
             return "Tap to turn this card over."
         }
         return "Tap to choose this card."
+    }
+
+    static func learningCardModel(for card: MemoryCard, difficulty: MemoryDifficulty, isIncorrect: Bool) -> LearningCardViewModel {
+        let display: LearningCardDisplay
+        switch card.content {
+        case .picture(let pictureAnimal):
+            display = Self.learningCardDisplay(for: pictureAnimal.picture)
+        case .label(let labelAnimal):
+            display = .text(labelAnimal.name)
+        }
+
+        return LearningCardViewModel(
+            id: card.id.uuidString,
+            display: display,
+            accessibilityLabel: accessibilityLabel(for: card),
+            accessibilityHint: accessibilityHint(for: card, difficulty: difficulty),
+            isFaceDown: difficulty.faceDown && !card.isSelected && !card.isMatched,
+            isSelected: card.isSelected,
+            isMatched: card.isMatched,
+            isIncorrect: isIncorrect
+        )
+    }
+
+    private static func learningCardDisplay(for picture: MemoryPicture) -> LearningCardDisplay {
+        switch picture {
+        case .emoji(let emoji):
+            return .emoji(emoji)
+        case .asset(let assetName):
+            return .asset(assetName)
+        case .text(let value):
+            return .text(value)
+        }
     }
 
     private static func learningSourceBadge(for deckSelection: DeckSelection, source: MemoryCardDescriptionSource) -> String {
