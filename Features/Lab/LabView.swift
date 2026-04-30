@@ -94,7 +94,7 @@ struct LabView: View {
             progressPreview(progress(for: lane), tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
             if expandedReviewLaneID == lane.id {
-                mixMatchSampler(lane, tint: laneColor(lane.id))
+                recallReviewPanel(lane, tint: laneColor(lane.id))
             }
 
             if lane.isReady {
@@ -235,7 +235,7 @@ struct LabView: View {
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private func mixMatchSampler(_ lane: CapabilityLane, tint: Color) -> some View {
+    private func recallReviewPanel(_ lane: CapabilityLane, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Review sample")
@@ -245,6 +245,41 @@ struct LabView: View {
                 Text(lane.starterMixMatchSampler.progressLabel)
                     .font(.caption2.weight(.heavy))
                     .foregroundStyle(tint)
+            }
+
+            if let entry = lane.firstRecallEntry {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(entry.title)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    FlowLayout(spacing: 6) {
+                        ForEach(entry.card.choices) { choice in
+                            Button {
+                                recordReviewAction(
+                                    LaneRecallReviewAction(
+                                        laneID: entry.laneID,
+                                        cardID: entry.card.id,
+                                        choiceID: choice.id,
+                                        isCorrect: choice.isCorrect
+                                    )
+                                )
+                            } label: {
+                                Text(choice.answer.displayText ?? choice.answer.speechText)
+                                    .font(.caption2.weight(.black))
+                                    .foregroundStyle(tint)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 7)
+                                    .background(MatherTheme.card.opacity(0.86), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Review \(lane.title): \(choice.answer.speechText)")
+                        }
+                    }
+                }
+                .padding(8)
+                .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
 
             ForEach(Array(lane.starterMixMatchCards.prefix(3))) { card in
@@ -267,7 +302,7 @@ struct LabView: View {
         .padding(10)
         .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(lane.title) Mix-Match review sample")
+        .accessibilityLabel("\(lane.title) recall review sample")
     }
 
     private func modeChips(_ modes: [PlayMode], tint: Color) -> some View {
@@ -368,6 +403,20 @@ struct LabView: View {
                  .twoFingerProtractor, .gravityArtist, .compassAngles, .waterCycle, .memoryMatch:
                 break
             }
+        }
+    }
+
+    private func recordReviewAction(_ action: LaneRecallReviewAction) {
+        appModel.markExplorerLabReviewedCard(laneID: action.laneID, cardID: action.cardID)
+        appModel.markExplorerLabModeCompleted(laneID: action.laneID, mode: .review)
+
+        if action.isCorrect,
+           let card = CapabilityLane.defaultExplorerLanes
+            .first(where: { $0.id == action.laneID })?
+            .recallEntries
+            .first(where: { $0.card.id == action.cardID })?
+            .card {
+            appModel.setExplorerLabConceptConfidence(.steady, for: card.conceptID, laneID: action.laneID)
         }
     }
 
