@@ -36,6 +36,15 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(modesByLane[.mapWorld, default: []].contains(.challenge))
         XCTAssertTrue(modesByLane[.discoveryCards, default: []].contains(.review))
     }
+
+    func testLaneRecallReadinessSummariesExposeCardCountsAndConcepts() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+
+        XCTAssertEqual(numbers.starterMixMatchCount, 8)
+        XCTAssertEqual(numbers.recallReadinessLabel, "8 Mix-Match cards ready")
+        XCTAssertTrue(numbers.starterMixMatchConceptPreview.contains("number-bond"))
+    }
+
 }
 
 extension LabModelsTests {
