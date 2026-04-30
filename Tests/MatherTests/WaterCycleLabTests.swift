@@ -159,4 +159,64 @@ extension WaterCycleLabTests {
         #expect(state.lessonThread.isComplete)
         #expect(state.mixMatchProgressLabel == "Match 5 of 5")
     }
+
+    @Test func completedLessonThreadExposesStageFocusedPrimaryActions() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        #expect(state.stage == .complete)
+        #expect(state.activeLessonProgressLabel == "Level 1 of 4 - Card 1 of 5")
+        #expect(state.activeLessonPrimaryActionTitle == "Next look card")
+
+        for _ in 0..<4 { state.advanceLessonCard() }
+        #expect(state.isOnLastLessonCard)
+        #expect(state.activeLessonPrimaryActionTitle == "Start flip recall")
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
+        #expect(state.activeLessonPrimaryActionTitle == "Flip recall card")
+
+        state.revealRecallCard()
+        #expect(state.activeLessonPrimaryActionTitle == "Next recall")
+
+        for _ in 0..<4 { state.advanceLessonCard() }
+        state.revealRecallCard()
+        #expect(state.activeLessonPrimaryActionTitle == "Ask this card")
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .contextualAsk)
+        #expect(state.activeLessonPrimaryActionTitle == "Ask suggested question")
+
+        _ = state.selectAskTurn(id: "sun-heat-what")
+        #expect(state.activeLessonPrimaryActionTitle == "Next ask card")
+
+        for _ in 0..<4 {
+            state.advanceLessonCard()
+            _ = state.selectAskTurn(id: "\(state.currentLessonCard.id)-what")
+        }
+        #expect(state.activeLessonPrimaryActionTitle == "Start mix-match")
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .mixMatchFinale)
+        #expect(state.activeLessonPrimaryActionTitle == "Hear match clue")
+    }
+
+    @Test func mixMatchFinalePrimaryActionReflectsCompletionWithoutChangingMastery() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+
+        #expect(state.lessonThread.activeStage.kind == .mixMatchFinale)
+        #expect(state.activeLessonPrimaryActionTitle == "Hear match clue")
+
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
+
+        #expect(state.lessonThread.isComplete)
+        #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
+        #expect(state.cyclesCompleted == 1)
+    }
 }
