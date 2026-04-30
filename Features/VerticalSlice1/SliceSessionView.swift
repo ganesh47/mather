@@ -17,27 +17,31 @@ struct SliceSessionView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                header
-                    .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
-                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
-                    .padding(.top, 20)
+            GeometryReader { proxy in
+                let horizontalPadding = childSessionHorizontalPadding(for: proxy.size.width)
 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        FeedbackBannerView(message: childFacingBannerMessage, isCelebrating: appModel.engine.showCelebration)
+                VStack(spacing: 0) {
+                    header
+                        .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.top, 14)
 
-                        if let currentProblem = appModel.engine.currentProblem {
-                            stageView(for: currentProblem)
-                        } else {
-                            CardSurface { Text("No problem loaded.") }
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            FeedbackBannerView(message: childFacingBannerMessage, isCelebrating: appModel.engine.showCelebration)
+
+                            if let currentProblem = appModel.engine.currentProblem {
+                                stageView(for: currentProblem)
+                            } else {
+                                CardSurface { Text("No problem loaded.") }
+                            }
                         }
+                        .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.top, 10)
+                        .padding(.bottom, 20)
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: ResponsiveLayout.childSessionMaxWidth(for: horizontalSizeClass))
-                    .padding(.horizontal, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
-                    .padding(.top, 12)
-                    .padding(.bottom, 20)
-                    .frame(maxWidth: .infinity)
                 }
             }
 
@@ -73,6 +77,13 @@ struct SliceSessionView: View {
         .animation(.easeOut(duration: 0.25), value: appModel.engine.showCelebration)
     }
 
+
+    private func childSessionHorizontalPadding(for width: CGFloat) -> CGFloat {
+        guard horizontalSizeClass != .regular else { return ResponsiveLayout.contentPadding(for: horizontalSizeClass) }
+        if width < 360 { return 12 }
+        if width < 430 { return 16 }
+        return 20
+    }
 
     private var childFacingBannerMessage: String {
         if appModel.engine.currentStage == .storyAnchor,
@@ -335,63 +346,82 @@ struct SliceSessionView: View {
     private var header: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Problem \(appModel.engine.progressLabel)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text(appModel.engine.currentStage.title)
-                            .font(.system(size: 28, weight: .black, design: .rounded))
-                            .foregroundStyle(stageColour(appModel.engine.currentStage))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 8) {
+                        headerTitleBlock
+                        Spacer(minLength: 8)
+                        headerActionButtons
                     }
-                    Spacer()
-                    Button {
-                        appModel.engine.playPromptFromSpeakerButton()
-                    } label: {
-                        Image(systemName: appModel.featureFlags.audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(appModel.featureFlags.audioEnabled ? MatherTheme.softBlue : .secondary)
-                            .frame(width: 50, height: 50)
-                            .background(MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.24 : 0.18))
-                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
-                            .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        headerTitleBlock
+                        headerActionButtons
                     }
-                    .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Play prompt" : "Enable audio and play prompt")
-                    .accessibilityHint("Speaks the current instruction aloud.")
-                    Button {
-                        appModel.engine.playPromptFromSpeakerButton()
-                    } label: {
-                        Image(systemName: "arrow.counterclockwise.circle.fill")
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(MatherTheme.warm)
-                            .frame(width: 50, height: 50)
-                            .background(MatherTheme.warm.opacity(colorScheme == .dark ? 0.24 : 0.18))
-                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
-                            .clipShape(Circle())
-                    }
-                    .accessibilityLabel("Replay prompt")
-                    .accessibilityHint("Speaks the current instruction aloud.")
-                    // Adult escape hatch — secondary styling so child ignores it
-                    Button {
-                        appModel.engine.showHome()
-                    } label: {
-                        Image(systemName: "house.circle.fill")
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 50, height: 50)
-                            .background(Color.secondary.opacity(colorScheme == .dark ? 0.18 : 0.12))
-                            .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1))
-                            .clipShape(Circle())
-                    }
-                    .accessibilityLabel("Go to Home")
                 }
 
                 ProgressView(value: Double(appModel.engine.currentProblemIndex + 1), total: Double(max(appModel.engine.problems.count, 1)))
                     .tint(stageColour(appModel.engine.currentStage))
                     .animation(.easeInOut(duration: 0.4), value: appModel.engine.currentProblemIndex)
             }
+        }
+    }
+
+    private var headerTitleBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Problem \(appModel.engine.progressLabel)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(appModel.engine.currentStage.title)
+                .font(.system(size: 26, weight: .black, design: .rounded))
+                .foregroundStyle(stageColour(appModel.engine.currentStage))
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var headerActionButtons: some View {
+        HStack(spacing: 8) {
+            Button {
+                appModel.engine.playPromptFromSpeakerButton()
+            } label: {
+                Image(systemName: appModel.featureFlags.audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(appModel.featureFlags.audioEnabled ? MatherTheme.softBlue : .secondary)
+                    .frame(width: 44, height: 44)
+                    .background(MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.24 : 0.18))
+                    .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Play prompt" : "Enable audio and play prompt")
+            .accessibilityHint("Speaks the current instruction aloud.")
+
+            Button {
+                appModel.engine.playPromptFromSpeakerButton()
+            } label: {
+                Image(systemName: "arrow.counterclockwise.circle.fill")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(MatherTheme.warm)
+                    .frame(width: 44, height: 44)
+                    .background(MatherTheme.warm.opacity(colorScheme == .dark ? 0.24 : 0.18))
+                    .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel("Replay prompt")
+            .accessibilityHint("Speaks the current instruction aloud.")
+
+            Button {
+                appModel.engine.showHome()
+            } label: {
+                Image(systemName: "house.circle.fill")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(Color.secondary.opacity(colorScheme == .dark ? 0.18 : 0.12))
+                    .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1))
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel("Go to Home")
         }
     }
 

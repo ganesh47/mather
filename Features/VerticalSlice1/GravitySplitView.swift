@@ -79,8 +79,22 @@ struct GravitySplitView: View {
     // MARK: - Header
 
     private var headerRow: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 10) {
+                headerText
+                Spacer(minLength: 8)
+                compactActionRail
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                headerText
+                compactActionRail
+            }
+        }
+    }
+
+    private var headerText: some View {
+        VStack(alignment: .leading, spacing: 4) {
                 Text(vocabulary.title)
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.coral)
@@ -96,12 +110,7 @@ struct GravitySplitView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
-                liveCountRow
-            }
-
-            Spacer()
-
-            compactActionRail
+            liveCountRow
         }
     }
 
@@ -167,21 +176,40 @@ struct GravitySplitView: View {
         VStack(spacing: 10) {
             sourceTray
 
-            HStack(alignment: .top, spacing: 10) {
-                destinationZone(
-                    label: vocabulary.leftLabel,
-                    count: state.leftCount,
-                    target: state.decompositionA,
-                    fill: MatherTheme.warm,
-                    side: .left
-                )
-                destinationZone(
-                    label: vocabulary.rightLabel,
-                    count: state.rightCount,
-                    target: state.decompositionB,
-                    fill: MatherTheme.accent,
-                    side: .right
-                )
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 10) {
+                    destinationZone(
+                        label: vocabulary.leftLabel,
+                        count: state.leftCount,
+                        target: state.decompositionA,
+                        fill: MatherTheme.warm,
+                        side: .left
+                    )
+                    destinationZone(
+                        label: vocabulary.rightLabel,
+                        count: state.rightCount,
+                        target: state.decompositionB,
+                        fill: MatherTheme.accent,
+                        side: .right
+                    )
+                }
+
+                VStack(spacing: 10) {
+                    destinationZone(
+                        label: vocabulary.leftLabel,
+                        count: state.leftCount,
+                        target: state.decompositionA,
+                        fill: MatherTheme.warm,
+                        side: .left
+                    )
+                    destinationZone(
+                        label: vocabulary.rightLabel,
+                        count: state.rightCount,
+                        target: state.decompositionB,
+                        fill: MatherTheme.accent,
+                        side: .right
+                    )
+                }
             }
         }
         .accessibilityIdentifier("gravity-direct-token-board")
@@ -448,11 +476,12 @@ struct GravitySplitView: View {
             Image(systemName: "hand.tap.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.coral.opacity(0.8))
-            Text("Choose which side each token belongs on. Keep \(state.leftCount) + \(state.rightCount) = \(state.target) in view.")
+            Text("Tap Add on each side until the equation is complete: \(state.leftCount) + \(state.rightCount) = \(state.target). Use Clear to try again.")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
+                .lineLimit(3)
+                .minimumScaleFactor(0.82)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
