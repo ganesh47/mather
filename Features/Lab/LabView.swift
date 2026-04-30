@@ -85,6 +85,7 @@ struct LabView: View {
             }
 
             modeChips(lane.modes, tint: laneColor(lane.id))
+            ageEntryPreview(lane, tint: laneColor(lane.id))
             progressPreview(lane.emptyProgress, tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
             if expandedReviewLaneID == lane.id {
@@ -120,6 +121,23 @@ struct LabView: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(lane.title)
+    }
+
+    private func ageEntryPreview(_ lane: CapabilityLane, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Age entry points", systemImage: "person.2.fill")
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+            Text(lane.ageEntryPreview)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(tint.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(lane.title) age entry points: \(lane.ageEntryPreview)")
     }
 
     private func progressPreview(_ progress: CapabilityLaneProgress, tint: Color) -> some View {
