@@ -87,7 +87,7 @@ struct LabView: View {
             modeChips(lane.modes, tint: laneColor(lane.id))
             modeChoicePreview(lane, tint: laneColor(lane.id))
             ageEntryPreview(lane, tint: laneColor(lane.id))
-            progressPreview(lane.emptyProgress, tint: laneColor(lane.id))
+            progressPreview(progress(for: lane), tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
             if expandedReviewLaneID == lane.id {
                 mixMatchSampler(lane, tint: laneColor(lane.id))
@@ -168,6 +168,13 @@ struct LabView: View {
         .background(tint.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(lane.title) age entry points: \(lane.ageEntryPreview)")
+    }
+
+    private func progress(for lane: CapabilityLane) -> CapabilityLaneProgress {
+        guard let masteryState = appModel.explorerLabMasteryProfile[lane.id] else {
+            return lane.emptyProgress
+        }
+        return CapabilityLaneProgress(masteryState: masteryState)
     }
 
     private func progressPreview(_ progress: CapabilityLaneProgress, tint: Color) -> some View {

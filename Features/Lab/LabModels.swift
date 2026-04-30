@@ -123,6 +123,15 @@ struct CapabilityLaneProgress: Equatable {
         self.reviewedCardIDs = reviewedCardIDs
     }
 
+    init(masteryState: LaneMasteryState) {
+        self.init(
+            laneID: masteryState.laneID,
+            availableModes: masteryState.availableModes,
+            completedModes: masteryState.completedModes,
+            reviewedCardIDs: masteryState.reviewedCardIDs
+        )
+    }
+
     var completedModeCount: Int {
         availableModes.filter { completedModes.contains($0) }.count
     }
