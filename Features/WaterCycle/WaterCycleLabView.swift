@@ -76,13 +76,36 @@ struct WaterCycleLabState: Equatable {
     private(set) var cyclesCompleted = 0
     private(set) var flashcardIndex = 0
     private(set) var isFlashcardAnswerRevealed = false
+    private(set) var lessonThread = WaterCycleLessonThread.thread
+    private(set) var lessonCardIndex = 0
+    private(set) var isRecallCardRevealed = false
+    private(set) var askSession = WaterCycleLessonThread.askSession(for: WaterCycleLessonThread.cards[0])
+    private(set) var latestAskResponse: LessonSafeAskResponse?
+    private(set) var mixMatchIndex = 0
+    private(set) var mixMatchCorrectCardIDs: Set<String> = []
 
     var currentFlashcard: WaterCycleConceptFlashcard {
         WaterCycleConceptFlashcard.reviewDeck[flashcardIndex % WaterCycleConceptFlashcard.reviewDeck.count]
     }
 
+    var currentLessonCard: LessonPlayCard {
+        lessonThread.cards[lessonCardIndex % lessonThread.cards.count]
+    }
+
+    var currentMixMatchCard: LearningCard {
+        WaterCycleLessonThread.mixMatchCards[mixMatchIndex % WaterCycleLessonThread.mixMatchCards.count]
+    }
+
     var flashcardProgressLabel: String {
         "Card \(flashcardIndex + 1) of \(WaterCycleConceptFlashcard.reviewDeck.count)"
+    }
+
+    var lessonCardProgressLabel: String {
+        "Card \(lessonCardIndex + 1) of \(lessonThread.cards.count)"
+    }
+
+    var mixMatchProgressLabel: String {
+        "Match \(mixMatchCorrectCardIDs.count) of \(WaterCycleLessonThread.mixMatchCards.count)"
     }
 
     var progress: Double {
@@ -145,6 +168,7 @@ struct WaterCycleLabState: Equatable {
             cyclesCompleted += 1
             flashcardIndex = 0
             isFlashcardAnswerRevealed = false
+            resetLessonThread()
             stage = .complete
         case .complete:
             reset()
@@ -162,6 +186,55 @@ struct WaterCycleLabState: Equatable {
         isFlashcardAnswerRevealed = false
     }
 
+    mutating func advanceLessonCard() {
+        guard stage == .complete else { return }
+        lessonCardIndex = (lessonCardIndex + 1) % lessonThread.cards.count
+        isRecallCardRevealed = false
+        askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
+        latestAskResponse = nil
+    }
+
+    mutating func revealRecallCard() {
+        guard stage == .complete, lessonThread.activeStage.kind == .invertedRecall else { return }
+        isRecallCardRevealed = true
+    }
+
+    mutating func selectAskTurn(id: String) -> LessonSafeAskResponse? {
+        guard stage == .complete, lessonThread.activeStage.kind == .contextualAsk else { return nil }
+        var session = askSession
+        let response = session.respond(to: .suggestedTurn(id: id))
+        askSession = session
+        latestAskResponse = response
+        return response
+    }
+
+    mutating func completeCurrentLessonStage() {
+        guard stage == .complete else { return }
+        lessonThread.completeActiveStage()
+        lessonCardIndex = 0
+        isRecallCardRevealed = false
+        askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
+        latestAskResponse = nil
+    }
+
+    mutating func recordMixMatchAttempt(_ attempt: MixMatchRecallAttempt) {
+        guard stage == .complete, lessonThread.activeStage.kind == .mixMatchFinale, attempt.isCorrect else { return }
+        mixMatchCorrectCardIDs.insert(currentMixMatchCard.answer.id)
+        if mixMatchCorrectCardIDs.count == WaterCycleLessonThread.mixMatchCards.count {
+            lessonThread.completeActiveStage()
+        } else {
+            mixMatchIndex = nextUnmatchedMixMatchIndex()
+        }
+    }
+
+    private func nextUnmatchedMixMatchIndex() -> Int {
+        let cards = WaterCycleLessonThread.mixMatchCards
+        guard let next = cards.indices.first(where: { !mixMatchCorrectCardIDs.contains(cards[$0].answer.id) }) else {
+            return mixMatchIndex
+        }
+        return next
+    }
+
     mutating func reset() {
         stage = .wonder
         vaporDrops = 0
@@ -170,6 +243,17 @@ struct WaterCycleLabState: Equatable {
         pondDrops = 4
         flashcardIndex = 0
         isFlashcardAnswerRevealed = false
+        resetLessonThread()
+    }
+
+    private mutating func resetLessonThread() {
+        lessonThread.resetProgress()
+        lessonCardIndex = 0
+        isRecallCardRevealed = false
+        askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
+        latestAskResponse = nil
+        mixMatchIndex = 0
+        mixMatchCorrectCardIDs = []
     }
 }
 
@@ -235,7 +319,7 @@ struct WaterCycleLabView: View {
                         inquiryCard
                         waterCycleScene(width: contentWidth, height: sceneHeight)
                         if state.stage == .complete {
-                            flashcardReviewCard
+                            lessonPlayThreadCard
                         }
                         actionControls(availableWidth: contentWidth)
                     }
@@ -470,6 +554,211 @@ struct WaterCycleLabView: View {
         }
     }
 
+    private var lessonPlayThreadCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(state.lessonThread.activeStage.title, systemImage: lessonStageIcon)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(state.lessonThread.progressLabel)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                    Spacer()
+                    Text(state.lessonCardProgressLabel)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+
+                Text(state.lessonThread.activeStage.prompt)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ProgressView(value: state.lessonThread.progress)
+                    .tint(MatherTheme.accent)
+                    .accessibilityLabel("Lesson thread progress")
+
+                switch state.lessonThread.activeStage.kind {
+                case .lookLearnFlashcards:
+                    lookLearnLevel
+                case .invertedRecall:
+                    invertedRecallLevel
+                case .contextualAsk:
+                    safeAskLevel
+                case .mixMatchFinale:
+                    mixMatchFinaleLevel
+                }
+            }
+        }
+        .accessibilityIdentifier("water-cycle-lesson-thread")
+    }
+
+    private var lessonStageIcon: String {
+        switch state.lessonThread.activeStage.kind {
+        case .lookLearnFlashcards: "photo.stack.fill"
+        case .invertedRecall: "rectangle.on.rectangle.angled.fill"
+        case .contextualAsk: "bubble.left.and.text.bubble.right.fill"
+        case .mixMatchFinale: "rectangle.2.swap"
+        }
+    }
+
+    private var lookLearnLevel: some View {
+        let card = state.currentLessonCard
+
+        return VStack(alignment: .leading, spacing: 12) {
+            if let assetName = card.assetName {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 180)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHidden(true)
+            }
+
+            Text(card.title)
+                .font(.system(size: 24, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.accent)
+
+            Text(card.prompt)
+                .font(.system(size: 19, weight: .semibold, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(card.answer)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(card.detail)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+
+            lessonNavigationButtons(nextTitle: "Next card", completeTitle: "Start flip recall")
+        }
+    }
+
+    private var invertedRecallLevel: some View {
+        let card = state.currentLessonCard
+        let model = LearningCardViewModel(
+            id: card.id,
+            display: card.assetName.map(LearningCardDisplay.asset) ?? .text(card.title),
+            accessibilityLabel: card.title,
+            accessibilityHint: "Flip to recall this water cycle idea.",
+            isFaceDown: !state.isRecallCardRevealed,
+            isSelected: state.isRecallCardRevealed,
+            isMatched: false,
+            isIncorrect: false
+        )
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Button {
+                state.revealRecallCard()
+                speakLessonCard()
+            } label: {
+                LearningCardView(model: model)
+                    .frame(minHeight: 150)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("water-cycle-recall-card")
+
+            Text(state.isRecallCardRevealed ? card.answer : "Say the idea before you flip.")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if state.isRecallCardRevealed {
+                Text(card.detail)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            lessonNavigationButtons(nextTitle: "Next recall", completeTitle: "Ask this card")
+        }
+    }
+
+    private var safeAskLevel: some View {
+        let card = state.currentLessonCard
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(card.title)
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.accent)
+
+            ForEach(state.askSession.suggestedTurns) { turn in
+                Button {
+                    if let response = state.selectAskTurn(id: turn.id) {
+                        appModel.speechService.speak(response.spokenText, enabled: appModel.featureFlags.audioEnabled)
+                    }
+                } label: {
+                    Label(turn.question, systemImage: "questionmark.bubble.fill")
+                }
+                .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+                .accessibilityIdentifier("water-cycle-safe-ask-\(turn.id)")
+            }
+
+            if let latestAskResponse = state.latestAskResponse {
+                Text(latestAskResponse.spokenText)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("water-cycle-safe-ask-response")
+            }
+
+            lessonNavigationButtons(nextTitle: "Next card", completeTitle: "Start mix-match")
+        }
+    }
+
+    private var mixMatchFinaleLevel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(state.mixMatchProgressLabel)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+
+            if state.lessonThread.isComplete {
+                Label("Lesson thread complete", systemImage: "checkmark.seal.fill")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+            } else {
+                MixMatchRecallView(
+                    learningCard: state.currentMixMatchCard,
+                    onCorrect: { attempt in
+                        state.recordMixMatchAttempt(attempt)
+                        speakLessonText(attempt.isCorrect ? "Correct match." : "Try another match.")
+                    },
+                    onIncorrect: { attempt in
+                        state.recordMixMatchAttempt(attempt)
+                        speakLessonText("Try another match.")
+                    }
+                )
+                .accessibilityIdentifier("water-cycle-mix-match-finale")
+            }
+        }
+    }
+
+    private func lessonNavigationButtons(nextTitle: String, completeTitle: String) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                state.advanceLessonCard()
+                speakLessonCard()
+            } label: {
+                Label(nextTitle, systemImage: "arrow.right.circle.fill")
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+
+            Button {
+                state.completeCurrentLessonStage()
+                speakLessonStage()
+            } label: {
+                Label(completeTitle, systemImage: "play.fill")
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.32)))
+        }
+    }
+
     private var flashcardReviewCard: some View {
         let flashcard = state.currentFlashcard
 
@@ -605,6 +894,20 @@ struct WaterCycleLabView: View {
             ? "\(flashcard.question) \(flashcard.answer) \(flashcard.connection)"
             : flashcard.question
         appModel.speechService.speak(spokenText, enabled: appModel.featureFlags.audioEnabled)
+    }
+
+    private func speakLessonStage() {
+        let stage = state.lessonThread.activeStage
+        appModel.speechService.speak("\(stage.title). \(stage.prompt)", enabled: appModel.featureFlags.audioEnabled)
+    }
+
+    private func speakLessonCard() {
+        let card = state.currentLessonCard
+        appModel.speechService.speak("\(card.title). \(card.prompt) \(card.answer) \(card.detail)", enabled: appModel.featureFlags.audioEnabled)
+    }
+
+    private func speakLessonText(_ text: String) {
+        appModel.speechService.speak(text, enabled: appModel.featureFlags.audioEnabled)
     }
 
     private func saveIfCompleted() {
