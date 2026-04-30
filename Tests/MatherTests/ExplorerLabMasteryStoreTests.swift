@@ -52,6 +52,32 @@ struct ExplorerLabMasteryStoreTests {
     }
 
     @Test
+    func mutationHelpersPersistLaneMasteryUpdates() throws {
+        let storage = InMemoryMasteryDefaults()
+        let store = ExplorerLabMasteryStore(storage: storage, storageKey: "test.mastery")
+
+        store.markCompleted(laneID: .numbers, mode: .learn)
+        store.markReviewedCard(laneID: .numbers, cardID: "numbers-number-bond-five-and-five")
+        store.setConfidence(.steady, for: "number-bond", laneID: .numbers)
+
+        let numbers = try #require(store.load()[.numbers])
+        #expect(numbers.completedModes == [.learn])
+        #expect(numbers.reviewedCardIDs == ["numbers-number-bond-five-and-five"])
+        #expect(numbers.conceptConfidence["number-bond"] == .steady)
+    }
+
+    @Test
+    func mutationHelpersIgnoreModesOutsideLane() throws {
+        let storage = InMemoryMasteryDefaults()
+        let store = ExplorerLabMasteryStore(storage: storage, storageKey: "test.mastery")
+
+        store.markCompleted(laneID: .physics, mode: .timed)
+
+        let physics = try #require(store.load()[.physics])
+        #expect(physics.completedModes.isEmpty)
+    }
+
+    @Test
     func corruptDataFallsBackToSeededProfile() throws {
         let storage = InMemoryMasteryDefaults()
         storage.set(Data("not json".utf8), forKey: "test.mastery")

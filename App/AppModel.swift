@@ -43,6 +43,26 @@ final class AppModel {
         action?()
     }
 
+    func markExplorerLabModeCompleted(laneID: CapabilityLaneID, mode: PlayMode) {
+        explorerLabMasteryProfile = explorerLabMasteryStore.markCompleted(laneID: laneID, mode: mode)
+    }
+
+    func markExplorerLabReviewedCard(laneID: CapabilityLaneID, cardID: String) {
+        explorerLabMasteryProfile = explorerLabMasteryStore.markReviewedCard(laneID: laneID, cardID: cardID)
+    }
+
+    func setExplorerLabConceptConfidence(
+        _ confidence: ConceptConfidence,
+        for conceptID: ConceptId,
+        laneID: CapabilityLaneID
+    ) {
+        explorerLabMasteryProfile = explorerLabMasteryStore.setConfidence(
+            confidence,
+            for: conceptID,
+            laneID: laneID
+        )
+    }
+
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
         let featureFlags = FeatureFlagService()
