@@ -120,19 +120,22 @@ struct CardProgress: Codable, Hashable {
     var incorrectCount: Int
     var currentCorrectStreak: Int
     var lastReviewedAt: Date?
+    var lastReviewResult: CardReviewResult?
 
     init(
         timesSeen: Int = 0,
         correctCount: Int = 0,
         incorrectCount: Int = 0,
         currentCorrectStreak: Int = 0,
-        lastReviewedAt: Date? = nil
+        lastReviewedAt: Date? = nil,
+        lastReviewResult: CardReviewResult? = nil
     ) {
         self.timesSeen = timesSeen
         self.correctCount = correctCount
         self.incorrectCount = incorrectCount
         self.currentCorrectStreak = currentCorrectStreak
         self.lastReviewedAt = lastReviewedAt
+        self.lastReviewResult = lastReviewResult
     }
 
     var totalAttempts: Int {
@@ -143,6 +146,12 @@ struct CardProgress: Codable, Hashable {
         guard totalAttempts > 0 else { return 0 }
         return Double(correctCount) / Double(totalAttempts)
     }
+}
+
+enum CardReviewResult: String, Codable, Hashable {
+    case correct
+    case supportedCorrect
+    case incorrect
 }
 
 protocol StarterLearningCardProviding {
