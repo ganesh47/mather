@@ -26,6 +26,7 @@ targets:
       - path: Domain
       - path: Features
       - path: Persistence
+      # Directory source includes SmartPlayProvider.swift.
       - path: Services
       - path: Shared
     settings:
@@ -58,6 +59,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
+      # Directory source includes SmartPlayProviderTests.swift.
       - path: Tests/MatherTests
     dependencies:
       - target: Mather
