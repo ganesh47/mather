@@ -18,6 +18,7 @@ enum AppRoute: Hashable {
     case gravityArtist
     case compassAngles
     case lab
+    case labLane(CapabilityLaneID)
     case memory
     case waterCycle
 }
@@ -128,6 +129,7 @@ final class VerticalSliceEngine {
     func showGravityArtist() { route = .gravityArtist }
     func showCompassAngles() { route = .compassAngles }
     func showLab() { route = .lab }
+    func showLabLane(_ laneID: CapabilityLaneID) { route = .labLane(laneID) }
     func showMemory() { route = .memory }
     func showWaterCycle() { route = .waterCycle }
 

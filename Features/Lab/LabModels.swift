@@ -174,7 +174,7 @@ struct LabActivity: Identifiable, Equatable {
     }
 
     var accessibilityHint: String {
-        "Opens \(title). Modes: \(modes.map(\.rawValue).joined(separator: ", "))."
+        "Launches \(title). Modes: \(modes.map(\.rawValue).joined(separator: ", "))."
     }
 }
 
@@ -276,7 +276,6 @@ enum LabLaneCardSection: Equatable {
     case visualSummary
     case promise
     case progressStatus
-    case detailAffordance
     case modes
     case playStyles
     case ageEntries
@@ -287,43 +286,54 @@ enum LabLaneCardSection: Equatable {
 
 struct LabLaneCardPresentation: Equatable {
     let laneID: CapabilityLaneID
-    let isExpanded: Bool
     let title: String
     let promiseLine: String
     let progressMicrocopy: String
-    let detailAffordanceLabel: String
+    let openAffordanceLabel: String
+    let accessibilityLabel: String
+    let accessibilityHint: String
     let sections: [LabLaneCardSection]
 
-    init(lane: CapabilityLane, progress: CapabilityLaneProgress, isExpanded: Bool) {
+    init(lane: CapabilityLane, progress: CapabilityLaneProgress) {
         self.laneID = lane.id
-        self.isExpanded = isExpanded
         title = lane.title
         promiseLine = lane.promise
         progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
-        detailAffordanceLabel = isExpanded ? "Hide details" : "Show details"
-
-        var visibleSections: [LabLaneCardSection] = [
+        openAffordanceLabel = "Open lane"
+        accessibilityLabel = "\(lane.title). \(lane.ageBandHint). \(lane.promise)"
+        accessibilityHint = "Opens \(lane.title) to choose games, review cards, play styles, and sensor options."
+        sections = [
             .visualSummary,
             .promise,
             .progressStatus,
-            .detailAffordance,
         ]
-
-        if isExpanded {
-            visibleSections += [
-                .modes,
-                .playStyles,
-                .ageEntries,
-                .recall,
-                lane.isReady ? .activities : .comingSoon,
-            ]
-        }
-
-        sections = visibleSections
     }
 
     var showsDetails: Bool {
         sections.contains(.activities) || sections.contains(.comingSoon)
+    }
+}
+
+struct LabLaneDetailPresentation: Equatable {
+    let laneID: CapabilityLaneID
+    let title: String
+    let activityCountLabel: String
+    let sections: [LabLaneCardSection]
+
+    init(lane: CapabilityLane) {
+        laneID = lane.id
+        title = lane.title
+        activityCountLabel = lane.activities.isEmpty
+            ? "Games coming soon"
+            : "\(lane.activities.count) game\(lane.activities.count == 1 ? "" : "s") ready"
+        sections = [
+            .visualSummary,
+            .modes,
+            .playStyles,
+            .ageEntries,
+            .recall,
+            lane.isReady ? .activities : .comingSoon,
+        ]
     }
 }
 
