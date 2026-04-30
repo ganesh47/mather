@@ -90,7 +90,7 @@ jobs:
 
       - name: Show sandbox toolchain versions
         run: |
-          "$RUN_AS_SANDBOX" bash -euo pipefail <<'SANDBOX_SCRIPT'
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
           cd "$SANDBOX_WORKSPACE"
           xcodebuild -version
           swift --version
@@ -105,7 +105,7 @@ jobs:
 
       - name: Generate project
         run: |
-          "$RUN_AS_SANDBOX" bash -euo pipefail <<'SANDBOX_SCRIPT'
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
           cd "$SANDBOX_WORKSPACE"
           xcodegen generate
           SANDBOX_SCRIPT
@@ -149,14 +149,14 @@ jobs:
 
       - name: Resolve dependencies
         run: |
-          "$RUN_AS_SANDBOX" bash -euo pipefail <<'SANDBOX_SCRIPT'
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
           cd "$SANDBOX_WORKSPACE"
           xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
           SANDBOX_SCRIPT
 
       - name: Build for testing
         run: |
-          "$RUN_AS_SANDBOX" bash -euo pipefail <<'SANDBOX_SCRIPT'
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
           cd "$SANDBOX_WORKSPACE"
           xcodebuild build-for-testing \
             -project Mather.xcodeproj \
