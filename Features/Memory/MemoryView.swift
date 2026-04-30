@@ -1028,7 +1028,8 @@ struct MemoryView: View {
                 cardView(card)
                     .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
-                    .accessibilityLabel(Self.accessibilityLabel(for: card))
+                    .accessibilityLabel(Self.accessibilityLabel(for: card, difficulty: difficulty))
+                    .accessibilityHint(Self.accessibilityHint(for: card, difficulty: difficulty))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
                     .modifier(MemoryLearnMoreAccessibilityModifier(
@@ -1577,6 +1578,32 @@ struct MemoryView: View {
         case .label(let animal):
             return animal.name
         }
+    }
+
+    static func accessibilityLabel(for card: MemoryCard, difficulty: MemoryDifficulty) -> String {
+        if difficulty.faceDown && !card.isSelected && !card.isMatched {
+            return "Face down memory card"
+        }
+
+        let state: String
+        if card.isMatched {
+            state = "matched"
+        } else if card.isSelected {
+            state = "selected"
+        } else {
+            state = "visible"
+        }
+        return "\(accessibilityLabel(for: card)), \(state)"
+    }
+
+    static func accessibilityHint(for card: MemoryCard, difficulty: MemoryDifficulty) -> String {
+        if card.isMatched {
+            return "Matched card."
+        }
+        if difficulty.faceDown && !card.isSelected {
+            return "Tap to turn this card over."
+        }
+        return "Tap to choose this card."
     }
 
     private static func learningSourceBadge(for deckSelection: DeckSelection, source: MemoryCardDescriptionSource) -> String {

@@ -35,6 +35,10 @@ struct MixMatchCard: Identifiable, Equatable {
         self.prompt = prompt
         self.match = match
     }
+
+    var accessibilityLabel: String {
+        "\(prompt), matches \(match)"
+    }
 }
 
 
@@ -131,6 +135,14 @@ struct LabActivity: Identifiable, Equatable {
         self.tagline = tagline
         self.modes = modes
     }
+
+    var accessibilityLabel: String {
+        "\(title). \(tagline)"
+    }
+
+    var accessibilityHint: String {
+        "Opens \(title). Modes: \(modes.map(\.rawValue).joined(separator: ", "))."
+    }
 }
 
 enum LabSensorNeed: CaseIterable, Equatable {
@@ -211,6 +223,19 @@ struct LabSensorAffordance: Identifiable, Equatable {
 
     var accessibilityLabel: String {
         displayLabel
+    }
+
+    var accessibilityHint: String {
+        if need == .noSpecialSensor {
+            return "Works with touch only."
+        }
+        if isAvailable {
+            return "Sensor is ready for this activity."
+        }
+        guard let fallback else {
+            return "This activity still works without extra setup."
+        }
+        return fallback
     }
 }
 
@@ -314,6 +339,14 @@ struct CapabilityLane: Identifiable, Equatable {
     var title: String { id.title }
     var isReady: Bool { !activities.isEmpty }
 
+    var accessibilityLabel: String {
+        "\(title). \(ageBandHint). \(promise)"
+    }
+
+    var accessibilityHint: String {
+        isReady ? "Choose an activity or review cards." : "Activities are coming soon. Review cards are available."
+    }
+
     var ageEntryPreview: String {
         ageEntries.prefix(2).map(\.summaryLabel).joined(separator: " • ")
     }
@@ -344,6 +377,10 @@ struct CapabilityLane: Identifiable, Equatable {
 
     var recallReadinessLabel: String {
         "\(starterMixMatchCount) Mix-Match cards ready"
+    }
+
+    var recallAccessibilityLabel: String {
+        "\(title) recall. \(recallReadinessLabel). Concepts: \(starterMixMatchConceptPreview)"
     }
 
     var starterMixMatchSampler: MixMatchReviewSampler {
