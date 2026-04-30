@@ -41,17 +41,17 @@ struct WaterCycleLabState: Equatable {
     var prompt: String {
         switch stage {
         case .wonder:
-            "What do you think the warm sun will do to the pond?"
+            "First, predict: what will the warm sun do to the pond? Tap Make a prediction."
         case .evaporation:
-            "Warm water goes up as tiny vapor. That is evaporation."
+            "evaporation: warm water rises as tiny vapor. Tap Warm the pond."
         case .condensation:
-            "Tiny drops gather and make a cloud. That is condensation."
+            "condensation: tiny drops gather to make a cloud. Tap Gather the cloud."
         case .precipitation:
-            "The cloud is heavy. Tap it to make rain. That is precipitation."
+            "precipitation: a heavy cloud drops rain. Tap Make rain fall."
         case .collection:
-            "Rain fills the pond again. The cycle can start over."
+            "Collection: rain fills the pond again. Tap Fill the pond."
         case .complete:
-            "You made a full water cycle: up, cloud, rain, pond."
+            "Full cycle complete: water went up, made a cloud, fell as rain, and filled the pond."
         }
     }
 
@@ -151,11 +151,11 @@ struct WaterCycleLabView: View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
             GeometryReader { proxy in
-                let horizontalPadding = proxy.size.width < 390 ? 16.0 : 24.0
+                let horizontalPadding = waterCycleHorizontalPadding(for: proxy.size.width)
                 let contentWidth = max(proxy.size.width - horizontalPadding * 2, 0)
                 let sceneHeight = contentWidth < 340
-                    ? min(max(proxy.size.height * 0.32, 260), 330)
-                    : min(max(proxy.size.height * 0.46, 320), 520)
+                    ? min(max(proxy.size.height * 0.28, 230), 300)
+                    : min(max(proxy.size.height * 0.42, 300), 480)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
@@ -164,10 +164,10 @@ struct WaterCycleLabView: View {
                         waterCycleScene(width: contentWidth, height: sceneHeight)
                         actionControls(availableWidth: contentWidth)
                     }
-                    .frame(width: contentWidth, alignment: .leading)
+                    .frame(maxWidth: contentWidth, alignment: .leading)
                     .padding(.horizontal, horizontalPadding)
-                    .padding(.vertical, 24)
-                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
@@ -175,6 +175,12 @@ struct WaterCycleLabView: View {
             sessionStartedAt = .now
             speakPrompt()
         }
+    }
+
+    private func waterCycleHorizontalPadding(for width: CGFloat) -> CGFloat {
+        if width < 360 { return 12 }
+        if width < 430 { return 16 }
+        return 24
     }
 
     private func header(availableWidth: CGFloat) -> some View {
@@ -220,8 +226,10 @@ struct WaterCycleLabView: View {
                 }
 
                 Text(state.prompt)
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 19, weight: .semibold, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.86)
                     .fixedSize(horizontal: false, vertical: true)
 
                 ProgressView(value: state.progress)
@@ -399,7 +407,7 @@ struct WaterCycleLabView: View {
             .buttonStyle(PrimaryActionButtonStyle())
             .accessibilityIdentifier("water-cycle-primary-action")
 
-            if availableWidth < 280 {
+            if availableWidth < 390 {
                 VStack(spacing: 12) {
                     replayPromptButton(compact: false)
                     resetButton(compact: false)
