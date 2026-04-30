@@ -26,6 +26,7 @@ targets:
       - path: Domain
       - path: Features
       - path: Persistence
+      # Directory source includes SmartPlayProvider.swift.
       - path: Services
         includes:
           - "**/*.swift"
@@ -60,6 +61,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
+      # Directory source includes SmartPlayProviderTests.swift.
       - path: Tests/MatherTests
         includes:
           - "**/*.swift"
