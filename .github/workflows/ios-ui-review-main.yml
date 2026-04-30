@@ -2,8 +2,9 @@ name: iOS UI Review (main)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
+  schedule:
+    # Run artifact-producing UI review twice daily without blocking main/release.
+    - cron: '17 */12 * * *'
 
 permissions:
   contents: read
@@ -11,13 +12,7 @@ permissions:
 jobs:
   ui-review:
     name: UI Screenshot Review (${{ matrix.device-family }})
-    # Public-repo hardening: only the canonical main branch may run this
-    # workflow on the self-hosted Mac. Do not run untrusted fork code here.
-    if: >-
-      github.repository == 'ganesh47/mather' &&
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: [self-hosted, macOS, ganesh-mba]
+    runs-on: macos-15
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -30,12 +25,20 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Show constrained runner toolchain versions
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show toolchain versions
         run: |
           set -euo pipefail
           xcodebuild -version
           swift --version
-          xcodegen --version
+
+      - name: Install XcodeGen
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
 
       - name: Generate project
         run: xcodegen generate
