@@ -180,6 +180,14 @@ struct CapabilityLane: Identifiable, Equatable {
         ageEntries.prefix(2).map(\.summaryLabel).joined(separator: " • ")
     }
 
+    var modeChoiceCards: [PlayModeChoiceCard] {
+        TimerChallengePolicy.choiceCards(for: modes)
+    }
+
+    var modeChoicePreviewLabel: String {
+        modeChoiceCards.prefix(2).map(\.summaryLabel).joined(separator: " • ")
+    }
+
     var starterMixMatchCards: [MixMatchCard] {
         Self.starterMixMatchCardsByLane[id, default: []]
     }

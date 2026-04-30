@@ -26,6 +26,16 @@ struct TimerChallengePolicyTests {
     }
 
     @Test
+    func choiceCardsExposeChildChoiceCopy() {
+        let cards = TimerChallengePolicy.choiceCards(for: [.learn, .challenge, .timed, .review])
+
+        #expect(cards.map(\.mode) == [.learn, .challenge, .timed, .review])
+        #expect(cards.first?.summaryLabel == "Learn: calm build")
+        #expect(cards.first { $0.mode == .timed }?.policy.usesTimer == true)
+        #expect(cards.first { $0.mode == .timed }?.detail.contains("choose") == true)
+    }
+
+    @Test
     func policyCopyAvoidsShameAndPressureLanguage() {
         let blockedTerms = [
             "shame",
@@ -46,6 +56,9 @@ struct TimerChallengePolicyTests {
                 policy.activeTimerLabel,
                 policy.completionMessage,
                 policy.timeExpiredMessage,
+                policy.choiceCard.title,
+                policy.choiceCard.flavor,
+                policy.choiceCard.detail,
             ]
             .compactMap { $0 }
             .joined(separator: " ")

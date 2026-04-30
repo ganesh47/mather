@@ -85,6 +85,7 @@ struct LabView: View {
             }
 
             modeChips(lane.modes, tint: laneColor(lane.id))
+            modeChoicePreview(lane, tint: laneColor(lane.id))
             ageEntryPreview(lane, tint: laneColor(lane.id))
             progressPreview(lane.emptyProgress, tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
@@ -121,6 +122,35 @@ struct LabView: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(lane.title)
+    }
+
+    private func modeChoicePreview(_ lane: CapabilityLane, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Choose your play style", systemImage: "slider.horizontal.3")
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+            ForEach(lane.modeChoiceCards.prefix(3)) { card in
+                HStack(spacing: 6) {
+                    Text(card.title)
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(card.flavor)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                    Spacer(minLength: 0)
+                    if card.policy.usesTimer {
+                        Text("opt-in timer")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(tint)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(MatherTheme.panel.opacity(0.58), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(lane.title) play styles: \(lane.modeChoicePreviewLabel)")
     }
 
     private func ageEntryPreview(_ lane: CapabilityLane, tint: Color) -> some View {

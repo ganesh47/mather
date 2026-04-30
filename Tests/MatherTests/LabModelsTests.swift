@@ -37,6 +37,14 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(physics.ageEntryPreview.contains("Ages 2–3"))
     }
 
+    func testCapabilityLanesExposeChildChoiceModeCards() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+
+        XCTAssertEqual(numbers.modeChoiceCards.map(\.mode), numbers.modes)
+        XCTAssertTrue(numbers.modeChoicePreviewLabel.contains("Learn: calm build"))
+        XCTAssertTrue(numbers.modeChoiceCards.contains { $0.mode == .timed && $0.policy.usesTimer })
+    }
+
     func testCapabilityLanesIncludeChoiceBasedPlayModes() {
         let modesByLane = Dictionary(
             uniqueKeysWithValues: CapabilityLane.defaultExplorerLanes.map { ($0.id, Set($0.modes)) }
