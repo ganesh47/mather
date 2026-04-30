@@ -11,7 +11,13 @@ permissions:
 jobs:
   ui-review:
     name: UI Screenshot Review (${{ matrix.device-family }})
-    runs-on: macos-15
+    # Public-repo hardening: only the canonical main branch may run this
+    # workflow on the self-hosted Mac. Do not run untrusted fork code here.
+    if: >-
+      github.repository == 'ganesh47/mather' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, macOS, ganesh-mba]
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -19,26 +25,95 @@ jobs:
         device-family: [iphone, ipad]
     env:
       DEVICE_FAMILY: ${{ matrix.device-family }}
+      SANDBOX_USER_PREFIX: mathergha
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Show toolchain versions
+      - name: Install XcodeGen
         run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+
+      - name: Prepare isolated macOS user
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SANDBOX_USER="${SANDBOX_USER_PREFIX}${DEVICE_FAMILY:0:2}${GITHUB_RUN_ATTEMPT}${GITHUB_RUN_ID}"
+          SANDBOX_USER="${SANDBOX_USER:0:31}"
+          SANDBOX_HOME="${RUNNER_TEMP}/sandbox-home-${SANDBOX_USER}"
+          SANDBOX_WORKSPACE="${RUNNER_TEMP}/sandbox-workspace-${SANDBOX_USER}"
+          RUN_AS_SANDBOX="${RUNNER_TEMP}/run-as-${SANDBOX_USER}"
+
+          if id -u "$SANDBOX_USER" >/dev/null 2>&1; then
+            echo "Sandbox user already exists unexpectedly: $SANDBOX_USER" >&2
+            exit 1
+          fi
+
+          sudo sysadminctl -addUser "$SANDBOX_USER" \
+            -fullName "Mather GitHub Actions Sandbox" \
+            -home "$SANDBOX_HOME" \
+            -password "$(uuidgen)"
+          sudo createhomedir -c -u "$SANDBOX_USER" >/dev/null 2>&1 || true
+
+          mkdir -p "$SANDBOX_WORKSPACE"
+          rsync -a --delete --exclude .git "$GITHUB_WORKSPACE/" "$SANDBOX_WORKSPACE/"
+          sudo chown -R "$SANDBOX_USER":staff "$SANDBOX_HOME" "$SANDBOX_WORKSPACE"
+
+          cat > "$RUN_AS_SANDBOX" <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec sudo -H -u "$SANDBOX_USER" env \
+            HOME="$SANDBOX_HOME" \
+            USER="$SANDBOX_USER" \
+            LOGNAME="$SANDBOX_USER" \
+            DEVICE_FAMILY="${DEVICE_FAMILY:-}" \
+            SANDBOX_WORKSPACE="$SANDBOX_WORKSPACE" \
+            PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+            XCODE_XCCONFIG_FILE= \
+            "$@"
+          EOF
+          chmod 700 "$RUN_AS_SANDBOX"
+
+          {
+            echo "SANDBOX_USER=$SANDBOX_USER"
+            echo "SANDBOX_HOME=$SANDBOX_HOME"
+            echo "SANDBOX_WORKSPACE=$SANDBOX_WORKSPACE"
+            echo "RUN_AS_SANDBOX=$RUN_AS_SANDBOX"
+          } >> "$GITHUB_ENV"
+
+      - name: Show sandbox toolchain versions
+        run: |
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
+          cd "$SANDBOX_WORKSPACE"
           xcodebuild -version
           swift --version
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
+          xcodegen --version
+          if command -v xbox >/dev/null 2>&1; then
+            xbox --version 2>/dev/null || xbox version 2>/dev/null || true
+          else
+            echo "xbox utility not found on PATH" >&2
+            exit 1
+          fi
+          SANDBOX_SCRIPT
 
       - name: Generate project
-        run: xcodegen generate
+        run: |
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
+          cd "$SANDBOX_WORKSPACE"
+          xcodegen generate
+          SANDBOX_SCRIPT
 
       - name: Choose simulator destination
         run: |
           set -euo pipefail
+          cd "$SANDBOX_WORKSPACE"
 
           if [[ "$DEVICE_FAMILY" == "ipad" ]]; then
             preferred=("iPad Pro 11-inch (M4)" "iPad Air 11-inch (M2)" "iPad (10th generation)" "iPad Pro (11-inch) (4th generation)")
@@ -49,7 +124,7 @@ jobs:
           fi
 
           for name in "${preferred[@]}"; do
-            line="$(xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
+            line="$("$RUN_AS_SANDBOX" xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
             if [[ -n "$line" ]]; then
               id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
               echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
@@ -59,7 +134,7 @@ jobs:
           done
 
           for name in "${fallback[@]}"; do
-            line="$(xcrun simctl list devices available | grep -F "$name" | head -n 1 || true)"
+            line="$("$RUN_AS_SANDBOX" xcrun simctl list devices available | grep -F "$name" | head -n 1 || true)"
             if [[ -n "$line" ]]; then
               id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
               echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
@@ -69,27 +144,35 @@ jobs:
           done
 
           echo "No preferred $DEVICE_FAMILY simulator found" >&2
-          xcrun simctl list devices available
+          "$RUN_AS_SANDBOX" xcrun simctl list devices available
           exit 1
 
       - name: Resolve dependencies
-        run: xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
+        run: |
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
+          cd "$SANDBOX_WORKSPACE"
+          xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
+          SANDBOX_SCRIPT
 
       - name: Build for testing
         run: |
+          "$RUN_AS_SANDBOX" bash -euo pipefail <<SANDBOX_SCRIPT
+          cd "$SANDBOX_WORKSPACE"
           xcodebuild build-for-testing \
             -project Mather.xcodeproj \
             -scheme Mather \
             -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO
+          SANDBOX_SCRIPT
 
       - name: Boot simulator
         timeout-minutes: 8
         run: |
+          cd "$SANDBOX_WORKSPACE"
           SIM_ID="${SIM_DESTINATION#id=}"
-          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+          "$RUN_AS_SANDBOX" xcrun simctl boot "$SIM_ID" 2>/dev/null || true
           for i in $(seq 1 40); do
-            STATE=$(xcrun simctl list devices | grep -F "$SIM_ID" \
+            STATE=$("$RUN_AS_SANDBOX" xcrun simctl list devices | grep -F "$SIM_ID" \
               | grep -oE 'Booted|Shutdown|Booting' | head -1 || echo "Unknown")
             echo "[$i/40] $STATE"
             [[ "$STATE" == "Booted" ]] && {
@@ -100,7 +183,7 @@ jobs:
             sleep 5
           done
           echo "Simulator did not reach Booted state after 200s" >&2
-          xcrun simctl list devices | grep -F "$SIM_ID" >&2
+          "$RUN_AS_SANDBOX" xcrun simctl list devices | grep -F "$SIM_ID" >&2
           exit 1
 
       - name: Run UI screenshot tests
@@ -110,16 +193,17 @@ jobs:
         # upload review artifacts instead of being killed mid-run.
         timeout-minutes: 25
         run: |
+          cd "$SANDBOX_WORKSPACE"
           mkdir -p ci-videos
           SIM_ID="${SIM_DESTINATION#id=}"
 
-          xcrun simctl io "$SIM_ID" recordVideo --codec hevc \
+          "$RUN_AS_SANDBOX" xcrun simctl io "$SIM_ID" recordVideo --codec hevc \
             "ci-videos/ui-tests-${DEVICE_FAMILY}.mp4" &
           VIDEO_PID=$!
 
           # Keep screenshot review focused on artifact-producing flows.
           # Slower behavioral UI assertions belong in the main test lane.
-          xcodebuild test-without-building \
+          "$RUN_AS_SANDBOX" xcodebuild test-without-building \
             -project Mather.xcodeproj \
             -scheme Mather \
             -destination "$SIM_DESTINATION" \
@@ -137,9 +221,11 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
+          cd "$SANDBOX_WORKSPACE"
           mkdir -p ci-screenshots
 
-          cat > /tmp/extract_screenshots.py << 'PYEOF'
+          EXTRACT_SCRIPT="${RUNNER_TEMP}/extract_screenshots.py"
+          cat > "$EXTRACT_SCRIPT" << 'PYEOF'
           import sys, json, subprocess, pathlib, shutil, plistlib
 
           bundle = pathlib.Path(f"UITestResults-{__import__('os').environ.get('DEVICE_FAMILY', 'device')}.xcresult")
@@ -219,14 +305,32 @@ jobs:
                           idx += 1
           PYEOF
 
-          python3 /tmp/extract_screenshots.py
+          "$RUN_AS_SANDBOX" python3 "$EXTRACT_SCRIPT"
 
-          SIM_ID=$(xcrun simctl list devices booted \
+          SIM_ID=$("$RUN_AS_SANDBOX" xcrun simctl list devices booted \
             | grep -E '\([-A-F0-9]+\)' | head -1 \
             | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
           if [[ -n "$SIM_ID" ]]; then
-            xcrun simctl io "$SIM_ID" screenshot \
+            "$RUN_AS_SANDBOX" xcrun simctl io "$SIM_ID" screenshot \
               "ci-screenshots/simulator-final-state-${DEVICE_FAMILY}.png" 2>/dev/null || true
+          fi
+
+      - name: Stage review artifacts for upload
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -rf ci-upload
+          mkdir -p ci-upload
+          if [[ -n "${SANDBOX_WORKSPACE:-}" ]]; then
+            if [[ -d "${SANDBOX_WORKSPACE}/UITestResults-${DEVICE_FAMILY}.xcresult" ]]; then
+              cp -R "${SANDBOX_WORKSPACE}/UITestResults-${DEVICE_FAMILY}.xcresult" ci-upload/
+            fi
+            if [[ -d "${SANDBOX_WORKSPACE}/ci-screenshots" ]]; then
+              cp -R "${SANDBOX_WORKSPACE}/ci-screenshots" ci-upload/
+            fi
+            if [[ -d "${SANDBOX_WORKSPACE}/ci-videos" ]]; then
+              cp -R "${SANDBOX_WORKSPACE}/ci-videos" ci-upload/
+            fi
           fi
 
       - name: Upload UI result bundle
@@ -234,7 +338,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ui-review-results-${{ matrix.device-family }}-${{ github.run_number }}
-          path: UITestResults-${{ matrix.device-family }}.xcresult
+          path: ci-upload/UITestResults-${{ matrix.device-family }}.xcresult
           if-no-files-found: ignore
           retention-days: 30
 
@@ -243,7 +347,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ui-review-screenshots-${{ matrix.device-family }}-${{ github.run_number }}
-          path: ci-screenshots/
+          path: ci-upload/ci-screenshots/
           if-no-files-found: ignore
           retention-days: 30
 
@@ -252,6 +356,25 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ui-review-video-${{ matrix.device-family }}-${{ github.run_number }}
-          path: ci-videos/
+          path: ci-upload/ci-videos/
           if-no-files-found: ignore
           retention-days: 30
+
+
+      - name: Remove isolated macOS user
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -n "${SIM_DESTINATION:-}" && -n "${RUN_AS_SANDBOX:-}" ]]; then
+            SIM_ID="${SIM_DESTINATION#id=}"
+            "$RUN_AS_SANDBOX" xcrun simctl shutdown "$SIM_ID" 2>/dev/null || true
+          fi
+          if [[ -n "${SANDBOX_WORKSPACE:-}" ]]; then
+            sudo rm -rf "$SANDBOX_WORKSPACE"
+          fi
+          if [[ -n "${SANDBOX_USER:-}" ]] && id -u "$SANDBOX_USER" >/dev/null 2>&1; then
+            sudo sysadminctl -deleteUser "$SANDBOX_USER" 2>/dev/null || true
+          fi
+          if [[ -n "${SANDBOX_HOME:-}" ]]; then
+            sudo rm -rf "$SANDBOX_HOME"
+          fi
