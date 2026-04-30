@@ -4,6 +4,7 @@ import SwiftUI
 struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
+    @State private var expandedReviewLaneID: CapabilityLaneID?
 
     private let lanes = CapabilityLane.defaultExplorerLanes
 
@@ -85,6 +86,9 @@ struct LabView: View {
 
             modeChips(lane.modes, tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
+            if expandedReviewLaneID == lane.id {
+                mixMatchSampler(lane, tint: laneColor(lane.id))
+            }
 
             if lane.isReady {
                 VStack(spacing: 8) {
@@ -118,7 +122,7 @@ struct LabView: View {
     }
 
     private func recallPreview(_ lane: CapabilityLane, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Label(lane.recallReadinessLabel, systemImage: "rectangle.on.rectangle.angled")
                 .font(.caption.weight(.black))
                 .foregroundStyle(tint)
@@ -128,12 +132,59 @@ struct LabView: View {
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .lineLimit(1)
             }
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                    expandedReviewLaneID = expandedReviewLaneID == lane.id ? nil : lane.id
+                }
+            } label: {
+                Text(expandedReviewLaneID == lane.id ? "Hide review cards" : "Review cards")
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(tint)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(MatherTheme.card.opacity(0.8), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Review \(lane.title) Mix-Match cards")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(lane.title) \(lane.recallReadinessLabel)")
+    }
+
+    private func mixMatchSampler(_ lane: CapabilityLane, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Review sample")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text(lane.starterMixMatchSampler.progressLabel)
+                    .font(.caption2.weight(.heavy))
+                    .foregroundStyle(tint)
+            }
+
+            ForEach(Array(lane.starterMixMatchCards.prefix(3))) { card in
+                HStack(spacing: 8) {
+                    Text(card.prompt)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.ink)
+                    Image(systemName: "arrow.right")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                    Text(card.match)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.ink)
+                    Spacer(minLength: 0)
+                }
+                .padding(8)
+                .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+        }
+        .padding(10)
+        .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(lane.title) Mix-Match review sample")
     }
 
     private func modeChips(_ modes: [PlayMode], tint: Color) -> some View {

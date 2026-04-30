@@ -59,6 +59,22 @@ extension LabModelsTests {
         }
     }
 
+
+    func testStarterMixMatchSamplerCyclesThroughCards() throws {
+        let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
+        var sampler = geometry.starterMixMatchSampler
+
+        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+        XCTAssertEqual(sampler.currentCard?.prompt, "3 sides")
+
+        sampler.advance()
+        XCTAssertEqual(sampler.progressLabel, "2 / 8")
+        XCTAssertEqual(sampler.currentCard?.prompt, "4 equal sides")
+
+        sampler.rewind()
+        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+    }
+
     func testStarterMixMatchCardsHaveChildReadablePromptsAndMatches() {
         let allCards = CapabilityLane.defaultExplorerLanes.flatMap(\.starterMixMatchCards)
 
