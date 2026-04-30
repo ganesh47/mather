@@ -77,7 +77,7 @@ struct LabView: View {
         let presentation = LabLaneCardPresentation(lane: lane, progress: progress, isExpanded: isExpanded)
         let tint = laneColor(lane.id)
 
-        VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 14) {
             laneSummaryHeader(lane, presentation: presentation, tint: tint, isCompact: isCompact)
 
             if isExpanded {
