@@ -119,7 +119,7 @@ struct WaterCycleLabState: Equatable {
     var activeLessonPrimaryActionTitle: String {
         switch lessonThread.activeStage.kind {
         case .lookLearnFlashcards:
-            isOnLastLessonCard ? "Start flip recall" : "Next look card"
+            return isOnLastLessonCard ? "Start flip recall" : "Next look card"
         case .invertedRecall:
             if !isRecallCardRevealed { return "Flip recall card" }
             return isOnLastLessonCard ? "Ask this card" : "Next recall"
@@ -127,7 +127,7 @@ struct WaterCycleLabState: Equatable {
             if latestAskResponse == nil { return "Ask suggested question" }
             return isOnLastLessonCard ? "Start mix-match" : "Next ask card"
         case .mixMatchFinale:
-            lessonThread.isComplete ? "Try the cycle again" : "Hear match clue"
+            return lessonThread.isComplete ? "Try the cycle again" : "Hear match clue"
         }
     }
 
