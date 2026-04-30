@@ -106,9 +106,57 @@ extension WaterCycleLabTests {
         #expect(state.currentFlashcard.concept == "Sun Heat")
 
         state.revealFlashcardAnswer()
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
+
         state.reset()
         #expect(state.stage == .wonder)
         #expect(state.flashcardIndex == 0)
         #expect(state.isFlashcardAnswerRevealed == false)
+        #expect(state.lessonThread.activeStage.kind == .lookLearnFlashcards)
+        #expect(state.mixMatchCorrectCardIDs.isEmpty)
+    }
+
+    @Test func completedCycleUnlocksStagedLessonThread() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        #expect(state.stage == .complete)
+        #expect(state.lessonThread.stages.map(\.kind) == [
+            .lookLearnFlashcards,
+            .invertedRecall,
+            .contextualAsk,
+            .mixMatchFinale
+        ])
+        #expect(state.currentLessonCard.title == "Sun Heat")
+        #expect(state.currentLessonCard.assetName == "MemoryWaterCycleSunHeat")
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
+        #expect(state.isRecallCardRevealed == false)
+
+        state.revealRecallCard()
+        #expect(state.isRecallCardRevealed)
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .contextualAsk)
+        #expect(state.askSession.cardID == "sun-heat")
+        #expect(state.askSession.suggestedTurns.count == 2)
+
+        let response = state.selectAskTurn(id: "sun-heat-what")
+        #expect(response?.kind == .answer)
+        #expect(response?.spokenText.contains("Sun Heat") == true)
+
+        state.completeCurrentLessonStage()
+        #expect(state.lessonThread.activeStage.kind == .mixMatchFinale)
+        #expect(state.currentMixMatchCard.answer.id == "sun-heat")
+
+        for card in WaterCycleLessonThread.mixMatchCards {
+            let attempt = MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true)
+            state.recordMixMatchAttempt(attempt)
+        }
+
+        #expect(state.lessonThread.isComplete)
+        #expect(state.mixMatchProgressLabel == "Match 5 of 5")
     }
 }
