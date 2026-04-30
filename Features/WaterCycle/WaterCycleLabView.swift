@@ -108,6 +108,38 @@ struct WaterCycleLabState: Equatable {
         "Match \(mixMatchCorrectCardIDs.count) of \(WaterCycleLessonThread.mixMatchCards.count)"
     }
 
+    var isOnLastLessonCard: Bool {
+        lessonCardIndex == lessonThread.cards.count - 1
+    }
+
+    var activeLessonProgressLabel: String {
+        "\(lessonThread.progressLabel) - \(lessonCardProgressLabel)"
+    }
+
+    var activeLessonPrimaryActionTitle: String {
+        switch lessonThread.activeStage.kind {
+        case .lookLearnFlashcards:
+            isOnLastLessonCard ? "Start flip recall" : "Next look card"
+        case .invertedRecall:
+            if !isRecallCardRevealed { return "Flip recall card" }
+            return isOnLastLessonCard ? "Ask this card" : "Next recall"
+        case .contextualAsk:
+            if latestAskResponse == nil { return "Ask suggested question" }
+            return isOnLastLessonCard ? "Start mix-match" : "Next ask card"
+        case .mixMatchFinale:
+            lessonThread.isComplete ? "Try the cycle again" : "Hear match clue"
+        }
+    }
+
+    var activeLessonPrimaryActionIcon: String {
+        switch lessonThread.activeStage.kind {
+        case .lookLearnFlashcards: "arrow.right.circle.fill"
+        case .invertedRecall: isRecallCardRevealed ? "arrow.right.circle.fill" : "rectangle.on.rectangle.angled.fill"
+        case .contextualAsk: latestAskResponse == nil ? "questionmark.bubble.fill" : "arrow.right.circle.fill"
+        case .mixMatchFinale: lessonThread.isComplete ? "arrow.counterclockwise" : "speaker.wave.2.fill"
+        }
+    }
+
     var progress: Double {
         switch stage {
         case .wonder: 0.0
@@ -313,20 +345,25 @@ struct WaterCycleLabView: View {
                     ? min(max(proxy.size.height * 0.28, 230), 300)
                     : min(max(proxy.size.height * 0.42, 300), 480)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        header(availableWidth: contentWidth)
-                        inquiryCard
-                        waterCycleScene(width: contentWidth, height: sceneHeight)
-                        if state.stage == .complete {
-                            lessonPlayThreadCard
+                if state.stage == .complete {
+                    lessonPlayScene(
+                        availableWidth: contentWidth,
+                        availableHeight: proxy.size.height,
+                        horizontalPadding: horizontalPadding
+                    )
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            header(availableWidth: contentWidth)
+                            inquiryCard
+                            waterCycleScene(width: contentWidth, height: sceneHeight)
+                            actionControls(availableWidth: contentWidth)
                         }
-                        actionControls(availableWidth: contentWidth)
+                        .frame(maxWidth: contentWidth, alignment: .leading)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 18)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .frame(maxWidth: contentWidth, alignment: .leading)
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.vertical, 18)
-                    .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
@@ -554,32 +591,86 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private var lessonPlayThreadCard: some View {
+    private var lessonStageIcon: String {
+        switch state.lessonThread.activeStage.kind {
+        case .lookLearnFlashcards: "photo.stack.fill"
+        case .invertedRecall: "rectangle.on.rectangle.angled.fill"
+        case .contextualAsk: "bubble.left.and.text.bubble.right.fill"
+        case .mixMatchFinale: "rectangle.2.swap"
+        }
+    }
+
+    private func lessonPlayScene(
+        availableWidth: CGFloat,
+        availableHeight: CGFloat,
+        horizontalPadding: CGFloat
+    ) -> some View {
+        let boardHeight = max(260, availableHeight - 244)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            header(availableWidth: availableWidth)
+            lessonStageStatusBar
+
+            ViewThatFits(in: .vertical) {
+                activeLessonStageBoard
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .frame(height: boardHeight, alignment: .top)
+
+                ScrollView {
+                    activeLessonStageBoard
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: boardHeight)
+            }
+
+            lessonPlayActionBar(availableWidth: availableWidth)
+        }
+        .frame(maxWidth: availableWidth, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .accessibilityIdentifier("water-cycle-playable-lesson")
+    }
+
+    private var lessonStageStatusBar: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 10) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Label(state.lessonThread.activeStage.title, systemImage: lessonStageIcon)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Spacer()
+                        Text(state.activeLessonProgressLabel)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+
                     VStack(alignment: .leading, spacing: 4) {
                         Label(state.lessonThread.activeStage.title, systemImage: lessonStageIcon)
                             .font(.headline.weight(.black))
                             .foregroundStyle(MatherTheme.ink)
-                        Text(state.lessonThread.progressLabel)
+                        Text(state.activeLessonProgressLabel)
                             .font(.caption.weight(.bold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
-                    Spacer()
-                    Text(state.lessonCardProgressLabel)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
                 }
-
-                Text(state.lessonThread.activeStage.prompt)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .fixedSize(horizontal: false, vertical: true)
 
                 ProgressView(value: state.lessonThread.progress)
                     .tint(MatherTheme.accent)
                     .accessibilityLabel("Lesson thread progress")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var activeLessonStageBoard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(state.lessonThread.activeStage.prompt)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 switch state.lessonThread.activeStage.kind {
                 case .lookLearnFlashcards:
@@ -593,16 +684,7 @@ struct WaterCycleLabView: View {
                 }
             }
         }
-        .accessibilityIdentifier("water-cycle-lesson-thread")
-    }
-
-    private var lessonStageIcon: String {
-        switch state.lessonThread.activeStage.kind {
-        case .lookLearnFlashcards: "photo.stack.fill"
-        case .invertedRecall: "rectangle.on.rectangle.angled.fill"
-        case .contextualAsk: "bubble.left.and.text.bubble.right.fill"
-        case .mixMatchFinale: "rectangle.2.swap"
-        }
+        .accessibilityIdentifier("water-cycle-active-lesson-stage")
     }
 
     private var lookLearnLevel: some View {
@@ -635,8 +717,6 @@ struct WaterCycleLabView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
-
-            lessonNavigationButtons(nextTitle: "Next card", completeTitle: "Start flip recall")
         }
     }
 
@@ -675,8 +755,6 @@ struct WaterCycleLabView: View {
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)
             }
-
-            lessonNavigationButtons(nextTitle: "Next recall", completeTitle: "Ask this card")
         }
     }
 
@@ -707,8 +785,6 @@ struct WaterCycleLabView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("water-cycle-safe-ask-response")
             }
-
-            lessonNavigationButtons(nextTitle: "Next card", completeTitle: "Start mix-match")
         }
     }
 
@@ -739,85 +815,79 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private func lessonNavigationButtons(nextTitle: String, completeTitle: String) -> some View {
-        HStack(spacing: 12) {
+    private func lessonPlayActionBar(availableWidth: CGFloat) -> some View {
+        VStack(spacing: 10) {
             Button {
-                state.advanceLessonCard()
-                speakLessonCard()
+                performLessonPrimaryAction()
             } label: {
-                Label(nextTitle, systemImage: "arrow.right.circle.fill")
+                Label(state.activeLessonPrimaryActionTitle, systemImage: state.activeLessonPrimaryActionIcon)
             }
-            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+            .buttonStyle(PrimaryActionButtonStyle())
+            .accessibilityIdentifier("water-cycle-lesson-primary-action")
 
-            Button {
-                state.completeCurrentLessonStage()
-                speakLessonStage()
-            } label: {
-                Label(completeTitle, systemImage: "play.fill")
+            if availableWidth < 390 {
+                HStack(spacing: 10) {
+                    replayLessonButton(compact: true)
+                    resetButton(compact: true)
+                }
+            } else {
+                HStack(spacing: 12) {
+                    replayLessonButton(compact: false)
+                    resetButton(compact: false)
+                }
             }
-            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.32)))
         }
     }
 
-    private var flashcardReviewCard: some View {
-        let flashcard = state.currentFlashcard
+    private func replayLessonButton(compact: Bool) -> some View {
+        Button {
+            speakLessonStage()
+        } label: {
+            secondaryActionLabel("Replay stage", systemImage: "speaker.wave.2.fill", compact: compact)
+        }
+        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+        .accessibilityIdentifier("water-cycle-replay-lesson-stage")
+    }
 
-        return CardSurface {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Label("Flash card review", systemImage: "rectangle.stack.fill")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
-                    Spacer()
-                    Text(state.flashcardProgressLabel)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
+    private func performLessonPrimaryAction() {
+        switch state.lessonThread.activeStage.kind {
+        case .lookLearnFlashcards:
+            if state.isOnLastLessonCard {
+                state.completeCurrentLessonStage()
+                speakLessonStage()
+            } else {
+                state.advanceLessonCard()
+                speakLessonCard()
+            }
+        case .invertedRecall:
+            if !state.isRecallCardRevealed {
+                state.revealRecallCard()
+                speakLessonCard()
+            } else if state.isOnLastLessonCard {
+                state.completeCurrentLessonStage()
+                speakLessonStage()
+            } else {
+                state.advanceLessonCard()
+                speakLessonCard()
+            }
+        case .contextualAsk:
+            if state.latestAskResponse == nil, let turn = state.askSession.suggestedTurns.first {
+                if let response = state.selectAskTurn(id: turn.id) {
+                    appModel.speechService.speak(response.spokenText, enabled: appModel.featureFlags.audioEnabled)
                 }
-
-                Text(flashcard.concept)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(MatherTheme.accent)
-
-                Text(flashcard.question)
-                    .font(.system(size: 19, weight: .semibold, design: .rounded))
-                    .foregroundStyle(MatherTheme.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if state.isFlashcardAnswerRevealed {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(flashcard.answer)
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text(flashcard.connection)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                    }
-                    .accessibilityIdentifier("water-cycle-flashcard-answer")
-                } else {
-                    Text("Ask your child to guess, then reveal the answer.")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        state.revealFlashcardAnswer()
-                        speakFlashcard()
-                    } label: {
-                        Label("Reveal", systemImage: "sparkles")
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.32)))
-                    .accessibilityIdentifier("water-cycle-flashcard-reveal")
-
-                    Button {
-                        state.advanceFlashcard()
-                        speakFlashcard()
-                    } label: {
-                        Label("Next card", systemImage: "arrow.right.circle.fill")
-                    }
-                    .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
-                    .accessibilityIdentifier("water-cycle-flashcard-next")
-                }
+            } else if state.isOnLastLessonCard {
+                state.completeCurrentLessonStage()
+                speakLessonStage()
+            } else {
+                state.advanceLessonCard()
+                speakLessonCard()
+            }
+        case .mixMatchFinale:
+            if state.lessonThread.isComplete {
+                state.advance()
+                speakPrompt()
+            } else {
+                speakLessonText(state.currentMixMatchCard.prompt.speechText)
             }
         }
     }
