@@ -25,6 +25,18 @@ final class LabModelsTests: XCTestCase {
         XCTAssertFalse(CapabilityLaneID.allCases.contains { $0.title == "Memory Match" })
     }
 
+
+    func testCapabilityLanesExposeAgeBandEntryPoints() throws {
+        for lane in CapabilityLane.defaultExplorerLanes {
+            XCTAssertGreaterThanOrEqual(lane.ageEntries.count, 4, "\(lane.title) should define multiple age entry points")
+            XCTAssertFalse(lane.ageEntryPreview.isEmpty)
+        }
+
+        let physics = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .physics })
+        XCTAssertTrue(physics.ageEntries.contains { $0.ageBand == .toddler })
+        XCTAssertTrue(physics.ageEntryPreview.contains("Ages 2–3"))
+    }
+
     func testCapabilityLanesIncludeChoiceBasedPlayModes() {
         let modesByLane = Dictionary(
             uniqueKeysWithValues: CapabilityLane.defaultExplorerLanes.map { ($0.id, Set($0.modes)) }

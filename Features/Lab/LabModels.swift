@@ -1,5 +1,27 @@
 import Foundation
 
+enum ChildAgeBand: String, CaseIterable, Hashable {
+    case toddler = "2–3"
+    case preschool = "4–5"
+    case earlyElementary = "6–7"
+    case upperElementary = "8–10"
+    case preteen = "11–12"
+
+    var label: String { "Ages \(rawValue)" }
+}
+
+struct CapabilityAgeEntry: Identifiable, Equatable {
+    var id: ChildAgeBand { ageBand }
+    let ageBand: ChildAgeBand
+    let posture: String
+    let entryPlay: String
+
+    var summaryLabel: String {
+        "\(ageBand.label): \(entryPlay)"
+    }
+}
+
+
 struct MixMatchCard: Identifiable, Equatable {
     var id: String { "\(laneID.rawValue)-\(concept)-\(prompt)" }
     let laneID: CapabilityLaneID
@@ -148,10 +170,15 @@ struct CapabilityLane: Identifiable, Equatable {
     let promise: String
     let ageBandHint: String
     let modes: [PlayMode]
+    let ageEntries: [CapabilityAgeEntry]
     let activities: [LabActivity]
 
     var title: String { id.title }
     var isReady: Bool { !activities.isEmpty }
+
+    var ageEntryPreview: String {
+        ageEntries.prefix(2).map(\.summaryLabel).joined(separator: " • ")
+    }
 
     var starterMixMatchCards: [MixMatchCard] {
         Self.starterMixMatchCardsByLane[id, default: []]
@@ -188,6 +215,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Build number bonds, fast facts, arrays, and whole-part thinking.",
             ageBandHint: "Ages 4–12",
             modes: [.learn, .challenge, .timed, .review],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .preschool, posture: "count and pair", entryPlay: "Bond Blast pairs"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "CPA number bonds", entryPlay: "Make & Break"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "strategy and factors", entryPlay: "arrays and races"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "mastery and mental math", entryPlay: "personal-best challenges"),
+            ],
             activities: [
                 LabActivity(
                     id: .sumSprint,
@@ -218,6 +251,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Fold, measure, aim, and transform shapes with touch and motion.",
             ageBandHint: "Ages 4–12",
             modes: [.learn, .explore, .challenge, .review],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .preschool, posture: "shape discovery", entryPlay: "shape sort"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "fold and compare", entryPlay: "symmetry play"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "measure and transform", entryPlay: "angles and arrays"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "systems and coordinates", entryPlay: "puzzle challenges"),
+            ],
             activities: [
                 LabActivity(
                     id: .symmetryFold,
@@ -248,6 +287,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Predict motion, gravity, water, and cause-and-effect systems.",
             ageBandHint: "Ages 2–12",
             modes: [.explore, .challenge, .review],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .toddler, posture: "cause and effect", entryPlay: "tap, drop, splash"),
+                CapabilityAgeEntry(ageBand: .preschool, posture: "predict and observe", entryPlay: "roll and rain"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "forces and systems", entryPlay: "cannon strategy"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "model and explain", entryPlay: "energy puzzles"),
+            ],
             activities: [
                 LabActivity(
                     id: .gravityArtist,
@@ -271,6 +316,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Use rooms, compass turns, direction words, and route clues.",
             ageBandHint: "Ages 4–12",
             modes: [.explore, .challenge, .timed],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .preschool, posture: "left/right and finding", entryPlay: "room clues"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "directions and turns", entryPlay: "compass walk"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "maps and scale", entryPlay: "route planning"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "coordinates and strategy", entryPlay: "map challenges"),
+            ],
             activities: [
                 LabActivity(
                     id: .roomQuest,
@@ -294,6 +345,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Practice names, pictures, categories, and Mix-Match recall.",
             ageBandHint: "Ages 2–12",
             modes: [.learn, .review, .challenge],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .toddler, posture: "name and notice", entryPlay: "big picture cards"),
+                CapabilityAgeEntry(ageBand: .preschool, posture: "sort and match", entryPlay: "Mix-Match"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "facts and categories", entryPlay: "choice cards"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "explain and connect", entryPlay: "systems cards"),
+            ],
             activities: [
                 LabActivity(
                     id: .memoryMatch,
@@ -310,6 +367,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Future: sort materials, mix safely, and predict properties.",
             ageBandHint: "Future lane",
             modes: [.explore, .challenge, .review],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .preschool, posture: "material sorting", entryPlay: "color and texture"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "states and mixtures", entryPlay: "mix and separate"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "properties and prediction", entryPlay: "safe reaction cards"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "families and systems", entryPlay: "property puzzles"),
+            ],
             activities: []
         ),
         CapabilityLane(
@@ -318,6 +381,12 @@ struct CapabilityLane: Identifiable, Equatable {
             promise: "Future: switches, circuits, sensors, and input/output systems.",
             ageBandHint: "Future lane",
             modes: [.explore, .challenge, .review],
+            ageEntries: [
+                CapabilityAgeEntry(ageBand: .preschool, posture: "switch and output", entryPlay: "light on/off"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "circuits and components", entryPlay: "wire paths"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "debug and sensors", entryPlay: "input/output"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "logic and systems", entryPlay: "gate puzzles"),
+            ],
             activities: []
         ),
     ]
