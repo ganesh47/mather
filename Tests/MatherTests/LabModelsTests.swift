@@ -82,14 +82,18 @@ extension LabModelsTests {
 
         XCTAssertEqual(progress.progressLabel, "0 / 4 modes")
         XCTAssertEqual(progress.masteryPercentLabel, "0% ready")
+        XCTAssertEqual(progress.progressSummaryLabel, "0 / 4 modes • 0% ready")
         XCTAssertEqual(progress.nextRecommendedMode, .learn)
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Learn next")
 
         progress.markCompleted(.learn)
         progress.markCompleted(.timed)
 
         XCTAssertEqual(progress.progressLabel, "2 / 4 modes")
         XCTAssertEqual(progress.masteryPercentLabel, "50% ready")
+        XCTAssertEqual(progress.progressSummaryLabel, "2 / 4 modes • 50% ready")
         XCTAssertEqual(progress.nextRecommendedMode, .challenge)
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Challenge next")
     }
 
     func testCapabilityLaneProgressTracksReviewedCardsOnlyForItsLane() throws {

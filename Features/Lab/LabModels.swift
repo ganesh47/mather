@@ -160,6 +160,15 @@ struct CapabilityLaneProgress: Equatable {
         "\(Int((masteryFraction * 100).rounded()))% ready"
     }
 
+    var progressSummaryLabel: String {
+        "\(progressLabel) • \(masteryPercentLabel)"
+    }
+
+    var nextRecommendedModeLabel: String {
+        guard let nextRecommendedMode else { return "Choose any mode" }
+        return "Try \(nextRecommendedMode.rawValue) next"
+    }
+
     var nextRecommendedMode: PlayMode? {
         availableModes.first { !completedModes.contains($0) } ?? availableModes.last
     }
