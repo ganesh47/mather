@@ -41,6 +41,22 @@ enum PlayMode: String, CaseIterable, Hashable {
     case review = "Review"
 }
 
+
+struct MixMatchCard: Identifiable, Equatable {
+    var id: String { "\(laneID.rawValue)-\(concept)-\(prompt)" }
+    let laneID: CapabilityLaneID
+    let concept: String
+    let prompt: String
+    let match: String
+
+    init(laneID: CapabilityLaneID, concept: String, prompt: String, match: String) {
+        self.laneID = laneID
+        self.concept = concept
+        self.prompt = prompt
+        self.match = match
+    }
+}
+
 enum LabActivityID: String, CaseIterable, Hashable {
     case sumSprint
     case roomQuest
@@ -81,6 +97,10 @@ struct CapabilityLane: Identifiable, Equatable {
 
     var title: String { id.title }
     var isReady: Bool { !activities.isEmpty }
+
+    var starterMixMatchCards: [MixMatchCard] {
+        Self.starterMixMatchCardsByLane[id, default: []]
+    }
 
     static let defaultExplorerLanes: [CapabilityLane] = [
         CapabilityLane(
@@ -222,4 +242,78 @@ struct CapabilityLane: Identifiable, Equatable {
             activities: []
         ),
     ]
+
+    static let starterMixMatchCardsByLane: [CapabilityLaneID: [MixMatchCard]] = [
+        .numbers: [
+            MixMatchCard(laneID: .numbers, concept: "number-bond", prompt: "6 + 4", match: "10"),
+            MixMatchCard(laneID: .numbers, concept: "number-bond", prompt: "7 + 3", match: "10"),
+            MixMatchCard(laneID: .numbers, concept: "number-bond", prompt: "8 + 5", match: "13"),
+            MixMatchCard(laneID: .numbers, concept: "dot-pattern", prompt: "five-frame full", match: "5"),
+            MixMatchCard(laneID: .numbers, concept: "dot-pattern", prompt: "ten-frame 8 dots", match: "8"),
+            MixMatchCard(laneID: .numbers, concept: "array", prompt: "3 rows of 4", match: "12"),
+            MixMatchCard(laneID: .numbers, concept: "factor-pair", prompt: "2 × 6", match: "12"),
+            MixMatchCard(laneID: .numbers, concept: "story-equation", prompt: "9 birds, 2 fly away", match: "9 − 2 = 7"),
+        ],
+        .geometry: [
+            MixMatchCard(laneID: .geometry, concept: "shape", prompt: "3 sides", match: "triangle"),
+            MixMatchCard(laneID: .geometry, concept: "shape", prompt: "4 equal sides", match: "square"),
+            MixMatchCard(laneID: .geometry, concept: "symmetry", prompt: "butterfly fold", match: "line of symmetry"),
+            MixMatchCard(laneID: .geometry, concept: "angle", prompt: "square corner", match: "90°"),
+            MixMatchCard(laneID: .geometry, concept: "angle", prompt: "straight line", match: "180°"),
+            MixMatchCard(laneID: .geometry, concept: "array-shape", prompt: "2 by 5 rectangle", match: "10 squares"),
+            MixMatchCard(laneID: .geometry, concept: "transformation", prompt: "slide", match: "translation"),
+            MixMatchCard(laneID: .geometry, concept: "transformation", prompt: "turn", match: "rotation"),
+        ],
+        .physics: [
+            MixMatchCard(laneID: .physics, concept: "motion", prompt: "push harder", match: "moves faster"),
+            MixMatchCard(laneID: .physics, concept: "motion", prompt: "steeper ramp", match: "rolls farther"),
+            MixMatchCard(laneID: .physics, concept: "gravity", prompt: "drop ball", match: "falls down"),
+            MixMatchCard(laneID: .physics, concept: "prediction", prompt: "aim higher", match: "lands farther"),
+            MixMatchCard(laneID: .physics, concept: "water-cycle", prompt: "sun warms water", match: "evaporation"),
+            MixMatchCard(laneID: .physics, concept: "water-cycle", prompt: "cloud gets heavy", match: "rain"),
+            MixMatchCard(laneID: .physics, concept: "float-sink", prompt: "wood block", match: "float"),
+            MixMatchCard(laneID: .physics, concept: "balance", prompt: "same weight both sides", match: "level"),
+        ],
+        .mapWorld: [
+            MixMatchCard(laneID: .mapWorld, concept: "direction", prompt: "sunrise", match: "east"),
+            MixMatchCard(laneID: .mapWorld, concept: "direction", prompt: "sunset", match: "west"),
+            MixMatchCard(laneID: .mapWorld, concept: "turn", prompt: "quarter turn right", match: "90° clockwise"),
+            MixMatchCard(laneID: .mapWorld, concept: "turn", prompt: "half turn", match: "180°"),
+            MixMatchCard(laneID: .mapWorld, concept: "route", prompt: "start → clue → treasure", match: "path"),
+            MixMatchCard(laneID: .mapWorld, concept: "map-symbol", prompt: "star on map", match: "special place"),
+            MixMatchCard(laneID: .mapWorld, concept: "scale", prompt: "small map step", match: "big real step"),
+            MixMatchCard(laneID: .mapWorld, concept: "compass", prompt: "N", match: "north"),
+        ],
+        .discoveryCards: [
+            MixMatchCard(laneID: .discoveryCards, concept: "animal", prompt: "striped big cat", match: "tiger"),
+            MixMatchCard(laneID: .discoveryCards, concept: "animal", prompt: "long-neck animal", match: "giraffe"),
+            MixMatchCard(laneID: .discoveryCards, concept: "habitat", prompt: "fish home", match: "water"),
+            MixMatchCard(laneID: .discoveryCards, concept: "category", prompt: "apple", match: "fruit"),
+            MixMatchCard(laneID: .discoveryCards, concept: "category", prompt: "bus", match: "vehicle"),
+            MixMatchCard(laneID: .discoveryCards, concept: "body", prompt: "we hear with", match: "ears"),
+            MixMatchCard(laneID: .discoveryCards, concept: "world", prompt: "very cold place", match: "Arctic"),
+            MixMatchCard(laneID: .discoveryCards, concept: "vocabulary", prompt: "tiny", match: "small"),
+        ],
+        .chemistry: [
+            MixMatchCard(laneID: .chemistry, concept: "state", prompt: "ice", match: "solid"),
+            MixMatchCard(laneID: .chemistry, concept: "state", prompt: "water", match: "liquid"),
+            MixMatchCard(laneID: .chemistry, concept: "state", prompt: "steam", match: "gas"),
+            MixMatchCard(laneID: .chemistry, concept: "property", prompt: "metal spoon", match: "shiny"),
+            MixMatchCard(laneID: .chemistry, concept: "property", prompt: "sponge", match: "soaks water"),
+            MixMatchCard(laneID: .chemistry, concept: "mixture", prompt: "sand + pebbles", match: "can separate"),
+            MixMatchCard(laneID: .chemistry, concept: "mixture", prompt: "sugar + water", match: "dissolves"),
+            MixMatchCard(laneID: .chemistry, concept: "safety", prompt: "unknown liquid", match: "ask grown-up"),
+        ],
+        .electronics: [
+            MixMatchCard(laneID: .electronics, concept: "component", prompt: "battery", match: "power"),
+            MixMatchCard(laneID: .electronics, concept: "component", prompt: "wire", match: "path"),
+            MixMatchCard(laneID: .electronics, concept: "component", prompt: "switch", match: "open or close"),
+            MixMatchCard(laneID: .electronics, concept: "output", prompt: "lamp", match: "light"),
+            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "closed loop", match: "works"),
+            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "broken loop", match: "off"),
+            MixMatchCard(laneID: .electronics, concept: "sensor", prompt: "microphone", match: "hears sound"),
+            MixMatchCard(laneID: .electronics, concept: "logic", prompt: "two switches both on", match: "AND"),
+        ],
+    ]
+
 }

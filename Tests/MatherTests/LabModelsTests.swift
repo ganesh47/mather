@@ -37,3 +37,26 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(modesByLane[.discoveryCards, default: []].contains(.review))
     }
 }
+
+extension LabModelsTests {
+    func testEveryCapabilityLaneDefinesAtLeastEightStarterMixMatchCards() throws {
+        for lane in CapabilityLane.defaultExplorerLanes {
+            XCTAssertGreaterThanOrEqual(
+                lane.starterMixMatchCards.count,
+                8,
+                "\(lane.title) should have at least eight starter Mix-Match cards"
+            )
+            XCTAssertTrue(lane.starterMixMatchCards.allSatisfy { $0.laneID == lane.id })
+        }
+    }
+
+    func testStarterMixMatchCardsHaveChildReadablePromptsAndMatches() {
+        let allCards = CapabilityLane.defaultExplorerLanes.flatMap(\.starterMixMatchCards)
+
+        XCTAssertFalse(allCards.isEmpty)
+        XCTAssertTrue(allCards.allSatisfy { !$0.concept.isEmpty })
+        XCTAssertTrue(allCards.allSatisfy { !$0.prompt.isEmpty })
+        XCTAssertTrue(allCards.allSatisfy { !$0.match.isEmpty })
+        XCTAssertEqual(Set(allCards.map(\.id)).count, allCards.count)
+    }
+}
