@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-enum AppRoute {
+enum AppRoute: Hashable {
     case home
     case sessionConfig
     case session
@@ -113,6 +113,7 @@ final class VerticalSliceEngine {
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
     var sumSprintStageCardCount: Int { sumSprintBurstState?.totalPairs ?? 0 }
 
+    func show(_ route: AppRoute) { self.route = route }
     func showSettings() { route = .settings }
     func showHome() { route = .home }
     func showParentSummary() { route = .parentSummary }

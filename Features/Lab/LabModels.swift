@@ -88,6 +88,35 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case memoryMatch
 }
 
+extension LabActivityID {
+    var appRoute: AppRoute {
+        switch self {
+        case .sumSprint:
+            return .sumSprint
+        case .roomQuest:
+            return .roomQuest
+        case .symmetryFold:
+            return .symmetryFold
+        case .rectangleFactory:
+            return .rectangleFactory
+        case .factoryCards:
+            return .factoryCards
+        case .angleCannon:
+            return .angleCannon
+        case .twoFingerProtractor:
+            return .twoFingerProtractor
+        case .gravityArtist:
+            return .gravityArtist
+        case .compassAngles:
+            return .compassAngles
+        case .waterCycle:
+            return .waterCycle
+        case .memoryMatch:
+            return .memory
+        }
+    }
+}
+
 struct LabActivity: Identifiable, Equatable {
     let id: LabActivityID
     let emoji: String

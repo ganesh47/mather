@@ -360,30 +360,13 @@ struct LabView: View {
 
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
+            appModel.engine.show(activityID.appRoute)
             switch activityID {
             case .sumSprint:
-                appModel.engine.showSumSprint()
                 appModel.sumSprintEngine.showDifficultyPick()
-            case .roomQuest:
-                appModel.engine.showRoomQuest()
-            case .symmetryFold:
-                appModel.engine.showSymmetryFold()
-            case .rectangleFactory:
-                appModel.engine.showRectangleFactory()
-            case .factoryCards:
-                appModel.engine.showFactoryCards()
-            case .angleCannon:
-                appModel.engine.showAngleCannon()
-            case .twoFingerProtractor:
-                appModel.engine.showTwoFingerProtractor()
-            case .gravityArtist:
-                appModel.engine.showGravityArtist()
-            case .compassAngles:
-                appModel.engine.showCompassAngles()
-            case .waterCycle:
-                appModel.engine.showWaterCycle()
-            case .memoryMatch:
-                appModel.engine.showMemory()
+            case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
+                 .twoFingerProtractor, .gravityArtist, .compassAngles, .waterCycle, .memoryMatch:
+                break
             }
         }
     }
