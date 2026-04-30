@@ -1,39 +1,5 @@
 import Foundation
 
-/// Top-level capability lanes used by Explorer Lab.
-///
-/// The lab intentionally groups activities by the capability a child is growing,
-/// instead of presenting every mini-game as an unrelated destination.
-enum CapabilityLaneID: String, CaseIterable, Hashable {
-    case numbers
-    case geometry
-    case physics
-    case mapWorld
-    case discoveryCards
-    case chemistry
-    case electronics
-
-    var title: String {
-        switch self {
-        case .numbers:
-            return "Numbers Lab"
-        case .geometry:
-            return "Geometry Lab"
-        case .physics:
-            return "Physics Lab"
-        case .mapWorld:
-            return "Map & World Lab"
-        case .discoveryCards:
-            return "Discovery Cards"
-        case .chemistry:
-            return "Chemistry Lab"
-        case .electronics:
-            return "Electronics Lab"
-        }
-    }
-}
-
-
 enum ChildAgeBand: String, CaseIterable, Hashable {
     case toddler = "2–3"
     case preschool = "4–5"
@@ -53,14 +19,6 @@ struct CapabilityAgeEntry: Identifiable, Equatable {
     var summaryLabel: String {
         "\(ageBand.label): \(entryPlay)"
     }
-}
-
-enum PlayMode: String, CaseIterable, Hashable {
-    case learn = "Learn"
-    case explore = "Explore"
-    case challenge = "Challenge"
-    case timed = "Timed"
-    case review = "Review"
 }
 
 
