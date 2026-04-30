@@ -76,3 +76,39 @@ struct WaterCycleLabTests {
         #expect(middleRowMinimum < metrics.availableWidth)
     }
 }
+
+extension WaterCycleLabTests {
+    @Test func completionUnlocksConceptFlashcardReviewDeck() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        #expect(state.stage == .complete)
+        #expect(WaterCycleConceptFlashcard.reviewDeck.count >= 5)
+        #expect(state.currentFlashcard.concept == "Sun Heat")
+        #expect(state.flashcardProgressLabel == "Card 1 of 5")
+        #expect(state.isFlashcardAnswerRevealed == false)
+
+        state.revealFlashcardAnswer()
+        #expect(state.isFlashcardAnswerRevealed)
+        #expect(state.currentFlashcard.answer.contains("sun warms"))
+
+        state.advanceFlashcard()
+        #expect(state.currentFlashcard.concept == "Evaporation")
+        #expect(state.flashcardProgressLabel == "Card 2 of 5")
+        #expect(state.isFlashcardAnswerRevealed == false)
+    }
+
+    @Test func flashcardReviewWrapsAndResetsWithInquiryCycle() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        for _ in 0..<WaterCycleConceptFlashcard.reviewDeck.count { state.advanceFlashcard() }
+        #expect(state.currentFlashcard.concept == "Sun Heat")
+
+        state.revealFlashcardAnswer()
+        state.reset()
+        #expect(state.stage == .wonder)
+        #expect(state.flashcardIndex == 0)
+        #expect(state.isFlashcardAnswerRevealed == false)
+    }
+}
