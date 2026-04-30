@@ -2,8 +2,9 @@ name: iOS UI Review (main)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
+  schedule:
+    # Run artifact-producing UI review twice daily without blocking main/release.
+    - cron: '17 */12 * * *'
 
 permissions:
   contents: read
