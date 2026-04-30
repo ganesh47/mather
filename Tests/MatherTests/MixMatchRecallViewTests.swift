@@ -35,6 +35,7 @@ struct MixMatchRecallViewTests {
     }
 
     @Test
+    @MainActor
     func memoryAdapterPreservesCardStateAndAccessibleLabels() throws {
         let animal = try #require(MemoryDeck.countryFlags.first)
         var pictureCard = MemoryCard(pairId: animal.id, content: .picture(animal))
