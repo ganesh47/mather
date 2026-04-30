@@ -88,6 +88,8 @@ struct RootView: View {
                     CompassAnglesView(appModel: appModel)
                 case .lab:
                     LabView(appModel: appModel)
+                case .labLane(let laneID):
+                    LabLaneDetailView(appModel: appModel, laneID: laneID)
                 case .memory:
                     MemoryView(appModel: appModel)
                 case .waterCycle:

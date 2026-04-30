@@ -66,43 +66,46 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(numbers.starterMixMatchConceptPreview.contains("number-bond"))
     }
 
-    func testCollapsedLaneCardPresentationKeepsFirstPaintSparse() throws {
+    func testRootLaneCardPresentationStaysSparseAndOpensDetailScreen() throws {
         let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
         let presentation = LabLaneCardPresentation(
             lane: numbers,
-            progress: numbers.emptyProgress,
-            isExpanded: false
+            progress: numbers.emptyProgress
         )
 
         XCTAssertEqual(presentation.title, "Numbers Lab")
-        XCTAssertEqual(presentation.detailAffordanceLabel, "Show details")
+        XCTAssertEqual(presentation.openAffordanceLabel, "Open lane")
         XCTAssertEqual(
             presentation.sections,
-            [.visualSummary, .promise, .progressStatus, .detailAffordance]
+            [.visualSummary, .promise, .progressStatus]
         )
         XCTAssertFalse(presentation.showsDetails)
         XCTAssertFalse(presentation.sections.contains(.modes))
         XCTAssertFalse(presentation.sections.contains(.ageEntries))
         XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertFalse(presentation.sections.contains(.activities))
+        XCTAssertTrue(presentation.accessibilityHint.contains("Opens Numbers Lab"))
     }
 
-    func testExpandedLaneCardPresentationRestoresDetailsWithoutDroppingLaunches() throws {
+    func testLaneDetailPresentationRestoresDetailsWithoutDroppingLaunches() throws {
         let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
-        let presentation = LabLaneCardPresentation(
-            lane: numbers,
-            progress: numbers.emptyProgress,
-            isExpanded: true
-        )
+        let presentation = LabLaneDetailPresentation(lane: numbers)
 
-        XCTAssertEqual(presentation.detailAffordanceLabel, "Hide details")
-        XCTAssertTrue(presentation.showsDetails)
+        XCTAssertEqual(presentation.activityCountLabel, "3 games ready")
         XCTAssertTrue(presentation.sections.contains(.modes))
         XCTAssertTrue(presentation.sections.contains(.playStyles))
         XCTAssertTrue(presentation.sections.contains(.ageEntries))
         XCTAssertTrue(presentation.sections.contains(.recall))
         XCTAssertTrue(presentation.sections.contains(.activities))
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
+    }
+
+    func testLabLaneRouteCarriesSelectedLaneWithoutChangingGameRoutes() throws {
+        XCTAssertEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.geometry))
+        XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
+        XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)
+        XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
+        XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }
 
 }
@@ -204,6 +207,7 @@ extension LabModelsTests {
         XCTAssertTrue(numbers.recallAccessibilityLabel.contains("1 recall card + 8 Mix-Match ready"))
         XCTAssertTrue(numbers.recallAccessibilityLabel.contains("number-bond"))
         XCTAssertEqual(sumSprint.accessibilityLabel, "Sum Sprint. Race through sums 11–20")
+        XCTAssertTrue(sumSprint.accessibilityHint.contains("Launches Sum Sprint"))
         XCTAssertTrue(sumSprint.accessibilityHint.contains("Modes: Challenge, Timed, Review"))
     }
 
