@@ -5,6 +5,7 @@ struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
     @State private var expandedReviewLaneID: CapabilityLaneID?
+    @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
     private let lanes = CapabilityLane.defaultExplorerLanes
 
@@ -25,6 +26,9 @@ struct LabView: View {
                     .padding(24)
                 }
             }
+        }
+        .onAppear {
+            sensorCapabilities = SensorCapabilityService().currentCapabilities()
         }
     }
 
@@ -297,6 +301,7 @@ struct LabView: View {
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .lineLimit(2)
+                    sensorAffordanceRow(activity, tint: tint)
                 }
                 Spacer(minLength: 6)
                 Image(systemName: "chevron.right")
@@ -309,6 +314,48 @@ struct LabView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(activity.title)
         .accessibilityHint(activity.modes.map(\.rawValue).joined(separator: ", "))
+    }
+
+    private func sensorAffordanceRow(_ activity: LabActivity, tint: Color) -> some View {
+        FlowLayout(spacing: 4) {
+            ForEach(activity.id.sensorAffordances(with: sensorCapabilities)) { affordance in
+                Label {
+                    Text(affordance.displayLabel)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                } icon: {
+                    Image(systemName: sensorIcon(for: affordance.need, isAvailable: affordance.isAvailable))
+                }
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(affordance.isAvailable ? tint : MatherTheme.cardSubtitle)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
+                .background(
+                    (affordance.isAvailable ? tint.opacity(0.10) : MatherTheme.panel.opacity(0.72)),
+                    in: Capsule()
+                )
+                .accessibilityLabel(affordance.accessibilityLabel)
+            }
+        }
+    }
+
+    private func sensorIcon(for need: LabSensorNeed, isAvailable: Bool) -> String {
+        if !isAvailable {
+            return "exclamationmark.triangle.fill"
+        }
+
+        switch need {
+        case .noSpecialSensor:
+            return "hand.tap.fill"
+        case .motion:
+            return "gyroscope"
+        case .compass:
+            return "location.north.line.fill"
+        case .cameraMarkerMode:
+            return "camera.viewfinder"
+        case .haptics:
+            return "waveform"
+        }
     }
 
     private func launch(_ activityID: LabActivityID) {
