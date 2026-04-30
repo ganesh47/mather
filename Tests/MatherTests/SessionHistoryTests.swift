@@ -370,3 +370,59 @@ struct ParentSummaryTrendPointTests {
         #expect(points[0].paceLabel == "—")
     }
 }
+
+// MARK: - Parent summary Explorer Lab tests
+
+struct ParentSummaryExplorerLabSummaryTests {
+    @Test
+    func summaryShowsGracefulEmptyStateForSeededProfile() {
+        let summary = ParentSummaryExplorerLabSummary.make(profile: .emptyExplorerProfile())
+
+        #expect(summary.rows.isEmpty)
+        #expect(summary.activeLaneCount == 0)
+        #expect(summary.completedModeCount == 0)
+        #expect(summary.subtitle == "Lane, mode, concept, and mastery signals from Explorer Lab.")
+    }
+
+    @Test
+    func summaryMapsLaneModeConceptAndMasteryCopy() {
+        var profile = ExplorerLabMasteryProfile.emptyExplorerProfile()
+        profile.updateLane(.numbers) { lane in
+            lane.markCompleted(.learn)
+            lane.markCompleted(.challenge)
+            lane.setConfidence(.steady, for: "number-bond")
+            lane.setConfidence(.mastered, for: "array")
+        }
+
+        let summary = ParentSummaryExplorerLabSummary.make(profile: profile)
+
+        #expect(summary.activeLaneCount == 1)
+        #expect(summary.completedModeCount == 2)
+        #expect(summary.subtitle == "1 active lane · 2 modes completed")
+        #expect(summary.rows.map(\.laneTitle) == ["Numbers Lab"])
+        #expect(summary.rows.first?.masteryLabel == "50% ready")
+        #expect(summary.rows.first?.detailLabel == "2 / 4 modes · Try Timed next · 2 steady concepts")
+    }
+
+    @Test
+    func summaryOrdersByMasteryAndLimitsRows() {
+        var profile = ExplorerLabMasteryProfile.emptyExplorerProfile()
+        profile.updateLane(.numbers) { lane in
+            lane.markCompleted(.learn)
+        }
+        profile.updateLane(.geometry) { lane in
+            lane.markCompleted(.learn)
+            lane.markCompleted(.explore)
+        }
+        profile.updateLane(.physics) { lane in
+            lane.markCompleted(.explore)
+            lane.setConfidence(.steady, for: "motion")
+        }
+
+        let summary = ParentSummaryExplorerLabSummary.make(profile: profile, limit: 2)
+
+        #expect(summary.activeLaneCount == 3)
+        #expect(summary.completedModeCount == 4)
+        #expect(summary.rows.map(\.laneTitle) == ["Geometry Lab", "Physics Lab"])
+    }
+}
