@@ -51,20 +51,11 @@ jobs:
           SANDBOX_WORKSPACE="${RUNNER_TEMP}/sandbox-workspace-${SANDBOX_USER}"
           RUN_AS_SANDBOX="${RUNNER_TEMP}/run-as-${SANDBOX_USER}"
 
-          if id -u "$SANDBOX_USER" >/dev/null 2>&1; then
-            echo "Sandbox user already exists unexpectedly: $SANDBOX_USER" >&2
-            exit 1
-          fi
-
-          sudo sysadminctl -addUser "$SANDBOX_USER" \
-            -fullName "Mather GitHub Actions Sandbox" \
-            -home "$SANDBOX_HOME" \
-            -password "$(uuidgen)"
-          sudo createhomedir -c -u "$SANDBOX_USER" >/dev/null 2>&1 || true
-
           mkdir -p "$SANDBOX_WORKSPACE"
+          sudo /usr/local/sbin/mather-gha-sandbox add \
+            "$SANDBOX_USER" "$SANDBOX_HOME" "$SANDBOX_WORKSPACE"
           rsync -a --delete --exclude .git "$GITHUB_WORKSPACE/" "$SANDBOX_WORKSPACE/"
-          sudo chown -R "$SANDBOX_USER":staff "$SANDBOX_HOME" "$SANDBOX_WORKSPACE"
+          sudo /usr/local/sbin/mather-gha-sandbox chown "$SANDBOX_USER" "$SANDBOX_WORKSPACE"
 
           cat > "$RUN_AS_SANDBOX" <<'EOF'
           #!/usr/bin/env bash
@@ -370,11 +361,11 @@ jobs:
             "$RUN_AS_SANDBOX" xcrun simctl shutdown "$SIM_ID" 2>/dev/null || true
           fi
           if [[ -n "${SANDBOX_WORKSPACE:-}" ]]; then
-            sudo rm -rf "$SANDBOX_WORKSPACE"
+            sudo /usr/local/sbin/mather-gha-sandbox cleanup "$SANDBOX_USER" "$SANDBOX_WORKSPACE"
           fi
-          if [[ -n "${SANDBOX_USER:-}" ]] && id -u "$SANDBOX_USER" >/dev/null 2>&1; then
-            sudo sysadminctl -deleteUser "$SANDBOX_USER" 2>/dev/null || true
+          if [[ -n "${SANDBOX_USER:-}" ]]; then
+            sudo /usr/local/sbin/mather-gha-sandbox delete "$SANDBOX_USER"
           fi
           if [[ -n "${SANDBOX_HOME:-}" ]]; then
-            sudo rm -rf "$SANDBOX_HOME"
+            sudo /usr/local/sbin/mather-gha-sandbox cleanup "$SANDBOX_USER" "$SANDBOX_HOME"
           fi
