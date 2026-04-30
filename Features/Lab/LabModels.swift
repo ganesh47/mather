@@ -124,6 +124,57 @@ struct LabActivity: Identifiable, Equatable {
     }
 }
 
+
+struct CapabilityLaneProgress: Equatable {
+    let laneID: CapabilityLaneID
+    let availableModes: [PlayMode]
+    var completedModes: Set<PlayMode>
+    var reviewedCardIDs: Set<String>
+
+    init(
+        laneID: CapabilityLaneID,
+        availableModes: [PlayMode],
+        completedModes: Set<PlayMode> = [],
+        reviewedCardIDs: Set<String> = []
+    ) {
+        self.laneID = laneID
+        self.availableModes = availableModes
+        self.completedModes = completedModes
+        self.reviewedCardIDs = reviewedCardIDs
+    }
+
+    var completedModeCount: Int {
+        availableModes.filter { completedModes.contains($0) }.count
+    }
+
+    var progressLabel: String {
+        "\(completedModeCount) / \(availableModes.count) modes"
+    }
+
+    var masteryFraction: Double {
+        guard !availableModes.isEmpty else { return 0 }
+        return Double(completedModeCount) / Double(availableModes.count)
+    }
+
+    var masteryPercentLabel: String {
+        "\(Int((masteryFraction * 100).rounded()))% ready"
+    }
+
+    var nextRecommendedMode: PlayMode? {
+        availableModes.first { !completedModes.contains($0) } ?? availableModes.last
+    }
+
+    mutating func markCompleted(_ mode: PlayMode) {
+        guard availableModes.contains(mode) else { return }
+        completedModes.insert(mode)
+    }
+
+    mutating func markReviewed(_ card: MixMatchCard) {
+        guard card.laneID == laneID else { return }
+        reviewedCardIDs.insert(card.id)
+    }
+}
+
 struct CapabilityLane: Identifiable, Equatable {
     let id: CapabilityLaneID
     let emoji: String
@@ -157,6 +208,10 @@ struct CapabilityLane: Identifiable, Equatable {
 
     var starterMixMatchSampler: MixMatchReviewSampler {
         MixMatchReviewSampler(laneID: id, cards: starterMixMatchCards)
+    }
+
+    var emptyProgress: CapabilityLaneProgress {
+        CapabilityLaneProgress(laneID: id, availableModes: modes)
     }
 
     static let defaultExplorerLanes: [CapabilityLane] = [
