@@ -84,6 +84,7 @@ struct LabView: View {
             }
 
             modeChips(lane.modes, tint: laneColor(lane.id))
+            recallPreview(lane, tint: laneColor(lane.id))
 
             if lane.isReady {
                 VStack(spacing: 8) {
@@ -114,6 +115,25 @@ struct LabView: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(lane.title)
+    }
+
+    private func recallPreview(_ lane: CapabilityLane, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(lane.recallReadinessLabel, systemImage: "rectangle.on.rectangle.angled")
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+            if !lane.starterMixMatchConceptPreview.isEmpty {
+                Text(lane.starterMixMatchConceptPreview)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(lane.title) \(lane.recallReadinessLabel)")
     }
 
     private func modeChips(_ modes: [PlayMode], tint: Color) -> some View {

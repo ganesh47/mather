@@ -102,6 +102,22 @@ struct CapabilityLane: Identifiable, Equatable {
         Self.starterMixMatchCardsByLane[id, default: []]
     }
 
+    var starterMixMatchCount: Int { starterMixMatchCards.count }
+
+    var starterMixMatchConceptPreview: String {
+        var seen: Set<String> = []
+        let concepts = starterMixMatchCards.compactMap { card -> String? in
+            guard !seen.contains(card.concept) else { return nil }
+            seen.insert(card.concept)
+            return card.concept
+        }
+        return concepts.prefix(3).joined(separator: " • ")
+    }
+
+    var recallReadinessLabel: String {
+        "\(starterMixMatchCount) Mix-Match cards ready"
+    }
+
     static let defaultExplorerLanes: [CapabilityLane] = [
         CapabilityLane(
             id: .numbers,
