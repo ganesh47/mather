@@ -57,6 +57,43 @@ struct MixMatchCard: Identifiable, Equatable {
     }
 }
 
+
+struct MixMatchReviewSampler: Equatable {
+    let laneID: CapabilityLaneID
+    let cards: [MixMatchCard]
+    private(set) var currentIndex: Int
+
+    init(laneID: CapabilityLaneID, cards: [MixMatchCard], currentIndex: Int = 0) {
+        self.laneID = laneID
+        self.cards = cards
+        if cards.isEmpty {
+            self.currentIndex = 0
+        } else {
+            self.currentIndex = min(max(currentIndex, 0), cards.count - 1)
+        }
+    }
+
+    var currentCard: MixMatchCard? {
+        guard cards.indices.contains(currentIndex) else { return nil }
+        return cards[currentIndex]
+    }
+
+    var progressLabel: String {
+        guard !cards.isEmpty else { return "0 / 0" }
+        return "\(currentIndex + 1) / \(cards.count)"
+    }
+
+    mutating func advance() {
+        guard !cards.isEmpty else { return }
+        currentIndex = (currentIndex + 1) % cards.count
+    }
+
+    mutating func rewind() {
+        guard !cards.isEmpty else { return }
+        currentIndex = (currentIndex - 1 + cards.count) % cards.count
+    }
+}
+
 enum LabActivityID: String, CaseIterable, Hashable {
     case sumSprint
     case roomQuest
@@ -116,6 +153,10 @@ struct CapabilityLane: Identifiable, Equatable {
 
     var recallReadinessLabel: String {
         "\(starterMixMatchCount) Mix-Match cards ready"
+    }
+
+    var starterMixMatchSampler: MixMatchReviewSampler {
+        MixMatchReviewSampler(laneID: id, cards: starterMixMatchCards)
     }
 
     static let defaultExplorerLanes: [CapabilityLane] = [
