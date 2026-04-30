@@ -272,6 +272,61 @@ struct LabSensorAffordance: Identifiable, Equatable {
     }
 }
 
+enum LabLaneCardSection: Equatable {
+    case visualSummary
+    case promise
+    case progressStatus
+    case detailAffordance
+    case modes
+    case playStyles
+    case ageEntries
+    case recall
+    case activities
+    case comingSoon
+}
+
+struct LabLaneCardPresentation: Equatable {
+    let laneID: CapabilityLaneID
+    let isExpanded: Bool
+    let title: String
+    let promiseLine: String
+    let progressMicrocopy: String
+    let detailAffordanceLabel: String
+    let sections: [LabLaneCardSection]
+
+    init(lane: CapabilityLane, progress: CapabilityLaneProgress, isExpanded: Bool) {
+        self.laneID = lane.id
+        self.isExpanded = isExpanded
+        title = lane.title
+        promiseLine = lane.promise
+        progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
+        detailAffordanceLabel = isExpanded ? "Hide details" : "Show details"
+
+        var visibleSections: [LabLaneCardSection] = [
+            .visualSummary,
+            .promise,
+            .progressStatus,
+            .detailAffordance,
+        ]
+
+        if isExpanded {
+            visibleSections += [
+                .modes,
+                .playStyles,
+                .ageEntries,
+                .recall,
+                lane.isReady ? .activities : .comingSoon,
+            ]
+        }
+
+        sections = visibleSections
+    }
+
+    var showsDetails: Bool {
+        sections.contains(.activities) || sections.contains(.comingSoon)
+    }
+}
+
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
