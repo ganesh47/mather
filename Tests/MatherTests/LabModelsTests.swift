@@ -75,6 +75,34 @@ extension LabModelsTests {
         XCTAssertEqual(sampler.progressLabel, "1 / 8")
     }
 
+
+    func testCapabilityLaneProgressTracksModesAndRecommendation() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        var progress = numbers.emptyProgress
+
+        XCTAssertEqual(progress.progressLabel, "0 / 4 modes")
+        XCTAssertEqual(progress.masteryPercentLabel, "0% ready")
+        XCTAssertEqual(progress.nextRecommendedMode, .learn)
+
+        progress.markCompleted(.learn)
+        progress.markCompleted(.timed)
+
+        XCTAssertEqual(progress.progressLabel, "2 / 4 modes")
+        XCTAssertEqual(progress.masteryPercentLabel, "50% ready")
+        XCTAssertEqual(progress.nextRecommendedMode, .challenge)
+    }
+
+    func testCapabilityLaneProgressTracksReviewedCardsOnlyForItsLane() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
+        var progress = numbers.emptyProgress
+
+        progress.markReviewed(try XCTUnwrap(numbers.starterMixMatchCards.first))
+        progress.markReviewed(try XCTUnwrap(geometry.starterMixMatchCards.first))
+
+        XCTAssertEqual(progress.reviewedCardIDs.count, 1)
+    }
+
     func testStarterMixMatchCardsHaveChildReadablePromptsAndMatches() {
         let allCards = CapabilityLane.defaultExplorerLanes.flatMap(\.starterMixMatchCards)
 
