@@ -4,6 +4,7 @@ import SwiftUI
 struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
+    @State private var expandedLaneIDs: Set<CapabilityLaneID> = []
     @State private var expandedReviewLaneID: CapabilityLaneID?
     @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
@@ -17,9 +18,11 @@ struct LabView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         header
 
-                        LazyVGrid(columns: ResponsiveLayout.labColumns(for: proxy.size.width), spacing: 16) {
+                        let isCompact = Self.usesCollapsedLaneCards(for: proxy.size.width)
+
+                        LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: 16) {
                             ForEach(lanes) { lane in
-                                laneCard(lane)
+                                laneCard(lane, isCompact: isCompact)
                             }
                         }
                     }
@@ -58,67 +61,58 @@ struct LabView: View {
         }
     }
 
-    private func laneCard(_ lane: CapabilityLane) -> some View {
+    private static func usesCollapsedLaneCards(for availableWidth: CGFloat) -> Bool {
+        availableWidth < 700
+    }
+
+    private func labColumns(for availableWidth: CGFloat) -> [GridItem] {
+        Self.usesCollapsedLaneCards(for: availableWidth)
+            ? [GridItem(.flexible(), spacing: 16)]
+            : ResponsiveLayout.labColumns(for: availableWidth)
+    }
+
+    private func laneCard(_ lane: CapabilityLane, isCompact: Bool) -> some View {
+        let isExpanded = !isCompact || expandedLaneIDs.contains(lane.id)
+        let progress = progress(for: lane)
+        let presentation = LabLaneCardPresentation(lane: lane, progress: progress, isExpanded: isExpanded)
+        let tint = laneColor(lane.id)
+
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 12) {
-                Text(lane.emoji)
-                    .font(.system(size: 42))
-                    .frame(width: 56, height: 56)
-                    .background(laneColor(lane.id).opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            laneSummaryHeader(lane, presentation: presentation, tint: tint, isCompact: isCompact)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(lane.title)
-                            .font(.headline.weight(.black))
-                            .foregroundStyle(MatherTheme.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                        Text(lane.ageBandHint)
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(laneColor(lane.id))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .background(laneColor(lane.id).opacity(0.12), in: Capsule())
+            if isExpanded {
+                modeChips(lane.modes, tint: tint)
+                modeChoicePreview(lane, tint: tint)
+                ageEntryPreview(lane, tint: tint)
+                progressPreview(progress, tint: tint)
+                recallPreview(lane, tint: tint)
+                if expandedReviewLaneID == lane.id {
+                    recallReviewPanel(lane, tint: tint)
+                }
+
+                if lane.isReady {
+                    VStack(spacing: 8) {
+                        ForEach(lane.activities) { activity in
+                            activityButton(activity, tint: tint)
+                        }
                     }
-                    Text(lane.promise)
-                        .font(.caption.weight(.medium))
+                } else {
+                    Label("Coming soon", systemImage: "sparkles")
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                        .background(MatherTheme.panel.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .accessibilityLabel("\(lane.title) coming soon")
                 }
-            }
-
-            modeChips(lane.modes, tint: laneColor(lane.id))
-            modeChoicePreview(lane, tint: laneColor(lane.id))
-            ageEntryPreview(lane, tint: laneColor(lane.id))
-            progressPreview(progress(for: lane), tint: laneColor(lane.id))
-            recallPreview(lane, tint: laneColor(lane.id))
-            if expandedReviewLaneID == lane.id {
-                recallReviewPanel(lane, tint: laneColor(lane.id))
-            }
-
-            if lane.isReady {
-                VStack(spacing: 8) {
-                    ForEach(lane.activities) { activity in
-                        activityButton(activity, tint: laneColor(lane.id))
-                    }
-                }
-            } else {
-                Label("Coming soon", systemImage: "sparkles")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(10)
-                    .background(MatherTheme.panel.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .accessibilityLabel("\(lane.title) coming soon")
             }
         }
-        .padding(14)
+        .padding(isCompact ? 16 : 14)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(laneColor(lane.id).opacity(0.18), lineWidth: 1)
+                .stroke(tint.opacity(isExpanded ? 0.22 : 0.16), lineWidth: 1)
         )
         .shadow(
             color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08),
@@ -126,7 +120,76 @@ struct LabView: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(lane.accessibilityLabel)
-        .accessibilityHint(lane.accessibilityHint)
+        .accessibilityHint(isCompact && !isExpanded ? "Show details to choose activities, review cards, and sensor options." : lane.accessibilityHint)
+    }
+
+    private func laneSummaryHeader(
+        _ lane: CapabilityLane,
+        presentation: LabLaneCardPresentation,
+        tint: Color,
+        isCompact: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 14) {
+                Text(lane.emoji)
+                    .font(.system(size: isCompact ? 58 : 42))
+                    .frame(width: isCompact ? 84 : 56, height: isCompact ? 84 : 56)
+                    .background(tint.opacity(0.18), in: RoundedRectangle(cornerRadius: isCompact ? 18 : 16, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 8) {
+                        Text(presentation.title)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                        Text(lane.ageBandHint)
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(tint)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(tint.opacity(0.12), in: Capsule())
+                    }
+                    Text(presentation.promiseLine)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(isCompact ? 1 : 3)
+                        .minimumScaleFactor(0.82)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard isCompact else { return }
+                toggleLaneDetails(lane.id)
+            }
+
+            if isCompact {
+                HStack(spacing: 10) {
+                    Label(presentation.progressMicrocopy, systemImage: "chart.bar.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+
+                    Spacer(minLength: 8)
+
+                    Button {
+                        toggleLaneDetails(lane.id)
+                    } label: {
+                        Label(presentation.detailAffordanceLabel, systemImage: presentation.isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(tint)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .frame(minHeight: 56)
+                            .background(tint.opacity(0.10), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(presentation.detailAffordanceLabel) for \(lane.title)")
+                }
+            }
+        }
     }
 
     private func modeChoicePreview(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -414,6 +477,19 @@ struct LabView: View {
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
                  .twoFingerProtractor, .gravityArtist, .compassAngles, .waterCycle, .memoryMatch:
                 break
+            }
+        }
+    }
+
+    private func toggleLaneDetails(_ laneID: CapabilityLaneID) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+            if expandedLaneIDs.contains(laneID) {
+                expandedLaneIDs.remove(laneID)
+                if expandedReviewLaneID == laneID {
+                    expandedReviewLaneID = nil
+                }
+            } else {
+                expandedLaneIDs.insert(laneID)
             }
         }
     }

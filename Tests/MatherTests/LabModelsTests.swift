@@ -66,6 +66,45 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(numbers.starterMixMatchConceptPreview.contains("number-bond"))
     }
 
+    func testCollapsedLaneCardPresentationKeepsFirstPaintSparse() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        let presentation = LabLaneCardPresentation(
+            lane: numbers,
+            progress: numbers.emptyProgress,
+            isExpanded: false
+        )
+
+        XCTAssertEqual(presentation.title, "Numbers Lab")
+        XCTAssertEqual(presentation.detailAffordanceLabel, "Show details")
+        XCTAssertEqual(
+            presentation.sections,
+            [.visualSummary, .promise, .progressStatus, .detailAffordance]
+        )
+        XCTAssertFalse(presentation.showsDetails)
+        XCTAssertFalse(presentation.sections.contains(.modes))
+        XCTAssertFalse(presentation.sections.contains(.ageEntries))
+        XCTAssertFalse(presentation.sections.contains(.recall))
+        XCTAssertFalse(presentation.sections.contains(.activities))
+    }
+
+    func testExpandedLaneCardPresentationRestoresDetailsWithoutDroppingLaunches() throws {
+        let numbers = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        let presentation = LabLaneCardPresentation(
+            lane: numbers,
+            progress: numbers.emptyProgress,
+            isExpanded: true
+        )
+
+        XCTAssertEqual(presentation.detailAffordanceLabel, "Hide details")
+        XCTAssertTrue(presentation.showsDetails)
+        XCTAssertTrue(presentation.sections.contains(.modes))
+        XCTAssertTrue(presentation.sections.contains(.playStyles))
+        XCTAssertTrue(presentation.sections.contains(.ageEntries))
+        XCTAssertTrue(presentation.sections.contains(.recall))
+        XCTAssertTrue(presentation.sections.contains(.activities))
+        XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
+    }
+
 }
 
 extension LabModelsTests {
