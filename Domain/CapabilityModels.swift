@@ -47,8 +47,8 @@ enum CapabilityLaneRegistry {
             emoji: "🗺️",
             promise: "Use rooms, compass turns, direction words, and route clues.",
             ageBand: .ages4To12,
-            stages: [.concrete, .pictorial, .abstract, .transfer],
-            supportedPlayModes: [.explore, .challenge, .timed],
+            stages: [.concrete, .pictorial, .abstract, .transfer, .review],
+            supportedPlayModes: [.explore, .challenge, .timed, .review],
             starterConcepts: ["direction", "turn", "route", "map-symbol", "scale", "compass"]
         ),
         CapabilityLaneDescriptor(
@@ -84,4 +84,3 @@ enum CapabilityLaneRegistry {
         all.first { $0.id == laneID }
     }
 }
-

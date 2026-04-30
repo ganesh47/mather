@@ -77,6 +77,33 @@ struct LabRouteRegressionTests {
         }
     }
 
+    @Test
+    func everyCapabilityLaneExposesRecallEntries() {
+        let lanes = CapabilityLane.defaultExplorerLanes
+
+        #expect(Set(lanes.map(\.id)) == Set(CapabilityLaneID.allCases))
+
+        for lane in lanes {
+            #expect(!lane.recallEntries.isEmpty, "\(lane.id.rawValue) should expose recall cards")
+            #expect(lane.recallEntries.allSatisfy { $0.laneID == lane.id })
+            #expect(lane.modes.contains(.review), "\(lane.id.rawValue) should expose Review mode")
+        }
+    }
+
+    @Test
+    func recallReviewActionsMapBackToOwningLane() throws {
+        for lane in CapabilityLane.defaultExplorerLanes {
+            let entry = try #require(lane.firstRecallEntry)
+            let actions = entry.choiceActions
+
+            #expect(!actions.isEmpty)
+            #expect(actions.allSatisfy { $0.laneID == lane.id })
+            #expect(actions.allSatisfy { $0.cardID == entry.card.id })
+            #expect(Set(actions.map(\.choiceID)) == Set(entry.card.choices.map(\.id)))
+            #expect(actions.filter(\.isCorrect).map(\.choiceID) == entry.card.correctChoices.map(\.id))
+        }
+    }
+
     private func makeEngine() -> VerticalSliceEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: "LabRouteRegressionTests")!)
         flags.testModeEnabled = true

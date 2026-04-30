@@ -78,6 +78,39 @@ struct MixMatchReviewSampler: Equatable {
     }
 }
 
+struct LaneRecallEntry: Identifiable, Equatable {
+    let laneID: CapabilityLaneID
+    let card: LearningCard
+
+    var id: String { card.id }
+
+    var title: String {
+        card.prompt.displayText ?? card.prompt.speechText
+    }
+
+    var answerLabel: String {
+        card.answer.displayText ?? card.answer.speechText
+    }
+
+    var choiceActions: [LaneRecallReviewAction] {
+        card.choices.map { choice in
+            LaneRecallReviewAction(
+                laneID: laneID,
+                cardID: card.id,
+                choiceID: choice.id,
+                isCorrect: choice.isCorrect
+            )
+        }
+    }
+}
+
+struct LaneRecallReviewAction: Equatable {
+    let laneID: CapabilityLaneID
+    let cardID: String
+    let choiceID: String
+    let isCorrect: Bool
+}
+
 enum LabActivityID: String, CaseIterable, Hashable {
     case sumSprint
     case roomQuest
@@ -363,6 +396,16 @@ struct CapabilityLane: Identifiable, Equatable {
         Self.starterMixMatchCardsByLane[id, default: []]
     }
 
+    var recallEntries: [LaneRecallEntry] {
+        Self.starterLearningCardProvider
+            .starterCards(for: id)
+            .map { LaneRecallEntry(laneID: id, card: $0) }
+    }
+
+    var firstRecallEntry: LaneRecallEntry? {
+        recallEntries.first
+    }
+
     var starterMixMatchCount: Int { starterMixMatchCards.count }
 
     var starterMixMatchConceptPreview: String {
@@ -376,7 +419,11 @@ struct CapabilityLane: Identifiable, Equatable {
     }
 
     var recallReadinessLabel: String {
-        "\(starterMixMatchCount) Mix-Match cards ready"
+        let learningCardCount = recallEntries.count
+        guard learningCardCount > 0 else {
+            return "\(starterMixMatchCount) Mix-Match cards ready"
+        }
+        return "\(learningCardCount) recall card + \(starterMixMatchCount) Mix-Match ready"
     }
 
     var recallAccessibilityLabel: String {
@@ -498,7 +545,7 @@ struct CapabilityLane: Identifiable, Equatable {
             emoji: "🗺️",
             promise: "Use rooms, compass turns, direction words, and route clues.",
             ageBandHint: "Ages 4–12",
-            modes: [.explore, .challenge, .timed],
+            modes: [.explore, .challenge, .timed, .review],
             ageEntries: [
                 CapabilityAgeEntry(ageBand: .preschool, posture: "left/right and finding", entryPlay: "room clues"),
                 CapabilityAgeEntry(ageBand: .earlyElementary, posture: "directions and turns", entryPlay: "compass walk"),
@@ -573,6 +620,8 @@ struct CapabilityLane: Identifiable, Equatable {
             activities: []
         ),
     ]
+
+    static let starterLearningCardProvider = DeterministicStarterLearningCardProvider()
 
     static let starterMixMatchCardsByLane: [CapabilityLaneID: [MixMatchCard]] = [
         .numbers: [
