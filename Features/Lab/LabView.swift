@@ -85,6 +85,7 @@ struct LabView: View {
             }
 
             modeChips(lane.modes, tint: laneColor(lane.id))
+            progressPreview(lane.emptyProgress, tint: laneColor(lane.id))
             recallPreview(lane, tint: laneColor(lane.id))
             if expandedReviewLaneID == lane.id {
                 mixMatchSampler(lane, tint: laneColor(lane.id))
@@ -119,6 +120,29 @@ struct LabView: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(lane.title)
+    }
+
+    private func progressPreview(_ progress: CapabilityLaneProgress, tint: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "chart.bar.fill")
+                .font(.caption.weight(.black))
+                .foregroundStyle(tint)
+                .frame(width: 24, height: 24)
+                .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(progress.progressSummaryLabel)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(progress.nextRecommendedModeLabel)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(MatherTheme.panel.opacity(0.58), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Lane progress \(progress.progressSummaryLabel). \(progress.nextRecommendedModeLabel)")
     }
 
     private func recallPreview(_ lane: CapabilityLane, tint: Color) -> some View {
