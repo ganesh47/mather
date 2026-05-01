@@ -213,6 +213,7 @@ struct MixMatchRecallView: View {
     private let evaluator: MixMatchRecallChoiceEvaluator
     let onCorrect: (MixMatchRecallAttempt) -> Void
     let onIncorrect: (MixMatchRecallAttempt) -> Void
+    @State private var latestAttempt: MixMatchRecallAttempt?
 
     init(
         prompt: LearningCardViewModel? = nil,
@@ -250,15 +251,30 @@ struct MixMatchRecallView: View {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: 12)], spacing: 12) {
                 ForEach(choices) { choice in
+                    let attempt = latestAttempt
+                    let feedbackCard = LearningCardViewModel(
+                        id: choice.card.id,
+                        display: choice.card.display,
+                        accessibilityLabel: choice.card.accessibilityLabel,
+                        accessibilityHint: choice.card.accessibilityHint,
+                        isFaceDown: choice.card.isFaceDown,
+                        isSelected: attempt?.choiceID == choice.id,
+                        isMatched: attempt?.choiceID == choice.id && attempt?.isCorrect == true,
+                        isIncorrect: attempt?.choiceID == choice.id && attempt?.isCorrect == false
+                    )
+
                     Button {
                         let attempt = evaluator.attempt(choiceID: choice.id)
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.58)) {
+                            latestAttempt = attempt
+                        }
                         if attempt.isCorrect {
                             onCorrect(attempt)
                         } else {
                             onIncorrect(attempt)
                         }
                     } label: {
-                        LearningCardView(model: choice.card, minTouchSize: 80)
+                        LearningCardView(model: feedbackCard, minTouchSize: 80)
                             .frame(minHeight: 96)
                     }
                     .buttonStyle(.plain)

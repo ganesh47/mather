@@ -12,10 +12,10 @@ enum WaterCycleLessonThread {
                 prompt: "Look at each picture and hear what the water is doing."
             ),
             LessonPlayStage(
-                id: "flip-recall",
+                id: "picture-name-match",
                 kind: .invertedRecall,
-                title: "Flip Recall",
-                prompt: "Flip the hidden card, say the idea, then check the picture."
+                title: "Picture Match",
+                prompt: "Match the open picture card to its water cycle name."
             ),
             LessonPlayStage(
                 id: "safe-ask",

@@ -135,8 +135,10 @@ extension WaterCycleLabTests {
         #expect(state.lessonThread.activeStage.kind == .invertedRecall)
         #expect(state.isRecallCardRevealed == false)
 
-        state.revealRecallCard()
+        let openMatchAttempt = state.recordOpenMatchChoice(id: "sun-heat")
+        #expect(openMatchAttempt == MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
         #expect(state.isRecallCardRevealed)
+        #expect(state.openMatchFeedback == .correct(choiceID: "sun-heat"))
 
         state.completeCurrentLessonStage()
         #expect(state.lessonThread.activeStage.kind == .contextualAsk)
@@ -170,17 +172,17 @@ extension WaterCycleLabTests {
 
         for _ in 0..<4 { state.advanceLessonCard() }
         #expect(state.isOnLastLessonCard)
-        #expect(state.activeLessonPrimaryActionTitle == "Start flip recall")
+        #expect(state.activeLessonPrimaryActionTitle == "Start picture match")
 
         state.completeCurrentLessonStage()
         #expect(state.lessonThread.activeStage.kind == .invertedRecall)
-        #expect(state.activeLessonPrimaryActionTitle == "Flip recall card")
+        #expect(state.activeLessonPrimaryActionTitle == "Pick the matching name")
 
-        state.revealRecallCard()
-        #expect(state.activeLessonPrimaryActionTitle == "Next recall")
+        _ = state.recordOpenMatchChoice(id: "sun-heat")
+        #expect(state.activeLessonPrimaryActionTitle == "Next picture")
 
         for _ in 0..<4 { state.advanceLessonCard() }
-        state.revealRecallCard()
+        _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
         #expect(state.activeLessonPrimaryActionTitle == "Ask this card")
 
         state.completeCurrentLessonStage()
@@ -218,5 +220,35 @@ extension WaterCycleLabTests {
         #expect(state.lessonThread.isComplete)
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
         #expect(state.cyclesCompleted == 1)
+    }
+}
+
+
+extension WaterCycleLabTests {
+    @Test func openPictureNameMatchRecordsDeterministicFeedback() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+
+        #expect(state.lessonThread.activeStage.title == "Picture Match")
+        #expect(state.isRecallCardRevealed == false)
+
+        let wrong = state.recordOpenMatchChoice(id: "evaporation")
+        #expect(wrong == MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: false))
+        #expect(state.openMatchFeedback == .incorrect(choiceID: "evaporation"))
+        #expect(state.isRecallCardRevealed == false)
+        #expect(state.openMatchedCardIDs.isEmpty)
+
+        let correct = state.recordOpenMatchChoice(id: "sun-heat")
+        #expect(correct == MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
+        #expect(state.openMatchFeedback == .correct(choiceID: "sun-heat"))
+        #expect(state.isRecallCardRevealed)
+        #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
+
+        state.advanceLessonCard()
+        #expect(state.currentLessonCard.id == "evaporation")
+        #expect(state.openMatchFeedback == nil)
+        #expect(state.isRecallCardRevealed == false)
+        #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
     }
 }
