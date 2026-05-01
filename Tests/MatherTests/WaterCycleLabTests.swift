@@ -253,6 +253,12 @@ extension WaterCycleLabTests {
         state.completeCurrentLessonStage()
         state.completeCurrentLessonStage()
         state.advanceInterestingFact()
+        #expect(state.currentInterestingFact.title == "Rainiest place")
+
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
+        state.advanceInterestingFact()
         #expect(state.currentInterestingFact.title == "Driest desert")
 
         state.reset()
