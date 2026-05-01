@@ -299,7 +299,15 @@ final class ScreenshotTests: XCTestCase {
             replayLesson = app.buttons["Replay stage"]
         }
         XCTAssertTrue(scrollUntilExists(replayLesson, in: app, direction: .up, maxSwipes: 4))
-        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-reset"], in: app, direction: .up, maxSwipes: 4))
+
+        let resetByIdentifier = app.buttons["water-cycle-reset"]
+        let resetAction: XCUIElement
+        if resetByIdentifier.exists {
+            resetAction = resetByIdentifier
+        } else {
+            resetAction = app.buttons["Reset"]
+        }
+        XCTAssertTrue(scrollUntilExists(resetAction, in: app, direction: .up, maxSwipes: 4))
         snapshot(app, "WaterCycle-Complete-Compact")
     }
 
@@ -632,9 +640,13 @@ final class ScreenshotTests: XCTestCase {
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
-        if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3) {
-            completeSplit.tap()
-        } else {
+        if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
+           !sumSprintTitle.exists {
+            completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            _ = sumSprintTitle.waitForExistence(timeout: 3)
+        }
+
+        if !sumSprintTitle.exists {
             for _ in 0..<leftPanCount {
                 if sumSprintTitle.exists { break }
                 tapGravityIncrement(
