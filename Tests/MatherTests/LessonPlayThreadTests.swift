@@ -8,7 +8,7 @@ struct LessonPlayThreadTests {
             title: "Sample",
             stages: [
                 LessonPlayStage(id: "look", kind: .lookLearnFlashcards, title: "Look", prompt: "Look."),
-                LessonPlayStage(id: "recall", kind: .invertedRecall, title: "Recall", prompt: "Recall."),
+                LessonPlayStage(id: "picture-name", kind: .pictureNameMatch, title: "Picture-Name", prompt: "Match."),
                 LessonPlayStage(id: "ask", kind: .contextualAsk, title: "Ask", prompt: "Ask."),
                 LessonPlayStage(id: "match", kind: .mixMatchFinale, title: "Match", prompt: "Match.")
             ],
@@ -22,7 +22,7 @@ struct LessonPlayThreadTests {
         #expect(thread.progress == 0)
 
         thread.completeActiveStage()
-        #expect(thread.activeStage.kind == .invertedRecall)
+        #expect(thread.activeStage.kind == .pictureNameMatch)
         #expect(thread.progressLabel == "Level 2 of 4")
         #expect(thread.progress == 0.25)
 

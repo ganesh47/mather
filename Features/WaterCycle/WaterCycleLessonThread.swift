@@ -13,9 +13,9 @@ enum WaterCycleLessonThread {
             ),
             LessonPlayStage(
                 id: "picture-name-match",
-                kind: .invertedRecall,
-                title: "Picture Match",
-                prompt: "Match the open picture card to its water cycle name."
+                kind: .pictureNameMatch,
+                title: "Picture-Name Match",
+                prompt: "Match each open picture to its water cycle name."
             ),
             LessonPlayStage(
                 id: "safe-ask",

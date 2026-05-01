@@ -2,7 +2,7 @@ import Foundation
 
 enum LessonPlayStageKind: String, Codable, CaseIterable, Equatable, Hashable {
     case lookLearnFlashcards
-    case invertedRecall
+    case pictureNameMatch
     case contextualAsk
     case mixMatchFinale
 }

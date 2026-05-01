@@ -107,13 +107,14 @@ extension WaterCycleLabTests {
 
         state.revealFlashcardAnswer()
         state.completeCurrentLessonStage()
-        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
+        #expect(state.lessonThread.activeStage.kind == .pictureNameMatch)
 
         state.reset()
         #expect(state.stage == .wonder)
         #expect(state.flashcardIndex == 0)
         #expect(state.isFlashcardAnswerRevealed == false)
         #expect(state.lessonThread.activeStage.kind == .lookLearnFlashcards)
+        #expect(state.pictureNameMatchCorrectCardIDs.isEmpty)
         #expect(state.mixMatchCorrectCardIDs.isEmpty)
     }
 
@@ -124,24 +125,26 @@ extension WaterCycleLabTests {
         #expect(state.stage == .complete)
         #expect(state.lessonThread.stages.map(\.kind) == [
             .lookLearnFlashcards,
-            .invertedRecall,
+            .pictureNameMatch,
             .contextualAsk,
             .mixMatchFinale
         ])
+        #expect(state.lessonThread.stages[1].title == "Picture-Name Match")
+        #expect(state.lessonThread.stages[1].prompt.contains("open picture"))
         #expect(state.currentLessonCard.title == "Sun Heat")
         #expect(state.currentLessonCard.assetName == "MemoryWaterCycleSunHeat")
 
         state.completeCurrentLessonStage()
-        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
-        #expect(state.isRecallCardRevealed == false)
+        #expect(state.lessonThread.activeStage.kind == .pictureNameMatch)
+        #expect(state.currentPictureNameMatchCard.answer.id == "sun-heat")
+        #expect(state.pictureNameMatchProgressLabel == "Match 0 of 5")
 
-        let openMatchAttempt = state.recordOpenMatchChoice(id: "sun-heat")
-        #expect(openMatchAttempt == MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
-        #expect(state.isRecallCardRevealed)
-        #expect(state.openMatchFeedback == .correct(choiceID: "sun-heat"))
-
-        state.completeCurrentLessonStage()
+        for card in WaterCycleLessonThread.mixMatchCards {
+            let attempt = MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true)
+            state.recordPictureNameMatchAttempt(attempt)
+        }
         #expect(state.lessonThread.activeStage.kind == .contextualAsk)
+        #expect(state.pictureNameMatchProgressLabel == "Match 5 of 5")
         #expect(state.askSession.cardID == "sun-heat")
         #expect(state.askSession.suggestedTurns.count == 2)
 
@@ -175,17 +178,12 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Start picture match")
 
         state.completeCurrentLessonStage()
-        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
-        #expect(state.activeLessonPrimaryActionTitle == "Pick the matching name")
+        #expect(state.lessonThread.activeStage.kind == .pictureNameMatch)
+        #expect(state.activeLessonPrimaryActionTitle == "Hear match clue")
 
-        _ = state.recordOpenMatchChoice(id: "sun-heat")
-        #expect(state.activeLessonPrimaryActionTitle == "Next picture")
-
-        for _ in 0..<4 { state.advanceLessonCard() }
-        _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
-        #expect(state.activeLessonPrimaryActionTitle == "Ask this card")
-
-        state.completeCurrentLessonStage()
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordPictureNameMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
         #expect(state.lessonThread.activeStage.kind == .contextualAsk)
         #expect(state.activeLessonPrimaryActionTitle == "Ask suggested question")
 
@@ -221,6 +219,31 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
         #expect(state.cyclesCompleted == 1)
     }
+
+    @Test func pictureNameMatchIgnoresIncorrectAttemptsAndAdvancesOnCurrentCorrectMatch() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+
+        #expect(state.lessonThread.activeStage.kind == .pictureNameMatch)
+        #expect(state.currentPictureNameMatchCard.answer.id == "sun-heat")
+
+        state.recordPictureNameMatchAttempt(MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: false))
+        #expect(state.currentPictureNameMatchCard.answer.id == "sun-heat")
+        #expect(state.pictureNameMatchCorrectCardIDs.isEmpty)
+        #expect(state.pictureNameMatchProgressLabel == "Match 0 of 5")
+        #expect(state.lessonThread.activeStage.kind == .pictureNameMatch)
+
+        state.recordPictureNameMatchAttempt(MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: true))
+        #expect(state.currentPictureNameMatchCard.answer.id == "sun-heat")
+        #expect(state.pictureNameMatchCorrectCardIDs.isEmpty)
+
+        state.recordPictureNameMatchAttempt(MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
+        #expect(state.pictureNameMatchCorrectCardIDs == Set(["sun-heat"]))
+        #expect(state.currentPictureNameMatchCard.answer.id == "evaporation")
+        #expect(state.pictureNameMatchProgressLabel == "Match 1 of 5")
+    }
+
     @Test func mixMatchFinaleIgnoresIncorrectAttemptsAndAdvancesOnCurrentCorrectMatch() {
         var state = WaterCycleLabState()
         for _ in 0..<5 { state.advance() }
@@ -273,30 +296,4 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
     }
 
-    @Test func openPictureNameMatchRecordsDeterministicFeedback() {
-        var state = WaterCycleLabState()
-        for _ in 0..<5 { state.advance() }
-        state.completeCurrentLessonStage()
-
-        #expect(state.lessonThread.activeStage.title == "Picture Match")
-        #expect(state.isRecallCardRevealed == false)
-
-        let wrong = state.recordOpenMatchChoice(id: "evaporation")
-        #expect(wrong == MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: false))
-        #expect(state.openMatchFeedback == .incorrect(choiceID: "evaporation"))
-        #expect(state.isRecallCardRevealed == false)
-        #expect(state.openMatchedCardIDs.isEmpty)
-
-        let correct = state.recordOpenMatchChoice(id: "sun-heat")
-        #expect(correct == MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
-        #expect(state.openMatchFeedback == .correct(choiceID: "sun-heat"))
-        #expect(state.isRecallCardRevealed)
-        #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
-
-        state.advanceLessonCard()
-        #expect(state.currentLessonCard.id == "evaporation")
-        #expect(state.openMatchFeedback == nil)
-        #expect(state.isRecallCardRevealed == false)
-        #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
-    }
 }
