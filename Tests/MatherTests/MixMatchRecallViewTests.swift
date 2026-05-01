@@ -11,6 +11,26 @@ struct MixMatchRecallViewTests {
     }
 
     @Test
+    func feedbackStateMarksCorrectAndIncorrectAttempts() {
+        var feedback = MixMatchRecallFeedbackState()
+
+        feedback.markAttempt(MixMatchRecallAttempt(choiceID: "ten", isCorrect: true))
+        #expect(feedback.selectedChoiceID == "ten")
+        #expect(feedback.matchedChoiceID == "ten")
+        #expect(feedback.incorrectChoiceID == nil)
+        #expect(feedback.isResolving)
+
+        feedback.clear()
+        #expect(feedback.hasActiveFeedback == false)
+
+        feedback.markAttempt(MixMatchRecallAttempt(choiceID: "nine", isCorrect: false))
+        #expect(feedback.selectedChoiceID == "nine")
+        #expect(feedback.matchedChoiceID == nil)
+        #expect(feedback.incorrectChoiceID == "nine")
+        #expect(feedback.isResolving)
+    }
+
+    @Test
     func learningCardAdapterCreatesPromptAndChoiceCards() {
         let correct = CardAnswer(id: "triangle", speechText: "triangle", displayText: "Triangle")
         let card = LearningCard(

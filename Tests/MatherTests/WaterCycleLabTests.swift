@@ -220,6 +220,33 @@ extension WaterCycleLabTests {
         #expect(state.cyclesCompleted == 1)
     }
 
+
+    @Test func mixMatchFinaleIgnoresIncorrectAttemptsAndAdvancesOnCurrentCorrectMatch() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+
+        #expect(state.lessonThread.activeStage.kind == .mixMatchFinale)
+        #expect(state.currentMixMatchCard.answer.id == "sun-heat")
+
+        state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: false))
+        #expect(state.currentMixMatchCard.answer.id == "sun-heat")
+        #expect(state.mixMatchCorrectCardIDs.isEmpty)
+        #expect(state.mixMatchProgressLabel == "Match 0 of 5")
+        #expect(state.lessonThread.isComplete == false)
+
+        state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: "evaporation", isCorrect: true))
+        #expect(state.currentMixMatchCard.answer.id == "sun-heat")
+        #expect(state.mixMatchCorrectCardIDs.isEmpty)
+
+        state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: "sun-heat", isCorrect: true))
+        #expect(state.mixMatchCorrectCardIDs == Set(["sun-heat"]))
+        #expect(state.currentMixMatchCard.answer.id == "evaporation")
+        #expect(state.mixMatchProgressLabel == "Match 1 of 5")
+    }
+
     @Test func completedLessonThreadExposesDeterministicInterestingFacts() {
         var state = WaterCycleLabState()
         for _ in 0..<5 { state.advance() }
@@ -245,4 +272,5 @@ extension WaterCycleLabTests {
         #expect(facts.allSatisfy { !$0.title.isEmpty && !$0.body.isEmpty })
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
     }
+
 }

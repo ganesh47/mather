@@ -67,6 +67,36 @@ struct MixMatchRecallChoiceEvaluator: Equatable {
     }
 }
 
+struct MixMatchRecallFeedbackState: Equatable {
+    private(set) var selectedChoiceID: String?
+    private(set) var matchedChoiceID: String?
+    private(set) var incorrectChoiceID: String?
+    private(set) var isResolving = false
+
+    var hasActiveFeedback: Bool {
+        selectedChoiceID != nil || matchedChoiceID != nil || incorrectChoiceID != nil || isResolving
+    }
+
+    mutating func markAttempt(_ attempt: MixMatchRecallAttempt) {
+        selectedChoiceID = attempt.choiceID
+        isResolving = true
+        if attempt.isCorrect {
+            matchedChoiceID = attempt.choiceID
+            incorrectChoiceID = nil
+        } else {
+            matchedChoiceID = nil
+            incorrectChoiceID = attempt.choiceID
+        }
+    }
+
+    mutating func clear() {
+        selectedChoiceID = nil
+        matchedChoiceID = nil
+        incorrectChoiceID = nil
+        isResolving = false
+    }
+}
+
 extension LearningCard {
     var mixMatchPromptCard: LearningCardViewModel {
         let display: LearningCardDisplay
@@ -208,11 +238,16 @@ struct LearningCardView: View {
 
 @MainActor
 struct MixMatchRecallView: View {
+    private static let correctFeedbackDuration: Duration = .milliseconds(520)
+    private static let incorrectFeedbackDuration: Duration = .milliseconds(420)
+
     let prompt: LearningCardViewModel?
     let choices: [MixMatchRecallChoice]
     private let evaluator: MixMatchRecallChoiceEvaluator
     let onCorrect: (MixMatchRecallAttempt) -> Void
     let onIncorrect: (MixMatchRecallAttempt) -> Void
+    @State private var feedback = MixMatchRecallFeedbackState()
+    @State private var feedbackTask: Task<Void, Never>?
 
     init(
         prompt: LearningCardViewModel? = nil,
@@ -251,20 +286,59 @@ struct MixMatchRecallView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: 12)], spacing: 12) {
                 ForEach(choices) { choice in
                     Button {
-                        let attempt = evaluator.attempt(choiceID: choice.id)
-                        if attempt.isCorrect {
-                            onCorrect(attempt)
-                        } else {
-                            onIncorrect(attempt)
-                        }
+                        handleChoice(choice)
                     } label: {
-                        LearningCardView(model: choice.card, minTouchSize: 80)
+                        LearningCardView(model: feedbackCard(for: choice), minTouchSize: 80)
                             .frame(minHeight: 96)
                     }
                     .buttonStyle(.plain)
+                    .disabled(feedback.isResolving)
                     .accessibilityIdentifier("mix-match-choice-\(choice.id)")
                     .accessibilityAddTraits(.isButton)
                 }
+            }
+        }
+        .onDisappear {
+            feedbackTask?.cancel()
+        }
+    }
+
+    private func feedbackCard(for choice: MixMatchRecallChoice) -> LearningCardViewModel {
+        var card = choice.card
+        card.isSelected = feedback.selectedChoiceID == choice.id
+        card.isMatched = feedback.matchedChoiceID == choice.id
+        card.isIncorrect = feedback.incorrectChoiceID == choice.id
+        return card
+    }
+
+    private func handleChoice(_ choice: MixMatchRecallChoice) {
+        guard !feedback.isResolving else { return }
+        let attempt = evaluator.attempt(choiceID: choice.id)
+        feedbackTask?.cancel()
+
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.62)) {
+            feedback.markAttempt(attempt)
+        }
+
+        let feedbackDuration = attempt.isCorrect
+            ? Self.correctFeedbackDuration
+            : Self.incorrectFeedbackDuration
+
+        feedbackTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: feedbackDuration)
+            } catch {
+                return
+            }
+
+            if attempt.isCorrect {
+                onCorrect(attempt)
+            } else {
+                onIncorrect(attempt)
+            }
+
+            withAnimation(.easeOut(duration: 0.12)) {
+                feedback.clear()
             }
         }
     }
