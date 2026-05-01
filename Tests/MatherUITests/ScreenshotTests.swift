@@ -280,7 +280,7 @@ final class ScreenshotTests: XCTestCase {
         }
 
         XCTAssertTrue(app.staticTexts["Look & Learn"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Card 1 of 5"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Level 1 of 4 - Card 1 of 5"].waitForExistence(timeout: 5))
 
         let lessonPrimaryByIdentifier = app.buttons["water-cycle-lesson-primary-action"]
         let lessonPrimaryAction: XCUIElement
