@@ -279,13 +279,10 @@ final class ScreenshotTests: XCTestCase {
             tapWhenReachable(primaryAction, in: app, scrollDirection: .up)
         }
 
-        let completedPrimaryAction = app.buttons
-            .matching(identifier: "water-cycle-primary-action")
-            .matching(NSPredicate(format: "label CONTAINS[c] %@", "Try the cycle again"))
-            .firstMatch
-        XCTAssertTrue(completedPrimaryAction.waitForExistence(timeout: 5))
-        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-replay-prompt"], in: app, direction: .up, maxSwipes: 4))
-        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-reset"], in: app, direction: .up, maxSwipes: 4))
+        XCTAssertTrue(app.otherElements["water-cycle-playable-lesson"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-lesson-primary-action"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-replay-lesson-stage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
         snapshot(app, "WaterCycle-Complete-Compact")
     }
 
