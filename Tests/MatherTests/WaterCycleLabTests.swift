@@ -219,4 +219,45 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
         #expect(state.cyclesCompleted == 1)
     }
+
+    @Test func completedLessonThreadExposesDeterministicInterestingFacts() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
+
+        #expect(state.lessonThread.isComplete)
+        #expect(WaterCycleInterestingFact.completionFacts.count >= 4)
+        #expect(state.currentInterestingFact.title == "Rainiest place")
+        #expect(state.interestingFactProgressLabel == "Fact 1 of 4")
+        #expect(state.currentInterestingFact.detail.contains("Mawsynram"))
+
+        state.advanceInterestingFact()
+        #expect(state.currentInterestingFact.title == "Driest desert")
+        #expect(state.interestingFactProgressLabel == "Fact 2 of 4")
+    }
+
+    @Test func interestingFactsIgnoreEarlyAdvanceAndResetWithReplay() {
+        var state = WaterCycleLabState()
+
+        state.advanceInterestingFact()
+        #expect(state.currentInterestingFact.title == "Rainiest place")
+
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.advanceInterestingFact()
+        #expect(state.currentInterestingFact.title == "Driest desert")
+
+        state.reset()
+        #expect(state.stage == .wonder)
+        #expect(state.currentInterestingFact.title == "Rainiest place")
+        #expect(state.interestingFactProgressLabel == "Fact 1 of 4")
+    }
 }

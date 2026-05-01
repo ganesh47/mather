@@ -67,6 +67,39 @@ struct WaterCycleConceptFlashcard: Equatable, Identifiable {
     ]
 }
 
+struct WaterCycleInterestingFact: Equatable, Identifiable {
+    let id: String
+    let title: String
+    let detail: String
+
+    var accessibilityText: String {
+        "Interesting water fact: \(title). \(detail)"
+    }
+
+    static let completionFacts: [WaterCycleInterestingFact] = [
+        WaterCycleInterestingFact(
+            id: "rainiest-place",
+            title: "Rainiest place",
+            detail: "Mawsynram, India is famous for some of the highest average yearly rainfall on Earth."
+        ),
+        WaterCycleInterestingFact(
+            id: "driest-desert",
+            title: "Driest desert",
+            detail: "Parts of the Atacama Desert can go years with almost no rain."
+        ),
+        WaterCycleInterestingFact(
+            id: "ocean-evaporation",
+            title: "Ocean engine",
+            detail: "Most water vapor that becomes rain starts by evaporating from the ocean."
+        ),
+        WaterCycleInterestingFact(
+            id: "tiny-freshwater",
+            title: "Freshwater is rare",
+            detail: "Only a tiny part of Earth’s water is fresh water we can easily use."
+        )
+    ]
+}
+
 struct WaterCycleLabState: Equatable {
     private(set) var stage: WaterCycleStage = .wonder
     private(set) var vaporDrops = 0
@@ -83,6 +116,7 @@ struct WaterCycleLabState: Equatable {
     private(set) var latestAskResponse: LessonSafeAskResponse?
     private(set) var mixMatchIndex = 0
     private(set) var mixMatchCorrectCardIDs: Set<String> = []
+    private(set) var interestingFactIndex = 0
 
     var currentFlashcard: WaterCycleConceptFlashcard {
         WaterCycleConceptFlashcard.reviewDeck[flashcardIndex % WaterCycleConceptFlashcard.reviewDeck.count]
@@ -94,6 +128,14 @@ struct WaterCycleLabState: Equatable {
 
     var currentMixMatchCard: LearningCard {
         WaterCycleLessonThread.mixMatchCards[mixMatchIndex % WaterCycleLessonThread.mixMatchCards.count]
+    }
+
+    var currentInterestingFact: WaterCycleInterestingFact {
+        WaterCycleInterestingFact.completionFacts[interestingFactIndex % WaterCycleInterestingFact.completionFacts.count]
+    }
+
+    var interestingFactProgressLabel: String {
+        "Fact \(interestingFactIndex + 1) of \(WaterCycleInterestingFact.completionFacts.count)"
     }
 
     var flashcardProgressLabel: String {
@@ -201,6 +243,7 @@ struct WaterCycleLabState: Equatable {
             flashcardIndex = 0
             isFlashcardAnswerRevealed = false
             resetLessonThread()
+            interestingFactIndex = max(cyclesCompleted - 1, 0) % WaterCycleInterestingFact.completionFacts.count
             stage = .complete
         case .complete:
             reset()
@@ -216,6 +259,11 @@ struct WaterCycleLabState: Equatable {
         guard stage == .complete else { return }
         flashcardIndex = (flashcardIndex + 1) % WaterCycleConceptFlashcard.reviewDeck.count
         isFlashcardAnswerRevealed = false
+    }
+
+    mutating func advanceInterestingFact() {
+        guard stage == .complete, lessonThread.isComplete else { return }
+        interestingFactIndex = (interestingFactIndex + 1) % WaterCycleInterestingFact.completionFacts.count
     }
 
     mutating func advanceLessonCard() {
@@ -286,6 +334,7 @@ struct WaterCycleLabState: Equatable {
         latestAskResponse = nil
         mixMatchIndex = 0
         mixMatchCorrectCardIDs = []
+        interestingFactIndex = 0
     }
 }
 
@@ -798,6 +847,8 @@ struct WaterCycleLabView: View {
                 Label("Lesson thread complete", systemImage: "checkmark.seal.fill")
                     .font(.headline.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
+
+                completionFactCard
             } else {
                 MixMatchRecallView(
                     learningCard: state.currentMixMatchCard,
@@ -813,6 +864,45 @@ struct WaterCycleLabView: View {
                 .accessibilityIdentifier("water-cycle-mix-match-finale")
             }
         }
+    }
+
+    private var completionFactCard: some View {
+        let fact = state.currentInterestingFact
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Label("Interesting fact", systemImage: "sparkles")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                Spacer()
+                Text(state.interestingFactProgressLabel)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+
+            Text(fact.title)
+                .font(.system(size: 21, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+
+            Text(fact.detail)
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                state.advanceInterestingFact()
+                speakLessonText(state.currentInterestingFact.accessibilityText)
+            } label: {
+                Label("Next fact", systemImage: "sparkles")
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
+            .accessibilityIdentifier("water-cycle-next-interesting-fact")
+        }
+        .padding(14)
+        .background(MatherTheme.warm.opacity(0.18), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(fact.accessibilityText)
+        .accessibilityIdentifier("water-cycle-interesting-fact-card")
     }
 
     private func lessonPlayActionBar(availableWidth: CGFloat) -> some View {
