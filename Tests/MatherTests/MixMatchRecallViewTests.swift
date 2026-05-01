@@ -13,6 +13,7 @@ struct MixMatchRecallViewTests {
     @Test
     func feedbackStateMarksCorrectAndIncorrectAttempts() {
         var feedback = MixMatchRecallFeedbackState()
+        #expect(feedback.hasActiveFeedback == false)
 
         feedback.markAttempt(MixMatchRecallAttempt(choiceID: "ten", isCorrect: true))
         #expect(feedback.selectedChoiceID == "ten")

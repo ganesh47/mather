@@ -1,5 +1,22 @@
 import SwiftUI
 
+
+enum WaterCycleOpenMatchFeedback: Equatable {
+    case correct(choiceID: String)
+    case incorrect(choiceID: String)
+
+    var choiceID: String {
+        switch self {
+        case .correct(let choiceID), .incorrect(let choiceID): choiceID
+        }
+    }
+
+    var isCorrect: Bool {
+        if case .correct = self { return true }
+        return false
+    }
+}
+
 enum WaterCycleStage: String, CaseIterable, Equatable {
     case wonder
     case evaporation
@@ -107,6 +124,8 @@ struct WaterCycleLabState: Equatable {
     private(set) var lessonThread = WaterCycleLessonThread.thread
     private(set) var lessonCardIndex = 0
     private(set) var isRecallCardRevealed = false
+    private(set) var openMatchFeedback: WaterCycleOpenMatchFeedback?
+    private(set) var openMatchedCardIDs: Set<String> = []
     private(set) var askSession = WaterCycleLessonThread.askSession(for: WaterCycleLessonThread.cards[0])
     private(set) var latestAskResponse: LessonSafeAskResponse?
     private(set) var mixMatchIndex = 0
@@ -123,6 +142,7 @@ struct WaterCycleLabState: Equatable {
     var currentMixMatchCard: LearningCard {
         WaterCycleLessonThread.mixMatchCards[mixMatchIndex % WaterCycleLessonThread.mixMatchCards.count]
     }
+
 
     var flashcardProgressLabel: String {
         "Card \(flashcardIndex + 1) of \(WaterCycleConceptFlashcard.reviewDeck.count)"
@@ -151,10 +171,10 @@ struct WaterCycleLabState: Equatable {
     var activeLessonPrimaryActionTitle: String {
         switch lessonThread.activeStage.kind {
         case .lookLearnFlashcards:
-            return isOnLastLessonCard ? "Start flip recall" : "Next look card"
+            return isOnLastLessonCard ? "Start picture match" : "Next look card"
         case .invertedRecall:
-            if !isRecallCardRevealed { return "Flip recall card" }
-            return isOnLastLessonCard ? "Ask this card" : "Next recall"
+            if !isRecallCardRevealed { return "Pick the matching name" }
+            return isOnLastLessonCard ? "Ask this card" : "Next picture"
         case .contextualAsk:
             if latestAskResponse == nil { return "Ask suggested question" }
             return isOnLastLessonCard ? "Start mix-match" : "Next ask card"
@@ -166,7 +186,7 @@ struct WaterCycleLabState: Equatable {
     var activeLessonPrimaryActionIcon: String {
         switch lessonThread.activeStage.kind {
         case .lookLearnFlashcards: "arrow.right.circle.fill"
-        case .invertedRecall: isRecallCardRevealed ? "arrow.right.circle.fill" : "rectangle.on.rectangle.angled.fill"
+        case .invertedRecall: isRecallCardRevealed ? "arrow.right.circle.fill" : "rectangle.2.swap"
         case .contextualAsk: latestAskResponse == nil ? "questionmark.bubble.fill" : "arrow.right.circle.fill"
         case .mixMatchFinale: lessonThread.isComplete ? "arrow.counterclockwise" : "speaker.wave.2.fill"
         }
@@ -250,10 +270,12 @@ struct WaterCycleLabState: Equatable {
         isFlashcardAnswerRevealed = false
     }
 
+
     mutating func advanceLessonCard() {
         guard stage == .complete else { return }
         lessonCardIndex = (lessonCardIndex + 1) % lessonThread.cards.count
         isRecallCardRevealed = false
+        openMatchFeedback = nil
         askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
         latestAskResponse = nil
     }
@@ -261,6 +283,19 @@ struct WaterCycleLabState: Equatable {
     mutating func revealRecallCard() {
         guard stage == .complete, lessonThread.activeStage.kind == .invertedRecall else { return }
         isRecallCardRevealed = true
+        openMatchedCardIDs.insert(currentLessonCard.id)
+        openMatchFeedback = .correct(choiceID: currentLessonCard.id)
+    }
+
+    mutating func recordOpenMatchChoice(id choiceID: String) -> MixMatchRecallAttempt? {
+        guard stage == .complete, lessonThread.activeStage.kind == .invertedRecall else { return nil }
+        let isCorrect = choiceID == currentLessonCard.id
+        openMatchFeedback = isCorrect ? .correct(choiceID: choiceID) : .incorrect(choiceID: choiceID)
+        if isCorrect {
+            isRecallCardRevealed = true
+            openMatchedCardIDs.insert(currentLessonCard.id)
+        }
+        return MixMatchRecallAttempt(choiceID: choiceID, isCorrect: isCorrect)
     }
 
     mutating func selectAskTurn(id: String) -> LessonSafeAskResponse? {
@@ -277,6 +312,7 @@ struct WaterCycleLabState: Equatable {
         lessonThread.completeActiveStage()
         lessonCardIndex = 0
         isRecallCardRevealed = false
+        openMatchFeedback = nil
         askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
         latestAskResponse = nil
     }
@@ -319,6 +355,8 @@ struct WaterCycleLabState: Equatable {
         lessonThread.resetProgress()
         lessonCardIndex = 0
         isRecallCardRevealed = false
+        openMatchFeedback = nil
+        openMatchedCardIDs = []
         askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
         latestAskResponse = nil
         mixMatchIndex = 0
@@ -631,7 +669,7 @@ struct WaterCycleLabView: View {
     private var lessonStageIcon: String {
         switch state.lessonThread.activeStage.kind {
         case .lookLearnFlashcards: "photo.stack.fill"
-        case .invertedRecall: "rectangle.on.rectangle.angled.fill"
+        case .invertedRecall: "rectangle.2.swap"
         case .contextualAsk: "bubble.left.and.text.bubble.right.fill"
         case .mixMatchFinale: "rectangle.2.swap"
         }
@@ -713,7 +751,7 @@ struct WaterCycleLabView: View {
                 case .lookLearnFlashcards:
                     lookLearnLevel
                 case .invertedRecall:
-                    invertedRecallLevel
+                    openPictureNameMatchLevel
                 case .contextualAsk:
                     safeAskLevel
                 case .mixMatchFinale:
@@ -757,40 +795,57 @@ struct WaterCycleLabView: View {
         }
     }
 
-    private var invertedRecallLevel: some View {
+    private var openPictureNameMatchLevel: some View {
         let card = state.currentLessonCard
-        let model = LearningCardViewModel(
-            id: card.id,
+        let feedback = state.openMatchFeedback
+        let pictureModel = LearningCardViewModel(
+            id: "\(card.id).picture",
             display: card.assetName.map(LearningCardDisplay.asset) ?? .text(card.title),
-            accessibilityLabel: card.title,
-            accessibilityHint: "Flip to recall this water cycle idea.",
-            isFaceDown: !state.isRecallCardRevealed,
+            accessibilityLabel: "Picture for \(card.title)",
+            accessibilityHint: "Choose the matching water cycle name.",
             isSelected: state.isRecallCardRevealed,
-            isMatched: false,
+            isMatched: state.openMatchedCardIDs.contains(card.id),
             isIncorrect: false
         )
+        let choices = WaterCycleLessonThread.cards.map { choice in
+            LearningCardViewModel(
+                id: choice.id,
+                display: .choice(choice.title),
+                accessibilityLabel: choice.title,
+                accessibilityHint: choice.id == card.id ? "Correct name for this picture." : "Name choice.",
+                isSelected: feedback?.choiceID == choice.id,
+                isMatched: state.openMatchedCardIDs.contains(choice.id) && choice.id == card.id,
+                isIncorrect: feedback == .incorrect(choiceID: choice.id)
+            )
+        }
 
         return VStack(alignment: .leading, spacing: 12) {
-            Button {
-                state.revealRecallCard()
-                speakLessonCard()
-            } label: {
-                LearningCardView(model: model)
-                    .frame(minHeight: 150)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("water-cycle-recall-card")
+            LearningCardView(model: pictureModel)
+                .frame(minHeight: 150)
+                .accessibilityIdentifier("water-cycle-open-picture-card")
 
-            Text(state.isRecallCardRevealed ? card.answer : "Say the idea before you flip.")
+            Text(state.isRecallCardRevealed ? "Matched: \(card.title)" : "Tap the name that matches this picture.")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(MatherTheme.ink)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("water-cycle-open-match-feedback")
 
-            if state.isRecallCardRevealed {
-                Text(card.detail)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .fixedSize(horizontal: false, vertical: true)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 12)], spacing: 12) {
+                ForEach(choices) { choice in
+                    Button {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.58)) {
+                            if let attempt = state.recordOpenMatchChoice(id: choice.id) {
+                                speakLessonText(attempt.isCorrect ? "Correct match." : "Try another match.")
+                            }
+                        }
+                    } label: {
+                        LearningCardView(model: choice, minTouchSize: 78)
+                            .frame(minHeight: 88)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(state.isRecallCardRevealed)
+                    .accessibilityIdentifier("water-cycle-open-match-choice-\(choice.id)")
+                }
             }
         }
     }
@@ -936,8 +991,7 @@ struct WaterCycleLabView: View {
             }
         case .invertedRecall:
             if !state.isRecallCardRevealed {
-                state.revealRecallCard()
-                speakLessonCard()
+                speakLessonText("Choose the name that matches \(state.currentLessonCard.title).")
             } else if state.isOnLastLessonCard {
                 state.completeCurrentLessonStage()
                 speakLessonStage()
