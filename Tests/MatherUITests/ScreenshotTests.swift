@@ -280,26 +280,27 @@ final class ScreenshotTests: XCTestCase {
         }
 
         XCTAssertTrue(app.staticTexts["Look & Learn"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Card 1 of 5"].waitForExistence(timeout: 5))
+        let lessonProgress = app.staticTexts.element(
+            matching: NSPredicate(format: "label CONTAINS %@", "Card 1 of 5")
+        )
+        XCTAssertTrue(lessonProgress.waitForExistence(timeout: 5))
 
-        let lessonPrimaryByIdentifier = app.buttons["water-cycle-lesson-primary-action"]
-        let lessonPrimaryAction: XCUIElement
-        if lessonPrimaryByIdentifier.exists {
-            lessonPrimaryAction = lessonPrimaryByIdentifier
-        } else {
-            lessonPrimaryAction = app.buttons["Next look card"]
-        }
-        XCTAssertTrue(scrollUntilExists(lessonPrimaryAction, in: app, direction: .up, maxSwipes: 4))
-
-        let replayLessonByIdentifier = app.buttons["water-cycle-replay-lesson-stage"]
-        let replayLesson: XCUIElement
-        if replayLessonByIdentifier.exists {
-            replayLesson = replayLessonByIdentifier
-        } else {
-            replayLesson = app.buttons["Replay stage"]
-        }
-        XCTAssertTrue(scrollUntilExists(replayLesson, in: app, direction: .up, maxSwipes: 4))
-        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-reset"], in: app, direction: .up, maxSwipes: 4))
+        XCTAssertNotNil(
+            firstExistingControl(in: app, identifiers: ["water-cycle-playable-lesson"], timeout: 5),
+            "Expected the completed water-cycle scene to expose the playable lesson container"
+        )
+        XCTAssertNotNil(
+            firstExistingControl(in: app, identifiers: ["water-cycle-lesson-primary-action", "Next look card"], timeout: 5),
+            "Expected the water-cycle lesson primary action to be reachable after completion"
+        )
+        XCTAssertNotNil(
+            firstExistingControl(in: app, identifiers: ["water-cycle-replay-lesson-stage", "Replay stage"], timeout: 5),
+            "Expected the water-cycle replay lesson-stage control to be reachable after completion"
+        )
+        XCTAssertNotNil(
+            firstExistingControl(in: app, identifiers: ["water-cycle-reset", "Reset"], timeout: 5),
+            "Expected the water-cycle reset control to be reachable after completion"
+        )
         snapshot(app, "WaterCycle-Complete-Compact")
     }
 
