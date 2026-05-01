@@ -6,6 +6,7 @@ struct LabLaneDetailView: View {
     let laneID: CapabilityLaneID
 
     @State private var expandedReview = false
+    @State private var expandedSupport = false
     @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
     private var lane: CapabilityLane {
@@ -23,8 +24,8 @@ struct LabLaneDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header(selectedLane, presentation: presentation, progress: progress, tint: tint)
-                    supportPanel(selectedLane, progress: progress, tint: tint)
                     gamesSection(selectedLane, tint: tint)
+                    supportPanel(selectedLane, progress: progress, tint: tint)
                     recallSection(selectedLane, tint: tint)
                 }
                 .padding(24)
@@ -42,27 +43,41 @@ struct LabLaneDetailView: View {
         tint: Color
     ) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
+            HStack {
                 Button {
                     appModel.engine.showLab()
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.title3.weight(.black))
                         .foregroundStyle(tint)
-                        .frame(width: 56, height: 56)
+                        .frame(width: 80, height: 80)
                         .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back to Explorer Lab lanes")
 
+                Spacer(minLength: 0)
+
+                Button {
+                    appModel.engine.showHome()
+                } label: {
+                    Image(systemName: "house.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(MatherTheme.accent)
+                        .frame(width: 80, height: 80)
+                }
+                .accessibilityLabel("Home")
+            }
+
+            HStack(alignment: .top, spacing: 14) {
                 laneHeroVisual(lane, tint: tint)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(presentation.title)
                         .font(.system(size: 34, weight: .black, design: .rounded))
                         .foregroundStyle(MatherTheme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                     Text(lane.promise)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
@@ -73,19 +88,8 @@ struct LabLaneDetailView: View {
                 }
 
                 Spacer(minLength: 0)
-
-                Button {
-                    appModel.engine.showHome()
-                } label: {
-                    Image(systemName: "house.fill")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(MatherTheme.accent)
-                        .frame(width: 56, height: 56)
-                }
-                .accessibilityLabel("Home")
             }
 
-            progressBar(progress, tint: tint)
         }
         .padding(16)
         .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -100,10 +104,32 @@ struct LabLaneDetailView: View {
 
     private func supportPanel(_ lane: CapabilityLane, progress: CapabilityLaneProgress, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            modeChips(lane.modes, tint: tint)
-            modeChoicePreview(lane, tint: tint)
-            ageEntryPreview(lane, tint: tint)
-            progressPreview(progress, tint: tint)
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                    expandedSupport.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Label("Lane details", systemImage: "slider.horizontal.3")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(tint)
+                    Spacer(minLength: 0)
+                    Image(systemName: expandedSupport ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(tint)
+                }
+                .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(expandedSupport ? "Hide \(lane.title) lane details" : "Show \(lane.title) lane details")
+            .accessibilityHint("Shows play styles, age entry points, and progress after the game choices.")
+
+            if expandedSupport {
+                modeChips(lane.modes, tint: tint)
+                modeChoicePreview(lane, tint: tint)
+                ageEntryPreview(lane, tint: tint)
+                progressPreview(progress, tint: tint)
+            }
         }
         .padding(14)
         .background(MatherTheme.card.opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -139,28 +165,29 @@ struct LabLaneDetailView: View {
             HStack(alignment: .center, spacing: 14) {
                 activityVisual(activity, tint: tint)
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(activity.title)
                         .font(.title3.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                    Text(activity.tagline)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                    modeChips(activity.modes, tint: tint)
-                    sensorAffordanceRow(activity, tint: tint)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.82)
                 }
 
                 Spacer(minLength: 6)
 
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 34, weight: .black))
-                    .foregroundStyle(tint)
+                ZStack {
+                    Circle()
+                        .fill(tint)
+                    Image(systemName: "play.fill")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.white)
+                        .offset(x: 2)
+                }
+                .frame(width: 64, height: 64)
+                .accessibilityHidden(true)
             }
             .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 128, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
             .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -169,7 +196,7 @@ struct LabLaneDetailView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Launch \(activity.title). \(activity.tagline)")
-        .accessibilityHint("Starts this \(lane.title) game. Modes: \(activity.modes.map(\.rawValue).joined(separator: ", ")).")
+        .accessibilityHint("Starts this \(lane.title) game. Modes: \(activity.modes.map(\.rawValue).joined(separator: ", ")). \(sensorAccessibilitySummary(for: activity)).")
     }
 
     private func recallSection(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -187,20 +214,20 @@ struct LabLaneDetailView: View {
                     Text(expandedReview ? "Hide review" : "Review cards")
                         .font(.caption.weight(.black))
                         .foregroundStyle(tint)
-                        .frame(minWidth: 120, minHeight: 56)
+                        .frame(minWidth: 140, minHeight: 80)
                         .background(tint.opacity(0.10), in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(expandedReview ? "Hide \(lane.title) review cards" : "Open \(lane.title) review cards")
             }
 
-            if !lane.starterMixMatchConceptPreview.isEmpty {
-                Text(lane.starterMixMatchConceptPreview)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-            }
-
             if expandedReview {
+                if !lane.starterMixMatchConceptPreview.isEmpty {
+                    Text(lane.starterMixMatchConceptPreview)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+
                 recallReviewPanel(lane, tint: tint)
             }
         }
@@ -400,6 +427,13 @@ struct LabLaneDetailView: View {
                 .accessibilityHint(affordance.accessibilityHint)
             }
         }
+    }
+
+    private func sensorAccessibilitySummary(for activity: LabActivity) -> String {
+        activity.id
+            .sensorAffordances(with: sensorCapabilities)
+            .map(\.displayLabel)
+            .joined(separator: ". ")
     }
 
     private func laneHeroVisual(_ lane: CapabilityLane, tint: Color) -> some View {

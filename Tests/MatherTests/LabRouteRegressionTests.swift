@@ -91,6 +91,29 @@ struct LabRouteRegressionTests {
     }
 
     @Test
+    func laneDetailPresentationPrioritizesActivitiesBeforeSupportMetadata() throws {
+        let readyLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
+        let futureLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .chemistry })
+
+        #expect(LabLaneDetailPresentation(lane: readyLane).sections == [
+            .visualSummary,
+            .activities,
+            .modes,
+            .playStyles,
+            .ageEntries,
+            .recall,
+        ])
+        #expect(LabLaneDetailPresentation(lane: futureLane).sections == [
+            .visualSummary,
+            .comingSoon,
+            .modes,
+            .playStyles,
+            .ageEntries,
+            .recall,
+        ])
+    }
+
+    @Test
     func recallReviewActionsMapBackToOwningLane() throws {
         for lane in CapabilityLane.defaultExplorerLanes {
             let entry = try #require(lane.firstRecallEntry)
