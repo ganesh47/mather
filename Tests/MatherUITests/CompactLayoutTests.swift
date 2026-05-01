@@ -185,9 +185,11 @@ final class CompactLayoutTests: XCTestCase {
             primaryAction.tap()
         }
 
-        XCTAssertTrue(app.staticTexts["Cycle complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-primary-action"].isHittable)
-        XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Look & Learn"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["water-cycle-minimal-stacked-card"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-lesson-primary-action"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["water-cycle-lesson-primary-action"].isHittable)
+        XCTAssertTrue(app.buttons["water-cycle-replay-lesson-stage"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
     }
 

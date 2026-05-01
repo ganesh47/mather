@@ -67,6 +67,35 @@ struct WaterCycleConceptFlashcard: Equatable, Identifiable {
     ]
 }
 
+struct WaterCycleMinimalCardModel: Equatable, Identifiable {
+    let id: String
+    let title: String
+    let assetName: String?
+    let systemImage: String
+
+    init(card: LessonPlayCard) {
+        self.id = card.id
+        self.title = card.title
+        self.assetName = card.assetName
+        self.systemImage = Self.systemImage(for: card.id)
+    }
+
+    var accessibilityLabel: String {
+        "Water cycle card: \(title)"
+    }
+
+    private static func systemImage(for cardID: String) -> String {
+        switch cardID {
+        case "sun-heat": "sun.max.fill"
+        case "evaporation": "arrow.up.circle.fill"
+        case "condensation": "cloud.fill"
+        case "precipitation": "cloud.rain.fill"
+        case "collection": "drop.fill"
+        default: "rectangle.stack.fill"
+        }
+    }
+}
+
 struct WaterCycleLabState: Equatable {
     private(set) var stage: WaterCycleStage = .wonder
     private(set) var vaporDrops = 0
@@ -90,6 +119,10 @@ struct WaterCycleLabState: Equatable {
 
     var currentLessonCard: LessonPlayCard {
         lessonThread.cards[lessonCardIndex % lessonThread.cards.count]
+    }
+
+    var currentMinimalLessonCard: WaterCycleMinimalCardModel {
+        WaterCycleMinimalCardModel(card: currentLessonCard)
     }
 
     var currentMixMatchCard: LearningCard {
@@ -667,11 +700,6 @@ struct WaterCycleLabView: View {
     private var activeLessonStageBoard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 14) {
-                Text(state.lessonThread.activeStage.prompt)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .fixedSize(horizontal: false, vertical: true)
-
                 switch state.lessonThread.activeStage.kind {
                 case .lookLearnFlashcards:
                     lookLearnLevel
@@ -688,83 +716,91 @@ struct WaterCycleLabView: View {
     }
 
     private var lookLearnLevel: some View {
-        let card = state.currentLessonCard
+        VStack(alignment: .leading, spacing: 10) {
+            minimalStackedLessonCard(state.currentMinimalLessonCard)
 
-        return VStack(alignment: .leading, spacing: 12) {
-            if let assetName = card.assetName {
-                Image(assetName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 180)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHidden(true)
-            }
-
-            Text(card.title)
-                .font(.system(size: 24, weight: .black, design: .rounded))
-                .foregroundStyle(MatherTheme.accent)
-
-            Text(card.prompt)
-                .font(.system(size: 19, weight: .semibold, design: .rounded))
-                .foregroundStyle(MatherTheme.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(card.answer)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(MatherTheme.ink)
-                Text(card.detail)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-            }
+            Text("One card. Say the name, then tap Next.")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .accessibilityIdentifier("water-cycle-minimal-card-helper")
         }
+    }
+
+    private func minimalStackedLessonCard(_ model: WaterCycleMinimalCardModel, isFaceDown: Bool = false) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(MatherTheme.softBlue.opacity(0.16))
+                .offset(x: 10, y: 10)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(MatherTheme.warm.opacity(0.14))
+                .offset(x: 5, y: 5)
+
+            VStack(spacing: 14) {
+                if isFaceDown {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 70, weight: .black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                } else if let assetName = model.assetName {
+                    Image(assetName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 168)
+                        .accessibilityHidden(true)
+                } else {
+                    Image(systemName: model.systemImage)
+                        .font(.system(size: 70, weight: .black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                }
+
+                Label(model.title, systemImage: model.systemImage)
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.74)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, minHeight: 250)
+            .background(MatherTheme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(MatherTheme.panelDeep.opacity(0.18), lineWidth: 2)
+            )
+        }
+        .padding(.trailing, 10)
+        .padding(.bottom, 10)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(model.accessibilityLabel))
+        .accessibilityHint(Text(isFaceDown ? "Tap to reveal this card." : "Card shows one water cycle idea."))
+        .accessibilityIdentifier("water-cycle-minimal-stacked-card")
     }
 
     private var invertedRecallLevel: some View {
         let card = state.currentLessonCard
-        let model = LearningCardViewModel(
-            id: card.id,
-            display: card.assetName.map(LearningCardDisplay.asset) ?? .text(card.title),
-            accessibilityLabel: card.title,
-            accessibilityHint: "Flip to recall this water cycle idea.",
-            isFaceDown: !state.isRecallCardRevealed,
-            isSelected: state.isRecallCardRevealed,
-            isMatched: false,
-            isIncorrect: false
-        )
 
         return VStack(alignment: .leading, spacing: 12) {
             Button {
                 state.revealRecallCard()
                 speakLessonCard()
             } label: {
-                LearningCardView(model: model)
-                    .frame(minHeight: 150)
+                minimalStackedLessonCard(state.currentMinimalLessonCard, isFaceDown: !state.isRecallCardRevealed)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("water-cycle-recall-card")
 
-            Text(state.isRecallCardRevealed ? card.answer : "Say the idea before you flip.")
+            Text(state.isRecallCardRevealed ? card.answer : "Say the name, then flip one card.")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(MatherTheme.ink)
                 .fixedSize(horizontal: false, vertical: true)
-
-            if state.isRecallCardRevealed {
-                Text(card.detail)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 
     private var safeAskLevel: some View {
-        let card = state.currentLessonCard
-
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(card.title)
-                .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(MatherTheme.accent)
+        VStack(alignment: .leading, spacing: 12) {
+            minimalStackedLessonCard(state.currentMinimalLessonCard)
 
             ForEach(state.askSession.suggestedTurns) { turn in
                 Button {

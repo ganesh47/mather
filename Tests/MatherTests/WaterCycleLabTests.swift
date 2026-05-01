@@ -160,6 +160,25 @@ extension WaterCycleLabTests {
         #expect(state.mixMatchProgressLabel == "Match 5 of 5")
     }
 
+
+    @Test func lessonThreadCurrentCardExposesMinimalStackCardModel() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        let firstCard = state.currentMinimalLessonCard
+        #expect(firstCard.id == "sun-heat")
+        #expect(firstCard.title == "Sun Heat")
+        #expect(firstCard.assetName == "MemoryWaterCycleSunHeat")
+        #expect(firstCard.systemImage == "sun.max.fill")
+        #expect(firstCard.accessibilityLabel == "Water cycle card: Sun Heat")
+
+        state.advanceLessonCard()
+        let secondCard = state.currentMinimalLessonCard
+        #expect(secondCard.id == "evaporation")
+        #expect(secondCard.title == "Evaporation")
+        #expect(secondCard.systemImage == "arrow.up.circle.fill")
+    }
+
     @Test func completedLessonThreadExposesStageFocusedPrimaryActions() {
         var state = WaterCycleLabState()
         for _ in 0..<5 { state.advance() }
