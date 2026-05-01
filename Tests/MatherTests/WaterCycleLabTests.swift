@@ -219,4 +219,30 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
         #expect(state.cyclesCompleted == 1)
     }
+
+    @Test func completedLessonThreadExposesDeterministicInterestingFacts() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+
+        #expect(state.completionInterestingFacts.isEmpty)
+
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
+
+        let facts = state.completionInterestingFacts
+        #expect(facts.count == 3)
+        #expect(facts.map(\.id) == [
+            "rainiest-places",
+            "same-water-travels",
+            "cloud-tiny-drops"
+        ])
+        #expect(facts[0].body.contains("Mawsynram"))
+        #expect(facts[0].body.contains("Cherrapunji"))
+        #expect(facts.allSatisfy { !$0.title.isEmpty && !$0.body.isEmpty })
+        #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
+    }
 }
