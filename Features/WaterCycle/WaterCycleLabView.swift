@@ -318,10 +318,11 @@ struct WaterCycleLabState: Equatable {
     }
 
     mutating func recordMixMatchAttempt(_ attempt: MixMatchRecallAttempt) {
-        guard stage == .complete,
-              lessonThread.activeStage.kind == .mixMatchFinale,
-              attempt.isCorrect,
-              attempt.choiceID == currentMixMatchCard.answer.id
+        guard
+            stage == .complete,
+            lessonThread.activeStage.kind == .mixMatchFinale,
+            attempt.isCorrect,
+            attempt.choiceID == currentMixMatchCard.answer.id
         else { return }
         mixMatchCorrectCardIDs.insert(currentMixMatchCard.answer.id)
         if mixMatchCorrectCardIDs.count == WaterCycleLessonThread.mixMatchCards.count {
