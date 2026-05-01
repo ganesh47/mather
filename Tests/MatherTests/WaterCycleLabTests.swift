@@ -254,49 +254,25 @@ extension WaterCycleLabTests {
         state.completeCurrentLessonStage()
         state.completeCurrentLessonStage()
 
-        for card in WaterCycleLessonThread.mixMatchCards {
-            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
-        }
-
-        #expect(state.lessonThread.isComplete)
-        #expect(WaterCycleInterestingFact.completionFacts.count >= 4)
-        #expect(state.currentInterestingFact.title == "Rainiest place")
-        #expect(state.interestingFactProgressLabel == "Fact 1 of 4")
-        #expect(state.currentInterestingFact.detail.contains("Mawsynram"))
-
-        state.advanceInterestingFact()
-        #expect(state.currentInterestingFact.title == "Driest desert")
-        #expect(state.interestingFactProgressLabel == "Fact 2 of 4")
-    }
-
-    @Test func interestingFactsIgnoreEarlyAdvanceAndResetWithReplay() {
-        var state = WaterCycleLabState()
-
-        state.advanceInterestingFact()
-        #expect(state.currentInterestingFact.title == "Rainiest place")
-
-        for _ in 0..<5 { state.advance() }
-        state.completeCurrentLessonStage()
-        state.completeCurrentLessonStage()
-        state.completeCurrentLessonStage()
-        state.advanceInterestingFact()
-        #expect(state.currentInterestingFact.title == "Rainiest place")
+        #expect(state.completionInterestingFacts.isEmpty)
 
         for card in WaterCycleLessonThread.mixMatchCards {
             state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
         }
-        state.advanceInterestingFact()
-        #expect(state.currentInterestingFact.title == "Driest desert")
 
-        state.reset()
-        #expect(state.stage == .wonder)
-        #expect(state.currentInterestingFact.title == "Rainiest place")
-        #expect(state.interestingFactProgressLabel == "Fact 1 of 4")
+        let facts = state.completionInterestingFacts
+        #expect(facts.count == 3)
+        #expect(facts.map(\.id) == [
+            "rainiest-places",
+            "same-water-travels",
+            "cloud-tiny-drops"
+        ])
+        #expect(facts[0].body.contains("Mawsynram"))
+        #expect(facts[0].body.contains("Cherrapunji"))
+        #expect(facts.allSatisfy { !$0.title.isEmpty && !$0.body.isEmpty })
+        #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
     }
-}
 
-
-extension WaterCycleLabTests {
     @Test func openPictureNameMatchRecordsDeterministicFeedback() {
         var state = WaterCycleLabState()
         for _ in 0..<5 { state.advance() }

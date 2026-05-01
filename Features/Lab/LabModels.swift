@@ -328,11 +328,11 @@ struct LabLaneDetailPresentation: Equatable {
             : "\(lane.activities.count) game\(lane.activities.count == 1 ? "" : "s") ready"
         sections = [
             .visualSummary,
+            lane.isReady ? .activities : .comingSoon,
             .modes,
             .playStyles,
             .ageEntries,
             .recall,
-            lane.isReady ? .activities : .comingSoon,
         ]
     }
 }
