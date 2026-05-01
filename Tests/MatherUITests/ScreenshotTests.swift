@@ -279,10 +279,27 @@ final class ScreenshotTests: XCTestCase {
             tapWhenReachable(primaryAction, in: app, scrollDirection: .up)
         }
 
-        XCTAssertTrue(app.otherElements["water-cycle-playable-lesson"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-lesson-primary-action"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-replay-lesson-stage"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Look & Learn"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Card 1 of 5"].waitForExistence(timeout: 5))
+
+        let lessonPrimaryByIdentifier = app.buttons["water-cycle-lesson-primary-action"]
+        let lessonPrimaryAction: XCUIElement
+        if lessonPrimaryByIdentifier.exists {
+            lessonPrimaryAction = lessonPrimaryByIdentifier
+        } else {
+            lessonPrimaryAction = app.buttons["Next look card"]
+        }
+        XCTAssertTrue(scrollUntilExists(lessonPrimaryAction, in: app, direction: .up, maxSwipes: 4))
+
+        let replayLessonByIdentifier = app.buttons["water-cycle-replay-lesson-stage"]
+        let replayLesson: XCUIElement
+        if replayLessonByIdentifier.exists {
+            replayLesson = replayLessonByIdentifier
+        } else {
+            replayLesson = app.buttons["Replay stage"]
+        }
+        XCTAssertTrue(scrollUntilExists(replayLesson, in: app, direction: .up, maxSwipes: 4))
+        XCTAssertTrue(scrollUntilExists(app.buttons["water-cycle-reset"], in: app, direction: .up, maxSwipes: 4))
         snapshot(app, "WaterCycle-Complete-Compact")
     }
 
