@@ -67,6 +67,34 @@ struct WaterCycleConceptFlashcard: Equatable, Identifiable {
     ]
 }
 
+struct WaterCycleInterestingFact: Equatable, Identifiable {
+    let id: String
+    let title: String
+    let body: String
+    let systemImage: String
+
+    static let completionSpotlight: [WaterCycleInterestingFact] = [
+        WaterCycleInterestingFact(
+            id: "rainiest-places",
+            title: "Rainy places",
+            body: "Mawsynram and Cherrapunji in India are among the rainiest places on Earth.",
+            systemImage: "cloud.rain.fill"
+        ),
+        WaterCycleInterestingFact(
+            id: "same-water-travels",
+            title: "Same water travels",
+            body: "Water can move from puddle, to cloud, to rain, and back again.",
+            systemImage: "arrow.triangle.2.circlepath"
+        ),
+        WaterCycleInterestingFact(
+            id: "cloud-tiny-drops",
+            title: "Cloud drops",
+            body: "A cloud is made of many tiny water drops or ice crystals floating together.",
+            systemImage: "cloud.fill"
+        )
+    ]
+}
+
 struct WaterCycleLabState: Equatable {
     private(set) var stage: WaterCycleStage = .wonder
     private(set) var vaporDrops = 0
@@ -106,6 +134,10 @@ struct WaterCycleLabState: Equatable {
 
     var mixMatchProgressLabel: String {
         "Match \(mixMatchCorrectCardIDs.count) of \(WaterCycleLessonThread.mixMatchCards.count)"
+    }
+
+    var completionInterestingFacts: [WaterCycleInterestingFact] {
+        lessonThread.isComplete ? WaterCycleInterestingFact.completionSpotlight : []
     }
 
     var isOnLastLessonCard: Bool {
@@ -795,9 +827,18 @@ struct WaterCycleLabView: View {
                 .foregroundStyle(MatherTheme.cardSubtitle)
 
             if state.lessonThread.isComplete {
-                Label("Lesson thread complete", systemImage: "checkmark.seal.fill")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(MatherTheme.ink)
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Lesson thread complete", systemImage: "checkmark.seal.fill")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(state.completionInterestingFacts) { fact in
+                            waterCycleFactCard(fact)
+                        }
+                    }
+                    .accessibilityIdentifier("water-cycle-completion-facts")
+                }
             } else {
                 MixMatchRecallView(
                     learningCard: state.currentMixMatchCard,
@@ -813,6 +854,35 @@ struct WaterCycleLabView: View {
                 .accessibilityIdentifier("water-cycle-mix-match-finale")
             }
         }
+    }
+
+    private func waterCycleFactCard(_ fact: WaterCycleInterestingFact) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: fact.systemImage)
+                .font(.title3.weight(.black))
+                .foregroundStyle(MatherTheme.accent)
+                .frame(width: 34, height: 34)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fact.title)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(fact.body)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(MatherTheme.panelDeep.opacity(0.24))
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(fact.title). \(fact.body)")
+        .accessibilityIdentifier("water-cycle-completion-fact-\(fact.id)")
     }
 
     private func lessonPlayActionBar(availableWidth: CGFloat) -> some View {
