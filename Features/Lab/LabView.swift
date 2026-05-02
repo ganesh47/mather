@@ -4,12 +4,14 @@ import SwiftUI
 struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
+    @State private var playfulPulse = false
 
     private let lanes = CapabilityLane.defaultExplorerLanes
 
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
+            playgroundBackdrop
             GeometryReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -25,6 +27,30 @@ struct LabView: View {
                 }
             }
         }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                playfulPulse = true
+            }
+        }
+    }
+
+    private var playgroundBackdrop: some View {
+        ZStack {
+            Circle()
+                .fill(MatherTheme.warm.opacity(0.10))
+                .frame(width: 180, height: 180)
+                .offset(x: -170, y: -260)
+            Circle()
+                .fill(MatherTheme.softBlue.opacity(0.12))
+                .frame(width: 220, height: 220)
+                .offset(x: 180, y: 120)
+            Image(systemName: "sparkles")
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(MatherTheme.accent.opacity(0.16))
+                .offset(x: 130, y: -210)
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
 
     private var header: some View {
@@ -33,10 +59,10 @@ struct LabView: View {
                 Text("Explorer Lab")
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Pick a capability lane")
+                Text("Choose a world to explore")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Text("Games, review cards, play styles, and sensors live inside each lane")
+                Text("Missions, mini cards, and sensor-powered experiments wait inside")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.accent)
             }
@@ -97,7 +123,7 @@ struct LabView: View {
                 progressPreview(progress, tint: tint)
 
                 HStack(spacing: 10) {
-                    Label(lane.isReady ? "\(lane.activities.count) game\(lane.activities.count == 1 ? "" : "s")" : "Games coming soon", systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
+                    Label(lane.isReady ? "\(lane.activities.count) mission\(lane.activities.count == 1 ? "" : "s")" : "Missions coming soon", systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
                         .font(.caption.weight(.black))
                         .foregroundStyle(tint)
                     Spacer(minLength: 8)
@@ -117,6 +143,7 @@ struct LabView: View {
                 color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08),
                 radius: 8, y: 4
             )
+            .scaleEffect(playfulPulse ? 1.01 : 0.995, anchor: .center)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(presentation.accessibilityLabel)
@@ -126,15 +153,66 @@ struct LabView: View {
     private func laneVisual(_ lane: CapabilityLane, tint: Color) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(tint.opacity(0.14))
-            Circle()
-                .fill(tint.opacity(0.18))
-                .frame(width: 48, height: 48)
-                .offset(x: 18, y: -18)
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.28), tint.opacity(0.10), MatherTheme.card.opacity(0.42)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            laneMiniScene(lane.id, tint: tint)
             Text(lane.emoji)
                 .font(.system(size: 46))
+                .scaleEffect(playfulPulse ? 1.06 : 0.98)
+                .rotationEffect(.degrees(playfulPulse ? 2 : -2))
         }
         .frame(width: 84, height: 84)
+    }
+
+    @ViewBuilder
+    private func laneMiniScene(_ laneID: CapabilityLaneID, tint: Color) -> some View {
+        switch laneID {
+        case .numbers:
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .fill(tint.opacity(0.22))
+                        .frame(width: 12, height: 12)
+                        .offset(y: playfulPulse ? CGFloat(-index * 3) : CGFloat(index * 2))
+                }
+            }
+            .offset(x: 16, y: 22)
+        case .geometry:
+            Image(systemName: "triangle.fill")
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(tint.opacity(0.24))
+                .rotationEffect(.degrees(playfulPulse ? 12 : -6))
+                .offset(x: 20, y: 18)
+        case .physics:
+            Image(systemName: "moon.stars.fill")
+                .font(.system(size: 30, weight: .black))
+                .foregroundStyle(tint.opacity(0.24))
+                .offset(x: 20, y: -18)
+            Circle()
+                .fill(MatherTheme.warm.opacity(0.32))
+                .frame(width: 16, height: 16)
+                .offset(x: playfulPulse ? 24 : 10, y: playfulPulse ? 20 : 8)
+        case .mapWorld:
+            Image(systemName: "map.fill")
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(tint.opacity(0.24))
+                .offset(x: 18, y: 18)
+        case .discoveryCards:
+            Image(systemName: "rectangle.on.rectangle.angled")
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(tint.opacity(0.24))
+                .offset(x: 18, y: 18)
+        case .chemistry, .electronics:
+            Image(systemName: "sparkles")
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(tint.opacity(0.24))
+                .offset(x: 18, y: 18)
+        }
     }
 
     private func progress(for lane: CapabilityLane) -> CapabilityLaneProgress {

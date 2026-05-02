@@ -299,9 +299,9 @@ struct LabLaneCardPresentation: Equatable {
         title = lane.title
         promiseLine = lane.promise
         progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
-        openAffordanceLabel = "Open lane"
+        openAffordanceLabel = "Enter world"
         accessibilityLabel = "\(lane.title). \(lane.ageBandHint). \(lane.promise)"
-        accessibilityHint = "Opens \(lane.title) to choose games, review cards, play styles, and sensor options."
+        accessibilityHint = "Opens \(lane.title) to choose missions, review cards, play styles, and sensor options."
         sections = [
             .visualSummary,
             .promise,
@@ -402,12 +402,14 @@ struct CapabilityLaneProgress: Equatable {
     }
 
     var progressSummaryLabel: String {
-        "\(progressLabel) • \(masteryPercentLabel)"
+        "🚀 \(completedModeCount)/\(availableModes.count) missions unlocked"
     }
 
     var nextRecommendedModeLabel: String {
-        guard let nextRecommendedMode else { return "Choose any mode" }
-        return "Try \(nextRecommendedMode.rawValue) next"
+        guard let nextRecommendedMode else { return "⭐ Choose any mission" }
+        return completedModeCount == 0
+            ? "⭐ First \(nextRecommendedMode.rawValue) mission waiting"
+            : "⭐ Try \(nextRecommendedMode.rawValue) next"
     }
 
     var nextRecommendedMode: PlayMode? {

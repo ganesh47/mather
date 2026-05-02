@@ -647,23 +647,46 @@ struct WaterCycleLabView: View {
     }
 
     private func pondView(_ metrics: WaterCycleSceneMetrics) -> some View {
-        ZStack(alignment: .bottom) {
-            Capsule().fill(MatherTheme.softBlue.opacity(0.25)).frame(height: metrics.pondHeight)
-            Capsule().fill(MatherTheme.softBlue).frame(height: CGFloat(32 + state.pondDrops * 10) * metrics.scale)
-            HStack(spacing: 12) {
-                ForEach(0..<state.pondDrops, id: \.self) { _ in
-                    Circle().fill(.white.opacity(0.65)).frame(width: metrics.pondDropSize, height: metrics.pondDropSize)
+        let waterTone = Color(red: 0.42, green: 0.70, blue: 0.86)
+        let waterLevelHeight = CGFloat(30 + state.pondDrops * 9) * metrics.scale
+
+        return ZStack(alignment: .bottom) {
+            Capsule()
+                .fill(waterTone.opacity(0.18))
+                .frame(height: metrics.pondHeight)
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [waterTone.opacity(0.78), waterTone.opacity(0.58)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(height: waterLevelHeight)
+                .overlay(alignment: .leading) {
+                    Label("pond • \(state.pondDrops) drops", systemImage: "drop.fill")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .padding(.leading, 18)
+                        .accessibilityHidden(true)
                 }
-            }
-            .padding(.bottom, 28)
+                .overlay(alignment: .trailing) {
+                    HStack(spacing: 5) {
+                        ForEach(0..<state.pondDrops, id: \.self) { _ in
+                            Image(systemName: "drop.fill")
+                                .font(.system(size: max(8, metrics.pondDropSize * 0.55), weight: .bold))
+                                .foregroundStyle(.white.opacity(0.58))
+                        }
+                    }
+                    .padding(.trailing, 18)
+                }
         }
-        .overlay(alignment: .topLeading) {
-            Text("pond")
-                .font(.caption.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-                .padding(.leading, 24)
-                .padding(.top, 14)
-        }
+        .overlay(
+            Capsule()
+                .stroke(waterTone.opacity(0.32), lineWidth: 1.5)
+        )
+        .shadow(color: waterTone.opacity(0.10), radius: 4, y: 2)
+        .accessibilityLabel("Pond visual showing \(state.pondDrops) water drops collected")
     }
 
     private var lessonStageIcon: String {

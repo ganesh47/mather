@@ -223,18 +223,18 @@ struct SymmetryFoldView: View {
                 }
             }
             Spacer(minLength: 12)
-            Button("Done") {
+            Button {
                 stopAllTasks()
                 appModel.motionService.stopUpdates()
                 appModel.engine.showHome()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 34, weight: .black))
+                    .foregroundStyle(config.color)
+                    .frame(width: 56, height: 56)
+                    .background(config.color.opacity(0.12), in: Circle())
             }
-            .font(.headline.weight(.semibold))
-            .foregroundStyle(.white)
-            .frame(minWidth: 88, minHeight: 72)
-            .background(
-                MatherTheme.ink.opacity(0.65),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
+            .accessibilityLabel("Done")
             .accessibilityIdentifier("symmetry-fold-done-button")
         }
     }
@@ -453,7 +453,7 @@ struct SymmetryFoldView: View {
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(config.color)
                     } else {
-                        Text("Tilt left to fold")
+                        Text("Tilt left to match the mirror")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
