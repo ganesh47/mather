@@ -26,6 +26,7 @@ struct LabLaneDetailView: View {
                     header(selectedLane, presentation: presentation, progress: progress, tint: tint)
                     gamesSection(selectedLane, tint: tint)
                     supportPanel(selectedLane, progress: progress, tint: tint)
+                    researchQuestSection(selectedLane, tint: tint)
                     recallSection(selectedLane, tint: tint)
                 }
                 .padding(24)
@@ -134,6 +135,45 @@ struct LabLaneDetailView: View {
         .padding(14)
         .background(MatherTheme.card.opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .contain)
+    }
+
+    private func researchQuestSection(_ lane: CapabilityLane, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Research quest", systemImage: "sparkles")
+                .font(.headline.weight(.black))
+                .foregroundStyle(tint)
+            Text("Try one tiny experiment, notice what changed, then earn a discovery spark.")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+            HStack(spacing: 10) {
+                researchQuestChip(icon: "lightbulb.fill", title: "Wonder", detail: lane.promise, tint: tint)
+                researchQuestChip(icon: "hand.tap.fill", title: "Try", detail: lane.isReady ? "Play a game" : "Preview ideas", tint: tint)
+                researchQuestChip(icon: "star.fill", title: "Notice", detail: "Collect a spark", tint: tint)
+            }
+        }
+        .padding(14)
+        .background(MatherTheme.card.opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Research quest. Try one tiny experiment, notice what changed, then earn a discovery spark.")
+    }
+
+    private func researchQuestChip(icon: String, title: String, detail: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: icon)
+                .font(.headline.weight(.black))
+                .foregroundStyle(tint)
+            Text(title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Text(detail)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
+        .padding(10)
+        .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func gamesSection(_ lane: CapabilityLane, tint: Color) -> some View {

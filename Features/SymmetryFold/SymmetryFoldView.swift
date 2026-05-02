@@ -137,8 +137,8 @@ struct SymmetryFoldView: View {
         switch playMode {
         case .lesson:
             return currentLevel < levels.count
-                ? "Keep the lesson going, or try a timed challenge for this shape."
-                : "Lesson complete. You can finish now, or try one timed challenge."
+                ? "Keep collecting mirror badges, or try the timer challenge for this shape."
+                : "Mirror mission complete. You can finish now, or try one timed challenge."
         case .timedChallenge:
             return currentLevel < levels.count
                 ? "Timed challenge cleared. Ready for the next shape?"
@@ -390,6 +390,10 @@ struct SymmetryFoldView: View {
                 .font(.headline.weight(.black))
                 .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.center)
+            Text("Mirror badge earned: \(config.shapeName.capitalized) ✨")
+                .font(.headline.weight(.black))
+                .foregroundStyle(config.color)
+                .multilineTextAlignment(.center)
             Text(successBodyText)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
@@ -458,7 +462,14 @@ struct SymmetryFoldView: View {
                 .animation(.easeInOut(duration: 0.2), value: wrongDirectionCue)
             }
 
-            // Level progress dots (5) — active dot is slightly larger
+            Text(Self.mirrorMissionLabel(currentLevel: currentLevel, totalLevels: levels.count))
+                .font(.caption.weight(.black))
+                .foregroundStyle(config.color)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(config.color.opacity(0.12), in: Capsule())
+
+            // Level progress dots — active dot is slightly larger
             HStack(spacing: 8) {
                 ForEach(1...levels.count, id: \.self) { lvl in
                     let isActive = lvl == currentLevel
@@ -645,6 +656,11 @@ struct SymmetryFoldView: View {
     }
 
     nonisolated static let creativeLevelNames = ["heart", "butterfly", "flower", "kite", "leaf", "badge"]
+
+    nonisolated static func mirrorMissionLabel(currentLevel: Int, totalLevels: Int) -> String {
+        let collected = max(0, min(currentLevel - 1, totalLevels))
+        return "Mirror mission • \(collected)/\(totalLevels) badges"
+    }
 
     nonisolated static func challengeCountdownText(for secondsRemaining: Double) -> String {
         "\(max(0, Int(ceil(secondsRemaining))))s left"

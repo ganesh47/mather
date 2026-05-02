@@ -180,6 +180,8 @@ struct AngleCannonView: View {
                 canvasSize: canvasSize
             )
 
+            drawScenarioBackdrop(ctx: ctx, size: canvasSize)
+
             // Ground
             var ground = Path()
             ground.move(to: CGPoint(x: 0, y: canvasSize.height * 0.92))
@@ -479,23 +481,34 @@ struct AngleCannonView: View {
         let tipX = origin.x + barrelLen * cos(a)
         let tipY = origin.y - barrelLen * sin(a)
 
+        // Playful, high-contrast barrel: chunky silhouette plus coral inset so it reads as a toy.
         var barrel = Path()
         barrel.move(to: origin)
         barrel.addLine(to: CGPoint(x: tipX, y: tipY))
         ctx.stroke(barrel,
-                   with: .color(MatherTheme.ink.opacity(0.9)),
-                   style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                   with: .color(MatherTheme.ink.opacity(0.92)),
+                   style: StrokeStyle(lineWidth: 15, lineCap: .round))
+        ctx.stroke(barrel,
+                   with: .color(MatherTheme.coral.opacity(0.86)),
+                   style: StrokeStyle(lineWidth: 8, lineCap: .round))
 
         // Carriage
         let wheelR: CGFloat = 16
+        let body = RoundedRectangle(cornerRadius: 14).path(in: CGRect(x: origin.x - 42, y: origin.y - 18, width: 74, height: 28))
+        ctx.fill(body, with: .color(MatherTheme.warm.opacity(0.95)))
+        ctx.stroke(body, with: .color(MatherTheme.ink.opacity(0.24)), lineWidth: 2)
+        let decal = ctx.resolve(Text("★").font(.system(size: 15, weight: .black)).foregroundStyle(.white.opacity(0.9)))
+        ctx.draw(decal, at: CGPoint(x: origin.x - 8, y: origin.y - 4))
         ctx.fill(Circle().path(in: CGRect(x: origin.x - wheelR * 2.2,
                                           y: origin.y - wheelR * 0.6,
                                           width: wheelR * 2, height: wheelR * 2)),
-                 with: .color(MatherTheme.ink.opacity(0.7)))
+                 with: .color(MatherTheme.ink.opacity(0.78)))
         ctx.fill(Circle().path(in: CGRect(x: origin.x - wheelR * 0.4,
                                           y: origin.y - wheelR * 0.6,
                                           width: wheelR * 2, height: wheelR * 2)),
-                 with: .color(MatherTheme.ink.opacity(0.7)))
+                 with: .color(MatherTheme.ink.opacity(0.78)))
+        ctx.fill(Circle().path(in: CGRect(x: origin.x - wheelR * 1.7, y: origin.y - 2, width: 9, height: 9)), with: .color(.white.opacity(0.72)))
+        ctx.fill(Circle().path(in: CGRect(x: origin.x + wheelR * 0.1, y: origin.y - 2, width: 9, height: 9)), with: .color(.white.opacity(0.72)))
 
         // Muzzle flash ring when firing
         if firePulse {
@@ -503,6 +516,24 @@ struct AngleCannonView: View {
                                                  width: 28, height: 28)),
                        with: .color(MatherTheme.warm.opacity(0.8)), lineWidth: 3)
         }
+    }
+
+    private func drawScenarioBackdrop(ctx: GraphicsContext, size: CGSize) {
+        let sky = CGRect(x: 0, y: 0, width: size.width, height: size.height * 0.92)
+        ctx.fill(Rectangle().path(in: sky), with: .color(MatherTheme.softBlue.opacity(0.10)))
+
+        // Soft scenery makes the game feel less like a physics diagram while keeping targets readable.
+        let farHill = CGRect(x: -size.width * 0.10, y: size.height * 0.66, width: size.width * 0.78, height: size.height * 0.30)
+        let nearHill = CGRect(x: size.width * 0.42, y: size.height * 0.62, width: size.width * 0.76, height: size.height * 0.34)
+        ctx.fill(Ellipse().path(in: farHill), with: .color(MatherTheme.accent.opacity(0.10)))
+        ctx.fill(Ellipse().path(in: nearHill), with: .color(MatherTheme.warm.opacity(0.11)))
+
+        let cloudText = scenario.id == "moon-gate" ? "☁️   🌙   ☁️" : "☁️        ☁️"
+        let cloud = ctx.resolve(Text(cloudText).font(.system(size: 28)).foregroundStyle(.white.opacity(0.92)))
+        ctx.draw(cloud, at: CGPoint(x: size.width * 0.62, y: size.height * 0.16))
+
+        let prop = ctx.resolve(Text(scenario.environmentSymbol).font(.system(size: 42)))
+        ctx.draw(prop, at: CGPoint(x: size.width * 0.86, y: size.height * 0.72))
     }
 
     // MARK: - Actions
