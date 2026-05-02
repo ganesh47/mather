@@ -74,7 +74,7 @@ final class LabModelsTests: XCTestCase {
         )
 
         XCTAssertEqual(presentation.title, "Numbers Lab")
-        XCTAssertEqual(presentation.openAffordanceLabel, "Open lane")
+        XCTAssertEqual(presentation.openAffordanceLabel, "Enter world")
         XCTAssertEqual(
             presentation.sections,
             [.visualSummary, .promise, .progressStatus]
@@ -145,18 +145,18 @@ extension LabModelsTests {
 
         XCTAssertEqual(progress.progressLabel, "0 / 4 modes")
         XCTAssertEqual(progress.masteryPercentLabel, "0% ready")
-        XCTAssertEqual(progress.progressSummaryLabel, "0 / 4 modes • 0% ready")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 0/4 missions unlocked")
         XCTAssertEqual(progress.nextRecommendedMode, .learn)
-        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Learn next")
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ First Learn mission waiting")
 
         progress.markCompleted(.learn)
         progress.markCompleted(.timed)
 
         XCTAssertEqual(progress.progressLabel, "2 / 4 modes")
         XCTAssertEqual(progress.masteryPercentLabel, "50% ready")
-        XCTAssertEqual(progress.progressSummaryLabel, "2 / 4 modes • 50% ready")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions unlocked")
         XCTAssertEqual(progress.nextRecommendedMode, .challenge)
-        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Challenge next")
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ Try Challenge next")
     }
 
     func testCapabilityLaneProgressTracksReviewedCardsOnlyForItsLane() throws {
@@ -181,8 +181,8 @@ extension LabModelsTests {
 
         let progress = CapabilityLaneProgress(masteryState: masteryState)
 
-        XCTAssertEqual(progress.progressSummaryLabel, "2 / 4 modes • 50% ready")
-        XCTAssertEqual(progress.nextRecommendedModeLabel, "Try Challenge next")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions unlocked")
+        XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ Try Challenge next")
         XCTAssertEqual(progress.reviewedCardIDs, ["numbers-number-bond-five-and-five"])
     }
 
