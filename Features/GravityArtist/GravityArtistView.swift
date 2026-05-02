@@ -110,6 +110,7 @@ struct GravityArtistView: View {
     @State private var targetX: Double = 0
     @State private var hitTarget: Bool = false
     @State private var roundsPlayed: Int = 0
+    @State private var successStreak: Int = 0
     @State private var phase: GamePhase = .aim
     @State private var sessionStart: Date = .now
 
@@ -170,14 +171,27 @@ struct GravityArtistView: View {
     private var headerBar: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Gravity Sensor Lab")
+                Text("Gravity Quest")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Text(phaseHint)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    missionBadge("1 Predict", isActive: phase == .aim)
+                    missionBadge("2 Simulate", isActive: phase == .predicted)
+                    missionBadge("3 Learn", isActive: phase == .fired)
+                }
             }
             Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("⭐ \(successStreak)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.warm)
+                Text("Round \(roundsPlayed + 1)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
             Button {
                 appModel.engine.showHome()
             } label: {
@@ -192,11 +206,20 @@ struct GravityArtistView: View {
         .padding(.bottom, 8)
     }
 
+    private func missionBadge(_ title: String, isActive: Bool) -> some View {
+        Text(title)
+            .font(.caption2.weight(.black))
+            .foregroundStyle(isActive ? .white : MatherTheme.cardSubtitle)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(isActive ? MatherTheme.accent : MatherTheme.panel.opacity(0.72), in: Capsule())
+    }
+
     private var phaseHint: String {
         switch phase {
-        case .aim:       return "Tilt to find which way gravity pulls"
-        case .predicted: return "Prediction locked — now observe the roll"
-        case .fired:     return hitTarget ? "Pebble followed gravity!" : "Try a new tilt direction."
+        case .aim:       return "Guess where the pebble will roll"
+        case .predicted: return "Prediction locked — tilt, watch, and compare"
+        case .fired:     return hitTarget ? "You predicted gravity!" : "New guess: what changed?"
         }
     }
 
@@ -293,8 +316,9 @@ struct GravityArtistView: View {
     private func drawGravityTray(ctx: GraphicsContext, size: CGSize) {
         let tray = CGRect(x: size.width * 0.18, y: size.height * 0.13,
                           width: size.width * 0.64, height: size.height * 0.44)
-        ctx.fill(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.10)))
-        ctx.stroke(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.45)), lineWidth: 4)
+        ctx.fill(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.08)))
+        ctx.fill(RoundedRectangle(cornerRadius: 28).path(in: tray.insetBy(dx: 6, dy: 6)), with: .color(MatherTheme.panelDeep.opacity(0.10)))
+        ctx.stroke(RoundedRectangle(cornerRadius: 28).path(in: tray), with: .color(MatherTheme.softBlue.opacity(0.36)), lineWidth: 3)
 
         let neutral = neutralRoll ?? appModel.motionService.tiltRoll
         let vector = GravitySensorPhysics.normalizedVector(roll: appModel.motionService.tiltRoll, neutralRoll: neutral)
@@ -308,7 +332,9 @@ struct GravityArtistView: View {
         for (index, offset) in [CGPoint(x: -48, y: -18), CGPoint(x: 0, y: 10), CGPoint(x: 44, y: -8)].enumerated() {
             let start = CGPoint(x: center.x + offset.x, y: center.y + offset.y)
             let pos = GravitySensorPhysics.pebblePosition(origin: start, vector: vector, distance: 54 + Double(index * 18), bounds: pebbleBounds)
-            ctx.fill(Circle().path(in: CGRect(x: pos.x - 11, y: pos.y - 11, width: 22, height: 22)), with: .color(MatherTheme.warm.opacity(0.85)))
+            ctx.fill(Circle().path(in: CGRect(x: pos.x - 13, y: pos.y - 13, width: 26, height: 26)), with: .color(MatherTheme.warm.opacity(0.90)))
+            ctx.fill(Circle().path(in: CGRect(x: pos.x - 4, y: pos.y - 4, width: 3, height: 3)), with: .color(MatherTheme.ink.opacity(0.55)))
+            ctx.fill(Circle().path(in: CGRect(x: pos.x + 3, y: pos.y - 4, width: 3, height: 3)), with: .color(MatherTheme.ink.opacity(0.55)))
         }
 
         let label = ctx.resolve(Text("gravity pulls this way").font(.caption.bold()).foregroundStyle(MatherTheme.ink.opacity(0.70)))
@@ -361,6 +387,7 @@ struct GravityArtistView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
+            conceptCard
             HStack(spacing: 16) {
                 switch phase {
                 case .aim:
@@ -385,6 +412,33 @@ struct GravityArtistView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
+        }
+    }
+
+    private var conceptCard: some View {
+        HStack(spacing: 10) {
+            Image(systemName: phase == .fired ? (hitTarget ? "star.fill" : "lightbulb.fill") : "questionmark.bubble.fill")
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.warm)
+            Text(conceptCardText)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.horizontal, 24)
+    }
+
+    private var conceptCardText: String {
+        switch phase {
+        case .aim:
+            return "Flashcard: gravity pulls objects screen-down. Predict the path first."
+        case .predicted:
+            return "Now simulate: compare your dotted guess with the real roll."
+        case .fired:
+            return hitTarget ? "Reward: your prediction matched the simulation." : "Learning: change angle or power, then test again."
         }
     }
 
@@ -437,12 +491,14 @@ struct GravityArtistView: View {
         roundsPlayed += 1
 
         if hitTarget {
+            successStreak += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
                 "Bull's eye! The launch angle was \(Int(currentAngle.rounded())) degrees.",
                 enabled: appModel.featureFlags.audioEnabled
             )
         } else {
+            successStreak = 0
             appModel.hapticsService.failure(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
                 "So close! Try again.",
