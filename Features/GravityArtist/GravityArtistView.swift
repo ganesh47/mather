@@ -364,37 +364,19 @@ struct GravityArtistView: View {
             HStack(spacing: 16) {
                 switch phase {
                 case .aim:
-                    Button("PREDICT ROLL") {
+                    crispActionButton(title: "PREDICT ROLL", fill: MatherTheme.warm) {
                         handlePredict()
                     }
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(MatherTheme.warm)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 case .predicted:
-                    Button("OBSERVE") {
+                    crispActionButton(title: "OBSERVE", fill: MatherTheme.coral) {
                         handleFire()
                     }
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(MatherTheme.coral)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 case .fired:
-                    Button("Try Again") {
+                    crispActionButton(title: "NEW ROLL", fill: MatherTheme.softBlue) {
                         handleNextRound()
                     }
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(MatherTheme.softBlue)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
             }
             .padding(.horizontal, 24)
@@ -404,6 +386,23 @@ struct GravityArtistView: View {
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
         }
+    }
+
+    private func crispActionButton(title: String, fill: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 19, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 62)
+                .background(fill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(.white.opacity(0.65), lineWidth: 2)
+                )
+                .shadow(color: fill.opacity(0.24), radius: 6, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("gravity-crisp-action-button")
     }
 
     // MARK: - Actions

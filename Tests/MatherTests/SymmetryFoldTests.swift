@@ -129,6 +129,13 @@ struct SymmetryFoldTests {
     }
 
     @Test
+    func mirrorMissionLabelCountsEarnedBadges() {
+        #expect(SymmetryFoldView.mirrorMissionLabel(currentLevel: 1, totalLevels: 6) == "Mirror mission • 0/6 badges")
+        #expect(SymmetryFoldView.mirrorMissionLabel(currentLevel: 4, totalLevels: 6) == "Mirror mission • 3/6 badges")
+        #expect(SymmetryFoldView.mirrorMissionLabel(currentLevel: 99, totalLevels: 6) == "Mirror mission • 6/6 badges")
+    }
+
+    @Test
     func challengeCountdownRoundsUpAndClamps() {
         #expect(SymmetryFoldView.challengeCountdownText(for: 7.01) == "8s left")
         #expect(SymmetryFoldView.challengeCountdownText(for: 0.2) == "1s left")
