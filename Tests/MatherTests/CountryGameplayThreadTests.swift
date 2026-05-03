@@ -3,7 +3,7 @@ import Testing
 @testable import Mather
 
 struct CountryGameplayThreadTests {
-    private let requiredPropertyTypeIDs: Set<String> = ["capital", "currency", "flag", "map-shape", "continent", "language"]
+    private let requiredPropertyTypeIDs: Set<String> = ["capital", "currency", "flag", "map-shape", "continent", "language", "clue"]
 
     @Test
     func countriesThreadMigratesAllCurrentCountryCardsWithRequiredProperties() throws {

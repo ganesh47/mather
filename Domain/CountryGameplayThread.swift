@@ -16,7 +16,7 @@ enum CountryGameplayThread {
             GameplayPropertyType(id: "map-shape", displayName: "Map Shape", prompt: "Which map-shape clue fits this country?"),
             GameplayPropertyType(id: "continent", displayName: "Continent", prompt: "Which continent is this country on?"),
             GameplayPropertyType(id: "language", displayName: "Language", prompt: "Which language clue fits this country?"),
-            GameplayPropertyType(id: "known-for", displayName: "Known For", prompt: "Which clue is this country known for?")
+            GameplayPropertyType(id: "clue", displayName: "Clue", prompt: "Which clue is this country known for?")
         ],
         entities: [
             country(
@@ -159,7 +159,7 @@ enum CountryGameplayThread {
                 property(entityID: id, typeID: "map-shape", value: mapShape, explanation: "A map clue for \(name): \(mapShape).", visualKey: "🗺️"),
                 property(entityID: id, typeID: "continent", value: continent, explanation: "\(name) is in \(continent).", visualKey: "🌍"),
                 property(entityID: id, typeID: "language", value: language, explanation: "A language clue for \(name): \(language).", visualKey: "🗣️"),
-                property(entityID: id, typeID: "known-for", value: knownFor, explanation: "\(name) is \(knownFor).", visualKey: "✨")
+                property(entityID: id, typeID: "clue", value: knownFor, explanation: "\(name) is \(knownFor).", visualKey: "✨")
             ]
         )
     }
