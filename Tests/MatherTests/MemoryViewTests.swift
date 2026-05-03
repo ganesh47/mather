@@ -5,6 +5,12 @@ import Testing
 @Suite("MemoryView")
 struct MemoryViewTests {
 
+    @Test func lockedDeckStagesAdvanceEasyMediumHard() {
+        #expect(MemoryView.nextStage(after: .easy) == .medium)
+        #expect(MemoryView.nextStage(after: .medium) == .hard)
+        #expect(MemoryView.nextStage(after: .hard) == .easy)
+    }
+
     @Test func birdDeckUsesExtractedSheetAssetPool() {
         let ids = MemoryDeck.birds.map(\.id)
         let assets = MemoryDeck.birds.compactMap(\.imageAssetName)
