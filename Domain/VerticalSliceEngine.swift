@@ -17,6 +17,7 @@ enum AppRoute: Hashable {
     case twoFingerProtractor
     case gravityArtist
     case compassAngles
+    case countryCards
     case lab
     case labLane(CapabilityLaneID)
     case memory
@@ -130,6 +131,7 @@ final class VerticalSliceEngine {
     func showTwoFingerProtractor() { route = .twoFingerProtractor }
     func showGravityArtist() { route = .gravityArtist }
     func showCompassAngles() { route = .compassAngles }
+    func showCountryCards() { route = .countryCards }
     func showLab() { route = .lab }
     func showLabLane(_ laneID: CapabilityLaneID) { route = .labLane(laneID) }
     func showMemory() { route = .memory }

@@ -121,6 +121,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case twoFingerProtractor
     case gravityArtist
     case compassAngles
+    case countryCards
     case shapeGeometry
     case waterCycle
     case soundVolume
@@ -148,6 +149,8 @@ extension LabActivityID {
             return .gravityArtist
         case .compassAngles:
             return .compassAngles
+        case .countryCards:
+            return .countryCards
         case .shapeGeometry:
             return .shapeGeometry
         case .waterCycle:
@@ -653,6 +656,13 @@ struct CapabilityLane: Identifiable, Equatable {
                     title: "Compass Walk",
                     tagline: "Turn your body to match the angle",
                     modes: [.explore, .challenge, .timed]
+                ),
+                LabActivity(
+                    id: .countryCards,
+                    emoji: "🌍",
+                    title: "Country Cards",
+                    tagline: "Flashcards for capitals, flags, languages, currency, and continents",
+                    modes: [.learn, .review, .challenge]
                 ),
             ]
         ),

@@ -86,6 +86,8 @@ struct RootView: View {
                     GravityArtistView(appModel: appModel)
                 case .compassAngles:
                     CompassAnglesView(appModel: appModel)
+                case .countryCards:
+                    CountryCardsView(appModel: appModel)
                 case .lab:
                     LabView(appModel: appModel)
                 case .labLane(let laneID):

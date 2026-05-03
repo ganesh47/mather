@@ -109,6 +109,18 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(physics.starterMixMatchCards.contains { $0.concept == "hearing-safety" && $0.prompt == "siren" && $0.match == "protect ears" })
     }
 
+
+    func testMapWorldLaneAddsCountryCardsGame() throws {
+        let mapWorld = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .mapWorld })
+
+        XCTAssertEqual(mapWorld.activities.map(\.id), [.roomQuest, .compassAngles, .countryCards])
+        XCTAssertEqual(LabLaneDetailPresentation(lane: mapWorld).activityCountLabel, "3 games ready")
+        let countryCards = try XCTUnwrap(mapWorld.activities.first { $0.id == .countryCards })
+        XCTAssertTrue(countryCards.tagline.contains("capitals"))
+        XCTAssertTrue(countryCards.tagline.contains("currency"))
+        XCTAssertTrue(countryCards.tagline.contains("continents"))
+    }
+
     func testLabLaneRouteCarriesSelectedLaneWithoutChangingGameRoutes() throws {
         XCTAssertEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.geometry))
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
@@ -116,6 +128,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
+        XCTAssertEqual(LabActivityID.countryCards.appRoute, .countryCards)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }
 
