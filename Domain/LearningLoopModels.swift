@@ -314,6 +314,53 @@ enum SoundVolumeContent {
     }
 }
 
+
+enum ShapeGeometryLabStage: String, CaseIterable, Identifiable, Equatable {
+    case launch
+    case learn
+    case quiz
+    case match
+    case score
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .launch: return "Mission Brief"
+        case .learn: return "Card Quest"
+        case .quiz: return "Shape Check"
+        case .match: return "Bond Blast"
+        case .score: return "Victory Board"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .launch: return "Start"
+        case .learn: return "Cards"
+        case .quiz: return "Quiz"
+        case .match: return "Match"
+        case .score: return "Score"
+        }
+    }
+
+    var next: ShapeGeometryLabStage? {
+        guard let index = Self.allCases.firstIndex(of: self) else { return nil }
+        let nextIndex = Self.allCases.index(after: index)
+        return nextIndex < Self.allCases.endIndex ? Self.allCases[nextIndex] : nil
+    }
+
+    var previous: ShapeGeometryLabStage? {
+        guard let index = Self.allCases.firstIndex(of: self), index > Self.allCases.startIndex else { return nil }
+        return Self.allCases[Self.allCases.index(before: index)]
+    }
+
+    var progressLabel: String {
+        guard let index = Self.allCases.firstIndex(of: self) else { return "" }
+        return "Screen \(index + 1) of \(Self.allCases.count)"
+    }
+}
+
 enum ShapeGeometryContent {
     struct Level: Identifiable, Equatable {
         let id: String

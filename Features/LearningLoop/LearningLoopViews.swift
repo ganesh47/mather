@@ -530,10 +530,14 @@ struct SoundVolumeLabView: View {
 struct ShapeGeometryLabView: View {
     @Bindable var appModel: AppModel
     @State private var levelIndex = 0
+    @State private var stage: ShapeGeometryLabStage = .launch
+    @State private var cardIndex = 0
+    @State private var quizQuestionIndex = 0
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
-    @State private var feedback = "Start with shape cards, then match each picture to its name."
+    @State private var matchShuffleSeed = UInt64.random(in: UInt64.min...UInt64.max)
+    @State private var feedback = "Start a shape mission — one playful screen at a time."
 
     private var level: ShapeGeometryContent.Level {
         ShapeGeometryContent.levels[levelIndex]
@@ -551,23 +555,17 @@ struct ShapeGeometryLabView: View {
     var body: some View {
         GeometryReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 16) {
                     header
                     levelPicker
-                    LearningCardIntroView(cards: level.cards)
-                    ConceptQuizRoundView(questions: level.quizQuestions, answersByQuestionId: $answersByQuestionId)
-                    ConceptMixMatchRoundView(
-                        pairs: level.matchPairs,
-                        selectedLeft: $selectedMatchPairId,
-                        matchedPairIds: $matchedPairIds,
-                        onFeedback: { feedback = $0 }
-                    )
-                    summaryCard
+                    stageProgress
+                    activeStageCard
                 }
-                .padding(.horizontal, proxy.size.width < 420 ? 14 : 24)
-                .padding(.vertical, 22)
-                .frame(maxWidth: 900)
+                .padding(.horizontal, horizontalPadding(for: proxy.size.width))
+                .padding(.vertical, 18)
+                .frame(maxWidth: 760)
                 .frame(maxWidth: .infinity)
+                .animation(.spring(response: 0.28, dampingFraction: 0.82), value: stage)
             }
             .background(MatherTheme.background.ignoresSafeArea())
         }
@@ -585,6 +583,12 @@ struct ShapeGeometryLabView: View {
             .padding(.vertical, 8)
             .background(.thinMaterial)
         }
+        .safeAreaInset(edge: .bottom) {
+            stageControls
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.thinMaterial)
+        }
         .onDisappear {
             if summary.starCount > 0 || matchedPairIds.count == level.matchPairs.count {
                 appModel.markExplorerLabModeCompleted(laneID: .geometry, mode: .review)
@@ -600,11 +604,11 @@ struct ShapeGeometryLabView: View {
                     Text("🔷")
                         .font(.system(size: 58))
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Shape Names Lab")
+                        Text("Shape Mission Lab")
                             .font(.largeTitle.weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                             .minimumScaleFactor(0.75)
-                        Text("Learn circles, triangles, squares, rectangles, ovals, stars, hearts, and diamonds — then play Bond Blast-style matches.")
+                        Text("No giant worksheet. Kids clear short screens: mission, card quest, shape check, Bond Blast, victory board.")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
@@ -626,10 +630,7 @@ struct ShapeGeometryLabView: View {
             ForEach(Array(ShapeGeometryContent.levels.enumerated()), id: \.element.id) { index, level in
                 Button {
                     levelIndex = index
-                    answersByQuestionId = [:]
-                    selectedMatchPairId = nil
-                    matchedPairIds = []
-                    feedback = "Now playing \(level.title)."
+                    resetRun(message: "Now playing \(level.title).")
                 } label: {
                     Text(level.title)
                         .font(.subheadline.weight(.black))
@@ -646,19 +647,359 @@ struct ShapeGeometryLabView: View {
         .accessibilityLabel("Shape Lab level picker")
     }
 
+    private var stageProgress: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(stage.title)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text(stage.progressLabel)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .background(MatherTheme.accent.opacity(0.16))
+                    .clipShape(Capsule())
+            }
+            HStack(spacing: 8) {
+                ForEach(ShapeGeometryLabStage.allCases) { item in
+                    Capsule()
+                        .fill(stageFill(for: item))
+                        .frame(height: 8)
+                        .accessibilityLabel("\(item.shortTitle) screen")
+                }
+            }
+        }
+        .padding(14)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var activeStageCard: some View {
+        switch stage {
+        case .launch:
+            shapeMissionBrief
+        case .learn:
+            ShapeCardQuestView(cards: level.cards, cardIndex: $cardIndex)
+        case .quiz:
+            ShapeScreenQuizView(
+                questions: level.quizQuestions,
+                questionIndex: $quizQuestionIndex,
+                answersByQuestionId: $answersByQuestionId
+            )
+        case .match:
+            ConceptMixMatchRoundView(
+                pairs: level.matchPairs,
+                shuffleSeed: matchShuffleSeed,
+                selectedLeft: $selectedMatchPairId,
+                matchedPairIds: $matchedPairIds,
+                onFeedback: { feedback = $0 },
+                onHapticCue: playShapeMatchHaptic
+            )
+        case .score:
+            summaryCard
+        }
+    }
+
+    private var shapeMissionBrief: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    Text("🕵️‍♀️")
+                        .font(.system(size: 54))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Shape detective mission")
+                            .font(.title.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("Clear one screen, earn a badge, then move forward. No long scrolling hunt.")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                    missionBadge("1", "Peek", "Study one card at a time")
+                    missionBadge("2", "Pick", "Answer quick clues")
+                    missionBadge("3", "Blast", "Snap matching shapes")
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func missionBadge(_ number: String, _ title: String, _ copy: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(number)
+                .font(.caption.weight(.black))
+                .foregroundStyle(.white)
+                .padding(8)
+                .background(MatherTheme.accent)
+                .clipShape(Circle())
+            Text(title)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Text(copy)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 116, alignment: .topLeading)
+        .background(MatherTheme.softBlue.opacity(0.18))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
     private var summaryCard: some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Shape Score")
+            VStack(alignment: .leading, spacing: 12) {
+                Text(summary.starCount >= 2 ? "🏆 Shape detective mode unlocked" : "⭐ Keep collecting shape clues")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Text("Quiz: \(summary.quizCorrect)/\(summary.quizTotal) • Matches: \(summary.matchedPairs)/\(summary.totalPairs) • Stars: \(summary.starCount)")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Text(summary.starCount >= 2 ? "Shape detective mode unlocked." : "Try another level or match again.")
+                Text(summary.starCount >= 2 ? "Nice work — try another level for a fresh card quest." : "Replay the cards or try Bond Blast again to earn more stars.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.panelDeep)
+                Button {
+                    resetRun(message: "New shape mission ready.")
+                } label: {
+                    Label("Replay as a new mission", systemImage: "arrow.clockwise")
+                        .font(.headline.weight(.black))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
+    }
+
+    private var stageControls: some View {
+        HStack(spacing: 12) {
+            Button {
+                goBack()
+            } label: {
+                Label("Back", systemImage: "chevron.left")
+                    .font(.subheadline.weight(.black))
+            }
+            .buttonStyle(.bordered)
+            .disabled(stage.previous == nil)
+
+            Button {
+                goForward()
+            } label: {
+                Label(nextButtonTitle, systemImage: stage.next == nil ? "checkmark.seal.fill" : "chevron.right")
+                    .font(.headline.weight(.black))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+    }
+
+    private var nextButtonTitle: String {
+        switch stage {
+        case .launch: return "Start card quest"
+        case .learn: return cardIndex < level.cards.count - 1 ? "Next card" : "Start shape check"
+        case .quiz: return quizQuestionIndex < level.quizQuestions.count - 1 ? "Next clue" : "Start Bond Blast"
+        case .match: return matchedPairIds.count == level.matchPairs.count ? "See victory board" : "Skip to score"
+        case .score: return "Done"
+        }
+    }
+
+    private func goForward() {
+        switch stage {
+        case .learn where cardIndex < level.cards.count - 1:
+            cardIndex += 1
+            feedback = "Card \(cardIndex + 1) of \(level.cards.count): \(level.cards[cardIndex].title)."
+        case .quiz where quizQuestionIndex < level.quizQuestions.count - 1:
+            quizQuestionIndex += 1
+            feedback = "Shape clue \(quizQuestionIndex + 1) of \(level.quizQuestions.count)."
+        case .score:
+            appModel.engine.showLabLane(.geometry)
+        default:
+            if let next = stage.next {
+                stage = next
+                feedback = feedbackForStage(next)
+            }
+        }
+    }
+
+    private func goBack() {
+        switch stage {
+        case .learn where cardIndex > 0:
+            cardIndex -= 1
+            feedback = "Reviewing card \(cardIndex + 1) of \(level.cards.count)."
+        case .quiz where quizQuestionIndex > 0:
+            quizQuestionIndex -= 1
+            feedback = "Reviewing clue \(quizQuestionIndex + 1) of \(level.quizQuestions.count)."
+        default:
+            if let previous = stage.previous {
+                stage = previous
+                feedback = feedbackForStage(previous)
+            }
+        }
+    }
+
+    private func resetRun(message: String) {
+        stage = .launch
+        cardIndex = 0
+        quizQuestionIndex = 0
+        answersByQuestionId = [:]
+        selectedMatchPairId = nil
+        matchedPairIds = []
+        matchShuffleSeed = UInt64.random(in: UInt64.min...UInt64.max)
+        feedback = message
+    }
+
+    private func feedbackForStage(_ stage: ShapeGeometryLabStage) -> String {
+        switch stage {
+        case .launch: return "Start a shape mission — one playful screen at a time."
+        case .learn: return "Card quest started: one shape clue per screen."
+        case .quiz: return "Shape check: answer one clue at a time."
+        case .match: return "Bond Blast time: snap each picture to its name."
+        case .score: return "Victory board ready."
+        }
+    }
+
+    private func playShapeMatchHaptic(_ cue: ConceptMixMatchHapticCue) {
+        let enabled = appModel.featureFlags.hapticsEnabled
+        switch cue {
+        case .select:
+            appModel.hapticsService.cardPickup(enabled: enabled)
+        case .success:
+            appModel.hapticsService.cardSnapCorrect(enabled: enabled)
+        case .error:
+            appModel.hapticsService.cardSnapMismatch(enabled: enabled)
+        case .complete:
+            appModel.hapticsService.cardSnapCorrect(enabled: enabled)
+            appModel.hapticsService.bondMatchComplete(enabled: enabled)
+        }
+    }
+
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width < 420 ? 14 : 24
+    }
+
+    private func stageFill(for item: ShapeGeometryLabStage) -> Color {
+        guard let current = ShapeGeometryLabStage.allCases.firstIndex(of: stage),
+              let target = ShapeGeometryLabStage.allCases.firstIndex(of: item)
+        else { return Color.secondary.opacity(0.22) }
+        return target <= current ? MatherTheme.accent : Color.secondary.opacity(0.22)
+    }
+}
+
+private struct ShapeCardQuestView: View {
+    let cards: [LearningConceptCard]
+    @Binding var cardIndex: Int
+
+    private var currentCard: LearningConceptCard { cards[cardIndex] }
+
+    var body: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Card quest")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Spacer()
+                    Text("\(cardIndex + 1)/\(cards.count)")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(MatherTheme.accent.opacity(0.16))
+                        .clipShape(Capsule())
+                }
+                Text(currentCard.visualKey)
+                    .font(.system(size: 92, weight: .black))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(MatherTheme.warm.opacity(0.16))
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                Text(currentCard.title)
+                    .font(.largeTitle.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(currentCard.explanation)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    ForEach(cards.indices, id: \.self) { index in
+                        Circle()
+                            .fill(index == cardIndex ? MatherTheme.accent : Color.secondary.opacity(0.24))
+                            .frame(width: 9, height: 9)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Shape card \(cardIndex + 1) of \(cards.count). \(currentCard.title). \(currentCard.explanation)")
+    }
+}
+
+private struct ShapeScreenQuizView: View {
+    let questions: [ConceptQuizQuestion]
+    @Binding var questionIndex: Int
+    @Binding var answersByQuestionId: [String: String]
+
+    private var question: ConceptQuizQuestion { questions[questionIndex] }
+
+    var body: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("Shape check")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Spacer()
+                    Text("\(questionIndex + 1)/\(questions.count)")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(MatherTheme.accent.opacity(0.16))
+                        .clipShape(Capsule())
+                }
+                Text(question.prompt)
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                VStack(spacing: 10) {
+                    ForEach(question.choices, id: \.self) { choice in
+                        Button {
+                            answersByQuestionId[question.id] = choice
+                        } label: {
+                            HStack {
+                                Text(choice)
+                                    .font(.headline.weight(.black))
+                                Spacer()
+                                if answersByQuestionId[question.id] == choice {
+                                    Image(systemName: question.isCorrect(choice) ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                }
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 14)
+                            .frame(maxWidth: .infinity)
+                            .background(choiceFill(for: choice))
+                            .foregroundStyle(MatherTheme.ink)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(choice) answer")
+                    }
+                }
+                if let selected = answersByQuestionId[question.id] {
+                    Text(question.isCorrect(selected) ? question.feedback : "Try again — use the card clue.")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(question.isCorrect(selected) ? .green : MatherTheme.coral)
+                }
+            }
+        }
+    }
+
+    private func choiceFill(for choice: String) -> Color {
+        guard let selected = answersByQuestionId[question.id], selected == choice else {
+            return MatherTheme.softBlue.opacity(0.45)
+        }
+        return question.isCorrect(choice) ? .green.opacity(0.28) : MatherTheme.coral.opacity(0.28)
     }
 }

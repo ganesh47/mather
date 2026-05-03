@@ -186,4 +186,21 @@ extension LearningLoopTests {
         XCTAssertTrue(LearningLoopScoring.isMatch(left: "Clock", right: "Circle", pairs: pairs))
         XCTAssertTrue(LearningLoopScoring.isMatch(left: "Kite", right: "Diamond", pairs: pairs))
     }
+
+    func testShapeGeometryLabStagesAreShortScreenByScreenFlow() {
+        XCTAssertEqual(ShapeGeometryLabStage.allCases.map(\.shortTitle), ["Start", "Cards", "Quiz", "Match", "Score"])
+        XCTAssertEqual(ShapeGeometryLabStage.launch.next, .learn)
+        XCTAssertEqual(ShapeGeometryLabStage.learn.previous, .launch)
+        XCTAssertEqual(ShapeGeometryLabStage.match.next, .score)
+        XCTAssertNil(ShapeGeometryLabStage.score.next)
+        XCTAssertEqual(ShapeGeometryLabStage.quiz.progressLabel, "Screen 3 of 5")
+    }
+
+    func testShapeGeometryLevelsFitStagedCardsInsteadOfOneLongPage() {
+        XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { level in
+            !level.cards.isEmpty && level.cards.count <= ShapeGeometryContent.basicCards.count
+        })
+        XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { !$0.quizQuestions.isEmpty })
+        XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { !$0.matchPairs.isEmpty })
+    }
 }
