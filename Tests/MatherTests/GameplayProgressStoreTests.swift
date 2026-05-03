@@ -49,7 +49,7 @@ struct GameplayProgressStoreTests {
         #expect(weak?.entityId == "country-japan")
         #expect(weak?.confidenceBand == .reviewNeeded)
 
-        let round = store.makeRound(thread: thread, stage: stage, now: now, seed: 7)
+        let round = store.makeRound(thread: thread, stage: stage, now: now.addingTimeInterval(60 * 60 + 1), seed: 7)
         #expect(round.items.first?.entityID == "country-japan")
     }
 
