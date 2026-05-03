@@ -16,6 +16,15 @@ struct RootView: View {
         gameSessions.filter { $0.profileId == appModel.profileStore.activeProfileId }
     }
 
+    private static func gameplayThread(for id: String) -> GameplayThreadDefinition {
+        switch id {
+        case CountryGameplayThread.thread.id:
+            return CountryGameplayThread.thread
+        default:
+            return CountryGameplayThread.thread
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -94,6 +103,8 @@ struct RootView: View {
                     MemoryView(appModel: appModel)
                 case .memoryDeck(let deckKind):
                     MemoryView(appModel: appModel, initialDeckKind: deckKind)
+                case .gameplayThread(let threadID):
+                    GameplayThreadView(thread: Self.gameplayThread(for: threadID), appModel: appModel)
                 case .waterCycle:
                     WaterCycleLabView(appModel: appModel)
                 case .soundVolume:
