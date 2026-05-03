@@ -14,7 +14,9 @@ struct MatherApp: App {
                 StoredFactRecord.self,
                 StoredKidProfile.self,
                 StoredTelemetryEvent.self,
-                StoredGameSession.self
+                StoredGameSession.self,
+                StoredGameplayProgressRecord.self,
+                StoredGameplayThreadSession.self
             )
             let appModel = AppModel(modelContext: container.mainContext)
             Self.seedSessionHistoryIfRequested(using: appModel)

@@ -22,6 +22,7 @@ final class AppModel {
     let factStore: FactRecordStore
     let sumSprintEngine: SumSprintEngine
     let gameSessionStore: GameSessionStore
+    let gameplayProgressStore: GameplayProgressStore
     let explorerLabMasteryStore: ExplorerLabMasteryStore
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
@@ -133,6 +134,7 @@ final class AppModel {
 
         let factStore = FactRecordStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let gameSessionStore = GameSessionStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
+        let gameplayProgressStore = GameplayProgressStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let explorerLabMasteryStore = ExplorerLabMasteryStore()
         let explorerLabMasteryProfile = explorerLabMasteryStore.load()
         let sumSprintEngine = SumSprintEngine(
@@ -144,6 +146,7 @@ final class AppModel {
         )
         self.factStore = factStore
         self.gameSessionStore = gameSessionStore
+        self.gameplayProgressStore = gameplayProgressStore
         self.explorerLabMasteryStore = explorerLabMasteryStore
         self.explorerLabMasteryProfile = explorerLabMasteryProfile
         self.sumSprintEngine = sumSprintEngine
