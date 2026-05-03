@@ -179,11 +179,11 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Pick the matching name")
 
         _ = state.recordOpenMatchChoice(id: "sun-heat")
-        #expect(state.activeLessonPrimaryActionTitle == "Next picture")
+        #expect(state.activeLessonPrimaryActionTitle == "Loading next picture")
 
         for _ in 0..<4 { state.advanceLessonCard() }
         _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
-        #expect(state.activeLessonPrimaryActionTitle == "Ask this card")
+        #expect(state.activeLessonPrimaryActionTitle == "Opening ask card")
 
         state.completeCurrentLessonStage()
         #expect(state.lessonThread.activeStage.kind == .contextualAsk)
@@ -329,10 +329,30 @@ extension WaterCycleLabTests {
         #expect(state.isRecallCardRevealed)
         #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
 
-        state.advanceLessonCard()
+        state.advanceAfterCorrectOpenMatch()
         #expect(state.currentLessonCard.id == "evaporation")
         #expect(state.openMatchFeedback == nil)
         #expect(state.isRecallCardRevealed == false)
         #expect(state.openMatchedCardIDs == Set(["sun-heat"]))
     }
+    @Test func openPictureNameMatchAutoAdvanceMovesToNextCardOrAskStage() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+        state.completeCurrentLessonStage()
+
+        _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
+        state.advanceAfterCorrectOpenMatch()
+        #expect(state.lessonThread.activeStage.kind == .invertedRecall)
+        #expect(state.currentLessonCard.id == "evaporation")
+
+        while !state.isOnLastLessonCard {
+            _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
+            state.advanceAfterCorrectOpenMatch()
+        }
+        _ = state.recordOpenMatchChoice(id: state.currentLessonCard.id)
+        state.advanceAfterCorrectOpenMatch()
+        #expect(state.lessonThread.activeStage.kind == .contextualAsk)
+        #expect(state.currentLessonCard.id == "sun-heat")
+    }
+
 }

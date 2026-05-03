@@ -196,7 +196,7 @@ struct WaterCycleLabState: Equatable {
             return isOnLastLessonCard ? "Start picture match" : "Next look card"
         case .invertedRecall:
             if !isRecallCardRevealed { return "Pick the matching name" }
-            return isOnLastLessonCard ? "Ask this card" : "Next picture"
+            return isOnLastLessonCard ? "Opening ask card" : "Loading next picture"
         case .contextualAsk:
             if latestAskResponse == nil { return "Ask suggested question" }
             return isOnLastLessonCard ? "Start mix-match" : "Next ask card"
@@ -300,6 +300,20 @@ struct WaterCycleLabState: Equatable {
         openMatchFeedback = nil
         askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
         latestAskResponse = nil
+    }
+
+    mutating func advanceAfterCorrectOpenMatch() {
+        guard
+            stage == .complete,
+            lessonThread.activeStage.kind == .invertedRecall,
+            isRecallCardRevealed
+        else { return }
+
+        if isOnLastLessonCard {
+            completeCurrentLessonStage()
+        } else {
+            advanceLessonCard()
+        }
     }
 
     mutating func revealRecallCard() {
@@ -437,20 +451,25 @@ struct WaterCycleLabView: View {
             MatherTheme.background.ignoresSafeArea()
             GeometryReader { proxy in
                 let horizontalPadding = waterCycleHorizontalPadding(for: proxy.size.width)
+                let safeTop = max(proxy.safeAreaInsets.top, 0)
+                let safeBottom = max(proxy.safeAreaInsets.bottom, 0)
+                let usableHeight = max(proxy.size.height - safeTop - safeBottom, 1)
                 let contentWidth = max(proxy.size.width - horizontalPadding * 2, 0)
                 let sceneHeight = contentWidth < 340
-                    ? min(max(proxy.size.height * 0.28, 230), 300)
-                    : min(max(proxy.size.height * 0.42, 300), 480)
+                    ? min(max(usableHeight * 0.24, 200), 260)
+                    : min(max(usableHeight * 0.36, 280), 420)
 
                 if state.stage == .complete {
                     lessonPlayScene(
                         availableWidth: contentWidth,
-                        availableHeight: proxy.size.height,
-                        horizontalPadding: horizontalPadding
+                        availableHeight: usableHeight,
+                        horizontalPadding: horizontalPadding,
+                        safeTop: safeTop,
+                        safeBottom: safeBottom
                     )
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 16) {
                             header(availableWidth: contentWidth)
                             inquiryCard
                             waterCycleScene(width: contentWidth, height: sceneHeight)
@@ -458,7 +477,8 @@ struct WaterCycleLabView: View {
                         }
                         .frame(maxWidth: contentWidth, alignment: .leading)
                         .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, 18)
+                        .padding(.top, max(12, safeTop + 8))
+                        .padding(.bottom, max(16, safeBottom + 12))
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
@@ -723,31 +743,34 @@ struct WaterCycleLabView: View {
     private func lessonPlayScene(
         availableWidth: CGFloat,
         availableHeight: CGFloat,
-        horizontalPadding: CGFloat
+        horizontalPadding: CGFloat,
+        safeTop: CGFloat,
+        safeBottom: CGFloat
     ) -> some View {
-        let boardHeight = max(260, availableHeight - 244)
+        let boardMaxHeight = max(220, availableHeight - 236)
 
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 10) {
             header(availableWidth: availableWidth)
             lessonStageStatusBar
 
             ViewThatFits(in: .vertical) {
                 activeLessonStageBoard
                     .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .frame(height: boardHeight, alignment: .top)
+                    .frame(maxHeight: boardMaxHeight, alignment: .top)
 
                 ScrollView {
                     activeLessonStageBoard
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: boardHeight)
+                .frame(maxHeight: boardMaxHeight)
             }
 
             lessonPlayActionBar(availableWidth: availableWidth)
         }
         .frame(maxWidth: availableWidth, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, 14)
+        .padding(.top, max(12, safeTop + 8))
+        .padding(.bottom, max(12, safeBottom + 10))
         .frame(maxWidth: .infinity, alignment: .center)
         .accessibilityIdentifier("water-cycle-playable-lesson")
     }
@@ -902,6 +925,7 @@ struct WaterCycleLabView: View {
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.58)) {
                             if let attempt = state.recordOpenMatchChoice(id: choice.id) {
                                 speakLessonText(attempt.isCorrect ? "Correct match." : "Try another match.")
+                                scheduleOpenPictureMatchAutoAdvance(after: attempt)
                             }
                         }
                     } label: {
@@ -1044,6 +1068,22 @@ struct WaterCycleLabView: View {
         }
         .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.28)))
         .accessibilityIdentifier("water-cycle-replay-lesson-stage")
+    }
+
+    private func scheduleOpenPictureMatchAutoAdvance(after attempt: MixMatchRecallAttempt) {
+        guard attempt.isCorrect else { return }
+        let matchedID = attempt.choiceID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+            guard state.openMatchFeedback == .correct(choiceID: matchedID) else { return }
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                state.advanceAfterCorrectOpenMatch()
+            }
+            if state.lessonThread.activeStage.kind == .invertedRecall {
+                speakLessonCard()
+            } else {
+                speakLessonStage()
+            }
+        }
     }
 
     private func performLessonPrimaryAction() {
