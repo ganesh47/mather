@@ -327,10 +327,58 @@ struct ConceptMixMatchRoundView: View {
     }
 }
 
+
+private enum SoundVolumeActivityStage: CaseIterable {
+    case quiz
+    case match
+    case summary
+
+    var title: String {
+        switch self {
+        case .quiz: return "Quiz"
+        case .match: return "Mix + Match"
+        case .summary: return "Stars"
+        }
+    }
+
+    var primaryActionTitle: String {
+        switch self {
+        case .quiz: return "Go to Mix + Match"
+        case .match: return "See Sound Score"
+        case .summary: return "Review Quiz"
+        }
+    }
+
+    var primaryActionIcon: String {
+        switch self {
+        case .quiz: return "rectangle.grid.2x2.fill"
+        case .match: return "star.fill"
+        case .summary: return "arrow.counterclockwise"
+        }
+    }
+
+    var next: SoundVolumeActivityStage {
+        switch self {
+        case .quiz: return .match
+        case .match: return .summary
+        case .summary: return .quiz
+        }
+    }
+
+    var previous: SoundVolumeActivityStage {
+        switch self {
+        case .quiz: return .summary
+        case .match: return .quiz
+        case .summary: return .match
+        }
+    }
+}
+
 struct SoundVolumeLabView: View {
     @Bindable var appModel: AppModel
     @State private var introPageIndex = 0
     @State private var hasStartedActivities = false
+    @State private var activityStage: SoundVolumeActivityStage = .quiz
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
@@ -338,9 +386,10 @@ struct SoundVolumeLabView: View {
     @State private var feedback = SoundVolumeContent.safetyNote
 
     private var introPages: [SoundVolumeIntroPage] { SoundVolumeContent.introPages }
-    private var introPage: SoundVolumeIntroPage { introPages[introPageIndex] }
-    private var isFirstIntroPage: Bool { introPageIndex == 0 }
-    private var isLastIntroPage: Bool { introPageIndex == introPages.count - 1 }
+    private var introPage: SoundVolumeIntroPage { introPages[clampedIntroPageIndex] }
+    private var clampedIntroPageIndex: Int { min(max(introPageIndex, 0), max(introPages.count - 1, 0)) }
+    private var isFirstIntroPage: Bool { clampedIntroPageIndex == 0 }
+    private var isLastIntroPage: Bool { clampedIntroPageIndex == introPages.count - 1 }
 
     private var summary: LearningLoopSummary {
         LearningLoopScoring.summary(
@@ -357,19 +406,9 @@ struct SoundVolumeLabView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     if hasStartedActivities {
                         activityHeader
-                        ConceptQuizRoundView(
-                            questions: SoundVolumeContent.quizQuestions,
-                            answersByQuestionId: $answersByQuestionId
-                        )
-                        ConceptMixMatchRoundView(
-                            pairs: SoundVolumeContent.matchPairs,
-                            shuffleSeed: matchShuffleSeed,
-                            selectedLeft: $selectedMatchPairId,
-                            matchedPairIds: $matchedPairIds,
-                            onFeedback: { feedback = $0 },
-                            onHapticCue: playSoundMatchHaptic
-                        )
-                        summaryCard
+                        activityStagePicker
+                        currentActivityStage
+                        activityStageControls
                     } else {
                         stagedIntroCard
                     }
@@ -447,6 +486,8 @@ struct SoundVolumeLabView: View {
             soundClueChips(SoundVolumeContent.cards.prefix(4).map { ($0.visualKey, $0.title) })
         case "safety":
             safetyBanner
+        case "decibels":
+            decibelTeachingCard
         case "zones":
             loudnessZones
         default:
@@ -497,9 +538,10 @@ struct SoundVolumeLabView: View {
     private func advanceIntro() {
         if isLastIntroPage {
             hasStartedActivities = true
-            feedback = "Start with the quiz, then match each sound clue to its safe idea."
+            activityStage = .quiz
+            feedback = "Start with the quiz. Mix + Match comes on the next screen."
         } else {
-            introPageIndex += 1
+            introPageIndex = clampedIntroPageIndex + 1
         }
     }
 
@@ -520,6 +562,75 @@ struct SoundVolumeLabView: View {
                 .clipShape(Capsule())
                 .accessibilityElement(children: .combine)
             }
+        }
+    }
+
+
+    private var activityStagePicker: some View {
+        HStack(spacing: 8) {
+            ForEach(SoundVolumeActivityStage.allCases, id: \.self) { stage in
+                Text(stage.title)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(stage == activityStage ? .white : MatherTheme.accent)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(stage == activityStage ? MatherTheme.accent : MatherTheme.accent.opacity(0.14))
+                    .clipShape(Capsule())
+                    .accessibilityLabel("Sound Lab stage \(stage.title)\(stage == activityStage ? ", current" : "")")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var currentActivityStage: some View {
+        switch activityStage {
+        case .quiz:
+            ConceptQuizRoundView(
+                questions: SoundVolumeContent.quizQuestions,
+                answersByQuestionId: $answersByQuestionId
+            )
+        case .match:
+            ConceptMixMatchRoundView(
+                pairs: SoundVolumeContent.matchPairs,
+                shuffleSeed: matchShuffleSeed,
+                selectedLeft: $selectedMatchPairId,
+                matchedPairIds: $matchedPairIds,
+                onFeedback: { feedback = $0 },
+                onHapticCue: playSoundMatchHaptic
+            )
+        case .summary:
+            summaryCard
+        }
+    }
+
+    private var activityStageControls: some View {
+        HStack(spacing: 10) {
+            if activityStage != .quiz {
+                Button {
+                    activityStage = activityStage.previous
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .font(.headline.weight(.black))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+
+            Button {
+                activityStage = activityStage.next
+                if activityStage == .match {
+                    feedback = "Now match each sound clue to its safe idea."
+                } else if activityStage == .summary {
+                    feedback = "Review your Sound Lab score."
+                }
+            } label: {
+                Label(activityStage.primaryActionTitle, systemImage: activityStage.primaryActionIcon)
+                    .font(.headline.weight(.black))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
         }
     }
 
@@ -579,6 +690,29 @@ struct SoundVolumeLabView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
+        }
+        .padding(14)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+
+    private var decibelTeachingCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Decibel = dB")
+                .font(.title2.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Text("A decibel is a loudness number. A whisper has a small dB number. A siren has a big dB number. We use dB cards only after learning what the unit means.")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Label("small dB = softer", systemImage: "speaker.fill")
+                Label("big dB = louder", systemImage: "speaker.wave.3.fill")
+            }
+            .font(.caption.weight(.black))
+            .foregroundStyle(MatherTheme.accent)
         }
         .padding(14)
         .background(MatherTheme.card)

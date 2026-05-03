@@ -97,18 +97,20 @@ extension LearningLoopTests {
     func testSoundVolumeIntroUsesStagedSafePagesBeforeActivity() {
         let pages = SoundVolumeContent.introPages
 
-        XCTAssertEqual(pages.map(\.id), ["welcome", "safety", "zones", "clues"])
+        XCTAssertEqual(pages.map(\.id), ["welcome", "safety", "decibels", "zones", "clues"])
         XCTAssertEqual(pages.last?.primaryActionTitle, "Start Sound Lab")
         XCTAssertTrue(pages[1].subtitle.contains("no microphone permission"))
         XCTAssertTrue(pages[1].subtitle.contains("no loud-noise challenge"))
-        XCTAssertTrue(pages[2].subtitle.contains("not a live sound meter"))
+        XCTAssertTrue(pages[2].subtitle.contains("decibel"))
+        XCTAssertTrue(pages[3].subtitle.contains("not a live sound meter"))
     }
 
     func testSoundVolumeContentCoversSafeHearingConcepts() {
         let titles = Set(SoundVolumeContent.cards.map(\.title))
 
-        XCTAssertEqual(SoundVolumeContent.cards.count, 8)
+        XCTAssertEqual(SoundVolumeContent.cards.count, 9)
         XCTAssertTrue(titles.isSuperset(of: [
+            "Decibel (dB)",
             "Quiet",
             "Conversation",
             "Traffic",

@@ -264,7 +264,7 @@ enum SoundVolumeContent {
     static let introPages: [SoundVolumeIntroPage] = [
         SoundVolumeIntroPage(
             id: "welcome",
-            eyebrow: "Step 1 of 4",
+            eyebrow: "Step 1 of 5",
             title: "Meet sound and volume",
             subtitle: "Sound can be soft, comfy, noisy, or too loud. We will learn one small idea at a time.",
             visualKey: "🔊",
@@ -273,16 +273,25 @@ enum SoundVolumeContent {
         ),
         SoundVolumeIntroPage(
             id: "safety",
-            eyebrow: "Step 2 of 4",
+            eyebrow: "Step 2 of 5",
             title: "Use hearing-safe play",
             subtitle: "Use listening clues only — no screaming, no loud-noise challenge, and no microphone permission in this activity.",
             visualKey: "👂",
+            primaryActionTitle: "Next: decibels",
+            primaryActionIcon: "arrow.right.circle.fill"
+        ),
+        SoundVolumeIntroPage(
+            id: "decibels",
+            eyebrow: "Step 3 of 5",
+            title: "What is a decibel?",
+            subtitle: "A decibel, written dB, is a number people use to talk about how loud a sound is. Bigger dB usually means louder sound.",
+            visualKey: "dB",
             primaryActionTitle: "Next: loudness zones",
             primaryActionIcon: "arrow.right.circle.fill"
         ),
         SoundVolumeIntroPage(
             id: "zones",
-            eyebrow: "Step 3 of 4",
+            eyebrow: "Step 4 of 5",
             title: "Sort sounds into zones",
             subtitle: "The zone cards are examples, not a live sound meter. If a sound hurts, move away or protect your ears.",
             visualKey: "📊",
@@ -291,7 +300,7 @@ enum SoundVolumeContent {
         ),
         SoundVolumeIntroPage(
             id: "clues",
-            eyebrow: "Step 4 of 4",
+            eyebrow: "Step 5 of 5",
             title: "Ready for quiz and match",
             subtitle: "Look for picture clues like whisper, traffic, siren, headphones, birds, and protect ears.",
             visualKey: "🧩",
@@ -301,6 +310,7 @@ enum SoundVolumeContent {
     ]
 
     static let cards: [LearningConceptCard] = [
+        LearningConceptCard(id: "decibel", title: "Decibel (dB)", explanation: "A decibel is a number for loudness. Bigger dB usually means a louder sound.", visualKey: "dB", audioPrompt: "A decibel, or dB, is a number for loudness."),
         LearningConceptCard(id: "quiet", title: "Quiet", explanation: "Quiet sounds are soft and gentle, like a whisper or leaves.", visualKey: "🍃", audioPrompt: "Quiet sounds are soft and gentle."),
         LearningConceptCard(id: "conversation", title: "Conversation", explanation: "A talking voice sits in the middle loudness zone.", visualKey: "💬", audioPrompt: "Conversation is a middle loudness zone."),
         LearningConceptCard(id: "traffic", title: "Traffic", explanation: "Busy traffic is loud and can turn into noise pollution.", visualKey: "🚗", audioPrompt: "Traffic can be loud and unwanted."),
