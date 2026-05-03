@@ -21,6 +21,7 @@ enum AppRoute: Hashable {
     case labLane(CapabilityLaneID)
     case memory
     case waterCycle
+    case soundVolume
 }
 
 @MainActor
@@ -132,6 +133,7 @@ final class VerticalSliceEngine {
     func showLabLane(_ laneID: CapabilityLaneID) { route = .labLane(laneID) }
     func showMemory() { route = .memory }
     func showWaterCycle() { route = .waterCycle }
+    func showSoundVolume() { route = .soundVolume }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom

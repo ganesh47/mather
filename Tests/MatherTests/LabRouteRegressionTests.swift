@@ -33,6 +33,7 @@ struct LabRouteRegressionTests {
             .gravityArtist: .gravityArtist,
             .compassAngles: .compassAngles,
             .waterCycle: .waterCycle,
+            .soundVolume: .soundVolume,
             .memoryMatch: .memory,
         ]
 

@@ -174,3 +174,108 @@ enum WaterCycleContent {
         ConceptMatchPair(id: "rain-pond", left: "Rain", right: "Pond", feedback: "Rain fills ponds again.", leftVisualKey: "🌧️", rightVisualKey: "🏞️"),
     ]
 }
+
+
+enum SoundLoudnessZone: String, CaseIterable, Equatable {
+    case quiet
+    case normal
+    case loud
+    case tooLoud
+
+    var label: String {
+        switch self {
+        case .quiet: return "Quiet"
+        case .normal: return "Normal talking"
+        case .loud: return "Loud"
+        case .tooLoud: return "Too loud"
+        }
+    }
+
+    var estimatedRangeLabel: String {
+        switch self {
+        case .quiet: return "about 30–40 dB"
+        case .normal: return "about 55–65 dB"
+        case .loud: return "about 70–85 dB"
+        case .tooLoud: return "90 dB or more"
+        }
+    }
+
+    var safetyCopy: String {
+        switch self {
+        case .quiet:
+            return "Soft sounds are gentle for ears."
+        case .normal:
+            return "Talking voice is a safe middle zone."
+        case .loud:
+            return "Loud places can feel tiring — take breaks."
+        case .tooLoud:
+            return "Move away, lower the volume, or protect your ears."
+        }
+    }
+}
+
+enum SoundVolumeContent {
+    static let safetyNote = "Use listening clues only — no screaming. Protect your ears. A live microphone meter comes later and is not used in this activity."
+
+    static let cards: [LearningConceptCard] = [
+        LearningConceptCard(id: "quiet", title: "Quiet", explanation: "Quiet sounds are soft and gentle, like a whisper or leaves.", visualKey: "🍃", audioPrompt: "Quiet sounds are soft and gentle."),
+        LearningConceptCard(id: "conversation", title: "Conversation", explanation: "A talking voice sits in the middle loudness zone.", visualKey: "💬", audioPrompt: "Conversation is a middle loudness zone."),
+        LearningConceptCard(id: "traffic", title: "Traffic", explanation: "Busy traffic is loud and can turn into noise pollution.", visualKey: "🚗", audioPrompt: "Traffic can be loud and unwanted."),
+        LearningConceptCard(id: "siren", title: "Siren", explanation: "Sirens warn us, but they are very loud. Move away and protect ears.", visualKey: "🚨", audioPrompt: "Sirens are very loud warning sounds."),
+        LearningConceptCard(id: "headphones", title: "Headphones", explanation: "Keep headphones low, take breaks, and never play a volume that hurts.", visualKey: "🎧", audioPrompt: "Headphones should stay low and safe."),
+        LearningConceptCard(id: "pleasant", title: "Pleasant Sound", explanation: "Pleasant sounds feel nice and safe, like birds or soft music.", visualKey: "🐦", audioPrompt: "Pleasant sounds feel nice and safe."),
+        LearningConceptCard(id: "unpleasant", title: "Noisy Sound", explanation: "Noisy sounds feel harsh, distracting, or unwanted.", visualKey: "📣", audioPrompt: "Noisy sounds are unwanted or harsh."),
+        LearningConceptCard(id: "protect-ears", title: "Protect Ears", explanation: "Lower volume, move away, cover ears, or ask a grown-up for help.", visualKey: "👂", audioPrompt: "Protect ears when sound is too loud."),
+    ]
+
+    static let quizQuestions: [ConceptQuizQuestion] = [
+        ConceptQuizQuestion(
+            id: "quiet-example",
+            prompt: "Which sound belongs in the quiet zone?",
+            choices: ["Whisper", "Siren", "Busy traffic"],
+            correctChoice: "Whisper",
+            feedback: "Yes — a whisper is soft and gentle."
+        ),
+        ConceptQuizQuestion(
+            id: "safe-headphones",
+            prompt: "What is the safest headphone choice?",
+            choices: ["Turn it up until it hurts", "Keep volume low and take breaks", "Try to be louder than traffic"],
+            correctChoice: "Keep volume low and take breaks",
+            feedback: "Right — low volume and breaks help protect hearing."
+        ),
+        ConceptQuizQuestion(
+            id: "noise-pollution",
+            prompt: "What does noise pollution mean?",
+            choices: ["Too much unwanted sound", "Only music you like", "A silent room"],
+            correctChoice: "Too much unwanted sound",
+            feedback: "Yes — noise pollution is unwanted sound around us."
+        ),
+        ConceptQuizQuestion(
+            id: "too-loud-action",
+            prompt: "What should you do if a sound hurts your ears?",
+            choices: ["Move away or protect ears", "Make a louder sound", "Stand closer"],
+            correctChoice: "Move away or protect ears",
+            feedback: "Correct — move away, lower volume, or protect ears."
+        ),
+    ]
+
+    static let matchPairs: [ConceptMatchPair] = [
+        ConceptMatchPair(id: "whisper-quiet", left: "Whisper", right: "Quiet", feedback: "A whisper belongs in the quiet zone.", leftVisualKey: "🤫", rightVisualKey: "🍃"),
+        ConceptMatchPair(id: "talk-normal", left: "Friend talking", right: "Conversation", feedback: "Talking voice is a middle loudness clue.", leftVisualKey: "🗣️", rightVisualKey: "💬"),
+        ConceptMatchPair(id: "traffic-loud", left: "Busy road", right: "Traffic noise", feedback: "Busy roads can be loud and distracting.", leftVisualKey: "🚗", rightVisualKey: "📣"),
+        ConceptMatchPair(id: "siren-too-loud", left: "Siren", right: "Protect ears", feedback: "Sirens are useful warnings, but they are too loud up close.", leftVisualKey: "🚨", rightVisualKey: "👂"),
+        ConceptMatchPair(id: "birds-pleasant", left: "Birds", right: "Pleasant sound", feedback: "Birds can be a pleasant, gentle sound.", leftVisualKey: "🐦", rightVisualKey: "😊"),
+        ConceptMatchPair(id: "headphones-safe", left: "Headphones", right: "Keep volume low", feedback: "Low volume and breaks are safer for headphones.", leftVisualKey: "🎧", rightVisualKey: "🔉"),
+    ]
+
+    static let estimatedZones: [SoundLoudnessZone] = [.quiet, .normal, .loud, .tooLoud]
+
+    static func zone(forEstimatedDecibels decibels: Double) -> SoundLoudnessZone {
+        switch decibels {
+        case ..<50: return .quiet
+        case ..<70: return .normal
+        case ..<90: return .loud
+        default: return .tooLoud
+        }
+    }
+}

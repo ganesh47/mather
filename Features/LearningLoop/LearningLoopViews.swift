@@ -1,3 +1,4 @@
+import Observation
 import SwiftUI
 
 struct LearningCardIntroView: View {
@@ -273,5 +274,187 @@ struct ConceptMixMatchRoundView: View {
         if isMatched { return MatherTheme.accent.opacity(0.75) }
         if isSelected { return MatherTheme.warm }
         return Color.secondary.opacity(0.12)
+    }
+}
+
+struct SoundVolumeLabView: View {
+    @Bindable var appModel: AppModel
+    @State private var answersByQuestionId: [String: String] = [:]
+    @State private var selectedMatchPairId: String?
+    @State private var matchedPairIds: Set<String> = []
+    @State private var feedback = SoundVolumeContent.safetyNote
+
+    private var summary: LearningLoopSummary {
+        LearningLoopScoring.summary(
+            questions: SoundVolumeContent.quizQuestions,
+            answersByQuestionId: answersByQuestionId,
+            matchedPairIds: matchedPairIds,
+            pairs: SoundVolumeContent.matchPairs
+        )
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    safetyBanner
+                    loudnessZones
+                    LearningCardIntroView(cards: SoundVolumeContent.cards)
+                    ConceptQuizRoundView(
+                        questions: SoundVolumeContent.quizQuestions,
+                        answersByQuestionId: $answersByQuestionId
+                    )
+                    ConceptMixMatchRoundView(
+                        pairs: SoundVolumeContent.matchPairs,
+                        selectedLeft: $selectedMatchPairId,
+                        matchedPairIds: $matchedPairIds,
+                        onFeedback: { feedback = $0 }
+                    )
+                    summaryCard
+                }
+                .padding(.horizontal, horizontalPadding(for: proxy.size.width))
+                .padding(.vertical, 22)
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
+            }
+            .background(MatherTheme.background.ignoresSafeArea())
+        }
+        .navigationTitle("Sound Lab")
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Button {
+                    appModel.engine.showLabLane(.physics)
+                } label: {
+                    Label("Physics", systemImage: "chevron.left")
+                        .font(.subheadline.weight(.black))
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.thinMaterial)
+        }
+        .onDisappear {
+            if summary.starCount > 0 || matchedPairIds.count == SoundVolumeContent.matchPairs.count {
+                appModel.markExplorerLabModeCompleted(laneID: .physics, mode: .review)
+                appModel.setExplorerLabConceptConfidence(.steady, for: ConceptId(rawValue: "sound-volume"), laneID: .physics)
+            }
+        }
+    }
+
+    private var header: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 12) {
+                    Text("🔊")
+                        .font(.system(size: 58))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Sound + Volume Lab")
+                            .font(.largeTitle.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .minimumScaleFactor(0.75)
+                        Text("Learn quiet, conversation, traffic, sirens, headphones, pleasant sounds, noisy sounds, and hearing safety.")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                }
+                Text(feedback)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(MatherTheme.panelDeep)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(MatherTheme.softBlue.opacity(0.28))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var safetyBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "ear")
+                .font(.title2.weight(.black))
+                .foregroundStyle(MatherTheme.accent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Hearing-safe play")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("No microphone permission, no live meter, and no loud-noise challenge in this round. Match the clues and choose safe actions.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+        }
+        .padding(14)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    private var loudnessZones: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Estimated loudness zones")
+                .font(.title2.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Text("These are learning examples, not a calibrated sound meter.")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                ForEach(SoundVolumeContent.estimatedZones, id: \.self) { zone in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(zone.label)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(zone.estimatedRangeLabel)
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(MatherTheme.accent)
+                        Text(zone.safetyCopy)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, minHeight: 122, alignment: .topLeading)
+                    .background(zoneFill(zone))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(zone.label), estimated \(zone.estimatedRangeLabel). \(zone.safetyCopy)")
+                }
+            }
+        }
+    }
+
+    private var summaryCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Sound Lab Score")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Quiz: \(summary.quizCorrect)/\(summary.quizTotal) • Matches: \(summary.matchedPairs)/\(summary.totalPairs) • Stars: \(summary.starCount)")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                Text("Remember: safe listening beats loud listening.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.panelDeep)
+            }
+        }
+    }
+
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width < 420 ? 14 : 24
+    }
+
+    private func zoneFill(_ zone: SoundLoudnessZone) -> Color {
+        switch zone {
+        case .quiet:
+            return MatherTheme.softBlue.opacity(0.22)
+        case .normal:
+            return MatherTheme.accent.opacity(0.14)
+        case .loud:
+            return MatherTheme.warm.opacity(0.24)
+        case .tooLoud:
+            return MatherTheme.coral.opacity(0.20)
+        }
     }
 }
