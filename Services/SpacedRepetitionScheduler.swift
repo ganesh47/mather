@@ -52,13 +52,17 @@ enum SpacedRepetitionScheduler {
         var next = records
         for update in updates {
             var record = next[update.key] ?? GameplayExposureRecord(key: update.key)
-            if update.wasCorrect {
+            switch update.outcome {
+            case .correct:
                 record.correctCount += 1
-            } else {
+            case .supportedCorrect:
+                record.supportedCorrectCount += 1
+            case .incorrect:
                 record.mistakeCount += 1
             }
             record.lastSeenAt = update.occurredAt
-            record.confidenceBand = confidenceBand(correctCount: record.correctCount, mistakeCount: record.mistakeCount)
+            record.lastOutcome = update.outcome
+            record.confidenceBand = confidenceBand(for: record)
             record.dueAt = dueDate(for: record, after: update.occurredAt, baseInterval: stageInterval)
             next[update.key] = record
         }
@@ -75,11 +79,18 @@ enum SpacedRepetitionScheduler {
         }
         let isDue = record.dueAt <= now
         let confidencePriority: Int
-        switch record.confidenceBand {
-        case .reviewNeeded: confidencePriority = 0
-        case .new: confidencePriority = 1
-        case .learning: confidencePriority = 2
-        case .steady: confidencePriority = 4
+        switch record.lastOutcome {
+        case .incorrect:
+            confidencePriority = 0
+        case .supportedCorrect:
+            confidencePriority = 1
+        case .correct, nil:
+            switch record.confidenceBand {
+            case .reviewNeeded: confidencePriority = 0
+            case .new: confidencePriority = 2
+            case .learning: confidencePriority = 3
+            case .steady: confidencePriority = 4
+            }
         }
         let duePenalty = isDue ? 0 : 5
         return GameplayItemRank(
@@ -90,22 +101,30 @@ enum SpacedRepetitionScheduler {
         )
     }
 
-    private static func confidenceBand(correctCount: Int, mistakeCount: Int) -> GameplayConfidenceBand {
-        if mistakeCount > 0 && mistakeCount >= correctCount { return .reviewNeeded }
-        if correctCount == 0 && mistakeCount == 0 { return .new }
-        if correctCount < 3 { return .learning }
-        return .steady
+    private static func confidenceBand(for record: GameplayExposureRecord) -> GameplayConfidenceBand {
+        if record.mistakeCount > 0 && record.mistakeCount >= record.totalSuccessfulCount { return .reviewNeeded }
+        if record.attemptCount == 0 { return .new }
+        if record.independentCorrectCount >= 3 && record.mistakeCount == 0 { return .steady }
+        return .learning
     }
 
     private static func dueDate(for record: GameplayExposureRecord, after date: Date, baseInterval: TimeInterval) -> Date {
-        switch record.confidenceBand {
-        case .reviewNeeded:
-            return date.addingTimeInterval(baseInterval / 24)
-        case .new, .learning:
-            return date.addingTimeInterval(baseInterval)
-        case .steady:
-            return date.addingTimeInterval(baseInterval * 5)
-        }
+        guard let outcome = record.lastOutcome else { return date }
+        let configuration = CardReviewScheduler.Configuration(
+            incorrectRetryDelay: baseInterval / 24,
+            supportedCorrectDelay: baseInterval / 2,
+            independentCorrectIntervals: [baseInterval, baseInterval * 3, baseInterval * 5],
+            interleaveWindow: baseInterval / 48
+        )
+        let progress = CardProgress(
+            timesSeen: record.attemptCount,
+            correctCount: record.totalSuccessfulCount,
+            incorrectCount: record.mistakeCount,
+            currentCorrectStreak: outcome == .correct ? max(1, record.independentCorrectCount) : 0,
+            lastReviewedAt: date,
+            lastReviewResult: outcome.cardReviewResult
+        )
+        return CardReviewScheduler(now: date, configuration: configuration).nextReviewDate(for: progress)
     }
 
     private static func stableTieBreak(_ id: String, seed: UInt64) -> UInt64 {

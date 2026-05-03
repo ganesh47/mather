@@ -174,6 +174,15 @@ struct GameplayStageResult: Identifiable, Codable, Equatable, Hashable {
         guard attemptedCount > 0 else { return 0 }
         return Double(correctCount) / Double(attemptedCount)
     }
+
+    var scorePoints: Int {
+        max(0, correctCount * 10 - mistakeCount * 4 - hintsUsed * 2)
+    }
+
+    var averageSecondsPerAttempt: TimeInterval {
+        guard attemptedCount > 0 else { return durationSeconds }
+        return durationSeconds / Double(attemptedCount)
+    }
 }
 
 struct GameplayScoreSummary: Codable, Equatable, Hashable {
@@ -187,6 +196,15 @@ struct GameplayScoreSummary: Codable, Equatable, Hashable {
     var accuracy: Double {
         guard attemptedCount > 0 else { return 0 }
         return Double(correctCount) / Double(attemptedCount)
+    }
+
+    var scorePoints: Int {
+        max(0, correctCount * 10 - mistakeCount * 4 - hintsUsed * 2)
+    }
+
+    var averageSecondsPerAttempt: TimeInterval {
+        guard attemptedCount > 0 else { return durationSeconds }
+        return durationSeconds / Double(attemptedCount)
     }
 
     static func summarize(_ results: [GameplayStageResult]) -> GameplayScoreSummary {
