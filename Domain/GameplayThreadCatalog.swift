@@ -3,6 +3,7 @@ import Foundation
 enum GameplayThreadID: String, Codable, CaseIterable, Hashable {
     case countries
     case fruits
+    case waterCycle = "water-cycle"
 }
 
 extension GameplayThreadCatalog {
@@ -12,6 +13,8 @@ extension GameplayThreadCatalog {
             return CountryGameplayThread.thread
         case .fruits:
             return fruits
+        case .waterCycle:
+            return waterCycle
         }
     }
 

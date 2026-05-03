@@ -33,7 +33,7 @@ struct LabRouteRegressionTests {
             .gravityArtist: .gravityArtist,
             .compassAngles: .compassAngles,
             .shapeGeometry: .shapeGeometry,
-            .waterCycle: .waterCycle,
+            .waterCycle: .gameplayThread(.waterCycle),
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
             .countryCards: .gameplayThread(.countries),
@@ -45,6 +45,31 @@ struct LabRouteRegressionTests {
             let expectedRoute = try #require(expectedRoutes[activityID])
             #expect(activityID.appRoute == expectedRoute)
         }
+    }
+
+    @Test
+    func explorerLabContentRoutesUseReusableGameplayThreads() {
+        let reusableThreadRoutes: [LabActivityID: GameplayThreadID] = [
+            .countryCards: .countries,
+            .fruitCards: .fruits,
+            .waterCycle: .waterCycle,
+        ]
+
+        for (activityID, threadID) in reusableThreadRoutes {
+            #expect(activityID.appRoute == .gameplayThread(threadID))
+            #expect(GameplayThreadCatalog.thread(for: threadID).stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+        }
+    }
+
+    @Test
+    func legacyWaterCycleRouteRemainsAvailableButExplorerLabDelegatesToGameplayThread() {
+        let engine = makeEngine()
+
+        engine.showWaterCycle()
+        #expect(engine.route == .gameplayThread(.waterCycle))
+
+        engine.showLegacyWaterCycleLab()
+        #expect(engine.route == .waterCycle)
     }
 
     @Test

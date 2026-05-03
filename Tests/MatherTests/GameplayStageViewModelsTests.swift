@@ -67,3 +67,17 @@ struct GameplayStageViewModelsTests {
         #expect(GameplayStageRenderSupport.cardMinimumWidth(availableWidth: 820, compact: false) == 180)
     }
 }
+
+
+struct GameplayThreadCatalogRegressionTests {
+    @Test
+    func allDirectGameplayEntriesUseFiveStageReusableThread() {
+        let directEntries: [GameplayThreadID] = [.countries, .fruits, .waterCycle]
+
+        for id in directEntries {
+            let thread = GameplayThreadCatalog.thread(for: id)
+            #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+            #expect(!thread.entities.isEmpty)
+        }
+    }
+}

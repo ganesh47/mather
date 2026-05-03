@@ -6,6 +6,7 @@ struct FlashcardStageView: View {
     let compact: Bool
     let onComplete: (Int, Int, Int) -> Void
     @State private var viewModel: GameplayFlashcardStageViewModel
+    @State private var lastSpokenCardID: String?
 
     init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
         self.stage = stage
@@ -24,7 +25,7 @@ struct FlashcardStageView: View {
                 HStack(spacing: 10) {
                     Button("Listen again") {
                         viewModel.markExposure()
-                        actions.speak(card.spokenText)
+                        speak(card)
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                     .accessibilityLabel(viewModel.listenAgainAccessibilityLabel)
@@ -33,7 +34,7 @@ struct FlashcardStageView: View {
                         if viewModel.advance() {
                             onComplete(max(1, viewModel.cards.count), 0, 0)
                         } else if let active = viewModel.activeCard {
-                            actions.speak(active.spokenText)
+                            speak(active)
                         }
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
@@ -42,5 +43,16 @@ struct FlashcardStageView: View {
         }
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
+        .onAppear { speakActiveCardIfNeeded() }
+    }
+
+    private func speakActiveCardIfNeeded() {
+        guard let card = viewModel.activeCard, lastSpokenCardID != card.id else { return }
+        speak(card)
+    }
+
+    private func speak(_ card: GameplayDisplayItem) {
+        lastSpokenCardID = card.id
+        actions.speak(card.spokenText)
     }
 }
