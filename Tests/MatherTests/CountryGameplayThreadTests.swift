@@ -81,7 +81,7 @@ struct CountryGameplayThreadTests {
 
         let engine = makeEngine()
         engine.showCountriesGameplayThread()
-        #expect(engine.route == .gameplayThread("countries"))
+        #expect(engine.route == .gameplayThread(.countries))
     }
 
     private func expectCountry(
