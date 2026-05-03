@@ -248,8 +248,57 @@ enum SoundLoudnessZone: String, CaseIterable, Equatable {
     }
 }
 
+struct SoundVolumeIntroPage: Identifiable, Equatable {
+    let id: String
+    let eyebrow: String
+    let title: String
+    let subtitle: String
+    let visualKey: String
+    let primaryActionTitle: String
+    let primaryActionIcon: String
+}
+
 enum SoundVolumeContent {
     static let safetyNote = "Use listening clues only — no screaming. Protect your ears. A live microphone meter comes later and is not used in this activity."
+
+    static let introPages: [SoundVolumeIntroPage] = [
+        SoundVolumeIntroPage(
+            id: "welcome",
+            eyebrow: "Step 1 of 4",
+            title: "Meet sound and volume",
+            subtitle: "Sound can be soft, comfy, noisy, or too loud. We will learn one small idea at a time.",
+            visualKey: "🔊",
+            primaryActionTitle: "Next: listening rules",
+            primaryActionIcon: "arrow.right.circle.fill"
+        ),
+        SoundVolumeIntroPage(
+            id: "safety",
+            eyebrow: "Step 2 of 4",
+            title: "Use hearing-safe play",
+            subtitle: "Use listening clues only — no screaming, no loud-noise challenge, and no microphone permission in this activity.",
+            visualKey: "👂",
+            primaryActionTitle: "Next: loudness zones",
+            primaryActionIcon: "arrow.right.circle.fill"
+        ),
+        SoundVolumeIntroPage(
+            id: "zones",
+            eyebrow: "Step 3 of 4",
+            title: "Sort sounds into zones",
+            subtitle: "The zone cards are examples, not a live sound meter. If a sound hurts, move away or protect your ears.",
+            visualKey: "📊",
+            primaryActionTitle: "Next: sound clues",
+            primaryActionIcon: "arrow.right.circle.fill"
+        ),
+        SoundVolumeIntroPage(
+            id: "clues",
+            eyebrow: "Step 4 of 4",
+            title: "Ready for quiz and match",
+            subtitle: "Look for picture clues like whisper, traffic, siren, headphones, birds, and protect ears.",
+            visualKey: "🧩",
+            primaryActionTitle: "Start Sound Lab",
+            primaryActionIcon: "play.fill"
+        ),
+    ]
 
     static let cards: [LearningConceptCard] = [
         LearningConceptCard(id: "quiet", title: "Quiet", explanation: "Quiet sounds are soft and gentle, like a whisper or leaves.", visualKey: "🍃", audioPrompt: "Quiet sounds are soft and gentle."),

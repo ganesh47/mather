@@ -329,11 +329,18 @@ struct ConceptMixMatchRoundView: View {
 
 struct SoundVolumeLabView: View {
     @Bindable var appModel: AppModel
+    @State private var introPageIndex = 0
+    @State private var hasStartedActivities = false
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
     @State private var matchShuffleSeed = UInt64.random(in: UInt64.min...UInt64.max)
     @State private var feedback = SoundVolumeContent.safetyNote
+
+    private var introPages: [SoundVolumeIntroPage] { SoundVolumeContent.introPages }
+    private var introPage: SoundVolumeIntroPage { introPages[introPageIndex] }
+    private var isFirstIntroPage: Bool { introPageIndex == 0 }
+    private var isLastIntroPage: Bool { introPageIndex == introPages.count - 1 }
 
     private var summary: LearningLoopSummary {
         LearningLoopScoring.summary(
@@ -348,26 +355,28 @@ struct SoundVolumeLabView: View {
         GeometryReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    header
-                    safetyBanner
-                    loudnessZones
-                    LearningCardIntroView(cards: SoundVolumeContent.cards)
-                    ConceptQuizRoundView(
-                        questions: SoundVolumeContent.quizQuestions,
-                        answersByQuestionId: $answersByQuestionId
-                    )
-                    ConceptMixMatchRoundView(
-                        pairs: SoundVolumeContent.matchPairs,
-                        shuffleSeed: matchShuffleSeed,
-                        selectedLeft: $selectedMatchPairId,
-                        matchedPairIds: $matchedPairIds,
-                        onFeedback: { feedback = $0 },
-                        onHapticCue: playSoundMatchHaptic
-                    )
-                    summaryCard
+                    if hasStartedActivities {
+                        activityHeader
+                        ConceptQuizRoundView(
+                            questions: SoundVolumeContent.quizQuestions,
+                            answersByQuestionId: $answersByQuestionId
+                        )
+                        ConceptMixMatchRoundView(
+                            pairs: SoundVolumeContent.matchPairs,
+                            shuffleSeed: matchShuffleSeed,
+                            selectedLeft: $selectedMatchPairId,
+                            matchedPairIds: $matchedPairIds,
+                            onFeedback: { feedback = $0 },
+                            onHapticCue: playSoundMatchHaptic
+                        )
+                        summaryCard
+                    } else {
+                        stagedIntroCard
+                    }
                 }
                 .padding(.horizontal, horizontalPadding(for: proxy.size.width))
-                .padding(.vertical, 22)
+                .padding(.top, 22)
+                .padding(.bottom, hasStartedActivities ? 22 : 118)
                 .frame(maxWidth: 900)
                 .frame(maxWidth: .infinity)
             }
@@ -389,10 +398,127 @@ struct SoundVolumeLabView: View {
             .padding(.vertical, 8)
             .background(.thinMaterial)
         }
+        .safeAreaInset(edge: .bottom) {
+            if !hasStartedActivities {
+                introControls
+            }
+        }
         .onDisappear {
             if summary.starCount > 0 || matchedPairIds.count == SoundVolumeContent.matchPairs.count {
                 appModel.markExplorerLabModeCompleted(laneID: .physics, mode: .review)
                 appModel.setExplorerLabConceptConfidence(.steady, for: ConceptId(rawValue: "sound-volume"), laneID: .physics)
+            }
+        }
+    }
+
+    private var stagedIntroCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(introPage.eyebrow.uppercased())
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .tracking(1.3)
+                HStack(alignment: .top, spacing: 14) {
+                    Text(introPage.visualKey)
+                        .font(.system(size: 64))
+                        .frame(width: 76)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(introPage.title)
+                            .font(.largeTitle.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .minimumScaleFactor(0.72)
+                        Text(introPage.subtitle)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                introPageContent
+                introProgressDots
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var introPageContent: some View {
+        switch introPage.id {
+        case "welcome":
+            soundClueChips(SoundVolumeContent.cards.prefix(4).map { ($0.visualKey, $0.title) })
+        case "safety":
+            safetyBanner
+        case "zones":
+            loudnessZones
+        default:
+            soundClueChips(SoundVolumeContent.cards.map { ($0.visualKey, $0.title) })
+        }
+    }
+
+    private var introProgressDots: some View {
+        HStack(spacing: 8) {
+            ForEach(introPages.indices, id: \.self) { index in
+                Capsule()
+                    .fill(index == introPageIndex ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.35))
+                    .frame(width: index == introPageIndex ? 28 : 10, height: 10)
+                    .accessibilityLabel("Intro step \(index + 1) of \(introPages.count)")
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var introControls: some View {
+        VStack(spacing: 10) {
+            Button {
+                advanceIntro()
+            } label: {
+                Label(introPage.primaryActionTitle, systemImage: introPage.primaryActionIcon)
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+            .accessibilityIdentifier("SoundVolumeIntroPrimaryAction")
+
+            if !isFirstIntroPage {
+                Button {
+                    introPageIndex = max(0, introPageIndex - 1)
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .font(.headline.weight(.black))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(.thinMaterial)
+    }
+
+    private func advanceIntro() {
+        if isLastIntroPage {
+            hasStartedActivities = true
+            feedback = "Start with the quiz, then match each sound clue to its safe idea."
+        } else {
+            introPageIndex += 1
+        }
+    }
+
+    private func soundClueChips(_ chips: [(String, String)]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 10)], spacing: 10) {
+            ForEach(Array(chips.enumerated()), id: \.offset) { _, chip in
+                HStack(spacing: 8) {
+                    Text(chip.0)
+                    Text(chip.1)
+                        .font(.caption.weight(.black))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(MatherTheme.softBlue.opacity(0.20))
+                .clipShape(Capsule())
+                .accessibilityElement(children: .combine)
             }
         }
     }
@@ -412,7 +538,7 @@ struct SoundVolumeLabView: View {
         }
     }
 
-    private var header: some View {
+    private var activityHeader: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top, spacing: 12) {
@@ -423,7 +549,7 @@ struct SoundVolumeLabView: View {
                             .font(.largeTitle.weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                             .minimumScaleFactor(0.75)
-                        Text("Learn quiet, conversation, traffic, sirens, headphones, pleasant sounds, noisy sounds, and hearing safety.")
+                        Text("Quiz and match safe listening clues. No microphone permission or live meter is used.")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
