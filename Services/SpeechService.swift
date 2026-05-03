@@ -229,6 +229,12 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is part of the water cycle."
             }
+        case .fruits:
+            if let region = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a fruit often found in \(region.lowercased())."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a fruit."
+            }
         }
 
         let secondParts: [String]
@@ -236,6 +242,12 @@ final class MemoryCardDescribeService {
             secondParts = [
                 metadata.habitat.map { "You can notice it \($0.lowercased())" },
                 animal.detailCards.first { $0.title == "Everyday Words" }.map(\.value)
+            ].compactMap { $0 }
+        } else if metadata.deck == .fruits {
+            secondParts = [
+                animal.detailCards.first { $0.title == "Shape" }.map { "It is usually \($0.value.lowercased())" },
+                animal.detailCards.first { $0.title == "Taste" }.map { "It tastes \($0.value.lowercased())" },
+                animal.detailCards.first { $0.title == "Smell" }.map { "It smells \($0.value.lowercased())" }
             ].compactMap { $0 }
         } else {
             secondParts = [

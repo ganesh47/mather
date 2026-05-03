@@ -558,6 +558,11 @@ struct LabLaneDetailView: View {
                 .font(.system(size: 48, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
                 .offset(x: 20, y: 12)
+        case .fruitMemory:
+            Image(systemName: "apple.logo")
+                .font(.system(size: 48, weight: .bold))
+                .foregroundStyle(tint.opacity(0.35))
+                .offset(x: 20, y: 12)
         }
     }
 
@@ -582,12 +587,21 @@ struct LabLaneDetailView: View {
 
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
+            switch activityID {
+            case .memoryMatch:
+                appModel.preferredMemoryDeckKind = nil
+            case .fruitMemory:
+                appModel.preferredMemoryDeckKind = .fruits
+            default:
+                break
+            }
+
             appModel.engine.show(activityID.appRoute)
             switch activityID {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
-                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
+                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .fruitMemory:
                 break
             }
         }

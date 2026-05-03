@@ -100,6 +100,14 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
     }
 
+    func testChemistryLaneAddsFruitMemoryCardsStarterGame() throws {
+        let chemistry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .chemistry })
+
+        XCTAssertEqual(chemistry.activities.map(\.id), [.fruitMemory])
+        XCTAssertEqual(LabLaneDetailPresentation(lane: chemistry).activityCountLabel, "1 game ready")
+        XCTAssertEqual(chemistry.promise, "Sort fruits by color, shape, smell, taste, and where they grow.")
+    }
+
     func testPhysicsLaneAddsSoundLabAsThirdReadyActivity() throws {
         let physics = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .physics })
 
@@ -117,6 +125,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
+        XCTAssertEqual(LabActivityID.fruitMemory.appRoute, .memory)
     }
 
 }
@@ -231,6 +240,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
         XCTAssertEqual(LabActivityID.soundVolume.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
+        XCTAssertEqual(LabActivityID.fruitMemory.sensorNeeds, [.noSpecialSensor])
     }
 
     func testUnavailableSensorAffordancesExposeVisibleFallbackCopy() {

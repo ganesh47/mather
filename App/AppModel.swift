@@ -25,6 +25,7 @@ final class AppModel {
     let explorerLabMasteryStore: ExplorerLabMasteryStore
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
+    var preferredMemoryDeckKind: MemoryDeckKind? = nil
     var showingProfilePicker = false
     private var pendingGameAction: (() -> Void)?
 

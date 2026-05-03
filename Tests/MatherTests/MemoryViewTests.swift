@@ -332,6 +332,7 @@ struct MemoryViewTests {
         #expect(plan.map(\.assetName) == assets)
         #expect(importedAssetNames == Set(assets))
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
+        #expect(MemoryDeck.fruits.allSatisfy { $0.metadata.deck == .fruits })
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.category == "water cycle concept" })
         #expect(MemoryDeck.waterCycle.allSatisfy { animal in
             Set(animal.detailCards.map(\.title)).isSuperset(of: ["Concept", "Action", "Where", "Everyday Words", "Cycle Step"])
@@ -482,7 +483,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle + MemoryDeck.fruits
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
@@ -496,6 +497,15 @@ struct MemoryCardDescribeServiceTests {
         #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
         #expect(MemoryDeck.indiaStates.allSatisfy { $0.metadata.deck == .indiaStates })
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
+        #expect(MemoryDeck.fruits.allSatisfy { $0.metadata.deck == .fruits })
+    }
+
+    @Test func fruitDeckProvidesDeterministicChemistryFactCards() {
+        #expect(MemoryDeck.fruits.count == 8)
+        #expect(MemoryDeck.fruits.map(\.id).first == "fruit-apple")
+        #expect(Set(MemoryDeck.fruits.map(\.id)).count == MemoryDeck.fruits.count)
+        #expect(MemoryDeck.fruits.allSatisfy { $0.detailCards.map(\.title) == ["Fruit", "Shape", "Color", "Taste", "Smell", "Often Found"] })
+        #expect(MemoryDeck.fruits.contains { $0.name == "Mango" && $0.detailCards.contains(MemoryFactCard(title: "Often Found", value: "India and other warm tropical regions")) })
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedFlagMetadata() async {
@@ -511,6 +521,21 @@ struct MemoryCardDescribeServiceTests {
         #expect(description.shortDescription.localizedCaseInsensitiveContains("flag of india"))
         #expect(description.shortDescription.localizedCaseInsensitiveContains("country in asia"))
         #expect(Array(description.factChips.map(\.title).prefix(4)) == ["Country", "Flag", "ISO Code", "Capital"])
+    }
+
+    @MainActor @Test func fallbackDescriptionUsesCuratedFruitMetadata() async {
+        let service = MemoryCardDescribeService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubAIAdapter(isAvailable: false, response: nil)
+        )
+
+        let description = await service.describe(MemoryDeck.fruits[2])
+
+        #expect(description.title == "Mango")
+        #expect(description.source == .curatedFallback)
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("fruit often found in india"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("tastes very sweet and juicy"))
+        #expect(Array(description.factChips.map(\.title).prefix(4)) == ["Fruit", "Shape", "Color", "Taste"] )
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedBirdMetadata() async {

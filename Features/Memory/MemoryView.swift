@@ -23,6 +23,7 @@ enum MemoryDeckKind: String, Equatable {
     case countryFlags
     case indiaStates
     case waterCycle
+    case fruits
 
     var displayName: String {
         switch self {
@@ -35,6 +36,7 @@ enum MemoryDeckKind: String, Equatable {
         case .countryFlags: return "Countries & Flags"
         case .indiaStates: return "Indian States & Capitals"
         case .waterCycle: return "Water Cycle"
+        case .fruits: return "Fruit Lab"
         }
     }
 }
@@ -391,6 +393,17 @@ enum MemoryDeck {
         indiaStateCapital("state-assam", state: "Assam", capital: "Dispur", region: "northeast India", clue: "tea gardens and one-horned rhinos")
     ]
 
+    static let fruits: [MemoryAnimal] = [
+        fruit("fruit-apple", name: "Apple", emoji: "🍎", shape: "round", color: "red, green, or yellow", taste: "sweet and crisp", smell: "fresh and lightly sweet", region: "many countries, including India and the United States"),
+        fruit("fruit-banana", name: "Banana", emoji: "🍌", shape: "long curved crescent", color: "yellow when ripe", taste: "sweet and soft", smell: "mild and fruity", region: "tropical regions such as India, Ecuador, and the Philippines"),
+        fruit("fruit-mango", name: "Mango", emoji: "🥭", shape: "oval", color: "yellow, orange, red, or green", taste: "very sweet and juicy", smell: "strong, tropical, and sweet", region: "India and other warm tropical regions"),
+        fruit("fruit-orange", name: "Orange", emoji: "🍊", shape: "round", color: "bright orange", taste: "sweet and tangy", smell: "zesty citrus", region: "warm regions such as Brazil, India, and the Mediterranean"),
+        fruit("fruit-grape", name: "Grape", emoji: "🍇", shape: "small round oval", color: "green, red, purple, or black", taste: "sweet or tangy", smell: "soft and juicy", region: "vineyards in Europe, India, and the Americas"),
+        fruit("fruit-strawberry", name: "Strawberry", emoji: "🍓", shape: "heart-shaped", color: "red with tiny yellow seeds", taste: "sweet and a little tart", smell: "bright and berry-sweet", region: "cool farms in many countries, including the United States, Mexico, and India"),
+        fruit("fruit-pineapple", name: "Pineapple", emoji: "🍍", shape: "oval with a leafy crown", color: "golden yellow inside with green-brown skin", taste: "sweet and tangy", smell: "tropical and juicy", region: "tropical regions such as Costa Rica, the Philippines, and India"),
+        fruit("fruit-watermelon", name: "Watermelon", emoji: "🍉", shape: "large round or oval", color: "green outside and red inside", taste: "sweet and watery", smell: "fresh and gentle", region: "warm regions in India, China, Africa, and the Americas")
+    ]
+
     static let waterCycle: [MemoryAnimal] = [
         waterCycleConcept("water-cycle-evaporation", name: "Evaporation", asset: "MemoryWaterCycleEvaporation", action: "warm water goes up", whereSeen: "above warm ponds, lakes, and puddles", everydayWords: "The sun warms water into vapor", cycleStep: "Water rises into the air"),
         waterCycleConcept("water-cycle-condensation", name: "Condensation", asset: "MemoryWaterCycleCondensation", action: "tiny drops make a cloud", whereSeen: "inside cool clouds", everydayWords: "Vapor cools and gathers as tiny drops", cycleStep: "Drops gather together"),
@@ -414,7 +427,7 @@ enum MemoryDeck {
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
-        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates + waterCycle).map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates + waterCycle + fruits).map { ($0.id, $0) })
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
@@ -753,6 +766,31 @@ enum MemoryDeck {
         )
     }
 
+    private static func fruit(_ id: String, name: String, emoji: String, shape: String, color: String, taste: String, smell: String, region: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .fruits,
+                category: "fruit",
+                kind: "fruit",
+                habitat: region,
+                colors: color,
+                use: taste,
+                movement: smell,
+                factCards: [
+                    MemoryFactCard(title: "Fruit", value: name),
+                    MemoryFactCard(title: "Shape", value: shape),
+                    MemoryFactCard(title: "Color", value: color),
+                    MemoryFactCard(title: "Taste", value: taste),
+                    MemoryFactCard(title: "Smell", value: smell),
+                    MemoryFactCard(title: "Often Found", value: region)
+                ]
+            )
+        )
+    }
+
     private static func waterCycleConcept(_ id: String, name: String, asset: String, action: String, whereSeen: String, everydayWords: String, cycleStep: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
@@ -824,6 +862,7 @@ struct MemoryView: View {
     @Bindable var appModel: AppModel
 
     @State private var deck: [MemoryAnimal] = MemoryDeck.domesticAnimals
+    @State private var appliedPreferredDeck = false
     @State private var difficulty: MemoryDifficulty = .easy
     @State private var cards: [MemoryCard] = []
     @State private var firstSelected: MemoryCard? = nil
@@ -840,7 +879,7 @@ struct MemoryView: View {
     @State private var latestAskResponse: MemoryAskResponse? = nil
 
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle
+        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle, fruits
 
         var label: String {
             switch self {
@@ -853,6 +892,7 @@ struct MemoryView: View {
             case .countryFlags: return "🏳️ Countries & Flags"
             case .indiaStates: return "📍 India States & Capitals"
             case .waterCycle: return "💧 Water Cycle"
+            case .fruits: return "🍎 Fruit Lab"
             }
         }
 
@@ -867,6 +907,22 @@ struct MemoryView: View {
             case .countryFlags: return "Countries & Flags"
             case .indiaStates: return "India States & Capitals"
             case .waterCycle: return "Water Cycle"
+            case .fruits: return "Fruit Lab"
+            }
+        }
+
+        init?(kind: MemoryDeckKind) {
+            switch kind {
+            case .domesticAnimals: self = .domestic
+            case .birds: self = .birds
+            case .vehicles: self = .vehicles
+            case .planets: self = .planets
+            case .fishes: self = .fishes
+            case .countries: self = .countries
+            case .countryFlags: self = .countryFlags
+            case .indiaStates: self = .indiaStates
+            case .waterCycle: self = .waterCycle
+            case .fruits: self = .fruits
             }
         }
 
@@ -881,6 +937,7 @@ struct MemoryView: View {
             case .countryFlags: return MemoryDeck.countryFlags
             case .indiaStates: return MemoryDeck.indiaStates
             case .waterCycle: return MemoryDeck.waterCycle
+            case .fruits: return MemoryDeck.fruits
             }
         }
     }
@@ -909,6 +966,7 @@ struct MemoryView: View {
             learningSheet(for: content)
         }
         .onAppear {
+            applyPreferredDeckIfNeeded()
             sessionStart = .now
             dealRound()
         }
@@ -921,6 +979,15 @@ struct MemoryView: View {
                 scoreLabel: "rounds"
             )
         }
+    }
+
+    private func applyPreferredDeckIfNeeded() {
+        guard !appliedPreferredDeck else { return }
+        appliedPreferredDeck = true
+        guard let preferred = appModel.preferredMemoryDeckKind, let selected = DeckSelection(kind: preferred) else { return }
+        deckSelection = selected
+        deck = selected.animals
+        recentPairHistory = []
     }
 
     private var header: some View {
@@ -1633,6 +1700,8 @@ struct MemoryView: View {
             deckLabel = "India Guide"
         case .waterCycle:
             deckLabel = "Water Cycle Guide"
+        case .fruits:
+            deckLabel = "Fruit Guide"
         }
 
         switch source {

@@ -125,6 +125,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case waterCycle
     case soundVolume
     case memoryMatch
+    case fruitMemory
 }
 
 extension LabActivityID {
@@ -154,7 +155,7 @@ extension LabActivityID {
             return .waterCycle
         case .soundVolume:
             return .soundVolume
-        case .memoryMatch:
+        case .memoryMatch, .fruitMemory:
             return .memory
         }
     }
@@ -346,7 +347,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .fruitMemory:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -681,16 +682,24 @@ struct CapabilityLane: Identifiable, Equatable {
         CapabilityLane(
             id: .chemistry,
             emoji: "⚗️",
-            promise: "Future: sort materials, mix safely, and predict properties.",
-            ageBandHint: "Future lane",
-            modes: [.explore, .challenge, .review],
+            promise: "Sort fruits by color, shape, smell, taste, and where they grow.",
+            ageBandHint: "Ages 4–12",
+            modes: [.learn, .review, .challenge],
             ageEntries: [
                 CapabilityAgeEntry(ageBand: .preschool, posture: "material sorting", entryPlay: "color and texture"),
                 CapabilityAgeEntry(ageBand: .earlyElementary, posture: "states and mixtures", entryPlay: "mix and separate"),
                 CapabilityAgeEntry(ageBand: .upperElementary, posture: "properties and prediction", entryPlay: "safe reaction cards"),
                 CapabilityAgeEntry(ageBand: .preteen, posture: "families and systems", entryPlay: "property puzzles"),
             ],
-            activities: []
+            activities: [
+                LabActivity(
+                    id: .fruitMemory,
+                    emoji: "🍎",
+                    title: "Fruit Memory Cards",
+                    tagline: "Match fruits and learn shape, color, taste, smell, and places",
+                    modes: [.learn, .review, .challenge]
+                ),
+            ]
         ),
         CapabilityLane(
             id: .electronics,
