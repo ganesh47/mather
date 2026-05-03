@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct GameplayStageFeedbackActions {
-    var speak: (String) -> Void = { _ in }
-    var success: () -> Void = {}
-    var failure: () -> Void = {}
+    var speak: @MainActor (String) -> Void = { _ in }
+    var success: @MainActor () -> Void = {}
+    var failure: @MainActor () -> Void = {}
 
     @MainActor
     static func services(speechService: SpeechService, hapticsService: HapticsService, featureFlags: FeatureFlagService) -> GameplayStageFeedbackActions {
@@ -35,6 +35,7 @@ struct GameplayThreadView: View {
         _navigation = State(initialValue: GameplayStageNavigationState(startedAt: now, currentStageStartedAt: now))
     }
 
+    @MainActor
     init(thread: GameplayThreadDefinition = GameplaySampleThreads.countries, appModel: AppModel, now: Date = Date()) {
         self.init(thread: thread, actions: .appModel(appModel), now: now)
     }
