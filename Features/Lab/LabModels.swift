@@ -159,7 +159,7 @@ extension LabActivityID {
         case .memoryMatch:
             return .memory
         case .countryCards:
-            return .memoryDeck(.countries)
+            return .gameplayThread(CountryGameplayThread.thread.id)
         case .fruitCards:
             return .memoryDeck(.fruits)
         }
