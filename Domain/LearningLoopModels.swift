@@ -42,6 +42,31 @@ struct ConceptMatchPair: Identifiable, Equatable {
     let left: String
     let right: String
     let feedback: String
+    let leftVisualKey: String?
+    let rightVisualKey: String?
+
+    init(
+        id: String,
+        left: String,
+        right: String,
+        feedback: String,
+        leftVisualKey: String? = nil,
+        rightVisualKey: String? = nil
+    ) {
+        self.id = id
+        self.left = left
+        self.right = right
+        self.feedback = feedback
+        self.leftVisualKey = leftVisualKey
+        self.rightVisualKey = rightVisualKey
+    }
+}
+
+enum ConceptMatchAttempt: Equatable {
+    case locked(pairId: String, feedback: String)
+    case mismatch(feedback: String)
+    case alreadyMatched
+    case missingSelection
 }
 
 struct LearningLoopSummary: Equatable {
@@ -73,6 +98,22 @@ enum LearningLoopScoring {
 
     static func isMatch(left: String, right: String, pairs: [ConceptMatchPair]) -> Bool {
         pairs.contains { $0.left == left && $0.right == right }
+    }
+
+    static func matchAttempt(
+        selectedPairId: String?,
+        targetPairId: String,
+        pairs: [ConceptMatchPair],
+        matchedPairIds: Set<String>
+    ) -> ConceptMatchAttempt {
+        guard let selectedPairId else { return .missingSelection }
+        guard !matchedPairIds.contains(selectedPairId), !matchedPairIds.contains(targetPairId) else {
+            return .alreadyMatched
+        }
+        guard selectedPairId == targetPairId, let pair = pairs.first(where: { $0.id == targetPairId }) else {
+            return .mismatch(feedback: "Not that pair yet — try another match.")
+        }
+        return .locked(pairId: pair.id, feedback: pair.feedback)
     }
 
     static func summary(
@@ -126,10 +167,10 @@ enum WaterCycleContent {
     ]
 
     static let matchPairs: [ConceptMatchPair] = [
-        ConceptMatchPair(id: "sun-evaporation", left: "Sun", right: "Evaporation", feedback: "The sun helps water evaporate."),
-        ConceptMatchPair(id: "pond-evaporation", left: "Pond", right: "Evaporation", feedback: "Water can rise from the pond."),
-        ConceptMatchPair(id: "cloud-condensation", left: "Cloud", right: "Condensation", feedback: "Condensation helps make clouds."),
-        ConceptMatchPair(id: "cloud-rain", left: "Cloud", right: "Rain", feedback: "Heavy cloud drops fall as rain."),
-        ConceptMatchPair(id: "rain-pond", left: "Rain", right: "Pond", feedback: "Rain fills ponds again."),
+        ConceptMatchPair(id: "sun-evaporation", left: "Sun", right: "Evaporation", feedback: "The sun helps water evaporate.", leftVisualKey: "☀️", rightVisualKey: "♨️"),
+        ConceptMatchPair(id: "pond-evaporation", left: "Pond", right: "Evaporation", feedback: "Water can rise from the pond.", leftVisualKey: "🏞️", rightVisualKey: "♨️"),
+        ConceptMatchPair(id: "cloud-condensation", left: "Cloud", right: "Condensation", feedback: "Condensation helps make clouds.", leftVisualKey: "☁️", rightVisualKey: "🌫️"),
+        ConceptMatchPair(id: "cloud-rain", left: "Cloud", right: "Rain", feedback: "Heavy cloud drops fall as rain.", leftVisualKey: "☁️", rightVisualKey: "🌧️"),
+        ConceptMatchPair(id: "rain-pond", left: "Rain", right: "Pond", feedback: "Rain fills ponds again.", leftVisualKey: "🌧️", rightVisualKey: "🏞️"),
     ]
 }
