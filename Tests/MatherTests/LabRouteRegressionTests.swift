@@ -5,17 +5,18 @@ import Testing
 @MainActor
 struct LabRouteRegressionTests {
     @Test
-    func everyExplorerLabActivityIsReachableFromAtLeastOneCapabilityLane() {
+    func everyExplorerLabActivityIsReachableFromExactlyOneCapabilityLane() {
         let activitiesByLane = CapabilityLane.defaultExplorerLanes.flatMap { lane in
             lane.activities.map { (laneID: lane.id, activityID: $0.id) }
         }
         let activityIDs = activitiesByLane.map(\.activityID)
 
         #expect(Set(activityIDs) == Set(LabActivityID.allCases))
+        #expect(activityIDs.count == LabActivityID.allCases.count)
 
         for activityID in LabActivityID.allCases {
             let hostLanes = activitiesByLane.filter { $0.activityID == activityID }.map(\.laneID)
-            #expect(!hostLanes.isEmpty, "\(activityID.rawValue) should be exposed by at least one lane")
+            #expect(hostLanes.count == 1, "\(activityID.rawValue) should be exposed by exactly one lane")
         }
     }
 
