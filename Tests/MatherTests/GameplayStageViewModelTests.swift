@@ -52,9 +52,11 @@ struct GameplayStageViewModelTests {
 
         #expect(viewModel.accessibilityLabel(for: firstPair.left, side: .left).contains("prompt: \(firstPair.left.title)"))
         viewModel.selectLeft(pairID: firstPair.id)
-        #expect(!viewModel.chooseRight(wrongRight))
+        let wrongResult = viewModel.chooseRight(wrongRight)
+        #expect(!wrongResult)
         #expect(viewModel.mismatchCount == 1)
-        #expect(viewModel.chooseRight(firstPair.right))
+        let correctResult = viewModel.chooseRight(firstPair.right)
+        #expect(correctResult)
         #expect(viewModel.correctCount == 1)
     }
 
@@ -68,7 +70,8 @@ struct GameplayStageViewModelTests {
 
         #expect(firstQuestion.choices.contains(firstQuestion.answer))
         #expect(firstQuestion.prompt.hasPrefix("Which one matches "))
-        #expect(viewModel.choose(firstQuestion.answer))
+        let quizResult = viewModel.choose(firstQuestion.answer)
+        #expect(quizResult)
         #expect(viewModel.correctCount == 1)
         #expect(viewModel.progressText == "2 of 4")
     }
