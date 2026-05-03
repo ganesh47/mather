@@ -12,7 +12,11 @@ struct GameplayRepetitionKey: Hashable, Equatable, Codable, Comparable {
     }
 
     static func < (lhs: GameplayRepetitionKey, rhs: GameplayRepetitionKey) -> Bool {
-        [lhs.entityID, lhs.propertyTypeID ?? "", lhs.propertyValueID ?? ""] < [rhs.entityID, rhs.propertyTypeID ?? "", rhs.propertyValueID ?? ""]
+        if lhs.entityID != rhs.entityID { return lhs.entityID < rhs.entityID }
+        let lhsPropertyTypeID = lhs.propertyTypeID ?? ""
+        let rhsPropertyTypeID = rhs.propertyTypeID ?? ""
+        if lhsPropertyTypeID != rhsPropertyTypeID { return lhsPropertyTypeID < rhsPropertyTypeID }
+        return (lhs.propertyValueID ?? "") < (rhs.propertyValueID ?? "")
     }
 }
 
