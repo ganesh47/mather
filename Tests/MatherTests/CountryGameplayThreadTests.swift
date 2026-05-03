@@ -77,11 +77,11 @@ struct CountryGameplayThreadTests {
     @Test
     @MainActor
     func countryCardsLaunchesCountriesGameplayThreadDirectly() {
-        #expect(LabActivityID.countryCards.appRoute == .gameplayThread(CountryGameplayThread.thread.id))
+        #expect(LabActivityID.countryCards.appRoute == .gameplayThread(.countries))
 
         let engine = makeEngine()
         engine.showCountriesGameplayThread()
-        #expect(engine.route == .gameplayThread("countries"))
+        #expect(engine.route == .gameplayThread(.countries))
     }
 
     private func expectCountry(
