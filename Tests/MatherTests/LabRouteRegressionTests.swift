@@ -36,7 +36,7 @@ struct LabRouteRegressionTests {
             .waterCycle: .waterCycle,
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
-            .countryCards: .memoryDeck(.countries),
+            .countryCards: .gameplayThread(.countries),
             .fruitCards: .gameplayThread(.fruits),
         ]
 

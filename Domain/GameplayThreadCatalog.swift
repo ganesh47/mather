@@ -5,11 +5,11 @@ enum GameplayThreadID: String, Codable, CaseIterable, Hashable {
     case fruits
 }
 
-enum GameplayThreadCatalog {
+extension GameplayThreadCatalog {
     static func thread(for id: GameplayThreadID) -> GameplayThreadDefinition {
         switch id {
         case .countries:
-            return GameplaySampleThreads.countries
+            return CountryGameplayThread.thread
         case .fruits:
             return fruits
         }

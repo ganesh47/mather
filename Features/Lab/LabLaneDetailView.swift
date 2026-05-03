@@ -599,7 +599,7 @@ struct LabLaneDetailView: View {
         case .chemistry:
             return .gameplayThread(.fruits)
         case .mapWorld:
-            return .memoryDeck(.countries)
+            return .gameplayThread(.countries)
         default:
             return .memory
         }
