@@ -125,6 +125,8 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case waterCycle
     case soundVolume
     case memoryMatch
+    case countryCards
+    case fruitCards
 }
 
 extension LabActivityID {
@@ -156,6 +158,10 @@ extension LabActivityID {
             return .soundVolume
         case .memoryMatch:
             return .memory
+        case .countryCards:
+            return .memoryDeck(.countries)
+        case .fruitCards:
+            return .memoryDeck(.fruits)
         }
     }
 }
@@ -655,7 +661,7 @@ struct CapabilityLane: Identifiable, Equatable {
                     modes: [.explore, .challenge, .timed]
                 ),
                 LabActivity(
-                    id: .memoryMatch,
+                    id: .countryCards,
                     emoji: "🌍",
                     title: "Country Cards",
                     tagline: "Flashcards for capitals, flags, languages, currency, and continents",
@@ -699,7 +705,7 @@ struct CapabilityLane: Identifiable, Equatable {
             ],
             activities: [
                 LabActivity(
-                    id: .memoryMatch,
+                    id: .fruitCards,
                     emoji: "🍎",
                     title: "Fruit Cards",
                     tagline: "Match fruit shape, color, taste, smell, and where it is found",
