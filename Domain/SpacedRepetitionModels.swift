@@ -19,31 +19,55 @@ enum GameplayConfidenceBand: String, Codable, Equatable, Hashable, CaseIterable 
     case reviewNeeded
 }
 
+enum GameplayExposureOutcome: String, Codable, Equatable, Hashable, CaseIterable {
+    case correct
+    case supportedCorrect
+    case incorrect
+
+    var cardReviewResult: CardReviewResult {
+        switch self {
+        case .correct: return .correct
+        case .supportedCorrect: return .supportedCorrect
+        case .incorrect: return .incorrect
+        }
+    }
+}
+
 struct GameplayExposureRecord: Codable, Equatable, Hashable {
     let key: GameplayExposureKey
     var correctCount: Int
+    var supportedCorrectCount: Int
     var mistakeCount: Int
     var lastSeenAt: Date?
+    var lastOutcome: GameplayExposureOutcome?
     var dueAt: Date
     var confidenceBand: GameplayConfidenceBand
 
     init(
         key: GameplayExposureKey,
         correctCount: Int = 0,
+        supportedCorrectCount: Int = 0,
         mistakeCount: Int = 0,
         lastSeenAt: Date? = nil,
+        lastOutcome: GameplayExposureOutcome? = nil,
         dueAt: Date = .distantPast,
         confidenceBand: GameplayConfidenceBand = .new
     ) {
         self.key = key
         self.correctCount = correctCount
+        self.supportedCorrectCount = supportedCorrectCount
         self.mistakeCount = mistakeCount
         self.lastSeenAt = lastSeenAt
+        self.lastOutcome = lastOutcome
         self.dueAt = dueAt
         self.confidenceBand = confidenceBand
     }
 
-    var attemptCount: Int { correctCount + mistakeCount }
+    var attemptCount: Int { correctCount + supportedCorrectCount + mistakeCount }
+
+    var independentCorrectCount: Int { correctCount }
+
+    var totalSuccessfulCount: Int { correctCount + supportedCorrectCount }
 }
 
 struct SpacedRepetitionSelectionPolicy: Codable, Equatable, Hashable {
@@ -70,6 +94,18 @@ struct SpacedRepetitionSelectionPolicy: Codable, Equatable, Hashable {
 
 struct SpacedRepetitionUpdate: Codable, Equatable, Hashable {
     let key: GameplayExposureKey
-    let wasCorrect: Bool
+    let outcome: GameplayExposureOutcome
     let occurredAt: Date
+
+    var wasCorrect: Bool { outcome != .incorrect }
+
+    init(key: GameplayExposureKey, outcome: GameplayExposureOutcome, occurredAt: Date) {
+        self.key = key
+        self.outcome = outcome
+        self.occurredAt = occurredAt
+    }
+
+    init(key: GameplayExposureKey, wasCorrect: Bool, occurredAt: Date) {
+        self.init(key: key, outcome: wasCorrect ? .correct : .incorrect, occurredAt: occurredAt)
+    }
 }

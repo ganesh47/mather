@@ -46,6 +46,48 @@ struct GameplaySchedulerTests {
         #expect(first.items.map(\.id) != different.items.map(\.id))
     }
 
+
+    @Test
+    func schedulerPlacesSupportedCorrectBetweenIncorrectAndIndependentCorrect() {
+        let thread = sampleThread()
+        let stage = GameplayStageDefinition(
+            id: "multiple-choice",
+            kind: .multipleChoice,
+            title: "Quiz",
+            prompt: "Choose",
+            propertyTypeIDs: ["capital"],
+            maximumItemCount: 3
+        )
+        let now = Date(timeIntervalSince1970: 4_000)
+        let indiaKey = GameplayExposureKey(entityID: "country-india", propertyID: "country-india-capital", stageID: stage.id)
+        let japanKey = GameplayExposureKey(entityID: "country-japan", propertyID: "country-japan-capital", stageID: stage.id)
+        let franceKey = GameplayExposureKey(entityID: "country-france", propertyID: "country-france-capital", stageID: stage.id)
+        let records: [GameplayExposureKey: GameplayExposureRecord] = [
+            indiaKey: GameplayExposureRecord(key: indiaKey, correctCount: 0, supportedCorrectCount: 0, mistakeCount: 1, lastOutcome: .incorrect, dueAt: now, confidenceBand: .reviewNeeded),
+            japanKey: GameplayExposureRecord(key: japanKey, correctCount: 0, supportedCorrectCount: 1, mistakeCount: 0, lastOutcome: .supportedCorrect, dueAt: now, confidenceBand: .learning),
+            franceKey: GameplayExposureRecord(key: franceKey, correctCount: 3, supportedCorrectCount: 0, mistakeCount: 0, lastOutcome: .correct, dueAt: now, confidenceBand: .steady)
+        ]
+
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, records: records, now: now, seed: 11)
+
+        #expect(round.items.map(\.entityID) == ["country-india", "country-japan", "country-france"])
+    }
+
+    @Test
+    func applyingSupportedCorrectUsesMiddleReviewDelay() {
+        let key = GameplayExposureKey(entityID: "fruit-mango", propertyID: "fruit-mango-taste", stageID: "easy-memory")
+        let now = Date(timeIntervalSince1970: 5_000)
+
+        let records = SpacedRepetitionScheduler.applying(
+            updates: [SpacedRepetitionUpdate(key: key, outcome: .supportedCorrect, occurredAt: now)],
+            to: [:]
+        )
+
+        #expect(records[key]?.confidenceBand == .learning)
+        #expect(records[key]?.supportedCorrectCount == 1)
+        #expect(records[key]?.dueAt == now.addingTimeInterval(60 * 60 * 12))
+    }
+
     @Test
     func applyingUpdatesMovesMistakesToReviewNeeded() {
         let key = GameplayExposureKey(entityID: "fruit-apple", propertyID: "fruit-apple-taste", stageID: "multiple-choice")
@@ -75,6 +117,8 @@ struct GameplaySchedulerTests {
         #expect(summary.mistakeCount == 1)
         #expect(summary.durationSeconds == 45)
         #expect(summary.stars == 3)
+        #expect(summary.scorePoints == 84)
+        #expect(summary.averageSecondsPerAttempt == 4.5)
     }
 
     private func sampleThread() -> GameplayThreadDefinition {
