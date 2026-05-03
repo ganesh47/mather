@@ -156,6 +156,28 @@ struct WaterCycleLabState: Equatable {
         "Match \(mixMatchCorrectCardIDs.count) of \(WaterCycleLessonThread.mixMatchCards.count)"
     }
 
+    var lessonScore: Int {
+        openMatchedCardIDs.count + mixMatchCorrectCardIDs.count
+    }
+
+    var lessonScoreMax: Int {
+        WaterCycleLessonThread.cards.count + WaterCycleLessonThread.mixMatchCards.count
+    }
+
+    var lessonScoreLabel: String {
+        "Score \(lessonScore) / \(lessonScoreMax)"
+    }
+
+    var lessonRewardLabel: String {
+        if lessonThread.isComplete {
+            return "Quiz cycle complete: \(lessonScore) stars earned"
+        }
+        if lessonScore == 0 {
+            return "Earn stars in picture quiz and Mix-Match"
+        }
+        return "\(lessonScore) quiz star\(lessonScore == 1 ? "" : "s") earned"
+    }
+
     var completionInterestingFacts: [WaterCycleInterestingFact] {
         lessonThread.isComplete ? WaterCycleInterestingFact.completionSpotlight : []
     }
@@ -757,8 +779,29 @@ struct WaterCycleLabView: View {
                 ProgressView(value: state.lessonThread.progress)
                     .tint(MatherTheme.accent)
                     .accessibilityLabel("Lesson thread progress")
+
+                lessonScoreStrip
             }
         }
+    }
+
+    private var lessonScoreStrip: some View {
+        HStack(spacing: 8) {
+            Label(state.lessonScoreLabel, systemImage: "star.fill")
+                .font(.caption.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(MatherTheme.warm.opacity(0.18), in: Capsule())
+
+            Text(state.lessonRewardLabel)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Water Cycle quiz score. \(state.lessonScoreLabel). \(state.lessonRewardLabel).")
     }
 
     @ViewBuilder
@@ -911,9 +954,10 @@ struct WaterCycleLabView: View {
 
             if state.lessonThread.isComplete {
                 VStack(alignment: .leading, spacing: 12) {
-                    Label("Lesson thread complete", systemImage: "checkmark.seal.fill")
+                    Label(state.lessonRewardLabel, systemImage: "checkmark.seal.fill")
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
+                        .accessibilityIdentifier("water-cycle-quiz-cycle-reward")
 
                     VStack(alignment: .leading, spacing: 10) {
                         ForEach(state.completionInterestingFacts) { fact in

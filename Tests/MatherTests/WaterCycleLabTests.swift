@@ -273,6 +273,42 @@ extension WaterCycleLabTests {
         #expect(state.activeLessonPrimaryActionTitle == "Try the cycle again")
     }
 
+
+
+    @Test func waterCycleLessonReportsScoredQuizCycle() {
+        var state = WaterCycleLabState()
+        for _ in 0..<5 { state.advance() }
+
+        #expect(state.lessonScore == 0)
+        #expect(state.lessonScoreMax == 10)
+        #expect(state.lessonScoreLabel == "Score 0 / 10")
+        #expect(state.lessonRewardLabel == "Earn stars in picture quiz and Mix-Match")
+
+        state.completeCurrentLessonStage()
+        for index in WaterCycleLessonThread.cards.indices {
+            let cardID = state.currentLessonCard.id
+            _ = state.recordOpenMatchChoice(id: cardID)
+            if index < WaterCycleLessonThread.cards.count - 1 {
+                state.advanceLessonCard()
+            }
+        }
+
+        #expect(state.lessonScore == 5)
+        #expect(state.lessonScoreLabel == "Score 5 / 10")
+        #expect(state.lessonRewardLabel == "5 quiz stars earned")
+
+        state.completeCurrentLessonStage()
+        state.completeCurrentLessonStage()
+        for card in WaterCycleLessonThread.mixMatchCards {
+            state.recordMixMatchAttempt(MixMatchRecallAttempt(choiceID: card.answer.id, isCorrect: true))
+        }
+
+        #expect(state.lessonThread.isComplete)
+        #expect(state.lessonScore == 10)
+        #expect(state.lessonScoreLabel == "Score 10 / 10")
+        #expect(state.lessonRewardLabel == "Quiz cycle complete: 10 stars earned")
+    }
+
     @Test func openPictureNameMatchRecordsDeterministicFeedback() {
         var state = WaterCycleLabState()
         for _ in 0..<5 { state.advance() }

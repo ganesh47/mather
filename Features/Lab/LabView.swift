@@ -13,17 +13,21 @@ struct LabView: View {
             MatherTheme.background.ignoresSafeArea()
             playgroundBackdrop
             GeometryReader { proxy in
+                let compactGrid = proxy.size.width < 700
+                let horizontalPadding: CGFloat = compactGrid ? 18 : 24
+
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: compactGrid ? 16 : 20) {
                         header
 
-                        LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: 16) {
+                        LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: compactGrid ? 14 : 16) {
                             ForEach(lanes) { lane in
-                                laneCard(lane)
+                                laneCard(lane, compact: compactGrid)
                             }
                         }
                     }
-                    .padding(24)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.vertical, 24)
                 }
             }
         }
@@ -81,11 +85,11 @@ struct LabView: View {
 
     private func labColumns(for availableWidth: CGFloat) -> [GridItem] {
         availableWidth < 700
-            ? [GridItem(.flexible(), spacing: 16)]
+            ? [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
             : ResponsiveLayout.labColumns(for: availableWidth)
     }
 
-    private func laneCard(_ lane: CapabilityLane) -> some View {
+    private func laneCard(_ lane: CapabilityLane, compact: Bool) -> some View {
         let progress = progress(for: lane)
         let presentation = LabLaneCardPresentation(lane: lane, progress: progress)
         let tint = laneColor(lane.id)
@@ -93,64 +97,137 @@ struct LabView: View {
         return Button {
             appModel.engine.showLabLane(lane.id)
         } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 14) {
-                    laneVisual(lane, tint: tint)
-
-                    VStack(alignment: .leading, spacing: 7) {
-                        HStack(spacing: 8) {
-                            Text(presentation.title)
-                                .font(.headline.weight(.black))
-                                .foregroundStyle(MatherTheme.ink)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.75)
-                            Text(lane.ageBandHint)
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(tint)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(tint.opacity(0.12), in: Capsule())
-                        }
-                        Text(presentation.promiseLine)
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .lineLimit(3)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 0)
-                }
-
-                progressPreview(progress, tint: tint)
-
-                HStack(spacing: 10) {
-                    Label(lane.isReady ? "\(lane.activities.count) mission\(lane.activities.count == 1 ? "" : "s")" : "Missions coming soon", systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
-                    Spacer(minLength: 8)
-                    Label(presentation.openAffordanceLabel, systemImage: "chevron.right.circle.fill")
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
+            Group {
+                if compact {
+                    compactLaneTile(lane, presentation: presentation, progress: progress, tint: tint)
+                } else {
+                    fullLaneCard(lane, presentation: presentation, progress: progress, tint: tint)
                 }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(tint.opacity(0.18), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(tint.opacity(compact ? 0.28 : 0.18), lineWidth: compact ? 1.5 : 1)
             )
             .shadow(
                 color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08),
-                radius: 8, y: 4
+                radius: compact ? 7 : 8, y: compact ? 3 : 4
             )
             .scaleEffect(playfulPulse ? 1.01 : 0.995, anchor: .center)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(presentation.accessibilityLabel)
+        .accessibilityLabel("\(presentation.accessibilityLabel). \(progress.progressSummaryLabel). \(progress.nextRecommendedModeLabel).")
         .accessibilityHint(presentation.accessibilityHint)
     }
 
-    private func laneVisual(_ lane: CapabilityLane, tint: Color) -> some View {
+    private func compactLaneTile(
+        _ lane: CapabilityLane,
+        presentation: LabLaneCardPresentation,
+        progress: CapabilityLaneProgress,
+        tint: Color
+    ) -> some View {
+        VStack(spacing: 10) {
+            laneVisual(lane, tint: tint, size: 72)
+
+            VStack(spacing: 4) {
+                Text(presentation.title)
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+                    .multilineTextAlignment(.center)
+
+                Text(lane.ageBandHint)
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(tint)
+                    .lineLimit(1)
+            }
+
+            compactProgressBadge(progress, tint: tint)
+
+            Image(systemName: "chevron.right.circle.fill")
+                .font(.title3.weight(.black))
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: 190, alignment: .center)
+    }
+
+    private func fullLaneCard(
+        _ lane: CapabilityLane,
+        presentation: LabLaneCardPresentation,
+        progress: CapabilityLaneProgress,
+        tint: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
+                laneVisual(lane, tint: tint)
+
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(spacing: 8) {
+                        Text(presentation.title)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                        Text(lane.ageBandHint)
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(tint)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(tint.opacity(0.12), in: Capsule())
+                    }
+                    Text(presentation.promiseLine)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+
+            progressPreview(progress, tint: tint)
+
+            HStack(spacing: 10) {
+                Label(lane.isReady ? "\(lane.activities.count) mission\(lane.activities.count == 1 ? "" : "s")" : "Missions coming soon", systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(tint)
+                Spacer(minLength: 8)
+                Label(presentation.openAffordanceLabel, systemImage: "chevron.right.circle.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(tint)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    private func compactProgressBadge(_ progress: CapabilityLaneProgress, tint: Color) -> some View {
+        VStack(spacing: 5) {
+            HStack(spacing: 3) {
+                ForEach(0..<max(progress.availableModes.count, 1), id: \.self) { index in
+                    Image(systemName: index < progress.completedModeCount ? "star.fill" : "star")
+                        .font(.system(size: 11, weight: .black))
+                        .foregroundStyle(tint)
+                }
+            }
+            Text("\(progress.completedModeCount)/\(progress.availableModes.count) missions")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity)
+        .background(tint.opacity(0.12), in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(progress.completedModeCount) of \(progress.availableModes.count) missions complete")
+    }
+
+    private func laneVisual(_ lane: CapabilityLane, tint: Color, size: CGFloat = 84) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(
@@ -162,11 +239,11 @@ struct LabView: View {
                 )
             laneMiniScene(lane.id, tint: tint)
             Text(lane.emoji)
-                .font(.system(size: 46))
+                .font(.system(size: size * 0.55))
                 .scaleEffect(playfulPulse ? 1.06 : 0.98)
                 .rotationEffect(.degrees(playfulPulse ? 2 : -2))
         }
-        .frame(width: 84, height: 84)
+        .frame(width: size, height: size)
     }
 
     @ViewBuilder
