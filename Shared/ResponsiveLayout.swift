@@ -76,9 +76,9 @@ enum ResponsiveLayout {
 
     static func memoryCardMinimumWidth(for difficulty: MemoryDifficulty) -> CGFloat {
         switch difficulty {
-        case .easy: return 136
-        case .medium: return 124
-        case .hard: return 112
+        case .easy: return 104
+        case .medium: return 94
+        case .hard: return 84
         }
     }
 
@@ -88,9 +88,9 @@ enum ResponsiveLayout {
 
     static func memoryCardAspectRatio(for difficulty: MemoryDifficulty) -> CGFloat {
         switch difficulty {
-        case .easy: return 0.96
-        case .medium: return 0.92
-        case .hard: return 0.86
+        case .easy: return 0.90
+        case .medium: return 0.86
+        case .hard: return 0.80
         }
     }
 
