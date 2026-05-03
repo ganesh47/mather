@@ -654,6 +654,13 @@ struct CapabilityLane: Identifiable, Equatable {
                     tagline: "Turn your body to match the angle",
                     modes: [.explore, .challenge, .timed]
                 ),
+                LabActivity(
+                    id: .memoryMatch,
+                    emoji: "🌍",
+                    title: "Country Cards",
+                    tagline: "Flashcards for capitals, flags, languages, currency, and continents",
+                    modes: [.learn, .review, .challenge]
+                ),
             ]
         ),
         CapabilityLane(
@@ -690,7 +697,15 @@ struct CapabilityLane: Identifiable, Equatable {
                 CapabilityAgeEntry(ageBand: .upperElementary, posture: "properties and prediction", entryPlay: "safe reaction cards"),
                 CapabilityAgeEntry(ageBand: .preteen, posture: "families and systems", entryPlay: "property puzzles"),
             ],
-            activities: []
+            activities: [
+                LabActivity(
+                    id: .memoryMatch,
+                    emoji: "🍎",
+                    title: "Fruit Cards",
+                    tagline: "Match fruit shape, color, taste, smell, and where it is found",
+                    modes: [.learn, .review, .challenge]
+                ),
+            ]
         ),
         CapabilityLane(
             id: .electronics,

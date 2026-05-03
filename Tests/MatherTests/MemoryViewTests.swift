@@ -183,12 +183,14 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.allCases.contains(.countryFlags))
         #expect(MemoryView.DeckSelection.allCases.contains(.indiaStates))
         #expect(MemoryView.DeckSelection.allCases.contains(.waterCycle))
+        #expect(MemoryView.DeckSelection.allCases.contains(.fruits))
         #expect(MemoryView.DeckSelection.planets.animals.map(\.id) == MemoryDeck.planets.map(\.id))
         #expect(MemoryView.DeckSelection.fishes.animals.map(\.id) == MemoryDeck.fishes.map(\.id))
         #expect(MemoryView.DeckSelection.countries.animals.map(\.id) == MemoryDeck.countries.map(\.id))
         #expect(MemoryView.DeckSelection.countryFlags.animals.map(\.id) == MemoryDeck.countryFlags.map(\.id))
         #expect(MemoryView.DeckSelection.indiaStates.animals.map(\.id) == MemoryDeck.indiaStates.map(\.id))
         #expect(MemoryView.DeckSelection.waterCycle.animals.map(\.id) == MemoryDeck.waterCycle.map(\.id))
+        #expect(MemoryView.DeckSelection.fruits.animals.map(\.id) == MemoryDeck.fruits.map(\.id))
     }
 
     @Test func requestedDecksProvideEnoughDistinctPairs() {
@@ -332,6 +334,9 @@ struct MemoryViewTests {
         #expect(plan.map(\.assetName) == assets)
         #expect(importedAssetNames == Set(assets))
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
+        #expect(MemoryDeck.fruits.allSatisfy { $0.metadata.deck == .fruits })
+        #expect(MemoryDeck.fruits.first?.detailCards.map(\.title).contains("Taste") == true)
+        #expect(MemoryDeck.fruits.first?.detailCards.map(\.title).contains("Usually Found") == true)
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.category == "water cycle concept" })
         #expect(MemoryDeck.waterCycle.allSatisfy { animal in
             Set(animal.detailCards.map(\.title)).isSuperset(of: ["Concept", "Action", "Where", "Everyday Words", "Cycle Step"])
@@ -466,6 +471,16 @@ struct MemoryViewTests {
         let waterCycleContent = MemoryView.learningContent(for: MemoryDeck.waterCycle[0], deckSelection: .waterCycle, description: waterCycleDescription)
         #expect(waterCycleContent.sourceBadge == "Water Cycle Guide")
         #expect(waterCycleContent.readAloudText.contains("Source: Water Cycle Guide."))
+
+        let fruitDescription = MemoryCardDescription(
+            title: "Mango",
+            shortDescription: "Mango is a sweet fruit with shape, color, smell, and country clues.",
+            factChips: [MemoryFactChip(title: "Taste", value: "very sweet and juicy")],
+            source: .curatedFallback
+        )
+        let fruitContent = MemoryView.learningContent(for: MemoryDeck.fruits[2], deckSelection: .fruits, description: fruitDescription)
+        #expect(fruitContent.sourceBadge == "Fruit Guide")
+        #expect(fruitContent.readAloudText.contains("Source: Fruit Guide."))
     }
 }
 
@@ -482,7 +497,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle
+        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle + MemoryDeck.fruits
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
@@ -496,6 +511,9 @@ struct MemoryCardDescribeServiceTests {
         #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
         #expect(MemoryDeck.indiaStates.allSatisfy { $0.metadata.deck == .indiaStates })
         #expect(MemoryDeck.waterCycle.allSatisfy { $0.metadata.deck == .waterCycle })
+        #expect(MemoryDeck.fruits.allSatisfy { $0.metadata.deck == .fruits })
+        #expect(MemoryDeck.fruits.first?.detailCards.map(\.title).contains("Taste") == true)
+        #expect(MemoryDeck.fruits.first?.detailCards.map(\.title).contains("Usually Found") == true)
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedFlagMetadata() async {

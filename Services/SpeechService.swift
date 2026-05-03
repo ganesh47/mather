@@ -229,6 +229,12 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is part of the water cycle."
             }
+        case .fruits:
+            if let foundIn = metadata.habitat {
+                firstSentence = "\(animal.canonicalName) is a fruit usually found in \(foundIn.lowercased())."
+            } else {
+                firstSentence = "\(animal.canonicalName) is a fruit with shape, color, taste, and smell clues."
+            }
         }
 
         let secondParts: [String]

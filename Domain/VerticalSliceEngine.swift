@@ -20,6 +20,7 @@ enum AppRoute: Hashable {
     case lab
     case labLane(CapabilityLaneID)
     case memory
+    case memoryDeck(MemoryDeckKind)
     case waterCycle
     case soundVolume
     case shapeGeometry

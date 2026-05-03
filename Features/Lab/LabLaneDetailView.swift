@@ -582,7 +582,7 @@ struct LabLaneDetailView: View {
 
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
-            appModel.engine.show(activityID.appRoute)
+            appModel.engine.show(route(for: activityID, laneID: lane.id))
             switch activityID {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
@@ -590,6 +590,18 @@ struct LabLaneDetailView: View {
                  .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
                 break
             }
+        }
+    }
+
+    private func route(for activityID: LabActivityID, laneID: CapabilityLaneID) -> AppRoute {
+        guard activityID == .memoryMatch else { return activityID.appRoute }
+        switch laneID {
+        case .chemistry:
+            return .memoryDeck(.fruits)
+        case .mapWorld:
+            return .memoryDeck(.countries)
+        default:
+            return .memory
         }
     }
 

@@ -23,6 +23,7 @@ enum MemoryDeckKind: String, Equatable {
     case countryFlags
     case indiaStates
     case waterCycle
+    case fruits
 
     var displayName: String {
         switch self {
@@ -35,6 +36,7 @@ enum MemoryDeckKind: String, Equatable {
         case .countryFlags: return "Countries & Flags"
         case .indiaStates: return "Indian States & Capitals"
         case .waterCycle: return "Water Cycle"
+        case .fruits: return "Fruits"
         }
     }
 }
@@ -359,14 +361,14 @@ enum MemoryDeck {
     ]
 
     static let countries: [MemoryAnimal] = [
-        countryCapital("country-india", country: "India", capital: "New Delhi", continent: "Asia", clue: "home of the Taj Mahal"),
-        countryCapital("country-japan", country: "Japan", capital: "Tokyo", continent: "Asia", clue: "known for cherry blossoms and bullet trains"),
-        countryCapital("country-france", country: "France", capital: "Paris", continent: "Europe", clue: "home of the Eiffel Tower"),
-        countryCapital("country-egypt", country: "Egypt", capital: "Cairo", continent: "Africa", clue: "home of the Great Pyramids"),
-        countryCapital("country-brazil", country: "Brazil", capital: "Brasília", continent: "South America", clue: "home of the Amazon rainforest"),
-        countryCapital("country-australia", country: "Australia", capital: "Canberra", continent: "Australia", clue: "home of kangaroos and koalas"),
-        countryCapital("country-canada", country: "Canada", capital: "Ottawa", continent: "North America", clue: "known for maple leaves and snowy winters"),
-        countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", clue: "known for savannas and wildlife parks")
+        countryCapital("country-india", country: "India", capital: "New Delhi", continent: "Asia", language: "Hindi and English", currency: "Indian rupee", mapShape: "wide triangle-like peninsula", clue: "home of the Taj Mahal"),
+        countryCapital("country-japan", country: "Japan", capital: "Tokyo", continent: "Asia", language: "Japanese", currency: "yen", mapShape: "long island chain", clue: "known for cherry blossoms and bullet trains"),
+        countryCapital("country-france", country: "France", capital: "Paris", continent: "Europe", language: "French", currency: "euro", mapShape: "hexagon-like outline", clue: "home of the Eiffel Tower"),
+        countryCapital("country-egypt", country: "Egypt", capital: "Cairo", continent: "Africa", language: "Arabic", currency: "Egyptian pound", mapShape: "square-like shape with Sinai corner", clue: "home of the Great Pyramids"),
+        countryCapital("country-brazil", country: "Brazil", capital: "Brasília", continent: "South America", language: "Portuguese", currency: "Brazilian real", mapShape: "large east-bulging outline", clue: "home of the Amazon rainforest"),
+        countryCapital("country-australia", country: "Australia", capital: "Canberra", continent: "Australia", language: "English", currency: "Australian dollar", mapShape: "big island continent", clue: "home of kangaroos and koalas"),
+        countryCapital("country-canada", country: "Canada", capital: "Ottawa", continent: "North America", language: "English and French", currency: "Canadian dollar", mapShape: "very wide northern outline", clue: "known for maple leaves and snowy winters"),
+        countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", language: "Swahili and English", currency: "Kenyan shilling", mapShape: "east Africa shape by the Indian Ocean", clue: "known for savannas and wildlife parks")
     ]
 
     static let countryFlags: [MemoryAnimal] = [
@@ -389,6 +391,17 @@ enum MemoryDeck {
         indiaStateCapital("state-rajasthan", state: "Rajasthan", capital: "Jaipur", region: "northwest India", clue: "pink city and desert forts"),
         indiaStateCapital("state-kerala", state: "Kerala", capital: "Thiruvananthapuram", region: "south India", clue: "backwaters and coconut trees"),
         indiaStateCapital("state-assam", state: "Assam", capital: "Dispur", region: "northeast India", clue: "tea gardens and one-horned rhinos")
+    ]
+
+    static let fruits: [MemoryAnimal] = [
+        fruit("fruit-apple", name: "Apple", emoji: "🍎", shape: "round", colors: "red, green, or yellow", taste: "sweet and crisp", smell: "fresh and fruity", foundIn: "India, China, the United States, and Europe"),
+        fruit("fruit-banana", name: "Banana", emoji: "🍌", shape: "long and curved", colors: "yellow", taste: "sweet and soft", smell: "gentle tropical smell", foundIn: "India, Ecuador, the Philippines, and Brazil"),
+        fruit("fruit-mango", name: "Mango", emoji: "🥭", shape: "oval", colors: "yellow, orange, green, or red", taste: "very sweet and juicy", smell: "rich tropical smell", foundIn: "India, Mexico, Thailand, and Pakistan"),
+        fruit("fruit-orange", name: "Orange", emoji: "🍊", shape: "round", colors: "orange", taste: "sweet and tangy", smell: "bright citrus smell", foundIn: "Brazil, India, China, and Spain"),
+        fruit("fruit-grape", name: "Grape", emoji: "🍇", shape: "small round bunches", colors: "green, red, or purple", taste: "sweet and juicy", smell: "light fruity smell", foundIn: "Italy, China, the United States, and India"),
+        fruit("fruit-watermelon", name: "Watermelon", emoji: "🍉", shape: "large oval", colors: "green outside and red inside", taste: "sweet and watery", smell: "fresh melon smell", foundIn: "India, China, Turkey, and Brazil"),
+        fruit("fruit-pineapple", name: "Pineapple", emoji: "🍍", shape: "oval with spiky crown", colors: "gold and green", taste: "sweet and tangy", smell: "strong tropical smell", foundIn: "Costa Rica, India, the Philippines, and Thailand"),
+        fruit("fruit-strawberry", name: "Strawberry", emoji: "🍓", shape: "heart-shaped", colors: "red with tiny seeds", taste: "sweet and a little tart", smell: "sweet berry smell", foundIn: "United States, Mexico, Spain, and India")
     ]
 
     static let waterCycle: [MemoryAnimal] = [
@@ -414,7 +427,7 @@ enum MemoryDeck {
     ]
 
     static let allAnimalsById: [String: MemoryAnimal] = {
-        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates + waterCycle).map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: (domesticAnimals + birds + vehicles + planets + fishes + countries + countryFlags + indiaStates + waterCycle + fruits).map { ($0.id, $0) })
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
@@ -686,7 +699,33 @@ enum MemoryDeck {
         )
     }
 
-    private static func countryCapital(_ id: String, country: String, capital: String, continent: String, clue: String) -> MemoryAnimal {
+    private static func fruit(_ id: String, name: String, emoji: String, shape: String, colors: String, taste: String, smell: String, foundIn: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .emoji(emoji),
+            metadata: MemoryCardMetadata(
+                deck: .fruits,
+                category: "fruit",
+                kind: "fruit",
+                habitat: foundIn,
+                colors: colors,
+                use: taste,
+                movement: "grows on plants and travels from farms to markets",
+                sound: smell,
+                factCards: [
+                    MemoryFactCard(title: "Fruit", value: name),
+                    MemoryFactCard(title: "Shape", value: shape),
+                    MemoryFactCard(title: "Color", value: colors),
+                    MemoryFactCard(title: "Taste", value: taste),
+                    MemoryFactCard(title: "Smell", value: smell),
+                    MemoryFactCard(title: "Usually Found", value: foundIn)
+                ]
+            )
+        )
+    }
+
+    private static func countryCapital(_ id: String, country: String, capital: String, continent: String, language: String, currency: String, mapShape: String, clue: String) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: capital,
@@ -700,7 +739,11 @@ enum MemoryDeck {
                 factCards: [
                     MemoryFactCard(title: "Country", value: country),
                     MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Language", value: language),
+                    MemoryFactCard(title: "Currency", value: currency),
                     MemoryFactCard(title: "Continent", value: continent),
+                    MemoryFactCard(title: "Map Shape", value: mapShape),
+                    MemoryFactCard(title: "Bucket", value: "Place in \(continent)"),
                     MemoryFactCard(title: "Known For", value: clue)
                 ]
             )
@@ -839,8 +882,29 @@ struct MemoryView: View {
     @State private var askSession: MemoryAskConversationSession? = nil
     @State private var latestAskResponse: MemoryAskResponse? = nil
 
+    init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil) {
+        self.appModel = appModel
+        _deckSelection = State(initialValue: DeckSelection(kind: initialDeckKind))
+    }
+
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle
+        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle, fruits
+
+        init(kind: MemoryDeckKind?) {
+            switch kind {
+            case .domesticAnimals: self = .domestic
+            case .birds: self = .birds
+            case .vehicles: self = .vehicles
+            case .planets: self = .planets
+            case .fishes: self = .fishes
+            case .countries: self = .countries
+            case .countryFlags: self = .countryFlags
+            case .indiaStates: self = .indiaStates
+            case .waterCycle: self = .waterCycle
+            case .fruits: self = .fruits
+            case nil: self = .domestic
+            }
+        }
 
         var label: String {
             switch self {
@@ -853,6 +917,7 @@ struct MemoryView: View {
             case .countryFlags: return "🏳️ Countries & Flags"
             case .indiaStates: return "📍 India States & Capitals"
             case .waterCycle: return "💧 Water Cycle"
+            case .fruits: return "🍎 Fruits"
             }
         }
 
@@ -867,6 +932,7 @@ struct MemoryView: View {
             case .countryFlags: return "Countries & Flags"
             case .indiaStates: return "India States & Capitals"
             case .waterCycle: return "Water Cycle"
+            case .fruits: return "Fruits"
             }
         }
 
@@ -881,6 +947,7 @@ struct MemoryView: View {
             case .countryFlags: return MemoryDeck.countryFlags
             case .indiaStates: return MemoryDeck.indiaStates
             case .waterCycle: return MemoryDeck.waterCycle
+            case .fruits: return MemoryDeck.fruits
             }
         }
     }
@@ -1633,6 +1700,8 @@ struct MemoryView: View {
             deckLabel = "India Guide"
         case .waterCycle:
             deckLabel = "Water Cycle Guide"
+        case .fruits:
+            deckLabel = "Fruit Guide"
         }
 
         switch source {

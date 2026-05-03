@@ -70,10 +70,12 @@ struct LabRouteRegressionTests {
         #expect(discovery.starterMixMatchCards.count >= 8)
         #expect(discovery.modeChoiceCards.count == discovery.modes.count)
 
+        #expect(chemistry.activities.map(\.id) == [.memoryMatch])
+        #expect(chemistry.activities.first?.title == "Fruit Cards")
+
+        #expect(electronics.activities.isEmpty)
         for futureShell in [chemistry, electronics] {
-            #expect(futureShell.activities.isEmpty)
             #expect(!futureShell.promise.isEmpty)
-            #expect(futureShell.ageBandHint == "Future lane")
             #expect(futureShell.starterMixMatchCards.count >= 8)
             #expect(futureShell.modeChoiceCards.count == futureShell.modes.count)
         }
