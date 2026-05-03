@@ -100,11 +100,21 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
     }
 
+    func testPhysicsLaneAddsSoundLabAsThirdReadyActivity() throws {
+        let physics = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .physics })
+
+        XCTAssertEqual(physics.activities.map(\.id), [.gravityArtist, .waterCycle, .soundVolume])
+        XCTAssertEqual(LabLaneDetailPresentation(lane: physics).activityCountLabel, "3 games ready")
+        XCTAssertTrue(physics.starterMixMatchCards.contains { $0.concept == "sound" && $0.prompt == "whisper" && $0.match == "quiet" })
+        XCTAssertTrue(physics.starterMixMatchCards.contains { $0.concept == "hearing-safety" && $0.prompt == "siren" && $0.match == "protect ears" })
+    }
+
     func testLabLaneRouteCarriesSelectedLaneWithoutChangingGameRoutes() throws {
         XCTAssertEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.geometry))
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
         XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
+        XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }
 
@@ -217,6 +227,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass])
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
+        XCTAssertEqual(LabActivityID.soundVolume.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
     }
 

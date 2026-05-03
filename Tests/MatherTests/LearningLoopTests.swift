@@ -91,3 +91,55 @@ extension LearningLoopTests {
         XCTAssertTrue(WaterCycleContent.matchPairs.allSatisfy { $0.rightVisualKey?.isEmpty == false })
     }
 }
+
+
+extension LearningLoopTests {
+    func testSoundVolumeContentCoversSafeHearingConcepts() {
+        let titles = Set(SoundVolumeContent.cards.map(\.title))
+
+        XCTAssertEqual(SoundVolumeContent.cards.count, 8)
+        XCTAssertTrue(titles.isSuperset(of: [
+            "Quiet",
+            "Conversation",
+            "Traffic",
+            "Siren",
+            "Headphones",
+            "Pleasant Sound",
+            "Noisy Sound",
+            "Protect Ears",
+        ]))
+        XCTAssertTrue(SoundVolumeContent.safetyNote.contains("no screaming"))
+        XCTAssertTrue(SoundVolumeContent.safetyNote.contains("microphone meter comes later"))
+    }
+
+    func testSoundVolumeQuizScoringUsesCorrectSafeAnswers() {
+        let questions = SoundVolumeContent.quizQuestions
+        let answers = Dictionary(uniqueKeysWithValues: questions.map { ($0.id, $0.correctChoice) })
+
+        XCTAssertEqual(questions.count, 4)
+        XCTAssertEqual(LearningLoopScoring.scoreQuiz(questions: questions, answersByQuestionId: answers), questions.count)
+        XCTAssertTrue(questions.contains { $0.correctChoice == "Keep volume low and take breaks" })
+        XCTAssertFalse(questions.flatMap(\.choices).contains { $0.localizedCaseInsensitiveContains("scream") })
+    }
+
+    func testSoundVolumeMatchPairsUsePictureNameVisualKeys() {
+        let pairs = SoundVolumeContent.matchPairs
+        let pairIDs = Set(pairs.map(\.id))
+
+        XCTAssertEqual(pairs.count, 6)
+        XCTAssertTrue(pairIDs.isSuperset(of: ["whisper-quiet", "talk-normal", "traffic-loud", "siren-too-loud", "birds-pleasant", "headphones-safe"]))
+        XCTAssertTrue(pairs.allSatisfy { $0.leftVisualKey?.isEmpty == false })
+        XCTAssertTrue(pairs.allSatisfy { $0.rightVisualKey?.isEmpty == false })
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Siren", right: "Protect ears", pairs: pairs))
+        XCTAssertFalse(LearningLoopScoring.isMatch(left: "Siren", right: "Quiet", pairs: pairs))
+    }
+
+    func testSoundVolumeEstimatedZonesAreExplicitlyEstimatedAndConservative() {
+        XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 35), .quiet)
+        XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 60), .normal)
+        XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 80), .loud)
+        XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 95), .tooLoud)
+        XCTAssertTrue(SoundLoudnessZone.tooLoud.safetyCopy.contains("protect your ears"))
+        XCTAssertTrue(SoundLoudnessZone.normal.estimatedRangeLabel.contains("about"))
+    }
+}

@@ -122,6 +122,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case gravityArtist
     case compassAngles
     case waterCycle
+    case soundVolume
     case memoryMatch
 }
 
@@ -148,6 +149,8 @@ extension LabActivityID {
             return .compassAngles
         case .waterCycle:
             return .waterCycle
+        case .soundVolume:
+            return .soundVolume
         case .memoryMatch:
             return .memory
         }
@@ -340,7 +343,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .waterCycle, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .waterCycle, .soundVolume, .memoryMatch:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -581,7 +584,7 @@ struct CapabilityLane: Identifiable, Equatable {
         CapabilityLane(
             id: .physics,
             emoji: "🧪",
-            promise: "Predict motion, gravity, water, and cause-and-effect systems.",
+            promise: "Predict motion, gravity, water, sound, and cause-and-effect systems.",
             ageBandHint: "Ages 2–12",
             modes: [.explore, .challenge, .review],
             ageEntries: [
@@ -604,6 +607,13 @@ struct CapabilityLane: Identifiable, Equatable {
                     title: "Water Cycle Lab",
                     tagline: "Predict, make clouds, then rain",
                     modes: [.learn, .explore, .review]
+                ),
+                LabActivity(
+                    id: .soundVolume,
+                    emoji: "🔊",
+                    title: "Sound Lab",
+                    tagline: "Match quiet, noisy, and safe listening clues",
+                    modes: [.learn, .review]
                 ),
             ]
         ),
@@ -718,6 +728,10 @@ struct CapabilityLane: Identifiable, Equatable {
             MixMatchCard(laneID: .physics, concept: "prediction", prompt: "aim higher", match: "lands farther"),
             MixMatchCard(laneID: .physics, concept: "water-cycle", prompt: "sun warms water", match: "evaporation"),
             MixMatchCard(laneID: .physics, concept: "water-cycle", prompt: "cloud gets heavy", match: "rain"),
+            MixMatchCard(laneID: .physics, concept: "sound", prompt: "whisper", match: "quiet"),
+            MixMatchCard(laneID: .physics, concept: "sound", prompt: "busy road", match: "noise pollution"),
+            MixMatchCard(laneID: .physics, concept: "hearing-safety", prompt: "headphones", match: "keep volume low"),
+            MixMatchCard(laneID: .physics, concept: "hearing-safety", prompt: "siren", match: "protect ears"),
             MixMatchCard(laneID: .physics, concept: "float-sink", prompt: "wood block", match: "float"),
             MixMatchCard(laneID: .physics, concept: "balance", prompt: "same weight both sides", match: "level"),
         ],
