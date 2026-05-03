@@ -23,21 +23,24 @@ struct GameplayStageFeedbackActions {
 struct GameplayThreadView: View {
     let thread: GameplayThreadDefinition
     var actions: GameplayStageFeedbackActions
+    var progressStore: GameplayProgressStore?
     @State private var navigation: GameplayStageNavigationState
 
     init(
         thread: GameplayThreadDefinition = GameplaySampleThreads.countries,
         actions: GameplayStageFeedbackActions = GameplayStageFeedbackActions(),
+        progressStore: GameplayProgressStore? = nil,
         now: Date = Date()
     ) {
         self.thread = thread
         self.actions = actions
+        self.progressStore = progressStore
         _navigation = State(initialValue: GameplayStageNavigationState(startedAt: now, currentStageStartedAt: now))
     }
 
     @MainActor
     init(thread: GameplayThreadDefinition = GameplaySampleThreads.countries, appModel: AppModel, now: Date = Date()) {
-        self.init(thread: thread, actions: .appModel(appModel), now: now)
+        self.init(thread: thread, actions: .appModel(appModel), progressStore: appModel.gameplayProgressStore, now: now)
     }
 
     var body: some View {
@@ -64,7 +67,8 @@ struct GameplayThreadView: View {
         if navigation.isComplete(for: thread) {
             GameplayThreadSummaryView(summary: navigation.summary(), stageCount: thread.stages.count)
         } else if let stage = navigation.activeStage(in: thread) {
-            let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: UInt64(navigation.activeStageIndex + 17))
+            let round = progressStore?.makeRound(thread: thread, stage: stage, seed: UInt64(navigation.activeStageIndex + 17))
+                ?? SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: UInt64(navigation.activeStageIndex + 17))
             switch stage.kind {
             case .flashcards:
                 FlashcardStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
@@ -96,6 +100,10 @@ struct GameplayThreadView: View {
 
     private func complete(correct: Int, mistakes: Int, hints: Int) {
         navigation.completeCurrentStage(thread: thread, correctCount: correct, mistakeCount: mistakes, hintsUsed: hints)
+        if navigation.isComplete(for: thread) {
+            let endedAt = navigation.stageResults.last?.completedAt ?? Date()
+            progressStore?.saveThreadSession(thread: thread, startedAt: navigation.startedAt, endedAt: endedAt, results: navigation.stageResults)
+        }
         actions.success()
     }
 

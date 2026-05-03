@@ -737,3 +737,116 @@ final class StoredGameSession {
         self.detail = detail
     }
 }
+
+// MARK: - StoredGameplayProgressRecord
+
+@Model
+final class StoredGameplayProgressRecord {
+    @Attribute(.unique) var uniqueKey: String
+    var profileId: String
+    var threadId: String
+    var entityId: String
+    var propertyId: String?
+    var propertyTypeId: String?
+    var propertyValue: String?
+    var relationId: String?
+    var stageId: String
+    var exposureCount: Int
+    var correctCount: Int
+    var incorrectCount: Int
+    var supportedCorrectCount: Int
+    var hintCount: Int
+    var firstSeenAt: Date
+    var lastSeenAt: Date?
+    var nextDueAt: Date
+    var confidenceBandRawValue: String
+    var lastOutcomeRawValue: String?
+    var lastStageId: String?
+    var lastResultMetadata: String?
+
+    init(
+        uniqueKey: String,
+        profileId: String,
+        threadId: String,
+        entityId: String,
+        propertyId: String? = nil,
+        propertyTypeId: String? = nil,
+        propertyValue: String? = nil,
+        relationId: String? = nil,
+        stageId: String,
+        exposureCount: Int = 0,
+        correctCount: Int = 0,
+        incorrectCount: Int = 0,
+        supportedCorrectCount: Int = 0,
+        hintCount: Int = 0,
+        firstSeenAt: Date = .now,
+        lastSeenAt: Date? = nil,
+        nextDueAt: Date = .distantPast,
+        confidenceBandRawValue: String = GameplayConfidenceBand.new.rawValue,
+        lastOutcomeRawValue: String? = nil,
+        lastStageId: String? = nil,
+        lastResultMetadata: String? = nil
+    ) {
+        self.uniqueKey = uniqueKey
+        self.profileId = profileId
+        self.threadId = threadId
+        self.entityId = entityId
+        self.propertyId = propertyId
+        self.propertyTypeId = propertyTypeId
+        self.propertyValue = propertyValue
+        self.relationId = relationId
+        self.stageId = stageId
+        self.exposureCount = exposureCount
+        self.correctCount = correctCount
+        self.incorrectCount = incorrectCount
+        self.supportedCorrectCount = supportedCorrectCount
+        self.hintCount = hintCount
+        self.firstSeenAt = firstSeenAt
+        self.lastSeenAt = lastSeenAt
+        self.nextDueAt = nextDueAt
+        self.confidenceBandRawValue = confidenceBandRawValue
+        self.lastOutcomeRawValue = lastOutcomeRawValue
+        self.lastStageId = lastStageId
+        self.lastResultMetadata = lastResultMetadata
+    }
+}
+
+// MARK: - StoredGameplayThreadSession
+
+@Model
+final class StoredGameplayThreadSession {
+    @Attribute(.unique) var id: String
+    var profileId: String
+    var threadId: String
+    var startedAt: Date
+    var endedAt: Date
+    var durationSeconds: Double
+    var completedStageIdsData: Data?
+    var totalScore: Int
+    var stars: Int
+    var stageSummaryData: Data?
+
+    init(
+        id: String = UUID().uuidString,
+        profileId: String,
+        threadId: String,
+        startedAt: Date,
+        endedAt: Date,
+        durationSeconds: Double,
+        completedStageIdsData: Data? = nil,
+        totalScore: Int,
+        stars: Int,
+        stageSummaryData: Data? = nil
+    ) {
+        self.id = id
+        self.profileId = profileId
+        self.threadId = threadId
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.durationSeconds = durationSeconds
+        self.completedStageIdsData = completedStageIdsData
+        self.totalScore = totalScore
+        self.stars = stars
+        self.stageSummaryData = stageSummaryData
+    }
+}
