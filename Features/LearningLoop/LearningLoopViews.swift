@@ -699,27 +699,34 @@ struct ShapeGeometryLabView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            VStack(alignment: .leading, spacing: 14) {
-                header
-                levelPicker
-                stageProgress
+            let compactChrome = ResponsiveLayout.shapeLabUsesCompactChrome(width: proxy.size.width, height: proxy.size.height)
+            let stageChromeReserve = ResponsiveLayout.shapeLabStageChromeReserve(compact: compactChrome, isLearnStage: stage == .learn)
+
+            VStack(alignment: .leading, spacing: compactChrome ? 10 : 14) {
+                if compactChrome && stage != .learn {
+                    compactHeader
+                } else {
+                    header(compact: compactChrome)
+                }
+                levelPicker(compact: compactChrome)
+                stageProgress(compact: compactChrome)
 
                 ViewThatFits(in: .vertical) {
                     currentStageView
                         .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .frame(maxHeight: max(260, proxy.size.height - 330), alignment: .top)
+                        .frame(maxHeight: max(320, proxy.size.height - stageChromeReserve), alignment: .top)
 
                     ScrollView {
                         currentStageView
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(maxHeight: max(260, proxy.size.height - 330))
+                    .frame(maxHeight: max(320, proxy.size.height - stageChromeReserve))
                 }
 
-                stageControls
+                stageControls(compact: compactChrome)
             }
             .padding(.horizontal, proxy.size.width < 420 ? 14 : 24)
-            .padding(.vertical, 18)
+            .padding(.vertical, compactChrome ? 10 : 18)
             .frame(maxWidth: 900)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(MatherTheme.background.ignoresSafeArea())
@@ -735,7 +742,7 @@ struct ShapeGeometryLabView: View {
                 Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
             .background(.thinMaterial)
         }
         .onDisappear {
@@ -746,20 +753,21 @@ struct ShapeGeometryLabView: View {
         }
     }
 
-    private var header: some View {
+    private func header(compact: Bool) -> some View {
         CardSurface {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: compact ? 8 : 10) {
+                HStack(alignment: .top, spacing: compact ? 10 : 12) {
                     Text("🔷")
-                        .font(.system(size: 58))
+                        .font(.system(size: compact ? 42 : 58))
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Shape Names Lab")
-                            .font(.largeTitle.weight(.black))
+                            .font((compact ? Font.title : .largeTitle).weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                             .minimumScaleFactor(0.75)
                         Text("Learn circles, triangles, squares, rectangles, ovals, stars, hearts, and diamonds — then play Bond Blast-style matches.")
-                            .font(.headline.weight(.semibold))
+                            .font((compact ? Font.subheadline : .headline).weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
+                            .lineLimit(compact ? 2 : nil)
                     }
                 }
                 Text(feedback)
@@ -774,7 +782,30 @@ struct ShapeGeometryLabView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var levelPicker: some View {
+    private var compactHeader: some View {
+        HStack(spacing: 10) {
+            Text("🔷")
+                .font(.title2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Shape Names Lab")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(feedback)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.panelDeep)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func levelPicker(compact: Bool) -> some View {
         HStack(spacing: 10) {
             ForEach(Array(ShapeGeometryContent.levels.enumerated()), id: \.element.id) { index, level in
                 Button {
@@ -786,9 +817,9 @@ struct ShapeGeometryLabView: View {
                     feedback = "Now playing \(level.title), one screen at a time."
                 } label: {
                     Text(level.title)
-                        .font(.subheadline.weight(.black))
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 12)
+                        .font((compact ? Font.caption : .subheadline).weight(.black))
+                        .padding(.vertical, compact ? 8 : 10)
+                        .padding(.horizontal, compact ? 8 : 12)
                         .frame(maxWidth: .infinity)
                         .background(index == levelIndex ? MatherTheme.accent.opacity(0.26) : MatherTheme.card)
                         .foregroundStyle(MatherTheme.ink)
@@ -800,13 +831,13 @@ struct ShapeGeometryLabView: View {
         .accessibilityLabel("Shape Lab level picker")
     }
 
-    private var stageProgress: some View {
+    private func stageProgress(compact: Bool) -> some View {
         HStack(spacing: 8) {
             ForEach(ShapeGeometryStage.allCases, id: \.rawValue) { shapeStage in
                 Text(shapeStage.title)
-                    .font(.caption.weight(.black))
-                    .padding(.vertical, 7)
-                    .padding(.horizontal, 10)
+                    .font((compact ? Font.caption2 : .caption).weight(.black))
+                    .padding(.vertical, compact ? 5 : 7)
+                    .padding(.horizontal, compact ? 6 : 10)
                     .frame(maxWidth: .infinity)
                     .background(shapeStage == stage ? MatherTheme.accent.opacity(0.24) : MatherTheme.card)
                     .foregroundStyle(shapeStage == stage ? MatherTheme.ink : MatherTheme.cardSubtitle)
@@ -835,7 +866,7 @@ struct ShapeGeometryLabView: View {
         }
     }
 
-    private var stageControls: some View {
+    private func stageControls(compact: Bool) -> some View {
         HStack(spacing: 12) {
             Button {
                 if let previous = ShapeGeometryStage(rawValue: stage.rawValue - 1) {
@@ -845,7 +876,7 @@ struct ShapeGeometryLabView: View {
             } label: {
                 Label("Back", systemImage: "chevron.left")
             }
-            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.24)))
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.24), minHeight: compact ? 64 : 88, font: (compact ? Font.subheadline : .headline).weight(.bold)))
             .disabled(stage == .learn)
 
             Button {
@@ -862,7 +893,7 @@ struct ShapeGeometryLabView: View {
             } label: {
                 Label(stage.nextTitle, systemImage: stage == .summary ? "arrow.counterclockwise" : "arrow.right.circle.fill")
             }
-            .buttonStyle(PrimaryActionButtonStyle())
+            .buttonStyle(PrimaryActionButtonStyle(verticalPadding: compact ? 14 : 20, font: (compact ? Font.headline : .title3).weight(.bold)))
         }
         .accessibilityIdentifier("shape-lab-stage-controls")
     }
