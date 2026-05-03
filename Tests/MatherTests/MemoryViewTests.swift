@@ -176,6 +176,7 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.vehicles.animals.map(\.id) == MemoryDeck.vehicles.map(\.id))
     }
 
+    @MainActor
     @Test func directFruitAndCountryEntriesBypassChooserAndUseStagedDifficulties() {
         #expect(MemoryView.shouldHideChooser(for: .fruits))
         #expect(MemoryView.shouldHideChooser(for: .countries))
@@ -190,6 +191,7 @@ struct MemoryViewTests {
         #expect(MemoryView.directStageDifficulties == [.easy, .medium, .hard])
     }
 
+    @MainActor
     @Test func directStagedEntriesAdvanceEasyMediumThenStayFaceDown() {
         #expect(MemoryView.stageNumber(for: .easy) == 1)
         #expect(MemoryView.stageNumber(for: .medium) == 2)
