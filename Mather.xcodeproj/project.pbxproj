@@ -37,6 +37,10 @@
 		D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */; };
 		E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A34215EE8D8788E7185EB /* MatherTheme.swift */; };
 		FAE49D35BAA07CE0B5573806 /* SessionHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBF689FCFE4D506002AB78E /* SessionHistoryStore.swift */; };
+		211111111111111111111111 /* GameplayStageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111111 /* GameplayStageModels.swift */; };
+		211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111112 /* SpacedRepetitionModels.swift */; };
+		211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111113 /* SpacedRepetitionScheduler.swift */; };
+		211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111114 /* GameplaySchedulerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +87,10 @@
 		DBDE340757D1657A76B2F5C5 /* EquationResolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquationResolveView.swift; sourceTree = "<group>"; };
 		E1C7741AD8CC742E6F122094 /* MatherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MatherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8DA96C428EF71E628E7BF19 /* Mather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mather.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		111111111111111111111111 /* GameplayStageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageModels.swift; sourceTree = "<group>"; };
+		111111111111111111111112 /* SpacedRepetitionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionModels.swift; sourceTree = "<group>"; };
+		111111111111111111111113 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
+		111111111111111111111114 /* GameplaySchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySchedulerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -98,6 +106,7 @@
 		13C13543035DCDDA54D258B6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				111111111111111111111113 /* SpacedRepetitionScheduler.swift */,
 				C12E4243979B82D1D254C7BF /* HapticsService.swift */,
 				57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */,
 			);
@@ -116,6 +125,7 @@
 		25FB5EFDA536B37D6A1D2832 /* MatherTests */ = {
 			isa = PBXGroup;
 			children = (
+				111111111111111111111114 /* GameplaySchedulerTests.swift */,
 				000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */,
 				A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */,
 				6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */,
@@ -127,6 +137,8 @@
 		4356714DEE880CBB965F848D /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				111111111111111111111111 /* GameplayStageModels.swift */,
+				111111111111111111111112 /* SpacedRepetitionModels.swift */,
 				4BE99DB8FC85397C3E504E0B /* ProblemGenerator.swift */,
 				B557BC960B2E1946C97F0B6A /* SliceModels.swift */,
 				AF3772D0CE080725B37A115F /* SliceStateMachine.swift */,
@@ -299,6 +311,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */,
 				D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */,
 				739452A890EDE3E9C9B6B9C4 /* SliceStateMachineTests.swift in Sources */,
 				7B95DE9FB34D4A152F5553FB /* VerticalSliceEngineTests.swift in Sources */,
@@ -309,6 +322,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				211111111111111111111111 /* GameplayStageModels.swift in Sources */,
+				211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */,
+				211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */,
 				A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */,
 				B8C505B0ADB2C5A6FA25D6CB /* ConcreteBuildView.swift in Sources */,
 				B3671AB5F1E14FFAA4088BF5 /* EquationResolveView.swift in Sources */,
