@@ -877,6 +877,7 @@ struct MemoryView: View {
     @State private var isProcessingMismatch = false
     @State private var showRoundComplete = false
     @State private var deckSelection: DeckSelection = .domestic
+    @State private var directEntryKind: MemoryDeckKind? = nil
     @State private var recentPairHistory: [String] = []
     @State private var learningContent: MemoryLearningContent? = nil
     @State private var askSession: MemoryAskConversationSession? = nil
@@ -884,7 +885,11 @@ struct MemoryView: View {
 
     init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil) {
         self.appModel = appModel
-        _deckSelection = State(initialValue: DeckSelection(kind: initialDeckKind))
+        let initialSelection = DeckSelection(kind: initialDeckKind)
+        _deck = State(initialValue: initialSelection.animals)
+        _deckSelection = State(initialValue: initialSelection)
+        _directEntryKind = State(initialValue: Self.directStagedEntryKind(for: initialDeckKind))
+        _difficulty = State(initialValue: Self.initialDifficulty(for: initialDeckKind))
     }
 
     enum DeckSelection: CaseIterable {
@@ -953,6 +958,7 @@ struct MemoryView: View {
     }
 
     private var totalPairs: Int { difficulty.pairCount }
+    private var isDirectStagedEntry: Bool { directEntryKind != nil }
 
     var body: some View {
         ZStack {
@@ -1022,40 +1028,63 @@ struct MemoryView: View {
             }
 
             CardSurface {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Choose a deck and level")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-
-                    VStack(spacing: 10) {
-                        Menu {
-                            ForEach(DeckSelection.allCases, id: \.label) { selectedDeck in
-                                Button(selectedDeck.label) {
-                                    deckSelection = selectedDeck
-                                    deck = selectedDeck.animals
-                                    recentPairHistory = []
-                                    dealRound()
-                                }
-                            }
-                        } label: {
-                            controlLabel(title: "Deck", value: deckSelection.menuLabel, tint: MatherTheme.accent)
-                        }
-                        .accessibilityIdentifier("memory-deck-menu")
-
-                        Menu {
-                            ForEach(MemoryDifficulty.allCases, id: \.label) { selectedDifficulty in
-                                Button(selectedDifficulty.label) {
-                                    difficulty = selectedDifficulty
-                                    dealRound()
-                                }
-                            }
-                        } label: {
-                            controlLabel(title: "Difficulty", value: difficulty.menuLabel, tint: MatherTheme.warm)
-                        }
-                        .accessibilityIdentifier("memory-difficulty-menu")
-                    }
+                if isDirectStagedEntry {
+                    directStagedEntryStatus
+                } else {
+                    deckAndDifficultyChooser
                 }
             }
+        }
+    }
+
+
+    private var deckAndDifficultyChooser: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Choose a deck and level")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+
+            VStack(spacing: 10) {
+                Menu {
+                    ForEach(DeckSelection.allCases, id: \.label) { selectedDeck in
+                        Button(selectedDeck.label) {
+                            deckSelection = selectedDeck
+                            deck = selectedDeck.animals
+                            recentPairHistory = []
+                            dealRound()
+                        }
+                    }
+                } label: {
+                    controlLabel(title: "Deck", value: deckSelection.menuLabel, tint: MatherTheme.accent)
+                }
+                .accessibilityIdentifier("memory-deck-menu")
+
+                Menu {
+                    ForEach(MemoryDifficulty.allCases, id: \.label) { selectedDifficulty in
+                        Button(selectedDifficulty.label) {
+                            difficulty = selectedDifficulty
+                            dealRound()
+                        }
+                    }
+                } label: {
+                    controlLabel(title: "Difficulty", value: difficulty.menuLabel, tint: MatherTheme.warm)
+                }
+                .accessibilityIdentifier("memory-difficulty-menu")
+            }
+        }
+    }
+
+    private var directStagedEntryStatus: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(deckSelection.menuLabel)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .accessibilityIdentifier("memory-direct-deck-title")
+
+            Text("Stage \(Self.stageNumber(for: difficulty)) of \(Self.directStageDifficulties.count): \(difficulty.menuLabel)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .accessibilityIdentifier("memory-direct-stage-label")
         }
     }
 
@@ -1349,6 +1378,37 @@ struct MemoryView: View {
         return Array((previous + newRoundAnimals.map(\.id)).suffix(historyWindow))
     }
 
+    static let directStageDifficulties: [MemoryDifficulty] = [.easy, .medium, .hard]
+
+    static func directStagedEntryKind(for initialDeckKind: MemoryDeckKind?) -> MemoryDeckKind? {
+        switch initialDeckKind {
+        case .fruits, .countries:
+            return initialDeckKind
+        case .domesticAnimals, .birds, .vehicles, .planets, .fishes, .countryFlags, .indiaStates, .waterCycle, nil:
+            return nil
+        }
+    }
+
+    static func initialDifficulty(for initialDeckKind: MemoryDeckKind?) -> MemoryDifficulty {
+        directStagedEntryKind(for: initialDeckKind) == nil ? .easy : directStageDifficulties[0]
+    }
+
+    static func stageNumber(for difficulty: MemoryDifficulty) -> Int {
+        (directStageDifficulties.firstIndex(of: difficulty) ?? 0) + 1
+    }
+
+    static func nextDirectStageDifficulty(after difficulty: MemoryDifficulty) -> MemoryDifficulty {
+        guard let index = directStageDifficulties.firstIndex(of: difficulty) else {
+            return directStageDifficulties[0]
+        }
+        let nextIndex = min(index + 1, directStageDifficulties.count - 1)
+        return directStageDifficulties[nextIndex]
+    }
+
+    static func shouldHideChooser(for initialDeckKind: MemoryDeckKind?) -> Bool {
+        directStagedEntryKind(for: initialDeckKind) != nil
+    }
+
     static func canOpenLearningDetails(for card: MemoryCard, deckSelection: DeckSelection, difficulty: MemoryDifficulty, showRoundComplete: Bool) -> Bool {
         guard supportsLearningDetails(for: deckSelection) else { return false }
         if card.isMatched { return true }
@@ -1589,6 +1649,9 @@ struct MemoryView: View {
 
     private func nextRound() {
         learningContent = nil
+        if isDirectStagedEntry {
+            difficulty = Self.nextDirectStageDifficulty(after: difficulty)
+        }
         withAnimation(.easeOut(duration: 0.2)) {
             showRoundComplete = false
         }
