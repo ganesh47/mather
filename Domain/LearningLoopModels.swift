@@ -279,3 +279,64 @@ enum SoundVolumeContent {
         }
     }
 }
+
+enum ShapeGeometryContent {
+    struct Level: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let cards: [LearningConceptCard]
+        let quizQuestions: [ConceptQuizQuestion]
+        let matchPairs: [ConceptMatchPair]
+    }
+
+    static let basicCards: [LearningConceptCard] = [
+        LearningConceptCard(id: "circle", title: "Circle", explanation: "A circle is round with no corners or sides.", visualKey: "●", audioPrompt: "Circle is round with no corners."),
+        LearningConceptCard(id: "triangle", title: "Triangle", explanation: "A triangle has three sides and three corners.", visualKey: "▲", audioPrompt: "Triangle has three sides."),
+        LearningConceptCard(id: "square", title: "Square", explanation: "A square has four equal sides and four square corners.", visualKey: "■", audioPrompt: "Square has four equal sides."),
+        LearningConceptCard(id: "rectangle", title: "Rectangle", explanation: "A rectangle has four square corners with opposite sides matching.", visualKey: "▭", audioPrompt: "Rectangle has four square corners."),
+        LearningConceptCard(id: "oval", title: "Oval", explanation: "An oval is stretched like an egg and has no corners.", visualKey: "⬭", audioPrompt: "Oval is a stretched round shape."),
+        LearningConceptCard(id: "diamond", title: "Diamond", explanation: "A diamond is a square turned onto a point.", visualKey: "◆", audioPrompt: "Diamond sits on a point."),
+        LearningConceptCard(id: "star", title: "Star", explanation: "A star has points that reach out from the middle.", visualKey: "★", audioPrompt: "Star has points."),
+        LearningConceptCard(id: "heart", title: "Heart", explanation: "A heart has two bumps on top and one point below.", visualKey: "♥", audioPrompt: "Heart has two bumps and one point."),
+    ]
+
+    static let huntCards: [LearningConceptCard] = [
+        LearningConceptCard(id: "clock", title: "Clock", explanation: "A wall clock can show a circle in the room.", visualKey: "🕘"),
+        LearningConceptCard(id: "pizza", title: "Pizza Slice", explanation: "A pizza slice can look like a triangle.", visualKey: "🍕"),
+        LearningConceptCard(id: "window", title: "Window", explanation: "A window often looks like a rectangle.", visualKey: "🪟"),
+        LearningConceptCard(id: "kite", title: "Kite", explanation: "A kite can look like a diamond in the sky.", visualKey: "🪁"),
+    ]
+
+    static let cards = basicCards
+
+    static let quizQuestions: [ConceptQuizQuestion] = [
+        ConceptQuizQuestion(id: "three-sides", prompt: "Which shape has three sides?", choices: ["Triangle", "Circle", "Oval"], correctChoice: "Triangle", feedback: "Yes — a triangle has three sides."),
+        ConceptQuizQuestion(id: "no-corners", prompt: "Which shape is round with no corners?", choices: ["Circle", "Square", "Diamond"], correctChoice: "Circle", feedback: "Correct — circles have no corners."),
+        ConceptQuizQuestion(id: "four-equal-sides", prompt: "Which shape has four equal sides?", choices: ["Square", "Rectangle", "Heart"], correctChoice: "Square", feedback: "Yes — every side of a square matches."),
+        ConceptQuizQuestion(id: "two-bumps", prompt: "Which shape has two bumps on top and one point below?", choices: ["Heart", "Star", "Oval"], correctChoice: "Heart", feedback: "Right — that is the heart outline clue."),
+    ]
+
+    static let matchPairs: [ConceptMatchPair] = [
+        ConceptMatchPair(id: "circle-round", left: "Circle picture", right: "Circle", feedback: "Circle locked — round with no corners.", leftVisualKey: "●", rightVisualKey: "⭕"),
+        ConceptMatchPair(id: "triangle-three", left: "Triangle picture", right: "Triangle", feedback: "Triangle locked — three sides.", leftVisualKey: "▲", rightVisualKey: "3"),
+        ConceptMatchPair(id: "square-equal", left: "Square picture", right: "Square", feedback: "Square locked — four equal sides.", leftVisualKey: "■", rightVisualKey: "4"),
+        ConceptMatchPair(id: "rectangle-long", left: "Rectangle picture", right: "Rectangle", feedback: "Rectangle locked — long box shape.", leftVisualKey: "▭", rightVisualKey: "▭"),
+        ConceptMatchPair(id: "oval-egg", left: "Oval picture", right: "Oval", feedback: "Oval locked — stretched round shape.", leftVisualKey: "⬭", rightVisualKey: "🥚"),
+        ConceptMatchPair(id: "diamond-point", left: "Diamond picture", right: "Diamond", feedback: "Diamond locked — point on top and bottom.", leftVisualKey: "◆", rightVisualKey: "💎"),
+    ]
+
+    static let huntMatchPairs: [ConceptMatchPair] = [
+        ConceptMatchPair(id: "clock-circle", left: "Clock", right: "Circle", feedback: "A clock can show a circle.", leftVisualKey: "🕘", rightVisualKey: "●"),
+        ConceptMatchPair(id: "pizza-triangle", left: "Pizza slice", right: "Triangle", feedback: "A pizza slice can show a triangle.", leftVisualKey: "🍕", rightVisualKey: "▲"),
+        ConceptMatchPair(id: "window-rectangle", left: "Window", right: "Rectangle", feedback: "A window can show a rectangle.", leftVisualKey: "🪟", rightVisualKey: "▭"),
+        ConceptMatchPair(id: "kite-diamond", left: "Kite", right: "Diamond", feedback: "A kite can show a diamond.", leftVisualKey: "🪁", rightVisualKey: "◆"),
+    ]
+
+    static let levels: [Level] = [
+        Level(id: "shape-names", title: "Level 1: Shape names", cards: basicCards, quizQuestions: quizQuestions, matchPairs: matchPairs),
+        Level(id: "shape-hunt", title: "Level 2: Shape hunt", cards: huntCards, quizQuestions: [
+            ConceptQuizQuestion(id: "clock-shape", prompt: "What shape can a clock show?", choices: ["Circle", "Triangle", "Star"], correctChoice: "Circle", feedback: "Yes — many clocks are circles."),
+            ConceptQuizQuestion(id: "kite-shape", prompt: "What shape can a kite show?", choices: ["Diamond", "Oval", "Heart"], correctChoice: "Diamond", feedback: "Correct — a kite can look like a diamond."),
+        ], matchPairs: huntMatchPairs),
+    ]
+}

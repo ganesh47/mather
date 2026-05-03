@@ -142,4 +142,58 @@ extension LearningLoopTests {
         XCTAssertTrue(SoundLoudnessZone.tooLoud.safetyCopy.contains("protect your ears"))
         XCTAssertTrue(SoundLoudnessZone.normal.estimatedRangeLabel.contains("about"))
     }
+    func testShapeGeometryContentCoversExpectedCardsAndLevels() {
+        let titles = Set(ShapeGeometryContent.cards.map(\.title))
+        XCTAssertEqual(ShapeGeometryContent.cards.count, 8)
+        XCTAssertTrue(titles.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Star", "Heart", "Diamond"]))
+        XCTAssertEqual(ShapeGeometryContent.levels.count, 2)
+        XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { !$0.cards.isEmpty && !$0.matchPairs.isEmpty })
+    }
+    func testShapeGeometryQuizScoringUsesCorrectAnswers() {
+        let questions = ShapeGeometryContent.quizQuestions
+        let answers = Dictionary(uniqueKeysWithValues: questions.map { ($0.id, $0.correctChoice) })
+        XCTAssertEqual(LearningLoopScoring.scoreQuiz(questions: questions, answersByQuestionId: answers), questions.count)
+    }
+    func testShapeGeometryPairMatchingRequiresDefinedShapeNamePair() {
+        let pairs = ShapeGeometryContent.matchPairs
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Triangle picture", right: "Triangle", pairs: pairs))
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Circle picture", right: "Circle", pairs: pairs))
+        XCTAssertFalse(LearningLoopScoring.isMatch(left: "Triangle picture", right: "Circle", pairs: pairs))
+        XCTAssertTrue(pairs.allSatisfy { $0.leftVisualKey?.isEmpty == false && $0.rightVisualKey?.isEmpty == false })
+    }
+    func testShapeHuntLevelMatchesObjectsToShapeNames() {
+        let pairs = ShapeGeometryContent.huntMatchPairs
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Clock", right: "Circle", pairs: pairs))
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Kite", right: "Diamond", pairs: pairs))
+    }
+}
+
+extension LearningLoopTests {
+    func testShapeGeometryContentCoversExpectedCardsAndLevels() {
+        let titles = Set(ShapeGeometryContent.cards.map(\.title))
+        XCTAssertEqual(ShapeGeometryContent.cards.count, 8)
+        XCTAssertTrue(titles.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Star", "Heart", "Diamond"]))
+        XCTAssertEqual(ShapeGeometryContent.levels.count, 2)
+        XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { !$0.cards.isEmpty && !$0.matchPairs.isEmpty })
+    }
+
+    func testShapeGeometryQuizScoringUsesCorrectAnswers() {
+        let questions = ShapeGeometryContent.quizQuestions
+        let answers = Dictionary(uniqueKeysWithValues: questions.map { ($0.id, $0.correctChoice) })
+        XCTAssertEqual(LearningLoopScoring.scoreQuiz(questions: questions, answersByQuestionId: answers), questions.count)
+    }
+
+    func testShapeGeometryPairMatchingRequiresDefinedShapeNamePair() {
+        let pairs = ShapeGeometryContent.matchPairs
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Triangle picture", right: "Triangle", pairs: pairs))
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Circle picture", right: "Circle", pairs: pairs))
+        XCTAssertFalse(LearningLoopScoring.isMatch(left: "Triangle picture", right: "Circle", pairs: pairs))
+        XCTAssertTrue(pairs.allSatisfy { $0.leftVisualKey?.isEmpty == false && $0.rightVisualKey?.isEmpty == false })
+    }
+
+    func testShapeHuntLevelMatchesObjectsToShapeNames() {
+        let pairs = ShapeGeometryContent.huntMatchPairs
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Clock", right: "Circle", pairs: pairs))
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Kite", right: "Diamond", pairs: pairs))
+    }
 }

@@ -121,6 +121,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case twoFingerProtractor
     case gravityArtist
     case compassAngles
+    case shapeGeometry
     case waterCycle
     case soundVolume
     case memoryMatch
@@ -147,6 +148,8 @@ extension LabActivityID {
             return .gravityArtist
         case .compassAngles:
             return .compassAngles
+        case .shapeGeometry:
+            return .shapeGeometry
         case .waterCycle:
             return .waterCycle
         case .soundVolume:
@@ -343,7 +346,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .waterCycle, .soundVolume, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -558,6 +561,13 @@ struct CapabilityLane: Identifiable, Equatable {
                 CapabilityAgeEntry(ageBand: .preteen, posture: "systems and coordinates", entryPlay: "puzzle challenges"),
             ],
             activities: [
+                LabActivity(
+                    id: .shapeGeometry,
+                    emoji: "🔷",
+                    title: "Shape Lab",
+                    tagline: "Learn shape names, clues, and picture matches",
+                    modes: [.learn, .review]
+                ),
                 LabActivity(
                     id: .symmetryFold,
                     emoji: "🪞",
