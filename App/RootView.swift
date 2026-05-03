@@ -96,6 +96,8 @@ struct RootView: View {
                     MemoryView(appModel: appModel, initialDeckKind: deckKind)
                 case .waterCycle:
                     WaterCycleLabView(appModel: appModel)
+                case .gameplayThread(let threadID):
+                    GameplayThreadView(thread: GameplayThreadCatalog.thread(for: threadID), appModel: appModel)
                 case .soundVolume:
                     SoundVolumeLabView(appModel: appModel)
                 case .shapeGeometry:

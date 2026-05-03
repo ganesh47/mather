@@ -37,7 +37,7 @@ struct LabRouteRegressionTests {
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
             .countryCards: .memoryDeck(.countries),
-            .fruitCards: .memoryDeck(.fruits),
+            .fruitCards: .gameplayThread(.fruits),
         ]
 
         #expect(Set(expectedRoutes.keys) == Set(LabActivityID.allCases))

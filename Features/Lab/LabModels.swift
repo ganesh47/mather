@@ -161,7 +161,7 @@ extension LabActivityID {
         case .countryCards:
             return .memoryDeck(.countries)
         case .fruitCards:
-            return .memoryDeck(.fruits)
+            return .gameplayThread(.fruits)
         }
     }
 }

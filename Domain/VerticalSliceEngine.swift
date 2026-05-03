@@ -22,6 +22,7 @@ enum AppRoute: Hashable {
     case memory
     case memoryDeck(MemoryDeckKind)
     case waterCycle
+    case gameplayThread(GameplayThreadID)
     case soundVolume
     case shapeGeometry
 }
@@ -135,6 +136,7 @@ final class VerticalSliceEngine {
     func showLabLane(_ laneID: CapabilityLaneID) { route = .labLane(laneID) }
     func showMemory() { route = .memory }
     func showWaterCycle() { route = .waterCycle }
+    func showGameplayThread(_ id: GameplayThreadID) { route = .gameplayThread(id) }
     func showSoundVolume() { route = .soundVolume }
     func showShapeGeometry() { route = .shapeGeometry }
 

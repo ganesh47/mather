@@ -597,7 +597,7 @@ struct LabLaneDetailView: View {
         guard activityID == .memoryMatch else { return activityID.appRoute }
         switch laneID {
         case .chemistry:
-            return .memoryDeck(.fruits)
+            return .gameplayThread(.fruits)
         case .mapWorld:
             return .memoryDeck(.countries)
         default:
