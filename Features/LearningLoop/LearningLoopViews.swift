@@ -656,10 +656,33 @@ struct SoundVolumeLabView: View {
 struct ShapeGeometryLabView: View {
     @Bindable var appModel: AppModel
     @State private var levelIndex = 0
+    @State private var stage: ShapeGeometryStage = .learn
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
-    @State private var feedback = "Start with shape cards, then match each picture to its name."
+    @State private var feedback = "Start with one playful shape screen at a time."
+
+    private enum ShapeGeometryStage: Int, CaseIterable {
+        case learn, quiz, match, summary
+
+        var title: String {
+            switch self {
+            case .learn: "Look"
+            case .quiz: "Quiz"
+            case .match: "Match"
+            case .summary: "Stars"
+            }
+        }
+
+        var nextTitle: String {
+            switch self {
+            case .learn: "Start quiz"
+            case .quiz: "Play match"
+            case .match: "See stars"
+            case .summary: "Play again"
+            }
+        }
+    }
 
     private var level: ShapeGeometryContent.Level {
         ShapeGeometryContent.levels[levelIndex]
@@ -676,25 +699,29 @@ struct ShapeGeometryLabView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    header
-                    levelPicker
-                    LearningCardIntroView(cards: level.cards)
-                    ConceptQuizRoundView(questions: level.quizQuestions, answersByQuestionId: $answersByQuestionId)
-                    ConceptMixMatchRoundView(
-                        pairs: level.matchPairs,
-                        selectedLeft: $selectedMatchPairId,
-                        matchedPairIds: $matchedPairIds,
-                        onFeedback: { feedback = $0 }
-                    )
-                    summaryCard
+            VStack(alignment: .leading, spacing: 14) {
+                header
+                levelPicker
+                stageProgress
+
+                ViewThatFits(in: .vertical) {
+                    currentStageView
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .frame(maxHeight: max(260, proxy.size.height - 330), alignment: .top)
+
+                    ScrollView {
+                        currentStageView
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(maxHeight: max(260, proxy.size.height - 330))
                 }
-                .padding(.horizontal, proxy.size.width < 420 ? 14 : 24)
-                .padding(.vertical, 22)
-                .frame(maxWidth: 900)
-                .frame(maxWidth: .infinity)
+
+                stageControls
             }
+            .padding(.horizontal, proxy.size.width < 420 ? 14 : 24)
+            .padding(.vertical, 18)
+            .frame(maxWidth: 900)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(MatherTheme.background.ignoresSafeArea())
         }
         .navigationTitle("Shape Lab")
@@ -755,7 +782,8 @@ struct ShapeGeometryLabView: View {
                     answersByQuestionId = [:]
                     selectedMatchPairId = nil
                     matchedPairIds = []
-                    feedback = "Now playing \(level.title)."
+                    stage = .learn
+                    feedback = "Now playing \(level.title), one screen at a time."
                 } label: {
                     Text(level.title)
                         .font(.subheadline.weight(.black))
@@ -770,6 +798,73 @@ struct ShapeGeometryLabView: View {
             }
         }
         .accessibilityLabel("Shape Lab level picker")
+    }
+
+    private var stageProgress: some View {
+        HStack(spacing: 8) {
+            ForEach(ShapeGeometryStage.allCases, id: \.rawValue) { shapeStage in
+                Text(shapeStage.title)
+                    .font(.caption.weight(.black))
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(shapeStage == stage ? MatherTheme.accent.opacity(0.24) : MatherTheme.card)
+                    .foregroundStyle(shapeStage == stage ? MatherTheme.ink : MatherTheme.cardSubtitle)
+                    .clipShape(Capsule())
+            }
+        }
+        .accessibilityIdentifier("shape-lab-stage-progress")
+    }
+
+    @ViewBuilder
+    private var currentStageView: some View {
+        switch stage {
+        case .learn:
+            LearningCardIntroView(cards: level.cards)
+        case .quiz:
+            ConceptQuizRoundView(questions: level.quizQuestions, answersByQuestionId: $answersByQuestionId)
+        case .match:
+            ConceptMixMatchRoundView(
+                pairs: level.matchPairs,
+                selectedLeft: $selectedMatchPairId,
+                matchedPairIds: $matchedPairIds,
+                onFeedback: { feedback = $0 }
+            )
+        case .summary:
+            summaryCard
+        }
+    }
+
+    private var stageControls: some View {
+        HStack(spacing: 12) {
+            Button {
+                if let previous = ShapeGeometryStage(rawValue: stage.rawValue - 1) {
+                    stage = previous
+                    feedback = "Back to \(previous.title.lowercased()) mode."
+                }
+            } label: {
+                Label("Back", systemImage: "chevron.left")
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.panelDeep.opacity(0.24)))
+            .disabled(stage == .learn)
+
+            Button {
+                if stage == .summary {
+                    answersByQuestionId = [:]
+                    selectedMatchPairId = nil
+                    matchedPairIds = []
+                    stage = .learn
+                    feedback = "New round: look, quiz, match, then stars."
+                } else if let next = ShapeGeometryStage(rawValue: stage.rawValue + 1) {
+                    stage = next
+                    feedback = "Now playing \(next.title.lowercased()) mode."
+                }
+            } label: {
+                Label(stage.nextTitle, systemImage: stage == .summary ? "arrow.counterclockwise" : "arrow.right.circle.fill")
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+        }
+        .accessibilityIdentifier("shape-lab-stage-controls")
     }
 
     private var summaryCard: some View {

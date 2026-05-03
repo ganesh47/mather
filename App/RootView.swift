@@ -92,6 +92,8 @@ struct RootView: View {
                     LabLaneDetailView(appModel: appModel, laneID: laneID)
                 case .memory:
                     MemoryView(appModel: appModel)
+                case .memoryDeck(let deckKind):
+                    MemoryView(appModel: appModel, initialDeckKind: deckKind)
                 case .waterCycle:
                     WaterCycleLabView(appModel: appModel)
                 case .soundVolume:

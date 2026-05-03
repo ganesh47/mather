@@ -36,6 +36,8 @@ struct LabRouteRegressionTests {
             .waterCycle: .waterCycle,
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
+            .countryCards: .memoryDeck(.countries),
+            .fruitCards: .memoryDeck(.fruits),
         ]
 
         #expect(Set(expectedRoutes.keys) == Set(LabActivityID.allCases))
@@ -70,10 +72,12 @@ struct LabRouteRegressionTests {
         #expect(discovery.starterMixMatchCards.count >= 8)
         #expect(discovery.modeChoiceCards.count == discovery.modes.count)
 
+        #expect(chemistry.activities.map(\.id) == [.fruitCards])
+        #expect(chemistry.activities.first?.title == "Fruit Cards")
+
+        #expect(electronics.activities.isEmpty)
         for futureShell in [chemistry, electronics] {
-            #expect(futureShell.activities.isEmpty)
             #expect(!futureShell.promise.isEmpty)
-            #expect(futureShell.ageBandHint == "Future lane")
             #expect(futureShell.starterMixMatchCards.count >= 8)
             #expect(futureShell.modeChoiceCards.count == futureShell.modes.count)
         }
@@ -95,7 +99,7 @@ struct LabRouteRegressionTests {
     @Test
     func laneDetailPresentationPrioritizesActivitiesBeforeSupportMetadata() throws {
         let readyLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
-        let futureLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .chemistry })
+        let futureLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .electronics })
 
         #expect(LabLaneDetailPresentation(lane: readyLane).sections == [
             .visualSummary,

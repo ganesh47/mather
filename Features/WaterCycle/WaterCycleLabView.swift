@@ -734,7 +734,7 @@ struct WaterCycleLabView: View {
             ViewThatFits(in: .vertical) {
                 activeLessonStageBoard
                     .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .frame(height: boardHeight, alignment: .top)
+                    .frame(maxHeight: boardHeight, alignment: .top)
 
                 ScrollView {
                     activeLessonStageBoard
@@ -902,6 +902,9 @@ struct WaterCycleLabView: View {
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.58)) {
                             if let attempt = state.recordOpenMatchChoice(id: choice.id) {
                                 speakLessonText(attempt.isCorrect ? "Correct match." : "Try another match.")
+                                if attempt.isCorrect {
+                                    advanceAfterCorrectOpenMatch()
+                                }
                             }
                         }
                     } label: {
@@ -1085,6 +1088,17 @@ struct WaterCycleLabView: View {
             } else {
                 speakLessonText(state.currentMixMatchCard.prompt.speechText)
             }
+        }
+    }
+
+    private func advanceAfterCorrectOpenMatch() {
+        guard state.lessonThread.activeStage.kind == .invertedRecall else { return }
+        if state.isOnLastLessonCard {
+            state.completeCurrentLessonStage()
+            speakLessonStage()
+        } else {
+            state.advanceLessonCard()
+            speakLessonCard()
         }
     }
 

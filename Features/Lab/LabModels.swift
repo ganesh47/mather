@@ -125,6 +125,8 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case waterCycle
     case soundVolume
     case memoryMatch
+    case countryCards
+    case fruitCards
 }
 
 extension LabActivityID {
@@ -156,6 +158,10 @@ extension LabActivityID {
             return .soundVolume
         case .memoryMatch:
             return .memory
+        case .countryCards:
+            return .memoryDeck(.countries)
+        case .fruitCards:
+            return .memoryDeck(.fruits)
         }
     }
 }
@@ -346,7 +352,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -654,6 +660,13 @@ struct CapabilityLane: Identifiable, Equatable {
                     tagline: "Turn your body to match the angle",
                     modes: [.explore, .challenge, .timed]
                 ),
+                LabActivity(
+                    id: .countryCards,
+                    emoji: "🌍",
+                    title: "Country Cards",
+                    tagline: "Flashcards for capitals, flags, languages, currency, and continents",
+                    modes: [.learn, .review, .challenge]
+                ),
             ]
         ),
         CapabilityLane(
@@ -690,7 +703,15 @@ struct CapabilityLane: Identifiable, Equatable {
                 CapabilityAgeEntry(ageBand: .upperElementary, posture: "properties and prediction", entryPlay: "safe reaction cards"),
                 CapabilityAgeEntry(ageBand: .preteen, posture: "families and systems", entryPlay: "property puzzles"),
             ],
-            activities: []
+            activities: [
+                LabActivity(
+                    id: .fruitCards,
+                    emoji: "🍎",
+                    title: "Fruit Cards",
+                    tagline: "Match fruit shape, color, taste, smell, and where it is found",
+                    modes: [.learn, .review, .challenge]
+                ),
+            ]
         ),
         CapabilityLane(
             id: .electronics,

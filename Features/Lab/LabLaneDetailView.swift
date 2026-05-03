@@ -553,7 +553,7 @@ struct LabLaneDetailView: View {
                 .font(.system(size: 48, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
                 .offset(x: 20, y: 12)
-        case .memoryMatch:
+        case .memoryMatch, .countryCards, .fruitCards:
             Image(systemName: "rectangle.on.rectangle.angled")
                 .font(.system(size: 48, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
@@ -582,14 +582,26 @@ struct LabLaneDetailView: View {
 
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
-            appModel.engine.show(activityID.appRoute)
+            appModel.engine.show(route(for: activityID, laneID: lane.id))
             switch activityID {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
-                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
+                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
                 break
             }
+        }
+    }
+
+    private func route(for activityID: LabActivityID, laneID: CapabilityLaneID) -> AppRoute {
+        guard activityID == .memoryMatch else { return activityID.appRoute }
+        switch laneID {
+        case .chemistry:
+            return .memoryDeck(.fruits)
+        case .mapWorld:
+            return .memoryDeck(.countries)
+        default:
+            return .memory
         }
     }
 
