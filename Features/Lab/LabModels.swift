@@ -352,7 +352,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
