@@ -5,6 +5,7 @@ import Testing
 @Suite("MemoryView")
 struct MemoryViewTests {
 
+    @MainActor
     @Test func lockedDeckStagesAdvanceEasyMediumHard() {
         #expect(MemoryView.nextStage(after: .easy) == .medium)
         #expect(MemoryView.nextStage(after: .medium) == .hard)
