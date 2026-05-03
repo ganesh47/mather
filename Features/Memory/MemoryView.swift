@@ -1661,6 +1661,7 @@ struct MemoryView: View {
         }
     }
 
+
     static func accessibilityIdentifier(for card: MemoryCard) -> String {
         let kind: String
         switch card.content {
