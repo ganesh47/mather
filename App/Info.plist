@@ -18,6 +18,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Mather counts a few small careful steps during motion games. If motion access is unavailable, your child can use tap-to-count instead.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mather listens for claps to celebrate with you. You can turn Clap reaction off any time in Settings.</string>
 	<key>NSCameraUsageDescription</key>
