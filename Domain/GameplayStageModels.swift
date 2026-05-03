@@ -207,6 +207,17 @@ struct GameplayScoreSummary: Codable, Equatable, Hashable {
         return durationSeconds / Double(attemptedCount)
     }
 
+    var formattedAccuracy: String {
+        "\(Int((accuracy * 100).rounded()))%"
+    }
+
+    var formattedDuration: String {
+        let seconds = max(0, Int(durationSeconds.rounded()))
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return minutes > 0 ? "\(minutes)m \(remainingSeconds)s" : "\(remainingSeconds)s"
+    }
+
     static func summarize(_ results: [GameplayStageResult]) -> GameplayScoreSummary {
         let correct = results.reduce(0) { $0 + $1.correctCount }
         let mistakes = results.reduce(0) { $0 + $1.mistakeCount }

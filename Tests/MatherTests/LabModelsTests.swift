@@ -114,7 +114,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
         XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)
         XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
-        XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
+        XCTAssertEqual(LabActivityID.waterCycle.appRoute, .gameplayThread(.waterCycle))
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }

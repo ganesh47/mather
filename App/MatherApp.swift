@@ -58,8 +58,10 @@ private extension MatherApp {
         switch arguments[flagIndex + 1].lowercased() {
         case "lab", "explorerlab", "explorer-lab":
             appModel.engine.showLab()
-        case "watercycle", "water-cycle", "watercyclelab", "water-cycle-lab":
+        case "watercycle", "water-cycle", "watercyclethread", "water-cycle-thread":
             appModel.engine.showWaterCycle()
+        case "watercyclelab", "water-cycle-lab", "legacy-watercycle", "legacy-water-cycle":
+            appModel.engine.showLegacyWaterCycleLab()
         default:
             break
         }

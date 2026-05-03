@@ -153,7 +153,7 @@ extension LabActivityID {
         case .shapeGeometry:
             return .shapeGeometry
         case .waterCycle:
-            return .waterCycle
+            return .gameplayThread(.waterCycle)
         case .soundVolume:
             return .soundVolume
         case .memoryMatch:

@@ -72,23 +72,23 @@ struct GameplayThreadView: View {
             switch stage.kind {
             case .flashcards:
                 FlashcardStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
-                    complete(correct: correct, mistakes: mistakes, hints: hints)
+                    complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             case .easyMemory:
                 MemoryStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
-                    complete(correct: correct, mistakes: mistakes, hints: hints)
+                    complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             case .flipMemory:
                 FlipMemoryStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
-                    complete(correct: correct, mistakes: mistakes, hints: hints)
+                    complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             case .bondBlast:
                 BondBlastStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
-                    complete(correct: correct, mistakes: mistakes, hints: hints)
+                    complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             case .multipleChoice:
                 MultipleChoiceStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
-                    complete(correct: correct, mistakes: mistakes, hints: hints)
+                    complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             }
         } else {
@@ -98,13 +98,51 @@ struct GameplayThreadView: View {
         }
     }
 
-    private func complete(correct: Int, mistakes: Int, hints: Int) {
-        navigation.completeCurrentStage(thread: thread, correctCount: correct, mistakeCount: mistakes, hintsUsed: hints)
+    private func complete(stage: GameplayStageDefinition, round: GameplayRoundDefinition, correct: Int, mistakes: Int, hints: Int) {
+        let occurredAt = Date()
+        navigation.completeCurrentStage(thread: thread, correctCount: correct, mistakeCount: mistakes, hintsUsed: hints, now: occurredAt)
+        persistProgress(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints, at: occurredAt)
         if navigation.isComplete(for: thread) {
-            let endedAt = navigation.stageResults.last?.completedAt ?? Date()
+            let endedAt = navigation.stageResults.last?.completedAt ?? occurredAt
             progressStore?.saveThreadSession(thread: thread, startedAt: navigation.startedAt, endedAt: endedAt, results: navigation.stageResults)
         }
         actions.success()
+    }
+
+    private func persistProgress(stage: GameplayStageDefinition, round: GameplayRoundDefinition, correct: Int, mistakes: Int, hints: Int, at date: Date) {
+        guard let progressStore else { return }
+        progressStore.markExposed(thread: thread, stage: stage, items: round.items, at: date)
+        progressStore.apply(
+            updates: repetitionUpdates(for: round, stage: stage, correct: correct, mistakes: mistakes, at: date),
+            thread: thread,
+            hintsByKey: hintsByKey(for: round, stage: stage, totalHints: hints),
+            metadataByKey: Dictionary(uniqueKeysWithValues: round.items.map { item in
+                let key = SpacedRepetitionScheduler.recordKey(for: item, stageID: stage.id)
+                return (key, "stage=\(stage.kind.rawValue);score=\(correct);mistakes=\(mistakes)")
+            })
+        )
+    }
+
+    private func repetitionUpdates(for round: GameplayRoundDefinition, stage: GameplayStageDefinition, correct: Int, mistakes: Int, at date: Date) -> [SpacedRepetitionUpdate] {
+        let correctLimit = max(0, correct)
+        let mistakeLimit = max(0, mistakes)
+        return round.items.enumerated().map { index, item in
+            let outcome: GameplayExposureOutcome
+            if index < correctLimit {
+                outcome = mistakeLimit == 0 ? .correct : .supportedCorrect
+            } else if index < correctLimit + mistakeLimit {
+                outcome = .incorrect
+            } else {
+                outcome = .supportedCorrect
+            }
+            return SpacedRepetitionUpdate(key: SpacedRepetitionScheduler.recordKey(for: item, stageID: stage.id), outcome: outcome, occurredAt: date)
+        }
+    }
+
+    private func hintsByKey(for round: GameplayRoundDefinition, stage: GameplayStageDefinition, totalHints: Int) -> [GameplayExposureKey: Int] {
+        guard totalHints > 0, !round.items.isEmpty else { return [:] }
+        let key = SpacedRepetitionScheduler.recordKey(for: round.items[0], stageID: stage.id)
+        return [key: totalHints]
     }
 
     private func header(compact: Bool) -> some View {
@@ -133,18 +171,38 @@ struct GameplayThreadView: View {
     }
 
     private func controls(compact: Bool) -> some View {
+        ViewThatFits(in: .horizontal) {
+            controlRow(compact: compact)
+            VStack(alignment: .leading, spacing: 8) {
+                controlButtons(compact: compact)
+                scoreText
+            }
+        }
+    }
+
+    private func controlRow(compact: Bool) -> some View {
         HStack(spacing: 10) {
+            controlButtons(compact: compact)
+            Spacer(minLength: 0)
+            scoreText
+        }
+    }
+
+    private func controlButtons(compact: Bool) -> some View {
+        HStack(spacing: 8) {
             Button("Back") { navigation.goBack() }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 .disabled(!navigation.canGoBack)
             Button("Retry") { navigation.retryCurrentStage() }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
-            Spacer(minLength: 0)
-            Text("Score \(navigation.summary().correctCount)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(MatherTheme.ink.opacity(0.8))
-                .accessibilityLabel("Current score \(navigation.summary().correctCount)")
         }
+    }
+
+    private var scoreText: some View {
+        Text("Score \(navigation.summary().scorePoints)")
+            .font(.subheadline.weight(.semibold).monospacedDigit())
+            .foregroundStyle(MatherTheme.ink.opacity(0.8))
+            .accessibilityLabel("Current score \(navigation.summary().scorePoints)")
     }
 }
 
@@ -161,9 +219,12 @@ private struct GameplayThreadSummaryView: View {
             Text("Thread complete")
                 .font(.title.bold())
                 .foregroundStyle(MatherTheme.ink)
-            Text("\(summary.correctCount) correct • \(summary.mistakeCount) review items • \(stageCount) stages")
+            Text("Score \(summary.scorePoints) • \(summary.correctCount)/\(summary.attemptedCount) correct • \(summary.formattedDuration)")
                 .font(.headline)
                 .foregroundStyle(MatherTheme.ink.opacity(0.78))
+            Text("Accuracy \(summary.formattedAccuracy) • \(summary.mistakeCount) review items • \(stageCount) stages")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.ink.opacity(0.68))
         }
         .padding(24)
         .frame(maxWidth: .infinity)

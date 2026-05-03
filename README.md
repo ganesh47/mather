@@ -55,6 +55,7 @@ Current Explorer Lab/gameplay work includes:
 - **Angle Cannon / Gravity Artist** — physics prediction and motion intuition
 - **Two-Finger Protractor / Compass Walk** — embodied angles, direction, and measurement
 - **Memory / Mix-Match** — moving from standalone play into embedded recall cards
+- **Reusable five-stage gameplay threads** — countries, fruits, and water cycle now share the same Flashcards → Easy Memory → Flip Memory → Bond Blast → Multiple Choice flow, with direct Explorer Lab entries, score/time summaries, and persisted spaced-repetition progress
 
 Useful specs and research live under `wiki/`, especially:
 
@@ -99,9 +100,15 @@ xcodebuild test -project Mather.xcodeproj -scheme Mather -destination 'platform=
 
 CI and workflow work should preserve the security posture documented in `.github/workflows/` and active PRs/issues.
 
+## Release readiness notes
+
+- Issue #912 Slice H polish routes country cards, fruit cards, and water cycle through the reusable gameplay-thread surface.
+- The legacy water-cycle lab route remains intentionally available for explicit legacy/UI-test launches, while Explorer Lab and direct water-cycle launches delegate to `GameplayThreadView`.
+- Release screenshots should cover `-uiTest.startRoute waterCycle`, country cards, and fruit cards on compact phone and iPad layouts once CI/simulator infrastructure is available.
+
 ## Current near-term gaps
 
-- Implement the capability-lane Explorer Lab shell.
+- Continue expanding the capability-lane Explorer Lab shell.
 - Extract reusable Bond Blast-style pairing and Mix-Match recall components.
 - Embed recall cards inside capability lanes instead of keeping Memory Match as a primary standalone play mode.
 - Add play-mode choice: Learn, Explore, Challenge, Timed, Review.
