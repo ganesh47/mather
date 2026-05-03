@@ -77,12 +77,14 @@ struct DarkModeCTAOverlay: View {
 
 struct PrimaryActionButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) private var colorScheme
+    var verticalPadding: CGFloat = 20
+    var font: Font = .title3.weight(.bold)
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.title3.weight(.bold))
+            .font(font)
             .foregroundStyle(.white)
-            .padding(.vertical, 20)
+            .padding(.vertical, verticalPadding)
             .frame(maxWidth: .infinity)
             .background(configuration.isPressed ? MatherTheme.accent.opacity(0.84) : MatherTheme.accent)
             .overlay(DarkModeCTAOverlay())
@@ -100,12 +102,14 @@ struct PrimaryActionButtonStyle: ButtonStyle {
 struct SecondaryTileButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) private var colorScheme
     var fill: Color = MatherTheme.softBlue
+    var minHeight: CGFloat = 88
+    var font: Font = .headline.weight(.bold)
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline.weight(.bold))
+            .font(font)
             .foregroundStyle(MatherTheme.ink)
-            .frame(maxWidth: .infinity, minHeight: 88)
+            .frame(maxWidth: .infinity, minHeight: minHeight)
             .background(configuration.isPressed ? fill.opacity(0.8) : fill)
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)

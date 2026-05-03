@@ -59,4 +59,11 @@ struct ResponsiveLayoutTests {
         #expect(ResponsiveLayout.memoryLearningFactMinimumWidth(for: .regular) > ResponsiveLayout.memoryLearningFactMinimumWidth(for: .compact))
     }
 
+    @MainActor @Test func shapeLabCompactsChromeOnPhoneSizedScreens() {
+        #expect(ResponsiveLayout.shapeLabUsesCompactChrome(width: 393, height: 852))
+        #expect(!ResponsiveLayout.shapeLabUsesCompactChrome(width: 768, height: 1_024))
+        #expect(ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: false) < ResponsiveLayout.shapeLabStageChromeReserve(compact: false, isLearnStage: false))
+        #expect(ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: false) < ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: true))
+    }
+
 }

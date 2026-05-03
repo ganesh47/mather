@@ -102,6 +102,15 @@ enum ResponsiveLayout {
         horizontalSizeClass == .regular ? 180 : 140
     }
 
+    static func shapeLabUsesCompactChrome(width: CGFloat, height: CGFloat) -> Bool {
+        width < 430 || height < 760
+    }
+
+    static func shapeLabStageChromeReserve(compact: Bool, isLearnStage: Bool) -> CGFloat {
+        guard compact else { return 330 }
+        return isLearnStage ? 260 : 188
+    }
+
     static func roomQuestStationMinimumWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
         horizontalSizeClass == .regular ? 240 : 170
     }
