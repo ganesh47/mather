@@ -32,6 +32,7 @@ struct LabRouteRegressionTests {
             .twoFingerProtractor: .twoFingerProtractor,
             .gravityArtist: .gravityArtist,
             .compassAngles: .compassAngles,
+            .shapeGeometry: .shapeGeometry,
             .waterCycle: .waterCycle,
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,

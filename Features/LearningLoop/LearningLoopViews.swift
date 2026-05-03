@@ -458,3 +458,139 @@ struct SoundVolumeLabView: View {
         }
     }
 }
+
+struct ShapeGeometryLabView: View {
+    @Bindable var appModel: AppModel
+    @State private var levelIndex = 0
+    @State private var answersByQuestionId: [String: String] = [:]
+    @State private var selectedMatchPairId: String?
+    @State private var matchedPairIds: Set<String> = []
+    @State private var feedback = "Start with shape cards, then match each picture to its name."
+
+    private var level: ShapeGeometryContent.Level {
+        ShapeGeometryContent.levels[levelIndex]
+    }
+
+    private var summary: LearningLoopSummary {
+        LearningLoopScoring.summary(
+            questions: level.quizQuestions,
+            answersByQuestionId: answersByQuestionId,
+            matchedPairIds: matchedPairIds,
+            pairs: level.matchPairs
+        )
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    levelPicker
+                    LearningCardIntroView(cards: level.cards)
+                    ConceptQuizRoundView(questions: level.quizQuestions, answersByQuestionId: $answersByQuestionId)
+                    ConceptMixMatchRoundView(
+                        pairs: level.matchPairs,
+                        selectedLeft: $selectedMatchPairId,
+                        matchedPairIds: $matchedPairIds,
+                        onFeedback: { feedback = $0 }
+                    )
+                    summaryCard
+                }
+                .padding(.horizontal, proxy.size.width < 420 ? 14 : 24)
+                .padding(.vertical, 22)
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
+            }
+            .background(MatherTheme.background.ignoresSafeArea())
+        }
+        .navigationTitle("Shape Lab")
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Button { appModel.engine.showLabLane(.geometry) } label: {
+                    Label("Geometry", systemImage: "chevron.left")
+                        .font(.subheadline.weight(.black))
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.thinMaterial)
+        }
+        .onDisappear {
+            if summary.starCount > 0 || matchedPairIds.count == level.matchPairs.count {
+                appModel.markExplorerLabModeCompleted(laneID: .geometry, mode: .review)
+                appModel.setExplorerLabConceptConfidence(.steady, for: ConceptId(rawValue: "shape-names"), laneID: .geometry)
+            }
+        }
+    }
+
+    private var header: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 12) {
+                    Text("🔷")
+                        .font(.system(size: 58))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Shape Names Lab")
+                            .font(.largeTitle.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .minimumScaleFactor(0.75)
+                        Text("Learn circles, triangles, squares, rectangles, ovals, stars, hearts, and diamonds — then play Bond Blast-style matches.")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                    }
+                }
+                Text(feedback)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(MatherTheme.panelDeep)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(MatherTheme.softBlue.opacity(0.28))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var levelPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(Array(ShapeGeometryContent.levels.enumerated()), id: \.element.id) { index, level in
+                Button {
+                    levelIndex = index
+                    answersByQuestionId = [:]
+                    selectedMatchPairId = nil
+                    matchedPairIds = []
+                    feedback = "Now playing \(level.title)."
+                } label: {
+                    Text(level.title)
+                        .font(.subheadline.weight(.black))
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(index == levelIndex ? MatherTheme.accent.opacity(0.26) : MatherTheme.card)
+                        .foregroundStyle(MatherTheme.ink)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .accessibilityLabel("Shape Lab level picker")
+    }
+
+    private var summaryCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Shape Score")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Quiz: \(summary.quizCorrect)/\(summary.quizTotal) • Matches: \(summary.matchedPairs)/\(summary.totalPairs) • Stars: \(summary.starCount)")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                Text(summary.starCount >= 2 ? "Shape detective mode unlocked." : "Try another level or match again.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.panelDeep)
+            }
+        }
+    }
+}

@@ -96,6 +96,8 @@ struct RootView: View {
                     WaterCycleLabView(appModel: appModel)
                 case .soundVolume:
                     SoundVolumeLabView(appModel: appModel)
+                case .shapeGeometry:
+                    ShapeGeometryLabView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

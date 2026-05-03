@@ -113,6 +113,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.geometry))
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
         XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)
+        XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
@@ -137,15 +138,15 @@ extension LabModelsTests {
         let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
         var sampler = geometry.starterMixMatchSampler
 
-        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+        XCTAssertEqual(sampler.progressLabel, "1 / \(geometry.starterMixMatchCards.count)")
         XCTAssertEqual(sampler.currentCard?.prompt, "3 sides")
 
         sampler.advance()
-        XCTAssertEqual(sampler.progressLabel, "2 / 8")
+        XCTAssertEqual(sampler.progressLabel, "2 / \(geometry.starterMixMatchCards.count)")
         XCTAssertEqual(sampler.currentCard?.prompt, "4 equal sides")
 
         sampler.rewind()
-        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+        XCTAssertEqual(sampler.progressLabel, "1 / \(geometry.starterMixMatchCards.count)")
     }
 
 
@@ -223,6 +224,7 @@ extension LabModelsTests {
 
     func testActivitySensorNeedsMapToHonestLaneAffordances() {
         XCTAssertEqual(LabActivityID.sumSprint.sensorNeeds, [.noSpecialSensor])
+        XCTAssertEqual(LabActivityID.shapeGeometry.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass])
