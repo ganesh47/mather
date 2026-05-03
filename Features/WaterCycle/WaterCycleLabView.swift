@@ -135,12 +135,18 @@ struct WaterCycleLabState: Equatable {
         WaterCycleConceptFlashcard.reviewDeck[flashcardIndex % WaterCycleConceptFlashcard.reviewDeck.count]
     }
 
+    private var playableLessonCards: [LessonPlayCard] {
+        lessonThread.cards.isEmpty ? WaterCycleLessonThread.cards : lessonThread.cards
+    }
+
     var currentLessonCard: LessonPlayCard {
-        lessonThread.cards[lessonCardIndex % lessonThread.cards.count]
+        let cards = playableLessonCards
+        return cards[safeModulo(lessonCardIndex, cards.count)]
     }
 
     var currentMixMatchCard: LearningCard {
-        WaterCycleLessonThread.mixMatchCards[mixMatchIndex % WaterCycleLessonThread.mixMatchCards.count]
+        let cards = WaterCycleLessonThread.mixMatchCards
+        return cards[safeModulo(mixMatchIndex, cards.count)]
     }
 
 
@@ -149,7 +155,9 @@ struct WaterCycleLabState: Equatable {
     }
 
     var lessonCardProgressLabel: String {
-        "Card \(lessonCardIndex + 1) of \(lessonThread.cards.count)"
+        let cards = playableLessonCards
+        let safeIndex = min(max(lessonCardIndex, 0), max(cards.count - 1, 0))
+        return "Card \(safeIndex + 1) of \(cards.count)"
     }
 
     var mixMatchProgressLabel: String {
@@ -183,7 +191,8 @@ struct WaterCycleLabState: Equatable {
     }
 
     var isOnLastLessonCard: Bool {
-        lessonCardIndex == lessonThread.cards.count - 1
+        let cards = playableLessonCards
+        return lessonCardIndex >= cards.count - 1
     }
 
     var activeLessonProgressLabel: String {
@@ -295,7 +304,8 @@ struct WaterCycleLabState: Equatable {
 
     mutating func advanceLessonCard() {
         guard stage == .complete else { return }
-        lessonCardIndex = (lessonCardIndex + 1) % lessonThread.cards.count
+        let cards = playableLessonCards
+        lessonCardIndex = (lessonCardIndex + 1) % cards.count
         isRecallCardRevealed = false
         openMatchFeedback = nil
         askSession = WaterCycleLessonThread.askSession(for: currentLessonCard)
@@ -357,9 +367,15 @@ struct WaterCycleLabState: Equatable {
     private func nextUnmatchedMixMatchIndex() -> Int {
         let cards = WaterCycleLessonThread.mixMatchCards
         guard let next = cards.indices.first(where: { !mixMatchCorrectCardIDs.contains(cards[$0].answer.id) }) else {
-            return mixMatchIndex
+            return safeModulo(mixMatchIndex, cards.count)
         }
         return next
+    }
+
+    private func safeModulo(_ index: Int, _ count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        let remainder = index % count
+        return remainder >= 0 ? remainder : remainder + count
     }
 
     mutating func reset() {

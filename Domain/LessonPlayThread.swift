@@ -74,6 +74,13 @@ struct LessonPlayStage: Identifiable, Codable, Equatable, Hashable {
 }
 
 struct LessonPlayThread: Identifiable, Codable, Equatable {
+    private static let fallbackStage = LessonPlayStage(
+        id: "safe-fallback",
+        kind: .lookLearnFlashcards,
+        title: "Review",
+        prompt: "Start the learning cards again."
+    )
+
     let id: String
     let title: String
     let stages: [LessonPlayStage]
@@ -98,7 +105,9 @@ struct LessonPlayThread: Identifiable, Codable, Equatable {
     }
 
     var activeStage: LessonPlayStage {
-        stages[activeStageIndex]
+        guard !stages.isEmpty else { return Self.fallbackStage }
+        let safeIndex = min(max(activeStageIndex, 0), stages.count - 1)
+        return stages[safeIndex]
     }
 
     var isComplete: Bool {
@@ -106,7 +115,9 @@ struct LessonPlayThread: Identifiable, Codable, Equatable {
     }
 
     var progressLabel: String {
-        "Level \(activeStageIndex + 1) of \(stages.count)"
+        guard !stages.isEmpty else { return "Level 0 of 0" }
+        let safeIndex = min(max(activeStageIndex, 0), stages.count - 1)
+        return "Level \(safeIndex + 1) of \(stages.count)"
     }
 
     var progress: Double {
@@ -115,6 +126,7 @@ struct LessonPlayThread: Identifiable, Codable, Equatable {
     }
 
     mutating func completeActiveStage() {
+        guard !stages.isEmpty else { return }
         completedStageIDs.insert(activeStage.id)
         guard activeStageIndex < stages.count - 1 else { return }
         activeStageIndex += 1

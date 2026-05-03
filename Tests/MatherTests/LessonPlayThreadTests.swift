@@ -67,3 +67,23 @@ struct LessonPlayThreadTests {
         #expect(unsupported.kind == .refusal)
     }
 }
+
+extension LessonPlayThreadTests {
+    @Test func emptyThreadUsesSafeFallbackInsteadOfIndexTrap() {
+        var thread = LessonPlayThread(
+            id: "empty-thread",
+            title: "Empty",
+            stages: [],
+            cards: []
+        )
+
+        #expect(thread.activeStage.id == "safe-fallback")
+        #expect(thread.progressLabel == "Level 0 of 0")
+        #expect(thread.progress == 1)
+        #expect(thread.isComplete)
+
+        thread.completeActiveStage()
+        #expect(thread.activeStage.id == "safe-fallback")
+        #expect(thread.progressLabel == "Level 0 of 0")
+    }
+}
