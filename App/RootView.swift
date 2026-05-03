@@ -88,6 +88,8 @@ struct RootView: View {
                     LabView(appModel: appModel)
                 case .memory:
                     MemoryView(appModel: appModel)
+                case .waterCycle:
+                    WaterCycleLabView(appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
