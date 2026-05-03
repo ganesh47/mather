@@ -41,6 +41,17 @@
 		211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111112 /* SpacedRepetitionModels.swift */; };
 		211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111113 /* SpacedRepetitionScheduler.swift */; };
 		211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111114 /* GameplaySchedulerTests.swift */; };
+		A912C0000000000000000011 /* GameplaySampleThreads.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000010 /* GameplaySampleThreads.swift */; };
+		A912C0000000000000000021 /* GameplayStageViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000020 /* GameplayStageViewModels.swift */; };
+		A912C0000000000000000031 /* GameplayThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000030 /* GameplayThreadView.swift */; };
+		A912C0000000000000000041 /* FlashcardStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000040 /* FlashcardStageView.swift */; };
+		A912C0000000000000000051 /* MemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000050 /* MemoryStageView.swift */; };
+		A912C0000000000000000061 /* FlipMemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000060 /* FlipMemoryStageView.swift */; };
+		A912C0000000000000000071 /* BondBlastStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000070 /* BondBlastStageView.swift */; };
+		A912C0000000000000000081 /* MultipleChoiceStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000080 /* MultipleChoiceStageView.swift */; };
+		A912C0000000000000000091 /* GameplayStageSharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000090 /* GameplayStageSharedViews.swift */; };
+		A912C00000000000000000A1 /* GameplayStageViewModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C00000000000000000A0 /* GameplayStageViewModelsTests.swift */; };
+		A912C00000000000000000B1 /* GameplayStageViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C00000000000000000B0 /* GameplayStageViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +102,17 @@
 		111111111111111111111112 /* SpacedRepetitionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionModels.swift; sourceTree = "<group>"; };
 		111111111111111111111113 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
 		111111111111111111111114 /* GameplaySchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySchedulerTests.swift; sourceTree = "<group>"; };
+		A912C0000000000000000010 /* GameplaySampleThreads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySampleThreads.swift; sourceTree = "<group>"; };
+		A912C0000000000000000020 /* GameplayStageViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModels.swift; sourceTree = "<group>"; };
+		A912C0000000000000000030 /* GameplayThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000040 /* FlashcardStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashcardStageView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000050 /* MemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryStageView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000060 /* FlipMemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipMemoryStageView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000070 /* BondBlastStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BondBlastStageView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000080 /* MultipleChoiceStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipleChoiceStageView.swift; sourceTree = "<group>"; };
+		A912C0000000000000000090 /* GameplayStageSharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageSharedViews.swift; sourceTree = "<group>"; };
+		A912C00000000000000000A0 /* GameplayStageViewModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModelsTests.swift; sourceTree = "<group>"; };
+		A912C00000000000000000B0 /* GameplayStageViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -126,6 +148,8 @@
 			isa = PBXGroup;
 			children = (
 				111111111111111111111114 /* GameplaySchedulerTests.swift */,
+				A912C00000000000000000A0 /* GameplayStageViewModelsTests.swift */,
+				A912C00000000000000000B0 /* GameplayStageViewModelTests.swift */,
 				000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */,
 				A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */,
 				6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */,
@@ -138,6 +162,8 @@
 			isa = PBXGroup;
 			children = (
 				111111111111111111111111 /* GameplayStageModels.swift */,
+				A912C0000000000000000010 /* GameplaySampleThreads.swift */,
+				A912C0000000000000000020 /* GameplayStageViewModels.swift */,
 				111111111111111111111112 /* SpacedRepetitionModels.swift */,
 				4BE99DB8FC85397C3E504E0B /* ProblemGenerator.swift */,
 				B557BC960B2E1946C97F0B6A /* SliceModels.swift */,
@@ -182,6 +208,7 @@
 		880735622E099C2F3076D196 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				A912C0000000000000000F0 /* GameplayStages */,
 				17AC38778B657066B28213D3 /* ParentSummary */,
 				B5B39A7A08D758312D7BB226 /* VerticalSlice1 */,
 			);
@@ -216,6 +243,20 @@
 				45002CF11E285E8168354DEF /* VS1SharedUI.swift */,
 			);
 			path = VerticalSlice1;
+			sourceTree = "<group>";
+		};
+		A912C0000000000000000F0 /* GameplayStages */ = {
+			isa = PBXGroup;
+			children = (
+				A912C0000000000000000030 /* GameplayThreadView.swift */,
+				A912C0000000000000000040 /* FlashcardStageView.swift */,
+				A912C0000000000000000050 /* MemoryStageView.swift */,
+				A912C0000000000000000060 /* FlipMemoryStageView.swift */,
+				A912C0000000000000000070 /* BondBlastStageView.swift */,
+				A912C0000000000000000080 /* MultipleChoiceStageView.swift */,
+				A912C0000000000000000090 /* GameplayStageSharedViews.swift */,
+			);
+			path = GameplayStages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -312,6 +353,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */,
+				A912C00000000000000000A1 /* GameplayStageViewModelsTests.swift in Sources */,
+				A912C00000000000000000B1 /* GameplayStageViewModelTests.swift in Sources */,
 				D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */,
 				739452A890EDE3E9C9B6B9C4 /* SliceStateMachineTests.swift in Sources */,
 				7B95DE9FB34D4A152F5553FB /* VerticalSliceEngineTests.swift in Sources */,
@@ -325,6 +368,15 @@
 				211111111111111111111111 /* GameplayStageModels.swift in Sources */,
 				211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */,
 				211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */,
+				A912C0000000000000000011 /* GameplaySampleThreads.swift in Sources */,
+				A912C0000000000000000021 /* GameplayStageViewModels.swift in Sources */,
+				A912C0000000000000000031 /* GameplayThreadView.swift in Sources */,
+				A912C0000000000000000041 /* FlashcardStageView.swift in Sources */,
+				A912C0000000000000000051 /* MemoryStageView.swift in Sources */,
+				A912C0000000000000000061 /* FlipMemoryStageView.swift in Sources */,
+				A912C0000000000000000071 /* BondBlastStageView.swift in Sources */,
+				A912C0000000000000000081 /* MultipleChoiceStageView.swift in Sources */,
+				A912C0000000000000000091 /* GameplayStageSharedViews.swift in Sources */,
 				A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */,
 				B8C505B0ADB2C5A6FA25D6CB /* ConcreteBuildView.swift in Sources */,
 				B3671AB5F1E14FFAA4088BF5 /* EquationResolveView.swift in Sources */,
