@@ -31,8 +31,14 @@ struct GameplayStageViewModelsTests {
         let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
 
         #expect(!pairs.isEmpty)
-        #expect(pairs.allSatisfy { $0.left.entityID == $0.right.entityID })
-        #expect(pairs.allSatisfy { $0.right.subtitle == "Capital" })
+        let allPairsMatchEntities = pairs.allSatisfy { pair in
+            pair.left.entityID == pair.right.entityID
+        }
+        let allPairsUseCapitalSubtitle = pairs.allSatisfy { pair in
+            pair.right.subtitle == "Capital"
+        }
+        #expect(allPairsMatchEntities)
+        #expect(allPairsUseCapitalSubtitle)
     }
 
     @Test
@@ -44,8 +50,14 @@ struct GameplayStageViewModelsTests {
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round, choicesPerQuestion: 4)
 
         #expect(questions.count == min(stage.maximumItemCount, thread.entities.count))
-        #expect(questions.allSatisfy { question in question.choices.contains(question.answer) })
-        #expect(questions.allSatisfy { question in question.choices.count >= 2 })
+        let allQuestionsContainAnswer = questions.allSatisfy { question in
+            question.choices.contains(question.answer)
+        }
+        let allQuestionsHaveDistractors = questions.allSatisfy { question in
+            question.choices.count >= 2
+        }
+        #expect(allQuestionsContainAnswer)
+        #expect(allQuestionsHaveDistractors)
     }
 
     @Test
