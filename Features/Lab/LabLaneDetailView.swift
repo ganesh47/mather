@@ -520,7 +520,7 @@ struct LabLaneDetailView: View {
                 .font(.system(size: 46, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
                 .offset(x: 20, y: 12)
-        case .symmetryFold, .twoFingerProtractor:
+        case .shapeGeometry, .symmetryFold, .twoFingerProtractor:
             Image(systemName: "angle")
                 .font(.system(size: 52, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
@@ -587,7 +587,7 @@ struct LabLaneDetailView: View {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
-                 .twoFingerProtractor, .gravityArtist, .compassAngles, .waterCycle, .soundVolume, .memoryMatch:
+                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
                 break
             }
         }
