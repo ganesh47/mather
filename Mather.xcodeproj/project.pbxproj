@@ -41,6 +41,8 @@
 		211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111112 /* SpacedRepetitionModels.swift */; };
 		211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111113 /* SpacedRepetitionScheduler.swift */; };
 		211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111111111111111111111114 /* GameplaySchedulerTests.swift */; };
+		A912G0000000000000000011 /* GameplayProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912G0000000000000000010 /* GameplayProgressStore.swift */; };
+		A912G0000000000000000021 /* GameplayProgressStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912G0000000000000000020 /* GameplayProgressStoreTests.swift */; };
 		A912C0000000000000000011 /* GameplaySampleThreads.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000010 /* GameplaySampleThreads.swift */; };
 		A912D0000000000000000011 /* GameplayThreadCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912D0000000000000000010 /* GameplayThreadCatalog.swift */; };
 		A912D0000000000000000021 /* GameplayThreadContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912D0000000000000000020 /* GameplayThreadContentTests.swift */; };
@@ -108,6 +110,8 @@
 		111111111111111111111112 /* SpacedRepetitionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionModels.swift; sourceTree = "<group>"; };
 		111111111111111111111113 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
 		111111111111111111111114 /* GameplaySchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySchedulerTests.swift; sourceTree = "<group>"; };
+		A912G0000000000000000010 /* GameplayProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayProgressStore.swift; sourceTree = "<group>"; };
+		A912G0000000000000000020 /* GameplayProgressStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayProgressStoreTests.swift; sourceTree = "<group>"; };
 		A912C0000000000000000010 /* GameplaySampleThreads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySampleThreads.swift; sourceTree = "<group>"; };
 		A912D0000000000000000010 /* GameplayThreadCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadCatalog.swift; sourceTree = "<group>"; };
 		A912D0000000000000000020 /* GameplayThreadContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadContentTests.swift; sourceTree = "<group>"; };
@@ -141,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				111111111111111111111113 /* SpacedRepetitionScheduler.swift */,
+				A912G0000000000000000010 /* GameplayProgressStore.swift */,
 				C12E4243979B82D1D254C7BF /* HapticsService.swift */,
 				57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */,
 			);
@@ -160,6 +165,7 @@
 			isa = PBXGroup;
 			children = (
 				111111111111111111111114 /* GameplaySchedulerTests.swift */,
+				A912G0000000000000000020 /* GameplayProgressStoreTests.swift */,
 				A912D0000000000000000020 /* GameplayThreadContentTests.swift */,
 				A912E0000000000000000020 /* WaterCycleGameplayThreadTests.swift */,
 				A912C00000000000000000A0 /* GameplayStageViewModelsTests.swift */,
@@ -371,6 +377,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				211111111111111111111114 /* GameplaySchedulerTests.swift in Sources */,
+				A912G0000000000000000021 /* GameplayProgressStoreTests.swift in Sources */,
 				A912D0000000000000000021 /* GameplayThreadContentTests.swift in Sources */,
 				A912E0000000000000000021 /* WaterCycleGameplayThreadTests.swift in Sources */,
 				A912C00000000000000000A1 /* GameplayStageViewModelsTests.swift in Sources */,
@@ -389,6 +396,7 @@
 				211111111111111111111111 /* GameplayStageModels.swift in Sources */,
 				211111111111111111111112 /* SpacedRepetitionModels.swift in Sources */,
 				211111111111111111111113 /* SpacedRepetitionScheduler.swift in Sources */,
+				A912G0000000000000000011 /* GameplayProgressStore.swift in Sources */,
 				A912C0000000000000000011 /* GameplaySampleThreads.swift in Sources */,
 				A912D0000000000000000011 /* GameplayThreadCatalog.swift in Sources */,
 				A912C0000000000000000013 /* CountryGameplayThread.swift in Sources */,
