@@ -144,6 +144,20 @@ extension LearningLoopTests {
         XCTAssertFalse(LearningLoopScoring.isMatch(left: "Siren", right: "Quiet", pairs: pairs))
     }
 
+    func testSoundVolumeMatchRowsShuffleDeterministicallyBySeed() {
+        let pairs = SoundVolumeContent.matchPairs
+        let first = LearningLoopScoring.shuffledMatchRowOrder(pairs: pairs, seed: 883)
+        let repeatOrder = LearningLoopScoring.shuffledMatchRowOrder(pairs: pairs, seed: 883)
+        let different = LearningLoopScoring.shuffledMatchRowOrder(pairs: pairs, seed: 884)
+        let ordered = LearningLoopScoring.orderedMatchRowOrder(pairs: pairs)
+
+        XCTAssertEqual(first, repeatOrder)
+        XCTAssertNotEqual(first, ordered)
+        XCTAssertNotEqual(first, different)
+        XCTAssertEqual(Set(first.leftPairIds), Set(pairs.map(\.id)))
+        XCTAssertEqual(Set(first.rightPairIds), Set(pairs.map(\.id)))
+    }
+
     func testSoundVolumeEstimatedZonesAreExplicitlyEstimatedAndConservative() {
         XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 35), .quiet)
         XCTAssertEqual(SoundVolumeContent.zone(forEstimatedDecibels: 60), .normal)

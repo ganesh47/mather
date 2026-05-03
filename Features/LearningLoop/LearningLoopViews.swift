@@ -90,11 +90,36 @@ struct ConceptQuizRoundView: View {
     }
 }
 
+enum ConceptMixMatchHapticCue {
+    case select
+    case success
+    case error
+    case complete
+}
+
 struct ConceptMixMatchRoundView: View {
     let pairs: [ConceptMatchPair]
+    let shuffleSeed: UInt64?
     @Binding var selectedLeft: String?
     @Binding var matchedPairIds: Set<String>
     let onFeedback: (String) -> Void
+    let onHapticCue: (ConceptMixMatchHapticCue) -> Void
+
+    init(
+        pairs: [ConceptMatchPair],
+        shuffleSeed: UInt64? = nil,
+        selectedLeft: Binding<String?>,
+        matchedPairIds: Binding<Set<String>>,
+        onFeedback: @escaping (String) -> Void,
+        onHapticCue: @escaping (ConceptMixMatchHapticCue) -> Void = { _ in }
+    ) {
+        self.pairs = pairs
+        self.shuffleSeed = shuffleSeed
+        self._selectedLeft = selectedLeft
+        self._matchedPairIds = matchedPairIds
+        self.onFeedback = onFeedback
+        self.onHapticCue = onHapticCue
+    }
 
     @State private var mismatchedPairId: String?
 
@@ -104,6 +129,17 @@ struct ConceptMixMatchRoundView: View {
 
     private var isComplete: Bool {
         matchCount == pairs.count
+    }
+
+    private var rowOrder: ConceptMatchRowOrder {
+        if let shuffleSeed {
+            return LearningLoopScoring.shuffledMatchRowOrder(pairs: pairs, seed: shuffleSeed)
+        }
+        return LearningLoopScoring.orderedMatchRowOrder(pairs: pairs)
+    }
+
+    private var pairsById: [String: ConceptMatchPair] {
+        Dictionary(uniqueKeysWithValues: pairs.map { ($0.id, $0) })
     }
 
     var body: some View {
@@ -145,7 +181,7 @@ struct ConceptMixMatchRoundView: View {
             VStack(spacing: 8) {
                 Text(" ")
                     .font(.caption.weight(.black))
-                ForEach(pairs) { pair in
+                ForEach(rightPairs) { pair in
                     Image(systemName: matchedPairIds.contains(pair.id) ? "checkmark.circle.fill" : "arrow.right")
                         .font(.system(size: 16, weight: .black))
                         .foregroundStyle(matchedPairIds.contains(pair.id) ? MatherTheme.accent : Color.secondary.opacity(0.45))
@@ -167,11 +203,19 @@ struct ConceptMixMatchRoundView: View {
             Text(title)
                 .font(.caption.weight(.black))
                 .foregroundStyle(MatherTheme.cardSubtitle)
-            ForEach(pairs) { pair in
+            ForEach(side == .left ? leftPairs : rightPairs) { pair in
                 matchCard(pair: pair, side: side)
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var leftPairs: [ConceptMatchPair] {
+        rowOrder.leftPairIds.compactMap { pairsById[$0] }
+    }
+
+    private var rightPairs: [ConceptMatchPair] {
+        rowOrder.rightPairIds.compactMap { pairsById[$0] }
     }
 
     private func matchCard(pair: ConceptMatchPair, side: MatchSide) -> some View {
@@ -239,6 +283,9 @@ struct ConceptMixMatchRoundView: View {
         case .left:
             selectedLeft = selectedLeft == pair.id ? nil : pair.id
             mismatchedPairId = nil
+            if selectedLeft != nil {
+                onHapticCue(.select)
+            }
             onFeedback(selectedLeft == nil ? "Pick a picture card." : "Now pick what goes with \(pair.left).")
         case .right:
             switch LearningLoopScoring.matchAttempt(
@@ -251,11 +298,14 @@ struct ConceptMixMatchRoundView: View {
                 matchedPairIds.insert(pairId)
                 selectedLeft = nil
                 mismatchedPairId = nil
+                onHapticCue(matchedPairIds.count == pairs.count ? .complete : .success)
                 onFeedback(feedback)
             case .mismatch(let feedback):
                 mismatchedPairId = pair.id
+                onHapticCue(.error)
                 onFeedback(feedback)
             case .missingSelection:
+                onHapticCue(.error)
                 onFeedback("Pick a picture card first.")
             case .alreadyMatched:
                 break
@@ -284,6 +334,7 @@ struct SoundVolumeLabView: View {
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
+    @State private var matchShuffleSeed = UInt64.random(in: UInt64.min...UInt64.max)
     @State private var feedback = SoundVolumeContent.safetyNote
 
     private var introPages: [SoundVolumeIntroPage] { SoundVolumeContent.introPages }
@@ -312,9 +363,11 @@ struct SoundVolumeLabView: View {
                         )
                         ConceptMixMatchRoundView(
                             pairs: SoundVolumeContent.matchPairs,
+                            shuffleSeed: matchShuffleSeed,
                             selectedLeft: $selectedMatchPairId,
                             matchedPairIds: $matchedPairIds,
-                            onFeedback: { feedback = $0 }
+                            onFeedback: { feedback = $0 },
+                            onHapticCue: playSoundMatchHaptic
                         )
                         summaryCard
                     } else {
@@ -467,6 +520,21 @@ struct SoundVolumeLabView: View {
                 .clipShape(Capsule())
                 .accessibilityElement(children: .combine)
             }
+        }
+    }
+
+    private func playSoundMatchHaptic(_ cue: ConceptMixMatchHapticCue) {
+        let enabled = appModel.featureFlags.hapticsEnabled
+        switch cue {
+        case .select:
+            appModel.hapticsService.cardPickup(enabled: enabled)
+        case .success:
+            appModel.hapticsService.cardSnapCorrect(enabled: enabled)
+        case .error:
+            appModel.hapticsService.cardSnapMismatch(enabled: enabled)
+        case .complete:
+            appModel.hapticsService.cardSnapCorrect(enabled: enabled)
+            appModel.hapticsService.bondMatchComplete(enabled: enabled)
         }
     }
 
