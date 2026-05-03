@@ -118,3 +118,79 @@ struct CompassAnglesTests {
     }
 
 }
+
+@Suite("Compass Walk + Turn sequencing")
+struct CompassWalkTurnTests {
+    @Test func levelsIncludeStepAndTurnInstructions() {
+        #expect(compassWalkTurnLevels.count >= 5)
+        #expect(compassWalkTurnLevels.allSatisfy { $0.steps > 0 })
+        #expect(compassWalkTurnLevels.first?.instruction.contains("small steps") == true)
+        #expect(compassWalkTurnLevels.first?.instruction.contains("turn") == true)
+    }
+
+    @Test func stepProgressCompletesAtRequiredThreshold() {
+        var progress = StepWalkProgress(requiredSteps: 3)
+        #expect(progress.remainingSteps == 3)
+        #expect(!progress.isComplete)
+        progress.setCountedSteps(2)
+        #expect(!progress.isComplete)
+        #expect(progress.remainingSteps == 1)
+        progress.setCountedSteps(3)
+        #expect(progress.isComplete)
+        #expect(progress.fractionComplete == 1)
+    }
+
+    @Test func manualStepFallbackCanCompleteWalk() {
+        var progress = StepWalkProgress(requiredSteps: 2)
+        progress.addManualStep()
+        #expect(!progress.isComplete)
+        progress.addManualStep()
+        #expect(progress.isComplete)
+    }
+
+    @Test func stateMovesFromWalkToTurnAfterSteps() {
+        let level = CompassWalkTurnLevel(id: 99, walkDirection: .forward, steps: 3, targetDeg: 90)
+        var state = CompassWalkTurnState(level: level)
+        #expect(state.phase == .ready)
+        state.startWalking()
+        #expect(state.phase == .walking)
+        state.applyCountedSteps(2)
+        #expect(state.phase == .walking)
+        state.applyCountedSteps(3)
+        #expect(state.phase == .turning)
+    }
+
+    @Test func stateCompletesOnlyAfterTurnSnap() {
+        let level = CompassWalkTurnLevel(id: 100, walkDirection: .left, steps: 2, targetDeg: -90)
+        var state = CompassWalkTurnState(level: level)
+        state.startWalking()
+        state.applyCountedSteps(2)
+        state.applyYaw(-75)
+        #expect(state.phase == .turning)
+        state.applyYaw(-84)
+        #expect(state.phase == .success)
+    }
+
+    @Test func yawBeforeWalkCompletionDoesNotWin() {
+        let level = CompassWalkTurnLevel(id: 101, walkDirection: .right, steps: 4, targetDeg: 180)
+        var state = CompassWalkTurnState(level: level)
+        state.startWalking()
+        state.applyYaw(180)
+        #expect(state.phase == .walking)
+    }
+
+    @MainActor
+    @Test func stepCountServiceManualFallbackStateIsTestableWithoutHardware() {
+        let service = StepCountService()
+        service.start(requiredSteps: 3)
+        service.useManualFallback(reason: "testing fallback")
+        service.addManualStep()
+        service.addManualStep()
+        #expect(service.countedSteps == 2)
+        #expect(!service.isComplete)
+        service.addManualStep()
+        #expect(service.isComplete)
+        service.stop()
+        #expect(service.mode == .idle)
+    }
+}

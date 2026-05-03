@@ -15,6 +15,7 @@ final class AppModel {
     let engine: VerticalSliceEngine
     let hapticsService: HapticsService
     let motionService: MotionService
+    let stepCountService: StepCountService
     let soundDetectionService: SoundDetectionService
     let roomQuestScanner: RoomQuestLiveScanner
     let roomQuestEngine: RoomQuestEngine
@@ -73,6 +74,7 @@ final class AppModel {
         let roomQuestStationStore = RoomQuestStationStore(modelContext: modelContext)
         let hapticsService = HapticsService()
         let motionService = MotionService()
+        let stepCountService = StepCountService()
         let soundDetectionService = SoundDetectionService()
         let roomQuestScanner = RoomQuestLiveScanner()
 
@@ -85,6 +87,7 @@ final class AppModel {
         self.roomQuestStationStore = roomQuestStationStore
         self.hapticsService = hapticsService
         self.motionService = motionService
+        self.stepCountService = stepCountService
         self.soundDetectionService = soundDetectionService
         self.roomQuestScanner = roomQuestScanner
         roomQuestScanner.featureFlags = featureFlags
