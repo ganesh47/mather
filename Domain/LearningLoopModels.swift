@@ -279,3 +279,76 @@ enum SoundVolumeContent {
         }
     }
 }
+
+struct ShapeGeometryLevel: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let cardIDs: [String]
+
+    func cards(from deck: [LearningConceptCard]) -> [LearningConceptCard] {
+        cardIDs.compactMap { id in deck.first { $0.id == id } }
+    }
+
+    func quizQuestions(from questions: [ConceptQuizQuestion]) -> [ConceptQuizQuestion] {
+        questions.filter { cardIDs.contains($0.id.replacingOccurrences(of: "shape-quiz-", with: "")) }
+    }
+
+    func matchPairs(from pairs: [ConceptMatchPair]) -> [ConceptMatchPair] {
+        pairs.filter { cardIDs.contains($0.id.replacingOccurrences(of: "shape-match-", with: "")) }
+    }
+}
+
+enum ShapeGeometryContent {
+    static let cards: [LearningConceptCard] = [
+        LearningConceptCard(id: "circle", title: "Circle", explanation: "A circle is round. It has no corners and no straight sides.", visualKey: "⚪", audioPrompt: "Circle is round with no corners."),
+        LearningConceptCard(id: "triangle", title: "Triangle", explanation: "A triangle has 3 straight sides and 3 corners.", visualKey: "🔺", audioPrompt: "Triangle has three sides."),
+        LearningConceptCard(id: "square", title: "Square", explanation: "A square has 4 equal sides and 4 square corners.", visualKey: "◼️", audioPrompt: "Square has four equal sides."),
+        LearningConceptCard(id: "rectangle", title: "Rectangle", explanation: "A rectangle has 4 straight sides and 4 square corners. Opposite sides match.", visualKey: "▭", audioPrompt: "Rectangle has four square corners."),
+        LearningConceptCard(id: "oval", title: "Oval", explanation: "An oval is round and stretched like an egg. It has no corners.", visualKey: "🥚", audioPrompt: "Oval is a stretched circle shape."),
+        LearningConceptCard(id: "diamond", title: "Diamond", explanation: "A diamond has 4 sides and stands on a point.", visualKey: "💎", audioPrompt: "Diamond stands on a point."),
+        LearningConceptCard(id: "star", title: "Star", explanation: "A star has points that stick out around the shape.", visualKey: "⭐", audioPrompt: "Star has points."),
+        LearningConceptCard(id: "heart", title: "Heart", explanation: "A heart has two rounded bumps and a point at the bottom.", visualKey: "❤️", audioPrompt: "Heart has two bumps and a point."),
+    ]
+
+    static let levels: [ShapeGeometryLevel] = [
+        ShapeGeometryLevel(
+            id: "basic-shapes",
+            title: "Level 1: Shape starters",
+            subtitle: "Circle, triangle, square, and rectangle",
+            cardIDs: ["circle", "triangle", "square", "rectangle"]
+        ),
+        ShapeGeometryLevel(
+            id: "expanded-shapes",
+            title: "Level 2: More shapes",
+            subtitle: "Oval, diamond, star, and heart",
+            cardIDs: ["oval", "diamond", "star", "heart"]
+        ),
+    ]
+
+    static let quizQuestions: [ConceptQuizQuestion] = [
+        ConceptQuizQuestion(id: "shape-quiz-circle", prompt: "Which shape is round with no corners?", choices: ["Circle", "Triangle", "Rectangle"], correctChoice: "Circle", feedback: "Yes — a circle is round with no corners."),
+        ConceptQuizQuestion(id: "shape-quiz-triangle", prompt: "Which shape has 3 straight sides?", choices: ["Square", "Triangle", "Oval"], correctChoice: "Triangle", feedback: "Triangle means 3 sides and 3 corners."),
+        ConceptQuizQuestion(id: "shape-quiz-square", prompt: "Which shape has 4 equal sides?", choices: ["Square", "Heart", "Oval"], correctChoice: "Square", feedback: "A square has four equal sides."),
+        ConceptQuizQuestion(id: "shape-quiz-rectangle", prompt: "Which shape has 4 square corners and opposite sides that match?", choices: ["Circle", "Rectangle", "Star"], correctChoice: "Rectangle", feedback: "A rectangle has four square corners."),
+        ConceptQuizQuestion(id: "shape-quiz-oval", prompt: "Which shape is stretched and round like an egg?", choices: ["Oval", "Diamond", "Triangle"], correctChoice: "Oval", feedback: "An oval is a stretched round shape."),
+        ConceptQuizQuestion(id: "shape-quiz-diamond", prompt: "Which shape stands on a point?", choices: ["Heart", "Diamond", "Circle"], correctChoice: "Diamond", feedback: "A diamond has four sides and a point at top and bottom."),
+        ConceptQuizQuestion(id: "shape-quiz-star", prompt: "Which shape has points sticking out?", choices: ["Star", "Oval", "Rectangle"], correctChoice: "Star", feedback: "A star has points around it."),
+        ConceptQuizQuestion(id: "shape-quiz-heart", prompt: "Which shape has two rounded bumps and one bottom point?", choices: ["Triangle", "Heart", "Square"], correctChoice: "Heart", feedback: "A heart has two rounded bumps and a bottom point."),
+    ]
+
+    static let matchPairs: [ConceptMatchPair] = cards.map { card in
+        ConceptMatchPair(
+            id: "shape-match-\(card.id)",
+            left: card.title,
+            right: card.title,
+            feedback: "Locked: \(card.title) matches its name.",
+            leftVisualKey: card.visualKey,
+            rightVisualKey: nil
+        )
+    }
+
+    static func level(withID id: String) -> ShapeGeometryLevel? {
+        levels.first { $0.id == id }
+    }
+}

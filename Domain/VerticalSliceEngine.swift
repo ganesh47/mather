@@ -15,6 +15,7 @@ enum AppRoute: Hashable {
     case factoryCards
     case angleCannon
     case twoFingerProtractor
+    case shapeGeometry
     case gravityArtist
     case compassAngles
     case lab
@@ -127,6 +128,7 @@ final class VerticalSliceEngine {
     func showFactoryCards() { route = .factoryCards }
     func showAngleCannon() { route = .angleCannon }
     func showTwoFingerProtractor() { route = .twoFingerProtractor }
+    func showShapeGeometry() { route = .shapeGeometry }
     func showGravityArtist() { route = .gravityArtist }
     func showCompassAngles() { route = .compassAngles }
     func showLab() { route = .lab }

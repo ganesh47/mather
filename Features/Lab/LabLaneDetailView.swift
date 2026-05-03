@@ -525,6 +525,11 @@ struct LabLaneDetailView: View {
                 .font(.system(size: 52, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
                 .offset(x: 18, y: 12)
+        case .shapeGeometry:
+            Image(systemName: "square.on.circle")
+                .font(.system(size: 52, weight: .bold))
+                .foregroundStyle(tint.opacity(0.35))
+                .offset(x: 20, y: 12)
         case .rectangleFactory, .factoryCards:
             Grid(horizontalSpacing: 3, verticalSpacing: 3) {
                 ForEach(0..<2, id: \.self) { _ in
@@ -587,7 +592,7 @@ struct LabLaneDetailView: View {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
-                 .twoFingerProtractor, .gravityArtist, .compassAngles, .waterCycle, .soundVolume, .memoryMatch:
+                 .twoFingerProtractor, .shapeGeometry, .gravityArtist, .compassAngles, .waterCycle, .soundVolume, .memoryMatch:
                 break
             }
         }

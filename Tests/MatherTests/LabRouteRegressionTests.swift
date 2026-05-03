@@ -30,6 +30,7 @@ struct LabRouteRegressionTests {
             .factoryCards: .factoryCards,
             .angleCannon: .angleCannon,
             .twoFingerProtractor: .twoFingerProtractor,
+            .shapeGeometry: .shapeGeometry,
             .gravityArtist: .gravityArtist,
             .compassAngles: .compassAngles,
             .waterCycle: .waterCycle,

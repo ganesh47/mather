@@ -119,6 +119,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case factoryCards
     case angleCannon
     case twoFingerProtractor
+    case shapeGeometry
     case gravityArtist
     case compassAngles
     case waterCycle
@@ -143,6 +144,8 @@ extension LabActivityID {
             return .angleCannon
         case .twoFingerProtractor:
             return .twoFingerProtractor
+        case .shapeGeometry:
+            return .shapeGeometry
         case .gravityArtist:
             return .gravityArtist
         case .compassAngles:
@@ -343,7 +346,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .waterCycle, .soundVolume, .memoryMatch:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -578,6 +581,13 @@ struct CapabilityLane: Identifiable, Equatable {
                     title: "Protractor",
                     tagline: "Spread two fingers to measure angles",
                     modes: [.learn, .explore]
+                ),
+                LabActivity(
+                    id: .shapeGeometry,
+                    emoji: "🔷",
+                    title: "Shape Cards",
+                    tagline: "Learn shapes, quiz, then match pictures and names",
+                    modes: [.learn, .review, .challenge]
                 ),
             ]
         ),

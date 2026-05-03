@@ -98,6 +98,10 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(presentation.sections.contains(.recall))
         XCTAssertTrue(presentation.sections.contains(.activities))
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
+
+        let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
+        XCTAssertEqual(LabLaneDetailPresentation(lane: geometry).activityCountLabel, "4 games ready")
+        XCTAssertEqual(geometry.activities.map(\.id), [.symmetryFold, .angleCannon, .twoFingerProtractor, .shapeGeometry])
     }
 
     func testPhysicsLaneAddsSoundLabAsThirdReadyActivity() throws {
@@ -114,6 +118,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
         XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .waterCycle)
+        XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }
@@ -137,15 +142,17 @@ extension LabModelsTests {
         let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
         var sampler = geometry.starterMixMatchSampler
 
-        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+        let totalCards = geometry.starterMixMatchCards.count
+
+        XCTAssertEqual(sampler.progressLabel, "1 / \(totalCards)")
         XCTAssertEqual(sampler.currentCard?.prompt, "3 sides")
 
         sampler.advance()
-        XCTAssertEqual(sampler.progressLabel, "2 / 8")
+        XCTAssertEqual(sampler.progressLabel, "2 / \(totalCards)")
         XCTAssertEqual(sampler.currentCard?.prompt, "4 equal sides")
 
         sampler.rewind()
-        XCTAssertEqual(sampler.progressLabel, "1 / 8")
+        XCTAssertEqual(sampler.progressLabel, "1 / \(totalCards)")
     }
 
 
@@ -227,6 +234,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass])
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
+        XCTAssertEqual(LabActivityID.shapeGeometry.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.soundVolume.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
     }

@@ -82,6 +82,8 @@ struct RootView: View {
                     AngleCannonView(appModel: appModel)
                 case .twoFingerProtractor:
                     TwoFingerProtractorView(appModel: appModel)
+                case .shapeGeometry:
+                    ShapeGeometryLabView(appModel: appModel)
                 case .gravityArtist:
                     GravityArtistView(appModel: appModel)
                 case .compassAngles:
