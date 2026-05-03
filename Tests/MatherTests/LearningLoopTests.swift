@@ -105,6 +105,17 @@ extension LearningLoopTests {
         XCTAssertTrue(pages[3].subtitle.contains("not a live sound meter"))
     }
 
+    func testSoundVolumeIntroPageLookupClampsOutOfRangeIndexes() {
+        let pages = SoundVolumeContent.introPages
+
+        XCTAssertEqual(SoundVolumeContent.clampedIntroPageIndex(-3), 0)
+        XCTAssertEqual(SoundVolumeContent.clampedIntroPageIndex(0), 0)
+        XCTAssertEqual(SoundVolumeContent.clampedIntroPageIndex(pages.count), pages.count - 1)
+        XCTAssertEqual(SoundVolumeContent.clampedIntroPageIndex(pages.count + 5), pages.count - 1)
+        XCTAssertEqual(SoundVolumeContent.introPage(for: -1), pages[0])
+        XCTAssertEqual(SoundVolumeContent.introPage(for: pages.count + 2), pages[pages.count - 1])
+    }
+
     func testSoundVolumeContentCoversSafeHearingConcepts() {
         let titles = Set(SoundVolumeContent.cards.map(\.title))
 

@@ -386,10 +386,10 @@ struct SoundVolumeLabView: View {
     @State private var feedback = SoundVolumeContent.safetyNote
 
     private var introPages: [SoundVolumeIntroPage] { SoundVolumeContent.introPages }
-    private var introPage: SoundVolumeIntroPage { introPages[clampedIntroPageIndex] }
-    private var clampedIntroPageIndex: Int { min(max(introPageIndex, 0), max(introPages.count - 1, 0)) }
-    private var isFirstIntroPage: Bool { clampedIntroPageIndex == 0 }
-    private var isLastIntroPage: Bool { clampedIntroPageIndex == introPages.count - 1 }
+    private var safeIntroPageIndex: Int { SoundVolumeContent.clampedIntroPageIndex(introPageIndex) }
+    private var introPage: SoundVolumeIntroPage { SoundVolumeContent.introPage(for: introPageIndex) }
+    private var isFirstIntroPage: Bool { safeIntroPageIndex == 0 }
+    private var isLastIntroPage: Bool { safeIntroPageIndex == introPages.count - 1 }
 
     private var summary: LearningLoopSummary {
         LearningLoopScoring.summary(
@@ -499,8 +499,8 @@ struct SoundVolumeLabView: View {
         HStack(spacing: 8) {
             ForEach(introPages.indices, id: \.self) { index in
                 Capsule()
-                    .fill(index == introPageIndex ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.35))
-                    .frame(width: index == introPageIndex ? 28 : 10, height: 10)
+                    .fill(index == safeIntroPageIndex ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.35))
+                    .frame(width: index == safeIntroPageIndex ? 28 : 10, height: 10)
                     .accessibilityLabel("Intro step \(index + 1) of \(introPages.count)")
             }
         }
@@ -519,7 +519,7 @@ struct SoundVolumeLabView: View {
 
             if !isFirstIntroPage {
                 Button {
-                    introPageIndex = max(0, introPageIndex - 1)
+                    introPageIndex = SoundVolumeContent.clampedIntroPageIndex(introPageIndex - 1)
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                         .font(.headline.weight(.black))
@@ -541,7 +541,7 @@ struct SoundVolumeLabView: View {
             activityStage = .quiz
             feedback = "Start with the quiz. Mix + Match comes on the next screen."
         } else {
-            introPageIndex = clampedIntroPageIndex + 1
+            introPageIndex = SoundVolumeContent.clampedIntroPageIndex(safeIntroPageIndex + 1)
         }
     }
 

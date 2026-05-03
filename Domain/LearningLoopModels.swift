@@ -261,6 +261,14 @@ struct SoundVolumeIntroPage: Identifiable, Equatable {
 enum SoundVolumeContent {
     static let safetyNote = "Use listening clues only — no screaming. Protect your ears. A live microphone meter comes later and is not used in this activity."
 
+    static func clampedIntroPageIndex(_ index: Int) -> Int {
+        min(max(index, 0), introPages.count - 1)
+    }
+
+    static func introPage(for index: Int) -> SoundVolumeIntroPage {
+        introPages[clampedIntroPageIndex(index)]
+    }
+
     static let introPages: [SoundVolumeIntroPage] = [
         SoundVolumeIntroPage(
             id: "welcome",
