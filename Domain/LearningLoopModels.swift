@@ -69,6 +69,27 @@ enum ConceptMatchAttempt: Equatable {
     case missingSelection
 }
 
+struct ConceptMatchRowOrder: Equatable {
+    let leftPairIds: [String]
+    let rightPairIds: [String]
+}
+
+struct LearningLoopSeededRandomGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        self.state = seed == 0 ? 0x9E3779B97F4A7C15 : seed
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var result = state
+        result = (result ^ (result >> 30)) &* 0xBF58476D1CE4E5B9
+        result = (result ^ (result >> 27)) &* 0x94D049BB133111EB
+        return result ^ (result >> 31)
+    }
+}
+
 struct LearningLoopSummary: Equatable {
     let quizCorrect: Int
     let quizTotal: Int
@@ -114,6 +135,19 @@ enum LearningLoopScoring {
             return .mismatch(feedback: "Not that pair yet — try another match.")
         }
         return .locked(pairId: pair.id, feedback: pair.feedback)
+    }
+
+    static func shuffledMatchRowOrder(pairs: [ConceptMatchPair], seed: UInt64) -> ConceptMatchRowOrder {
+        var leftGenerator = LearningLoopSeededRandomGenerator(seed: seed)
+        var rightGenerator = LearningLoopSeededRandomGenerator(seed: seed ^ 0xD1B54A32D192ED03)
+        return ConceptMatchRowOrder(
+            leftPairIds: pairs.map(\.id).shuffled(using: &leftGenerator),
+            rightPairIds: pairs.map(\.id).shuffled(using: &rightGenerator)
+        )
+    }
+
+    static func orderedMatchRowOrder(pairs: [ConceptMatchPair]) -> ConceptMatchRowOrder {
+        ConceptMatchRowOrder(leftPairIds: pairs.map(\.id), rightPairIds: pairs.map(\.id))
     }
 
     static func summary(
