@@ -176,6 +176,32 @@ struct MemoryViewTests {
         #expect(MemoryView.DeckSelection.vehicles.animals.map(\.id) == MemoryDeck.vehicles.map(\.id))
     }
 
+    @MainActor
+    @Test func directFruitAndCountryEntriesBypassChooserAndUseStagedDifficulties() {
+        #expect(MemoryView.shouldHideChooser(for: .fruits))
+        #expect(MemoryView.shouldHideChooser(for: .countries))
+        #expect(!MemoryView.shouldHideChooser(for: nil))
+        #expect(!MemoryView.shouldHideChooser(for: .domesticAnimals))
+        #expect(!MemoryView.shouldHideChooser(for: .countryFlags))
+
+        #expect(MemoryView.DeckSelection(kind: .fruits).animals.map(\.id) == MemoryDeck.fruits.map(\.id))
+        #expect(MemoryView.DeckSelection(kind: .countries).animals.map(\.id) == MemoryDeck.countries.map(\.id))
+        #expect(MemoryView.initialDifficulty(for: .fruits) == .easy)
+        #expect(MemoryView.initialDifficulty(for: .countries) == .easy)
+        #expect(MemoryView.directStageDifficulties == [.easy, .medium, .hard])
+    }
+
+    @MainActor
+    @Test func directStagedEntriesAdvanceEasyMediumThenStayFaceDown() {
+        #expect(MemoryView.stageNumber(for: .easy) == 1)
+        #expect(MemoryView.stageNumber(for: .medium) == 2)
+        #expect(MemoryView.stageNumber(for: .hard) == 3)
+        #expect(MemoryView.nextDirectStageDifficulty(after: .easy) == .medium)
+        #expect(MemoryView.nextDirectStageDifficulty(after: .medium) == .hard)
+        #expect(MemoryView.nextDirectStageDifficulty(after: .hard) == .hard)
+        #expect(MemoryDifficulty.hard.faceDown)
+    }
+
     @Test func newDeckSelectionsExposeRequestedCategories() {
         #expect(MemoryView.DeckSelection.allCases.contains(.planets))
         #expect(MemoryView.DeckSelection.allCases.contains(.fishes))
