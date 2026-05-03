@@ -44,3 +44,50 @@ final class LearningLoopTests: XCTestCase {
         XCTAssertEqual(summary.starCount, 3)
     }
 }
+
+extension LearningLoopTests {
+    func testMatchAttemptLocksCorrectPairImmediately() {
+        let pairs = WaterCycleContent.matchPairs
+        let first = pairs[0]
+
+        let result = LearningLoopScoring.matchAttempt(
+            selectedPairId: first.id,
+            targetPairId: first.id,
+            pairs: pairs,
+            matchedPairIds: []
+        )
+
+        XCTAssertEqual(result, .locked(pairId: first.id, feedback: first.feedback))
+    }
+
+    func testMatchAttemptRejectsWrongPairWithoutProgress() {
+        let pairs = WaterCycleContent.matchPairs
+        let result = LearningLoopScoring.matchAttempt(
+            selectedPairId: pairs[0].id,
+            targetPairId: pairs[1].id,
+            pairs: pairs,
+            matchedPairIds: []
+        )
+
+        XCTAssertEqual(result, .mismatch(feedback: "Not that pair yet — try another match."))
+    }
+
+    func testMatchAttemptDoesNotRelockMatchedCards() {
+        let pairs = WaterCycleContent.matchPairs
+        let first = pairs[0]
+
+        let result = LearningLoopScoring.matchAttempt(
+            selectedPairId: first.id,
+            targetPairId: first.id,
+            pairs: pairs,
+            matchedPairIds: [first.id]
+        )
+
+        XCTAssertEqual(result, .alreadyMatched)
+    }
+
+    func testWaterCycleMatchPairsCarryVisualKeysForCompactBondStyleBoard() {
+        XCTAssertTrue(WaterCycleContent.matchPairs.allSatisfy { $0.leftVisualKey?.isEmpty == false })
+        XCTAssertTrue(WaterCycleContent.matchPairs.allSatisfy { $0.rightVisualKey?.isEmpty == false })
+    }
+}

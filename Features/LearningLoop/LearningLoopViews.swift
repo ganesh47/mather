@@ -95,70 +95,183 @@ struct ConceptMixMatchRoundView: View {
     @Binding var matchedPairIds: Set<String>
     let onFeedback: (String) -> Void
 
-    private var leftItems: [String] { Array(Set(pairs.map(\.left))).sorted() }
-    private var rightItems: [String] { Array(Set(pairs.map(\.right))).sorted() }
+    @State private var mismatchedPairId: String?
+
+    private var matchCount: Int {
+        pairs.filter { matchedPairIds.contains($0.id) }.count
+    }
+
+    private var isComplete: Bool {
+        matchCount == pairs.count
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Mix + Match")
-                .font(.title2.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-            HStack(alignment: .top, spacing: 14) {
-                matchColumn(title: "Start", items: leftItems, isLeft: true)
-                matchColumn(title: "Goes with", items: rightItems, isLeft: false)
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                headerView
+                matchBoard
+                progressDots
             }
+        }
+        .sensoryFeedback(.success, trigger: matchCount)
+        .accessibilityLabel("Mix and Match. \(matchCount) of \(pairs.count) matched.")
+    }
+
+    private var headerView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Mix + Match")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer()
+                Text("\(matchCount)/\(pairs.count)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .background(MatherTheme.accent.opacity(0.16))
+                    .clipShape(Capsule())
+            }
+            Text(isComplete ? "All matches locked — nice cycle work!" : selectedLeft == nil ? "Pick a picture card, then tap its matching name." : "Now find its match.")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
         }
     }
 
-    private func matchColumn(title: String, items: [String], isLeft: Bool) -> some View {
+    private var matchBoard: some View {
+        HStack(alignment: .top, spacing: 10) {
+            matchColumn(title: "Picture", side: .left)
+            VStack(spacing: 8) {
+                Text(" ")
+                    .font(.caption.weight(.black))
+                ForEach(pairs) { pair in
+                    Image(systemName: matchedPairIds.contains(pair.id) ? "checkmark.circle.fill" : "arrow.right")
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundStyle(matchedPairIds.contains(pair.id) ? MatherTheme.accent : Color.secondary.opacity(0.45))
+                        .frame(height: 58)
+                }
+            }
+            .accessibilityHidden(true)
+            matchColumn(title: "Name", side: .right)
+        }
+    }
+
+    private enum MatchSide {
+        case left
+        case right
+    }
+
+    private func matchColumn(title: String, side: MatchSide) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.caption.weight(.black))
                 .foregroundStyle(MatherTheme.cardSubtitle)
-            ForEach(items, id: \.self) { item in
-                Button {
-                    handleTap(item, isLeft: isLeft)
-                } label: {
-                    Text(item)
-                        .font(.headline.weight(.black))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(tileFill(item: item, isLeft: isLeft))
-                        .foregroundStyle(MatherTheme.ink)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(item)
+            ForEach(pairs) { pair in
+                matchCard(pair: pair, side: side)
             }
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func handleTap(_ item: String, isLeft: Bool) {
-        if isLeft {
-            selectedLeft = item
-            onFeedback("Now pick what goes with \(item).")
-            return
+    private func matchCard(pair: ConceptMatchPair, side: MatchSide) -> some View {
+        let isLeft = side == .left
+        let isMatched = matchedPairIds.contains(pair.id)
+        let isSelected = isLeft && selectedLeft == pair.id
+        let isMismatched = !isLeft && mismatchedPairId == pair.id
+        let visualKey = isLeft ? pair.leftVisualKey : pair.rightVisualKey
+        let label = isLeft ? pair.left : pair.right
+
+        return Button {
+            handleTap(pair: pair, side: side)
+        } label: {
+            HStack(spacing: 8) {
+                if let visualKey {
+                    Text(visualKey)
+                        .font(.title3)
+                        .frame(width: 28)
+                }
+                Text(label)
+                    .font(.subheadline.weight(.black))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+                    .frame(maxWidth: .infinity, alignment: visualKey == nil ? .center : .leading)
+                if isMatched {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(MatherTheme.accent)
+                        .font(.caption.weight(.black))
+                }
+            }
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(tileFill(isMatched: isMatched, isSelected: isSelected, isMismatched: isMismatched, side: side))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(tileStroke(isMatched: isMatched, isSelected: isSelected), lineWidth: isSelected ? 3 : isMatched ? 2 : 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .shadow(color: isSelected ? MatherTheme.warm.opacity(0.30) : .clear, radius: 8, y: 3)
         }
-        guard let left = selectedLeft else {
-            onFeedback("Pick a start card first.")
-            return
+        .buttonStyle(.plain)
+        .disabled(isMatched)
+        .scaleEffect(isSelected ? 1.03 : 1.0)
+        .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isSelected)
+        .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isMatched)
+        .accessibilityLabel("\(label)\(isMatched ? ", matched" : isSelected ? ", selected" : "")")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var progressDots: some View {
+        HStack(spacing: 8) {
+            ForEach(pairs) { pair in
+                Circle()
+                    .fill(matchedPairIds.contains(pair.id) ? MatherTheme.accent : Color.secondary.opacity(0.24))
+                    .frame(width: 10, height: 10)
+            }
         }
-        if let pair = pairs.first(where: { $0.left == left && $0.right == item }) {
-            matchedPairIds.insert(pair.id)
-            selectedLeft = nil
-            onFeedback(pair.feedback)
-        } else {
-            onFeedback("Not that pair yet — try another match.")
+        .frame(maxWidth: .infinity)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: matchCount)
+    }
+
+    private func handleTap(pair: ConceptMatchPair, side: MatchSide) {
+        guard !matchedPairIds.contains(pair.id) else { return }
+        switch side {
+        case .left:
+            selectedLeft = selectedLeft == pair.id ? nil : pair.id
+            mismatchedPairId = nil
+            onFeedback(selectedLeft == nil ? "Pick a picture card." : "Now pick what goes with \(pair.left).")
+        case .right:
+            switch LearningLoopScoring.matchAttempt(
+                selectedPairId: selectedLeft,
+                targetPairId: pair.id,
+                pairs: pairs,
+                matchedPairIds: matchedPairIds
+            ) {
+            case .locked(let pairId, let feedback):
+                matchedPairIds.insert(pairId)
+                selectedLeft = nil
+                mismatchedPairId = nil
+                onFeedback(feedback)
+            case .mismatch(let feedback):
+                mismatchedPairId = pair.id
+                onFeedback(feedback)
+            case .missingSelection:
+                onFeedback("Pick a picture card first.")
+            case .alreadyMatched:
+                break
+            }
         }
     }
 
-    private func tileFill(item: String, isLeft: Bool) -> Color {
-        let isMatched = pairs.contains { pair in
-            matchedPairIds.contains(pair.id) && (isLeft ? pair.left == item : pair.right == item)
-        }
-        if isMatched { return .green.opacity(0.28) }
-        if isLeft, selectedLeft == item { return MatherTheme.warm.opacity(0.6) }
-        return MatherTheme.card
+    private func tileFill(isMatched: Bool, isSelected: Bool, isMismatched: Bool, side: MatchSide) -> Color {
+        if isMatched { return MatherTheme.accent.opacity(0.18) }
+        if isMismatched { return MatherTheme.coral.opacity(0.22) }
+        if isSelected { return MatherTheme.warm.opacity(0.62) }
+        return side == .left ? MatherTheme.warm.opacity(0.18) : MatherTheme.softBlue.opacity(0.18)
+    }
+
+    private func tileStroke(isMatched: Bool, isSelected: Bool) -> Color {
+        if isMatched { return MatherTheme.accent.opacity(0.75) }
+        if isSelected { return MatherTheme.warm }
+        return Color.secondary.opacity(0.12)
     }
 }
