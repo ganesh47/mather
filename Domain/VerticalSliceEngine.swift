@@ -22,6 +22,7 @@ enum AppRoute: Hashable {
     case memory
     case waterCycle
     case soundVolume
+    case shapeGeometry
 }
 
 @MainActor
@@ -134,6 +135,7 @@ final class VerticalSliceEngine {
     func showMemory() { route = .memory }
     func showWaterCycle() { route = .waterCycle }
     func showSoundVolume() { route = .soundVolume }
+    func showShapeGeometry() { route = .shapeGeometry }
 
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom
