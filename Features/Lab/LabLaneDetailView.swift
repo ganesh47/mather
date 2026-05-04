@@ -324,7 +324,7 @@ struct LabLaneDetailView: View {
 
     private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
         let state = progressState(for: stage.stage, progress: progress)
-        VStack(alignment: .leading, spacing: 7) {
+        return VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 7) {
                 Image(systemName: stage.stage.symbolName)
                     .font(.caption.weight(.black))
