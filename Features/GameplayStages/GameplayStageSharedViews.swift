@@ -58,21 +58,24 @@ struct GameplayDisplayCard: View {
     var showsSubtitle = true
     var selected = false
     var matched = false
+    var concealed = false
 
     var body: some View {
         VStack(spacing: compact ? 6 : 10) {
-            Text(item.visualKey ?? "✦")
-                .font(.system(size: compact ? 40 : 58))
+            Text(concealed ? "?" : item.visualKey ?? "✦")
+                .font(.system(size: compact ? 40 : 58, weight: concealed ? .black : .regular, design: .rounded))
+                .foregroundStyle(concealed ? MatherTheme.accent : MatherTheme.ink)
                 .frame(width: compact ? 64 : 86, height: compact ? 58 : 78)
                 .background(Circle().fill(MatherTheme.softBlue.opacity(0.45)))
-            Text(item.title)
+            Text(concealed ? "Hidden match" : item.title)
                 .font(compact ? .headline.bold() : .title3.bold())
                 .multilineTextAlignment(.center)
                 .foregroundStyle(MatherTheme.ink)
                 .lineLimit(2)
                 .minimumScaleFactor(0.76)
-            if showsSubtitle && !item.subtitle.isEmpty {
-                Text(item.subtitle)
+            let subtitle = concealed ? "Tap to check" : item.subtitle
+            if showsSubtitle && !subtitle.isEmpty {
+                Text(subtitle)
                     .font(.caption.weight(.semibold))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(MatherTheme.ink.opacity(0.68))
@@ -128,7 +131,13 @@ struct GameplayPairingStageShell: View {
                         if correct { actions.success() } else { actions.failure() }
                         if viewModel.isComplete { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
                     } label: {
-                        GameplayDisplayCard(item: item, compact: compact, showsSubtitle: true, matched: viewModel.matchedPairIDs.contains(pairID(for: item)))
+                        GameplayDisplayCard(
+                            item: item,
+                            compact: compact,
+                            showsSubtitle: true,
+                            matched: viewModel.matchedPairIDs.contains(pairID(for: item)),
+                            concealed: viewModel.shouldConcealRight(item)
+                        )
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(viewModel.accessibilityLabel(for: item, side: .right))

@@ -60,6 +60,26 @@ struct GameplayStageViewModelTests {
         #expect(viewModel.correctCount == 1)
     }
 
+
+    @Test
+    func flipMemoryConcealsUnmatchedAnswerCardsUntilMatched() {
+        let thread = CountryGameplayThread.thread
+        let stage = thread.stages.first { $0.kind == .flipMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 923)
+        var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .flipMemory)
+        let firstPair = viewModel.pairs[0]
+
+        #expect(viewModel.shouldConcealRight(firstPair.right))
+        #expect(viewModel.accessibilityLabel(for: firstPair.right, side: .right) == "hidden answer card")
+
+        viewModel.selectLeft(pairID: firstPair.id)
+        let didMatch = viewModel.chooseRight(firstPair.right)
+        #expect(didMatch)
+
+        #expect(!viewModel.shouldConcealRight(firstPair.right))
+        #expect(viewModel.accessibilityLabel(for: firstPair.right, side: .right).contains(firstPair.right.title))
+    }
+
     @Test
     func multipleChoiceQuestionsKeepVisibleAnswerAndDeterministicChoices() {
         let thread = GameplaySampleThreads.countries
