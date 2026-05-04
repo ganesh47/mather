@@ -159,7 +159,18 @@ struct GameplayMatchStageViewModel: Equatable {
 
     func accessibilityLabel(for item: GameplayDisplayItem, side: GameplayMatchSide) -> String {
         let role = side == .left ? "prompt" : "answer"
+        if side == .right && shouldConcealRight(item) {
+            return "hidden \(role) card"
+        }
         return "\(role): \(item.title), \(item.subtitle)"
+    }
+
+    func shouldConcealRight(_ item: GameplayDisplayItem) -> Bool {
+        mode == .flipMemory && !matchedPairIDs.contains(pairID(forRight: item))
+    }
+
+    private func pairID(forRight item: GameplayDisplayItem) -> String {
+        pairs.first(where: { $0.right.id == item.id })?.id ?? item.id
     }
 
     mutating func selectLeft(pairID: String) {
