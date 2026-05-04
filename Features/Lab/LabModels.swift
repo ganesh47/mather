@@ -348,6 +348,10 @@ struct LabActivity: Identifiable, Equatable {
         self.modes = modes
     }
 
+    var artworkAccessibilityLabel: String {
+        "Game artwork for \(title)"
+    }
+
     var accessibilityLabel: String {
         "\(title). \(tagline)"
     }
@@ -368,14 +372,22 @@ enum ExplorerPathID: String, CaseIterable, Hashable, Identifiable {
 struct ExplorerPathPresentation: Identifiable, Equatable {
     let id: ExplorerPathID
     let emoji: String
+    let symbolName: String
+    let artMotif: String
     let title: String
     let subtitle: String
     let callToAction: String
+
+    var artworkAccessibilityLabel: String {
+        "Decorative \(artMotif) artwork for \(title)"
+    }
 
     static let all: [ExplorerPathPresentation] = [
         ExplorerPathPresentation(
             id: .labs,
             emoji: "🧭",
+            symbolName: "sparkles.rectangle.stack.fill",
+            artMotif: "guided compass path",
             title: "Labs",
             subtitle: "Guided sessions that move from learning to remembering, playful practice, blast rounds, and score.",
             callToAction: "Start a learning path"
@@ -383,6 +395,8 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
         ExplorerPathPresentation(
             id: .games,
             emoji: "🎮",
+            symbolName: "gamecontroller.fill",
+            artMotif: "arcade play portal",
             title: "Games",
             subtitle: "Jump straight into the games you already love — no staged lesson required.",
             callToAction: "Play now"
@@ -407,6 +421,30 @@ enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {
         case .blast: return "🚀"
         case .score: return "⭐"
         }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .learn: return "cube.transparent.fill"
+        case .remember: return "rectangle.on.rectangle.angled"
+        case .play: return "gamecontroller.fill"
+        case .blast: return "flame.fill"
+        case .score: return "star.circle.fill"
+        }
+    }
+
+    var artMotif: String {
+        switch self {
+        case .learn: return "hands-on blocks"
+        case .remember: return "memory cards"
+        case .play: return "practice game"
+        case .blast: return "celebration rocket"
+        case .score: return "progress star"
+        }
+    }
+
+    var artworkAccessibilityLabel: String {
+        "\(rawValue) stage artwork: \(artMotif)"
     }
 
     var microcopy: String {
