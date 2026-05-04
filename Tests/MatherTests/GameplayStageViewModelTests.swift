@@ -27,6 +27,56 @@ struct GameplayStageViewModelTests {
     }
 
     @Test
+    func retryReopensCompletedCurrentStageWithFreshAttemptToken() {
+        let thread = GameplaySampleThreads.countries
+        let start = Date(timeIntervalSince1970: 20)
+        var navigation = GameplayStageNavigationState(startedAt: start, currentStageStartedAt: start)
+
+        for index in thread.stages.indices {
+            navigation.completeCurrentStage(
+                thread: thread,
+                correctCount: 2,
+                mistakeCount: 0,
+                now: start.addingTimeInterval(Double(index + 1) * 5)
+            )
+        }
+
+        #expect(navigation.isComplete(for: thread))
+        let previousToken = navigation.stageAttemptToken
+
+        navigation.retryCurrentStage(in: thread, now: start.addingTimeInterval(100))
+
+        #expect(!navigation.isComplete(for: thread))
+        #expect(navigation.activeStage(in: thread)?.id == thread.stages.last?.id)
+        #expect(!navigation.stageResults.contains { $0.stageID == thread.stages.last?.id })
+        #expect(navigation.stageAttemptToken == previousToken + 1)
+    }
+
+    @Test
+    func backFromCompletedSummaryReopensPreviousStage() {
+        let thread = GameplaySampleThreads.countries
+        let start = Date(timeIntervalSince1970: 30)
+        var navigation = GameplayStageNavigationState(startedAt: start, currentStageStartedAt: start)
+
+        for index in thread.stages.indices {
+            navigation.completeCurrentStage(
+                thread: thread,
+                correctCount: 2,
+                mistakeCount: 0,
+                now: start.addingTimeInterval(Double(index + 1) * 5)
+            )
+        }
+
+        #expect(navigation.isComplete(for: thread))
+
+        navigation.goBack(in: thread, now: start.addingTimeInterval(100))
+
+        #expect(!navigation.isComplete(for: thread))
+        #expect(navigation.activeStage(in: thread)?.id == thread.stages[thread.stages.count - 2].id)
+        #expect(!navigation.stageResults.contains { $0.stageID == thread.stages[thread.stages.count - 2].id })
+    }
+
+    @Test
     func flashcardListenAgainAccessibilityNamesActiveCardAndTracksExposure() {
         let thread = GameplaySampleThreads.countries
         let stage = thread.stages[0]
@@ -59,7 +109,6 @@ struct GameplayStageViewModelTests {
         #expect(correctResult)
         #expect(viewModel.correctCount == 1)
     }
-
 
     @Test
     func flipMemoryConcealsUnmatchedAnswerCardsUntilMatched() {

@@ -6,12 +6,20 @@ struct GameplayStageNavigationState: Equatable {
     var stageResults: [GameplayStageResult]
     var startedAt: Date
     var currentStageStartedAt: Date
+    var stageAttemptToken: Int
 
-    init(activeStageIndex: Int = 0, stageResults: [GameplayStageResult] = [], startedAt: Date = Date(), currentStageStartedAt: Date = Date()) {
+    init(
+        activeStageIndex: Int = 0,
+        stageResults: [GameplayStageResult] = [],
+        startedAt: Date = Date(),
+        currentStageStartedAt: Date = Date(),
+        stageAttemptToken: Int = 0
+    ) {
         self.activeStageIndex = max(0, activeStageIndex)
         self.stageResults = stageResults
         self.startedAt = startedAt
         self.currentStageStartedAt = currentStageStartedAt
+        self.stageAttemptToken = max(0, stageAttemptToken)
     }
 
     func activeStage(in thread: GameplayThreadDefinition) -> GameplayStageDefinition? {
@@ -40,10 +48,30 @@ struct GameplayStageNavigationState: Equatable {
         guard activeStageIndex > 0 else { return }
         activeStageIndex -= 1
         currentStageStartedAt = now
+        stageAttemptToken += 1
+    }
+
+    mutating func goBack(in thread: GameplayThreadDefinition, now: Date = Date()) {
+        guard activeStageIndex > 0 else { return }
+        activeStageIndex -= 1
+        if let stage = activeStage(in: thread) {
+            stageResults.removeAll { $0.stageID == stage.id }
+        }
+        currentStageStartedAt = now
+        stageAttemptToken += 1
     }
 
     mutating func retryCurrentStage(now: Date = Date()) {
         currentStageStartedAt = now
+        stageAttemptToken += 1
+    }
+
+    mutating func retryCurrentStage(in thread: GameplayThreadDefinition, now: Date = Date()) {
+        if let stage = activeStage(in: thread) {
+            stageResults.removeAll { $0.stageID == stage.id }
+        }
+        currentStageStartedAt = now
+        stageAttemptToken += 1
     }
 
     mutating func completeCurrentStage(

@@ -24,23 +24,32 @@ struct GameplayThreadView: View {
     let thread: GameplayThreadDefinition
     var actions: GameplayStageFeedbackActions
     var progressStore: GameplayProgressStore?
+    var onExitHome: (() -> Void)?
     @State private var navigation: GameplayStageNavigationState
 
     init(
         thread: GameplayThreadDefinition = GameplaySampleThreads.countries,
         actions: GameplayStageFeedbackActions = GameplayStageFeedbackActions(),
         progressStore: GameplayProgressStore? = nil,
+        onExitHome: (@escaping () -> Void)? = nil,
         now: Date = Date()
     ) {
         self.thread = thread
         self.actions = actions
         self.progressStore = progressStore
+        self.onExitHome = onExitHome
         _navigation = State(initialValue: GameplayStageNavigationState(startedAt: now, currentStageStartedAt: now))
     }
 
     @MainActor
     init(thread: GameplayThreadDefinition = GameplaySampleThreads.countries, appModel: AppModel, now: Date = Date()) {
-        self.init(thread: thread, actions: .appModel(appModel), progressStore: appModel.gameplayProgressStore, now: now)
+        self.init(
+            thread: thread,
+            actions: .appModel(appModel),
+            progressStore: appModel.gameplayProgressStore,
+            onExitHome: { appModel.engine.showHome() },
+            now: now
+        )
     }
 
     var body: some View {
@@ -67,9 +76,11 @@ struct GameplayThreadView: View {
         if navigation.isComplete(for: thread) {
             GameplayThreadSummaryView(summary: navigation.summary(), stageCount: thread.stages.count)
         } else if let stage = navigation.activeStage(in: thread) {
-            let round = progressStore?.makeRound(thread: thread, stage: stage, seed: UInt64(navigation.activeStageIndex + 17))
-                ?? SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: UInt64(navigation.activeStageIndex + 17))
-            switch stage.kind {
+            let roundSeed = UInt64(max(0, navigation.activeStageIndex + 17 + navigation.stageAttemptToken * 7_919))
+            let round = progressStore?.makeRound(thread: thread, stage: stage, seed: roundSeed)
+                ?? SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: roundSeed)
+            Group {
+                switch stage.kind {
             case .flashcards:
                 FlashcardStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
                     complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
@@ -90,7 +101,9 @@ struct GameplayThreadView: View {
                 MultipleChoiceStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
                     complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
+                }
             }
+            .id("\(stage.id)-\(navigation.stageAttemptToken)")
         } else {
             Text("No stage is available yet.")
                 .font(.headline)
@@ -190,11 +203,15 @@ struct GameplayThreadView: View {
 
     private func controlButtons(compact: Bool) -> some View {
         HStack(spacing: 8) {
-            Button("Back") { navigation.goBack() }
+            Button("Back") { navigation.goBack(in: thread) }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 .disabled(!navigation.canGoBack)
-            Button("Retry") { navigation.retryCurrentStage() }
+            Button("Retry") { navigation.retryCurrentStage(in: thread) }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+            if let onExitHome {
+                Button("Home") { onExitHome() }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+            }
         }
     }
 
