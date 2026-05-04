@@ -190,6 +190,101 @@ struct LabActivity: Identifiable, Equatable {
     }
 }
 
+
+enum ExplorerPathID: String, CaseIterable, Hashable, Identifiable {
+    case labs
+    case games
+
+    var id: String { rawValue }
+}
+
+struct ExplorerPathPresentation: Identifiable, Equatable {
+    let id: ExplorerPathID
+    let emoji: String
+    let title: String
+    let subtitle: String
+    let callToAction: String
+
+    static let all: [ExplorerPathPresentation] = [
+        ExplorerPathPresentation(
+            id: .labs,
+            emoji: "🧭",
+            title: "Labs",
+            subtitle: "Guided sessions that move from learning to remembering, playful practice, blast rounds, and score.",
+            callToAction: "Start a learning path"
+        ),
+        ExplorerPathPresentation(
+            id: .games,
+            emoji: "🎮",
+            title: "Games",
+            subtitle: "Jump straight into the games you already love — no staged lesson required.",
+            callToAction: "Play now"
+        ),
+    ]
+}
+
+enum GuidedLabStage: String, CaseIterable, Hashable, Identifiable {
+    case learn = "Learn"
+    case remember = "Remember"
+    case play = "Play"
+    case blast = "Blast"
+    case score = "Score"
+
+    var id: String { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .learn: return "📖"
+        case .remember: return "🧠"
+        case .play: return "🕹️"
+        case .blast: return "🚀"
+        case .score: return "⭐"
+        }
+    }
+
+    var microcopy: String {
+        switch self {
+        case .learn: return "See the idea"
+        case .remember: return "Recall cards"
+        case .play: return "Practice calmly"
+        case .blast: return "Fast round"
+        case .score: return "Celebrate progress"
+        }
+    }
+}
+
+struct GuidedLabPath: Identifiable, Equatable {
+    let laneID: CapabilityLaneID
+    let title: String
+    let subtitle: String
+    let stages: [GuidedLabStage]
+
+    var id: CapabilityLaneID { laneID }
+
+    static let phaseOne: [GuidedLabPath] = [
+        GuidedLabPath(
+            laneID: .numbers,
+            title: "Numbers Path",
+            subtitle: "A first guided loop for number bonds and arrays.",
+            stages: GuidedLabStage.allCases
+        ),
+    ]
+}
+
+struct ExplorerGameEntry: Identifiable, Equatable {
+    let laneID: CapabilityLaneID
+    let activity: LabActivity
+
+    var id: LabActivityID { activity.id }
+    var directRoute: AppRoute { activity.id.appRoute }
+}
+
+enum ExplorerGameRegistry {
+    static let directLaunchEntries: [ExplorerGameEntry] = CapabilityLane.defaultExplorerLanes.flatMap { lane in
+        lane.activities.map { ExplorerGameEntry(laneID: lane.id, activity: $0) }
+    }
+}
+
 enum LabSensorNeed: CaseIterable, Equatable {
     case noSpecialSensor
     case motion

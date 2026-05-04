@@ -119,6 +119,53 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
     }
 
+    func testExplorerPathSplitKeepsLabsAndGamesAsTopLevelChoices() {
+        XCTAssertEqual(ExplorerPathID.allCases, [.labs, .games])
+        XCTAssertEqual(ExplorerPathPresentation.all.map(\.id), [.labs, .games])
+
+        let labs = ExplorerPathPresentation.all[0]
+        let games = ExplorerPathPresentation.all[1]
+
+        XCTAssertEqual(labs.title, "Labs")
+        XCTAssertTrue(labs.subtitle.contains("Guided sessions"))
+        XCTAssertEqual(labs.callToAction, "Start a learning path")
+
+        XCTAssertEqual(games.title, "Games")
+        XCTAssertTrue(games.subtitle.contains("Jump straight into"))
+        XCTAssertEqual(games.callToAction, "Play now")
+    }
+
+    func testPhaseOneGuidedLabPathShowsStagedLearningLoop() throws {
+        let path = try XCTUnwrap(GuidedLabPath.phaseOne.first)
+
+        XCTAssertEqual(path.laneID, .numbers)
+        XCTAssertEqual(path.title, "Numbers Path")
+        XCTAssertEqual(path.stages, [.learn, .remember, .play, .blast, .score])
+        XCTAssertEqual(path.stages.map(\.rawValue).joined(separator: " → "), "Learn → Remember → Play → Blast → Score")
+        XCTAssertEqual(GuidedLabStage.allCases.map(\.microcopy), [
+            "See the idea",
+            "Recall cards",
+            "Practice calmly",
+            "Fast round",
+            "Celebrate progress",
+        ])
+    }
+
+    func testExplorerGamesRegistryDirectlyLaunchesEveryCurrentExplorerActivity() {
+        let expectedEntries = CapabilityLane.defaultExplorerLanes.flatMap { lane in
+            lane.activities.map { (laneID: lane.id, activityID: $0.id, route: $0.id.appRoute) }
+        }
+        let entries = ExplorerGameRegistry.directLaunchEntries
+
+        XCTAssertEqual(entries.map(\.laneID), expectedEntries.map { $0.laneID })
+        XCTAssertEqual(entries.map { $0.activity.id }, expectedEntries.map { $0.activityID })
+        XCTAssertEqual(entries.map(\.directRoute), expectedEntries.map { $0.route })
+        XCTAssertEqual(Set(entries.map(\.id)).count, entries.count)
+        XCTAssertTrue(entries.contains { $0.activity.id == .sumSprint && $0.directRoute == .sumSprint })
+        XCTAssertTrue(entries.contains { $0.activity.id == .waterCycle && $0.directRoute == .gameplayThread(.waterCycle) })
+        XCTAssertTrue(entries.contains { $0.activity.id == .memoryMatch && $0.directRoute == .memory })
+    }
+
 }
 
 extension LabModelsTests {
