@@ -493,6 +493,13 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
     var continueAffordanceLabel: String { "Continue" }
     var pathLabel: String { stageOrder.map(\.rawValue).joined(separator: " → ") }
 
+    static func plan(for id: String) -> LabConceptSessionPlan? {
+        if id == numbersNumberBondsTo10.id {
+            return .numbersNumberBondsTo10
+        }
+        return nil
+    }
+
     static let numbersNumberBondsTo10 = LabConceptSessionPlan(
         id: "numbers-number-bonds-to-10",
         laneID: .numbers,
@@ -1283,6 +1290,20 @@ struct CapabilityLane: Identifiable, Equatable {
 }
 
 // MARK: - Lab concept session progress
+
+struct LabGameplayCompletionContext: Codable, Equatable {
+    let conceptPlanID: String
+    let stage: GuidedLabStage
+
+    init(conceptPlanID: String, stage: GuidedLabStage) {
+        self.conceptPlanID = conceptPlanID
+        self.stage = stage
+    }
+
+    init(plan: LabConceptSessionPlan, stage: GuidedLabStage) {
+        self.init(conceptPlanID: plan.id, stage: stage)
+    }
+}
 
 struct LabStageTimingScoreSummary: Codable, Equatable {
     let durationSeconds: TimeInterval?

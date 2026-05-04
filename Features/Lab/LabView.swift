@@ -316,6 +316,7 @@ struct LabView: View {
 
     private func launchDirectGame(_ entry: ExplorerGameEntry) {
         appModel.pickProfileThenRun {
+            appModel.clearLabGameplayCompletion()
             appModel.engine.show(entry.directRoute)
             if entry.activity.id == .sumSprint {
                 appModel.sumSprintEngine.showDifficultyPick()

@@ -399,6 +399,71 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
     }
 
+
+    func testLabLaunchedGameplayCompletionAdvancesPlayToBlastWithSummary() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-gameplay-complete",
+            activeProfileIdProvider: { "profile-a" }
+        )
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let launchedAt = Date(timeIntervalSince1970: 4_000)
+        let completedAt = Date(timeIntervalSince1970: 4_120)
+        let context = LabGameplayCompletionContext(plan: plan, stage: .play)
+        let summary = LabStageTimingScoreSummary(durationSeconds: 120)
+
+        _ = store.beginGuidedStage(.play, in: plan, at: launchedAt)
+        let progress = try XCTUnwrap(store.markLabLaunchedGameplayCompleted(context, at: completedAt, summary: summary))
+
+        XCTAssertEqual(progress.completedStages, [.play])
+        XCTAssertEqual(progress.currentStage, .blast)
+        XCTAssertEqual(progress.lastActivityAt, completedAt)
+        XCTAssertEqual(progress.stageSummaries[.play], summary)
+    }
+
+    func testLabLaunchedGameplayCompletionIsProfileScoped() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let context = LabGameplayCompletionContext(plan: plan, stage: .play)
+        let first = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-gameplay-profile",
+            activeProfileIdProvider: { "profile-a" }
+        )
+        let second = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-gameplay-profile",
+            activeProfileIdProvider: { "profile-b" }
+        )
+
+        _ = first.beginGuidedStage(.play, in: plan)
+        _ = first.markLabLaunchedGameplayCompleted(context)
+
+        XCTAssertEqual(first.progress(for: plan)?.completedStages, [.play])
+        XCTAssertNil(second.progress(for: plan))
+    }
+
+    func testDirectGameplayCompletionWithoutLabContextDoesNotMutateLabProgress() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(storage: storage, storageKey: "test.direct-gameplay-complete")
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+
+        XCTAssertNil(store.markLabLaunchedGameplayCompleted(nil))
+        XCTAssertNil(store.progress(for: plan))
+    }
+
+    func testNonPlayLabCompletionContextDoesNotAdvanceGameplayProgress() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(storage: storage, storageKey: "test.non-play-context")
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        _ = store.beginGuidedStage(.remember, in: plan)
+
+        XCTAssertNil(store.markLabLaunchedGameplayCompleted(LabGameplayCompletionContext(plan: plan, stage: .remember)))
+        XCTAssertEqual(store.currentStage(for: plan), .remember)
+        XCTAssertEqual(store.progress(for: plan)?.completedStages, [])
+    }
+
     func testDirectGamesLaunchDoesNotMarkBlastOrScoreComplete() throws {
         let storage = InMemoryLabConceptSessionProgressDefaults()
         let store = LabConceptSessionProgressStore(storage: storage, storageKey: "test.direct-games")
