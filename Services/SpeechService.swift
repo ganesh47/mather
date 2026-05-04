@@ -235,10 +235,17 @@ final class MemoryCardDescribeService {
             } else {
                 firstSentence = "\(animal.canonicalName) is a fruit with shape, color, taste, and smell clues."
             }
+        case .numberBondsTo10:
+            firstSentence = "\(animal.canonicalName) is a number bond to ten."
         }
 
         let secondParts: [String]
-        if metadata.deck == .waterCycle {
+        if metadata.deck == .numberBondsTo10 {
+            secondParts = [
+                animal.detailCards.first { $0.title == "Clue" }.map(\.value),
+                animal.detailCards.first { $0.title == "Stage" }.map(\.value)
+            ].compactMap { $0 }
+        } else if metadata.deck == .waterCycle {
             secondParts = [
                 metadata.habitat.map { "You can notice it \($0.lowercased())" },
                 animal.detailCards.first { $0.title == "Everyday Words" }.map(\.value)

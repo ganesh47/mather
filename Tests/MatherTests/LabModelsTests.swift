@@ -266,6 +266,50 @@ final class LabModelsTests: XCTestCase {
     }
 
 
+    func testRememberStageDeckReusesNumberBondMixMatchAndKeepsCalmPolicy() throws {
+        let deck = LabRememberStageDeck.numbersNumberBondsTo10
+
+        XCTAssertEqual(deck.id, .numbersNumberBondsTo10)
+        XCTAssertEqual(deck.planID, LabConceptSessionPlan.numbersNumberBondsTo10.id)
+        XCTAssertEqual(deck.stage, .remember)
+        XCTAssertEqual(deck.laneID, .numbers)
+        XCTAssertFalse(deck.hasPunitiveCountdown)
+        XCTAssertEqual(deck.timerPolicy, .calmNoCountdown)
+        XCTAssertGreaterThanOrEqual(deck.cards.count, 10)
+        XCTAssertTrue(deck.cards.contains { $0.id == "numbers-number-bond-6 + 4" || ($0.prompt == "6 + 4" && $0.answer == "10") })
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
+        XCTAssertTrue(deck.cards.allSatisfy { $0.concept == "number-bond" && $0.laneID == .numbers })
+    }
+
+    func testRememberStageExecutionTracksRecallWithoutCountdownPressure() throws {
+        let deck = LabRememberStageDeck.numbersNumberBondsTo10
+        var execution = LabRememberStageExecution(deck: deck)
+        let first = try XCTUnwrap(execution.currentCard)
+
+        XCTAssertEqual(execution.progressLabel, "1 / \(deck.cards.count)")
+        XCTAssertFalse(execution.usesPunitiveCountdown)
+        XCTAssertFalse(execution.submit(answer: "9"))
+        XCTAssertEqual(execution.reviewedCardIDs, [first.id])
+        XCTAssertFalse(execution.correctCardIDs.contains(first.id))
+        XCTAssertTrue(execution.submit(answer: first.answer))
+        XCTAssertTrue(execution.correctCardIDs.contains(first.id))
+
+        execution.advance()
+
+        XCTAssertEqual(execution.progressLabel, "2 / \(deck.cards.count)")
+    }
+
+    func testNumbersRememberStageRoutesToReusableRememberDeck() throws {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let remember = try XCTUnwrap(plan.stages.first { $0.stage == .remember })
+
+        XCTAssertEqual(remember.route, .labRememberStage(.numbersNumberBondsTo10))
+        XCTAssertEqual(LabRememberStageDeck.deck(for: .numbersNumberBondsTo10).route, remember.route)
+        XCTAssertFalse(remember.timerPolicy.showsCountdown)
+        XCTAssertFalse(remember.timerPolicy.isPunitive)
+    }
+
+
     func testLabConceptProgressCreationAndResumeCopy() throws {
         let plan = LabConceptSessionPlan.numbersNumberBondsTo10
         let startedAt = Date(timeIntervalSince1970: 1_000)
@@ -339,6 +383,20 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(first.currentStage(for: plan), .remember)
         XCTAssertNil(second.progress(for: plan))
         XCTAssertEqual(second.resumeLabel(for: plan), "Start")
+    }
+
+    func testRememberStageDeckUsesNumberBondRouteWithoutCountdown() throws {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let rememberStage = try XCTUnwrap(plan.stages.first { $0.stage == .remember })
+        let deck = LabRememberStageDeck.numbersNumberBondsTo10
+
+        XCTAssertEqual(rememberStage.route, .labRememberStage(.numbersNumberBondsTo10))
+        XCTAssertEqual(rememberStage.timerPolicy, .calmNoCountdown)
+        XCTAssertFalse(rememberStage.timerPolicy.showsCountdown)
+        XCTAssertFalse(rememberStage.timerPolicy.isPunitive)
+        XCTAssertEqual(deck.route, .labRememberStage(.numbersNumberBondsTo10))
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "6 + 4" && $0.answer == "10" })
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
     }
 
     func testDirectGamesLaunchDoesNotMarkBlastOrScoreComplete() throws {

@@ -13,6 +13,7 @@ struct MemoryVarietyTests {
         #expect(MemoryDeck.countryFlags.count >= 8)
         #expect(MemoryDeck.indiaStates.count >= 8)
         #expect(MemoryDeck.waterCycle.count >= 8)
+        #expect(MemoryDeck.numberBondsTo10.count == 10)
     }
 
     @MainActor @Test func preferredRoundAnimalsAvoidsRecentHistoryWhenFreshPoolIsLargeEnough() {
@@ -34,7 +35,7 @@ struct MemoryVarietyTests {
     }
 
     @MainActor @Test func buildCardsCreatesExactPictureAndLabelPairs() {
-        let round = Array(MemoryDeck.birds.prefix(4))
+        let round = Array(MemoryDeck.numberBondsTo10.prefix(4))
         let cards = MemoryView.buildCards(for: round)
 
         #expect(cards.count == 8)

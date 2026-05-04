@@ -98,6 +98,8 @@ struct RootView: View {
                     MemoryView(appModel: appModel)
                 case .memoryDeck(let deckKind):
                     MemoryView(appModel: appModel, initialDeckKind: deckKind)
+                case .labRememberStage(let deckID):
+                    LabRememberStageView(appModel: appModel, deckID: deckID)
                 case .waterCycle:
                     WaterCycleLabView(appModel: appModel)
                 case .gameplayThread(let threadID):
