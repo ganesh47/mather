@@ -85,6 +85,35 @@ struct GameplayStageViewModelsTests {
         #expect(allPairsUseCapitalSubtitle)
     }
 
+
+    @Test
+    func flipMemoryHiddenRightCardRevealsWhenTappedFirst() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .flipMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 77)
+        var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .flipMemory, turnItemCount: 2)
+        let firstRight = viewModel.shuffledRights[0]
+
+        #expect(viewModel.shouldConcealRight(firstRight))
+        let correct = viewModel.chooseRight(firstRight)
+
+        #expect(!correct)
+        #expect(!viewModel.shouldConcealRight(firstRight))
+        #expect(viewModel.inspectedItemID == firstRight.id)
+        #expect(viewModel.mismatchCount == 0)
+    }
+
+    @Test
+    func matchTurnsAvoidDuplicateEntitiesWherePossible() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .bondBlast }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 18)
+        let viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .bondBlast, turnItemCount: 3)
+
+        #expect(viewModel.activePairs.count <= 3)
+        #expect(Set(viewModel.activePairs.map { $0.left.entityID }).count == viewModel.activePairs.count)
+    }
+
     @Test
     func multipleChoiceQuestionsIncludeAnswerAndDistractors() {
         let thread = GameplaySampleThreads.countries

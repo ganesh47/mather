@@ -18,7 +18,11 @@ enum SpacedRepetitionScheduler {
             let rightRank = rank(item: rhs, record: rightRecord, now: now, seed: seed)
             return leftRank < rightRank
         }
-        let selected = Array(ranked.prefix(effectivePolicy.maximumItemCount))
+        let selected = childSafeSelection(
+            from: ranked,
+            maximumItemCount: effectivePolicy.maximumItemCount,
+            stageKind: stage.kind
+        )
         return GameplayRoundDefinition(
             id: "\(stage.id)-round-\(seed)",
             stageID: stage.id,
@@ -71,6 +75,33 @@ enum SpacedRepetitionScheduler {
 
     static func recordKey(for item: GameplayRoundItem, stageID: String) -> GameplayExposureKey {
         GameplayExposureKey(entityID: item.entityID, propertyID: item.propertyID, stageID: stageID)
+    }
+
+    private static func childSafeSelection(
+        from ranked: [GameplayRoundItem],
+        maximumItemCount: Int,
+        stageKind: GameplayStageKind
+    ) -> [GameplayRoundItem] {
+        let limit = max(1, maximumItemCount)
+        guard stageKind == .easyMemory || stageKind == .flipMemory else {
+            return Array(ranked.prefix(limit))
+        }
+
+        var selected: [GameplayRoundItem] = []
+        var selectedEntityIDs = Set<String>()
+        var deferred: [GameplayRoundItem] = []
+        for item in ranked {
+            guard selected.count < limit else { break }
+            if selectedEntityIDs.insert(item.entityID).inserted {
+                selected.append(item)
+            } else {
+                deferred.append(item)
+            }
+        }
+        for item in deferred where selected.count < limit {
+            selected.append(item)
+        }
+        return selected
     }
 
     private static func rank(item: GameplayRoundItem, record: GameplayExposureRecord?, now: Date, seed: UInt64) -> GameplayItemRank {

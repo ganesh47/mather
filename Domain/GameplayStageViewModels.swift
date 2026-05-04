@@ -165,13 +165,18 @@ struct GameplayMatchStageViewModel: Equatable {
     let seed: UInt64
     var selectedLeftID: String?
     var inspectedItemID: String?
+    var revealedRightIDs: Set<String> = []
     var matchedPairIDs: Set<String> = []
     var mismatchCount = 0
     var hintCount = 0
     var activeTurnIndex = 0
 
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, mode: GameplayStageKind, turnItemCount: Int? = nil) {
-        self.pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+        self.pairs = GameplayStageContentBuilder.turnFriendlyOrder(
+            GameplayStageContentBuilder.matchPairs(thread: thread, round: round),
+            turnItemCount: turnItemCount ?? Self.defaultTurnItemCount(for: mode, itemCount: round.items.count),
+            seed: round.seed
+        )
         self.mode = mode
         self.turnItemCount = max(1, turnItemCount ?? Self.defaultTurnItemCount(for: mode, itemCount: round.items.count))
         self.seed = round.seed
@@ -208,7 +213,9 @@ struct GameplayMatchStageViewModel: Equatable {
     }
 
     func shouldConcealRight(_ item: GameplayDisplayItem) -> Bool {
-        mode == .flipMemory && !matchedPairIDs.contains(pairID(forRight: item))
+        guard mode == .flipMemory else { return false }
+        guard !matchedPairIDs.contains(pairID(forRight: item)) else { return false }
+        return !revealedRightIDs.contains(item.id) && inspectedItemID != item.id
     }
 
     func pairID(forRight item: GameplayDisplayItem) -> String {
@@ -223,9 +230,17 @@ struct GameplayMatchStageViewModel: Equatable {
 
     mutating func inspect(_ item: GameplayDisplayItem) {
         inspectedItemID = inspectedItemID == item.id ? nil : item.id
+        if mode == .flipMemory, activePairs.contains(where: { $0.right.id == item.id }) {
+            if revealedRightIDs.contains(item.id), inspectedItemID == nil {
+                revealedRightIDs.remove(item.id)
+            } else {
+                revealedRightIDs.insert(item.id)
+            }
+        }
     }
 
     mutating func chooseRight(_ right: GameplayDisplayItem) -> Bool {
+        revealedRightIDs.insert(right.id)
         guard let selectedLeftID, let pair = activePairs.first(where: { $0.id == selectedLeftID }) else {
             inspect(right)
             return false
@@ -235,9 +250,11 @@ struct GameplayMatchStageViewModel: Equatable {
             matchedPairIDs.insert(pair.id)
             self.selectedLeftID = nil
             inspectedItemID = right.id
+            revealedRightIDs.insert(right.id)
         } else {
             mismatchCount += 1
             inspectedItemID = right.id
+            revealedRightIDs = Set([right.id])
         }
         return correct
     }
@@ -247,6 +264,7 @@ struct GameplayMatchStageViewModel: Equatable {
         activeTurnIndex = min(activeTurnIndex + 1, turnCount - 1)
         selectedLeftID = nil
         inspectedItemID = nil
+        revealedRightIDs.removeAll()
     }
 
     private static func defaultTurnItemCount(for mode: GameplayStageKind, itemCount: Int) -> Int {
@@ -360,6 +378,31 @@ enum GameplayStageContentBuilder {
 
     static func sortedRights(_ pairs: [GameplayMatchPair], seed: UInt64) -> [GameplayDisplayItem] {
         deterministicOrder(pairs.map(\.right), seed: seed)
+    }
+
+    static func turnFriendlyOrder(_ pairs: [GameplayMatchPair], turnItemCount: Int, seed: UInt64) -> [GameplayMatchPair] {
+        let size = max(1, turnItemCount)
+        var remaining = deterministicOrder(pairs, seed: seed &+ 31)
+        var ordered: [GameplayMatchPair] = []
+        while !remaining.isEmpty {
+            var turn: [GameplayMatchPair] = []
+            var usedEntities = Set<String>()
+            var nextRemaining: [GameplayMatchPair] = []
+            for pair in remaining {
+                if turn.count < size && !usedEntities.contains(pair.left.entityID) {
+                    turn.append(pair)
+                    usedEntities.insert(pair.left.entityID)
+                } else {
+                    nextRemaining.append(pair)
+                }
+            }
+            while turn.count < size, !nextRemaining.isEmpty {
+                turn.append(nextRemaining.removeFirst())
+            }
+            ordered.append(contentsOf: turn)
+            remaining = nextRemaining
+        }
+        return ordered
     }
 
     private static func propertyTypeTitle(_ id: String, in thread: GameplayThreadDefinition) -> String {
