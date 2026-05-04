@@ -18,11 +18,15 @@ struct HomeView: View {
                     if ResponsiveLayout.isWide(horizontalSizeClass) {
                         HStack(alignment: .top, spacing: 20) {
                             makeAndBreakCard
-                            labCard
+                            labsCard
+                            gamesCard
                         }
                     } else {
                         makeAndBreakCard
-                        labCard
+                        HStack(alignment: .top, spacing: 14) {
+                            labsCard
+                            gamesCard
+                        }
                     }
 
                     HStack(spacing: 14) {
@@ -151,84 +155,164 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Explorer Lab card
+    // MARK: - Labs and Games cards
 
-    private var labCard: some View {
-        Button {
+    private var labsCard: some View {
+        explorerEntryCard(
+            title: "Labs",
+            subtitle: "Subject streams",
+            detail: "Numbers · Geometry · Physics",
+            emoji: "🔬",
+            symbolName: "sparkles.rectangle.stack.fill",
+            gradient: [MatherTheme.softBlue, MatherTheme.coral.opacity(0.8)],
+            accent: MatherTheme.softBlue,
+            accessibilityIdentifier: "ExplorerLab"
+        ) {
             appModel.engine.showLab()
-        } label: {
+        }
+    }
+
+    private var gamesCard: some View {
+        explorerEntryCard(
+            title: "Games",
+            subtitle: "One-tap play",
+            detail: "Launch ready games directly",
+            emoji: "🎮",
+            symbolName: "gamecontroller.fill",
+            gradient: [MatherTheme.warm, MatherTheme.accent.opacity(0.85)],
+            accent: MatherTheme.warm,
+            accessibilityIdentifier: "GamesEntry"
+        ) {
+            appModel.engine.showLabGames()
+        }
+    }
+
+    private func explorerEntryCard(
+        title: String,
+        subtitle: String,
+        detail: String,
+        emoji: String,
+        symbolName: String,
+        gradient: [Color],
+        accent: Color,
+        accessibilityIdentifier: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        HomeExplorerEntryCard(
+            title: title,
+            subtitle: subtitle,
+            detail: detail,
+            emoji: emoji,
+            symbolName: symbolName,
+            gradient: gradient,
+            accent: accent,
+            accessibilityIdentifier: accessibilityIdentifier,
+            isDark: colorScheme == .dark,
+            action: action
+        )
+    }
+
+}
+
+private struct HomeExplorerEntryCard: View {
+    let title: String
+    let subtitle: String
+    let detail: String
+    let emoji: String
+    let symbolName: String
+    let gradient: [Color]
+    let accent: Color
+    let accessibilityIdentifier: String
+    let isDark: Bool
+    let action: () -> Void
+
+    private var destinationLabel: String {
+        title == "Labs" ? "Open subject picker" : "Open game launcher"
+    }
+
+    private var accessibilityCopy: String {
+        title == "Labs" ? "Open Labs subject streams" : "Open Games direct launcher"
+    }
+
+    var body: some View {
+        Button(action: action) {
             VStack(spacing: 0) {
-                ZStack {
-                    LinearGradient(
-                        colors: [MatherTheme.softBlue, MatherTheme.coral.opacity(0.8)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-
-                    HStack(spacing: 16) {
-                        Text("🔬")
-                            .font(.system(size: 48))
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Labs + Games")
-                                .font(.title3.weight(.black))
-                                .foregroundStyle(.white)
-                            Text("Subjects + one-tap play")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white.opacity(0.85))
-                        }
-                        .layoutPriority(1)
-
-                        Spacer()
-                    }
-                    .padding(20)
-                }
-                .frame(height: 110)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 20, bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0, topTrailingRadius: 20,
-                        style: .continuous
-                    )
-                )
-
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Numbers · Geometry · Physics · Geography")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text("Choose Labs or Games")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(MatherTheme.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right.circle.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(MatherTheme.softBlue)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .background(MatherTheme.card)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 0, bottomLeadingRadius: 20,
-                        bottomTrailingRadius: 20, topTrailingRadius: 0,
-                        style: .continuous
-                    )
-                )
+                header
+                footer
             }
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1)
+                    .strokeBorder(.white.opacity(isDark ? 0.08 : 0), lineWidth: 1)
             )
             .shadow(
-                color: colorScheme == .dark ? MatherTheme.softBlue.opacity(0.12) : .black.opacity(0.08),
-                radius: colorScheme == .dark ? 18 : 12,
-                y: colorScheme == .dark ? 8 : 5
+                color: isDark ? accent.opacity(0.12) : .black.opacity(0.08),
+                radius: isDark ? 18 : 12,
+                y: isDark ? 8 : 5
             )
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("ExplorerLab")
+        .accessibilityIdentifier(accessibilityIdentifier)
+        .accessibilityLabel(accessibilityCopy)
+    }
+
+    private var header: some View {
+        ZStack {
+            LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+
+            HStack(spacing: 12) {
+                Text(emoji)
+                    .font(.system(size: 42))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .layoutPriority(1)
+
+                Spacer(minLength: 0)
+            }
+            .padding(18)
+        }
+        .frame(height: 104)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 20, bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0, topTrailingRadius: 20,
+                style: .continuous
+            )
+        )
+    }
+
+    private var footer: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(detail)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                Text(destinationLabel)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: symbolName)
+                .font(.system(size: 32, weight: .black))
+                .foregroundStyle(accent)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(MatherTheme.card)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 0, bottomLeadingRadius: 20,
+                bottomTrailingRadius: 20, topTrailingRadius: 0,
+                style: .continuous
+            )
+        )
     }
 }

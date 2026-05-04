@@ -7,6 +7,7 @@ struct LabLaneDetailView: View {
 
     @State private var expandedReview = false
     @State private var expandedSupport = false
+    @State private var expandedPlanDetails: Set<String> = []
     @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
     private var lane: CapabilityLane {
@@ -213,8 +214,11 @@ struct LabLaneDetailView: View {
     }
 
     private func conceptSessionPlanCard(_ plan: LabConceptSessionPlan, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
+        let progress = appModel.labConceptSessionProgressStore.progress(for: plan)
+        let detailsExpanded = expandedPlanDetails.contains(plan.id)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.title)
                         .font(.headline.weight(.black))
@@ -222,8 +226,9 @@ struct LabLaneDetailView: View {
                     Text(plan.subtitle)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("\(plan.masteryStateLabel) • \(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
+                    Text(plan.masteryStateLabel)
                         .font(.caption2.weight(.black))
                         .foregroundStyle(tint)
                 }
@@ -242,70 +247,79 @@ struct LabLaneDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(startLabel(for: plan)) \(plan.title)")
-                .accessibilityHint("Opens the guided stage in progress. Games remain directly playable below.")
+                .accessibilityHint("This is the primary next action for the guided path. Games remain directly playable below.")
             }
 
-            if let progress = appModel.labConceptSessionProgressStore.progress(for: plan) {
+            if let progress {
                 Label(progress.resumeCopy, systemImage: "bookmark.fill")
                     .font(.caption.weight(.black))
                     .foregroundStyle(tint)
                     .accessibilityLabel("Resume \(plan.title). \(progress.resumeCopy).")
             }
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
-                ForEach(plan.stages) { stage in
-                    stagePlanCard(stage, progress: appModel.labConceptSessionProgressStore.progress(for: plan), tint: tint)
+            stageSummaryStrip(plan, progress: progress, tint: tint)
+
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                    if detailsExpanded {
+                        expandedPlanDetails.remove(plan.id)
+                    } else {
+                        expandedPlanDetails.insert(plan.id)
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Label(detailsExpanded ? "Hide path details" : "Show path details", systemImage: detailsExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(tint)
+                    Spacer(minLength: 0)
+                    Text("\(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                .padding(9)
+                .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(detailsExpanded ? "Hide guided path details" : "Show guided path details")
+
+            if detailsExpanded {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
+                    ForEach(plan.stages) { stage in
+                        stagePlanCard(stage, progress: progress, tint: tint)
+                    }
                 }
             }
         }
         .padding(12)
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(plan.title). \(plan.pathLabel).")
+        .accessibilityLabel("\(plan.title). Primary action: \(startLabel(for: plan)). Path: \(plan.pathLabel).")
     }
 
-    private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
-        let stageState = progressState(for: stage.stage, progress: progress)
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(tint.opacity(0.12))
+    private func stageSummaryStrip(_ plan: LabConceptSessionPlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
+        LabDetailFlowLayout(spacing: 6) {
+            ForEach(plan.stages) { stage in
+                let state = progressState(for: stage.stage, progress: progress)
+                HStack(spacing: 4) {
                     Image(systemName: stage.stage.symbolName)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
-                }
-                .frame(width: 26, height: 26)
-                .accessibilityLabel(stage.stage.artworkAccessibilityLabel)
-                Text(stage.stage.rawValue)
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(MatherTheme.ink)
-                Spacer(minLength: 0)
-                if let stageState {
-                    Text(stageState)
                         .font(.caption2.weight(.black))
-                        .foregroundStyle(tint)
+                    Text(stage.stage.rawValue)
+                        .font(.caption2.weight(.black))
+                    if let state {
+                        Text(state)
+                            .font(.caption2.weight(.heavy))
+                    }
                 }
+                .foregroundStyle(state == nil ? MatherTheme.cardSubtitle : tint)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background((state == nil ? MatherTheme.panel.opacity(0.58) : tint.opacity(0.12)), in: Capsule())
             }
-            Text(stage.title)
-                .font(.caption.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-            Text(stage.childCopy)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .lineLimit(3)
-                .minimumScaleFactor(0.75)
-            Text(stage.timerPolicy.childCopy)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(tint)
-                .lineLimit(2)
-                .minimumScaleFactor(0.72)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 138, alignment: .topLeading)
-        .background(MatherTheme.card.opacity(0.78), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(stage.accessibilityLabel)
+        .accessibilityLabel("Guided stages: \(plan.pathLabel)")
     }
 
     private func gamesSection(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -835,7 +849,7 @@ struct LabLaneDetailView: View {
     }
 }
 
-private struct LabDetailFlowLayout: Layout {
+struct LabDetailFlowLayout: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

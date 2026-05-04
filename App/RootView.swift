@@ -91,7 +91,9 @@ struct RootView: View {
                 case .compassAngles:
                     CompassAnglesView(appModel: appModel)
                 case .lab:
-                    LabView(appModel: appModel)
+                    LabView(appModel: appModel, initialPath: .labs)
+                case .labGames:
+                    LabView(appModel: appModel, initialPath: .games)
                 case .labLane(let laneID):
                     LabLaneDetailView(appModel: appModel, laneID: laneID)
                 case .memory:

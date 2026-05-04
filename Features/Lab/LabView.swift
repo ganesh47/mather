@@ -5,8 +5,13 @@ struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
     @State private var playfulPulse = false
-    @State private var selectedPath: ExplorerPathID = .labs
+    @State private var selectedPath: ExplorerPathID
     @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
+
+    init(appModel: AppModel, initialPath: ExplorerPathID = .labs) {
+        self.appModel = appModel
+        _selectedPath = State(initialValue: initialPath)
+    }
 
     private let lanes = CapabilityLane.labSubjectStreams
     private let guidedPaths = GuidedLabPath.phaseOne
@@ -26,13 +31,15 @@ struct LabView: View {
                         pathSelector(compact: compactGrid)
 
                         if selectedPath == .labs {
-                            guidedLabsIntro(compact: compactGrid)
+                            labsStreamHeader(compact: compactGrid)
 
                             LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: compactGrid ? 14 : 16) {
                                 ForEach(lanes) { lane in
                                     laneCard(lane, compact: compactGrid)
                                 }
                             }
+
+                            guidedLabsIntro(compact: compactGrid)
                         } else {
                             directGamesSection(compact: compactGrid, width: proxy.size.width)
                         }
@@ -72,13 +79,13 @@ struct LabView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Explorer Lab")
+                Text(selectedPath == .labs ? "Labs" : "Games")
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Labs and Games")
+                Text("Explorer Lab")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Text("Choose a subject stream, or jump straight into a game")
+                Text(selectedPath == .labs ? "Choose a subject stream first" : "Jump straight into a game")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.accent)
             }
@@ -157,55 +164,83 @@ struct LabView: View {
         )
     }
 
-    private func guidedLabsIntro(compact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+    private func labsStreamHeader(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Subject streams")
                         .font(.title3.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text("Numbers & Arithmetic · Geometry · Physics · Geography · Chemistry")
+                    Text(CapabilityLane.subjectStreamSummary)
                         .font(.caption.weight(.black))
                         .foregroundStyle(MatherTheme.accent)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
 
-            stageStrip(compact: compact)
+            LabDetailFlowLayout(spacing: 6) {
+                ForEach(lanes) { lane in
+                    Text(lane.subjectStreamShortLabel)
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(laneColor(lane.id))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(laneColor(lane.id).opacity(0.10), in: Capsule())
+                }
+            }
+        }
+        .padding(14)
+        .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(MatherTheme.accent.opacity(0.18), lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Subject streams: \(CapabilityLane.subjectStreamSummary)")
+    }
+
+    private func guidedLabsIntro(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Guided path")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text("Optional staged learning appears after the subject picker so other streams stay visible.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+                Spacer(minLength: 0)
+            }
+
+            compactStageStrip(compact: compact)
 
             ForEach(guidedPaths) { path in
                 guidedPathCard(path)
             }
         }
-        .padding(16)
-        .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(14)
+        .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(MatherTheme.accent.opacity(0.18), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(MatherTheme.accent.opacity(0.14), lineWidth: 1)
         )
         .accessibilityElement(children: .contain)
     }
 
-    private func stageStrip(compact: Bool) -> some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: compact ? 6 : 8), count: compact ? 3 : 5)
-        return LazyVGrid(columns: columns, spacing: compact ? 6 : 8) {
+    private func compactStageStrip(compact: Bool) -> some View {
+        LabDetailFlowLayout(spacing: compact ? 5 : 6) {
             ForEach(GuidedLabStage.allCases) { stage in
-                VStack(spacing: 4) {
-                    stageArtwork(stage, tint: MatherTheme.accent, compact: compact)
-                    Text(stage.rawValue)
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
-                    Text(stage.microcopy)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                }
-                .padding(8)
-                .frame(maxWidth: .infinity, minHeight: 82)
-                .background(MatherTheme.panel.opacity(0.62), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                Label(stage.rawValue, systemImage: stage.symbolName)
+                    .font(.caption2.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(MatherTheme.panel.opacity(0.62), in: Capsule())
             }
         }
+        .accessibilityLabel(GuidedLabStage.allCases.map(\.rawValue).joined(separator: " to "))
     }
 
     private func explorerArtwork(_ path: ExplorerPathPresentation, tint: Color, compact: Bool) -> some View {

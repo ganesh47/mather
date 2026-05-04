@@ -152,18 +152,12 @@ struct LabRouteRegressionTests {
         #expect(LabLaneDetailPresentation(lane: readyLane).sections == [
             .visualSummary,
             .activities,
-            .modes,
-            .playStyles,
-            .ageEntries,
-            .recall,
+            .progressStatus,
         ])
         #expect(LabLaneDetailPresentation(lane: futureLane).sections == [
             .visualSummary,
             .comingSoon,
-            .modes,
-            .playStyles,
-            .ageEntries,
-            .recall,
+            .progressStatus,
         ])
     }
 

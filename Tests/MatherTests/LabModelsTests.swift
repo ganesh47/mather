@@ -20,10 +20,11 @@ final class LabModelsTests: XCTestCase {
     func testLabSubjectStreamsExposeFocusedSubjectPickerSeparateFromGames() throws {
         let streams = CapabilityLane.labSubjectStreams
 
-        XCTAssertEqual(streams.map(\.id), [.numbers, .geometry, .physics, .mapWorld, .chemistry])
-        XCTAssertEqual(streams.map(\.subjectStreamLabel), ["Numbers & Arithmetic", "Geometry", "Physics", "Geography", "Chemistry"])
+        XCTAssertEqual(streams.map(\.id), [.numbers, .geometry, .physics, .mapWorld, .discoveryCards, .chemistry, .electronics])
+        XCTAssertEqual(streams.map(\.subjectStreamShortLabel), ["Numbers", "Geometry", "Physics", "Geography/Maps", "Discovery", "Chemistry", "Electronics"])
+        XCTAssertEqual(CapabilityLane.subjectStreamSummary, "Numbers · Geometry · Physics · Geography/Maps · Discovery · Chemistry · Electronics")
         XCTAssertTrue(streams.allSatisfy(\.isLabSubjectStream))
-        XCTAssertFalse(CapabilityLane.defaultExplorerLanes.first { $0.id == .discoveryCards }?.isLabSubjectStream ?? true)
+        XCTAssertTrue(CapabilityLane.defaultExplorerLanes.first { $0.id == .discoveryCards }?.isLabSubjectStream ?? false)
         XCTAssertTrue(ExplorerGameRegistry.directLaunchEntries.contains { $0.activity.id == .memoryMatch })
     }
 
@@ -102,10 +103,11 @@ final class LabModelsTests: XCTestCase {
         let presentation = LabLaneDetailPresentation(lane: numbers)
 
         XCTAssertEqual(presentation.activityCountLabel, "3 games ready")
-        XCTAssertTrue(presentation.sections.contains(.modes))
-        XCTAssertTrue(presentation.sections.contains(.playStyles))
-        XCTAssertTrue(presentation.sections.contains(.ageEntries))
-        XCTAssertTrue(presentation.sections.contains(.recall))
+        XCTAssertEqual(presentation.sections, [.visualSummary, .activities, .progressStatus])
+        XCTAssertFalse(presentation.sections.contains(.modes))
+        XCTAssertFalse(presentation.sections.contains(.playStyles))
+        XCTAssertFalse(presentation.sections.contains(.ageEntries))
+        XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertTrue(presentation.sections.contains(.activities))
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
     }
@@ -120,6 +122,8 @@ final class LabModelsTests: XCTestCase {
     }
 
     func testLabLaneRouteCarriesSelectedLaneWithoutChangingGameRoutes() throws {
+        XCTAssertEqual(AppRoute.lab, AppRoute.lab)
+        XCTAssertEqual(AppRoute.labGames, AppRoute.labGames)
         XCTAssertEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.geometry))
         XCTAssertNotEqual(AppRoute.labLane(.geometry), AppRoute.labLane(.numbers))
         XCTAssertEqual(LabActivityID.sumSprint.appRoute, .sumSprint)

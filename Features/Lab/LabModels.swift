@@ -1034,10 +1034,7 @@ struct LabLaneDetailPresentation: Equatable {
         sections = [
             .visualSummary,
             lane.isReady ? .activities : .comingSoon,
-            .modes,
-            .playStyles,
-            .ageEntries,
-            .recall,
+            .progressStatus,
         ]
     }
 }
@@ -1231,11 +1228,30 @@ struct CapabilityLane: Identifiable, Equatable {
         case .physics:
             return "Physics"
         case .mapWorld:
-            return "Geography"
+            return "Geography/Maps"
         case .chemistry:
             return "Chemistry"
         case .discoveryCards:
-            return "Discovery Cards"
+            return "Discovery"
+        case .electronics:
+            return "Electronics"
+        }
+    }
+
+    var subjectStreamShortLabel: String {
+        switch id {
+        case .numbers:
+            return "Numbers"
+        case .geometry:
+            return "Geometry"
+        case .physics:
+            return "Physics"
+        case .mapWorld:
+            return "Geography/Maps"
+        case .chemistry:
+            return "Chemistry"
+        case .discoveryCards:
+            return "Discovery"
         case .electronics:
             return "Electronics"
         }
@@ -1246,8 +1262,14 @@ struct CapabilityLane: Identifiable, Equatable {
         .geometry,
         .physics,
         .mapWorld,
+        .discoveryCards,
         .chemistry,
+        .electronics,
     ]
+
+    static var subjectStreamSummary: String {
+        labSubjectStreams.map(\.subjectStreamShortLabel).joined(separator: " · ")
+    }
 
     static var labSubjectStreams: [CapabilityLane] {
         labSubjectStreamIDs.compactMap { streamID in
