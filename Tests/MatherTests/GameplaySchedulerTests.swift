@@ -47,6 +47,25 @@ struct GameplaySchedulerTests {
     }
 
 
+
+    @Test
+    func memoryRoundsPreferOneCardPerEntityBeforeRepeats() {
+        let thread = sampleThread()
+        let stage = GameplayStageDefinition(
+            id: "flip-memory",
+            kind: .flipMemory,
+            title: "Flip",
+            prompt: "Match",
+            propertyTypeIDs: ["capital", "currency"],
+            maximumItemCount: 3
+        )
+
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 23)
+
+        #expect(round.items.count == 3)
+        #expect(Set(round.items.map(\.entityID)).count == round.items.count)
+    }
+
     @Test
     func schedulerPlacesSupportedCorrectBetweenIncorrectAndIndependentCorrect() {
         let thread = sampleThread()
