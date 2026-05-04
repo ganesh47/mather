@@ -111,20 +111,24 @@ struct LabRememberStageView: View {
 
     private func answer(_ choice: String) {
         let correct = execution.submit(answer: choice)
-        feedback = correct ? "Yes — that pair makes 10." : "Try again calmly. Look for the pair that fills ten."
+        feedback = correct ? "Yes — keep that idea for the Play stage." : "Try again calmly. Look back at the clue and choose the best match."
         if correct {
             execution.advance()
         }
     }
 
     private func answerChoices(for card: LabRememberStageCard) -> [String] {
-        var choices = [card.answer, "9", "11"]
-        if card.answer != "10" { choices.append("10") }
-        return Array(Set(choices)).sorted()
+        let siblingAnswers = execution.deck.cards
+            .filter { $0.id != card.id }
+            .map(\.answer)
+        return Array(Set([card.answer] + Array(siblingAnswers.prefix(3)))).sorted()
     }
 
     private func finishRemember(_ deck: LabRememberStageDeck) {
-        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        guard let plan = LabConceptSessionPlan.plan(for: deck.planID) else {
+            appModel.engine.showLabLane(deck.laneID)
+            return
+        }
         if execution.isComplete {
             _ = appModel.labConceptSessionProgressStore.markCompleted(deck.stage, in: plan)
         } else {
