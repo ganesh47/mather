@@ -720,6 +720,80 @@ extension LabModelsTests {
         XCTAssertEqual(stepFallback.accessibilityHint, "Tap each small step instead")
         XCTAssertTrue(stepFallback.permitsLaunch)
     }
+    func testGeometryGuidedLabPathExposesShapeAngleAndSymmetryPlans() throws {
+        let geometryPath = try XCTUnwrap(GuidedLabPath.phaseOne.first { $0.laneID == .geometry })
+
+        XCTAssertEqual(geometryPath.title, "Geometry Path")
+        XCTAssertEqual(geometryPath.stages, [.learn, .remember, .play, .blast, .score])
+        XCTAssertEqual(geometryPath.stages.map(\.rawValue).joined(separator: " → "), "Learn → Remember → Play → Blast → Score")
+        XCTAssertEqual(geometryPath.sessionPlans.map(\.id), [
+            "geometry-shape-names",
+            "geometry-angles-basic",
+            "geometry-symmetry-folds",
+        ])
+
+        for plan in geometryPath.sessionPlans {
+            XCTAssertEqual(plan.laneID, .geometry)
+            XCTAssertEqual(plan.stageOrder, [.learn, .remember, .play, .blast, .score])
+            XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Blast → Score")
+            XCTAssertEqual(LabConceptSessionPlan.plan(for: plan.id), plan)
+            XCTAssertEqual(plan.stages.first { $0.stage == .score }?.route, nil)
+            XCTAssertTrue(plan.stages.allSatisfy { !$0.accessibilityLabel.isEmpty })
+        }
+    }
+
+    func testGeometryStagePlansWrapExistingDirectGamesWithoutChangingGameRoutes() throws {
+        let angle = LabConceptSessionPlan.geometryAnglesBasic
+        let symmetry = LabConceptSessionPlan.geometrySymmetryFolds
+        let shape = LabConceptSessionPlan.geometryShapeNames
+
+        XCTAssertEqual(angle.stages.map(\.route), [
+            .twoFingerProtractor,
+            .labRememberStage(.geometryAnglesBasic),
+            .twoFingerProtractor,
+            .angleCannon,
+            nil,
+        ])
+        XCTAssertEqual(symmetry.stages.map(\.route), [
+            .symmetryFold,
+            .labRememberStage(.geometrySymmetryFolds),
+            .symmetryFold,
+            .symmetryFold,
+            nil,
+        ])
+        XCTAssertEqual(shape.stages.map(\.route), [
+            .shapeGeometry,
+            .labRememberStage(.geometryShapeNames),
+            .shapeGeometry,
+            .shapeGeometry,
+            nil,
+        ])
+
+        XCTAssertEqual(LabActivityID.angleCannon.appRoute, .angleCannon)
+        XCTAssertEqual(LabActivityID.twoFingerProtractor.appRoute, .twoFingerProtractor)
+        XCTAssertEqual(LabActivityID.symmetryFold.appRoute, .symmetryFold)
+        XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
+    }
+
+    func testGeometryRememberDecksAreCalmReusableCards() throws {
+        let decks = [
+            LabRememberStageDeck.geometryShapeNames,
+            LabRememberStageDeck.geometryAnglesBasic,
+            LabRememberStageDeck.geometrySymmetryFolds,
+        ]
+
+        XCTAssertEqual(decks.map(\.id), [.geometryShapeNames, .geometryAnglesBasic, .geometrySymmetryFolds])
+        for deck in decks {
+            XCTAssertEqual(deck.laneID, .geometry)
+            XCTAssertEqual(deck.stage, .remember)
+            XCTAssertFalse(deck.hasPunitiveCountdown)
+            XCTAssertGreaterThanOrEqual(deck.cards.count, 4)
+            XCTAssertEqual(LabRememberStageDeck.deck(for: deck.id), deck)
+            XCTAssertEqual(LabConceptSessionPlan.plan(for: deck.planID)?.stages.first { $0.stage == .remember }?.route, deck.route)
+            XCTAssertTrue(deck.cards.allSatisfy { $0.laneID == .geometry })
+            XCTAssertTrue(deck.cards.allSatisfy { !$0.accessibilityLabel.isEmpty })
+        }
+    }
 
 }
 
@@ -738,4 +812,5 @@ private final class InMemoryLabConceptSessionProgressDefaults: ExplorerLabMaster
     func removeObject(forKey defaultName: String) {
         values.removeValue(forKey: defaultName)
     }
+
 }

@@ -84,6 +84,9 @@ struct MixMatchReviewSampler: Equatable {
 
 enum LabRememberStageDeckID: String, Codable, Hashable, Identifiable {
     case numbersNumberBondsTo10 = "numbers-number-bonds-to-10-remember"
+    case geometryShapeNames = "geometry-shape-names-remember"
+    case geometryAnglesBasic = "geometry-angles-basic-remember"
+    case geometrySymmetryFolds = "geometry-symmetry-folds-remember"
 
     var id: String { rawValue }
 }
@@ -146,6 +149,12 @@ struct LabRememberStageDeck: Equatable, Identifiable {
         switch id {
         case .numbersNumberBondsTo10:
             return .numbersNumberBondsTo10
+        case .geometryShapeNames:
+            return .geometryShapeNames
+        case .geometryAnglesBasic:
+            return .geometryAnglesBasic
+        case .geometrySymmetryFolds:
+            return .geometrySymmetryFolds
         }
     }
 
@@ -159,6 +168,58 @@ struct LabRememberStageDeck: Equatable, Identifiable {
         subtitle: "Flip friendly bond facts back into memory — no countdown, no penalty.",
         timerPolicy: .calmNoCountdown,
         cards: Self.numberBondCardsTo10()
+    )
+
+
+    static let geometryShapeNames = LabRememberStageDeck(
+        id: .geometryShapeNames,
+        planID: "geometry-shape-names",
+        stage: .remember,
+        laneID: .geometry,
+        concept: "shape-names",
+        title: "Remember shape clues",
+        subtitle: "Match each shape clue back to the shape before you play Shape Lab.",
+        timerPolicy: .calmNoCountdown,
+        cards: [
+            LabRememberStageCard(id: "geometry-shape-circle", laneID: .geometry, concept: "shape-names", prompt: "No corners, one curved edge", answer: "circle", supportCopy: "Trace around the outside: it keeps curving."),
+            LabRememberStageCard(id: "geometry-shape-triangle", laneID: .geometry, concept: "shape-names", prompt: "Three straight sides", answer: "triangle", supportCopy: "Count the sides and corners: 1, 2, 3."),
+            LabRememberStageCard(id: "geometry-shape-square", laneID: .geometry, concept: "shape-names", prompt: "Four equal sides", answer: "square", supportCopy: "All sides match, like a neat tile."),
+            LabRememberStageCard(id: "geometry-shape-rectangle", laneID: .geometry, concept: "shape-names", prompt: "Four sides, opposite sides match", answer: "rectangle", supportCopy: "Long sides match each other; short sides match each other."),
+        ]
+    )
+
+    static let geometryAnglesBasic = LabRememberStageDeck(
+        id: .geometryAnglesBasic,
+        planID: "geometry-angles-basic",
+        stage: .remember,
+        laneID: .geometry,
+        concept: "angles-basic",
+        title: "Remember angle sizes",
+        subtitle: "Bring back the names and benchmark degrees before aiming the cannon.",
+        timerPolicy: .calmNoCountdown,
+        cards: [
+            LabRememberStageCard(id: "geometry-angle-right", laneID: .geometry, concept: "angles-basic", prompt: "A square-corner angle", answer: "90°", supportCopy: "A right angle looks like the corner of a page."),
+            LabRememberStageCard(id: "geometry-angle-straight", laneID: .geometry, concept: "angles-basic", prompt: "A straight line angle", answer: "180°", supportCopy: "Half a turn stretches into one straight line."),
+            LabRememberStageCard(id: "geometry-angle-acute", laneID: .geometry, concept: "angles-basic", prompt: "Smaller than a right angle", answer: "acute", supportCopy: "Acute angles are tiny turns below 90°."),
+            LabRememberStageCard(id: "geometry-angle-obtuse", laneID: .geometry, concept: "angles-basic", prompt: "Bigger than a right angle but not straight", answer: "obtuse", supportCopy: "Obtuse angles open wide past 90°."),
+        ]
+    )
+
+    static let geometrySymmetryFolds = LabRememberStageDeck(
+        id: .geometrySymmetryFolds,
+        planID: "geometry-symmetry-folds",
+        stage: .remember,
+        laneID: .geometry,
+        concept: "symmetry-folds",
+        title: "Remember mirror matches",
+        subtitle: "Sort mirror-half clues before trying Symmetry Fold.",
+        timerPolicy: .calmNoCountdown,
+        cards: [
+            LabRememberStageCard(id: "geometry-symmetry-line", laneID: .geometry, concept: "symmetry-folds", prompt: "A fold where both sides match", answer: "line of symmetry", supportCopy: "Fold on the line: one half covers the other."),
+            LabRememberStageCard(id: "geometry-symmetry-butterfly", laneID: .geometry, concept: "symmetry-folds", prompt: "Wings that mirror each other", answer: "symmetric", supportCopy: "Left wing and right wing can match across the middle."),
+            LabRememberStageCard(id: "geometry-symmetry-lopsided", laneID: .geometry, concept: "symmetry-folds", prompt: "One side is different after folding", answer: "not symmetric", supportCopy: "If the halves do not cover each other, it is not symmetric yet."),
+            LabRememberStageCard(id: "geometry-symmetry-vertical", laneID: .geometry, concept: "symmetry-folds", prompt: "A mirror line from top to bottom", answer: "vertical", supportCopy: "Top-to-bottom folds split left and right halves."),
+        ]
     )
 
     private static func numberBondCardsTo10() -> [LabRememberStageCard] {
@@ -532,10 +593,18 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
     var pathLabel: String { stageOrder.map(\.rawValue).joined(separator: " → ") }
 
     static func plan(for id: String) -> LabConceptSessionPlan? {
-        if id == numbersNumberBondsTo10.id {
+        switch id {
+        case numbersNumberBondsTo10.id:
             return .numbersNumberBondsTo10
+        case geometryShapeNames.id:
+            return .geometryShapeNames
+        case geometryAnglesBasic.id:
+            return .geometryAnglesBasic
+        case geometrySymmetryFolds.id:
+            return .geometrySymmetryFolds
+        default:
+            return nil
         }
-        return nil
     }
 
     static let numbersNumberBondsTo10 = LabConceptSessionPlan(
@@ -589,6 +658,58 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
             ),
         ]
     )
+
+    static let geometryShapeNames = LabConceptSessionPlan(
+        id: "geometry-shape-names",
+        laneID: .geometry,
+        title: "Shape Lab",
+        subtitle: "Learn shape cards, remember clues, play the existing Shape Lab, then finish with a quick match blast.",
+        estimatedLength: "6–8 min",
+        masteryStateLabel: "Geometry starter",
+        recommendedNextActivity: "Shape Lab play",
+        stages: [
+            LabSessionStagePlan(stage: .learn, title: "Meet the shapes", childCopy: "Look at shape cards and notice sides, corners, and curves.", parentCopy: "Introduces shape vocabulary with visual-first cards.", timerPolicy: .learnTrackedOnly, route: .shapeGeometry),
+            LabSessionStagePlan(stage: .remember, title: "Bring clues back", childCopy: "Match each clue to the shape it describes.", parentCopy: "Calm retrieval stage using reusable Remember cards.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometryShapeNames)),
+            LabSessionStagePlan(stage: .play, title: "Play Shape Lab", childCopy: "Use the current Shape Lab to quiz and match shapes.", parentCopy: "Wraps existing Shape Lab as the Play stage without removing direct game access.", timerPolicy: .calmNoCountdown, route: .shapeGeometry),
+            LabSessionStagePlan(stage: .blast, title: "Shape quick match", childCopy: "Do a celebratory fast match when you feel ready.", parentCopy: "Blast stays readiness gated and non-punitive.", timerPolicy: .readinessGatedBlast, route: .shapeGeometry),
+            LabSessionStagePlan(stage: .score, title: "Shape spark score", childCopy: "Celebrate shapes you can name and pick the next quest.", parentCopy: "Score stage summarizes progress later; no timer pressure.", timerPolicy: .calmNoCountdown, route: nil),
+        ]
+    )
+
+    static let geometryAnglesBasic = LabConceptSessionPlan(
+        id: "geometry-angles-basic",
+        laneID: .geometry,
+        title: "Angle Lab",
+        subtitle: "Learn angle benchmarks, remember degrees, measure with two fingers, then blast targets in Angle Cannon.",
+        estimatedLength: "7–9 min",
+        masteryStateLabel: "Recommended next",
+        recommendedNextActivity: "Two-Finger Protractor",
+        stages: [
+            LabSessionStagePlan(stage: .learn, title: "See angle turns", childCopy: "Open, close, and compare small, square, wide, and straight turns.", parentCopy: "Concept-first angle vocabulary before sensor play.", timerPolicy: .learnTrackedOnly, route: .twoFingerProtractor),
+            LabSessionStagePlan(stage: .remember, title: "Remember degrees", childCopy: "Recall 90°, 180°, acute, and obtuse clues.", parentCopy: "Soft retrieval with no countdown.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometryAnglesBasic)),
+            LabSessionStagePlan(stage: .play, title: "Measure with fingers", childCopy: "Use two fingers like a protractor to feel the size of an angle.", parentCopy: "Existing Two-Finger Protractor remains directly playable and also serves this Play stage.", timerPolicy: .calmNoCountdown, route: .twoFingerProtractor),
+            LabSessionStagePlan(stage: .blast, title: "Angle Cannon", childCopy: "Aim at target angles when you are ready for a rocket round.", parentCopy: "Existing Angle Cannon becomes the Blast stage for Angle Lab.", timerPolicy: .readinessGatedBlast, route: .angleCannon),
+            LabSessionStagePlan(stage: .score, title: "Angle spark score", childCopy: "Celebrate the angles you measured and blasted.", parentCopy: "Score remains child-safe and pressure-free.", timerPolicy: .calmNoCountdown, route: nil),
+        ]
+    )
+
+    static let geometrySymmetryFolds = LabConceptSessionPlan(
+        id: "geometry-symmetry-folds",
+        laneID: .geometry,
+        title: "Symmetry Lab",
+        subtitle: "Learn mirror halves, remember symmetric examples, play Symmetry Fold, then try a mirror challenge blast.",
+        estimatedLength: "6–8 min",
+        masteryStateLabel: "Fold and compare",
+        recommendedNextActivity: "Symmetry Fold",
+        stages: [
+            LabSessionStagePlan(stage: .learn, title: "See mirror halves", childCopy: "Look for halves that cover each other after a fold.", parentCopy: "Visual symmetry examples introduce the fold idea.", timerPolicy: .learnTrackedOnly, route: .symmetryFold),
+            LabSessionStagePlan(stage: .remember, title: "Remember mirror clues", childCopy: "Sort symmetric, not symmetric, and fold-line clues.", parentCopy: "Reusable Remember cards prepare children before sensor play.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometrySymmetryFolds)),
+            LabSessionStagePlan(stage: .play, title: "Play Symmetry Fold", childCopy: "Fold shapes and see whether both sides match.", parentCopy: "Existing Symmetry Fold is wrapped as the Play stage.", timerPolicy: .calmNoCountdown, route: .symmetryFold),
+            LabSessionStagePlan(stage: .blast, title: "Mirror challenge", childCopy: "Try a celebratory fold challenge when ready.", parentCopy: "Blast is framed as celebration, not a punitive speed test.", timerPolicy: .readinessGatedBlast, route: .symmetryFold),
+            LabSessionStagePlan(stage: .score, title: "Symmetry spark score", childCopy: "Celebrate the mirror matches you found.", parentCopy: "Score stage can show richer analytics later.", timerPolicy: .calmNoCountdown, route: nil),
+        ]
+    )
+
 }
 
 struct GuidedLabPath: Identifiable, Equatable {
@@ -622,6 +743,13 @@ struct GuidedLabPath: Identifiable, Equatable {
             subtitle: "A first guided loop for Number Bonds to 10.",
             stages: LabConceptSessionPlan.numbersNumberBondsTo10.stageOrder,
             sessionPlans: [.numbersNumberBondsTo10]
+        ),
+        GuidedLabPath(
+            laneID: .geometry,
+            title: "Geometry Path",
+            subtitle: "Staged Shape, Angle, and Symmetry labs using Learn → Remember → Play → Blast → Score.",
+            stages: [.learn, .remember, .play, .blast, .score],
+            sessionPlans: [.geometryShapeNames, .geometryAnglesBasic, .geometrySymmetryFolds]
         ),
     ]
 }
