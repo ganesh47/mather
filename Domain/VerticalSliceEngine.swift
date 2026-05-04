@@ -65,6 +65,8 @@ final class VerticalSliceEngine {
     private let speechService: SpeechService
     private let hapticsService: HapticsService
     private let saveSummary: (SessionSummaryDraft) -> Void
+    var onSessionComplete: ((SessionSummaryDraft) -> Void)?
+    private var initialStageOverride: SliceStage?
     // Injected so unit tests can pass 0 to skip the animation delay.
     let celebrationDuration: TimeInterval
     // Frozen at startSession(); never changes mid-session.
@@ -144,6 +146,12 @@ final class VerticalSliceEngine {
     func showSoundVolume() { route = .soundVolume }
     func showShapeGeometry() { route = .shapeGeometry }
 
+    func startBondBlastFinale(target: Int = 10) {
+        updateConfig(problemCount: 1, minTarget: target, maxTarget: target)
+        initialStageOverride = .bondMatch
+        startSession()
+    }
+
     func startSession() {
         // Freeze the active theme from the user's current selection — unless a custom
         // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
@@ -179,6 +187,7 @@ final class VerticalSliceEngine {
         }
         currentProblemIndex = 0
         currentStage = initialStageForCurrentRoute()
+        initialStageOverride = nil
         currentProblemState = ProblemState(stage: currentStage)
         currentSession = SliceSession(
             sessionId: UUID(),
@@ -204,7 +213,9 @@ final class VerticalSliceEngine {
         sessionStartedAt = .now
         problemStartedAt = .now
         speechService.resetSession()
-        if currentStage == .storyAnchor, let currentStoryPrompt {
+        if currentStage == .bondMatch {
+            prepareForStage(currentStage)
+        } else if currentStage == .storyAnchor, let currentStoryPrompt {
             speechService.speak(currentStoryPrompt.spokenIntro, enabled: featureFlags.audioEnabled)
         } else {
             speechService.speakSessionIntro(activeTheme.sessionIntroPhrase())
@@ -695,6 +706,7 @@ final class VerticalSliceEngine {
             exportFileName: "swiftdata://session/\(currentSession.sessionId.uuidString)"
         )
         saveSummary(summary)
+        onSessionComplete?(summary)
         completedSummary = summary
         feedbackMessage = activeTheme.sessionEndPhrase()
         route = .sessionSummary
@@ -995,7 +1007,7 @@ final class VerticalSliceEngine {
     }
 
     private func initialStageForCurrentRoute() -> SliceStage {
-        featureFlags.makeBreakLoopV2Enabled ? .storyAnchor : .concrete
+        initialStageOverride ?? (featureFlags.makeBreakLoopV2Enabled ? .storyAnchor : .concrete)
     }
 
 }

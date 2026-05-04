@@ -94,6 +94,25 @@ final class AppModel {
         _ = labConceptSessionProgressStore.markLabLaunchedGameplayCompleted(context, summary: stageSummary)
     }
 
+    func completePendingLabBondBlast(with summary: SessionSummaryDraft) {
+        let context = pendingLabGameplayCompletionContext
+        pendingLabGameplayCompletionContext = nil
+
+        let duration = summary.endedAt.timeIntervalSince(summary.startedAt)
+        let stageSummary = LabStageTimingScoreSummary(
+            durationSeconds: duration,
+            scoreSummary: LabSessionScoreSummary(
+                conceptTitle: summary.objectiveTitle,
+                stageDurations: [.blast: duration],
+                accuracy: summary.firstAttemptAccuracy,
+                streak: summary.transferCorrectCount,
+                weakAreas: [],
+                nextRecommendation: "Celebrate the spark score"
+            )
+        )
+        _ = labConceptSessionProgressStore.markLabLaunchedGameplayCompleted(context, summary: stageSummary)
+    }
+
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
         let featureFlags = FeatureFlagService()
@@ -182,6 +201,9 @@ final class AppModel {
         self.explorerLabMasteryProfile = explorerLabMasteryProfile
         self.sumSprintEngine = sumSprintEngine
         sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
+        vsEngine.onSessionComplete = { [weak self] summary in
+            self?.completePendingLabBondBlast(with: summary)
+        }
         sumSprintEngine.onSessionComplete = { [weak self, weak gameSessionStore] summary in
             gameSessionStore?.save(
                 gameName: "Sum Sprint",

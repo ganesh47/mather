@@ -204,7 +204,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(plan.masteryStateLabel, "Recommended first")
         XCTAssertEqual(plan.recommendedNextActivity, "Make & Break warm-up")
         XCTAssertTrue(plan.stages.allSatisfy { !$0.accessibilityLabel.isEmpty })
-        XCTAssertEqual(plan.stages.map(\.actionLabel), ["Start", "Continue", "Continue", "Preview", "Preview"])
+        XCTAssertEqual(plan.stages.map(\.actionLabel), ["Start", "Continue", "Continue", "Continue", "Preview"])
     }
 
     func testNumbersLabPlanDoesNotChangeDirectGamesRegistry() {
@@ -390,7 +390,10 @@ final class LabModelsTests: XCTestCase {
         let rememberStage = try XCTUnwrap(plan.stages.first { $0.stage == .remember })
         let deck = LabRememberStageDeck.numbersNumberBondsTo10
 
+        let blastStage = try XCTUnwrap(plan.stages.first { $0.stage == .blast })
+
         XCTAssertEqual(rememberStage.route, .labRememberStage(.numbersNumberBondsTo10))
+        XCTAssertEqual(blastStage.route, .session)
         XCTAssertEqual(rememberStage.timerPolicy, .calmNoCountdown)
         XCTAssertFalse(rememberStage.timerPolicy.showsCountdown)
         XCTAssertFalse(rememberStage.timerPolicy.isPunitive)
@@ -399,6 +402,40 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
     }
 
+
+
+    func testLabBlastStageLaunchesBondBlastFinaleRoute() throws {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let blast = try XCTUnwrap(plan.stages.first { $0.stage == .blast })
+
+        XCTAssertEqual(blast.title, "Bond Blast")
+        XCTAssertEqual(blast.route, .session)
+        XCTAssertEqual(blast.timerPolicy, .readinessGatedBlast)
+        XCTAssertFalse(blast.timerPolicy.showsCountdown)
+        XCTAssertFalse(blast.timerPolicy.isPunitive)
+    }
+
+    func testLabLaunchedBlastCompletionAdvancesToScoreWithSummary() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-blast-complete",
+            activeProfileIdProvider: { "profile-a" }
+        )
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let launchedAt = Date(timeIntervalSince1970: 5_000)
+        let completedAt = Date(timeIntervalSince1970: 5_045)
+        let context = LabGameplayCompletionContext(plan: plan, stage: .blast)
+        let summary = LabStageTimingScoreSummary(durationSeconds: 45)
+
+        _ = store.beginGuidedStage(.blast, in: plan, at: launchedAt)
+        let progress = try XCTUnwrap(store.markLabLaunchedGameplayCompleted(context, at: completedAt, summary: summary))
+
+        XCTAssertEqual(progress.completedStages, [.blast])
+        XCTAssertEqual(progress.currentStage, .score)
+        XCTAssertEqual(progress.lastActivityAt, completedAt)
+        XCTAssertEqual(progress.stageSummaries[.blast], summary)
+    }
 
     func testLabLaunchedGameplayCompletionAdvancesPlayToBlastWithSummary() throws {
         let storage = InMemoryLabConceptSessionProgressDefaults()

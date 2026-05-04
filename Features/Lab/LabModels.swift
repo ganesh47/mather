@@ -539,7 +539,7 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
                 childCopy: "A rocket round appears when you’re ready to celebrate.",
                 parentCopy: "Blast is celebratory and readiness gated; countdown pressure is not default.",
                 timerPolicy: .readinessGatedBlast,
-                route: nil
+                route: .session
             ),
             LabSessionStagePlan(
                 stage: .score,
