@@ -8,7 +8,7 @@ struct LabView: View {
     @State private var selectedPath: ExplorerPathID = .labs
     @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
-    private let lanes = CapabilityLane.defaultExplorerLanes
+    private let lanes = CapabilityLane.labSubjectStreams
     private let guidedPaths = GuidedLabPath.phaseOne
     private let gameEntries = ExplorerGameRegistry.directLaunchEntries
 
@@ -75,10 +75,10 @@ struct LabView: View {
                 Text("Explorer Lab")
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Choose a world to explore")
+                Text("Labs and Games")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Text("Missions, mini cards, and sensor-powered experiments wait inside")
+                Text("Choose a subject stream, or jump straight into a game")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.accent)
             }
@@ -161,10 +161,10 @@ struct LabView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Labs build in stages")
+                    Text("Subject streams")
                         .font(.title3.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text("Learn → Remember → Play → Blast → Score")
+                    Text("Numbers & Arithmetic · Geometry · Physics · Geography · Chemistry")
                         .font(.caption.weight(.black))
                         .foregroundStyle(MatherTheme.accent)
                 }
@@ -269,17 +269,12 @@ struct LabView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                     if let primaryPlan = path.primaryPlan {
-                        Text("First quest: \(primaryPlan.title) • \(primaryPlan.estimatedLength)")
+                        Text("First: \(primaryPlan.title) • \(primaryPlan.estimatedLength)")
                             .font(.caption2.weight(.black))
                             .foregroundStyle(tint)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
                     }
-                    Text(path.stages.map(\.rawValue).joined(separator: " → "))
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(tint)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right.circle.fill")
@@ -350,13 +345,15 @@ struct LabView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .lineLimit(2)
-                    Text(canLaunch ? "Direct game" : "Needs a sensor on this device")
+                    Text(canLaunch ? "Tap to play" : "Needs a sensor")
                         .font(.caption2.weight(.black))
                         .foregroundStyle(canLaunch ? tint : MatherTheme.cardSubtitle)
-                    Text(capabilitySummary)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(2)
+                    if !canLaunch || activity.id.sensorNeeds != [.noSpecialSensor] {
+                        Text(capabilitySummary)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .lineLimit(1)
+                    }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")

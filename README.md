@@ -14,7 +14,7 @@ Mather is built around:
   - Numbers Lab
   - Geometry Lab
   - Physics Lab
-  - Map & World Lab
+  - Geography Lab
   - Discovery Cards / recall substrate
   - future Chemistry Lab
   - future Electronics Lab

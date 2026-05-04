@@ -170,10 +170,10 @@ struct HomeView: View {
                             .font(.system(size: 48))
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Explorer Lab")
+                            Text("Labs + Games")
                                 .font(.title3.weight(.black))
                                 .foregroundStyle(.white)
-                            Text("8 games inside")
+                            Text("Subjects + one-tap play")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.white.opacity(0.85))
                         }
@@ -194,10 +194,10 @@ struct HomeView: View {
 
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Physics · Geometry · Angles")
+                        Text("Numbers · Geometry · Physics · Geography")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        Text("Tap to explore all activities")
+                        Text("Choose Labs or Games")
                             .font(.headline.weight(.bold))
                             .foregroundStyle(MatherTheme.ink)
                             .fixedSize(horizontal: false, vertical: true)
