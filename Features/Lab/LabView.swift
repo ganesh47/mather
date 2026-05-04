@@ -121,8 +121,7 @@ struct LabView: View {
 
         return VStack(alignment: .leading, spacing: compact ? 8 : 10) {
             HStack(spacing: 10) {
-                Text(path.emoji)
-                    .font(.system(size: compact ? 30 : 38))
+                explorerArtwork(path, tint: tint, compact: compact)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(path.title)
                         .font(.system(size: compact ? 22 : 26, weight: .black, design: .rounded))
@@ -192,8 +191,7 @@ struct LabView: View {
         return LazyVGrid(columns: columns, spacing: compact ? 6 : 8) {
             ForEach(GuidedLabStage.allCases) { stage in
                 VStack(spacing: 4) {
-                    Text(stage.emoji)
-                        .font(.title3)
+                    stageArtwork(stage, tint: MatherTheme.accent, compact: compact)
                     Text(stage.rawValue)
                         .font(.caption2.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
@@ -210,6 +208,39 @@ struct LabView: View {
         }
     }
 
+    private func explorerArtwork(_ path: ExplorerPathPresentation, tint: Color, compact: Bool) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            RoundedRectangle(cornerRadius: compact ? 16 : 18, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.26), tint.opacity(0.08), MatherTheme.card.opacity(0.9)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            Image(systemName: path.symbolName)
+                .font(.system(size: compact ? 22 : 28, weight: .black))
+                .foregroundStyle(tint)
+            Text(path.emoji)
+                .font(.system(size: compact ? 16 : 20))
+                .offset(x: 3, y: 4)
+        }
+        .frame(width: compact ? 46 : 56, height: compact ? 46 : 56)
+        .accessibilityLabel(path.artworkAccessibilityLabel)
+    }
+
+    private func stageArtwork(_ stage: GuidedLabStage, tint: Color, compact: Bool) -> some View {
+        ZStack {
+            Circle()
+                .fill(tint.opacity(0.12))
+            Image(systemName: stage.symbolName)
+                .font(.system(size: compact ? 14 : 16, weight: .black))
+                .foregroundStyle(tint)
+        }
+        .frame(width: compact ? 30 : 34, height: compact ? 30 : 34)
+        .accessibilityLabel(stage.artworkAccessibilityLabel)
+    }
+
     private func guidedPathCard(_ path: GuidedLabPath) -> some View {
         let lane = lanes.first { $0.id == path.laneID }
         let tint = laneColor(path.laneID)
@@ -218,10 +249,18 @@ struct LabView: View {
             appModel.engine.showLabLane(path.laneID)
         } label: {
             HStack(spacing: 12) {
-                Text(lane?.emoji ?? "🧪")
-                    .font(.system(size: 34))
-                    .frame(width: 58, height: 58)
-                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(tint.opacity(0.12))
+                    Image(systemName: "sparkles")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(tint)
+                    Text(lane?.emoji ?? "🧪")
+                        .font(.system(size: 24))
+                        .offset(x: 10, y: 10)
+                }
+                .frame(width: 58, height: 58)
+                .accessibilityLabel("Guided lab artwork for \(path.title)")
                 VStack(alignment: .leading, spacing: 4) {
                     Text(path.title)
                         .font(.headline.weight(.black))
@@ -284,10 +323,24 @@ struct LabView: View {
             launchDirectGame(entry)
         } label: {
             HStack(spacing: 12) {
-                Text(activity.emoji)
-                    .font(.system(size: 36))
-                    .frame(width: 62, height: 62)
-                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.18), MatherTheme.card.opacity(0.88)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(tint.opacity(canLaunch ? 1 : 0.45))
+                    Text(activity.emoji)
+                        .font(.system(size: 24))
+                        .offset(x: 11, y: 11)
+                }
+                .frame(width: 62, height: 62)
+                .accessibilityLabel(activity.artworkAccessibilityLabel)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(activity.title)
                         .font(.headline.weight(.black))

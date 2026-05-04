@@ -268,7 +268,15 @@ struct LabLaneDetailView: View {
         let stageState = progressState(for: stage.stage, progress: progress)
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(stage.stage.emoji)
+                ZStack {
+                    Circle()
+                        .fill(tint.opacity(0.12))
+                    Image(systemName: stage.stage.symbolName)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(tint)
+                }
+                .frame(width: 26, height: 26)
+                .accessibilityLabel(stage.stage.artworkAccessibilityLabel)
                 Text(stage.stage.rawValue)
                     .font(.caption.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
@@ -627,6 +635,7 @@ struct LabLaneDetailView: View {
                 .font(.system(size: 42))
         }
         .frame(width: 76, height: 76)
+        .accessibilityLabel("Lab artwork for \(lane.title)")
     }
 
     private func activityVisual(_ activity: LabActivity, tint: Color) -> some View {
@@ -639,7 +648,7 @@ struct LabLaneDetailView: View {
                 .offset(x: -18, y: -14)
         }
         .frame(width: 104, height: 96)
-        .accessibilityHidden(true)
+        .accessibilityLabel(activity.artworkAccessibilityLabel)
     }
 
     @ViewBuilder

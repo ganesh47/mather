@@ -129,10 +129,26 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(labs.title, "Labs")
         XCTAssertTrue(labs.subtitle.contains("Guided sessions"))
         XCTAssertEqual(labs.callToAction, "Start a learning path")
+        XCTAssertEqual(labs.symbolName, "sparkles.rectangle.stack.fill")
+        XCTAssertTrue(labs.artworkAccessibilityLabel.contains("Labs"))
 
         XCTAssertEqual(games.title, "Games")
         XCTAssertTrue(games.subtitle.contains("Jump straight into"))
         XCTAssertEqual(games.callToAction, "Play now")
+        XCTAssertEqual(games.symbolName, "gamecontroller.fill")
+        XCTAssertTrue(games.artworkAccessibilityLabel.contains("Games"))
+    }
+
+    func testGuidedStageArtworkMetadataAvoidsEmbeddedTextDependency() {
+        XCTAssertEqual(GuidedLabStage.allCases.map(\.symbolName), [
+            "cube.transparent.fill",
+            "rectangle.on.rectangle.angled",
+            "gamecontroller.fill",
+            "flame.fill",
+            "star.circle.fill",
+        ])
+        XCTAssertTrue(GuidedLabStage.allCases.allSatisfy { !$0.artMotif.isEmpty })
+        XCTAssertTrue(GuidedLabStage.allCases.allSatisfy { $0.artworkAccessibilityLabel.contains($0.rawValue) })
     }
 
     func testPhaseOneGuidedLabPathShowsStagedLearningLoop() throws {
