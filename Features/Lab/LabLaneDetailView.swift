@@ -233,7 +233,7 @@ struct LabLaneDetailView: View {
                 Button {
                     start(plan)
                 } label: {
-                    Label(plan.startAffordanceLabel, systemImage: "play.fill")
+                    Label(startLabel(for: plan), systemImage: appModel.labConceptSessionProgressStore.hasProgress(for: plan) ? "arrow.clockwise.circle.fill" : "play.fill")
                         .font(.caption.weight(.black))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
@@ -241,13 +241,20 @@ struct LabLaneDetailView: View {
                         .background(tint, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Start \(plan.title)")
-                .accessibilityHint("Opens the first available stage. Games remain directly playable below.")
+                .accessibilityLabel("\(startLabel(for: plan)) \(plan.title)")
+                .accessibilityHint("Opens the guided stage in progress. Games remain directly playable below.")
+            }
+
+            if let progress = appModel.labConceptSessionProgressStore.progress(for: plan) {
+                Label(progress.resumeCopy, systemImage: "bookmark.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(tint)
+                    .accessibilityLabel("Resume \(plan.title). \(progress.resumeCopy).")
             }
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
                 ForEach(plan.stages) { stage in
-                    stagePlanCard(stage, tint: tint)
+                    stagePlanCard(stage, progress: appModel.labConceptSessionProgressStore.progress(for: plan), tint: tint)
                 }
             }
         }
@@ -257,14 +264,20 @@ struct LabLaneDetailView: View {
         .accessibilityLabel("\(plan.title). \(plan.pathLabel).")
     }
 
-    private func stagePlanCard(_ stage: LabSessionStagePlan, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
+        let stageState = progressState(for: stage.stage, progress: progress)
+        return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text(stage.stage.emoji)
                 Text(stage.stage.rawValue)
                     .font(.caption.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Spacer(minLength: 0)
+                if let stageState {
+                    Text(stageState)
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                }
             }
             Text(stage.title)
                 .font(.caption.weight(.black))
@@ -696,9 +709,23 @@ struct LabLaneDetailView: View {
         }
     }
 
+    private func startLabel(for plan: LabConceptSessionPlan) -> String {
+        appModel.labConceptSessionProgressStore.resumeLabel(for: plan)
+    }
+
+    private func progressState(for stage: GuidedLabStage, progress: LabConceptSessionProgress?) -> String? {
+        guard let progress else { return nil }
+        if progress.completedStages.contains(stage) { return "Done" }
+        if progress.currentStage == stage { return "Resume" }
+        return nil
+    }
+
     private func start(_ plan: LabConceptSessionPlan) {
-        guard let route = plan.startRoute else { return }
+        let progress = appModel.labConceptSessionProgressStore.progress(for: plan)
+        let stage = progress?.currentStagePlan(in: plan) ?? plan.stages.first(where: { $0.route != nil })
+        guard let stage, let route = stage.route else { return }
         appModel.pickProfileThenRun {
+            _ = appModel.labConceptSessionProgressStore.beginGuidedStage(stage.stage, in: plan)
             if plan.id == LabConceptSessionPlan.numbersNumberBondsTo10.id {
                 appModel.engine.updateConfig(problemCount: 4, minTarget: 1, maxTarget: 10)
             }

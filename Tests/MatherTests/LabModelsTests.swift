@@ -265,6 +265,94 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.activity.id == .memoryMatch && $0.directRoute == .memory })
     }
 
+
+    func testLabConceptProgressCreationAndResumeCopy() throws {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+        let progress = LabConceptSessionProgress(plan: plan, startedAt: startedAt)
+
+        XCTAssertEqual(progress.conceptPlanID, plan.id)
+        XCTAssertEqual(progress.currentStage, .learn)
+        XCTAssertEqual(progress.completedStages, [])
+        XCTAssertEqual(progress.lastActivityAt, startedAt)
+        XCTAssertEqual(progress.resumeCopy, "Continue: Learn")
+        XCTAssertEqual(progress.currentStagePlan(in: plan)?.route, .sessionConfig)
+    }
+
+    func testLabConceptProgressNextStageCalculationAndCompletedOrdering() {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        var progress = LabConceptSessionProgress(
+            conceptPlanID: plan.id,
+            currentStage: .learn,
+            completedStages: [.play, .learn, .play],
+            lastActivityAt: Date(timeIntervalSince1970: 1_000)
+        )
+
+        progress.markCompleted(.remember, in: plan, at: Date(timeIntervalSince1970: 1_100))
+
+        XCTAssertEqual(progress.completedStages, [.learn, .remember, .play])
+        XCTAssertEqual(progress.nextIncompleteStage(in: plan), .blast)
+        XCTAssertEqual(progress.currentStage, .blast)
+        XCTAssertEqual(progress.resumeCopy, "Continue: Blast next")
+    }
+
+    func testLabConceptProgressStorePersistsGuidedLaunchWithoutFakingMastery() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress",
+            activeProfileIdProvider: { "profile-a" }
+        )
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let launchedAt = Date(timeIntervalSince1970: 2_000)
+
+        let progress = store.beginGuidedStage(.learn, in: plan, at: launchedAt)
+        let reloaded = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress",
+            activeProfileIdProvider: { "profile-a" }
+        )
+
+        XCTAssertEqual(progress.currentStage, .learn)
+        XCTAssertEqual(progress.completedStages, [])
+        XCTAssertEqual(progress.lastActivityAt, launchedAt)
+        XCTAssertEqual(reloaded.resumeLabel(for: plan), "Continue: Learn")
+        XCTAssertEqual(reloaded.progress(for: plan)?.completedStages, [])
+    }
+
+    func testLabConceptProgressStoreScopesByProfile() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let first = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress.profiles",
+            activeProfileIdProvider: { "profile-a" }
+        )
+        let second = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress.profiles",
+            activeProfileIdProvider: { "profile-b" }
+        )
+
+        first.beginGuidedStage(.remember, in: plan, at: Date(timeIntervalSince1970: 3_000))
+
+        XCTAssertEqual(first.currentStage(for: plan), .remember)
+        XCTAssertNil(second.progress(for: plan))
+        XCTAssertEqual(second.resumeLabel(for: plan), "Start")
+    }
+
+    func testDirectGamesLaunchDoesNotMarkBlastOrScoreComplete() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let store = LabConceptSessionProgressStore(storage: storage, storageKey: "test.direct-games")
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let directSumSprint = try XCTUnwrap(ExplorerGameRegistry.directLaunchEntries.first { $0.activity.id == .sumSprint })
+
+        XCTAssertEqual(directSumSprint.directRoute, .sumSprint)
+        XCTAssertNil(store.progress(for: plan))
+        XCTAssertFalse(store.progress(for: plan)?.completedStages.contains(.blast) ?? false)
+        XCTAssertFalse(store.progress(for: plan)?.completedStages.contains(.score) ?? false)
+    }
+
 }
 
 extension LabModelsTests {
@@ -421,5 +509,22 @@ extension LabModelsTests {
             LabActivityID.twoFingerProtractor.sensorAffordances(with: capabilities).map(\.displayLabel),
             ["No special sensor needed"]
         )
+    }
+}
+
+
+private final class InMemoryLabConceptSessionProgressDefaults: ExplorerLabMasteryKeyValueStore {
+    var values: [String: Data] = [:]
+
+    func data(forKey defaultName: String) -> Data? {
+        values[defaultName]
+    }
+
+    func set(_ value: Data?, forKey defaultName: String) {
+        values[defaultName] = value
+    }
+
+    func removeObject(forKey defaultName: String) {
+        values.removeValue(forKey: defaultName)
     }
 }
