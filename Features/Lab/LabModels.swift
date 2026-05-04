@@ -223,7 +223,7 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
     ]
 }
 
-enum GuidedLabStage: String, CaseIterable, Hashable, Identifiable {
+enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {
     case learn = "Learn"
     case remember = "Remember"
     case play = "Play"
@@ -449,7 +449,7 @@ struct RoundTimerSnapshot: Equatable {
     }
 }
 
-struct LabSessionScoreSummary: Equatable {
+struct LabSessionScoreSummary: Codable, Equatable {
     let conceptTitle: String
     let stageDurations: [GuidedLabStage: TimeInterval]
     let accuracy: Double
@@ -1113,4 +1113,93 @@ struct CapabilityLane: Identifiable, Equatable {
         ],
     ]
 
+}
+
+// MARK: - Lab concept session progress
+
+struct LabStageTimingScoreSummary: Codable, Equatable {
+    let durationSeconds: TimeInterval?
+    let scoreSummary: LabSessionScoreSummary?
+
+    init(durationSeconds: TimeInterval? = nil, scoreSummary: LabSessionScoreSummary? = nil) {
+        self.durationSeconds = durationSeconds
+        self.scoreSummary = scoreSummary
+    }
+}
+
+struct LabConceptSessionProgress: Codable, Equatable, Identifiable {
+    let conceptPlanID: String
+    var currentStage: GuidedLabStage
+    private(set) var completedStages: [GuidedLabStage]
+    var lastActivityAt: Date
+    var stageSummaries: [GuidedLabStage: LabStageTimingScoreSummary]
+
+    var id: String { conceptPlanID }
+    var hasStarted: Bool { true }
+
+    init(
+        conceptPlanID: String,
+        currentStage: GuidedLabStage,
+        completedStages: [GuidedLabStage] = [],
+        lastActivityAt: Date,
+        stageSummaries: [GuidedLabStage: LabStageTimingScoreSummary] = [:]
+    ) {
+        self.conceptPlanID = conceptPlanID
+        self.currentStage = currentStage
+        self.completedStages = Self.uniqueStages(completedStages)
+        self.lastActivityAt = lastActivityAt
+        self.stageSummaries = stageSummaries
+    }
+
+    init(plan: LabConceptSessionPlan, startedAt: Date) {
+        self.init(
+            conceptPlanID: plan.id,
+            currentStage: plan.stageOrder.first ?? .learn,
+            lastActivityAt: startedAt
+        )
+    }
+
+    var resumeCopy: String {
+        if completedStages.isEmpty {
+            return "Continue: \(currentStage.rawValue)"
+        }
+        return "Continue: \(currentStage.rawValue) next"
+    }
+
+    func currentStagePlan(in plan: LabConceptSessionPlan) -> LabSessionStagePlan? {
+        plan.stages.first { $0.stage == currentStage }
+    }
+
+    func nextIncompleteStage(in plan: LabConceptSessionPlan) -> GuidedLabStage? {
+        plan.stageOrder.first { !completedStages.contains($0) }
+    }
+
+    mutating func markLaunched(_ stage: GuidedLabStage, in plan: LabConceptSessionPlan, at date: Date) {
+        guard plan.stageOrder.contains(stage) else { return }
+        currentStage = stage
+        lastActivityAt = date
+    }
+
+    mutating func markCompleted(
+        _ stage: GuidedLabStage,
+        in plan: LabConceptSessionPlan,
+        at date: Date,
+        summary: LabStageTimingScoreSummary? = nil
+    ) {
+        guard plan.stageOrder.contains(stage) else { return }
+        if !completedStages.contains(stage) {
+            completedStages.append(stage)
+        }
+        completedStages = plan.stageOrder.filter { completedStages.contains($0) }
+        if let summary {
+            stageSummaries[stage] = summary
+        }
+        currentStage = nextIncompleteStage(in: plan) ?? stage
+        lastActivityAt = date
+    }
+
+    private static func uniqueStages(_ stages: [GuidedLabStage]) -> [GuidedLabStage] {
+        var seen = Set<GuidedLabStage>()
+        return stages.filter { seen.insert($0).inserted }
+    }
 }
