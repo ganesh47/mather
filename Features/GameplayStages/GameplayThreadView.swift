@@ -31,7 +31,7 @@ struct GameplayThreadView: View {
         thread: GameplayThreadDefinition = GameplaySampleThreads.countries,
         actions: GameplayStageFeedbackActions = GameplayStageFeedbackActions(),
         progressStore: GameplayProgressStore? = nil,
-        onExitHome: (@escaping () -> Void)? = nil,
+        onExitHome: (() -> Void)? = nil,
         now: Date = Date()
     ) {
         self.thread = thread
