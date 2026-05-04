@@ -13,6 +13,10 @@ struct LabLaneDetailView: View {
         CapabilityLane.defaultExplorerLanes.first { $0.id == laneID } ?? CapabilityLane.defaultExplorerLanes[0]
     }
 
+    private var sessionPlans: [LabConceptSessionPlan] {
+        GuidedLabPath.phaseOne.first { $0.laneID == laneID }?.sessionPlans ?? []
+    }
+
     var body: some View {
         let selectedLane = lane
         let tint = laneColor(selectedLane.id)
@@ -24,6 +28,7 @@ struct LabLaneDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header(selectedLane, presentation: presentation, progress: progress, tint: tint)
+                    guidedSessionSection(tint: tint)
                     gamesSection(selectedLane, tint: tint)
                     supportPanel(selectedLane, progress: progress, tint: tint)
                     researchQuestSection(selectedLane, tint: tint)
@@ -174,6 +179,112 @@ struct LabLaneDetailView: View {
         .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
         .padding(10)
         .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func guidedSessionSection(tint: Color) -> some View {
+        if !sessionPlans.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Guided path")
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text("Learn → Remember → Play → Blast → Score")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(tint)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                ForEach(sessionPlans) { plan in
+                    conceptSessionPlanCard(plan, tint: tint)
+                }
+            }
+            .padding(14)
+            .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(tint.opacity(0.18), lineWidth: 1)
+            )
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Guided path for \(lane.title).")
+        }
+    }
+
+    private func conceptSessionPlanCard(_ plan: LabConceptSessionPlan, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(plan.title)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(plan.subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(plan.masteryStateLabel) • \(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                }
+
+                Spacer(minLength: 0)
+
+                Button {
+                    start(plan)
+                } label: {
+                    Label(plan.startAffordanceLabel, systemImage: "play.fill")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(tint, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Start \(plan.title)")
+                .accessibilityHint("Opens the first available stage. Games remain directly playable below.")
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
+                ForEach(plan.stages) { stage in
+                    stagePlanCard(stage, tint: tint)
+                }
+            }
+        }
+        .padding(12)
+        .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(plan.title). \(plan.pathLabel).")
+    }
+
+    private func stagePlanCard(_ stage: LabSessionStagePlan, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(stage.stage.emoji)
+                Text(stage.stage.rawValue)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer(minLength: 0)
+            }
+            Text(stage.title)
+                .font(.caption.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Text(stage.childCopy)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(3)
+                .minimumScaleFactor(0.75)
+            Text(stage.timerPolicy.childCopy)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(tint)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 138, alignment: .topLeading)
+        .background(MatherTheme.card.opacity(0.78), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(stage.accessibilityLabel)
     }
 
     private func gamesSection(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -577,6 +688,19 @@ struct LabLaneDetailView: View {
             return "camera.viewfinder"
         case .haptics:
             return "waveform"
+        }
+    }
+
+    private func start(_ plan: LabConceptSessionPlan) {
+        guard let route = plan.startRoute else { return }
+        appModel.pickProfileThenRun {
+            if plan.id == LabConceptSessionPlan.numbersNumberBondsTo10.id {
+                appModel.engine.updateConfig(problemCount: 4, minTarget: 1, maxTarget: 10)
+            }
+            appModel.engine.show(route)
+            if route == .sumSprint {
+                appModel.sumSprintEngine.showDifficultyPick()
+            }
         }
     }
 

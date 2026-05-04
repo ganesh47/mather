@@ -253,20 +253,163 @@ enum GuidedLabStage: String, CaseIterable, Hashable, Identifiable {
     }
 }
 
+enum LabSessionTimerPressure: String, Equatable {
+    case trackedOnly
+    case none
+    case readinessGated
+}
+
+struct LabSessionTimerPolicy: Equatable {
+    let pressure: LabSessionTimerPressure
+    let tracksElapsedTime: Bool
+    let showsCountdown: Bool
+    let isPunitive: Bool
+    let childCopy: String
+
+    static let learnTrackedOnly = LabSessionTimerPolicy(
+        pressure: .trackedOnly,
+        tracksElapsedTime: true,
+        showsCountdown: false,
+        isPunitive: false,
+        childCopy: "No rush — I’ll just remember how long you explored."
+    )
+
+    static let calmNoCountdown = LabSessionTimerPolicy(
+        pressure: .none,
+        tracksElapsedTime: true,
+        showsCountdown: false,
+        isPunitive: false,
+        childCopy: "Take your time. Memory grows with calm practice."
+    )
+
+    static let readinessGatedBlast = LabSessionTimerPolicy(
+        pressure: .readinessGated,
+        tracksElapsedTime: true,
+        showsCountdown: false,
+        isPunitive: false,
+        childCopy: "Blast is a celebration after you feel ready — not a test."
+    )
+}
+
+struct LabSessionStagePlan: Identifiable, Equatable {
+    let stage: GuidedLabStage
+    let title: String
+    let childCopy: String
+    let parentCopy: String
+    let timerPolicy: LabSessionTimerPolicy
+    let route: AppRoute?
+
+    var id: GuidedLabStage { stage }
+
+    var actionLabel: String {
+        route == nil ? "Preview" : (stage == .learn ? "Start" : "Continue")
+    }
+
+    var accessibilityLabel: String {
+        "\(stage.rawValue). \(title). \(childCopy)"
+    }
+}
+
+struct LabConceptSessionPlan: Identifiable, Equatable {
+    let id: String
+    let laneID: CapabilityLaneID
+    let title: String
+    let subtitle: String
+    let estimatedLength: String
+    let masteryStateLabel: String
+    let recommendedNextActivity: String
+    let stages: [LabSessionStagePlan]
+
+    var stageOrder: [GuidedLabStage] { stages.map(\.stage) }
+    var startRoute: AppRoute? { stages.first(where: { $0.route != nil })?.route }
+    var startAffordanceLabel: String { "Start" }
+    var continueAffordanceLabel: String { "Continue" }
+    var pathLabel: String { stageOrder.map(\.rawValue).joined(separator: " → ") }
+
+    static let numbersNumberBondsTo10 = LabConceptSessionPlan(
+        id: "numbers-number-bonds-to-10",
+        laneID: .numbers,
+        title: "Number Bonds to 10",
+        subtitle: "Build pairs that make ten, remember friendly facts, then celebrate with Bond Blast.",
+        estimatedLength: "8–10 min",
+        masteryStateLabel: "Recommended first",
+        recommendedNextActivity: "Make & Break warm-up",
+        stages: [
+            LabSessionStagePlan(
+                stage: .learn,
+                title: "Build ten",
+                childCopy: "Move counters and see two parts make one ten.",
+                parentCopy: "Concrete/pictorial discovery before symbols; elapsed time is tracked only.",
+                timerPolicy: .learnTrackedOnly,
+                route: .sessionConfig
+            ),
+            LabSessionStagePlan(
+                stage: .remember,
+                title: "Bring pairs back",
+                childCopy: "Use friendly picture clues to remember ten pairs.",
+                parentCopy: "Soft retrieval with visual support; no punitive countdown.",
+                timerPolicy: .calmNoCountdown,
+                route: .memory
+            ),
+            LabSessionStagePlan(
+                stage: .play,
+                title: "Try it for real",
+                childCopy: "Practice bonds inside playful number games.",
+                parentCopy: "Application stays calm before any readiness-gated speed round.",
+                timerPolicy: .calmNoCountdown,
+                route: .sumSprint
+            ),
+            LabSessionStagePlan(
+                stage: .blast,
+                title: "Bond Blast",
+                childCopy: "A rocket round appears when you’re ready to celebrate.",
+                parentCopy: "Blast is celebratory and readiness gated; countdown pressure is not default.",
+                timerPolicy: .readinessGatedBlast,
+                route: nil
+            ),
+            LabSessionStagePlan(
+                stage: .score,
+                title: "Spark score",
+                childCopy: "See what grew and pick the next tiny quest.",
+                parentCopy: "Child score stays encouraging; richer analytics can live in parent detail later.",
+                timerPolicy: .calmNoCountdown,
+                route: nil
+            ),
+        ]
+    )
+}
+
 struct GuidedLabPath: Identifiable, Equatable {
     let laneID: CapabilityLaneID
     let title: String
     let subtitle: String
     let stages: [GuidedLabStage]
+    let sessionPlans: [LabConceptSessionPlan]
 
     var id: CapabilityLaneID { laneID }
+    var primaryPlan: LabConceptSessionPlan? { sessionPlans.first }
+
+    init(
+        laneID: CapabilityLaneID,
+        title: String,
+        subtitle: String,
+        stages: [GuidedLabStage],
+        sessionPlans: [LabConceptSessionPlan] = []
+    ) {
+        self.laneID = laneID
+        self.title = title
+        self.subtitle = subtitle
+        self.stages = stages
+        self.sessionPlans = sessionPlans
+    }
 
     static let phaseOne: [GuidedLabPath] = [
         GuidedLabPath(
             laneID: .numbers,
             title: "Numbers Path",
-            subtitle: "A first guided loop for number bonds and arrays.",
-            stages: GuidedLabStage.allCases
+            subtitle: "A first guided loop for Number Bonds to 10.",
+            stages: LabConceptSessionPlan.numbersNumberBondsTo10.stageOrder,
+            sessionPlans: [.numbersNumberBondsTo10]
         ),
     ]
 }

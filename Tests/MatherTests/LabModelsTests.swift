@@ -151,6 +151,72 @@ final class LabModelsTests: XCTestCase {
         ])
     }
 
+
+    func testNumbersLabNumberBondsPlanDefinesReusableStageOrder() throws {
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+
+        XCTAssertEqual(plan.id, "numbers-number-bonds-to-10")
+        XCTAssertEqual(plan.laneID, .numbers)
+        XCTAssertEqual(plan.title, "Number Bonds to 10")
+        XCTAssertEqual(plan.stageOrder, [.learn, .remember, .play, .blast, .score])
+        XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Blast → Score")
+        XCTAssertEqual(plan.startRoute, .sessionConfig)
+        XCTAssertEqual(plan.startAffordanceLabel, "Start")
+        XCTAssertEqual(plan.continueAffordanceLabel, "Continue")
+    }
+
+    func testNumbersLabStageTimerPoliciesStayChildSafe() throws {
+        let stages = Dictionary(
+            uniqueKeysWithValues: LabConceptSessionPlan.numbersNumberBondsTo10.stages.map { ($0.stage, $0) }
+        )
+
+        let learn = try XCTUnwrap(stages[.learn])
+        XCTAssertEqual(learn.timerPolicy.pressure, .trackedOnly)
+        XCTAssertTrue(learn.timerPolicy.tracksElapsedTime)
+        XCTAssertFalse(learn.timerPolicy.showsCountdown)
+        XCTAssertFalse(learn.timerPolicy.isPunitive)
+        XCTAssertTrue(learn.timerPolicy.childCopy.contains("No rush"))
+
+        let remember = try XCTUnwrap(stages[.remember])
+        XCTAssertEqual(remember.timerPolicy.pressure, .none)
+        XCTAssertTrue(remember.timerPolicy.tracksElapsedTime)
+        XCTAssertFalse(remember.timerPolicy.showsCountdown)
+        XCTAssertFalse(remember.timerPolicy.isPunitive)
+        XCTAssertTrue(remember.parentCopy.contains("no punitive countdown"))
+
+        let blast = try XCTUnwrap(stages[.blast])
+        XCTAssertEqual(blast.timerPolicy.pressure, .readinessGated)
+        XCTAssertFalse(blast.timerPolicy.showsCountdown)
+        XCTAssertFalse(blast.timerPolicy.isPunitive)
+        XCTAssertTrue(blast.childCopy.contains("when you’re ready"))
+        XCTAssertTrue(blast.parentCopy.contains("readiness gated"))
+    }
+
+    func testNumbersPathCarriesNumberBondsPlanPresentationCopy() throws {
+        let path = try XCTUnwrap(GuidedLabPath.phaseOne.first { $0.laneID == .numbers })
+        let plan = try XCTUnwrap(path.primaryPlan)
+
+        XCTAssertEqual(path.title, "Numbers Path")
+        XCTAssertTrue(path.subtitle.contains("Number Bonds to 10"))
+        XCTAssertEqual(path.stages, plan.stageOrder)
+        XCTAssertEqual(plan.subtitle, "Build pairs that make ten, remember friendly facts, then celebrate with Bond Blast.")
+        XCTAssertEqual(plan.estimatedLength, "8–10 min")
+        XCTAssertEqual(plan.masteryStateLabel, "Recommended first")
+        XCTAssertEqual(plan.recommendedNextActivity, "Make & Break warm-up")
+        XCTAssertTrue(plan.stages.allSatisfy { !$0.accessibilityLabel.isEmpty })
+        XCTAssertEqual(plan.stages.map(\.actionLabel), ["Start", "Continue", "Continue", "Preview", "Preview"])
+    }
+
+    func testNumbersLabPlanDoesNotChangeDirectGamesRegistry() {
+        let entries = ExplorerGameRegistry.directLaunchEntries
+        let entryIDs = entries.map(\.activity.id)
+
+        XCTAssertEqual(entryIDs, CapabilityLane.defaultExplorerLanes.flatMap { $0.activities.map(\.id) })
+        XCTAssertEqual(entries.first { $0.activity.id == .sumSprint }?.directRoute, .sumSprint)
+        XCTAssertEqual(entries.first { $0.activity.id == .rectangleFactory }?.directRoute, .rectangleFactory)
+        XCTAssertEqual(entries.first { $0.activity.id == .factoryCards }?.directRoute, .factoryCards)
+    }
+
     func testExplorerGamesRegistryDirectlyLaunchesEveryCurrentExplorerActivity() {
         let expectedEntries = CapabilityLane.defaultExplorerLanes.flatMap { lane in
             lane.activities.map { (laneID: lane.id, activityID: $0.id, route: $0.id.appRoute) }
