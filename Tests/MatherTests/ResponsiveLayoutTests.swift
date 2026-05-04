@@ -63,6 +63,7 @@ struct ResponsiveLayoutTests {
         #expect(ResponsiveLayout.shapeLabUsesCompactChrome(width: 393, height: 852))
         #expect(!ResponsiveLayout.shapeLabUsesCompactChrome(width: 768, height: 1_024))
         #expect(ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: false) < ResponsiveLayout.shapeLabStageChromeReserve(compact: false, isLearnStage: false))
+        #expect(ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: true) <= 214)
         #expect(ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: false) < ResponsiveLayout.shapeLabStageChromeReserve(compact: true, isLearnStage: true))
     }
 

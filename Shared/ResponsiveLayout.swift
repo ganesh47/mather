@@ -108,7 +108,10 @@ enum ResponsiveLayout {
 
     static func shapeLabStageChromeReserve(compact: Bool, isLearnStage: Bool) -> CGFloat {
         guard compact else { return 330 }
-        return isLearnStage ? 260 : 188
+        // On phones the shape lab uses a single-line header even on Look/Learn so
+        // cards get the vertical budget instead of chrome. Learn still needs a
+        // touch more room for the denser card grid than quiz/match screens.
+        return isLearnStage ? 214 : 188
     }
 
     static func roomQuestStationMinimumWidth(for horizontalSizeClass: UserInterfaceSizeClass?) -> CGFloat {
