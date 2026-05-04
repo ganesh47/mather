@@ -70,7 +70,7 @@ final class LabConceptSessionProgressStore {
         summary: LabStageTimingScoreSummary? = nil
     ) -> LabConceptSessionProgress? {
         guard let context,
-              context.stage == .play,
+              [.play, .blast].contains(context.stage),
               let plan = LabConceptSessionPlan.plan(for: context.conceptPlanID),
               plan.stageOrder.contains(context.stage)
         else { return nil }

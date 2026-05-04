@@ -726,7 +726,7 @@ struct LabLaneDetailView: View {
         guard let stage, let route = stage.route else { return }
         appModel.pickProfileThenRun {
             _ = appModel.labConceptSessionProgressStore.beginGuidedStage(stage.stage, in: plan)
-            if stage.stage == .play {
+            if stage.stage == .play || stage.stage == .blast {
                 appModel.prepareLabGameplayCompletion(plan: plan, stage: stage.stage)
             } else {
                 appModel.clearLabGameplayCompletion()
@@ -734,9 +734,13 @@ struct LabLaneDetailView: View {
             if plan.id == LabConceptSessionPlan.numbersNumberBondsTo10.id {
                 appModel.engine.updateConfig(problemCount: 4, minTarget: 1, maxTarget: 10)
             }
-            appModel.engine.show(route)
-            if route == .sumSprint {
-                appModel.sumSprintEngine.showDifficultyPick()
+            if stage.stage == .blast {
+                appModel.engine.startBondBlastFinale(target: 10)
+            } else {
+                appModel.engine.show(route)
+                if route == .sumSprint {
+                    appModel.sumSprintEngine.showDifficultyPick()
+                }
             }
         }
     }

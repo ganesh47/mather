@@ -51,6 +51,38 @@ struct VerticalSliceEngineTests {
         Issue.record("Timed out waiting for \(description)")
     }
 
+
+    @Test
+    func startBondBlastFinaleStartsDirectlyInBondMatchAndCompletesSummary() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        var completedSummary: SessionSummaryDraft?
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { completedSummary = $0 }
+        )
+
+        engine.startBondBlastFinale(target: 10)
+
+        #expect(engine.route == .session)
+        #expect(engine.currentStage == .bondMatch)
+        #expect(engine.currentProblem?.target == 10)
+        #expect(engine.bondMatchState?.target == 10)
+        #expect(engine.bondMatchState?.pairs.isEmpty == false)
+
+        for id in engine.bondMatchState?.pairs.map(\.id) ?? [] {
+            engine.matchPair(id: id)
+        }
+
+        await waitFor("bond blast finale summary") { engine.route == .sessionSummary }
+        #expect(completedSummary?.problemsCompleted == 1)
+    }
+
     @Test
     func loopV2RoutesConcreteToGravitySplitToSumSprintToBondBlast() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
