@@ -156,7 +156,7 @@ enum CountryGameplayThread {
                 property(entityID: id, typeID: "capital", value: capital, explanation: "The capital of \(name) is \(capital).", visualKey: "🏛️"),
                 property(entityID: id, typeID: "currency", value: currency, explanation: "\(name) uses \(currency).", visualKey: "💰"),
                 property(entityID: id, typeID: "flag", value: "\(name) flag", explanation: "This is the flag of \(name).", visualKey: flagEmoji, visualAssetName: flagAsset),
-                property(entityID: id, typeID: "map-shape", value: mapShape, explanation: "A map clue for \(name): \(mapShape).", visualKey: "🗺️"),
+                property(entityID: id, typeID: "map-shape", value: mapShape, explanation: "A map clue for \(name): \(mapShape).", visualKey: "🗺️", visualShapeKey: id),
                 property(entityID: id, typeID: "continent", value: continent, explanation: "\(name) is in \(continent).", visualKey: "🌍"),
                 property(entityID: id, typeID: "language", value: language, explanation: "A language clue for \(name): \(language).", visualKey: "🗣️"),
                 property(entityID: id, typeID: "clue", value: knownFor, explanation: "\(name) is \(knownFor).", visualKey: "✨")
@@ -170,7 +170,8 @@ enum CountryGameplayThread {
         value: String,
         explanation: String,
         visualKey: String? = nil,
-        visualAssetName: String? = nil
+        visualAssetName: String? = nil,
+        visualShapeKey: String? = nil
     ) -> GameplayProperty {
         GameplayProperty(
             id: "\(entityID)-\(typeID)",
@@ -178,7 +179,8 @@ enum CountryGameplayThread {
             value: value,
             explanation: explanation,
             visualKey: visualKey,
-            visualAssetName: visualAssetName
+            visualAssetName: visualAssetName,
+            visualShapeKey: visualShapeKey
         )
     }
 }

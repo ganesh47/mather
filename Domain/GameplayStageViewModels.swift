@@ -98,6 +98,7 @@ struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
     let subtitle: String
     let visualKey: String?
     let visualAssetName: String?
+    let visualShapeKey: String?
 
     var spokenText: String {
         [title, subtitle].filter { !$0.isEmpty }.joined(separator: ". ")
@@ -309,7 +310,8 @@ enum GameplayStageContentBuilder {
                 title: entity.name,
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
-                visualAssetName: entity.visualAssetName
+                visualAssetName: entity.visualAssetName,
+                visualShapeKey: entity.visualShapeKey
             )
         }
     }
@@ -324,7 +326,8 @@ enum GameplayStageContentBuilder {
                 title: entity.name,
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
-                visualAssetName: entity.visualAssetName
+                visualAssetName: entity.visualAssetName,
+                visualShapeKey: entity.visualShapeKey
             )
             let right = GameplayDisplayItem(
                 id: "\(item.id)-right",
@@ -332,7 +335,8 @@ enum GameplayStageContentBuilder {
                 title: property?.value ?? entity.name,
                 subtitle: property.map { propertyTypeTitle($0.typeID, in: thread) } ?? "Name",
                 visualKey: property?.visualKey,
-                visualAssetName: property?.visualAssetName
+                visualAssetName: property?.visualAssetName,
+                visualShapeKey: property?.visualShapeKey
             )
             return GameplayMatchPair(id: item.id, left: left, right: right)
         }

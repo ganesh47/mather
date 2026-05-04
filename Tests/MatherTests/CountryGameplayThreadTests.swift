@@ -30,6 +30,7 @@ struct CountryGameplayThreadTests {
             #expect(entity.visualAssetName?.hasPrefix("MemoryFlag") == true)
             #expect(entity.properties.first { $0.typeID == "flag" }?.visualAssetName == entity.visualAssetName)
             #expect(!(entity.properties.first { $0.typeID == "map-shape" }?.value.isEmpty ?? true))
+            #expect(entity.properties.first { $0.typeID == "map-shape" }?.visualShapeKey == entity.id)
         }
     }
 
@@ -72,6 +73,20 @@ struct CountryGameplayThreadTests {
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: quiz)
         #expect(!questions.isEmpty)
         #expect(questions.allSatisfy { $0.choices.contains($0.answer) })
+    }
+
+
+    @Test
+    func mapShapeQuizItemsCarryDrawableShapeKeys() throws {
+        let thread = CountryGameplayThread.thread
+        let stage = try #require(thread.stages.first { $0.kind == .multipleChoice })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 18)
+        let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round)
+        let mapShapeAnswers = questions.map(\.answer).filter { $0.subtitle == "Map Shape" }
+
+        #expect(!mapShapeAnswers.isEmpty)
+        #expect(mapShapeAnswers.allSatisfy { $0.visualShapeKey == $0.entityID })
+        #expect(mapShapeAnswers.allSatisfy { $0.visualAssetName == nil })
     }
 
     @Test

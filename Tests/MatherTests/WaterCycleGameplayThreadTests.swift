@@ -38,6 +38,19 @@ struct WaterCycleGameplayThreadTests {
         #expect(thread.entities[3].properties.first { $0.typeID == "whatHappens" }?.value.localizedCaseInsensitiveContains("ponds") == true)
     }
 
+
+    @Test
+    func waterCycleFlashcardsExposeLargeRenderableAssetMetadata() {
+        let thread = GameplayThreadCatalog.waterCycle
+        let stage = thread.stages[0]
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 5)
+        let cards = GameplayStageContentBuilder.flashcards(thread: thread, round: round)
+
+        #expect(cards.count == 4)
+        #expect(cards.allSatisfy { $0.visualAssetName?.hasPrefix("MemoryWaterCycle") == true })
+        #expect(cards.allSatisfy { $0.visualShapeKey == nil })
+    }
+
     @Test
     func waterCycleStagesGenerateFocusedRounds() {
         let thread = GameplayThreadCatalog.waterCycle

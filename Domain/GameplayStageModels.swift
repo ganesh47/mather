@@ -27,6 +27,7 @@ struct GameplayProperty: Identifiable, Codable, Equatable, Hashable {
     let explanation: String
     let visualKey: String?
     let visualAssetName: String?
+    let visualShapeKey: String?
 
     init(
         id: String,
@@ -34,7 +35,8 @@ struct GameplayProperty: Identifiable, Codable, Equatable, Hashable {
         value: String,
         explanation: String = "",
         visualKey: String? = nil,
-        visualAssetName: String? = nil
+        visualAssetName: String? = nil,
+        visualShapeKey: String? = nil
     ) {
         self.id = id
         self.typeID = typeID
@@ -42,6 +44,7 @@ struct GameplayProperty: Identifiable, Codable, Equatable, Hashable {
         self.explanation = explanation
         self.visualKey = visualKey
         self.visualAssetName = visualAssetName
+        self.visualShapeKey = visualShapeKey
     }
 }
 
@@ -51,6 +54,7 @@ struct GameplayEntity: Identifiable, Codable, Equatable, Hashable {
     let summary: String
     let visualKey: String?
     let visualAssetName: String?
+    let visualShapeKey: String?
     let properties: [GameplayProperty]
 
     init(
@@ -59,6 +63,7 @@ struct GameplayEntity: Identifiable, Codable, Equatable, Hashable {
         summary: String = "",
         visualKey: String? = nil,
         visualAssetName: String? = nil,
+        visualShapeKey: String? = nil,
         properties: [GameplayProperty]
     ) {
         self.id = id
@@ -66,6 +71,7 @@ struct GameplayEntity: Identifiable, Codable, Equatable, Hashable {
         self.summary = summary
         self.visualKey = visualKey
         self.visualAssetName = visualAssetName
+        self.visualShapeKey = visualShapeKey
         self.properties = properties
     }
 }
