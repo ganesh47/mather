@@ -29,6 +29,7 @@ final class AppModel {
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
     var showingProfilePicker = false
     private var pendingGameAction: (() -> Void)?
+    private var pendingLabGameplayCompletionContext: LabGameplayCompletionContext?
 
     func pickProfileThenRun(_ action: @escaping () -> Void) {
         if featureFlags.skipProfilePicker {
@@ -64,6 +65,33 @@ final class AppModel {
             for: conceptID,
             laneID: laneID
         )
+    }
+
+    func prepareLabGameplayCompletion(plan: LabConceptSessionPlan, stage: GuidedLabStage) {
+        pendingLabGameplayCompletionContext = LabGameplayCompletionContext(plan: plan, stage: stage)
+    }
+
+    func clearLabGameplayCompletion() {
+        pendingLabGameplayCompletionContext = nil
+    }
+
+    func completePendingLabGameplay(with summary: SumSprintSessionSummary) {
+        let context = pendingLabGameplayCompletionContext
+        pendingLabGameplayCompletionContext = nil
+
+        let accuracy = summary.cards.isEmpty ? 0 : Double(summary.correctCount) / Double(summary.cards.count)
+        let stageSummary = LabStageTimingScoreSummary(
+            durationSeconds: summary.endedAt.timeIntervalSince(summary.startedAt),
+            scoreSummary: LabSessionScoreSummary(
+                conceptTitle: "Number Bonds to 10",
+                stageDurations: [.play: summary.endedAt.timeIntervalSince(summary.startedAt)],
+                accuracy: accuracy,
+                streak: summary.peakStreak,
+                weakAreas: summary.timeoutCount > 0 ? ["timed practice"] : [],
+                nextRecommendation: "Try Bond Blast when ready"
+            )
+        )
+        _ = labConceptSessionProgressStore.markLabLaunchedGameplayCompleted(context, summary: stageSummary)
     }
 
     init(modelContext: ModelContext) {
@@ -154,7 +182,7 @@ final class AppModel {
         self.explorerLabMasteryProfile = explorerLabMasteryProfile
         self.sumSprintEngine = sumSprintEngine
         sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
-        sumSprintEngine.onSessionComplete = { [weak gameSessionStore] summary in
+        sumSprintEngine.onSessionComplete = { [weak self, weak gameSessionStore] summary in
             gameSessionStore?.save(
                 gameName: "Sum Sprint",
                 startedAt: summary.startedAt,
@@ -162,6 +190,7 @@ final class AppModel {
                 scoreLabel: "correct",
                 detail: summary.difficulty.rawValue
             )
+            self?.completePendingLabGameplay(with: summary)
         }
     }
 }

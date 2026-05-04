@@ -726,6 +726,11 @@ struct LabLaneDetailView: View {
         guard let stage, let route = stage.route else { return }
         appModel.pickProfileThenRun {
             _ = appModel.labConceptSessionProgressStore.beginGuidedStage(stage.stage, in: plan)
+            if stage.stage == .play {
+                appModel.prepareLabGameplayCompletion(plan: plan, stage: stage.stage)
+            } else {
+                appModel.clearLabGameplayCompletion()
+            }
             if plan.id == LabConceptSessionPlan.numbersNumberBondsTo10.id {
                 appModel.engine.updateConfig(problemCount: 4, minTarget: 1, maxTarget: 10)
             }
@@ -738,6 +743,7 @@ struct LabLaneDetailView: View {
 
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
+            appModel.clearLabGameplayCompletion()
             appModel.engine.show(route(for: activityID, laneID: lane.id))
             switch activityID {
             case .sumSprint:

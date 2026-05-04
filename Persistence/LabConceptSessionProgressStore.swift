@@ -63,6 +63,27 @@ final class LabConceptSessionProgressStore {
         }
     }
 
+    @discardableResult
+    func markLabLaunchedGameplayCompleted(
+        _ context: LabGameplayCompletionContext?,
+        at date: Date = Date(),
+        summary: LabStageTimingScoreSummary? = nil
+    ) -> LabConceptSessionProgress? {
+        guard let context,
+              context.stage == .play,
+              let plan = LabConceptSessionPlan.plan(for: context.conceptPlanID),
+              plan.stageOrder.contains(context.stage)
+        else { return nil }
+
+        return update(plan: plan, at: date) { progress in
+            progress.markCompleted(context.stage, in: plan, at: date, summary: summary)
+            if let completedIndex = plan.stageOrder.firstIndex(of: context.stage),
+               plan.stageOrder.indices.contains(completedIndex + 1) {
+                progress.currentStage = plan.stageOrder[completedIndex + 1]
+            }
+        }
+    }
+
     func reset() {
         var all = loadAll()
         all[activeProfileIdProvider()] = [:]
