@@ -5,8 +5,11 @@ struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Bindable var appModel: AppModel
     @State private var playfulPulse = false
+    @State private var selectedPath: ExplorerPathID = .labs
 
     private let lanes = CapabilityLane.defaultExplorerLanes
+    private let guidedPaths = GuidedLabPath.phaseOne
+    private let gameEntries = ExplorerGameRegistry.directLaunchEntries
 
     var body: some View {
         ZStack {
@@ -19,11 +22,18 @@ struct LabView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: compactGrid ? 16 : 20) {
                         header
+                        pathSelector(compact: compactGrid)
 
-                        LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: compactGrid ? 14 : 16) {
-                            ForEach(lanes) { lane in
-                                laneCard(lane, compact: compactGrid)
+                        if selectedPath == .labs {
+                            guidedLabsIntro(compact: compactGrid)
+
+                            LazyVGrid(columns: labColumns(for: proxy.size.width), spacing: compactGrid ? 14 : 16) {
+                                ForEach(lanes) { lane in
+                                    laneCard(lane, compact: compactGrid)
+                                }
                             }
+                        } else {
+                            directGamesSection(compact: compactGrid, width: proxy.size.width)
                         }
                     }
                     .padding(.horizontal, horizontalPadding)
@@ -80,6 +90,229 @@ struct LabView: View {
                     .frame(width: 56, height: 56)
             }
             .accessibilityLabel("Home")
+        }
+    }
+
+    private func pathSelector(compact: Bool) -> some View {
+        let columns = compact
+            ? [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+            : [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
+
+        return LazyVGrid(columns: columns, spacing: compact ? 12 : 16) {
+            ForEach(ExplorerPathPresentation.all) { path in
+                Button {
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
+                        selectedPath = path.id
+                    }
+                } label: {
+                    explorerPathCard(path, isSelected: selectedPath == path.id, compact: compact)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Explorer path: \(path.title). \(path.subtitle)")
+                .accessibilityHint(path.callToAction)
+            }
+        }
+    }
+
+    private func explorerPathCard(_ path: ExplorerPathPresentation, isSelected: Bool, compact: Bool) -> some View {
+        let tint = path.id == .labs ? MatherTheme.accent : MatherTheme.warm
+
+        return VStack(alignment: .leading, spacing: compact ? 8 : 10) {
+            HStack(spacing: 10) {
+                Text(path.emoji)
+                    .font(.system(size: compact ? 30 : 38))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(path.title)
+                        .font(.system(size: compact ? 22 : 26, weight: .black, design: .rounded))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(path.callToAction)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(tint)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(tint)
+            }
+
+            Text(path.subtitle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(compact ? 3 : 2)
+        }
+        .padding(compact ? 12 : 16)
+        .frame(maxWidth: .infinity, minHeight: compact ? 146 : 136, alignment: .topLeading)
+        .background(
+            LinearGradient(
+                colors: [tint.opacity(isSelected ? 0.18 : 0.08), MatherTheme.card],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(tint.opacity(isSelected ? 0.50 : 0.16), lineWidth: isSelected ? 2 : 1)
+        )
+    }
+
+    private func guidedLabsIntro(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Labs build in stages")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text("Learn → Remember → Play → Blast → Score")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                }
+                Spacer(minLength: 0)
+            }
+
+            stageStrip(compact: compact)
+
+            ForEach(guidedPaths) { path in
+                guidedPathCard(path)
+            }
+        }
+        .padding(16)
+        .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(MatherTheme.accent.opacity(0.18), lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+    }
+
+    private func stageStrip(compact: Bool) -> some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: compact ? 6 : 8), count: compact ? 3 : 5)
+        return LazyVGrid(columns: columns, spacing: compact ? 6 : 8) {
+            ForEach(GuidedLabStage.allCases) { stage in
+                VStack(spacing: 4) {
+                    Text(stage.emoji)
+                        .font(.title3)
+                    Text(stage.rawValue)
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(stage.microcopy)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity, minHeight: 82)
+                .background(MatherTheme.panel.opacity(0.62), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+    }
+
+    private func guidedPathCard(_ path: GuidedLabPath) -> some View {
+        let lane = lanes.first { $0.id == path.laneID }
+        let tint = laneColor(path.laneID)
+
+        return Button {
+            appModel.engine.showLabLane(path.laneID)
+        } label: {
+            HStack(spacing: 12) {
+                Text(lane?.emoji ?? "🧪")
+                    .font(.system(size: 34))
+                    .frame(width: 58, height: 58)
+                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(path.title)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text(path.subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                    Text(path.stages.map(\.rawValue).joined(separator: " → "))
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(tint)
+            }
+            .padding(12)
+            .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Open \(path.title). \(path.subtitle). Stages: \(path.stages.map(\.rawValue).joined(separator: ", "))")
+    }
+
+    private func directGamesSection(compact: Bool, width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Games")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Direct launch stays one tap away. Pick any game without entering a staged lab session.")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
+
+            LazyVGrid(columns: labColumns(for: width), spacing: compact ? 12 : 14) {
+                ForEach(gameEntries) { entry in
+                    directGameCard(entry)
+                }
+            }
+        }
+    }
+
+    private func directGameCard(_ entry: ExplorerGameEntry) -> some View {
+        let tint = laneColor(entry.laneID)
+        let activity = entry.activity
+
+        return Button {
+            launchDirectGame(entry)
+        } label: {
+            HStack(spacing: 12) {
+                Text(activity.emoji)
+                    .font(.system(size: 36))
+                    .frame(width: 62, height: 62)
+                    .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(activity.title)
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                        .lineLimit(2)
+                    Text(activity.tagline)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(2)
+                    Text("Direct game")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "play.circle.fill")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(tint)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 116, alignment: .leading)
+            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(tint.opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Launch game \(activity.title). \(activity.tagline)")
+        .accessibilityHint("Directly starts the existing game route without a staged lab session.")
+    }
+
+    private func launchDirectGame(_ entry: ExplorerGameEntry) {
+        appModel.pickProfileThenRun {
+            appModel.engine.show(entry.directRoute)
+            if entry.activity.id == .sumSprint {
+                appModel.sumSprintEngine.showDifficultyPick()
+            }
         }
     }
 
