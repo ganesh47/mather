@@ -322,6 +322,57 @@ struct LabLaneDetailView: View {
         .accessibilityLabel("Guided stages: \(plan.pathLabel)")
     }
 
+    private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
+        let state = progressState(for: stage.stage, progress: progress)
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 7) {
+                Image(systemName: stage.stage.symbolName)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(tint)
+                Text(stage.stage.rawValue)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Spacer(minLength: 0)
+                if let state {
+                    Text(state)
+                        .font(.caption2.weight(.heavy))
+                        .foregroundStyle(tint)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(tint.opacity(0.12), in: Capsule())
+                }
+            }
+
+            Text(stage.title)
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(2)
+
+            Text(stage.childCopy)
+                .font(.caption)
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(3)
+
+            Text(stage.timerPolicy.childCopy)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(2)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MatherTheme.card.opacity(0.76), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .overlay(alignment: .topTrailing) {
+            if stage.route != nil {
+                Image(systemName: "arrow.up.forward.circle.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(tint.opacity(0.82))
+                    .padding(8)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(stage.accessibilityLabel)
+    }
+
     private func gamesSection(_ lane: CapabilityLane, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Games")
