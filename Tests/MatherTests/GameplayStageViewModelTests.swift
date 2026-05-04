@@ -173,6 +173,38 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.correctCount == 1)
     }
 
+
+    @Test
+    func reusableBondBlastRightTargetsRevealLikeNumbersBondBlastSlots() {
+        #expect(!ReusableBondBlastBoard.shouldRevealRightCard(selectedPairID: nil, pairID: "bond-1", isMatched: false))
+        #expect(ReusableBondBlastBoard.shouldRevealRightCard(selectedPairID: "bond-2", pairID: "bond-1", isMatched: false))
+        #expect(ReusableBondBlastBoard.shouldRevealRightCard(selectedPairID: nil, pairID: "bond-1", isMatched: true))
+    }
+
+    @Test
+    func waterBondBlastAcceptsArbitraryGameplayMatchPairDataInFocusedTurns() {
+        let thread = GameplayThreadCatalog.waterCycle
+        let stage = thread.stages.first { $0.kind == .bondBlast }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 47)
+        var viewModel = GameplayMatchStageViewModel(
+            thread: thread,
+            round: round,
+            mode: .bondBlast,
+            turnItemCount: stage.recommendedTurnItemCount
+        )
+        let active = viewModel.activePairs
+
+        #expect(!active.isEmpty)
+        #expect(active.count <= 3)
+        #expect(active.allSatisfy { !$0.left.title.isEmpty && !$0.right.title.isEmpty })
+
+        let pair = active[0]
+        viewModel.selectLeft(pairID: pair.id)
+        let matched = viewModel.chooseRight(pair.right)
+        #expect(matched)
+        #expect(viewModel.correctCount == 1)
+    }
+
     @Test
     func stageDefinitionsKeepSingleCardAndPairTurnsChildSized() {
         let flashcard = GameplayStageDefinition(id: "learn", kind: .flashcards, title: "Learn", prompt: "Look", maximumItemCount: 8)
