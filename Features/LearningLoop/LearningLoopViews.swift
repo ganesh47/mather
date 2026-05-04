@@ -3,30 +3,34 @@ import SwiftUI
 
 struct LearningCardIntroView: View {
     let cards: [LearningConceptCard]
+    var compact: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Learn")
-                .font(.title2.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+        VStack(alignment: .leading, spacing: compact ? 8 : 14) {
+            if !compact {
+                Text("Learn")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: compact ? 128 : 150), spacing: compact ? 8 : 12)], spacing: compact ? 8 : 12) {
                 ForEach(cards) { card in
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: compact ? 5 : 8) {
                         Text(card.visualKey)
-                            .font(.system(size: 44))
+                            .font(.system(size: compact ? 34 : 44))
                             .frame(maxWidth: .infinity, alignment: .center)
                         Text(card.title)
-                            .font(.headline.weight(.black))
+                            .font((compact ? Font.subheadline : .headline).weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                         Text(card.explanation)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
+                            .lineLimit(compact ? 2 : nil)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+                    .padding(compact ? 10 : 14)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 118 : 150, alignment: .topLeading)
                     .background(MatherTheme.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: compact ? 16 : 20, style: .continuous))
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(card.title). \(card.explanation)")
                 }
@@ -837,21 +841,21 @@ struct ShapeGeometryLabView: View {
             let stageChromeReserve = ResponsiveLayout.shapeLabStageChromeReserve(compact: compactChrome, isLearnStage: stage == .learn)
 
             VStack(alignment: .leading, spacing: compactChrome ? 10 : 14) {
-                if compactChrome && stage != .learn {
+                if compactChrome {
                     compactHeader
                 } else {
-                    header(compact: compactChrome)
+                    header(compact: false)
                 }
                 levelPicker(compact: compactChrome)
                 stageProgress(compact: compactChrome)
 
                 ViewThatFits(in: .vertical) {
-                    currentStageView
+                    currentStageView(compact: compactChrome)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                         .frame(maxHeight: max(320, proxy.size.height - stageChromeReserve), alignment: .top)
 
                     ScrollView {
-                        currentStageView
+                        currentStageView(compact: compactChrome)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(maxHeight: max(320, proxy.size.height - stageChromeReserve))
@@ -982,10 +986,10 @@ struct ShapeGeometryLabView: View {
     }
 
     @ViewBuilder
-    private var currentStageView: some View {
+    private func currentStageView(compact: Bool) -> some View {
         switch stage {
         case .learn:
-            LearningCardIntroView(cards: level.cards)
+            LearningCardIntroView(cards: level.cards, compact: compact)
         case .quiz:
             ConceptQuizRoundView(questions: level.quizQuestions, answersByQuestionId: $answersByQuestionId)
         case .match:
