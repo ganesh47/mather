@@ -414,6 +414,73 @@ struct GuidedLabPath: Identifiable, Equatable {
     ]
 }
 
+struct RoundTimerSnapshot: Equatable {
+    let startedAt: Date
+    let now: Date
+    let limitSeconds: TimeInterval?
+    let timerPolicy: LabSessionTimerPolicy
+
+    init(startedAt: Date, now: Date, limitSeconds: TimeInterval? = nil, timerPolicy: LabSessionTimerPolicy) {
+        self.startedAt = startedAt
+        self.now = now
+        self.limitSeconds = limitSeconds
+        self.timerPolicy = timerPolicy
+    }
+
+    var elapsedSeconds: TimeInterval {
+        max(0, now.timeIntervalSince(startedAt))
+    }
+
+    var remainingSeconds: TimeInterval? {
+        guard timerPolicy.showsCountdown, let limitSeconds else { return nil }
+        return max(0, limitSeconds - elapsedSeconds)
+    }
+
+    var childFacingLabel: String {
+        if let remainingSeconds {
+            return "Final round: \(Self.format(remainingSeconds)) left"
+        }
+        return "Time spent: \(Self.format(elapsedSeconds))"
+    }
+
+    static func format(_ seconds: TimeInterval) -> String {
+        let clamped = max(0, Int(seconds.rounded()))
+        return "\(clamped / 60):" + String(format: "%02d", clamped % 60)
+    }
+}
+
+struct LabSessionScoreSummary: Equatable {
+    let conceptTitle: String
+    let stageDurations: [GuidedLabStage: TimeInterval]
+    let accuracy: Double
+    let streak: Int
+    let weakAreas: [String]
+    let nextRecommendation: String
+
+    var totalSeconds: TimeInterval {
+        stageDurations.values.reduce(0, +)
+    }
+
+    var childCelebrationLine: String {
+        if weakAreas.isEmpty {
+            return "Session Complete 🎉 You powered up \(conceptTitle)!"
+        }
+        return "Session Complete 🎉 \(weakAreas.count) tricky \(weakAreas.count == 1 ? "idea" : "ideas") will come back soon."
+    }
+
+    var parentDetailLines: [String] {
+        [
+            "Total time: \(RoundTimerSnapshot.format(totalSeconds))",
+            "Accuracy: \(Int((accuracy * 100).rounded()))%",
+            "Best streak: \(streak)",
+            "Next: \(nextRecommendation)",
+        ] + GuidedLabStage.allCases.compactMap { stage in
+            guard let seconds = stageDurations[stage] else { return nil }
+            return "\(stage.rawValue): \(RoundTimerSnapshot.format(seconds))"
+        } + (weakAreas.isEmpty ? ["Weak areas: none flagged"] : ["Coming back soon: \(weakAreas.joined(separator: ", "))"])
+    }
+}
+
 struct ExplorerGameEntry: Identifiable, Equatable {
     let laneID: CapabilityLaneID
     let activity: LabActivity

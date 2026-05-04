@@ -322,6 +322,11 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.82)
+                    Text(activity.tagline)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(2)
+                    sensorAffordanceRow(activity, tint: tint)
                 }
 
                 Spacer(minLength: 6)

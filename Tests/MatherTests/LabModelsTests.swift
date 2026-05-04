@@ -217,6 +217,39 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(entries.first { $0.activity.id == .factoryCards }?.directRoute, .factoryCards)
     }
 
+
+    func testRoundTimerFoundationTracksTimeWithoutDefaultPressure() {
+        let startedAt = Date(timeIntervalSince1970: 100)
+        let now = Date(timeIntervalSince1970: 175)
+        let gentleTimer = RoundTimerSnapshot(startedAt: startedAt, now: now, limitSeconds: 90, timerPolicy: .calmNoCountdown)
+
+        XCTAssertEqual(gentleTimer.elapsedSeconds, 75)
+        XCTAssertNil(gentleTimer.remainingSeconds)
+        XCTAssertEqual(gentleTimer.childFacingLabel, "Time spent: 1:15")
+
+        let blastTimer = RoundTimerSnapshot(startedAt: startedAt, now: now, limitSeconds: 90, timerPolicy: .readinessGatedBlast)
+        XCTAssertNil(blastTimer.remainingSeconds)
+        XCTAssertEqual(blastTimer.childFacingLabel, "Time spent: 1:15")
+    }
+
+    func testSessionScoreSummaryKeepsChildCopyEncouragingAndParentDetailSpecific() {
+        let score = LabSessionScoreSummary(
+            conceptTitle: "number bonds",
+            stageDurations: [.learn: 72, .remember: 45, .play: 90, .blast: 30, .score: 15],
+            accuracy: 0.82,
+            streak: 4,
+            weakAreas: ["6 + 4", "7 + 3"],
+            nextRecommendation: "Review number bonds tomorrow"
+        )
+
+        XCTAssertEqual(score.totalSeconds, 252)
+        XCTAssertEqual(score.childCelebrationLine, "Session Complete 🎉 2 tricky ideas will come back soon.")
+        XCTAssertTrue(score.parentDetailLines.contains("Total time: 4:12"))
+        XCTAssertTrue(score.parentDetailLines.contains("Accuracy: 82%"))
+        XCTAssertTrue(score.parentDetailLines.contains("Remember: 0:45"))
+        XCTAssertTrue(score.parentDetailLines.contains("Coming back soon: 6 + 4, 7 + 3"))
+    }
+
     func testExplorerGamesRegistryDirectlyLaunchesEveryCurrentExplorerActivity() {
         let expectedEntries = CapabilityLane.defaultExplorerLanes.flatMap { lane in
             lane.activities.map { (laneID: lane.id, activityID: $0.id, route: $0.id.appRoute) }
