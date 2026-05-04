@@ -6,6 +6,7 @@ struct LabView: View {
     @Bindable var appModel: AppModel
     @State private var playfulPulse = false
     @State private var selectedPath: ExplorerPathID = .labs
+    @State private var sensorCapabilities = DeviceSensorCapabilities.unavailable
 
     private let lanes = CapabilityLane.defaultExplorerLanes
     private let guidedPaths = GuidedLabPath.phaseOne
@@ -42,6 +43,7 @@ struct LabView: View {
             }
         }
         .onAppear {
+            sensorCapabilities = SensorCapabilityService().currentCapabilities()
             withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
                 playfulPulse = true
             }
@@ -275,6 +277,9 @@ struct LabView: View {
         let tint = laneColor(entry.laneID)
         let activity = entry.activity
 
+        let canLaunch = activity.id.canDirectLaunch(with: sensorCapabilities)
+        let capabilitySummary = activity.id.capabilitySummary(with: sensorCapabilities)
+
         return Button {
             launchDirectGame(entry)
         } label: {
@@ -286,32 +291,38 @@ struct LabView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(activity.title)
                         .font(.headline.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
+                        .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
                         .lineLimit(2)
                     Text(activity.tagline)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .lineLimit(2)
-                    Text("Direct game")
+                    Text(canLaunch ? "Direct game" : "Needs a sensor on this device")
                         .font(.caption2.weight(.black))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(canLaunch ? tint : MatherTheme.cardSubtitle)
+                    Text(capabilitySummary)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "play.circle.fill")
+                Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
                     .font(.title2.weight(.black))
-                    .foregroundStyle(tint)
+                    .foregroundStyle(canLaunch ? tint : MatherTheme.cardSubtitle)
             }
             .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 116, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 126, alignment: .leading)
             .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(tint.opacity(0.16), lineWidth: 1)
+                    .stroke((canLaunch ? tint : MatherTheme.cardSubtitle).opacity(0.16), lineWidth: 1)
             )
+            .opacity(canLaunch ? 1 : 0.78)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Launch game \(activity.title). \(activity.tagline)")
-        .accessibilityHint("Directly starts the existing game route without a staged lab session.")
+        .disabled(!canLaunch)
+        .accessibilityLabel("Launch game \(activity.title). \(activity.tagline). \(capabilitySummary)")
+        .accessibilityHint(canLaunch ? "Directly starts the existing game route without a staged lab session." : "This game needs a device sensor that is not available here; no score is lost.")
     }
 
     private func launchDirectGame(_ entry: ExplorerGameEntry) {

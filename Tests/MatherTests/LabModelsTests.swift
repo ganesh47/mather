@@ -621,7 +621,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.shapeGeometry.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
-        XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass])
+        XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass, .stepCounting])
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
         XCTAssertEqual(LabActivityID.soundVolume.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
@@ -633,11 +633,11 @@ extension LabModelsTests {
         XCTAssertEqual(
             affordances.map(\.displayLabel),
             [
-                "Camera marker mode unavailable: Use tap-to-place stations",
+                "Camera marker mode unavailable: Use same-place setup",
                 "Haptics unavailable: Visual feedback stays available",
             ]
         )
-        XCTAssertEqual(affordances.map(\.accessibilityHint), ["Use tap-to-place stations", "Visual feedback stays available"])
+        XCTAssertEqual(affordances.map(\.accessibilityHint), ["Use same-place setup", "Visual feedback stays available"])
         XCTAssertTrue(affordances.allSatisfy { !$0.isAvailable })
     }
 
@@ -649,17 +649,18 @@ extension LabModelsTests {
             supportsMicrophone: false,
             supportsHaptics: true,
             supportsBarometer: false,
+            supportsStepCounting: true,
             supportsLiDAR: false,
             supportsApplePencil: false
         )
 
         XCTAssertEqual(
             LabActivityID.angleCannon.sensorAffordances(with: capabilities).map(\.displayLabel),
-            ["Motion ready"]
+            ["Tilt ready"]
         )
         XCTAssertEqual(
             LabActivityID.compassAngles.sensorAffordances(with: capabilities).map(\.displayLabel),
-            ["Compass ready"]
+            ["Body turns ready", "Step sensing ready"]
         )
         XCTAssertEqual(
             LabActivityID.roomQuest.sensorAffordances(with: capabilities).map(\.displayLabel),
@@ -667,9 +668,32 @@ extension LabModelsTests {
         )
         XCTAssertEqual(
             LabActivityID.twoFingerProtractor.sensorAffordances(with: capabilities).map(\.displayLabel),
-            ["No special sensor needed"]
+            ["Touch ready"]
         )
     }
+
+    func testSensorLaunchPolicyKeepsFallbackGamesPlayableButDisablesSensorOnlyRoutes() {
+        XCTAssertTrue(LabActivityID.sumSprint.canDirectLaunch(with: .unavailable))
+        XCTAssertTrue(LabActivityID.roomQuest.canDirectLaunch(with: .unavailable))
+        XCTAssertFalse(LabActivityID.angleCannon.canDirectLaunch(with: .unavailable))
+        XCTAssertFalse(LabActivityID.gravityArtist.canDirectLaunch(with: .unavailable))
+        XCTAssertFalse(LabActivityID.compassAngles.canDirectLaunch(with: .unavailable))
+
+        let roomQuestCopy = LabActivityID.roomQuest.capabilitySummary(with: .unavailable)
+        XCTAssertTrue(roomQuestCopy.contains("Use same-place setup"))
+        XCTAssertTrue(roomQuestCopy.contains("Visual feedback stays available"))
+    }
+
+    func testSensorAffordancesExposePermissionAwareChildSafeCopy() {
+        let unavailableTilt = LabActivityID.angleCannon.sensorAffordances(with: .unavailable)
+        XCTAssertEqual(unavailableTilt.first?.accessibilityHint, "This game needs this sensor on the device. Try another game for now.")
+
+        let stepFallback = LabSensorNeed.stepCounting.copy(with: .unavailable)
+        XCTAssertEqual(stepFallback.displayLabel, "Step sensing unavailable: Tap each small step instead")
+        XCTAssertEqual(stepFallback.accessibilityHint, "Tap each small step instead")
+        XCTAssertTrue(stepFallback.permitsLaunch)
+    }
+
 }
 
 
