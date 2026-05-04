@@ -13,6 +13,7 @@ struct SensorCapabilityServiceTests {
             supportsMicrophone: false,
             supportsHaptics: true,
             supportsBarometer: false,
+            supportsStepCounting: true,
             supportsLiDAR: false,
             supportsApplePencil: false
         )

@@ -323,7 +323,9 @@ struct LabLaneDetailView: View {
     }
 
     private func activityCard(_ activity: LabActivity, lane: CapabilityLane, tint: Color) -> some View {
-        Button {
+        let canLaunch = activity.id.canDirectLaunch(with: sensorCapabilities)
+
+        return Button {
             launch(activity.id)
         } label: {
             HStack(alignment: .center, spacing: 14) {
@@ -332,7 +334,7 @@ struct LabLaneDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(activity.title)
                         .font(.title3.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
+                        .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
                         .lineLimit(2)
                         .minimumScaleFactor(0.82)
                     Text(activity.tagline)
@@ -340,17 +342,23 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .lineLimit(2)
                     sensorAffordanceRow(activity, tint: tint)
+                    if !canLaunch {
+                        Text("Try this on a device with motion sensing. Nothing is counted as wrong.")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 Spacer(minLength: 6)
 
                 ZStack {
                     Circle()
-                        .fill(tint)
-                    Image(systemName: "play.fill")
+                        .fill(canLaunch ? tint : MatherTheme.cardSubtitle.opacity(0.35))
+                    Image(systemName: canLaunch ? "play.fill" : "lock.open.trianglebadge.exclamationmark")
                         .font(.title2.weight(.black))
                         .foregroundStyle(.white)
-                        .offset(x: 2)
+                        .offset(x: canLaunch ? 2 : 0)
                 }
                 .frame(width: 64, height: 64)
                 .accessibilityHidden(true)
@@ -360,12 +368,14 @@ struct LabLaneDetailView: View {
             .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(tint.opacity(0.16), lineWidth: 1)
+                    .stroke((canLaunch ? tint : MatherTheme.cardSubtitle).opacity(0.16), lineWidth: 1)
             )
+            .opacity(canLaunch ? 1 : 0.78)
         }
         .buttonStyle(.plain)
+        .disabled(!canLaunch)
         .accessibilityLabel("Launch \(activity.title). \(activity.tagline)")
-        .accessibilityHint("Starts this \(lane.title) game. Modes: \(activity.modes.map(\.rawValue).joined(separator: ", ")). \(sensorAccessibilitySummary(for: activity)).")
+        .accessibilityHint(canLaunch ? "Starts this \(lane.title) game. Modes: \(activity.modes.map(\.rawValue).joined(separator: ", ")). \(sensorAccessibilitySummary(for: activity))." : "This game needs a sensor that is not available on this device. Nothing is marked wrong.")
     }
 
     private func recallSection(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -704,6 +714,8 @@ struct LabLaneDetailView: View {
             return "location.north.line.fill"
         case .cameraMarkerMode:
             return "camera.viewfinder"
+        case .stepCounting:
+            return "figure.walk"
         case .haptics:
             return "waveform"
         }

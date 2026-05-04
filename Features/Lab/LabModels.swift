@@ -669,10 +669,44 @@ enum ExplorerGameRegistry {
     }
 }
 
+enum LabSensorFallback: Equatable {
+    case none
+    case sameRoute(copy: String, actionTitle: String)
+    case visualOnly(copy: String)
+
+    var copy: String? {
+        switch self {
+        case .none:
+            return nil
+        case .sameRoute(let copy, _), .visualOnly(let copy):
+            return copy
+        }
+    }
+
+    var actionTitle: String? {
+        switch self {
+        case .sameRoute(_, let actionTitle):
+            return actionTitle
+        case .none, .visualOnly:
+            return nil
+        }
+    }
+
+    var permitsLaunch: Bool {
+        switch self {
+        case .none:
+            return false
+        case .sameRoute, .visualOnly:
+            return true
+        }
+    }
+}
+
 enum LabSensorNeed: CaseIterable, Equatable {
     case noSpecialSensor
     case motion
     case compass
+    case stepCounting
     case cameraMarkerMode
     case haptics
 
@@ -680,10 +714,10 @@ enum LabSensorNeed: CaseIterable, Equatable {
         switch self {
         case .noSpecialSensor:
             return true
-        case .motion:
+        case .motion, .compass:
             return capabilities.supportsMotion
-        case .compass:
-            return capabilities.supportsHeading
+        case .stepCounting:
+            return capabilities.supportsStepCounting
         case .cameraMarkerMode:
             return capabilities.supportsCamera
         case .haptics:
@@ -698,36 +732,49 @@ enum LabSensorNeed: CaseIterable, Equatable {
             return LabSensorAffordance(
                 need: self,
                 isAvailable: true,
-                label: "No special sensor needed",
-                fallback: nil
+                label: "Touch ready",
+                permissionCopy: "No sensor permission needed.",
+                fallback: .sameRoute(copy: "Works with touch only", actionTitle: "Play")
             )
         case .motion:
             return LabSensorAffordance(
                 need: self,
                 isAvailable: available,
-                label: available ? "Motion ready" : "Motion unavailable",
-                fallback: available ? nil : "Touch fallback available"
+                label: available ? "Tilt ready" : "Tilt not available",
+                permissionCopy: "Tilt sensing does not ask for a child permission prompt.",
+                fallback: .none
             )
         case .compass:
             return LabSensorAffordance(
                 need: self,
                 isAvailable: available,
-                label: available ? "Compass ready" : "Compass unavailable",
-                fallback: available ? nil : "Use on-screen turns"
+                label: available ? "Body turns ready" : "Body turns not available",
+                permissionCopy: "Uses gentle body-relative motion, not a precise compass reading.",
+                fallback: .none
+            )
+        case .stepCounting:
+            return LabSensorAffordance(
+                need: self,
+                isAvailable: available,
+                label: available ? "Step sensing ready" : "Step sensing unavailable",
+                permissionCopy: "If Motion & Fitness is not allowed, the game switches to tap-to-count steps.",
+                fallback: .sameRoute(copy: "Tap each small step instead", actionTitle: "Use tap count")
             )
         case .cameraMarkerMode:
             return LabSensorAffordance(
                 need: self,
                 isAvailable: available,
                 label: available ? "Camera marker mode ready" : "Camera marker mode unavailable",
-                fallback: available ? nil : "Use tap-to-place stations"
+                permissionCopy: "Camera is only for local station checks; a grown-up can choose same-place fallback.",
+                fallback: .sameRoute(copy: "Use same-place setup", actionTitle: "Use setup fallback")
             )
         case .haptics:
             return LabSensorAffordance(
                 need: self,
                 isAvailable: available,
                 label: available ? "Haptics ready" : "Haptics unavailable",
-                fallback: available ? nil : "Visual feedback stays available"
+                permissionCopy: "No permission prompt needed for haptics.",
+                fallback: .visualOnly(copy: "Visual feedback stays available")
             )
         }
     }
@@ -738,11 +785,15 @@ struct LabSensorAffordance: Identifiable, Equatable {
     let need: LabSensorNeed
     let isAvailable: Bool
     let label: String
-    let fallback: String?
+    let permissionCopy: String
+    let fallback: LabSensorFallback
+
+    var fallbackCopy: String? { fallback.copy }
+    var permitsLaunch: Bool { isAvailable || fallback.permitsLaunch }
 
     var displayLabel: String {
-        guard let fallback else { return label }
-        return "\(label): \(fallback)"
+        guard !isAvailable, let fallbackCopy else { return label }
+        return "\(label): \(fallbackCopy)"
     }
 
     var accessibilityLabel: String {
@@ -750,16 +801,13 @@ struct LabSensorAffordance: Identifiable, Equatable {
     }
 
     var accessibilityHint: String {
-        if need == .noSpecialSensor {
-            return "Works with touch only."
-        }
         if isAvailable {
-            return "Sensor is ready for this activity."
+            return permissionCopy
         }
-        guard let fallback else {
-            return "This activity still works without extra setup."
+        guard let fallbackCopy else {
+            return "This game needs this sensor on the device. Try another game for now."
         }
-        return fallback
+        return fallbackCopy
     }
 }
 
@@ -838,12 +886,20 @@ extension LabActivityID {
         case .roomQuest:
             return [.cameraMarkerMode, .haptics]
         case .compassAngles:
-            return [.compass]
+            return [.compass, .stepCounting]
         }
     }
 
     func sensorAffordances(with capabilities: DeviceSensorCapabilities) -> [LabSensorAffordance] {
         sensorNeeds.map { $0.copy(with: capabilities) }
+    }
+
+    func canDirectLaunch(with capabilities: DeviceSensorCapabilities) -> Bool {
+        sensorAffordances(with: capabilities).allSatisfy(\.permitsLaunch)
+    }
+
+    func capabilitySummary(with capabilities: DeviceSensorCapabilities) -> String {
+        sensorAffordances(with: capabilities).map(\.displayLabel).joined(separator: " • ")
     }
 }
 

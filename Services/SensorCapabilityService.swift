@@ -16,6 +16,7 @@ struct DeviceSensorCapabilities: Equatable, Sendable {
     let supportsMicrophone: Bool
     let supportsHaptics: Bool
     let supportsBarometer: Bool
+    let supportsStepCounting: Bool
 
     /// LiDAR is currently only a readiness signal for future Explorer Lab lanes.
     let supportsLiDAR: Bool
@@ -31,6 +32,7 @@ struct DeviceSensorCapabilities: Equatable, Sendable {
         supportsMicrophone: false,
         supportsHaptics: false,
         supportsBarometer: false,
+        supportsStepCounting: false,
         supportsLiDAR: false,
         supportsApplePencil: false
     )
@@ -67,6 +69,7 @@ struct SystemDeviceSensorCapabilityInspector: DeviceSensorCapabilityInspecting {
             supportsMicrophone: AVAudioSession.sharedInstance().isInputAvailable,
             supportsHaptics: CHHapticEngine.capabilitiesForHardware().supportsHaptics,
             supportsBarometer: CMAltimeter.isRelativeAltitudeAvailable(),
+            supportsStepCounting: CMPedometer.isStepCountingAvailable(),
             supportsLiDAR: ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh),
             supportsApplePencil: false
         )
