@@ -17,6 +17,16 @@ final class LabModelsTests: XCTestCase {
         }
     }
 
+    func testLabSubjectStreamsExposeFocusedSubjectPickerSeparateFromGames() throws {
+        let streams = CapabilityLane.labSubjectStreams
+
+        XCTAssertEqual(streams.map(\.id), [.numbers, .geometry, .physics, .mapWorld, .chemistry])
+        XCTAssertEqual(streams.map(\.subjectStreamLabel), ["Numbers & Arithmetic", "Geometry", "Physics", "Geography", "Chemistry"])
+        XCTAssertTrue(streams.allSatisfy(\.isLabSubjectStream))
+        XCTAssertFalse(CapabilityLane.defaultExplorerLanes.first { $0.id == .discoveryCards }?.isLabSubjectStream ?? true)
+        XCTAssertTrue(ExplorerGameRegistry.directLaunchEntries.contains { $0.activity.id == .memoryMatch })
+    }
+
     func testMemoryMatchIsEmbeddedInDiscoveryCardsInsteadOfTopLevelLane() throws {
         let lanes = CapabilityLane.defaultExplorerLanes
         let discovery = try XCTUnwrap(lanes.first { $0.id == .discoveryCards })
@@ -73,7 +83,7 @@ final class LabModelsTests: XCTestCase {
             progress: numbers.emptyProgress
         )
 
-        XCTAssertEqual(presentation.title, "Numbers Lab")
+        XCTAssertEqual(presentation.title, "Numbers & Arithmetic")
         XCTAssertEqual(presentation.openAffordanceLabel, "Enter world")
         XCTAssertEqual(
             presentation.sections,
@@ -84,7 +94,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertFalse(presentation.sections.contains(.ageEntries))
         XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertFalse(presentation.sections.contains(.activities))
-        XCTAssertTrue(presentation.accessibilityHint.contains("Opens Numbers Lab"))
+        XCTAssertTrue(presentation.accessibilityHint.contains("Opens Numbers & Arithmetic"))
     }
 
     func testLaneDetailPresentationRestoresDetailsWithoutDroppingLaunches() throws {
@@ -127,13 +137,14 @@ final class LabModelsTests: XCTestCase {
         let games = ExplorerPathPresentation.all[1]
 
         XCTAssertEqual(labs.title, "Labs")
-        XCTAssertTrue(labs.subtitle.contains("Guided sessions"))
-        XCTAssertEqual(labs.callToAction, "Start a learning path")
+        XCTAssertTrue(labs.subtitle.contains("Pick a subject stream"))
+        XCTAssertEqual(labs.callToAction, "Choose a subject")
         XCTAssertEqual(labs.symbolName, "sparkles.rectangle.stack.fill")
         XCTAssertTrue(labs.artworkAccessibilityLabel.contains("Labs"))
 
         XCTAssertEqual(games.title, "Games")
-        XCTAssertTrue(games.subtitle.contains("Jump straight into"))
+        XCTAssertTrue(games.subtitle.contains("Jump straight into playable games"))
+        XCTAssertTrue(games.subtitle.contains("no lab progress changes"))
         XCTAssertEqual(games.callToAction, "Play now")
         XCTAssertEqual(games.symbolName, "gamecontroller.fill")
         XCTAssertTrue(games.artworkAccessibilityLabel.contains("Games"))

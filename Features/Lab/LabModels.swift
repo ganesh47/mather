@@ -389,8 +389,8 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
             symbolName: "sparkles.rectangle.stack.fill",
             artMotif: "guided compass path",
             title: "Labs",
-            subtitle: "Guided sessions that move from learning to remembering, playful practice, blast rounds, and score.",
-            callToAction: "Start a learning path"
+            subtitle: "Pick a subject stream, then follow a calm staged path when one is ready.",
+            callToAction: "Choose a subject"
         ),
         ExplorerPathPresentation(
             id: .games,
@@ -398,7 +398,7 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
             symbolName: "gamecontroller.fill",
             artMotif: "arcade play portal",
             title: "Games",
-            subtitle: "Jump straight into the games you already love — no staged lesson required.",
+            subtitle: "Jump straight into playable games — no lab progress changes unless a Lab starts them.",
             callToAction: "Play now"
         ),
     ]
@@ -873,12 +873,12 @@ struct LabLaneCardPresentation: Equatable {
 
     init(lane: CapabilityLane, progress: CapabilityLaneProgress) {
         self.laneID = lane.id
-        title = lane.title
+        title = lane.subjectStreamLabel
         promiseLine = lane.promise
         progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
         openAffordanceLabel = "Enter world"
-        accessibilityLabel = "\(lane.title). \(lane.ageBandHint). \(lane.promise)"
-        accessibilityHint = "Opens \(lane.title) to choose missions, review cards, play styles, and sensor options."
+        accessibilityLabel = "\(lane.subjectStreamLabel) subject stream. \(lane.ageBandHint). \(lane.promise)"
+        accessibilityHint = "Opens \(lane.subjectStreamLabel) to choose missions, review cards, play styles, and sensor options."
         sections = [
             .visualSummary,
             .promise,
@@ -1088,6 +1088,43 @@ struct CapabilityLane: Identifiable, Equatable {
 
     var emptyProgress: CapabilityLaneProgress {
         CapabilityLaneProgress(laneID: id, availableModes: modes)
+    }
+
+    var isLabSubjectStream: Bool {
+        Self.labSubjectStreamIDs.contains(id)
+    }
+
+    var subjectStreamLabel: String {
+        switch id {
+        case .numbers:
+            return "Numbers & Arithmetic"
+        case .geometry:
+            return "Geometry"
+        case .physics:
+            return "Physics"
+        case .mapWorld:
+            return "Geography"
+        case .chemistry:
+            return "Chemistry"
+        case .discoveryCards:
+            return "Discovery Cards"
+        case .electronics:
+            return "Electronics"
+        }
+    }
+
+    static let labSubjectStreamIDs: [CapabilityLaneID] = [
+        .numbers,
+        .geometry,
+        .physics,
+        .mapWorld,
+        .chemistry,
+    ]
+
+    static var labSubjectStreams: [CapabilityLane] {
+        labSubjectStreamIDs.compactMap { streamID in
+            defaultExplorerLanes.first { $0.id == streamID }
+        }
     }
 
     static let defaultExplorerLanes: [CapabilityLane] = [

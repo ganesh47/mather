@@ -24,7 +24,7 @@ enum CapabilityLaneID: String, CaseIterable, Codable, Hashable, Identifiable {
         case .physics:
             return "Physics Lab"
         case .mapWorld:
-            return "Map & World Lab"
+            return "Geography Lab"
         case .discoveryCards:
             return "Discovery Cards"
         case .chemistry:

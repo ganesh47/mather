@@ -42,7 +42,7 @@ struct CapabilityLaneTests {
         #expect(CapabilityLaneID.numbers.title == "Numbers Lab")
         #expect(CapabilityLaneID.geometry.title == "Geometry Lab")
         #expect(CapabilityLaneID.physics.title == "Physics Lab")
-        #expect(CapabilityLaneID.mapWorld.title == "Map & World Lab")
+        #expect(CapabilityLaneID.mapWorld.title == "Geography Lab")
         #expect(CapabilityLaneID.discoveryCards.title == "Discovery Cards")
         #expect(CapabilityLaneID.chemistry.title == "Chemistry Lab")
         #expect(CapabilityLaneID.electronics.title == "Electronics Lab")
