@@ -154,7 +154,7 @@ struct GameplayMatchStageViewModel: Equatable {
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, mode: GameplayStageKind, turnItemCount: Int? = nil) {
         self.pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
         self.mode = mode
-        self.turnItemCount = max(1, turnItemCount ?? defaultTurnItemCount(for: mode, itemCount: round.items.count))
+        self.turnItemCount = max(1, turnItemCount ?? Self.defaultTurnItemCount(for: mode, itemCount: round.items.count))
         self.seed = round.seed
     }
 
