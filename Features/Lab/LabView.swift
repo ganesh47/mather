@@ -227,6 +227,13 @@ struct LabView: View {
                     Text(path.subtitle)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
+                    if let primaryPlan = path.primaryPlan {
+                        Text("First quest: \(primaryPlan.title) • \(primaryPlan.estimatedLength)")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(tint)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
                     Text(path.stages.map(\.rawValue).joined(separator: " → "))
                         .font(.caption2.weight(.black))
                         .foregroundStyle(tint)
