@@ -196,7 +196,10 @@ struct GameplayStageParityRegressionTests {
 
         #expect(!active.isEmpty)
         #expect(active.count <= 3)
-        #expect(active.allSatisfy { !$0.left.title.isEmpty && !$0.right.title.isEmpty })
+        let activePairsHaveDisplayText = active.allSatisfy { pair in
+            !pair.left.title.isEmpty && !pair.right.title.isEmpty
+        }
+        #expect(activePairsHaveDisplayText)
 
         let pair = active[0]
         viewModel.selectLeft(pairID: pair.id)
