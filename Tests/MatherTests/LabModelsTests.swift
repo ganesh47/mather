@@ -166,6 +166,55 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.activity.id == .memoryMatch && $0.directRoute == .memory })
     }
 
+    func testRoundTimerTracksElapsedTimeWithoutDefaultPressure() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let now = Date(timeIntervalSince1970: 1_075)
+        let timer = RoundTimer(stage: .learn, startedAt: start, targetDuration: 90)
+
+        XCTAssertEqual(timer.elapsed(at: now), 75)
+        XCTAssertEqual(timer.remaining(at: now), 15)
+        XCTAssertFalse(timer.isComplete)
+        XCTAssertFalse(timer.allowsCountdownPressure)
+        XCTAssertEqual(timer.pressurePolicy, .trackedOnly)
+    }
+
+    func testRoundTimerCompletionClampsNegativeElapsedTime() {
+        let start = Date(timeIntervalSince1970: 200)
+        let earlier = Date(timeIntervalSince1970: 150)
+        let timer = RoundTimer(stage: .remember, startedAt: start).completed(at: earlier)
+
+        XCTAssertTrue(timer.isComplete)
+        XCTAssertEqual(timer.elapsed(at: Date(timeIntervalSince1970: 250)), 0)
+    }
+
+    func testSessionScoreAggregatesStageTimesAndChildSafeSummary() {
+        let timers = [
+            RoundTimer(stage: .learn, startedAt: Date(timeIntervalSince1970: 0)).completed(at: Date(timeIntervalSince1970: 60)),
+            RoundTimer(stage: .remember, startedAt: Date(timeIntervalSince1970: 60)).completed(at: Date(timeIntervalSince1970: 90)),
+            RoundTimer(stage: .blast, startedAt: Date(timeIntervalSince1970: 90), pressurePolicy: .personalBest).completed(at: Date(timeIntervalSince1970: 105)),
+        ]
+        let score = SessionScore(
+            laneID: .numbers,
+            activityID: .sumSprint,
+            stageTimers: timers,
+            correctCount: 9,
+            mistakeCount: 1,
+            streak: 4,
+            mastery: .steady,
+            weakAreas: ["number-bond-8"]
+        )
+
+        XCTAssertEqual(score.totalTime, 105)
+        XCTAssertEqual(score.stageTimes[.learn], 60)
+        XCTAssertEqual(score.stageTimes[.remember], 30)
+        XCTAssertEqual(score.stageTimes[.blast], 15)
+        XCTAssertEqual(score.accuracy, 0.9)
+        XCTAssertEqual(score.formattedAccuracy, "90%")
+        XCTAssertEqual(score.formattedTotalTime, "1m 45s")
+        XCTAssertEqual(score.totalScore, 94)
+        XCTAssertEqual(score.childCelebrationLabel, "You powered up this idea!")
+    }
+
 }
 
 extension LabModelsTests {

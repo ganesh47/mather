@@ -111,7 +111,7 @@ struct LaneRecallReviewAction: Equatable {
     let isCorrect: Bool
 }
 
-enum LabActivityID: String, CaseIterable, Hashable {
+enum LabActivityID: String, CaseIterable, Codable, Hashable {
     case sumSprint
     case roomQuest
     case symmetryFold
@@ -223,7 +223,7 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
     ]
 }
 
-enum GuidedLabStage: String, CaseIterable, Hashable, Identifiable {
+enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {
     case learn = "Learn"
     case remember = "Remember"
     case play = "Play"
@@ -250,6 +250,141 @@ enum GuidedLabStage: String, CaseIterable, Hashable, Identifiable {
         case .blast: return "Fast round"
         case .score: return "Celebrate progress"
         }
+    }
+}
+
+
+enum RoundTimerPressurePolicy: String, CaseIterable, Codable, Equatable, Hashable {
+    case trackedOnly
+    case visibleElapsed
+    case personalBest
+    case countdownChallenge
+
+    var usesCountdownPressure: Bool { self == .countdownChallenge }
+}
+
+struct RoundTimer: Identifiable, Codable, Equatable, Hashable {
+    let id: String
+    let stage: GuidedLabStage
+    let startedAt: Date
+    private(set) var endedAt: Date?
+    let targetDuration: TimeInterval?
+    let pressurePolicy: RoundTimerPressurePolicy
+
+    init(
+        id: String = UUID().uuidString,
+        stage: GuidedLabStage,
+        startedAt: Date,
+        endedAt: Date? = nil,
+        targetDuration: TimeInterval? = nil,
+        pressurePolicy: RoundTimerPressurePolicy = .trackedOnly
+    ) {
+        self.id = id
+        self.stage = stage
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.targetDuration = targetDuration.map { max(0, $0) }
+        self.pressurePolicy = pressurePolicy
+    }
+
+    var isComplete: Bool { endedAt != nil }
+    var allowsCountdownPressure: Bool { pressurePolicy.usesCountdownPressure }
+
+    func elapsed(at now: Date = Date()) -> TimeInterval {
+        let effectiveEnd = endedAt ?? now
+        return max(0, effectiveEnd.timeIntervalSince(startedAt))
+    }
+
+    func remaining(at now: Date = Date()) -> TimeInterval? {
+        guard let targetDuration else { return nil }
+        return max(0, targetDuration - elapsed(at: now))
+    }
+
+    func completed(at date: Date) -> RoundTimer {
+        var copy = self
+        copy.endedAt = date
+        return copy
+    }
+}
+
+struct SessionScoreRecommendation: Codable, Equatable, Hashable {
+    let title: String
+    let detail: String
+}
+
+struct SessionScore: Identifiable, Codable, Equatable, Hashable {
+    let id: UUID
+    let laneID: CapabilityLaneID?
+    let activityID: LabActivityID?
+    let stageTimers: [RoundTimer]
+    let correctCount: Int
+    let mistakeCount: Int
+    let streak: Int
+    let mastery: ConceptConfidence
+    let weakAreas: [ConceptId]
+    let recommendedNextActivity: SessionScoreRecommendation?
+
+    init(
+        id: UUID = UUID(),
+        laneID: CapabilityLaneID? = nil,
+        activityID: LabActivityID? = nil,
+        stageTimers: [RoundTimer],
+        correctCount: Int,
+        mistakeCount: Int,
+        streak: Int = 0,
+        mastery: ConceptConfidence = .introduced,
+        weakAreas: [ConceptId] = [],
+        recommendedNextActivity: SessionScoreRecommendation? = nil
+    ) {
+        self.id = id
+        self.laneID = laneID
+        self.activityID = activityID
+        self.stageTimers = stageTimers
+        self.correctCount = max(0, correctCount)
+        self.mistakeCount = max(0, mistakeCount)
+        self.streak = max(0, streak)
+        self.mastery = mastery
+        self.weakAreas = weakAreas
+        self.recommendedNextActivity = recommendedNextActivity
+    }
+
+    var attemptedCount: Int { correctCount + mistakeCount }
+    var totalTime: TimeInterval { stageTimers.reduce(0) { $0 + $1.elapsed() } }
+
+    var stageTimes: [GuidedLabStage: TimeInterval] {
+        stageTimers.reduce(into: [:]) { partial, timer in
+            partial[timer.stage, default: 0] += timer.elapsed()
+        }
+    }
+
+    var accuracy: Double {
+        guard attemptedCount > 0 else { return 0 }
+        return Double(correctCount) / Double(attemptedCount)
+    }
+
+    var totalScore: Int {
+        max(0, correctCount * 10 + streak * 2 - mistakeCount * 4)
+    }
+
+    var childCelebrationLabel: String {
+        if mastery >= .steady { return "You powered up this idea!" }
+        if attemptedCount == 0 { return "Session saved — come back when you're ready." }
+        return "Nice practice — tricky parts can come back soon."
+    }
+
+    var formattedAccuracy: String {
+        "\(Int((accuracy * 100).rounded()))%"
+    }
+
+    var formattedTotalTime: String {
+        Self.formatDuration(totalTime)
+    }
+
+    static func formatDuration(_ duration: TimeInterval) -> String {
+        let seconds = max(0, Int(duration.rounded()))
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return minutes > 0 ? "\(minutes)m \(remainingSeconds)s" : "\(remainingSeconds)s"
     }
 }
 
