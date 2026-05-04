@@ -63,11 +63,14 @@ struct GameplayDisplayCard: View {
 
     var body: some View {
         VStack(spacing: compact ? 6 : 10) {
-            Text(concealed ? "?" : item.visualKey ?? "✦")
-                .font(.system(size: visualSize, weight: concealed ? .black : .regular, design: .rounded))
-                .foregroundStyle(concealed ? MatherTheme.accent : MatherTheme.ink)
-                .frame(width: visualFrameWidth, height: visualFrameHeight)
-                .background(Circle().fill(MatherTheme.softBlue.opacity(0.45)))
+            GameplayDisplayVisual(
+                item: item,
+                concealed: concealed,
+                visualSize: visualSize,
+                visualFrameWidth: visualFrameWidth,
+                visualFrameHeight: visualFrameHeight,
+                cornerRadius: isFeatured ? 28 : 22
+            )
             Text(concealed ? "Hidden match" : item.title)
                 .font(prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold()))
                 .multilineTextAlignment(.center)
@@ -99,19 +102,19 @@ struct GameplayDisplayCard: View {
 
     private var isFeatured: Bool { prominence == .featured }
     private var visualSize: CGFloat {
-        if isFeatured { return compact ? 76 : 112 }
+        if isFeatured { return compact ? 104 : 140 }
         return compact ? 40 : 58
     }
     private var visualFrameWidth: CGFloat {
-        if isFeatured { return compact ? 118 : 156 }
+        if isFeatured { return compact ? 220 : 320 }
         return compact ? 64 : 86
     }
     private var visualFrameHeight: CGFloat {
-        if isFeatured { return compact ? 102 : 136 }
+        if isFeatured { return compact ? 170 : 240 }
         return compact ? 58 : 78
     }
     private var minimumHeight: CGFloat {
-        if isFeatured { return compact ? 220 : 280 }
+        if isFeatured { return compact ? 310 : 400 }
         return compact ? 132 : 164
     }
 }
@@ -119,6 +122,115 @@ struct GameplayDisplayCard: View {
 enum GameplayDisplayCardProminence {
     case normal
     case featured
+}
+
+private struct GameplayDisplayVisual: View {
+    let item: GameplayDisplayItem
+    let concealed: Bool
+    let visualSize: CGFloat
+    let visualFrameWidth: CGFloat
+    let visualFrameHeight: CGFloat
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        Group {
+            if concealed {
+                Text("?")
+                    .font(.system(size: visualSize, weight: .black, design: .rounded))
+                    .foregroundStyle(MatherTheme.accent)
+            } else if let assetName = item.visualAssetName {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .accessibilityHidden(true)
+                    .padding(visualAssetPadding)
+            } else if let shapeKey = item.visualShapeKey {
+                CountryMapShapeArtwork(shapeKey: shapeKey)
+                    .accessibilityHidden(true)
+                    .padding(visualAssetPadding)
+            } else {
+                Text(item.visualKey ?? "✦")
+                    .font(.system(size: visualSize, weight: .regular, design: .rounded))
+                    .foregroundStyle(MatherTheme.ink)
+            }
+        }
+        .frame(width: visualFrameWidth, height: visualFrameHeight)
+        .background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(MatherTheme.softBlue.opacity(0.45))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .strokeBorder(MatherTheme.panelDeep.opacity(concealed ? 0 : 0.12), lineWidth: 1)
+        )
+    }
+
+    private var visualAssetPadding: CGFloat {
+        max(4, min(14, visualFrameHeight * 0.08))
+    }
+}
+
+private struct CountryMapShapeArtwork: View {
+    let shapeKey: String
+
+    var body: some View {
+        CountryMapSilhouette(shapeKey: shapeKey)
+            .fill(
+                LinearGradient(
+                    colors: [MatherTheme.accent.opacity(0.95), MatherTheme.panelDeep.opacity(0.82)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                CountryMapSilhouette(shapeKey: shapeKey)
+                    .stroke(MatherTheme.ink.opacity(0.18), lineWidth: 2)
+            )
+            .shadow(color: MatherTheme.panelDeep.opacity(0.18), radius: 4, x: 0, y: 3)
+    }
+}
+
+private struct CountryMapSilhouette: Shape {
+    let shapeKey: String
+
+    func path(in rect: CGRect) -> Path {
+        let points = normalizedPoints(for: shapeKey)
+        guard let first = points.first else { return Path() }
+        var path = Path()
+        path.move(to: point(first, in: rect))
+        for coordinate in points.dropFirst() {
+            path.addLine(to: point(coordinate, in: rect))
+        }
+        path.closeSubpath()
+        return path
+    }
+
+    private func point(_ coordinate: CGPoint, in rect: CGRect) -> CGPoint {
+        CGPoint(x: rect.minX + coordinate.x * rect.width, y: rect.minY + coordinate.y * rect.height)
+    }
+
+    private func normalizedPoints(for key: String) -> [CGPoint] {
+        switch key {
+        case "country-india":
+            return [CGPoint(x: 0.40, y: 0.08), CGPoint(x: 0.70, y: 0.22), CGPoint(x: 0.62, y: 0.52), CGPoint(x: 0.52, y: 0.92), CGPoint(x: 0.34, y: 0.58), CGPoint(x: 0.24, y: 0.24)]
+        case "country-japan":
+            return [CGPoint(x: 0.58, y: 0.06), CGPoint(x: 0.72, y: 0.18), CGPoint(x: 0.65, y: 0.36), CGPoint(x: 0.76, y: 0.56), CGPoint(x: 0.58, y: 0.92), CGPoint(x: 0.42, y: 0.76), CGPoint(x: 0.50, y: 0.52), CGPoint(x: 0.34, y: 0.30)]
+        case "country-france":
+            return [CGPoint(x: 0.34, y: 0.12), CGPoint(x: 0.66, y: 0.12), CGPoint(x: 0.82, y: 0.42), CGPoint(x: 0.66, y: 0.78), CGPoint(x: 0.36, y: 0.86), CGPoint(x: 0.16, y: 0.48)]
+        case "country-egypt":
+            return [CGPoint(x: 0.18, y: 0.18), CGPoint(x: 0.72, y: 0.18), CGPoint(x: 0.72, y: 0.56), CGPoint(x: 0.86, y: 0.72), CGPoint(x: 0.58, y: 0.74), CGPoint(x: 0.18, y: 0.72)]
+        case "country-brazil":
+            return [CGPoint(x: 0.34, y: 0.08), CGPoint(x: 0.70, y: 0.18), CGPoint(x: 0.88, y: 0.46), CGPoint(x: 0.70, y: 0.74), CGPoint(x: 0.54, y: 0.92), CGPoint(x: 0.24, y: 0.76), CGPoint(x: 0.12, y: 0.44)]
+        case "country-australia":
+            return [CGPoint(x: 0.20, y: 0.42), CGPoint(x: 0.40, y: 0.24), CGPoint(x: 0.76, y: 0.32), CGPoint(x: 0.88, y: 0.56), CGPoint(x: 0.66, y: 0.78), CGPoint(x: 0.32, y: 0.72), CGPoint(x: 0.12, y: 0.58)]
+        case "country-canada":
+            return [CGPoint(x: 0.06, y: 0.34), CGPoint(x: 0.22, y: 0.16), CGPoint(x: 0.42, y: 0.28), CGPoint(x: 0.58, y: 0.14), CGPoint(x: 0.86, y: 0.30), CGPoint(x: 0.94, y: 0.54), CGPoint(x: 0.72, y: 0.68), CGPoint(x: 0.42, y: 0.58), CGPoint(x: 0.20, y: 0.72)]
+        case "country-kenya":
+            return [CGPoint(x: 0.42, y: 0.10), CGPoint(x: 0.64, y: 0.18), CGPoint(x: 0.72, y: 0.46), CGPoint(x: 0.54, y: 0.90), CGPoint(x: 0.30, y: 0.70), CGPoint(x: 0.34, y: 0.34)]
+        default:
+            return [CGPoint(x: 0.30, y: 0.12), CGPoint(x: 0.74, y: 0.28), CGPoint(x: 0.66, y: 0.76), CGPoint(x: 0.24, y: 0.86), CGPoint(x: 0.16, y: 0.42)]
+        }
+    }
 }
 
 struct GameplayPairingStageShell: View {
