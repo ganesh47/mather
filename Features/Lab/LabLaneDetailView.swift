@@ -758,7 +758,7 @@ struct LabLaneDetailView: View {
             if stage.stage == .blast {
                 appModel.engine.startBondBlastFinale(target: 10)
             } else {
-                appModel.engine.show(route)
+                showActivityRoute(route, returnLaneID: plan.laneID)
                 if route == .sumSprint {
                     appModel.sumSprintEngine.showDifficultyPick()
                 }
@@ -769,7 +769,8 @@ struct LabLaneDetailView: View {
     private func launch(_ activityID: LabActivityID) {
         appModel.pickProfileThenRun {
             appModel.clearLabGameplayCompletion()
-            appModel.engine.show(route(for: activityID, laneID: lane.id))
+            let activityRoute = route(for: activityID, laneID: lane.id)
+            showActivityRoute(activityRoute, returnLaneID: lane.id)
             switch activityID {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
@@ -777,6 +778,14 @@ struct LabLaneDetailView: View {
                  .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
                 break
             }
+        }
+    }
+
+    private func showActivityRoute(_ route: AppRoute, returnLaneID: CapabilityLaneID) {
+        if case let .gameplayThread(threadID) = route {
+            appModel.engine.showGameplayThread(threadID, returnRoute: .labLane(returnLaneID))
+        } else {
+            appModel.engine.show(route)
         }
     }
 

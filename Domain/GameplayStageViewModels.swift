@@ -6,12 +6,20 @@ struct GameplayStageNavigationState: Equatable {
     var stageResults: [GameplayStageResult]
     var startedAt: Date
     var currentStageStartedAt: Date
+    var stageAttemptNonce: Int
 
-    init(activeStageIndex: Int = 0, stageResults: [GameplayStageResult] = [], startedAt: Date = Date(), currentStageStartedAt: Date = Date()) {
+    init(
+        activeStageIndex: Int = 0,
+        stageResults: [GameplayStageResult] = [],
+        startedAt: Date = Date(),
+        currentStageStartedAt: Date = Date(),
+        stageAttemptNonce: Int = 0
+    ) {
         self.activeStageIndex = max(0, activeStageIndex)
         self.stageResults = stageResults
         self.startedAt = startedAt
         self.currentStageStartedAt = currentStageStartedAt
+        self.stageAttemptNonce = max(0, stageAttemptNonce)
     }
 
     func activeStage(in thread: GameplayThreadDefinition) -> GameplayStageDefinition? {
@@ -25,6 +33,8 @@ struct GameplayStageNavigationState: Equatable {
     }
 
     var canGoBack: Bool { activeStageIndex > 0 }
+
+    var stageAttemptID: String { "stage-attempt-\(activeStageIndex)-\(stageAttemptNonce)" }
 
     func isComplete(for thread: GameplayThreadDefinition) -> Bool {
         guard !thread.stages.isEmpty else { return true }
@@ -40,10 +50,18 @@ struct GameplayStageNavigationState: Equatable {
         guard activeStageIndex > 0 else { return }
         activeStageIndex -= 1
         currentStageStartedAt = now
+        stageAttemptNonce += 1
     }
 
-    mutating func retryCurrentStage(now: Date = Date()) {
+    mutating func retryCurrentStage(in thread: GameplayThreadDefinition? = nil, now: Date = Date()) {
+        if let thread, isComplete(for: thread) {
+            activeStageIndex = max(thread.stages.count - 1, 0)
+        }
+        if let thread, let stage = activeStage(in: thread) {
+            stageResults.removeAll { $0.stageID == stage.id }
+        }
         currentStageStartedAt = now
+        stageAttemptNonce += 1
     }
 
     mutating func completeCurrentStage(
@@ -68,6 +86,7 @@ struct GameplayStageNavigationState: Equatable {
         if activeStageIndex < thread.stages.count - 1 {
             activeStageIndex += 1
             currentStageStartedAt = now
+            stageAttemptNonce += 1
         }
     }
 }

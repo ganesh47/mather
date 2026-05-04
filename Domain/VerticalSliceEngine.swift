@@ -32,6 +32,7 @@ enum AppRoute: Hashable {
 @Observable
 final class VerticalSliceEngine {
     private(set) var route: AppRoute = .home
+    private(set) var gameplayReturnRoute: AppRoute?
     private(set) var config = SliceConfig()
     private(set) var problems: [SliceProblem] = []
     private(set) var currentProblemIndex = 0
@@ -121,30 +122,42 @@ final class VerticalSliceEngine {
     var concreteCount: Int { concreteWarmCount + concreteAccentCount }
     var sumSprintStageCardCount: Int { sumSprintBurstState?.totalPairs ?? 0 }
 
-    func show(_ route: AppRoute) { self.route = route }
-    func showSettings() { route = .settings }
-    func showHome() { route = .home }
-    func showParentSummary() { route = .parentSummary }
-    func showSessionConfig() { route = .sessionConfig }
-    func showRoomQuest() { route = .roomQuest }
-    func showSumSprint() { route = .sumSprint }
-    func showSymmetryFold() { route = .symmetryFold }
-    func showRectangleFactory() { route = .rectangleFactory }
-    func showFactoryCards() { route = .factoryCards }
-    func showAngleCannon() { route = .angleCannon }
-    func showTwoFingerProtractor() { route = .twoFingerProtractor }
-    func showGravityArtist() { route = .gravityArtist }
-    func showCompassAngles() { route = .compassAngles }
-    func showLab() { route = .lab }
-    func showLabLane(_ laneID: CapabilityLaneID) { route = .labLane(laneID) }
-    func showMemory() { route = .memory }
-    func showLabRememberStage(_ deckID: LabRememberStageDeckID) { route = .labRememberStage(deckID) }
-    func showCountriesGameplayThread() { route = .gameplayThread(.countries) }
-    func showWaterCycle() { route = .gameplayThread(.waterCycle) }
-    func showLegacyWaterCycleLab() { route = .waterCycle }
-    func showGameplayThread(_ id: GameplayThreadID) { route = .gameplayThread(id) }
-    func showSoundVolume() { route = .soundVolume }
-    func showShapeGeometry() { route = .shapeGeometry }
+    func show(_ route: AppRoute) {
+        gameplayReturnRoute = nil
+        self.route = route
+    }
+
+    func showSettings() { show(.settings) }
+    func showHome() { show(.home) }
+    func showParentSummary() { show(.parentSummary) }
+    func showSessionConfig() { show(.sessionConfig) }
+    func showRoomQuest() { show(.roomQuest) }
+    func showSumSprint() { show(.sumSprint) }
+    func showSymmetryFold() { show(.symmetryFold) }
+    func showRectangleFactory() { show(.rectangleFactory) }
+    func showFactoryCards() { show(.factoryCards) }
+    func showAngleCannon() { show(.angleCannon) }
+    func showTwoFingerProtractor() { show(.twoFingerProtractor) }
+    func showGravityArtist() { show(.gravityArtist) }
+    func showCompassAngles() { show(.compassAngles) }
+    func showLab() { show(.lab) }
+    func showLabLane(_ laneID: CapabilityLaneID) { show(.labLane(laneID)) }
+    func showMemory() { show(.memory) }
+    func showLabRememberStage(_ deckID: LabRememberStageDeckID) { show(.labRememberStage(deckID)) }
+    func showCountriesGameplayThread() { showGameplayThread(.countries) }
+    func showWaterCycle() { showGameplayThread(.waterCycle) }
+    func showLegacyWaterCycleLab() { show(.waterCycle) }
+    func showGameplayThread(_ id: GameplayThreadID, returnRoute: AppRoute? = nil) {
+        gameplayReturnRoute = returnRoute
+        route = .gameplayThread(id)
+    }
+
+    func returnFromGameplay(defaultRoute: AppRoute = .lab) {
+        route = gameplayReturnRoute ?? defaultRoute
+        gameplayReturnRoute = nil
+    }
+    func showSoundVolume() { show(.soundVolume) }
+    func showShapeGeometry() { show(.shapeGeometry) }
 
     func startBondBlastFinale(target: Int = 10) {
         updateConfig(problemCount: 1, minTarget: target, maxTarget: target)

@@ -23,6 +23,50 @@ struct GameplayStageViewModelsTests {
     }
 
     @Test
+    func retryCurrentStageRebuildsAttemptAndClearsCompletedResult() {
+        let thread = GameplaySampleThreads.countries
+        let start = Date(timeIntervalSince1970: 200)
+        var state = GameplayStageNavigationState(startedAt: start, currentStageStartedAt: start)
+
+        state.completeCurrentStage(thread: thread, correctCount: 3, mistakeCount: 0, now: start.addingTimeInterval(10))
+        #expect(state.activeStageIndex == 1)
+        let attemptBeforeRetry = state.stageAttemptID
+
+        state.retryCurrentStage(in: thread, now: start.addingTimeInterval(12))
+
+        #expect(state.activeStageIndex == 1)
+        #expect(state.stageResults.map(\.stageID) == [thread.stages[0].id])
+        #expect(state.currentStageStartedAt == start.addingTimeInterval(12))
+        #expect(state.stageAttemptID != attemptBeforeRetry)
+    }
+
+    @Test
+    func retryAfterThreadCompleteReturnsToLastStage() {
+        let thread = GameplayThreadDefinition(
+            id: "short-thread",
+            title: "Short Thread",
+            category: GameplayCategory(id: "test", title: "Test", subtitle: ""),
+            propertyTypes: [],
+            entities: [],
+            stages: [
+                GameplayStageDefinition(id: "look", kind: .flashcards, title: "Look", prompt: "Look"),
+                GameplayStageDefinition(id: "quiz", kind: .multipleChoice, title: "Quiz", prompt: "Quiz")
+            ]
+        )
+        let start = Date(timeIntervalSince1970: 300)
+        var state = GameplayStageNavigationState(startedAt: start, currentStageStartedAt: start)
+        state.completeCurrentStage(thread: thread, correctCount: 1, mistakeCount: 0, now: start.addingTimeInterval(5))
+        state.completeCurrentStage(thread: thread, correctCount: 1, mistakeCount: 0, now: start.addingTimeInterval(10))
+        #expect(state.isComplete(for: thread))
+
+        state.retryCurrentStage(in: thread, now: start.addingTimeInterval(11))
+
+        #expect(!state.isComplete(for: thread))
+        #expect(state.activeStage(in: thread)?.id == "quiz")
+        #expect(state.stageResults.map(\.stageID) == ["look"])
+    }
+
+    @Test
     func contentBuilderCreatesPropertyPairsForRoundItems() {
         let thread = GameplaySampleThreads.countries
         let stage = thread.stages.first { $0.kind == .easyMemory }!
@@ -67,7 +111,6 @@ struct GameplayStageViewModelsTests {
         #expect(GameplayStageRenderSupport.cardMinimumWidth(availableWidth: 820, compact: false) == 180)
     }
 }
-
 
 struct GameplayThreadCatalogRegressionTests {
     @Test
