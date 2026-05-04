@@ -125,7 +125,8 @@ struct GameplayStageParityRegressionTests {
 
         for pair in viewModel.activePairs {
             viewModel.selectLeft(pairID: pair.id)
-            #expect(viewModel.chooseRight(pair.right))
+            let matched = viewModel.chooseRight(pair.right)
+            #expect(matched)
         }
 
         #expect(viewModel.canAdvanceTurn)
@@ -167,7 +168,8 @@ struct GameplayStageParityRegressionTests {
         viewModel.selectLeft(pairID: pair.id)
         #expect(viewModel.selectedLeftID == pair.id)
         #expect(viewModel.inspectedItem == pair.left)
-        #expect(viewModel.chooseRight(pair.right))
+        let matched = viewModel.chooseRight(pair.right)
+        #expect(matched)
         #expect(viewModel.correctCount == 1)
     }
 
