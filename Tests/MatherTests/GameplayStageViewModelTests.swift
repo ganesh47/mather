@@ -104,3 +104,81 @@ struct GameplayStageViewModelTests {
         #expect(GameplayStageRenderSupport.maximumContentWidth(compact: false) == 920)
     }
 }
+
+struct GameplayStageParityRegressionTests {
+    @Test
+    func memoryStagesChunkPairsIntoSmallTurns() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .easyMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 44)
+        var viewModel = GameplayMatchStageViewModel(
+            thread: thread,
+            round: round,
+            mode: .easyMemory,
+            turnItemCount: stage.recommendedTurnItemCount
+        )
+
+        #expect(viewModel.pairs.count == 4)
+        #expect(viewModel.activePairs.count == 2)
+        #expect(viewModel.turnCount == 2)
+        #expect(viewModel.turnProgressText == "Turn 1/2")
+
+        for pair in viewModel.activePairs {
+            viewModel.selectLeft(pairID: pair.id)
+            #expect(viewModel.chooseRight(pair.right))
+        }
+
+        #expect(viewModel.canAdvanceTurn)
+        viewModel.advanceTurn()
+        #expect(viewModel.activeTurnIndex == 1)
+        #expect(viewModel.activePairs.count == 2)
+        #expect(viewModel.turnProgressText == "Turn 2/2")
+    }
+
+    @Test
+    func rightCardTapWithoutSelectedPromptOpensDetailsWithoutMistake() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .easyMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 45)
+        var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory, turnItemCount: 2)
+        let right = viewModel.shuffledRights[0]
+
+        let matched = viewModel.chooseRight(right)
+
+        #expect(!matched)
+        #expect(viewModel.mismatchCount == 0)
+        #expect(viewModel.inspectedItem == right)
+    }
+
+    @Test
+    func bondBlastUsesNumbersStyleTapSelectThenMatchAcrossReadinessTurns() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .bondBlast }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 46)
+        var viewModel = GameplayMatchStageViewModel(
+            thread: thread,
+            round: round,
+            mode: .bondBlast,
+            turnItemCount: stage.recommendedTurnItemCount
+        )
+        let pair = viewModel.activePairs[0]
+
+        #expect(viewModel.activePairs.count <= 3)
+        viewModel.selectLeft(pairID: pair.id)
+        #expect(viewModel.selectedLeftID == pair.id)
+        #expect(viewModel.inspectedItem == pair.left)
+        #expect(viewModel.chooseRight(pair.right))
+        #expect(viewModel.correctCount == 1)
+    }
+
+    @Test
+    func stageDefinitionsKeepSingleCardAndPairTurnsChildSized() {
+        let flashcard = GameplayStageDefinition(id: "learn", kind: .flashcards, title: "Learn", prompt: "Look", maximumItemCount: 8)
+        let memory = GameplayStageDefinition(id: "remember", kind: .easyMemory, title: "Remember", prompt: "Match", maximumItemCount: 8)
+        let blast = GameplayStageDefinition(id: "blast", kind: .bondBlast, title: "Bond Blast", prompt: "Match", maximumItemCount: 10)
+
+        #expect(flashcard.recommendedTurnItemCount == 1)
+        #expect(memory.recommendedTurnItemCount == 2)
+        #expect(blast.recommendedTurnItemCount == 3)
+    }
+}

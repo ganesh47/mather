@@ -20,8 +20,18 @@ struct FlashcardStageView: View {
         VStack(spacing: compact ? 12 : 18) {
             GameplayStageTitle(stage: stage, detail: viewModel.progressText)
             if let card = viewModel.activeCard {
-                GameplayDisplayCard(item: card, compact: compact)
-                    .accessibilityLabel("Flashcard: \(card.title), \(card.subtitle)")
+                Button {
+                    viewModel.markExposure()
+                    speak(card)
+                } label: {
+                    GameplayDisplayCard(
+                        item: card,
+                        compact: compact,
+                        prominence: viewModel.cards.count == 1 ? .featured : .normal
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open flashcard: \(card.title), \(card.subtitle)")
                 HStack(spacing: 10) {
                     Button("Listen again") {
                         viewModel.markExposure()

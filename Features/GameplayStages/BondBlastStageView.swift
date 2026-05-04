@@ -12,10 +12,10 @@ struct BondBlastStageView: View {
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
-        _viewModel = State(initialValue: GameplayMatchStageViewModel(thread: thread, round: round, mode: .bondBlast))
+        _viewModel = State(initialValue: GameplayMatchStageViewModel(thread: thread, round: round, mode: .bondBlast, turnItemCount: stage.recommendedTurnItemCount))
     }
 
     var body: some View {
-        GameplayPairingStageShell(title: stage.title, prompt: "Blast through the matching bonds.", compact: compact, viewModel: $viewModel, actions: actions, onComplete: onComplete)
+        GameplayPairingStageShell(title: stage.title, prompt: stage.prompt.isEmpty ? "Tap a card, then tap its matching bond." : stage.prompt, compact: compact, viewModel: $viewModel, actions: actions, onComplete: onComplete)
     }
 }

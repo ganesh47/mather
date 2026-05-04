@@ -78,6 +78,23 @@ struct GameplayStageDefinition: Identifiable, Codable, Equatable, Hashable {
     let propertyTypeIDs: [String]
     let maximumItemCount: Int
 
+    /// Pairing/card stages may review several items in one stage while only
+    /// showing a child-sized turn at a time. This keeps Lab/Gameplay stages
+    /// aligned with the Numbers Bond Blast tap-to-select rhythm without forcing
+    /// a long scrolling board.
+    var recommendedTurnItemCount: Int {
+        switch kind {
+        case .flashcards:
+            return 1
+        case .easyMemory, .flipMemory:
+            return min(maximumItemCount, 2)
+        case .bondBlast:
+            return min(maximumItemCount, 3)
+        case .multipleChoice:
+            return 1
+        }
+    }
+
     init(
         id: String,
         kind: GameplayStageKind,
@@ -137,10 +154,10 @@ struct GameplayThreadDefinition: Identifiable, Codable, Equatable {
     }
 
     static let defaultStages: [GameplayStageDefinition] = [
-        GameplayStageDefinition(id: "flashcards", kind: .flashcards, title: "Look + Learn", prompt: "Meet each card."),
-        GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Easy Memory", prompt: "Match with the cards still visible."),
-        GameplayStageDefinition(id: "flip-memory", kind: .flipMemory, title: "Flip Memory", prompt: "Remember where the matches are."),
-        GameplayStageDefinition(id: "bond-blast", kind: .bondBlast, title: "Bond Blast", prompt: "Connect names, pictures, and facts."),
+        GameplayStageDefinition(id: "flashcards", kind: .flashcards, title: "Look + Learn", prompt: "Meet each card.", maximumItemCount: 6),
+        GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Easy Memory", prompt: "Match with the cards still visible.", maximumItemCount: 6),
+        GameplayStageDefinition(id: "flip-memory", kind: .flipMemory, title: "Flip Memory", prompt: "Remember where the matches are.", maximumItemCount: 6),
+        GameplayStageDefinition(id: "bond-blast", kind: .bondBlast, title: "Bond Blast", prompt: "Connect names, pictures, and facts.", maximumItemCount: 6),
         GameplayStageDefinition(id: "multiple-choice", kind: .multipleChoice, title: "Quiz", prompt: "Pick the best answer.")
     ]
 }

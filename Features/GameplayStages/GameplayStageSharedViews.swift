@@ -59,16 +59,17 @@ struct GameplayDisplayCard: View {
     var selected = false
     var matched = false
     var concealed = false
+    var prominence: GameplayDisplayCardProminence = .normal
 
     var body: some View {
         VStack(spacing: compact ? 6 : 10) {
             Text(concealed ? "?" : item.visualKey ?? "✦")
-                .font(.system(size: compact ? 40 : 58, weight: concealed ? .black : .regular, design: .rounded))
+                .font(.system(size: visualSize, weight: concealed ? .black : .regular, design: .rounded))
                 .foregroundStyle(concealed ? MatherTheme.accent : MatherTheme.ink)
-                .frame(width: compact ? 64 : 86, height: compact ? 58 : 78)
+                .frame(width: visualFrameWidth, height: visualFrameHeight)
                 .background(Circle().fill(MatherTheme.softBlue.opacity(0.45)))
             Text(concealed ? "Hidden match" : item.title)
-                .font(compact ? .headline.bold() : .title3.bold())
+                .font(prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold()))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(MatherTheme.ink)
                 .lineLimit(2)
@@ -84,7 +85,7 @@ struct GameplayDisplayCard: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(minHeight: compact ? 132 : 164)
+        .frame(minHeight: minimumHeight)
         .padding(compact ? 10 : 14)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -95,6 +96,29 @@ struct GameplayDisplayCard: View {
                 .strokeBorder(selected ? MatherTheme.accent : .clear, lineWidth: 3)
         )
     }
+
+    private var isFeatured: Bool { prominence == .featured }
+    private var visualSize: CGFloat {
+        if isFeatured { return compact ? 76 : 112 }
+        return compact ? 40 : 58
+    }
+    private var visualFrameWidth: CGFloat {
+        if isFeatured { return compact ? 118 : 156 }
+        return compact ? 64 : 86
+    }
+    private var visualFrameHeight: CGFloat {
+        if isFeatured { return compact ? 102 : 136 }
+        return compact ? 58 : 78
+    }
+    private var minimumHeight: CGFloat {
+        if isFeatured { return compact ? 220 : 280 }
+        return compact ? 132 : 164
+    }
+}
+
+enum GameplayDisplayCardProminence {
+    case normal
+    case featured
 }
 
 struct GameplayPairingStageShell: View {
@@ -107,9 +131,9 @@ struct GameplayPairingStageShell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
-            GameplayStageTitle(title: title, prompt: prompt, detail: "\(viewModel.correctCount)/\(viewModel.pairs.count)")
+            GameplayStageTitle(title: title, prompt: prompt, detail: "\(viewModel.turnProgressText) • \(viewModel.correctCount)/\(viewModel.pairs.count)")
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(viewModel.pairs) { pair in
+                ForEach(viewModel.activePairs) { pair in
                     Button {
                         viewModel.selectLeft(pairID: pair.id)
                     } label: {
@@ -117,7 +141,8 @@ struct GameplayPairingStageShell: View {
                             item: pair.left,
                             compact: compact,
                             selected: viewModel.selectedLeftID == pair.id,
-                            matched: viewModel.matchedPairIDs.contains(pair.id)
+                            matched: viewModel.matchedPairIDs.contains(pair.id),
+                            prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
                     }
                     .buttonStyle(.plain)
@@ -127,29 +152,41 @@ struct GameplayPairingStageShell: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.shuffledRights) { item in
                     Button {
+                        let wasMatching = viewModel.selectedLeftID != nil
                         let correct = viewModel.chooseRight(item)
-                        if correct { actions.success() } else { actions.failure() }
+                        if correct { actions.success() }
+                        else if wasMatching { actions.failure() }
                         if viewModel.isComplete { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
                     } label: {
                         GameplayDisplayCard(
                             item: item,
                             compact: compact,
                             showsSubtitle: true,
+                            selected: viewModel.inspectedItemID == item.id,
                             matched: viewModel.matchedPairIDs.contains(pairID(for: item)),
-                            concealed: viewModel.shouldConcealRight(item)
+                            concealed: viewModel.shouldConcealRight(item),
+                            prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(viewModel.accessibilityLabel(for: item, side: .right))
                 }
             }
+            if let item = viewModel.inspectedItem, !viewModel.shouldConcealRight(item) {
+                GameplayCardDetailCallout(item: item, compact: compact)
+            }
             HStack {
                 Button("Hint") { viewModel.hintCount += 1 }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 Spacer()
-                Button("Finish stage") { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
-                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                    .disabled(!viewModel.isComplete)
+                if viewModel.canAdvanceTurn {
+                    Button("Next turn") { viewModel.advanceTurn() }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                } else {
+                    Button("Finish stage") { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                        .disabled(!viewModel.isComplete)
+                }
             }
         }
         .padding(compact ? 14 : 20)
@@ -161,6 +198,32 @@ struct GameplayPairingStageShell: View {
     }
 
     private func pairID(for item: GameplayDisplayItem) -> String {
-        viewModel.pairs.first(where: { $0.right.id == item.id })?.id ?? item.id
+        viewModel.pairID(forRight: item)
+    }
+}
+
+private struct GameplayCardDetailCallout: View {
+    let item: GameplayDisplayItem
+    let compact: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text(item.visualKey ?? "✦")
+                .font(.system(size: compact ? 24 : 30, weight: .semibold, design: .rounded))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title)
+                    .font(.headline.bold())
+                if !item.subtitle.isEmpty {
+                    Text(item.subtitle)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.ink.opacity(0.72))
+                }
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(MatherTheme.softBlue.opacity(0.5)))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Card details: \(item.title), \(item.subtitle)")
     }
 }

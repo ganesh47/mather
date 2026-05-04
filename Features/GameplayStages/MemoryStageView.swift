@@ -12,7 +12,7 @@ struct MemoryStageView: View {
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
-        _viewModel = State(initialValue: GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory))
+        _viewModel = State(initialValue: GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory, turnItemCount: stage.recommendedTurnItemCount))
     }
 
     var body: some View {

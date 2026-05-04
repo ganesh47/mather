@@ -142,20 +142,43 @@ struct GameplayFlashcardStageViewModel: Equatable {
 struct GameplayMatchStageViewModel: Equatable {
     let pairs: [GameplayMatchPair]
     let mode: GameplayStageKind
-    let shuffledRights: [GameplayDisplayItem]
+    let turnItemCount: Int
+    let seed: UInt64
     var selectedLeftID: String?
+    var inspectedItemID: String?
     var matchedPairIDs: Set<String> = []
     var mismatchCount = 0
     var hintCount = 0
+    var activeTurnIndex = 0
 
-    init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, mode: GameplayStageKind) {
+    init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, mode: GameplayStageKind, turnItemCount: Int? = nil) {
         self.pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
         self.mode = mode
-        self.shuffledRights = GameplayStageContentBuilder.sortedRights(pairs, seed: round.seed)
+        self.turnItemCount = max(1, turnItemCount ?? defaultTurnItemCount(for: mode, itemCount: round.items.count))
+        self.seed = round.seed
     }
 
     var correctCount: Int { matchedPairIDs.count }
     var isComplete: Bool { !pairs.isEmpty && matchedPairIDs.count == pairs.count }
+    var turnCount: Int { max(1, Int(ceil(Double(max(pairs.count, 1)) / Double(turnItemCount)))) }
+    var turnProgressText: String { "Turn \(min(activeTurnIndex + 1, turnCount))/\(turnCount)" }
+    var activePairs: [GameplayMatchPair] {
+        let start = activeTurnIndex * turnItemCount
+        guard pairs.indices.contains(start) else { return [] }
+        let end = min(start + turnItemCount, pairs.count)
+        return Array(pairs[start..<end])
+    }
+    var shuffledRights: [GameplayDisplayItem] {
+        GameplayStageContentBuilder.sortedRights(activePairs, seed: seed &+ UInt64(activeTurnIndex * 97))
+    }
+    var isTurnComplete: Bool {
+        !activePairs.isEmpty && activePairs.allSatisfy { matchedPairIDs.contains($0.id) }
+    }
+    var canAdvanceTurn: Bool { isTurnComplete && !isComplete }
+    var inspectedItem: GameplayDisplayItem? {
+        guard let inspectedItemID else { return nil }
+        return (activePairs.map(\.left) + activePairs.map(\.right)).first { $0.id == inspectedItemID }
+    }
 
     func accessibilityLabel(for item: GameplayDisplayItem, side: GameplayMatchSide) -> String {
         let role = side == .left ? "prompt" : "answer"
@@ -169,25 +192,53 @@ struct GameplayMatchStageViewModel: Equatable {
         mode == .flipMemory && !matchedPairIDs.contains(pairID(forRight: item))
     }
 
-    private func pairID(forRight item: GameplayDisplayItem) -> String {
+    func pairID(forRight item: GameplayDisplayItem) -> String {
         pairs.first(where: { $0.right.id == item.id })?.id ?? item.id
     }
 
     mutating func selectLeft(pairID: String) {
-        guard !matchedPairIDs.contains(pairID) else { return }
+        guard activePairs.contains(where: { $0.id == pairID }), !matchedPairIDs.contains(pairID) else { return }
         selectedLeftID = pairID
+        inspectedItemID = activePairs.first(where: { $0.id == pairID })?.left.id
+    }
+
+    mutating func inspect(_ item: GameplayDisplayItem) {
+        inspectedItemID = inspectedItemID == item.id ? nil : item.id
     }
 
     mutating func chooseRight(_ right: GameplayDisplayItem) -> Bool {
-        guard let selectedLeftID, let pair = pairs.first(where: { $0.id == selectedLeftID }) else { return false }
+        guard let selectedLeftID, let pair = activePairs.first(where: { $0.id == selectedLeftID }) else {
+            inspect(right)
+            return false
+        }
         let correct = pair.right.id == right.id
         if correct {
             matchedPairIDs.insert(pair.id)
             self.selectedLeftID = nil
+            inspectedItemID = right.id
         } else {
             mismatchCount += 1
+            inspectedItemID = right.id
         }
         return correct
+    }
+
+    mutating func advanceTurn() {
+        guard canAdvanceTurn else { return }
+        activeTurnIndex = min(activeTurnIndex + 1, turnCount - 1)
+        selectedLeftID = nil
+        inspectedItemID = nil
+    }
+
+    private static func defaultTurnItemCount(for mode: GameplayStageKind, itemCount: Int) -> Int {
+        switch mode {
+        case .easyMemory, .flipMemory:
+            return min(max(itemCount, 1), 2)
+        case .bondBlast:
+            return min(max(itemCount, 1), 3)
+        default:
+            return max(itemCount, 1)
+        }
     }
 }
 
