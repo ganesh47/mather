@@ -222,7 +222,7 @@ struct ReusableBondBlastBoard: View {
     }
 
     nonisolated static func shouldRevealRightCard(selectedPairID: String?, pairID: String, isMatched: Bool) -> Bool {
-        selectedPairID != nil || isMatched
+        isMatched || selectedPairID == pairID || selectedPairID != nil
     }
 }
 
