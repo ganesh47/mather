@@ -444,7 +444,7 @@ final class ScreenshotTests: XCTestCase {
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.skipProfilePicker", "YES",
-            "-uiTest.startRoute", "waterCycle"
+            "-uiTest.startRoute", "waterCycleLab"
         ])
     }
 
