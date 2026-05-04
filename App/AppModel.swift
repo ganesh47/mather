@@ -95,6 +95,7 @@ final class AppModel {
     }
 
     func completePendingLabBondBlast(with summary: SessionSummaryDraft) {
+        guard pendingLabGameplayCompletionContext?.stage == .blast else { return }
         let context = pendingLabGameplayCompletionContext
         pendingLabGameplayCompletionContext = nil
 
