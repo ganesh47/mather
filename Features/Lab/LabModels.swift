@@ -78,6 +78,173 @@ struct MixMatchReviewSampler: Equatable {
     }
 }
 
+
+
+// MARK: - Guided Remember stage foundation
+
+enum LabRememberStageDeckID: String, Codable, Hashable, Identifiable {
+    case numbersNumberBondsTo10 = "numbers-number-bonds-to-10-remember"
+
+    var id: String { rawValue }
+}
+
+struct LabRememberStageCard: Codable, Equatable, Identifiable, Hashable {
+    let id: String
+    let laneID: CapabilityLaneID
+    let concept: String
+    let prompt: String
+    let answer: String
+    let supportCopy: String
+
+    init(
+        id: String,
+        laneID: CapabilityLaneID,
+        concept: String,
+        prompt: String,
+        answer: String,
+        supportCopy: String
+    ) {
+        self.id = id
+        self.laneID = laneID
+        self.concept = concept
+        self.prompt = prompt
+        self.answer = answer
+        self.supportCopy = supportCopy
+    }
+
+    init(mixMatchCard: MixMatchCard, supportCopy: String) {
+        self.init(
+            id: mixMatchCard.id,
+            laneID: mixMatchCard.laneID,
+            concept: mixMatchCard.concept,
+            prompt: mixMatchCard.prompt,
+            answer: mixMatchCard.match,
+            supportCopy: supportCopy
+        )
+    }
+
+    var accessibilityLabel: String {
+        "Remember card. \(prompt), answer \(answer). \(supportCopy)"
+    }
+}
+
+struct LabRememberStageDeck: Equatable, Identifiable {
+    let id: LabRememberStageDeckID
+    let planID: String
+    let stage: GuidedLabStage
+    let laneID: CapabilityLaneID
+    let concept: String
+    let title: String
+    let subtitle: String
+    let timerPolicy: LabSessionTimerPolicy
+    let cards: [LabRememberStageCard]
+
+    var route: AppRoute { .labRememberStage(id) }
+    var hasPunitiveCountdown: Bool { timerPolicy.showsCountdown || timerPolicy.isPunitive }
+
+    static func deck(for id: LabRememberStageDeckID) -> LabRememberStageDeck {
+        switch id {
+        case .numbersNumberBondsTo10:
+            return .numbersNumberBondsTo10
+        }
+    }
+
+    static let numbersNumberBondsTo10 = LabRememberStageDeck(
+        id: .numbersNumberBondsTo10,
+        planID: "numbers-number-bonds-to-10",
+        stage: .remember,
+        laneID: .numbers,
+        concept: "number-bond",
+        title: "Remember pairs to 10",
+        subtitle: "Flip friendly bond facts back into memory — no countdown, no penalty.",
+        timerPolicy: .calmNoCountdown,
+        cards: Self.numberBondCardsTo10()
+    )
+
+    private static func numberBondCardsTo10() -> [LabRememberStageCard] {
+        let mixMatchSupport = "Picture the two parts snapping into one full ten-frame."
+        let existingNumberBondCards = CapabilityLane.starterMixMatchCardsByLane[.numbers, default: []]
+            .filter { $0.concept == "number-bond" && $0.match == "10" }
+            .map { LabRememberStageCard(mixMatchCard: $0, supportCopy: mixMatchSupport) }
+        let existingIDs = Set(existingNumberBondCards.map(\.id))
+        let supplementalPairs: [(String, String)] = [
+            ("0 + 10", "empty and full ten-frame"),
+            ("1 + 9", "one dot plus nine more fills ten"),
+            ("2 + 8", "two dots need eight friends"),
+            ("3 + 7", "three and seven make a full row pair"),
+            ("4 + 6", "four dots need six to make ten"),
+            ("5 + 5", "five-frame plus five-frame makes ten"),
+            ("6 + 4", "six and four are switch partners"),
+            ("7 + 3", "seven and three are switch partners"),
+            ("8 + 2", "eight and two are switch partners"),
+            ("9 + 1", "nine needs one more"),
+            ("10 + 0", "full ten-frame plus none stays ten"),
+        ]
+        let supplemental = supplementalPairs.map { prompt, clue in
+            LabRememberStageCard(
+                id: "numbers-number-bond-\(prompt.replacingOccurrences(of: " + ", with: "-plus-"))",
+                laneID: .numbers,
+                concept: "number-bond",
+                prompt: prompt,
+                answer: "10",
+                supportCopy: clue
+            )
+        }
+        return existingNumberBondCards + supplemental.filter { !existingIDs.contains($0.id) }
+    }
+}
+
+struct LabRememberStageExecution: Equatable {
+    let deck: LabRememberStageDeck
+    private(set) var currentIndex: Int
+    private(set) var reviewedCardIDs: [String]
+    private(set) var correctCardIDs: Set<String>
+    private(set) var selectedAnswer: String?
+
+    init(deck: LabRememberStageDeck, currentIndex: Int = 0, reviewedCardIDs: [String] = [], correctCardIDs: Set<String> = []) {
+        self.deck = deck
+        self.currentIndex = deck.cards.isEmpty ? 0 : min(max(currentIndex, 0), deck.cards.count - 1)
+        self.reviewedCardIDs = reviewedCardIDs
+        self.correctCardIDs = correctCardIDs
+        self.selectedAnswer = nil
+    }
+
+    var currentCard: LabRememberStageCard? {
+        guard deck.cards.indices.contains(currentIndex) else { return nil }
+        return deck.cards[currentIndex]
+    }
+
+    var progressLabel: String {
+        guard !deck.cards.isEmpty else { return "0 / 0" }
+        return "\(min(currentIndex + 1, deck.cards.count)) / \(deck.cards.count)"
+    }
+
+    var isComplete: Bool {
+        !deck.cards.isEmpty && Set(reviewedCardIDs).isSuperset(of: deck.cards.map(\.id))
+    }
+
+    var usesPunitiveCountdown: Bool { deck.hasPunitiveCountdown }
+
+    mutating func submit(answer: String) -> Bool {
+        guard let card = currentCard else { return false }
+        selectedAnswer = answer
+        if !reviewedCardIDs.contains(card.id) {
+            reviewedCardIDs.append(card.id)
+        }
+        let isCorrect = answer.trimmingCharacters(in: .whitespacesAndNewlines) == card.answer
+        if isCorrect {
+            correctCardIDs.insert(card.id)
+        }
+        return isCorrect
+    }
+
+    mutating func advance() {
+        selectedAnswer = nil
+        guard !deck.cards.isEmpty else { return }
+        currentIndex = min(currentIndex + 1, deck.cards.count - 1)
+    }
+}
+
 struct LaneRecallEntry: Identifiable, Equatable {
     let laneID: CapabilityLaneID
     let card: LearningCard
@@ -349,7 +516,7 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
                 childCopy: "Use friendly picture clues to remember ten pairs.",
                 parentCopy: "Soft retrieval with visual support; no punitive countdown.",
                 timerPolicy: .calmNoCountdown,
-                route: .memory
+                route: .labRememberStage(.numbersNumberBondsTo10)
             ),
             LabSessionStagePlan(
                 stage: .play,

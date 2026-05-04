@@ -13,7 +13,7 @@ struct MemoryFactCard: Equatable, Hashable {
     let value: String
 }
 
-enum MemoryDeckKind: String, Equatable {
+enum MemoryDeckKind: String, Equatable, Hashable {
     case domesticAnimals
     case birds
     case vehicles
@@ -24,6 +24,7 @@ enum MemoryDeckKind: String, Equatable {
     case indiaStates
     case waterCycle
     case fruits
+    case numberBondsTo10
 
     var displayName: String {
         switch self {
@@ -37,6 +38,7 @@ enum MemoryDeckKind: String, Equatable {
         case .indiaStates: return "Indian States & Capitals"
         case .waterCycle: return "Water Cycle"
         case .fruits: return "Fruits"
+        case .numberBondsTo10: return "Number Bonds to 10"
         }
     }
 }
@@ -391,6 +393,19 @@ enum MemoryDeck {
         indiaStateCapital("state-rajasthan", state: "Rajasthan", capital: "Jaipur", region: "northwest India", clue: "pink city and desert forts"),
         indiaStateCapital("state-kerala", state: "Kerala", capital: "Thiruvananthapuram", region: "south India", clue: "backwaters and coconut trees"),
         indiaStateCapital("state-assam", state: "Assam", capital: "Dispur", region: "northeast India", clue: "tea gardens and one-horned rhinos")
+    ]
+
+    static let numberBondsTo10: [MemoryAnimal] = [
+        numberBondTo10("bond-1-9", prompt: "1 + 9", match: "10", clue: "One and nine fill the ten-frame."),
+        numberBondTo10("bond-2-8", prompt: "2 + 8", match: "10", clue: "Two and eight make a full ten."),
+        numberBondTo10("bond-3-7", prompt: "3 + 7", match: "10", clue: "Three and seven are friendly ten partners."),
+        numberBondTo10("bond-4-6", prompt: "4 + 6", match: "10", clue: "Four and six snap together to ten."),
+        numberBondTo10("bond-5-5", prompt: "5 + 5", match: "10", clue: "Five and five are doubles that make ten."),
+        numberBondTo10("bond-6-4", prompt: "6 + 4", match: "10", clue: "Six needs four more to make ten."),
+        numberBondTo10("bond-7-3", prompt: "7 + 3", match: "10", clue: "Seven needs three more to make ten."),
+        numberBondTo10("bond-8-2", prompt: "8 + 2", match: "10", clue: "Eight and two complete the ten-frame."),
+        numberBondTo10("bond-9-1", prompt: "9 + 1", match: "10", clue: "Nine needs one more to make ten."),
+        numberBondTo10("bond-10-0", prompt: "10 + 0", match: "10", clue: "Ten and zero stay ten."),
     ]
 
     static let fruits: [MemoryAnimal] = [
@@ -817,6 +832,26 @@ enum MemoryDeck {
             )
         )
     }
+
+    private static func numberBondTo10(_ id: String, prompt: String, match: String, clue: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: match,
+            canonicalName: "\(prompt) = \(match)",
+            picture: .text(prompt),
+            metadata: MemoryCardMetadata(
+                deck: .numberBondsTo10,
+                category: "number bond",
+                kind: "number bond to 10",
+                factCards: [
+                    MemoryFactCard(title: "Prompt", value: prompt),
+                    MemoryFactCard(title: "Match", value: match),
+                    MemoryFactCard(title: "Clue", value: clue),
+                    MemoryFactCard(title: "Stage", value: "Remember — calm retrieval, no countdown")
+                ]
+            )
+        )
+    }
 }
 
 // MARK: - Game difficulty
@@ -893,7 +928,7 @@ struct MemoryView: View {
     }
 
     enum DeckSelection: CaseIterable {
-        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle, fruits
+        case domestic, birds, vehicles, planets, fishes, countries, countryFlags, indiaStates, waterCycle, fruits, numberBondsTo10
 
         init(kind: MemoryDeckKind?) {
             switch kind {
@@ -907,6 +942,7 @@ struct MemoryView: View {
             case .indiaStates: self = .indiaStates
             case .waterCycle: self = .waterCycle
             case .fruits: self = .fruits
+            case .numberBondsTo10: self = .numberBondsTo10
             case nil: self = .domestic
             }
         }
@@ -923,6 +959,7 @@ struct MemoryView: View {
             case .indiaStates: return "📍 India States & Capitals"
             case .waterCycle: return "💧 Water Cycle"
             case .fruits: return "🍎 Fruits"
+            case .numberBondsTo10: return "🔟 Number Bonds"
             }
         }
 
@@ -938,6 +975,7 @@ struct MemoryView: View {
             case .indiaStates: return "India States & Capitals"
             case .waterCycle: return "Water Cycle"
             case .fruits: return "Fruits"
+            case .numberBondsTo10: return "Number Bonds to 10"
             }
         }
 
@@ -953,6 +991,7 @@ struct MemoryView: View {
             case .indiaStates: return MemoryDeck.indiaStates
             case .waterCycle: return MemoryDeck.waterCycle
             case .fruits: return MemoryDeck.fruits
+            case .numberBondsTo10: return MemoryDeck.numberBondsTo10
             }
         }
     }
@@ -1382,7 +1421,7 @@ struct MemoryView: View {
 
     static func directStagedEntryKind(for initialDeckKind: MemoryDeckKind?) -> MemoryDeckKind? {
         switch initialDeckKind {
-        case .fruits, .countries:
+        case .fruits, .countries, .numberBondsTo10:
             return initialDeckKind
         case .domesticAnimals, .birds, .vehicles, .planets, .fishes, .countryFlags, .indiaStates, .waterCycle, nil:
             return nil
@@ -1766,6 +1805,8 @@ struct MemoryView: View {
             deckLabel = "Water Cycle Guide"
         case .fruits:
             deckLabel = "Fruit Guide"
+        case .numberBondsTo10:
+            deckLabel = "Number Bond Guide"
         }
 
         switch source {
