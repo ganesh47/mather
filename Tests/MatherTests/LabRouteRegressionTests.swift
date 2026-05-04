@@ -87,6 +87,29 @@ struct LabRouteRegressionTests {
     }
 
     @Test
+    func gameplayThreadReturnRouteCanLandBackOnLaunchingLabLane() {
+        let engine = makeEngine()
+
+        engine.showGameplayThread(.countries, returnRoute: .labLane(.mapWorld))
+        #expect(engine.route == .gameplayThread(.countries))
+        #expect(engine.gameplayReturnRoute == .labLane(.mapWorld))
+
+        engine.returnFromGameplay(defaultRoute: .lab)
+        #expect(engine.route == .labLane(.mapWorld))
+        #expect(engine.gameplayReturnRoute == nil)
+    }
+
+    @Test
+    func directGameplayThreadLaunchStillHasNoLabProgressReturnContext() {
+        let engine = makeEngine()
+
+        engine.showCountriesGameplayThread()
+
+        #expect(engine.route == .gameplayThread(.countries))
+        #expect(engine.gameplayReturnRoute == nil)
+    }
+
+    @Test
     func discoveryChemistryAndElectronicsShellsStayRegistered() throws {
         let lanes = CapabilityLane.defaultExplorerLanes
         let discovery = try #require(lanes.first { $0.id == .discoveryCards })

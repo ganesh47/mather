@@ -24,23 +24,36 @@ struct GameplayThreadView: View {
     let thread: GameplayThreadDefinition
     var actions: GameplayStageFeedbackActions
     var progressStore: GameplayProgressStore?
+    var onHome: @MainActor () -> Void
+    var onBackToStageSurface: @MainActor () -> Void
     @State private var navigation: GameplayStageNavigationState
 
     init(
         thread: GameplayThreadDefinition = GameplaySampleThreads.countries,
         actions: GameplayStageFeedbackActions = GameplayStageFeedbackActions(),
         progressStore: GameplayProgressStore? = nil,
-        now: Date = Date()
+        now: Date = Date(),
+        onHome: @escaping @MainActor () -> Void = {},
+        onBackToStageSurface: @escaping @MainActor () -> Void = {}
     ) {
         self.thread = thread
         self.actions = actions
         self.progressStore = progressStore
+        self.onHome = onHome
+        self.onBackToStageSurface = onBackToStageSurface
         _navigation = State(initialValue: GameplayStageNavigationState(startedAt: now, currentStageStartedAt: now))
     }
 
     @MainActor
     init(thread: GameplayThreadDefinition = GameplaySampleThreads.countries, appModel: AppModel, now: Date = Date()) {
-        self.init(thread: thread, actions: .appModel(appModel), progressStore: appModel.gameplayProgressStore, now: now)
+        self.init(
+            thread: thread,
+            actions: .appModel(appModel),
+            progressStore: appModel.gameplayProgressStore,
+            now: now,
+            onHome: { appModel.engine.showHome() },
+            onBackToStageSurface: { appModel.engine.returnFromGameplay(defaultRoute: .lab) }
+        )
     }
 
     var body: some View {
@@ -48,8 +61,10 @@ struct GameplayThreadView: View {
             let compact = GameplayStageRenderSupport.usesCompactStageLayout(width: proxy.size.width, height: proxy.size.height)
             ScrollView {
                 VStack(spacing: compact ? 12 : 20) {
+                    topChrome(compact: compact)
                     header(compact: compact)
                     activeStage(compact: compact)
+                        .id(navigation.stageAttemptID)
                         .frame(maxWidth: GameplayStageRenderSupport.maximumContentWidth(compact: compact))
                     controls(compact: compact)
                 }
@@ -145,6 +160,41 @@ struct GameplayThreadView: View {
         return [key: totalHints]
     }
 
+    private func topChrome(compact: Bool) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                backAction()
+            } label: {
+                Label(navigation.canGoBack ? "Back" : "Stages", systemImage: "chevron.left")
+                    .labelStyle(.titleAndIcon)
+            }
+            .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+            .accessibilityLabel(navigation.canGoBack ? "Back to previous stage" : "Back to stage details")
+            .accessibilityIdentifier("GameplayStageTopBackButton")
+
+            Spacer(minLength: 0)
+
+            Button {
+                onHome()
+            } label: {
+                Label("Home", systemImage: "house.fill")
+                    .labelStyle(.titleAndIcon)
+            }
+            .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+            .accessibilityLabel("Home")
+            .accessibilityIdentifier("GameplayStageHomeButton")
+        }
+        .frame(maxWidth: GameplayStageRenderSupport.maximumContentWidth(compact: compact))
+    }
+
+    private func backAction() {
+        if navigation.canGoBack {
+            navigation.goBack()
+        } else {
+            onBackToStageSurface()
+        }
+    }
+
     private func header(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: compact ? 8 : 12) {
             HStack {
@@ -190,11 +240,14 @@ struct GameplayThreadView: View {
 
     private func controlButtons(compact: Bool) -> some View {
         HStack(spacing: 8) {
-            Button("Back") { navigation.goBack() }
+            Button(navigation.canGoBack ? "Back" : "Stages") { backAction() }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
-                .disabled(!navigation.canGoBack)
-            Button("Retry") { navigation.retryCurrentStage() }
+                .accessibilityLabel(navigation.canGoBack ? "Back to previous stage" : "Back to stage details")
+                .accessibilityIdentifier("GameplayStageBackButton")
+            Button("Retry") { navigation.retryCurrentStage(in: thread) }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+                .accessibilityLabel("Retry current stage")
+                .accessibilityIdentifier("GameplayStageRetryButton")
         }
     }
 
