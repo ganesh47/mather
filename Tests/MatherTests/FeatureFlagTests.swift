@@ -41,7 +41,7 @@ struct FeatureFlagTests {
         #expect(flags.vs1BondMatchEnabled)
         #expect(flags.vs1GravitySplitEnabled)
         #expect(flags.makeBreakLoopV2Enabled)
-        #expect(flags.soundReactionEnabled)
+        #expect(!flags.soundReactionEnabled)
         #expect(!flags.routeQuestEnabled)
     }
 

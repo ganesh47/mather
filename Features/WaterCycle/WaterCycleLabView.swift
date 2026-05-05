@@ -462,7 +462,8 @@ struct WaterCycleLabView: View {
                     lessonPlayScene(
                         availableWidth: contentWidth,
                         availableHeight: proxy.size.height,
-                        horizontalPadding: horizontalPadding
+                        horizontalPadding: horizontalPadding,
+                        bottomSafeArea: proxy.safeAreaInsets.bottom
                     )
                 } else {
                     ScrollView {
@@ -739,9 +740,11 @@ struct WaterCycleLabView: View {
     private func lessonPlayScene(
         availableWidth: CGFloat,
         availableHeight: CGFloat,
-        horizontalPadding: CGFloat
+        horizontalPadding: CGFloat,
+        bottomSafeArea: CGFloat
     ) -> some View {
-        let boardHeight = max(260, availableHeight - 244)
+        let bottomClearance = max(18, bottomSafeArea + 14)
+        let boardHeight = max(240, availableHeight - bottomClearance - 244)
 
         return VStack(alignment: .leading, spacing: 12) {
             header(availableWidth: availableWidth)
@@ -763,7 +766,8 @@ struct WaterCycleLabView: View {
         }
         .frame(maxWidth: availableWidth, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, 14)
+        .padding(.top, 14)
+        .padding(.bottom, bottomClearance)
         .frame(maxWidth: .infinity, alignment: .center)
         .accessibilityIdentifier("water-cycle-playable-lesson")
     }
