@@ -12,6 +12,7 @@ struct FactoryCardsView: View {
     @State private var faceUp = true
     @State private var sessionStart: Date = .now
     @State private var savedSession = false
+    @State private var didCompleteFirstLook = false
 
     private var currentStep: ArrayPreludeRound.Step? {
         guard round.steps.indices.contains(currentIndex) else { return nil }
@@ -32,7 +33,11 @@ struct FactoryCardsView: View {
 
                 if let step = currentStep {
                     cardSurface(for: step)
-                    totalChoices(for: step)
+                    if didCompleteFirstLook {
+                        totalChoices(for: step)
+                    } else {
+                        firstLookStep(for: step)
+                    }
                 } else {
                     completionView
                 }
@@ -162,6 +167,41 @@ struct FactoryCardsView: View {
         }
     }
 
+    private func firstLookStep(for step: ArrayPreludeRound.Step) -> some View {
+        let concept = LabActivityID.factoryCards.introConceptCard
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Label("First look", systemImage: "eye.fill")
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.accent)
+            Text(concept?.principle ?? "Equal rows make one packed total.")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("This card shows \(step.fact.rowColumnPhrase). Count each row before choosing the total.")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                didCompleteFirstLook = true
+                speakCurrentPrompt()
+            } label: {
+                Label("I found the rows", systemImage: "checkmark.circle.fill")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 58)
+                    .background(MatherTheme.accent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Complete first look for \(step.fact.rowColumnPhrase)")
+        }
+        .padding(14)
+        .background(MatherTheme.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(concept?.accessibilityLabel ?? "First look. \(step.fact.rowColumnPhrase)")
+    }
+
     private func totalChoices(for step: ArrayPreludeRound.Step) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Choose the packed total")
@@ -195,7 +235,7 @@ struct FactoryCardsView: View {
             Text("Cards packed")
                 .font(.system(size: 34, weight: .black, design: .rounded))
                 .foregroundStyle(MatherTheme.ink)
-            Text("Now resize rectangles for the same factory idea.")
+            Text(LabActivityID.factoryCards.learningLoopSummaryPrompt ?? "Now resize rectangles for the same factory idea.")
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .multilineTextAlignment(.center)
@@ -232,8 +272,12 @@ struct FactoryCardsView: View {
         selectedTotal = nil
         faceUp = !difficulty.startsFaceDown
         savedSession = false
+        didCompleteFirstLook = false
         if speak {
-            speakCurrentPrompt()
+            appModel.speechService.speak(
+                LabActivityID.factoryCards.introConceptCard?.childPrompt ?? "First, find the rows and columns.",
+                enabled: appModel.featureFlags.audioEnabled
+            )
         }
     }
 

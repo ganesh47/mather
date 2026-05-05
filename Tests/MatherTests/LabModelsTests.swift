@@ -283,6 +283,22 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(score.parentDetailLines.contains("Coming back soon: 6 + 4, 7 + 3"))
     }
 
+    func testWeakLabLearningLoopConceptCardsExposeIntroAndSummaryContracts() throws {
+        let gravity = try XCTUnwrap(LabActivityID.gravityArtist.introConceptCard)
+        XCTAssertEqual(gravity.title, "Gravity pulls screen-down")
+        XCTAssertTrue(gravity.principle.contains("Tilt changes"))
+        XCTAssertTrue(gravity.childPrompt.contains("Predict"))
+        XCTAssertTrue(gravity.summaryPrompt.contains("tilt changes"))
+        XCTAssertTrue(gravity.accessibilityLabel.contains("Concept card"))
+
+        let packing = try XCTUnwrap(LabActivityID.factoryCards.introConceptCard)
+        XCTAssertEqual(packing.title, "Rows make a total")
+        XCTAssertTrue(packing.childPrompt.contains("First look"))
+        XCTAssertEqual(LabActivityID.factoryCards.learningLoopSummaryPrompt, packing.summaryPrompt)
+
+        XCTAssertNil(LabActivityID.sumSprint.introConceptCard)
+    }
+
     func testExplorerGamesRegistryDirectlyLaunchesEveryCurrentExplorerActivity() {
         let expectedEntries = CapabilityLane.defaultExplorerLanes.flatMap { lane in
             lane.activities.map { (laneID: lane.id, activityID: $0.id, route: $0.id.appRoute) }

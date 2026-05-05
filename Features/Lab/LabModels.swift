@@ -394,6 +394,18 @@ extension LabActivityID {
     }
 }
 
+
+struct LabLearningLoopConceptCard: Equatable {
+    let title: String
+    let principle: String
+    let childPrompt: String
+    let summaryPrompt: String
+
+    var accessibilityLabel: String {
+        "Concept card. \(title). \(principle). \(childPrompt)"
+    }
+}
+
 struct LabActivity: Identifiable, Equatable {
     let id: LabActivityID
     let emoji: String
@@ -1061,6 +1073,31 @@ extension LabActivityID {
 
     func capabilitySummary(with capabilities: DeviceSensorCapabilities) -> String {
         sensorAffordances(with: capabilities).map(\.displayLabel).joined(separator: " • ")
+    }
+
+    var introConceptCard: LabLearningLoopConceptCard? {
+        switch self {
+        case .gravityArtist:
+            return LabLearningLoopConceptCard(
+                title: "Gravity pulls screen-down",
+                principle: "Tilt changes the downhill direction, so pebbles roll toward the gravity arrow.",
+                childPrompt: "Predict the roll, observe the path, then say what changed.",
+                summaryPrompt: "I can explain how tilt changes the direction objects roll."
+            )
+        case .factoryCards:
+            return LabLearningLoopConceptCard(
+                title: "Rows make a total",
+                principle: "Equal rows can be counted as rows of columns before writing a multiplication fact.",
+                childPrompt: "First look: find the rows, find the columns, then choose the packed total.",
+                summaryPrompt: "I can describe an array as rows of columns and count the total."
+            )
+        default:
+            return nil
+        }
+    }
+
+    var learningLoopSummaryPrompt: String? {
+        introConceptCard?.summaryPrompt
     }
 }
 
