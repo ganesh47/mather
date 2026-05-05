@@ -30,3 +30,11 @@ struct ConcreteBuildViewTests {
         #expect(action?.group == .accent)
     }
 }
+
+
+extension ConcreteBuildViewTests {
+    @Test func smallTargetsKeepAFullTenFrameAvailableWithoutAccentGroup() {
+        #expect(ConcreteBuildView.tapAction(for: 5, target: 6, warmCount: 5, accentCount: 0)?.group == .warm)
+        #expect(ConcreteBuildView.tapAction(for: 9, target: 6, warmCount: 5, accentCount: 0) == nil)
+    }
+}

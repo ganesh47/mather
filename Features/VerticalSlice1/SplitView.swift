@@ -10,18 +10,23 @@ struct SplitView: View {
     /// Hides the drag affordance and shows a "collected" badge.
     var isLocked: Bool = false
 
+    @State private var showDragHint = false
+
     private var rightCount: Int { target - leftCount }
+    private var splitHeading: String { "Split \(target) \(theme.counterNoun)" }
 
     var body: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text("Break")
-                        .font(.title.weight(.bold))
-                        .foregroundStyle(.secondary)
-                    Text("\(target)")
-                        .font(.system(size: 56, weight: .black, design: .rounded))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(splitHeading)
+                        .font(.title.weight(.black))
                         .foregroundStyle(MatherTheme.softBlue)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.78)
+                    Text("Drag or tap to choose two parts")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
 
                 ViewThatFits {
@@ -51,14 +56,19 @@ struct SplitView: View {
                 } else {
                     // Swipe affordance — left/right chevrons hint at the drag gesture.
                     // Tap on each bucket also adjusts the split (no reading required).
-                    HStack {
+                    HStack(spacing: 10) {
                         Image(systemName: "chevron.left")
-                        Spacer()
+                        Text("Drag to split")
+                            .font(.caption.weight(.black))
                         Image(systemName: "chevron.right")
                     }
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(.secondary.opacity(0.45))
-                    .padding(.horizontal, 20)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(MatherTheme.softBlue.opacity(0.72))
+                    .frame(maxWidth: .infinity)
+                    .offset(x: showDragHint ? 14 : -14)
+                    .animation(.easeInOut(duration: 0.55).repeatCount(3, autoreverses: true), value: showDragHint)
+                    .onAppear { showDragHint = true }
+                    .accessibilityIdentifier("split-view-drag-hint")
                 }
 
                 // Live equation — shows A + B = target as the child adjusts the split.

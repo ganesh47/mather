@@ -41,38 +41,45 @@ struct ConcreteBuildView: View {
                 // Numerals and symbols only — no words, consistent with the no-reading principle.
                 // Connects the concrete ten-frame action to the abstract equation (CPA bridge).
                 HStack(spacing: 8) {
-                    Text("\(warmCount)")
+                    Text(equationPartText(warmCount))
                         .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.warm)
+                        .foregroundStyle(warmCount == 0 ? .secondary : MatherTheme.warm)
                         .accessibilityIdentifier("warm-count-label")
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.3), value: warmCount)
                     Text("+")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
-                    Text("\(accentCount)")
+                    Text(equationPartText(accentCount))
                         .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.accent)
+                        .foregroundStyle(accentCount == 0 ? .secondary : MatherTheme.accent)
                         .accessibilityIdentifier("accent-count-label")
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.3), value: accentCount)
-                    Text("= \(warmCount + accentCount)")
+                    Text("= \(target)")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 
-                Button("That is \(target)") {
+                Button(currentCount == target ? "That is \(target)" : "Make \(target)") {
                     onSubmit()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(currentCount != target)
+                .opacity(currentCount == target ? 1 : 0.58)
             }
         }
     }
 
+    private var visibleCounterSlotCount: Int {
+        if target <= 10 { return 10 }
+        return min(max(target, 1), 20)
+    }
+
     private var tapCounterGrid: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(0..<min(max(target, 1), 20), id: \.self) { index in
+            ForEach(0..<visibleCounterSlotCount, id: \.self) { index in
                 counterCell(index: index)
                     .frame(maxWidth: 72, maxHeight: 72)
                     .accessibilityIdentifier("counter-cell-\(index)")
@@ -114,6 +121,10 @@ struct ConcreteBuildView: View {
             }
             .frame(maxWidth: .infinity)
         }
+    }
+
+    private func equationPartText(_ value: Int) -> String {
+        value == 0 ? "?" : "\(value)"
     }
 
     private func groupedStepButton(step: Int) -> some View {
@@ -165,6 +176,11 @@ struct ConcreteBuildView: View {
         let isFirstRow = index < 10
         let rowIndex = index % 10
         let filled = isFirstRow ? rowIndex < warmCount : rowIndex < accentCount
-        CounterView(index: index, filled: filled, theme: theme)
+        CounterView(
+            index: index,
+            filled: filled,
+            theme: theme,
+            overrideColor: target <= 10 ? MatherTheme.warm : nil
+        )
     }
 }
