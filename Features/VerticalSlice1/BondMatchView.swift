@@ -91,7 +91,11 @@ struct BondMatchView: View {
                 reachablePairsGrid
                 progressDots
             }
+            .frame(maxWidth: 660, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
+        .frame(maxWidth: 760)
+        .frame(maxWidth: .infinity, alignment: .center)
         .onAppear {
             setupShuffledOrder()
         }

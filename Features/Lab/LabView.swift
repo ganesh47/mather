@@ -3,6 +3,7 @@ import SwiftUI
 /// The Explorer Lab — a capability playground for maths, physics, geometry, and science inquiry.
 struct LabView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Bindable var appModel: AppModel
     @State private var playfulPulse = false
     @State private var selectedPath: ExplorerPathID
@@ -51,6 +52,10 @@ struct LabView: View {
         }
         .onAppear {
             sensorCapabilities = SensorCapabilityService().currentCapabilities()
+            guard !reduceMotion else {
+                playfulPulse = false
+                return
+            }
             withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
                 playfulPulse = true
             }
@@ -370,6 +375,16 @@ struct LabView: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.78)
                     .multilineTextAlignment(.center)
+
+                if !canLaunch {
+                    Text(capabilitySummary.isEmpty ? "Needs a device sensor" : capabilitySummary)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.76)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: 132, alignment: .center)
@@ -426,7 +441,7 @@ struct LabView: View {
                 color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08),
                 radius: compact ? 7 : 8, y: compact ? 3 : 4
             )
-            .scaleEffect(playfulPulse ? 1.01 : 0.995, anchor: .center)
+            .scaleEffect(!reduceMotion && playfulPulse ? 1.01 : 1.0, anchor: .center)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(presentation.accessibilityLabel). \(progress.progressSummaryLabel). \(progress.nextRecommendedModeLabel).")
@@ -510,8 +525,8 @@ struct LabView: View {
             laneMiniScene(lane.id, tint: tint)
             Text(lane.emoji)
                 .font(.system(size: size * 0.55))
-                .scaleEffect(playfulPulse ? 1.06 : 0.98)
-                .rotationEffect(.degrees(playfulPulse ? 2 : -2))
+                .scaleEffect(!reduceMotion && playfulPulse ? 1.06 : 1.0)
+                .rotationEffect(.degrees(!reduceMotion && playfulPulse ? 2 : 0))
         }
         .frame(width: size, height: size)
     }
@@ -525,7 +540,7 @@ struct LabView: View {
                     Circle()
                         .fill(tint.opacity(0.22))
                         .frame(width: 12, height: 12)
-                        .offset(y: playfulPulse ? CGFloat(-index * 3) : CGFloat(index * 2))
+                        .offset(y: !reduceMotion && playfulPulse ? CGFloat(-index * 3) : CGFloat(index * 2))
                 }
             }
             .offset(x: 16, y: 22)
@@ -533,7 +548,7 @@ struct LabView: View {
             Image(systemName: "triangle.fill")
                 .font(.system(size: 34, weight: .black))
                 .foregroundStyle(tint.opacity(0.24))
-                .rotationEffect(.degrees(playfulPulse ? 12 : -6))
+                .rotationEffect(.degrees(!reduceMotion && playfulPulse ? 12 : -6))
                 .offset(x: 20, y: 18)
         case .physics:
             Image(systemName: "moon.stars.fill")
@@ -543,7 +558,7 @@ struct LabView: View {
             Circle()
                 .fill(MatherTheme.warm.opacity(0.32))
                 .frame(width: 16, height: 16)
-                .offset(x: playfulPulse ? 24 : 10, y: playfulPulse ? 20 : 8)
+                .offset(x: !reduceMotion && playfulPulse ? 24 : 10, y: !reduceMotion && playfulPulse ? 20 : 8)
         case .mapWorld:
             Image(systemName: "map.fill")
                 .font(.system(size: 34, weight: .black))

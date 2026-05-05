@@ -1037,33 +1037,17 @@ struct MemoryView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
-                Button {
-                    appModel.engine.showLab()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(MatherTheme.accent)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Back")
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Memory Match")
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
-                    Text("\(matchedPairs)/\(totalPairs) pairs matched")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                    if Self.supportsLearningDetails(for: deckSelection) {
-                        Text(Self.learnMoreHintText(for: deckSelection))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .accessibilityIdentifier("memory-learn-more-hint")
-                    }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 12) {
+                    backButton
+                    memoryHeaderCopy
+                    Spacer(minLength: 0)
                 }
 
-                Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 8) {
+                    backButton
+                    memoryHeaderCopy
+                }
             }
 
             CardSurface {
@@ -1076,6 +1060,39 @@ struct MemoryView: View {
         }
     }
 
+
+    private var backButton: some View {
+        Button {
+            appModel.engine.showLab()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(MatherTheme.accent)
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel("Back")
+    }
+
+    private var memoryHeaderCopy: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Memory Match")
+                .font(.title2.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+            Text("\(matchedPairs)/\(totalPairs) pairs matched")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+            if Self.supportsLearningDetails(for: deckSelection) {
+                Text(Self.learnMoreHintText(for: deckSelection))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("memory-learn-more-hint")
+            }
+        }
+    }
 
     private var deckAndDifficultyChooser: some View {
         VStack(alignment: .leading, spacing: 14) {

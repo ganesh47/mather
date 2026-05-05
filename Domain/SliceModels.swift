@@ -387,6 +387,7 @@ struct BondMatchState: Equatable {
 enum SumSprintBurstCardContent: Equatable {
     case prompt(String)
     case sum(Int)
+    case decoratedSum(value: Int, marker: String)
 
     var displayText: String {
         switch self {
@@ -394,6 +395,8 @@ enum SumSprintBurstCardContent: Equatable {
             return value
         case .sum(let value):
             return String(value)
+        case .decoratedSum(let value, let marker):
+            return "\(value) \(marker)"
         }
     }
 
@@ -407,8 +410,12 @@ enum SumSprintBurstCardContent: Equatable {
     }
 
     var sumValue: Int? {
-        guard case .sum(let value) = self else { return nil }
-        return value
+        switch self {
+        case .sum(let value), .decoratedSum(let value, _):
+            return value
+        case .prompt:
+            return nil
+        }
     }
 }
 
@@ -452,13 +459,24 @@ struct SumSprintBurstState: Equatable {
     }
 
     static func make(for problem: SliceProblem) -> SumSprintBurstState {
-        let cards = makeFacts(for: problem).flatMap { fact -> [SumSprintBurstCard] in
+        let facts = makeFacts(for: problem)
+        let duplicateTotals = Set(
+            Dictionary(grouping: facts.map { $0.0 + $0.1 }, by: { $0 })
+                .filter { $0.value.count > 1 }
+                .map(\.key)
+        )
+        let markers = ["●", "▲", "★", "◆", "■"]
+
+        let cards = facts.enumerated().flatMap { index, fact -> [SumSprintBurstCard] in
             let pairId = UUID()
             let prompt = "\(fact.0) + \(fact.1)"
             let sum = fact.0 + fact.1
+            let sumContent: SumSprintBurstCardContent = duplicateTotals.contains(sum)
+                ? .decoratedSum(value: sum, marker: markers[index % markers.count])
+                : .sum(sum)
             return [
                 SumSprintBurstCard(id: UUID(), pairId: pairId, content: .prompt(prompt)),
-                SumSprintBurstCard(id: UUID(), pairId: pairId, content: .sum(sum))
+                SumSprintBurstCard(id: UUID(), pairId: pairId, content: sumContent)
             ]
         }
         return SumSprintBurstState(target: problem.target, cards: cards.shuffled())

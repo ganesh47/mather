@@ -216,7 +216,7 @@ struct GravitySplitView: View {
         let placedCount = state.leftCount + state.rightCount
         let totalPlaced = max(1, placedCount)
         let tilt = CGFloat(state.rightCount - state.leftCount) / CGFloat(totalPlaced)
-        let rotation = Double(max(-0.16, min(0.16, tilt)) * 18)
+        let rotation = placedCount == 0 ? 0 : Double(max(-0.16, min(0.16, tilt)) * 18)
         let barStyle = placedCount == 0
             ? AnyShapeStyle(MatherTheme.cardSubtitle.opacity(0.24))
             : AnyShapeStyle(LinearGradient(
@@ -252,7 +252,7 @@ struct GravitySplitView: View {
             }
             .frame(height: 58)
 
-            Text(state.isLocked ? "See-saw balanced" : placedCount == 0 ? "Start with either side" : "Balance the see-saw")
+            Text(state.isLocked ? "See-saw balanced" : (placedCount == 0 ? "Place counters to start balancing" : "Balance the see-saw"))
                 .font(.caption2.weight(.black))
                 .foregroundStyle(state.isLocked ? MatherTheme.accent : MatherTheme.cardSubtitle)
         }

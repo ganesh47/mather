@@ -871,13 +871,21 @@ struct WaterCycleLabView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 6) {
+                Label("Key idea", systemImage: "drop.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
                 Text(card.answer)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(MatherTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(card.detail)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(12)
+            .background(MatherTheme.panel.opacity(0.58), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 

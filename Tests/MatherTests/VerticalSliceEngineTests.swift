@@ -667,10 +667,25 @@ struct VerticalSliceEngineTests {
         let contents = Set(firstPair.map { card -> String in
             switch card.content {
             case .prompt(let value): return "p:\(value)"
-            case .sum(let value): return "s:\(value)"
+            case .sum(let value), .decoratedSum(let value, _): return "s:\(value)"
             }
         })
         #expect(contents.count == 2)
+    }
+
+    @Test
+    func sumSprintDecoratesRepeatedTotalsForSmallTargets() {
+        for target in [4, 6] {
+            let problem = SliceProblem(target: target, decompositionA: target / 2, decompositionB: target - target / 2)
+            let state = SumSprintBurstState.make(for: problem)
+            let displayTexts = state.cards.map(\.content.displayText)
+
+            #expect(Set(displayTexts).count == displayTexts.count)
+
+            let resultCards = state.cards.filter { $0.content.sumValue == target }
+            #expect(resultCards.count >= 2)
+            #expect(resultCards.allSatisfy { $0.content.displayText.hasPrefix("\(target)") })
+        }
     }
 
     @Test
@@ -682,9 +697,7 @@ struct VerticalSliceEngineTests {
             return false
         }!
         let equivalentTotalFromOtherPair = state.cards.first { card in
-            guard card.pairId != prompt.pairId,
-                  case .sum(5) = card.content else { return false }
-            return true
+            card.pairId != prompt.pairId && card.content.sumValue == 5
         }!
 
         #expect(SumSprintBurstState.cardsFormValidMatch(prompt, equivalentTotalFromOtherPair))
