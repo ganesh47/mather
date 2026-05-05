@@ -49,7 +49,10 @@ struct ProfilePickerView: View {
     }
 
     private func profileTile(_ profile: StoredKidProfile) -> some View {
-        Button {
+        let isActive = store.activeProfileId == profile.id
+        let showsTruncationFeedback = profile.name.count > 14
+
+        return Button {
             store.setActiveProfile(id: profile.id)
             onPicked()
         } label: {
@@ -64,12 +67,20 @@ struct ProfilePickerView: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .truncationMode(.tail)
+                    .minimumScaleFactor(0.82)
+
+                if showsTruncationFeedback {
+                    Text("Name shortened")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .lineLimit(1)
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(
-                store.activeProfileId == profile.id
+                isActive
                     ? MatherTheme.accent.opacity(0.12)
                     : MatherTheme.card.opacity(0.5)
             )
@@ -77,13 +88,26 @@ struct ProfilePickerView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(
-                        store.activeProfileId == profile.id ? MatherTheme.accent : Color.clear,
+                        isActive ? MatherTheme.accent : Color.clear,
                         lineWidth: 2
                     )
             )
+            .overlay(alignment: .topTrailing) {
+                if isActive {
+                    Label("Active", systemImage: "checkmark.circle.fill")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(MatherTheme.card.opacity(0.94), in: Capsule())
+                        .padding(8)
+                        .accessibilityIdentifier("profile-active-badge")
+                }
+            }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(profile.name), \(profile.emoji)")
+        .accessibilityLabel("\(profile.name), \(profile.emoji)\(isActive ? ", active profile" : "")")
+        .accessibilityHint(showsTruncationFeedback ? "Name is shortened visually; full name is \(profile.name)." : "")
     }
 
     private var addTile: some View {

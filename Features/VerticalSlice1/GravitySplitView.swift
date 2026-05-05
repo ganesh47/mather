@@ -141,9 +141,9 @@ struct GravitySplitView: View {
 
     private var liveCountRow: some View {
         HStack(spacing: 7) {
-            counterPill(value: state.leftCount, fill: MatherTheme.warm)
+            counterPill(value: state.leftCount, fill: MatherTheme.warm, isEmpty: state.leftCount == 0 && sourceCount == state.target)
             Text("+").font(.headline.weight(.black)).foregroundStyle(.secondary)
-            counterPill(value: state.rightCount, fill: MatherTheme.accent)
+            counterPill(value: state.rightCount, fill: MatherTheme.accent, isEmpty: state.rightCount == 0 && sourceCount == state.target)
             Text("=").font(.headline.weight(.black)).foregroundStyle(.secondary)
             Text("\(state.target)")
                 .font(.system(size: 24, weight: .black, design: .rounded))
@@ -151,10 +151,10 @@ struct GravitySplitView: View {
         }
     }
 
-    private func counterPill(value: Int, fill: Color) -> some View {
-        Text("\(value)")
+    private func counterPill(value: Int, fill: Color, isEmpty: Bool = false) -> some View {
+        Text(isEmpty ? "?" : "\(value)")
             .font(.system(size: 18, weight: .black, design: .rounded))
-            .foregroundStyle(fill)
+            .foregroundStyle(isEmpty ? .secondary : fill)
             .frame(minWidth: 58, minHeight: 36)
             .background(fill.opacity(0.13))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -170,6 +170,7 @@ struct GravitySplitView: View {
         VStack(spacing: 10) {
             sourceTray
             seesawBalancePreview
+            reachableAddActionBar
 
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: 10) {
@@ -216,19 +217,18 @@ struct GravitySplitView: View {
         let totalPlaced = max(1, placedCount)
         let tilt = CGFloat(state.rightCount - state.leftCount) / CGFloat(totalPlaced)
         let rotation = placedCount == 0 ? 0 : Double(max(-0.16, min(0.16, tilt)) * 18)
+        let barStyle = placedCount == 0
+            ? AnyShapeStyle(MatherTheme.cardSubtitle.opacity(0.24))
+            : AnyShapeStyle(LinearGradient(
+                colors: [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
 
         return VStack(spacing: 4) {
             ZStack(alignment: .center) {
                 Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: placedCount == 0
-                                ? [MatherTheme.cardSubtitle.opacity(0.28), MatherTheme.cardSubtitle.opacity(0.28)]
-                                : [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .fill(barStyle)
                     .frame(height: 12)
                     .overlay(
                         Capsule()
@@ -262,6 +262,41 @@ struct GravitySplitView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Lever see-saw balance. Left side has \(state.leftCount), right side has \(state.rightCount).")
         .accessibilityIdentifier("gravity-seesaw-balance-preview")
+    }
+
+    private var reachableAddActionBar: some View {
+        HStack(spacing: 10) {
+            quickAddButton(label: vocabulary.leftLabel, count: state.leftCount, target: state.decompositionA, fill: MatherTheme.warm, side: .left)
+            quickAddButton(label: vocabulary.rightLabel, count: state.rightCount, target: state.decompositionB, fill: MatherTheme.accent, side: .right)
+        }
+        .accessibilityIdentifier("gravity-reachable-add-action-bar")
+    }
+
+    private func quickAddButton(label: String, count: Int, target: Int, fill: Color, side: TransferSide) -> some View {
+        let canAdd = !state.isLocked && sourceCount > 0 && count < target
+        let sideName = side == .left ? "left" : "right"
+        return Button {
+            onTap(1, side)
+        } label: {
+            Label("Add \(label)", systemImage: "plus.circle.fill")
+                .font(.subheadline.weight(.black))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(canAdd ? fill : MatherTheme.cardSubtitle.opacity(0.55))
+        .background(canAdd ? fill.opacity(0.12) : Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(canAdd ? fill.opacity(0.34) : Color.secondary.opacity(0.16), lineWidth: 1.25)
+        )
+        .disabled(!canAdd)
+        .opacity(canAdd ? 1 : 0.72)
+        .accessibilityIdentifier("gravity-\(sideName)-quick-add-button")
+        .accessibilityLabel("Add \(label)")
+        .accessibilityHint(canAdd ? "Adds one token to the \(label) side." : "This side cannot accept more tokens right now.")
     }
 
     private func balancePan(label: String, count: Int, fill: Color) -> some View {

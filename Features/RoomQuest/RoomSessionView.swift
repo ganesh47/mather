@@ -7,6 +7,8 @@ struct RoomSessionView: View {
     @Bindable var engine: RoomQuestEngine
     let vsEngine: VerticalSliceEngine
 
+    @State private var pendingAbandonReason: String?
+
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -15,7 +17,36 @@ struct RoomSessionView: View {
         .overlay(alignment: .topTrailing) {
             sessionChromeOverlay
         }
+        .alert("End Room Quest?", isPresented: abandonConfirmationBinding) {
+            Button("Keep playing", role: .cancel) {
+                pendingAbandonReason = nil
+            }
+            Button("End session", role: .destructive) {
+                confirmAbandonSession()
+            }
+        } message: {
+            Text("Progress in this Room Quest will be abandoned and you'll return home.")
+        }
         .onAppear { engine.startSession() }
+    }
+
+    private var abandonConfirmationBinding: Binding<Bool> {
+        Binding(
+            get: { pendingAbandonReason != nil },
+            set: { isPresented in
+                if !isPresented { pendingAbandonReason = nil }
+            }
+        )
+    }
+
+    private func requestAbandonSession(reason: String) {
+        pendingAbandonReason = reason
+    }
+
+    private func confirmAbandonSession() {
+        let reason = pendingAbandonReason ?? "parent_abort"
+        pendingAbandonReason = nil
+        engine.abandonSession(reason: reason)
     }
 
     /// Home / Pause chrome buttons overlaid on top of phases that don't manage their own chrome.
@@ -36,7 +67,7 @@ struct RoomSessionView: View {
                     engine.pauseSession()
                 }
                 roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-session") {
-                    engine.abandonSession(reason: "parent_home")
+                    requestAbandonSession(reason: "parent_home")
                 }
             }
             .padding(24)
@@ -50,7 +81,7 @@ struct RoomSessionView: View {
                         engine.pauseSession()
                     }
                     roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-route") {
-                        engine.abandonSession(reason: "parent_home")
+                        requestAbandonSession(reason: "parent_home")
                     }
                 }
                 .padding(24)
@@ -58,7 +89,7 @@ struct RoomSessionView: View {
 
         case .paused:
             roomLightChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-paused") {
-                engine.abandonSession(reason: "parent_home")
+                requestAbandonSession(reason: "parent_home")
             }
             .padding(24)
 
@@ -84,7 +115,7 @@ struct RoomSessionView: View {
             SpotPromptView(engine: engine, spotIndex: idx)
 
         case .returning:
-            ReturningView(engine: engine)
+            ReturningView(engine: engine, onRequestAbandon: { requestAbandonSession(reason: $0) })
 
         case .onScreenPictorial:
             onScreenPictorialView
@@ -96,7 +127,7 @@ struct RoomSessionView: View {
             onScreenTransferView
 
         case .paused(let resumeTo):
-            RoomPausedView(engine: engine, resumingTo: resumeTo)
+            RoomPausedView(engine: engine, resumingTo: resumeTo, onRequestAbandon: { requestAbandonSession(reason: $0) })
 
         case .complete:
             RoomCompleteView(engine: engine, vsEngine: vsEngine)
@@ -388,6 +419,19 @@ private func appendDigit(to string: String, digit: Int) -> String {
 /// One-time parent safety acknowledgement — shown before the first Room Quest session.
 private struct SafetyAckView: View {
     @Bindable var engine: RoomQuestEngine
+    @State private var checkedItems: Set<Int> = []
+
+    private let checklistItems = [
+        "Both spot-cards in the same room as this iPad",
+        "Spots are away from stairs, windows, and balconies",
+        "Spots are away from the kitchen",
+        "A parent stays nearby during the room phase",
+        "Nothing in the activity rewards running or jumping"
+    ]
+
+    private var allItemsChecked: Bool {
+        checkedItems.count == checklistItems.count
+    }
 
     var body: some View {
         ScrollView {
@@ -405,11 +449,13 @@ private struct SafetyAckView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Label("Safety checklist", systemImage: "checklist")
                             .font(.headline.weight(.semibold))
-                        safetyItem("Both spot-cards in the same room as this iPad")
-                        safetyItem("Spots are away from stairs, windows, and balconies")
-                        safetyItem("Spots are away from the kitchen")
-                        safetyItem("A parent stays nearby during the room phase")
-                        safetyItem("Nothing in the activity rewards running or jumping")
+                        ForEach(Array(checklistItems.enumerated()), id: \.offset) { index, item in
+                            safetyItem(item, index: index)
+                        }
+                        Text(allItemsChecked ? "Checklist complete — you can continue." : "Tick every safety condition to continue.")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(allItemsChecked ? MatherTheme.accent : MatherTheme.coral)
+                            .accessibilityIdentifier("room-safety-checklist-status")
                     }
                 }
 
@@ -417,21 +463,36 @@ private struct SafetyAckView: View {
                     engine.acknowledgedSafety()
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(!allItemsChecked)
+                .opacity(allItemsChecked ? 1 : 0.55)
             }
             .padding(24)
         }
     }
 
-    private func safetyItem(_ text: String) -> some View {
-        Label(text, systemImage: "checkmark.circle.fill")
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(MatherTheme.ink)
+    private func safetyItem(_ text: String, index: Int) -> some View {
+        Button {
+            if checkedItems.contains(index) {
+                checkedItems.remove(index)
+            } else {
+                checkedItems.insert(index)
+            }
+        } label: {
+            Label(text, systemImage: checkedItems.contains(index) ? "checkmark.circle.fill" : "circle")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(checkedItems.contains(index) ? MatherTheme.accent : MatherTheme.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("room-safety-check-\(index)")
+        .accessibilityValue(checkedItems.contains(index) ? "Checked" : "Not checked")
     }
 }
 
 /// Screen shown while child walks back to the iPad after collecting from both spots.
 private struct ReturningView: View {
     @Bindable var engine: RoomQuestEngine
+    let onRequestAbandon: (String) -> Void
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -483,7 +544,7 @@ private struct ReturningView: View {
                 }
 
                 roomReturningChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-button-returning") {
-                    engine.onExitToHome?()
+                    onRequestAbandon("parent_home")
                 }
             }
             .padding(24)
@@ -525,6 +586,7 @@ private func roomReturningChromeButton(title: String, systemImage: String, acces
 private struct RoomPausedView: View {
     @Bindable var engine: RoomQuestEngine
     let resumingTo: RoomPhase
+    let onRequestAbandon: (String) -> Void
 
     var body: some View {
         VStack(spacing: 32) {
@@ -552,7 +614,7 @@ private struct RoomPausedView: View {
                 .buttonStyle(PrimaryActionButtonStyle())
 
                 Button("End session & go home") {
-                    engine.abandonSession(reason: "parent_abort")
+                    onRequestAbandon("parent_abort")
                 }
                 .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.danger.opacity(0.45)))
                 .foregroundStyle(MatherTheme.danger)

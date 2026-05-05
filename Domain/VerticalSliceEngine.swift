@@ -1027,7 +1027,7 @@ final class VerticalSliceEngine {
 
 }
 
-enum EquationSide {
+enum EquationSide: String {
     case left
     case right
 }

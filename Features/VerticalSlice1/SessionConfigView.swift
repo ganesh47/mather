@@ -21,90 +21,153 @@ struct SessionConfigView: View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 20) {
-                    CardSurface {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Session setup")
-                                .font(.title.weight(.black))
-                            Text("Keep sessions short and consistent.")
-                                .font(.headline)
-                                .foregroundStyle(MatherTheme.ink.opacity(0.6))
-                                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 0) {
+                topExitBar
 
-                            Divider()
+                GeometryReader { proxy in
+                    ScrollView {
+                        VStack(spacing: horizontalSizeClass == .regular ? 24 : 18) {
+                            setupCard
 
-                            Text("Theme")
-                                .font(.title3.weight(.semibold))
-                                .accessibilityIdentifier("session-setup-theme-section")
-
-                            // Theme picker — selected card gets accent border.
-                            // Tapping sets selectedThemeId; engine reads it at startSession().
-                            HStack(spacing: 12) {
-                                ForEach(themeOptions) { option in
-                                    themeCard(option)
-                                }
+                            if horizontalSizeClass == .regular {
+                                whatHappensNextPanel
                             }
+                        }
+                        .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .frame(minHeight: horizontalSizeClass == .regular ? max(proxy.size.height - 24, 0) : nil, alignment: .center)
+                        .padding(.horizontal, 24)
+                        .padding(.top, horizontalSizeClass == .regular ? 20 : 14)
+                        .padding(.bottom, 32)
+                    }
+                    .scrollIndicators(.visible)
+                }
+            }
+        }
+    }
 
-                            Divider()
+    private var topExitBar: some View {
+        HStack {
+            Button {
+                appModel.engine.showHome()
+            } label: {
+                Label("Back to Home", systemImage: "chevron.left")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.softBlue)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(MatherTheme.softBlue.opacity(0.14), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("back-to-home-button")
 
-                            Stepper(value: Binding(
-                                get: { appModel.engine.config.maxProblems },
-                                set: { appModel.engine.updateConfig(problemCount: $0) }
-                            ), in: 4...8) {
-                                Text("Problems: \(appModel.engine.config.maxProblems)")
-                                    .font(.title3.weight(.semibold))
-                            }
-                            .accessibilityIdentifier("problems-stepper")
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+        .background(MatherTheme.background.opacity(0.94))
+    }
 
-                            Divider()
+    private var setupCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Session setup")
+                    .font(.title.weight(.black))
+                Text("Keep sessions short and consistent.")
+                    .font(.headline)
+                    .foregroundStyle(MatherTheme.ink.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
 
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Target numbers")
-                                    .font(.title3.weight(.semibold))
-                                Text("Choose the largest number this session can ask for.")
-                                    .font(.subheadline)
-                                    .foregroundStyle(MatherTheme.ink.opacity(0.6))
+                Divider()
 
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 12) {
-                                    ForEach(ParentTargetCap.quickPicks, id: \.self) { maxTarget in
-                                        targetCapButton(maxTarget: maxTarget)
-                                    }
-                                }
-                            }
-                            .accessibilityIdentifier("target-cap-section")
+                Text("Theme")
+                    .font(.title3.weight(.semibold))
+                    .accessibilityIdentifier("session-setup-theme-section")
 
-                            Toggle("Speak prompts", isOn: Binding(
-                                get: { appModel.featureFlags.audioEnabled },
-                                set: {
-                                    appModel.featureFlags.audioEnabled = $0
-                                    appModel.engine.updateConfig(audioEnabled: $0)
-                                }
-                            ))
-                            .font(.title3.weight(.semibold))
-                            .accessibilityIdentifier("speak-prompts-toggle")
+                HStack(spacing: 12) {
+                    ForEach(themeOptions) { option in
+                        themeCard(option)
+                    }
+                }
 
-                            Button("Start Session") {
-                                appModel.engine.startSession()
-                            }
-                            .buttonStyle(PrimaryActionButtonStyle())
-                            .accessibilityIdentifier("start-session-button")
+                Divider()
+
+                Stepper(value: Binding(
+                    get: { appModel.engine.config.maxProblems },
+                    set: { appModel.engine.updateConfig(problemCount: $0) }
+                ), in: 4...8) {
+                    Text("Problems: \(appModel.engine.config.maxProblems)")
+                        .font(.title3.weight(.semibold))
+                }
+                .accessibilityIdentifier("problems-stepper")
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Target numbers")
+                        .font(.title3.weight(.semibold))
+                    Text("Choose the largest number this session can ask for.")
+                        .font(.subheadline)
+                        .foregroundStyle(MatherTheme.ink.opacity(0.6))
+
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 12) {
+                        ForEach(ParentTargetCap.quickPicks, id: \.self) { maxTarget in
+                            targetCapButton(maxTarget: maxTarget)
                         }
                     }
-
-                    Button("Back to Home") {
-                        appModel.engine.showHome()
-                    }
-                    .font(.headline.weight(.semibold))
-                    .accessibilityIdentifier("back-to-home-button")
                 }
-                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 32)
+                .accessibilityIdentifier("target-cap-section")
+
+                Toggle("Speak prompts", isOn: Binding(
+                    get: { appModel.featureFlags.audioEnabled },
+                    set: {
+                        appModel.featureFlags.audioEnabled = $0
+                        appModel.engine.updateConfig(audioEnabled: $0)
+                    }
+                ))
+                .font(.title3.weight(.semibold))
+                .accessibilityIdentifier("speak-prompts-toggle")
+
+                Button("Start Session") {
+                    appModel.engine.startSession()
+                }
+                .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier("start-session-button")
             }
-            .scrollIndicators(.visible)
+        }
+    }
+
+    private var whatHappensNextPanel: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("What happens next")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                setupStep(icon: "hand.tap.fill", title: "Make it", detail: "Build the number with counters.")
+                setupStep(icon: "scalemass.fill", title: "Gravity Split", detail: "Split it into two balanced parts.")
+                setupStep(icon: "square.grid.2x2.fill", title: "Sum Sprint", detail: "Match sums to totals.")
+                setupStep(icon: "bolt.fill", title: "Bond Blast", detail: "Finish by finding all number bonds.")
+            }
+        }
+        .accessibilityIdentifier("session-setup-next-steps-panel")
+    }
+
+    private func setupStep(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.accent)
+                .frame(width: 30, height: 30)
+                .background(MatherTheme.accent.opacity(0.12), in: Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(detail)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+            }
         }
     }
 

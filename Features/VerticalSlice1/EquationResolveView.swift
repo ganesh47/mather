@@ -11,7 +11,12 @@ struct EquationResolveView: View {
     var showsInlineSubmit = true
     var theme: any SliceTheme = ClassicTheme()
 
-    @State private var selectedSide: EquationSide = .left
+    @SceneStorage("equationResolveSelectedSide") private var selectedSideRaw = EquationSide.left.rawValue
+
+    private var selectedSide: EquationSide {
+        get { EquationSide(rawValue: selectedSideRaw) ?? .left }
+        nonmutating set { selectedSideRaw = newValue.rawValue }
+    }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
 
@@ -93,20 +98,37 @@ struct EquationResolveView: View {
                 Text(title)
                     .font(.subheadline.weight(.bold))
                 ZStack(alignment: .topTrailing) {
-                    Text(value.isEmpty ? "?" : value)
-                        .font(.system(size: 30, weight: .black, design: .rounded))
-                        .frame(maxWidth: .infinity, minHeight: 60)
-                        .background(selectedSide == side ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.28 : 0.18) : MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.32 : 0.25))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(
-                                    selectedSide == side
-                                        ? .white.opacity(colorScheme == .dark ? 0.12 : 0)
-                                        : MatherTheme.panelDeep.opacity(colorScheme == .dark ? 0.65 : 0),
-                                    lineWidth: 1
-                                )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    VStack(spacing: 4) {
+                        Text(value.isEmpty ? "?" : value)
+                            .font(.system(size: 30, weight: .black, design: .rounded))
+                            .frame(maxWidth: .infinity, minHeight: 60)
+                            .background(selectedSide == side ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.30 : 0.20) : MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.32 : 0.25))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .strokeBorder(
+                                        selectedSide == side
+                                            ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.95 : 0.78)
+                                            : MatherTheme.panelDeep.opacity(colorScheme == .dark ? 0.65 : 0),
+                                        lineWidth: selectedSide == side ? 3 : 1
+                                    )
+                            )
+                            .overlay(alignment: .bottom) {
+                                if selectedSide == side {
+                                    Capsule()
+                                        .fill(MatherTheme.accent)
+                                        .frame(width: 34, height: 4)
+                                        .offset(y: -6)
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                        if selectedSide == side {
+                            Label("typing here", systemImage: "arrow.up")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(MatherTheme.accent)
+                                .accessibilityIdentifier("equation-active-side-indicator")
+                        }
+                    }
                     if !value.isEmpty {
                         Button {
                             onClear(side)

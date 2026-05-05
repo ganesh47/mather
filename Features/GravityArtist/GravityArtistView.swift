@@ -416,29 +416,40 @@ struct GravityArtistView: View {
     }
 
     private var conceptCard: some View {
-        HStack(spacing: 10) {
+        let contract = LabActivityID.gravityArtist.introConceptCard
+
+        return HStack(alignment: .top, spacing: 10) {
             Image(systemName: phase == .fired ? (hitTarget ? "star.fill" : "lightbulb.fill") : "questionmark.bubble.fill")
                 .font(.headline.weight(.black))
                 .foregroundStyle(MatherTheme.warm)
-            Text(conceptCardText)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(contract?.title ?? "Gravity idea")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(conceptCardText)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 24)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(contract?.accessibilityLabel ?? conceptCardText)
     }
 
     private var conceptCardText: String {
+        let contract = LabActivityID.gravityArtist.introConceptCard
         switch phase {
         case .aim:
-            return "Flashcard: gravity pulls objects screen-down. Predict the path first."
+            return contract?.childPrompt ?? "Predict the path first."
         case .predicted:
             return "Now simulate: compare your dotted guess with the real roll."
         case .fired:
-            return hitTarget ? "Reward: your prediction matched the simulation." : "Learning: change angle or power, then test again."
+            return hitTarget ? (contract?.summaryPrompt ?? "Your prediction matched the simulation.") : "Learning: change angle or power, then test again."
         }
     }
 
