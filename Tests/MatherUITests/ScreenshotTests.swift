@@ -120,24 +120,16 @@ final class ScreenshotTests: XCTestCase {
         startSessionAndWaitForConcrete(in: app)
         snapshot(app, "ConcreteBuild-BeforeInput")
 
-        // Submit with count at 0 to trigger failure feedback
-        let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
-        let submitButton = app.buttons.element(matching: submitPredicate)
-        _ = submitButton.waitForExistence(timeout: 5)
-        submitButton.tap()
-        snapshot(app, "ConcreteBuild-FailureFeedback")
+        // The current concrete stage keeps incomplete answers disabled rather than
+        // submitting a wrong count. Capture that guardrail, then complete the target.
+        let incompleteSubmitButton = app.buttons["Make 6"]
+        XCTAssertTrue(incompleteSubmitButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(incompleteSubmitButton.isEnabled)
+        snapshot(app, "ConcreteBuild-IncompleteDisabled")
 
-        // Fill the deterministic target of 6 with the current two-row concrete model:
-        // five warm counters on the top row plus one accent counter on the bottom row.
-        let warmRowLastCell = app.otherElements["counter-cell-4"]
-        if !warmRowLastCell.waitForExistence(timeout: 3) {
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        _ = warmRowLastCell.waitForExistence(timeout: 5)
-        warmRowLastCell.tap()
-        let accentRowFirstCell = app.otherElements["counter-cell-5"]
-        _ = accentRowFirstCell.waitForExistence(timeout: 5)
-        accentRowFirstCell.tap()
+        fillConcreteTarget(6, in: app)
+        let submitButton = concreteSubmitButton(for: 6, in: app)
+        XCTAssertTrue(submitButton.waitForExistence(timeout: 5))
         submitButton.tap()
 
         // After a correct answer the stage advances to Bond Blast in the pictorial slot.
@@ -159,7 +151,7 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "ParentSummary-Empty")
 
         // Navigate to Settings from Parent Summary
-        let settingsButton = app.buttons["Settings"]
+        let settingsButton = app.buttons["Settings"].firstMatch
         _ = settingsButton.waitForExistence(timeout: 5)
         settingsButton.tap()
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
@@ -249,20 +241,10 @@ final class ScreenshotTests: XCTestCase {
         startSessionAndWaitForConcrete(in: app)
         snapshot(app, "iPhone-ConcreteBuild-AdaptiveGrid")
 
-        // Fill the deterministic target of 6 with five warm counters plus one accent counter.
-        let warmRowLastCell = app.otherElements["counter-cell-4"]
-        if !warmRowLastCell.waitForExistence(timeout: 3) {
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        _ = warmRowLastCell.waitForExistence(timeout: 5)
-        warmRowLastCell.tap()
-        let accentRowFirstCell = app.otherElements["counter-cell-5"]
-        _ = accentRowFirstCell.waitForExistence(timeout: 5)
-        accentRowFirstCell.tap()
+        fillConcreteTarget(6, in: app)
 
-        let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
-        let submitButton = app.buttons.element(matching: submitPredicate)
-        _ = submitButton.waitForExistence(timeout: 5)
+        let submitButton = concreteSubmitButton(for: 6, in: app)
+        XCTAssertTrue(submitButton.waitForExistence(timeout: 5))
         submitButton.tap()
 
         _ = app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10)
@@ -601,6 +583,35 @@ final class ScreenshotTests: XCTestCase {
         add(attachment)
     }
 
+
+    private func concreteStageButton(for target: Int, in app: XCUIApplication) -> XCUIElement {
+        let ready = app.buttons["That is \(target)"]
+        if ready.exists { return ready }
+        return app.buttons["Make \(target)"]
+    }
+
+    private func concreteSubmitButton(for target: Int, in app: XCUIApplication) -> XCUIElement {
+        let ready = app.buttons["That is \(target)"]
+        if ready.exists { return ready }
+
+        let submitPredicate = NSPredicate(format: "label BEGINSWITH 'That is '")
+        return app.buttons.element(matching: submitPredicate)
+    }
+
+    private func fillConcreteTarget(_ target: Int, in app: XCUIApplication, through maxIndex: Int? = nil) {
+        let finalIndex = maxIndex ?? max(target - 1, 0)
+        guard finalIndex >= 0 else { return }
+
+        for index in 0...finalIndex {
+            let concreteCell = app.otherElements["counter-cell-\(index)"]
+            if !concreteCell.waitForExistence(timeout: 2) {
+                app.scrollViews.firstMatch.swipeUp()
+            }
+            XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(index) while filling target \(target)")
+            concreteCell.tap()
+        }
+    }
+
     private func completeLoopV2Problem(
         in app: XCUIApplication,
         target: Int,
@@ -614,20 +625,15 @@ final class ScreenshotTests: XCTestCase {
     ) {
         advanceStoryAnchorIfPresent(in: app, snapshotPrefix: snapshotPrefix, shouldSnapshot: !skipInitialConcreteSnapshot)
 
-        let concreteSubmit = app.buttons["That is \(target)"]
-        XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
+        let concreteStageButton = concreteStageButton(for: target, in: app)
+        XCTAssertTrue(concreteStageButton.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
         if !skipInitialConcreteSnapshot {
             snapshot(app, "\(snapshotPrefix)-Concrete")
         }
 
-        for index in 0...concreteCellIndex {
-            let concreteCell = app.otherElements["counter-cell-\(index)"]
-            if !concreteCell.waitForExistence(timeout: 3) {
-                app.scrollViews.firstMatch.swipeUp()
-            }
-            XCTAssertTrue(concreteCell.waitForExistence(timeout: 5), "Expected concrete cell \(index) for target \(target)")
-            concreteCell.tap()
-        }
+        fillConcreteTarget(target, in: app, through: concreteCellIndex)
+        let concreteSubmit = concreteSubmitButton(for: target, in: app)
+        XCTAssertTrue(concreteSubmit.waitForExistence(timeout: 5), "Expected concrete submit button for target \(target)")
         concreteSubmit.tap()
 
         let gravityTitle = app.staticTexts["Gravity Split"]
