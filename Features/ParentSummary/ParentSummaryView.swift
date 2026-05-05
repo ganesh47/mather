@@ -48,7 +48,9 @@ struct ParentSummaryView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                         }
-                        explorerLabProgressCard(summary: explorerLabSummary)
+                        if !explorerLabSummary.rows.isEmpty {
+                            explorerLabProgressCard(summary: explorerLabSummary)
+                        }
                     } else {
                         if overview.hasValidMakeBreakProgress {
                             makeBreakScorecard(digest: digest)
@@ -86,6 +88,8 @@ struct ParentSummaryView: View {
                             }
                         }
                     }
+
+                    parentSummaryBottomAffordance(hasAnyHistory: overview.hasAnyHistory)
                 }
                 .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                 .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
@@ -152,6 +156,53 @@ struct ParentSummaryView: View {
         }
     }
 
+
+    private func parentSummaryBottomAffordance(hasAnyHistory: Bool) -> some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: hasAnyHistory ? "arrow.right.circle.fill" : "play.circle.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(hasAnyHistory ? "Ready for the next activity?" : "Start a session to fill this summary")
+                            .font(.headline.weight(.bold))
+                        Text(hasAnyHistory ? "Return home to keep playing, or adjust settings before the next session." : "After a game or Make & Break session, recent progress and scores appear here.")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                if ResponsiveLayout.isWide(horizontalSizeClass) {
+                    HStack(spacing: 12) {
+                        bottomButtons
+                    }
+                } else {
+                    VStack(spacing: 12) {
+                        bottomButtons
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("parent-summary-bottom-affordance")
+    }
+
+    private var bottomButtons: some View {
+        Group {
+            Button("Home") {
+                appModel.engine.showHome()
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+
+            Button("Settings") {
+                appModel.engine.showSettings()
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+        }
+    }
 
     private var parentActionButtons: some View {
         LazyVGrid(
@@ -325,7 +376,7 @@ struct ParentSummaryView: View {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Session \(index + 1)")
+                            Text(index == 0 ? "Latest" : "Recent \(index + 1)")
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(MatherTheme.accent)
                             Text(row.title)
@@ -343,13 +394,13 @@ struct ParentSummaryView: View {
                                 .foregroundStyle(MatherTheme.cardSubtitle)
                         }
                         Spacer()
-                        if index == 0 {
-                            Text("Latest")
+                        if row.source == .game {
+                            Text("Game")
                                 .font(.caption.weight(.bold))
-                                .foregroundStyle(MatherTheme.accent)
+                                .foregroundStyle(MatherTheme.warm)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(MatherTheme.accent.opacity(0.12))
+                                .background(MatherTheme.warm.opacity(0.14))
                                 .clipShape(Capsule())
                         }
                     }

@@ -20,6 +20,12 @@ final class RoomQuestUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Before you start"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Safety checklist"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Tick every safety condition to continue."].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["I understand — let's go"].isEnabled)
+        for index in 0..<5 {
+            app.buttons["room-safety-check-\(index)"].tap()
+        }
+        XCTAssertTrue(app.staticTexts["Checklist complete — you can continue."].waitForExistence(timeout: 3))
         snapshot(app, "RoomQuest-SafetyAck")
 
         app.buttons["I understand — let's go"].tap()
@@ -144,16 +150,24 @@ final class RoomQuestUITests: XCTestCase {
 
     // MARK: - Abandon
 
-    func testRoomQuestAbandonSessionNavigatesToHome() {
+    func testRoomQuestAbandonSessionAsksForConfirmationBeforeHome() {
         let app = launchWithRoomQuestAndSafetyAck()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
         openRoomQuest(app)
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
-        completeSetupViaManualFallback(app)
 
-        _ = app.staticTexts["Red Rocket"].waitForExistence(timeout: 5)
-        XCTAssertTrue(app.buttons["room-pause-button"].waitForExistence(timeout: 5))
+        app.buttons["room-home-session"].tap()
+        XCTAssertTrue(app.alerts["End Room Quest?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.alerts["End Room Quest?"].buttons["Keep playing"].exists)
+        XCTAssertTrue(app.alerts["End Room Quest?"].buttons["End session"].exists)
+
+        app.alerts["End Room Quest?"].buttons["Keep playing"].tap()
+        XCTAssertTrue(app.staticTexts["Set up the room"].waitForExistence(timeout: 5))
+
+        app.buttons["room-home-session"].tap()
+        app.alerts["End Room Quest?"].buttons["End session"].tap()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 5))
     }
 
     // MARK: - Global settings handoff
