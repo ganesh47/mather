@@ -60,6 +60,9 @@ struct BondMatchView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var cardSize: CGFloat { ResponsiveLayout.isWide(horizontalSizeClass) ? 110 : 88 }
     private let cardSpacing: CGFloat = 12
+    private var compactPairsMaxHeight: CGFloat? {
+        ResponsiveLayout.isWide(horizontalSizeClass) ? nil : 408
+    }
 
     private var vocabulary: NumberStoryStageVocabulary {
         if let storyPrompt {
@@ -85,7 +88,7 @@ struct BondMatchView: View {
         CardSurface {
             VStack(spacing: 20) {
                 headerView
-                pairsGrid
+                reachablePairsGrid
                 progressDots
             }
         }
@@ -122,6 +125,16 @@ struct BondMatchView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var reachablePairsGrid: some View {
+        ScrollView(.vertical) {
+            pairsGrid
+                .padding(.vertical, 2)
+        }
+        .scrollIndicators(.visible)
+        .frame(maxHeight: compactPairsMaxHeight)
         .frame(maxWidth: .infinity)
     }
 

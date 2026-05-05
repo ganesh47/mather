@@ -15,18 +15,11 @@ struct HomeView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    if ResponsiveLayout.isWide(horizontalSizeClass) {
-                        HStack(alignment: .top, spacing: 20) {
-                            makeAndBreakCard
-                            labsCard
-                            gamesCard
-                        }
-                    } else {
-                        makeAndBreakCard
-                        HStack(alignment: .top, spacing: 14) {
-                            labsCard
-                            gamesCard
-                        }
+                    makeAndBreakCard
+
+                    HStack(alignment: .top, spacing: ResponsiveLayout.isWide(horizontalSizeClass) ? 20 : 14) {
+                        labsCard
+                        gamesCard
                     }
 
                     HStack(spacing: 14) {
@@ -139,6 +132,7 @@ struct HomeView: View {
             )
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
         .accessibilityIdentifier("Play")
     }
 
@@ -176,7 +170,7 @@ struct HomeView: View {
         explorerEntryCard(
             title: "Games",
             subtitle: "One-tap play",
-            detail: "Launch ready games directly",
+            detail: "Launch games directly",
             emoji: "🎮",
             symbolName: "gamecontroller.fill",
             gradient: [MatherTheme.warm, MatherTheme.accent.opacity(0.85)],
@@ -251,6 +245,7 @@ private struct HomeExplorerEntryCard: View {
             )
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
         .accessibilityIdentifier(accessibilityIdentifier)
         .accessibilityLabel(accessibilityCopy)
     }
