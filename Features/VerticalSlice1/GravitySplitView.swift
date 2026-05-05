@@ -212,16 +212,19 @@ struct GravitySplitView: View {
 
 
     private var seesawBalancePreview: some View {
-        let totalPlaced = max(1, state.leftCount + state.rightCount)
+        let placedCount = state.leftCount + state.rightCount
+        let totalPlaced = max(1, placedCount)
         let tilt = CGFloat(state.rightCount - state.leftCount) / CGFloat(totalPlaced)
-        let rotation = Double(max(-0.16, min(0.16, tilt)) * 18)
+        let rotation = placedCount == 0 ? 0 : Double(max(-0.16, min(0.16, tilt)) * 18)
 
         return VStack(spacing: 4) {
             ZStack(alignment: .center) {
                 Capsule()
                     .fill(
                         LinearGradient(
-                            colors: [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
+                            colors: placedCount == 0
+                                ? [MatherTheme.cardSubtitle.opacity(0.28), MatherTheme.cardSubtitle.opacity(0.28)]
+                                : [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -249,7 +252,7 @@ struct GravitySplitView: View {
             }
             .frame(height: 58)
 
-            Text(state.isLocked ? "See-saw balanced" : "Balance the see-saw")
+            Text(state.isLocked ? "See-saw balanced" : (placedCount == 0 ? "Place counters to start balancing" : "Balance the see-saw"))
                 .font(.caption2.weight(.black))
                 .foregroundStyle(state.isLocked ? MatherTheme.accent : MatherTheme.cardSubtitle)
         }

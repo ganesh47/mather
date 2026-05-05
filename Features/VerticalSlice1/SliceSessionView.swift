@@ -269,7 +269,11 @@ struct SliceSessionView: View {
                             }
                         }
                     }
+                    .frame(maxWidth: 680, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 CardSurface { Text("Loading Sum Sprint...") }
             }
