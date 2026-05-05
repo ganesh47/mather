@@ -1004,13 +1004,11 @@ struct LabLaneCardPresentation: Equatable {
         title = lane.subjectStreamLabel
         promiseLine = lane.promise
         progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
-        openAffordanceLabel = "Enter world"
+        openAffordanceLabel = "Open"
         accessibilityLabel = "\(lane.subjectStreamLabel) subject stream. \(lane.ageBandHint). \(lane.promise)"
-        accessibilityHint = "Opens \(lane.subjectStreamLabel) to choose missions, review cards, play styles, and sensor options."
+        accessibilityHint = "Opens \(lane.subjectStreamLabel) to choose staged labs and games."
         sections = [
             .visualSummary,
-            .promise,
-            .progressStatus,
         ]
     }
 

@@ -126,30 +126,22 @@ struct LabView: View {
     private func explorerPathCard(_ path: ExplorerPathPresentation, isSelected: Bool, compact: Bool) -> some View {
         let tint = path.id == .labs ? MatherTheme.accent : MatherTheme.warm
 
-        return VStack(alignment: .leading, spacing: compact ? 8 : 10) {
-            HStack(spacing: 10) {
-                explorerArtwork(path, tint: tint, compact: compact)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(path.title)
-                        .font(.system(size: compact ? 22 : 26, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.ink)
-                    Text(path.callToAction)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(tint)
-            }
+        return VStack(spacing: compact ? 8 : 10) {
+            explorerArtwork(path, tint: tint, compact: compact)
+            Text(path.title)
+                .font(.system(size: compact ? 22 : 26, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
 
-            Text(path.subtitle)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .lineLimit(compact ? 3 : 2)
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .font(.title3.weight(.black))
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
         }
         .padding(compact ? 12 : 16)
-        .frame(maxWidth: .infinity, minHeight: compact ? 146 : 136, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: compact ? 132 : 136, alignment: .center)
         .background(
             LinearGradient(
                 colors: [tint.opacity(isSelected ? 0.18 : 0.08), MatherTheme.card],
@@ -352,9 +344,9 @@ struct LabView: View {
         return Button {
             launchDirectGame(entry)
         } label: {
-            HStack(spacing: 12) {
+            VStack(spacing: 10) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [tint.opacity(0.18), MatherTheme.card.opacity(0.88)],
@@ -362,41 +354,25 @@ struct LabView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                    Image(systemName: "play.circle.fill")
+                    Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
                         .font(.title2.weight(.black))
                         .foregroundStyle(tint.opacity(canLaunch ? 1 : 0.45))
                     Text(activity.emoji)
-                        .font(.system(size: 24))
-                        .offset(x: 11, y: 11)
+                        .font(.system(size: 26))
+                        .offset(x: 12, y: 12)
                 }
-                .frame(width: 62, height: 62)
+                .frame(width: 68, height: 68)
                 .accessibilityLabel(activity.artworkAccessibilityLabel)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(activity.title)
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
-                        .lineLimit(2)
-                    Text(activity.tagline)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(2)
-                    Text(canLaunch ? "Tap to play" : "Needs a sensor")
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(canLaunch ? tint : MatherTheme.cardSubtitle)
-                    if !canLaunch || activity.id.sensorNeeds != [.noSpecialSensor] {
-                        Text(capabilitySummary)
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .lineLimit(1)
-                    }
-                }
-                Spacer(minLength: 0)
-                Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
-                    .font(.title2.weight(.black))
-                    .foregroundStyle(canLaunch ? tint : MatherTheme.cardSubtitle)
+
+                Text(activity.title)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.78)
+                    .multilineTextAlignment(.center)
             }
             .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 126, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 132, alignment: .center)
             .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -464,32 +440,18 @@ struct LabView: View {
         tint: Color
     ) -> some View {
         VStack(spacing: 10) {
-            laneVisual(lane, tint: tint, size: 72)
+            laneVisual(lane, tint: tint, size: 74)
 
-            VStack(spacing: 4) {
-                Text(presentation.title)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(MatherTheme.ink)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
-                    .multilineTextAlignment(.center)
-
-                Text(lane.ageBandHint)
-                    .font(.caption2.weight(.black))
-                    .foregroundStyle(tint)
-                    .lineLimit(1)
-            }
-
-            compactProgressBadge(progress, tint: tint)
-
-            Image(systemName: "chevron.right.circle.fill")
-                .font(.title3.weight(.black))
-                .foregroundStyle(tint)
-                .accessibilityHidden(true)
+            Text(presentation.title)
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: 190, alignment: .center)
+        .frame(maxWidth: .infinity, minHeight: 142, alignment: .center)
     }
 
     private func fullLaneCard(
@@ -498,47 +460,18 @@ struct LabView: View {
         progress: CapabilityLaneProgress,
         tint: Color
     ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                laneVisual(lane, tint: tint)
+        VStack(spacing: 12) {
+            laneVisual(lane, tint: tint, size: 86)
 
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack(spacing: 8) {
-                        Text(presentation.title)
-                            .font(.headline.weight(.black))
-                            .foregroundStyle(MatherTheme.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                        Text(lane.ageBandHint)
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(tint)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .background(tint.opacity(0.12), in: Capsule())
-                    }
-                    Text(presentation.promiseLine)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
-
-            progressPreview(progress, tint: tint)
-
-            HStack(spacing: 10) {
-                Label(lane.isReady ? "\(lane.activities.count) mission\(lane.activities.count == 1 ? "" : "s")" : "Missions coming soon", systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(tint)
-                Spacer(minLength: 8)
-                Label(presentation.openAffordanceLabel, systemImage: "chevron.right.circle.fill")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(tint)
-            }
+            Text(presentation.title)
+                .font(.title3.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
         }
         .padding(16)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 160, alignment: .center)
     }
 
     private func compactProgressBadge(_ progress: CapabilityLaneProgress, tint: Color) -> some View {
