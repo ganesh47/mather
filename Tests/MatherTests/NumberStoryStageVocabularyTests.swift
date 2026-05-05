@@ -40,7 +40,7 @@ struct NumberStoryStageVocabularyTests {
             switch card.content {
             case .prompt:
                 return true
-            case .sum(let value):
+            case .sum(let value), .decoratedSum(let value, _):
                 return value == problem.target
             }
         })
