@@ -175,6 +175,7 @@ struct GravitySplitView: View {
     private var tokenBoard: some View {
         VStack(spacing: 10) {
             sourceTray
+            seesawBalancePreview
 
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: 10) {
@@ -213,6 +214,72 @@ struct GravitySplitView: View {
             }
         }
         .accessibilityIdentifier("gravity-direct-token-board")
+    }
+
+
+    private var seesawBalancePreview: some View {
+        let totalPlaced = max(1, state.leftCount + state.rightCount)
+        let tilt = CGFloat(state.rightCount - state.leftCount) / CGFloat(totalPlaced)
+        let rotation = Double(max(-0.16, min(0.16, tilt)) * 18)
+
+        return VStack(spacing: 4) {
+            ZStack(alignment: .center) {
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 12)
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(MatherTheme.ink.opacity(0.10), lineWidth: 1)
+                    )
+                    .rotationEffect(.degrees(rotation))
+                    .animation(.spring(response: 0.32, dampingFraction: 0.72), value: state.leftCount)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.72), value: state.rightCount)
+
+                GravitySplitTrianglePivot()
+                    .fill(MatherTheme.ink.opacity(0.18))
+                    .frame(width: 34, height: 24)
+                    .offset(y: 17)
+
+                HStack {
+                    balancePan(label: vocabulary.leftLabel, count: state.leftCount, fill: MatherTheme.warm)
+                    Spacer(minLength: 34)
+                    balancePan(label: vocabulary.rightLabel, count: state.rightCount, fill: MatherTheme.accent)
+                }
+                .padding(.horizontal, 8)
+            }
+            .frame(height: 58)
+
+            Text(state.isLocked ? "See-saw balanced" : "Balance the see-saw")
+                .font(.caption2.weight(.black))
+                .foregroundStyle(state.isLocked ? MatherTheme.accent : MatherTheme.cardSubtitle)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(MatherTheme.panel.opacity(0.56), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Lever see-saw balance. Left side has \(state.leftCount), right side has \(state.rightCount).")
+        .accessibilityIdentifier("gravity-seesaw-balance-preview")
+    }
+
+    private func balancePan(label: String, count: Int, fill: Color) -> some View {
+        VStack(spacing: 2) {
+            Text("\(count)")
+                .font(.caption.weight(.black))
+                .foregroundStyle(fill)
+                .frame(width: 34, height: 26)
+                .background(fill.opacity(0.13), in: Circle())
+            Text(label)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
     }
 
     private var sourceTray: some View {
@@ -484,5 +551,17 @@ struct GravitySplitView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
+
+private struct GravitySplitTrianglePivot: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }

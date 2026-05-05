@@ -85,10 +85,10 @@ final class LabModelsTests: XCTestCase {
         )
 
         XCTAssertEqual(presentation.title, "Numbers & Arithmetic")
-        XCTAssertEqual(presentation.openAffordanceLabel, "Enter world")
+        XCTAssertEqual(presentation.openAffordanceLabel, "Open")
         XCTAssertEqual(
             presentation.sections,
-            [.visualSummary, .promise, .progressStatus]
+            [.visualSummary]
         )
         XCTAssertFalse(presentation.showsDetails)
         XCTAssertFalse(presentation.sections.contains(.modes))
@@ -96,6 +96,8 @@ final class LabModelsTests: XCTestCase {
         XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertFalse(presentation.sections.contains(.activities))
         XCTAssertTrue(presentation.accessibilityHint.contains("Opens Numbers & Arithmetic"))
+        XCTAssertFalse(presentation.sections.contains(.promise))
+        XCTAssertFalse(presentation.sections.contains(.progressStatus))
     }
 
     func testLaneDetailPresentationRestoresDetailsWithoutDroppingLaunches() throws {
