@@ -48,7 +48,9 @@ struct GravitySplitView: View {
             VStack(alignment: .leading, spacing: 12) {
                 headerRow
                 tokenBoard
-                if !state.isLocked {
+                if state.isLocked {
+                    successProgressionCTA
+                } else {
                     instructionText
                 }
             }
@@ -63,11 +65,7 @@ struct GravitySplitView: View {
         .onChange(of: state.isLocked) { _, locked in
             guard locked else { return }
             withAnimation(.spring(response: 0.38, dampingFraction: 0.48)) {
-                lockScale = 1.12
-            }
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(600))
-                onSubmit()
+                lockScale = 1.06
             }
         }
         .accessibilityElement(children: .contain)
@@ -117,18 +115,14 @@ struct GravitySplitView: View {
     private var compactActionRail: some View {
         VStack(alignment: .trailing, spacing: 8) {
             if state.isLocked {
-                Text("⭐️")
-                    .font(.system(size: 34))
+                Label("Ready to review", systemImage: "checkmark.seal.fill")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(MatherTheme.accent.opacity(0.12), in: Capsule())
                     .scaleEffect(lockScale)
-                    .transition(.scale.combined(with: .opacity))
-
-                Button("Next") {
-                    onSubmit()
-                }
-                .font(.caption.weight(.black))
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .accessibilityIdentifier("gravity-split-next-button")
+                    .accessibilityIdentifier("gravity-split-success-status")
             } else {
                 Button {
                     onReset()
@@ -469,6 +463,39 @@ struct GravitySplitView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
+    private var successProgressionCTA: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Great split — now review your equation", systemImage: "checkmark.seal.fill")
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Keep this proof visible: \(state.leftCount) + \(state.rightCount) = \(state.target).")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                onSubmit()
+            } label: {
+                Label("Next: review equation", systemImage: "arrow.right.circle.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryActionButtonStyle())
+            .accessibilityIdentifier("gravity-split-next-button")
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MatherTheme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(MatherTheme.accent.opacity(0.26), lineWidth: 1.5)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("gravity-split-success-progression")
+    }
+
+
 
     private func tokenGrid(
         count: Int,

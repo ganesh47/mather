@@ -138,7 +138,7 @@ struct SettingsView: View {
                     )
                     VS1ToggleRow(
                         title: "Clap reaction (mic)",
-                        subtitle: "On by default. Listens for a clap to trigger celebrations when microphone access is available.",
+                        subtitle: "Off by default. If a parent turns it on, Mather asks for microphone access and only listens for a clap to trigger celebrations.",
                         isOn: soundReactionBinding
                     )
                  }
