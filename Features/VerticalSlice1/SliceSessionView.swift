@@ -429,7 +429,7 @@ struct SliceSessionView: View {
         switch card.content {
         case .prompt(let prompt):
             return "sumsprint-prompt-\(normalizedSumSprintToken(prompt))"
-        case .sum(let value):
+        case .sum(let value), .decoratedSum(let value, _):
             let prompt = burst.cards.compactMap { sibling -> String? in
                 guard sibling.pairId == card.pairId,
                       case .prompt(let prompt) = sibling.content else { return nil }

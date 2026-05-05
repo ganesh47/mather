@@ -22,6 +22,7 @@ struct AngleCannonView: View {
 
     @State private var neutralRoll: Double? = nil
     @State private var calibrating = false          // shows "Hold steady…" banner
+    @State private var calibrationProgress: Double = 0
     /// Current aim angle in degrees [10, 80]. Snaps to multiples of 15°.
     @State private var currentAngleDeg: Double = 45
     /// Non-nil once FIRE is tapped; freezes the arc on screen.
@@ -78,6 +79,11 @@ struct AngleCannonView: View {
                         Text("Setting your aim baseline")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
+                        ProgressView(value: calibrationProgress)
+                            .tint(MatherTheme.accent)
+                            .frame(width: 160)
+                            .accessibilityLabel("Calibration progress")
+                            .accessibilityValue("\(Int(calibrationProgress * 100)) percent")
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 14)
@@ -119,9 +125,17 @@ struct AngleCannonView: View {
     private func autoCalibrateNeutral() {
         guard neutralRoll == nil else { return }
         calibrating = true
+        calibrationProgress = 0
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
+            for progress in [0.25, 0.55, 0.82] {
+                try? await Task.sleep(for: .milliseconds(150))
+                withAnimation(.easeOut(duration: 0.12)) {
+                    calibrationProgress = progress
+                }
+            }
+            try? await Task.sleep(for: .milliseconds(150))
             neutralRoll = appModel.motionService.tiltRoll
+            calibrationProgress = 1
             withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                 calibrating = false
             }
