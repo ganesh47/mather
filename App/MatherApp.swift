@@ -62,9 +62,19 @@ private extension MatherApp {
             appModel.engine.showWaterCycle()
         case "watercyclelab", "water-cycle-lab", "legacy-watercycle", "legacy-water-cycle":
             appModel.engine.showLegacyWaterCycleLab()
+        case "bondblast", "bond-blast", "bondblastfinale", "bond-blast-finale":
+            appModel.engine.startBondBlastFinale(target: uiTestBondBlastTarget(from: arguments))
         default:
             break
         }
+    }
+
+
+    static func uiTestBondBlastTarget(from arguments: [String]) -> Int {
+        guard let flagIndex = arguments.firstIndex(of: "-uiTest.bondBlastTarget"),
+              arguments.indices.contains(flagIndex + 1),
+              let target = Int(arguments[flagIndex + 1]) else { return 10 }
+        return target
     }
 
     static func seedSessionHistoryIfRequested(using appModel: AppModel) {
