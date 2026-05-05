@@ -1,7 +1,81 @@
+import UIKit
 import XCTest
 
 @MainActor
 final class CompactLayoutTests: XCTestCase {
+
+    func testIPadHomeRegularLayoutShowsFullMakeAndBreakTitle() throws {
+        guard UIDevice.current.userInterfaceIdiom == .pad else {
+            throw XCTSkip("iPad regular-layout regression only runs on iPad simulators")
+        }
+
+        let app = launchWithVS1()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
+
+        let playCard = app.buttons["Play"]
+        XCTAssertTrue(playCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(playCard.staticTexts["Make & Break"].waitForExistence(timeout: 5), "Expected the iPad home hero to expose the full Make & Break title")
+        XCTAssertTrue(playCard.staticTexts["Targets"].waitForExistence(timeout: 5), "Expected the iPad home hero subtitle to remain visible next to the title")
+    }
+
+    func testBondBlastTargetTwelveKeepsLowAndMiddlePairsReachableOnIPhone() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact Bond Blast reachability regression only runs on iPhone simulators")
+        }
+
+        let app = launchBondBlastFinale(target: 12)
+        XCTAssertTrue(app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10))
+
+        let firstLeft = app.buttons["bond-left-1"]
+        let firstRight = app.buttons["bond-right-11"]
+        XCTAssertTrue(firstLeft.waitForExistence(timeout: 5))
+        XCTAssertTrue(firstLeft.isHittable, "Expected the first target-12 Bond Blast source card to be reachable")
+        firstLeft.tap()
+        XCTAssertTrue(firstRight.waitForExistence(timeout: 5))
+        XCTAssertTrue(firstRight.isHittable, "Expected 1 + 11 target-12 match to be reachable")
+
+        let finalLeft = app.buttons["bond-left-6"]
+        let finalRight = app.buttons["bond-right-6"]
+        if !finalLeft.isHittable || !finalRight.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(finalLeft.waitForExistence(timeout: 5))
+        XCTAssertTrue(finalLeft.isHittable, "Expected the bottom target-12 Bond Blast source card to be reachable after the in-card scroll")
+        finalLeft.tap()
+        XCTAssertTrue(finalRight.waitForExistence(timeout: 5))
+        XCTAssertTrue(finalRight.isHittable, "Expected 6 + 6 target-12 match to be reachable after the in-card scroll")
+    }
+
+    func testGravitySplitSuccessCTAIsVisibleAndAdvancesOnIPhone() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact Gravity Split CTA regression only runs on iPhone simulators")
+        }
+
+        let app = launchWithVS1()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
+
+        app.buttons["Play"].tap()
+        XCTAssertTrue(app.staticTexts["Session setup"].waitForExistence(timeout: 10))
+        app.buttons["Start Session"].tap()
+        advanceStoryAnchorIfPresent(app)
+
+        XCTAssertTrue(app.buttons["That is 6"].waitForExistence(timeout: 10))
+        app.otherElements["counter-cell-4"].tap()
+        app.otherElements["counter-cell-5"].tap()
+        app.buttons["That is 6"].tap()
+
+        XCTAssertTrue(app.staticTexts["Gravity Split"].waitForExistence(timeout: 10))
+        app.buttons["gravity-complete-split-button"].tap()
+
+        let successCTA = app.otherElements["gravity-split-success-progression"]
+        let nextButton = app.buttons["gravity-split-next-button"]
+        XCTAssertTrue(successCTA.waitForExistence(timeout: 5), "Expected the Gravity Split success CTA to stay visible on compact layouts")
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(nextButton.isHittable, "Expected the Gravity Split success CTA button to be reachable")
+        nextButton.tap()
+        XCTAssertTrue(app.staticTexts["Sum Sprint"].waitForExistence(timeout: 10))
+    }
+
     func testVS1CompactFlowShowsUpdatedCopyAndKeepsCoreActionsReachableWithoutSwipe() {
         let app = launchWithVS1()
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
@@ -189,6 +263,30 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(app.buttons["water-cycle-primary-action"].isHittable)
         XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+    }
+
+
+    private func advanceStoryAnchorIfPresent(_ app: XCUIApplication) {
+        let startBuilding = app.buttons["story-anchor-start-button"]
+        if startBuilding.waitForExistence(timeout: 3) {
+            startBuilding.tap()
+        }
+    }
+
+    private func launchBondBlastFinale(target: Int) -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.motionControlsEnabled", "NO",
+            "-feature.soundReactionEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-uiTest.startRoute", "bondBlast",
+            "-uiTest.bondBlastTarget", "\(target)"
+        ]
+        app.launch()
+        return app
     }
 
     private func configureRoomQuestSetupViaManualFallback(_ app: XCUIApplication) {

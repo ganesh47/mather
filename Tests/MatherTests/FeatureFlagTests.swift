@@ -54,6 +54,17 @@ struct FeatureFlagTests {
         #expect(!flags2.makeBreakLoopV2Enabled)
     }
 
+
+    @Test func freshDefaultsKeepClapReactionOffUntilParentOptIn() {
+        let suiteName = "FeatureFlagTests.freshDefaultsKeepClapReactionOffUntilParentOptIn"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let flags = FeatureFlagService(defaults: defaults)
+
+        #expect(!flags.soundReactionEnabled)
+    }
+
     @Test func soundReactionPreferencePersistsAcrossInstances() {
         let defaults = UserDefaults(suiteName: #function)!
         let flags1 = FeatureFlagService(defaults: defaults)
