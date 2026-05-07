@@ -866,4 +866,78 @@ final class ScreenshotTests: XCTestCase {
         }
         return identified.exists || labeled.exists
     }
+
+    // MARK: - UX Review — Phase 1/2/3/4 verification
+
+    /// Phase 1: GameplayThreadView should show exactly one Back button (in topChrome).
+    /// Verifies the duplicate bottom Back button has been removed.
+    func testScreenshot_UXReview_ShapeThread_SingleBackButton() {
+        let app = launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "shapeGeometry"
+        ])
+
+        XCTAssertTrue(app.staticTexts["Shape Names"].waitForExistence(timeout: 10))
+        snapshot(app, "UXReview-ShapeThread-FlashcardStage")
+
+        let topBack = app.buttons["GameplayStageTopBackButton"]
+        XCTAssertTrue(topBack.waitForExistence(timeout: 5), "Expected single Back button in topChrome")
+
+        let bottomBack = app.buttons["GameplayStageBackButton"]
+        XCTAssertFalse(bottomBack.exists, "Duplicate bottom Back button must not exist")
+
+        snapshot(app, "UXReview-ShapeThread-NavChrome")
+    }
+
+    /// Phase 3/4: Lab Games tab renders GameActivityCard in grid layout.
+    func testScreenshot_UXReview_LabGamesGrid() {
+        let app = launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "labGames"
+        ])
+
+        _ = app.staticTexts["Games"].waitForExistence(timeout: 10)
+        snapshot(app, "UXReview-LabGames-GridCards")
+    }
+
+    /// Phase 3: Geometry lane detail renders GameActivityCard in detail layout.
+    func testScreenshot_UXReview_GeometryLaneDetail() {
+        let app = launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "geometryLane"
+        ])
+
+        _ = app.staticTexts["Geometry"].waitForExistence(timeout: 10)
+        snapshot(app, "UXReview-GeometryLane-DetailCards")
+    }
+
+    /// Phase 4: Shape Names thread navigates through flashcards → name match stages.
+    func testScreenshot_UXReview_ShapeThread_Stages() {
+        let app = launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "shapeGeometry"
+        ])
+
+        XCTAssertTrue(app.staticTexts["Shape Names"].waitForExistence(timeout: 10))
+        snapshot(app, "UXReview-ShapeThread-01-Flashcards")
+
+        let nextBtn = app.buttons["GameplayStageNextButton"]
+        if nextBtn.waitForExistence(timeout: 3) {
+            nextBtn.tap()
+            _ = app.staticTexts["Name Match"].waitForExistence(timeout: 5)
+            snapshot(app, "UXReview-ShapeThread-02-NameMatch")
+        }
+    }
 }
