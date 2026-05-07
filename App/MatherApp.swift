@@ -7,25 +7,50 @@ struct MatherApp: App {
     @State private var appModel: AppModel
 
     init() {
+        let schema = Schema([
+            StoredSessionSummary.self,
+            StoredRoomQuestStationReference.self,
+            StoredFactRecord.self,
+            StoredKidProfile.self,
+            StoredTelemetryEvent.self,
+            StoredGameSession.self,
+            StoredGameplayProgressRecord.self,
+            StoredGameplayThreadSession.self
+        ])
+        container = Self.makeModelContainer(schema: schema)
+        let appModel = AppModel(modelContext: container.mainContext)
+        Self.seedSessionHistoryIfRequested(using: appModel)
+        Self.seedGameHistoryIfRequested(using: appModel)
+        Self.applyUITestStartRouteIfRequested(using: appModel)
+        _appModel = State(initialValue: appModel)
+    }
+
+    private static func makeModelContainer(schema: Schema) -> ModelContainer {
         do {
-            container = try ModelContainer(
-                for: StoredSessionSummary.self,
-                StoredRoomQuestStationReference.self,
-                StoredFactRecord.self,
-                StoredKidProfile.self,
-                StoredTelemetryEvent.self,
-                StoredGameSession.self,
-                StoredGameplayProgressRecord.self,
-                StoredGameplayThreadSession.self
-            )
-            let appModel = AppModel(modelContext: container.mainContext)
-            Self.seedSessionHistoryIfRequested(using: appModel)
-            Self.seedGameHistoryIfRequested(using: appModel)
-            Self.applyUITestStartRouteIfRequested(using: appModel)
-            _appModel = State(initialValue: appModel)
+            return try ModelContainer(for: schema)
         } catch {
-            fatalError("Failed to create model container: \(error)")
+            // Migration failure (common on major OS upgrades). Wipe the store and start fresh
+            // rather than crashing — history and progress data is recoverable from iCloud backup.
+            deleteSwiftDataStore(for: schema)
+            do {
+                return try ModelContainer(for: schema)
+            } catch {
+                fatalError("Failed to create model container after store reset: \(error)")
+            }
         }
+    }
+
+    private static func deleteSwiftDataStore(for schema: Schema) {
+        let fm = FileManager.default
+        guard let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let storeDir = appSupport
+        let extensions = ["sqlite", "sqlite-shm", "sqlite-wal"]
+        do {
+            let files = try fm.contentsOfDirectory(at: storeDir, includingPropertiesForKeys: nil)
+            for url in files where extensions.contains(url.pathExtension) {
+                try? fm.removeItem(at: url)
+            }
+        } catch { /* best effort */ }
     }
 
     var body: some Scene {

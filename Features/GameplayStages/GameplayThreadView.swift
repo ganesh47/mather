@@ -282,6 +282,7 @@ enum GameplayStageControlKind {
 struct GameplayStageControlButtonStyle: ButtonStyle {
     let kind: GameplayStageControlKind
     let compact: Bool
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -292,7 +293,7 @@ struct GameplayStageControlButtonStyle: ButtonStyle {
             .background(
                 Capsule().fill(kind == .primary ? MatherTheme.accent.opacity(configuration.isPressed ? 0.78 : 1) : MatherTheme.card)
             )
-            .opacity(configuration.isPressed ? 0.86 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.86 : 1) : 0.45)
     }
 }
 

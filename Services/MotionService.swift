@@ -25,6 +25,10 @@ final class MotionService {
     /// Requires `startUpdates()` to already be active.
     var relativeYaw: Double = 0
 
+    /// True after at least one yaw update has been received since the last `startRelativeYawTracking()` call.
+    /// Views can watch this to detect silent motion failures on iOS 26+ devices.
+    private(set) var relativeYawResponsive = false
+
     // MARK: - Private
 
     // nonisolated(unsafe) avoids a Sendable crossing error: CMMotionManager is not
@@ -65,6 +69,7 @@ final class MotionService {
     func startRelativeYawTracking() {
         referenceAttitude = nil
         relativeYaw = 0
+        relativeYawResponsive = false
         trackingRelativeYaw = true
     }
 
@@ -73,6 +78,7 @@ final class MotionService {
         trackingRelativeYaw = false
         referenceAttitude = nil
         relativeYaw = 0
+        relativeYawResponsive = false
     }
 
     // Exposed for test injection only — do not call from production views.
@@ -127,6 +133,7 @@ final class MotionService {
             let current = motion.attitude.copy() as! CMAttitude
             current.multiply(byInverseOf: ref)
             relativeYaw = Self.bodyRelativeYawDegrees(fromCoreMotionYawRadians: current.yaw)
+            relativeYawResponsive = true
         }
     }
 

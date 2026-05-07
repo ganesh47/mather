@@ -153,6 +153,7 @@ struct CompassAnglesView: View {
     @State private var wonCount: Int = 0
     @State private var sessionStart: Date = .now
     @State private var showDegreeLabel: Bool = false
+    @State private var showTurnFallback: Bool = false
 
     private var level: CompassWalkTurnLevel { compassWalkTurnLevels[levelIndex % compassWalkTurnLevels.count] }
     private var currentYaw: Double { appModel.motionService.relativeYaw }
@@ -395,11 +396,38 @@ struct CompassAnglesView: View {
             if phase == .walking {
                 stepProgressView
             }
+            if phase == .turning, showTurnFallback {
+                turnFallbackButton
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(MatherTheme.card.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding(.horizontal, 24)
+    }
+
+    private var turnFallbackButton: some View {
+        HStack {
+            Text("Sensor unavailable")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+            Spacer()
+            Button("I'm facing \(Int(level.targetDeg.magnitude))°") {
+                phase = .success
+                wonCount += 1
+                showTurnFallback = false
+                appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
+                appModel.speechService.speak(
+                    "Great! You walked carefully, then turned \(Int(level.targetDeg.magnitude)) degrees.",
+                    enabled: appModel.featureFlags.audioEnabled
+                )
+            }
+            .font(.caption.weight(.black))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(MatherTheme.accent, in: Capsule())
+        }
     }
 
     private var stepProgressView: some View {
@@ -517,10 +545,17 @@ struct CompassAnglesView: View {
         guard phase == .walking, stepService.isComplete else { return }
         phase = .turning
         showDegreeLabel = true
+        showTurnFallback = false
         stepService.stop()
         appModel.motionService.startRelativeYawTracking()
         appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(level.turnHint, enabled: appModel.featureFlags.audioEnabled)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            if phase == .turning, !appModel.motionService.relativeYawResponsive {
+                showTurnFallback = true
+            }
+        }
     }
 
     private func checkSnap(yaw: Double) {
@@ -545,6 +580,7 @@ struct CompassAnglesView: View {
         levelIndex += 1
         phase = .ready
         showDegreeLabel = false
+        showTurnFallback = false
         stepService.stop()
         appModel.motionService.stopRelativeYawTracking()
     }
