@@ -20,7 +20,7 @@ struct LabLaneDetailView: View {
 
     var body: some View {
         let selectedLane = lane
-        let tint = laneColor(selectedLane.id)
+        let tint = selectedLane.id.themeColor
         let progress = progress(for: selectedLane)
         let presentation = LabLaneDetailPresentation(lane: selectedLane)
 
@@ -396,59 +396,15 @@ struct LabLaneDetailView: View {
     }
 
     private func activityCard(_ activity: LabActivity, lane: CapabilityLane, tint: Color) -> some View {
-        let canLaunch = activity.id.canDirectLaunch(with: sensorCapabilities)
-
-        return Button {
+        GameActivityCard(
+            activity: activity,
+            tint: tint,
+            canLaunch: activity.id.canDirectLaunch(with: sensorCapabilities),
+            layoutMode: .detail,
+            sensorCapabilities: sensorCapabilities
+        ) {
             launch(activity.id)
-        } label: {
-            HStack(alignment: .center, spacing: 14) {
-                activityVisual(activity, tint: tint)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(activity.title)
-                        .font(.title3.weight(.black))
-                        .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.82)
-                    Text(activity.tagline)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(2)
-                    sensorAffordanceRow(activity, tint: tint)
-                    if !canLaunch {
-                        Text("Try this on a device with motion sensing. Nothing is counted as wrong.")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(MatherTheme.cardSubtitle)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                Spacer(minLength: 6)
-
-                ZStack {
-                    Circle()
-                        .fill(canLaunch ? tint : MatherTheme.cardSubtitle.opacity(0.35))
-                    Image(systemName: canLaunch ? "play.fill" : "lock.open.trianglebadge.exclamationmark")
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(.white)
-                        .offset(x: canLaunch ? 2 : 0)
-                }
-                .frame(width: 64, height: 64)
-                .accessibilityHidden(true)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke((canLaunch ? tint : MatherTheme.cardSubtitle).opacity(0.16), lineWidth: 1)
-            )
-            .opacity(canLaunch ? 1 : 0.78)
         }
-        .buttonStyle(.plain)
-        .disabled(!canLaunch)
-        .accessibilityLabel("Launch \(activity.title). \(activity.tagline)")
-        .accessibilityHint(canLaunch ? "Starts this \(lane.title) game. Modes: \(activity.modes.map(\.rawValue).joined(separator: ", ")). \(sensorAccessibilitySummary(for: activity))." : "This game needs a sensor that is not available on this device. Nothing is marked wrong.")
     }
 
     private func recallSection(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -657,37 +613,6 @@ struct LabLaneDetailView: View {
         }
     }
 
-    private func sensorAffordanceRow(_ activity: LabActivity, tint: Color) -> some View {
-        LabDetailFlowLayout(spacing: 4) {
-            ForEach(activity.id.sensorAffordances(with: sensorCapabilities)) { affordance in
-                Label {
-                    Text(affordance.displayLabel)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                } icon: {
-                    Image(systemName: sensorIcon(for: affordance.need, isAvailable: affordance.isAvailable))
-                }
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(affordance.isAvailable ? tint : MatherTheme.cardSubtitle)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(
-                    (affordance.isAvailable ? tint.opacity(0.10) : MatherTheme.panel.opacity(0.72)),
-                    in: Capsule()
-                )
-                .accessibilityLabel(affordance.accessibilityLabel)
-                .accessibilityHint(affordance.accessibilityHint)
-            }
-        }
-    }
-
-    private func sensorAccessibilitySummary(for activity: LabActivity) -> String {
-        activity.id
-            .sensorAffordances(with: sensorCapabilities)
-            .map(\.displayLabel)
-            .joined(separator: ". ")
-    }
-
     private func laneHeroVisual(_ lane: CapabilityLane, tint: Color) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -701,98 +626,6 @@ struct LabLaneDetailView: View {
         }
         .frame(width: 76, height: 76)
         .accessibilityLabel("Lab artwork for \(lane.title)")
-    }
-
-    private func activityVisual(_ activity: LabActivity, tint: Color) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(tint.opacity(0.12))
-            visualMotif(for: activity.id, tint: tint)
-            Text(activity.emoji)
-                .font(.system(size: 38))
-                .offset(x: -18, y: -14)
-        }
-        .frame(width: 104, height: 96)
-        .accessibilityLabel(activity.artworkAccessibilityLabel)
-    }
-
-    @ViewBuilder
-    private func visualMotif(for activityID: LabActivityID, tint: Color) -> some View {
-        switch activityID {
-        case .sumSprint:
-            HStack(spacing: 4) {
-                ForEach(0..<4, id: \.self) { index in
-                    Capsule()
-                        .fill(tint.opacity(0.18 + Double(index) * 0.08))
-                        .frame(width: 8, height: CGFloat(24 + index * 10))
-                }
-            }
-            .offset(x: 18, y: 12)
-        case .roomQuest, .compassAngles:
-            Image(systemName: "location.north.line.fill")
-                .font(.system(size: 46, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 20, y: 12)
-        case .shapeGeometry, .symmetryFold, .twoFingerProtractor:
-            Image(systemName: "angle")
-                .font(.system(size: 52, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 18, y: 12)
-        case .rectangleFactory, .factoryCards:
-            Grid(horizontalSpacing: 3, verticalSpacing: 3) {
-                ForEach(0..<2, id: \.self) { _ in
-                    GridRow {
-                        ForEach(0..<3, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(tint.opacity(0.28))
-                                .frame(width: 16, height: 16)
-                        }
-                    }
-                }
-            }
-            .offset(x: 20, y: 12)
-        case .angleCannon, .gravityArtist:
-            Image(systemName: "circle.dotted")
-                .font(.system(size: 52, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 20, y: 12)
-        case .waterCycle:
-            Image(systemName: "cloud.rain.fill")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 20, y: 12)
-        case .soundVolume:
-            Image(systemName: "speaker.wave.2.fill")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 20, y: 12)
-        case .memoryMatch, .countryCards, .fruitCards:
-            Image(systemName: "rectangle.on.rectangle.angled")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(tint.opacity(0.35))
-                .offset(x: 20, y: 12)
-        }
-    }
-
-    private func sensorIcon(for need: LabSensorNeed, isAvailable: Bool) -> String {
-        if !isAvailable {
-            return "exclamationmark.triangle.fill"
-        }
-
-        switch need {
-        case .noSpecialSensor:
-            return "hand.tap.fill"
-        case .motion:
-            return "gyroscope"
-        case .compass:
-            return "location.north.line.fill"
-        case .cameraMarkerMode:
-            return "camera.viewfinder"
-        case .stepCounting:
-            return "figure.walk"
-        case .haptics:
-            return "waveform"
-        }
     }
 
     private func startLabel(for plan: LabConceptSessionPlan) -> String {
@@ -880,74 +713,5 @@ struct LabLaneDetailView: View {
         }
     }
 
-    private func laneColor(_ laneID: CapabilityLaneID) -> Color {
-        switch laneID {
-        case .numbers:
-            return MatherTheme.warm
-        case .geometry:
-            return MatherTheme.coral
-        case .physics:
-            return MatherTheme.panelDeep
-        case .mapWorld:
-            return MatherTheme.softBlue
-        case .discoveryCards:
-            return MatherTheme.accent
-        case .chemistry:
-            return MatherTheme.warm
-        case .electronics:
-            return MatherTheme.accent
-        }
-    }
 }
 
-struct LabDetailFlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 300
-        let rows = rows(in: width, subviews: subviews)
-        return CGSize(width: width, height: rows.reduce(0) { $0 + $1.height } + CGFloat(max(0, rows.count - 1)) * spacing)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var rowHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x > bounds.minX, x + size.width > bounds.maxX {
-                x = bounds.minX
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
-    }
-
-    private func rows(in width: CGFloat, subviews: Subviews) -> [CGSize] {
-        var rows: [CGSize] = []
-        var currentWidth: CGFloat = 0
-        var currentHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            let nextWidth = currentWidth == 0 ? size.width : currentWidth + spacing + size.width
-            if currentWidth > 0, nextWidth > width {
-                rows.append(CGSize(width: currentWidth, height: currentHeight))
-                currentWidth = size.width
-                currentHeight = size.height
-            } else {
-                currentWidth = nextWidth
-                currentHeight = max(currentHeight, size.height)
-            }
-        }
-
-        if currentWidth > 0 {
-            rows.append(CGSize(width: currentWidth, height: currentHeight))
-        }
-        return rows
-    }
-}

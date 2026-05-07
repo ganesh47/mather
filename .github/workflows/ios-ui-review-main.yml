@@ -145,88 +145,23 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p ci-screenshots
+          BUNDLE="UITestResults-${DEVICE_FAMILY}.xcresult"
 
-          cat > "$RUNNER_TEMP/extract_screenshots.py" << 'PYEOF'
-          import sys, json, subprocess, pathlib, shutil, plistlib
-
-          bundle = pathlib.Path(f"UITestResults-{__import__('os').environ.get('DEVICE_FAMILY', 'device')}.xcresult")
-          out    = pathlib.Path("ci-screenshots")
-          out.mkdir(exist_ok=True)
-
-          if not bundle.exists():
-              print("No UITestResults.xcresult, skipping")
-              sys.exit(0)
-
-          root_id = None
-          info_path = bundle / "Info.plist"
-          if info_path.exists():
-              try:
-                  info = plistlib.loads(info_path.read_bytes())
-                  ref = info.get("rootObject", {})
-                  root_id = (ref.get("id") or {}).get("_value") or ref.get("_value")
-              except Exception as e:
-                  print(f"Info.plist read failed: {e}")
-
-          cmds = []
-          if root_id:
-              cmds.append(["xcrun", "xcresulttool", "get", "--path", str(bundle),
-                           "--id", root_id, "--format", "json"])
-          cmds += [
-              ["xcrun", "xcresulttool", "get", "--path", str(bundle), "--format", "json", "--legacy"],
-              ["xcrun", "xcresulttool", "get", "--path", str(bundle), "--format", "json"],
-          ]
-
-          raw = ""
-          for cmd in cmds:
-              res = subprocess.run(cmd, capture_output=True, text=True)
-              raw = res.stdout.strip()
-              if raw:
-                  break
-
-          extracted = 0
-          if raw:
-              try:
-                  data = json.loads(raw)
-                  def walk(node):
-                      global extracted
-                      if isinstance(node, dict):
-                          if node.get("_type", {}).get("_name") == "ActionTestAttachment":
-                              name = node.get("name", {}).get("_value", f"screenshot-{extracted:02d}")
-                              ref_id = (node.get("payloadRef") or {}).get("id", {}).get("_value")
-                              if ref_id:
-                                  dest = out / f"{name}.png"
-                                  subprocess.run([
-                                      "xcrun", "xcresulttool", "export",
-                                      "--path", str(bundle),
-                                      "--id", ref_id,
-                                      "--output-path", str(dest)
-                                  ], check=False, capture_output=True)
-                                  if dest.exists():
-                                      extracted += 1
-                          for v in node.values():
-                              walk(v)
-                      elif isinstance(node, list):
-                          for item in node:
-                              walk(item)
-                  walk(data)
-              except Exception as e:
-                  print(f"JSON walk failed: {e}")
-                  extracted = 0
-
-          if extracted == 0:
-              att_dir = bundle / "Attachments"
-              if att_dir.exists():
-                  idx = 0
-                  for f in sorted(att_dir.iterdir()):
-                      if not f.is_file():
-                          continue
-                      if f.read_bytes()[:4] == b'\x89PNG':
-                          dest = out / f"screenshot-{idx:02d}.png"
-                          shutil.copy(f, dest)
-                          idx += 1
-          PYEOF
-
-          python3 "$RUNNER_TEMP/extract_screenshots.py"
+          if [[ -d "$BUNDLE" ]]; then
+            # Xcode 16+: bulk-export all attachments then move PNGs to flat directory.
+            # The --type directory flag bypasses the xcresulttool JSON manifest format,
+            # which changed in Xcode 16 and broke per-attachment payloadRef extraction.
+            xcrun xcresulttool export \
+              --path "$BUNDLE" \
+              --output-path ci-screenshots/exported \
+              --type directory 2>/dev/null || true
+            find ci-screenshots/exported -name "*.png" -exec mv {} ci-screenshots/ \; 2>/dev/null || true
+            rm -rf ci-screenshots/exported
+            COUNT=$(find ci-screenshots -name "*.png" | wc -l | tr -d ' ')
+            echo "Extracted $COUNT PNG(s) from xcresult bundle"
+          else
+            echo "No xcresult bundle found at $BUNDLE, skipping extraction"
+          fi
 
           SIM_ID=$(xcrun simctl list devices booted \
             | grep -E '\([-A-F0-9]+\)' | head -1 \

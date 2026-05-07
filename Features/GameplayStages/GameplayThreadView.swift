@@ -230,33 +230,13 @@ struct GameplayThreadView: View {
     }
 
     private func controls(compact: Bool) -> some View {
-        ViewThatFits(in: .horizontal) {
-            controlRow(compact: compact)
-            VStack(alignment: .leading, spacing: 8) {
-                controlButtons(compact: compact)
-                scoreText
-            }
-        }
-    }
-
-    private func controlRow(compact: Bool) -> some View {
         HStack(spacing: 10) {
-            controlButtons(compact: compact)
-            Spacer(minLength: 0)
-            scoreText
-        }
-    }
-
-    private func controlButtons(compact: Bool) -> some View {
-        HStack(spacing: 8) {
-            Button(navigation.canGoBack ? "Back" : "Stages") { backAction() }
-                .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
-                .accessibilityLabel(navigation.canGoBack ? "Back to previous stage" : "Back to stage details")
-                .accessibilityIdentifier("GameplayStageBackButton")
             Button("Retry") { navigation.retryCurrentStage(in: thread) }
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 .accessibilityLabel("Retry current stage")
                 .accessibilityIdentifier("GameplayStageRetryButton")
+            Spacer(minLength: 0)
+            scoreText
         }
     }
 

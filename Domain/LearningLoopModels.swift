@@ -165,51 +165,6 @@ enum LearningLoopScoring {
     }
 }
 
-enum WaterCycleContent {
-    static let cards: [LearningConceptCard] = [
-        LearningConceptCard(id: "sun", title: "Sun", explanation: "The sun warms water in ponds, lakes, and puddles.", visualKey: "☀️", audioPrompt: "The sun warms the water."),
-        LearningConceptCard(id: "pond", title: "Pond", explanation: "A pond holds water on the ground.", visualKey: "🏞️", audioPrompt: "A pond is water on the ground."),
-        LearningConceptCard(id: "evaporation", title: "Evaporation", explanation: "Warm water turns into invisible water vapour and rises.", visualKey: "♨️", audioPrompt: "Evaporation means water vapour goes up."),
-        LearningConceptCard(id: "water-vapour", title: "Water Vapour", explanation: "Water vapour is tiny water in the air.", visualKey: "💨", audioPrompt: "Water vapour floats in the air."),
-        LearningConceptCard(id: "condensation", title: "Condensation", explanation: "Water vapour cools and gathers into tiny drops.", visualKey: "🌫️", audioPrompt: "Condensation makes tiny drops."),
-        LearningConceptCard(id: "cloud", title: "Cloud", explanation: "A cloud is made from many tiny water drops.", visualKey: "☁️", audioPrompt: "Clouds hold tiny drops."),
-        LearningConceptCard(id: "rain", title: "Rain", explanation: "Drops get heavy and fall back down as rain.", visualKey: "🌧️", audioPrompt: "Rain falls back down."),
-    ]
-
-    static let quizQuestions: [ConceptQuizQuestion] = [
-        ConceptQuizQuestion(
-            id: "sun-warms-water",
-            prompt: "What does the sun do to pond water?",
-            choices: ["Warms it", "Freezes it", "Hides it"],
-            correctChoice: "Warms it",
-            feedback: "Yes — warm water can evaporate."
-        ),
-        ConceptQuizQuestion(
-            id: "vapour-rises",
-            prompt: "Which word means warm water vapour goes up?",
-            choices: ["Rain", "Evaporation", "Pond"],
-            correctChoice: "Evaporation",
-            feedback: "Evaporation sends water vapour up."
-        ),
-        ConceptQuizQuestion(
-            id: "cloud-rain",
-            prompt: "Which card shows water falling down?",
-            choices: ["Cloud", "Rain", "Sun"],
-            correctChoice: "Rain",
-            feedback: "Rain brings water back down."
-        ),
-    ]
-
-    static let matchPairs: [ConceptMatchPair] = [
-        ConceptMatchPair(id: "sun-evaporation", left: "Sun", right: "Evaporation", feedback: "The sun helps water evaporate.", leftVisualKey: "☀️", rightVisualKey: "♨️"),
-        ConceptMatchPair(id: "pond-evaporation", left: "Pond", right: "Evaporation", feedback: "Water can rise from the pond.", leftVisualKey: "🏞️", rightVisualKey: "♨️"),
-        ConceptMatchPair(id: "cloud-condensation", left: "Cloud", right: "Condensation", feedback: "Condensation helps make clouds.", leftVisualKey: "☁️", rightVisualKey: "🌫️"),
-        ConceptMatchPair(id: "cloud-rain", left: "Cloud", right: "Rain", feedback: "Heavy cloud drops fall as rain.", leftVisualKey: "☁️", rightVisualKey: "🌧️"),
-        ConceptMatchPair(id: "rain-pond", left: "Rain", right: "Pond", feedback: "Rain fills ponds again.", leftVisualKey: "🌧️", rightVisualKey: "🏞️"),
-    ]
-}
-
-
 enum SoundLoudnessZone: String, CaseIterable, Equatable {
     case quiet
     case normal
