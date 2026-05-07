@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Top-level capability lanes used by Explorer Lab.
 ///
@@ -85,6 +86,20 @@ enum AgeBand: String, CaseIterable, Codable, Hashable, Identifiable {
             return "Ages 4-12"
         case .future:
             return "Future lane"
+        }
+    }
+}
+
+extension CapabilityLaneID {
+    /// Semantic theme color for this lane, shared across all Lab views.
+    var themeColor: Color {
+        switch self {
+        case .numbers: MatherTheme.warm
+        case .geometry: MatherTheme.coral
+        case .physics: MatherTheme.panelDeep
+        case .mapWorld: MatherTheme.softBlue
+        case .discoveryCards, .electronics: MatherTheme.accent
+        case .chemistry: MatherTheme.warm
         }
     }
 }

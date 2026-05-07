@@ -4,6 +4,7 @@ enum GameplayThreadID: String, Codable, CaseIterable, Hashable {
     case countries
     case fruits
     case waterCycle = "water-cycle"
+    case shapes
 }
 
 extension GameplayThreadCatalog {
@@ -15,6 +16,8 @@ extension GameplayThreadCatalog {
             return fruits
         case .waterCycle:
             return waterCycle
+        case .shapes:
+            return shapes
         }
     }
 

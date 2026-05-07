@@ -101,7 +101,7 @@ struct LabView: View {
                 Image(systemName: "house.fill")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(MatherTheme.accent)
-                    .frame(width: 56, height: 56)
+                    .frame(width: 80, height: 80)
             }
             .accessibilityLabel("Home")
         }
@@ -180,10 +180,10 @@ struct LabView: View {
                 ForEach(lanes) { lane in
                     Text(lane.subjectStreamShortLabel)
                         .font(.caption2.weight(.black))
-                        .foregroundStyle(laneColor(lane.id))
+                        .foregroundStyle(lane.id.themeColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(laneColor(lane.id).opacity(0.10), in: Capsule())
+                        .background(lane.id.themeColor.opacity(0.10), in: Capsule())
                 }
             }
         }
@@ -275,7 +275,7 @@ struct LabView: View {
 
     private func guidedPathCard(_ path: GuidedLabPath) -> some View {
         let lane = lanes.first { $0.id == path.laneID }
-        let tint = laneColor(path.laneID)
+        let tint = path.laneID.themeColor
 
         return Button {
             appModel.engine.showLabLane(path.laneID)
@@ -340,65 +340,15 @@ struct LabView: View {
     }
 
     private func directGameCard(_ entry: ExplorerGameEntry) -> some View {
-        let tint = laneColor(entry.laneID)
-        let activity = entry.activity
-
-        let canLaunch = activity.id.canDirectLaunch(with: sensorCapabilities)
-        let capabilitySummary = activity.id.capabilitySummary(with: sensorCapabilities)
-
-        return Button {
+        GameActivityCard(
+            activity: entry.activity,
+            tint: entry.laneID.themeColor,
+            canLaunch: entry.activity.id.canDirectLaunch(with: sensorCapabilities),
+            layoutMode: .grid,
+            sensorCapabilities: sensorCapabilities
+        ) {
             launchDirectGame(entry)
-        } label: {
-            VStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [tint.opacity(0.18), MatherTheme.card.opacity(0.88)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                    Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(tint.opacity(canLaunch ? 1 : 0.45))
-                    Text(activity.emoji)
-                        .font(.system(size: 26))
-                        .offset(x: 12, y: 12)
-                }
-                .frame(width: 68, height: 68)
-                .accessibilityLabel(activity.artworkAccessibilityLabel)
-
-                Text(activity.title)
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
-                    .multilineTextAlignment(.center)
-
-                if !canLaunch {
-                    Text(capabilitySummary.isEmpty ? "Needs a device sensor" : capabilitySummary)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.76)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 132, alignment: .center)
-            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke((canLaunch ? tint : MatherTheme.cardSubtitle).opacity(0.16), lineWidth: 1)
-            )
-            .opacity(canLaunch ? 1 : 0.78)
         }
-        .buttonStyle(.plain)
-        .disabled(!canLaunch)
-        .accessibilityLabel("Launch game \(activity.title). \(activity.tagline). \(capabilitySummary)")
-        .accessibilityHint(canLaunch ? "Directly starts the existing game route without a staged lab session." : "This game needs a device sensor that is not available here; no score is lost.")
     }
 
     private func launchDirectGame(_ entry: ExplorerGameEntry) {
@@ -420,7 +370,7 @@ struct LabView: View {
     private func laneCard(_ lane: CapabilityLane, compact: Bool) -> some View {
         let progress = progress(for: lane)
         let presentation = LabLaneCardPresentation(lane: lane, progress: progress)
-        let tint = laneColor(lane.id)
+        let tint = lane.id.themeColor
 
         return Button {
             appModel.engine.showLabLane(lane.id)
@@ -607,22 +557,4 @@ struct LabView: View {
         .accessibilityLabel("Lane progress \(progress.progressSummaryLabel). \(progress.nextRecommendedModeLabel)")
     }
 
-    private func laneColor(_ laneID: CapabilityLaneID) -> Color {
-        switch laneID {
-        case .numbers:
-            return MatherTheme.warm
-        case .geometry:
-            return MatherTheme.coral
-        case .physics:
-            return MatherTheme.panelDeep
-        case .mapWorld:
-            return MatherTheme.softBlue
-        case .discoveryCards:
-            return MatherTheme.accent
-        case .chemistry:
-            return MatherTheme.warm
-        case .electronics:
-            return MatherTheme.accent
-        }
-    }
 }

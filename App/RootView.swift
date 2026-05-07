@@ -109,7 +109,7 @@ struct RootView: View {
                 case .soundVolume:
                     SoundVolumeLabView(appModel: appModel)
                 case .shapeGeometry:
-                    ShapeGeometryLabView(appModel: appModel)
+                    GameplayThreadView(thread: GameplayThreadCatalog.shapes, appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
