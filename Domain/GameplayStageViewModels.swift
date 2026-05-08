@@ -103,6 +103,12 @@ struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
     var spokenText: String {
         [title, subtitle].filter { !$0.isEmpty }.joined(separator: ". ")
     }
+
+    var isFruitCard: Bool { entityID.hasPrefix("fruit-") }
+
+    var discoveryPrompt: String {
+        isFruitCard ? "Spot the color, say the flavor, then tap I spotted it!" : "Tap the card, say one clue, then try the next one."
+    }
 }
 
 struct GameplayMatchPair: Identifiable, Equatable, Hashable {
@@ -126,6 +132,7 @@ struct GameplayFlashcardStageViewModel: Equatable {
     let cards: [GameplayDisplayItem]
     var activeIndex: Int = 0
     var exposureCount: Int = 0
+    var spottedCardIDs: Set<String> = []
 
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition) {
         self.cards = GameplayStageContentBuilder.flashcards(thread: thread, round: round)
@@ -146,6 +153,26 @@ struct GameplayFlashcardStageViewModel: Equatable {
     var listenAgainAccessibilityLabel: String {
         guard let activeCard else { return "Listen again" }
         return "Listen again to \(activeCard.title)"
+    }
+
+    var activeDiscoveryPrompt: String {
+        activeCard?.discoveryPrompt ?? "Tap the card, say one clue, then try the next one."
+    }
+
+    var spottedActiveCard: Bool {
+        guard let activeCard else { return false }
+        return spottedCardIDs.contains(activeCard.id)
+    }
+
+    var spottedFeedbackText: String {
+        guard let activeCard else { return "Clue spotted!" }
+        return activeCard.isFruitCard ? "Flavor badge unlocked for \(activeCard.title)!" : "Clue spotted for \(activeCard.title)!"
+    }
+
+    mutating func markActiveCardSpotted() {
+        guard let activeCard else { return }
+        spottedCardIDs.insert(activeCard.id)
+        markExposure()
     }
 
     mutating func markExposure() {

@@ -27,11 +27,25 @@ struct FlashcardStageView: View {
                     GameplayDisplayCard(
                         item: card,
                         compact: compact,
-                        prominence: viewModel.cards.count == 1 ? .featured : .normal
+                        prominence: card.isFruitCard || viewModel.cards.count == 1 ? .featured : .normal
                     )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Open flashcard: \(card.title), \(card.subtitle)")
+
+                VStack(spacing: 8) {
+                    Text(viewModel.activeDiscoveryPrompt)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.ink.opacity(0.72))
+                        .multilineTextAlignment(.center)
+
+                    Button(viewModel.spottedActiveCard ? viewModel.spottedFeedbackText : "I spotted it!") {
+                        viewModel.markActiveCardSpotted()
+                    }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: viewModel.spottedActiveCard ? .secondary : .primary, compact: compact))
+                    .accessibilityLabel(viewModel.spottedActiveCard ? viewModel.spottedFeedbackText : "Mark \(card.title) clue spotted")
+                }
+
                 HStack(spacing: 10) {
                     Button("Listen again") {
                         viewModel.markExposure()

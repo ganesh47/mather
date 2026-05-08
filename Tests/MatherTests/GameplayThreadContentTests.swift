@@ -10,14 +10,14 @@ struct GameplayThreadContentTests {
         #expect(thread.id == "fruits")
         #expect(thread.category.id == "chemistry")
         #expect(thread.entities.count == 8)
-        #expect(Set(thread.propertyTypes.map(\.id)) == Set(["name", "color", "taste", "seed-skin", "grows-on", "category"]))
+        #expect(Set(thread.propertyTypes.map(\.id)) == Set(["name", "color", "taste", "seed-skin", "grows-on", "grow-climate", "origin", "flavor", "category"]))
         #expect(thread.entities.allSatisfy { $0.id.hasPrefix("fruit-") })
         #expect(thread.entities.allSatisfy { $0.visualKey?.isEmpty == false })
         #expect(thread.entities.allSatisfy { $0.visualAssetName == nil })
 
         for fruit in thread.entities {
             let propertyTypes = Set(fruit.properties.map(\.typeID))
-            #expect(propertyTypes == Set(["name", "color", "taste", "seed-skin", "grows-on", "category"]), "\(fruit.id) should expose every fruit property type")
+            #expect(propertyTypes == Set(["name", "color", "taste", "seed-skin", "grows-on", "grow-climate", "origin", "flavor", "category"]), "\(fruit.id) should expose every fruit property type")
             #expect(fruit.properties.allSatisfy { !$0.value.isEmpty && !$0.explanation.isEmpty }, "\(fruit.id) properties should be kid-readable")
         }
     }
@@ -29,10 +29,12 @@ struct GameplayThreadContentTests {
         #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
         #expect(thread.stages.allSatisfy { $0.maximumItemCount >= 6 })
         #expect(thread.stages[0].propertyTypeIDs.isEmpty)
-        #expect(thread.stages[1].propertyTypeIDs == ["name", "color"])
-        #expect(thread.stages[2].propertyTypeIDs == ["color", "taste"])
-        #expect(thread.stages[3].propertyTypeIDs.contains("seed-skin"))
+        #expect(thread.stages[1].propertyTypeIDs == ["name", "taste", "grows-on", "grow-climate"])
+        #expect(thread.stages[2].propertyTypeIDs == ["color", "taste", "flavor", "origin"])
+        #expect(thread.stages[3].propertyTypeIDs.contains("grow-climate"))
+        #expect(thread.stages[3].propertyTypeIDs.contains("origin"))
         #expect(thread.stages[4].propertyTypeIDs.contains("grows-on"))
+        #expect(thread.stages[4].propertyTypeIDs.contains("flavor"))
     }
 
     @Test
@@ -54,6 +56,16 @@ struct GameplayThreadContentTests {
                 }, "\(stage.id) should only select allowed fruit properties")
             }
         }
+    }
+
+    @Test
+    func fruitEasyMemoryIncludesGrowTasteAndClimateFacts() throws {
+        let thread = GameplayThreadCatalog.fruits
+        let stage = try #require(thread.stages.first { $0.id == "fruit-easy-memory" })
+        let candidatePropertyTypeIDs = Set(SpacedRepetitionScheduler.candidateItems(thread: thread, stage: stage).compactMap(\.propertyTypeID))
+
+        #expect(candidatePropertyTypeIDs == Set(["name", "taste", "grows-on", "grow-climate"]))
+        #expect(candidatePropertyTypeIDs.isSuperset(of: Set(["taste", "grows-on", "grow-climate"])))
     }
 
     @Test
