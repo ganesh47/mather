@@ -63,6 +63,8 @@ struct WaterCycleGameplayThreadTests {
         #expect(flashcardRound.items.allSatisfy { $0.propertyID == nil && $0.propertyTypeID == nil })
 
         let orderStage = thread.stages[1]
+        #expect(orderStage.title == "Order Match")
+        #expect(orderStage.prompt == "Can you put the water cycle in order? Match each step to its number clue.")
         let orderRound = SpacedRepetitionScheduler.makeRound(thread: thread, stage: orderStage, seed: 912)
         #expect(orderRound.items.count == 4)
         #expect(orderRound.items.allSatisfy { $0.propertyTypeID == "order" })
