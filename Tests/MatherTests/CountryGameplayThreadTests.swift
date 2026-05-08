@@ -21,13 +21,24 @@ struct CountryGameplayThreadTests {
             "country-australia",
             "country-canada",
             "country-kenya",
+            "country-united-states",
+            "country-united-kingdom",
+            "country-china",
+            "country-germany",
+            "country-mexico",
+            "country-south-africa",
+            "country-italy",
+            "country-saudi-arabia",
         ])
+        #expect(thread.entities.count >= 16)
+        #expect(Set(thread.entities.compactMap { $0.properties.first { $0.typeID == "continent" }?.value }).isSuperset(of: ["Asia", "Europe", "Africa", "North America", "South America", "Australia"]))
         #expect(Set(thread.propertyTypes.map(\.id)).isSuperset(of: requiredPropertyTypeIDs))
 
         for entity in thread.entities {
             let propertyTypeIDs = Set(entity.properties.map(\.typeID))
             #expect(propertyTypeIDs.isSuperset(of: requiredPropertyTypeIDs), "\(entity.name) is missing a required country property")
-            #expect(entity.visualAssetName?.hasPrefix("MemoryFlag") == true)
+            #expect(entity.visualKey?.isEmpty == false)
+            #expect(entity.visualAssetName == nil || entity.visualAssetName?.hasPrefix("MemoryFlag") == true)
             #expect(entity.properties.first { $0.typeID == "flag" }?.visualAssetName == entity.visualAssetName)
             #expect(!(entity.properties.first { $0.typeID == "map-shape" }?.value.isEmpty ?? true))
             #expect(entity.properties.first { $0.typeID == "map-shape" }?.visualShapeKey == entity.id)
@@ -46,6 +57,14 @@ struct CountryGameplayThreadTests {
         try expectCountry(entities["country-australia"], capital: "Canberra", currency: "Australian dollar", continent: "Australia", language: "English", flagAsset: "MemoryFlagAustralia")
         try expectCountry(entities["country-canada"], capital: "Ottawa", currency: "Canadian dollar", continent: "North America", language: "English and French", flagAsset: "MemoryFlagCanada")
         try expectCountry(entities["country-kenya"], capital: "Nairobi", currency: "Kenyan shilling", continent: "Africa", language: "Swahili and English", flagAsset: "MemoryFlagKenya")
+        try expectCountry(entities["country-united-states"], capital: "Washington, D.C.", currency: "United States dollar", continent: "North America", language: "English", flagAsset: nil)
+        try expectCountry(entities["country-united-kingdom"], capital: "London", currency: "pound sterling", continent: "Europe", language: "English", flagAsset: nil)
+        try expectCountry(entities["country-china"], capital: "Beijing", currency: "Chinese yuan", continent: "Asia", language: "Mandarin Chinese", flagAsset: nil)
+        try expectCountry(entities["country-germany"], capital: "Berlin", currency: "euro", continent: "Europe", language: "German", flagAsset: nil)
+        try expectCountry(entities["country-mexico"], capital: "Mexico City", currency: "Mexican peso", continent: "North America", language: "Spanish", flagAsset: nil)
+        try expectCountry(entities["country-south-africa"], capital: "Pretoria", currency: "South African rand", continent: "Africa", language: "Zulu, Xhosa, Afrikaans, English, and more", flagAsset: nil)
+        try expectCountry(entities["country-italy"], capital: "Rome", currency: "euro", continent: "Europe", language: "Italian", flagAsset: nil)
+        try expectCountry(entities["country-saudi-arabia"], capital: "Riyadh", currency: "Saudi riyal", continent: "Asia", language: "Arabic", flagAsset: nil)
     }
 
     @Test
@@ -54,6 +73,7 @@ struct CountryGameplayThreadTests {
 
         let flashcards = try round(kind: .flashcards, thread: thread)
         #expect(flashcards.items.count == 8)
+        #expect(thread.entities.count > flashcards.items.count)
         #expect(flashcards.items.allSatisfy { $0.propertyID == nil })
         #expect(GameplayStageContentBuilder.flashcards(thread: thread, round: flashcards).count == 8)
 
@@ -105,7 +125,7 @@ struct CountryGameplayThreadTests {
         currency: String,
         continent: String,
         language: String,
-        flagAsset: String
+        flagAsset: String?
     ) throws {
         let entity = try #require(entity)
         #expect(entity.visualAssetName == flagAsset)

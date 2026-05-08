@@ -227,6 +227,22 @@ private struct CountryMapSilhouette: Shape {
             return [CGPoint(x: 0.06, y: 0.34), CGPoint(x: 0.22, y: 0.16), CGPoint(x: 0.42, y: 0.28), CGPoint(x: 0.58, y: 0.14), CGPoint(x: 0.86, y: 0.30), CGPoint(x: 0.94, y: 0.54), CGPoint(x: 0.72, y: 0.68), CGPoint(x: 0.42, y: 0.58), CGPoint(x: 0.20, y: 0.72)]
         case "country-kenya":
             return [CGPoint(x: 0.42, y: 0.10), CGPoint(x: 0.64, y: 0.18), CGPoint(x: 0.72, y: 0.46), CGPoint(x: 0.54, y: 0.90), CGPoint(x: 0.30, y: 0.70), CGPoint(x: 0.34, y: 0.34)]
+        case "country-united-states":
+            return [CGPoint(x: 0.08, y: 0.40), CGPoint(x: 0.24, y: 0.24), CGPoint(x: 0.48, y: 0.30), CGPoint(x: 0.74, y: 0.20), CGPoint(x: 0.92, y: 0.42), CGPoint(x: 0.80, y: 0.66), CGPoint(x: 0.50, y: 0.70), CGPoint(x: 0.22, y: 0.62)]
+        case "country-united-kingdom":
+            return [CGPoint(x: 0.48, y: 0.08), CGPoint(x: 0.66, y: 0.22), CGPoint(x: 0.58, y: 0.40), CGPoint(x: 0.72, y: 0.62), CGPoint(x: 0.56, y: 0.88), CGPoint(x: 0.40, y: 0.68), CGPoint(x: 0.48, y: 0.48), CGPoint(x: 0.30, y: 0.28)]
+        case "country-china":
+            return [CGPoint(x: 0.16, y: 0.30), CGPoint(x: 0.38, y: 0.12), CGPoint(x: 0.68, y: 0.16), CGPoint(x: 0.88, y: 0.38), CGPoint(x: 0.78, y: 0.68), CGPoint(x: 0.54, y: 0.86), CGPoint(x: 0.28, y: 0.70), CGPoint(x: 0.10, y: 0.52)]
+        case "country-germany":
+            return [CGPoint(x: 0.42, y: 0.08), CGPoint(x: 0.64, y: 0.20), CGPoint(x: 0.58, y: 0.40), CGPoint(x: 0.72, y: 0.62), CGPoint(x: 0.52, y: 0.90), CGPoint(x: 0.34, y: 0.72), CGPoint(x: 0.24, y: 0.42)]
+        case "country-mexico":
+            return [CGPoint(x: 0.12, y: 0.24), CGPoint(x: 0.42, y: 0.30), CGPoint(x: 0.66, y: 0.44), CGPoint(x: 0.86, y: 0.70), CGPoint(x: 0.68, y: 0.84), CGPoint(x: 0.44, y: 0.62), CGPoint(x: 0.22, y: 0.56)]
+        case "country-south-africa":
+            return [CGPoint(x: 0.22, y: 0.30), CGPoint(x: 0.58, y: 0.18), CGPoint(x: 0.86, y: 0.42), CGPoint(x: 0.72, y: 0.76), CGPoint(x: 0.46, y: 0.90), CGPoint(x: 0.18, y: 0.70), CGPoint(x: 0.10, y: 0.48)]
+        case "country-italy":
+            return [CGPoint(x: 0.42, y: 0.08), CGPoint(x: 0.60, y: 0.22), CGPoint(x: 0.54, y: 0.48), CGPoint(x: 0.72, y: 0.72), CGPoint(x: 0.58, y: 0.88), CGPoint(x: 0.40, y: 0.62), CGPoint(x: 0.32, y: 0.34)]
+        case "country-saudi-arabia":
+            return [CGPoint(x: 0.18, y: 0.26), CGPoint(x: 0.56, y: 0.18), CGPoint(x: 0.86, y: 0.44), CGPoint(x: 0.76, y: 0.74), CGPoint(x: 0.46, y: 0.86), CGPoint(x: 0.20, y: 0.62)]
         default:
             return [CGPoint(x: 0.30, y: 0.12), CGPoint(x: 0.74, y: 0.28), CGPoint(x: 0.66, y: 0.76), CGPoint(x: 0.24, y: 0.86), CGPoint(x: 0.16, y: 0.42)]
         }
