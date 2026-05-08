@@ -285,6 +285,7 @@ enum SoundLoudnessZone: String, CaseIterable, Equatable {
 
 enum SoundMeterPermissionState: String, Equatable {
     case notStarted
+    case requestingPermission
     case listening
     case unavailable
     case denied
@@ -292,6 +293,7 @@ enum SoundMeterPermissionState: String, Equatable {
     var title: String {
         switch self {
         case .notStarted: return "Meter off"
+        case .requestingPermission: return "Microphone check"
         case .listening: return "Meter listening"
         case .unavailable: return "Microphone unavailable"
         case .denied: return "Microphone off"
@@ -302,12 +304,47 @@ enum SoundMeterPermissionState: String, Equatable {
         switch self {
         case .notStarted:
             return "Start only when a grown-up says it is okay. Mather reads a local loudness number and does not record audio."
+        case .requestingPermission:
+            return "Mather is checking microphone access. If it is off, Sound Lab still works in no-mic learning mode."
         case .listening:
             return "Use normal room sounds only. Do not shout — quieter is safer."
         case .unavailable:
             return "This device cannot read the microphone right now. You can still learn with the safe example cards."
         case .denied:
             return "Microphone access is off. Mather will keep the Sound Lab in no-mic learning mode."
+        }
+    }
+}
+
+enum SoundMeterMicrophoneAuthorization: Equatable {
+    case undetermined
+    case denied
+    case granted
+    case unknown
+}
+
+enum SoundMeterStartupDecision: Equatable {
+    case requestPermission
+    case startMeter
+    case fail(SoundMeterPermissionState)
+}
+
+struct SoundMeterStartupPreflight: Equatable {
+    let isInputAvailable: Bool
+    let authorization: SoundMeterMicrophoneAuthorization
+
+    func startupDecision() -> SoundMeterStartupDecision {
+        guard isInputAvailable else { return .fail(.unavailable) }
+
+        switch authorization {
+        case .undetermined:
+            return .requestPermission
+        case .granted:
+            return .startMeter
+        case .denied:
+            return .fail(.denied)
+        case .unknown:
+            return .fail(.unavailable)
         }
     }
 }
