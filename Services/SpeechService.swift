@@ -8,6 +8,7 @@ import FoundationModels
 @Observable
 final class SpeechService {
     private let synthesizer = AVSpeechSynthesizer()
+    private var soundExamplePlayer: AVAudioPlayer?
     private var lastUtteranceID = UUID()
     private(set) var lastSpokenText: String?
     private(set) var lastSpeechDiagnostic: String?
@@ -19,12 +20,7 @@ final class SpeechService {
         // during speech; .duckOthers lowers (rather than cuts) background audio.
         // The in-app audio toggle (speak(_:enabled:)) remains the parent's control.
         do {
-            try AVAudioSession.sharedInstance().setCategory(
-                .playback,
-                mode: .spokenAudio,
-                options: .duckOthers
-            )
-            try AVAudioSession.sharedInstance().setActive(true)
+            try configureAudioSession(mode: .spokenAudio)
             lastSpeechDiagnostic = nil
         } catch {
             lastSpeechDiagnostic = "Audio session setup failed: \(error.localizedDescription)"
@@ -60,6 +56,113 @@ final class SpeechService {
 
     func speakLearningDetails(_ text: String, enabled: Bool) {
         speak(text, enabled: enabled)
+    }
+
+    func playSoundExample(_ example: SoundExampleKind, enabled: Bool) {
+        guard enabled else {
+            lastSpeechDiagnostic = "Sound example skipped because audio prompts are disabled."
+            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            return
+        }
+
+        do {
+            try configureAudioSession(mode: .default)
+            let player = try AVAudioPlayer(data: Self.hearingSafeWAVData(for: example))
+            player.volume = Float(min(SoundExampleKind.hearingSafeMaximumPeakAmplitude * 2.5, 0.45))
+            player.prepareToPlay()
+            soundExamplePlayer = player
+            lastSpeechDiagnostic = nil
+            lastSpokenText = nil
+            player.play()
+        } catch {
+            lastSpeechDiagnostic = "Sound example playback failed: \(error.localizedDescription)"
+            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+        }
+    }
+
+    private func configureAudioSession(mode: AVAudioSession.Mode) throws {
+        try AVAudioSession.sharedInstance().setCategory(
+            .playback,
+            mode: mode,
+            options: .duckOthers
+        )
+        try AVAudioSession.sharedInstance().setActive(true)
+    }
+
+    static func hearingSafeWAVData(for example: SoundExampleKind) -> Data {
+        let profile = example.profile
+        let sampleRate = 22_050
+        let channelCount = 1
+        let bitsPerSample = 16
+        let bytesPerSample = bitsPerSample / 8
+        let sampleCount = max(1, Int(profile.durationSeconds * Double(sampleRate)))
+        var pcm = Data(capacity: sampleCount * bytesPerSample)
+
+        for index in 0..<sampleCount {
+            let t = Double(index) / Double(sampleRate)
+            let progress = Double(index) / Double(max(sampleCount - 1, 1))
+            let envelope = sin(Double.pi * progress)
+            let raw = waveform(for: example, at: t, progress: progress, sampleIndex: index)
+            let safeSample = max(-1, min(1, raw * profile.peakAmplitude * envelope))
+            pcm.appendLittleEndian(Int16(safeSample * Double(Int16.max)))
+        }
+
+        var data = Data(capacity: 44 + pcm.count)
+        data.append(contentsOf: "RIFF".utf8)
+        data.appendLittleEndian(UInt32(36 + pcm.count))
+        data.append(contentsOf: "WAVE".utf8)
+        data.append(contentsOf: "fmt ".utf8)
+        data.appendLittleEndian(UInt32(16))
+        data.appendLittleEndian(UInt16(1))
+        data.appendLittleEndian(UInt16(channelCount))
+        data.appendLittleEndian(UInt32(sampleRate))
+        data.appendLittleEndian(UInt32(sampleRate * channelCount * bytesPerSample))
+        data.appendLittleEndian(UInt16(channelCount * bytesPerSample))
+        data.appendLittleEndian(UInt16(bitsPerSample))
+        data.append(contentsOf: "data".utf8)
+        data.appendLittleEndian(UInt32(pcm.count))
+        data.append(pcm)
+        return data
+    }
+
+    private static func waveform(for example: SoundExampleKind, at t: Double, progress: Double, sampleIndex: Int) -> Double {
+        let profile = example.profile
+        let primary = profile.primaryFrequency
+        let secondary = profile.secondaryFrequency ?? primary
+        let twoPi = 2 * Double.pi
+
+        switch example {
+        case .decibelPulse:
+            let tone = progress < 0.5 ? primary : secondary
+            return sin(twoPi * tone * t)
+        case .quietChime:
+            return 0.72 * sin(twoPi * primary * t) + 0.28 * sin(twoPi * secondary * t)
+        case .conversationPulse:
+            let syllableGate = 0.45 + 0.55 * max(0, sin(twoPi * 4.2 * t))
+            return syllableGate * (0.65 * sin(twoPi * primary * t) + 0.35 * sin(twoPi * secondary * t))
+        case .trafficRumble:
+            return 0.58 * sin(twoPi * primary * t) + 0.27 * sin(twoPi * secondary * t) + 0.15 * deterministicNoise(sampleIndex)
+        case .sirenSweep:
+            let sweep = primary + (secondary - primary) * progress
+            return sin(twoPi * sweep * t)
+        case .headphonesLow:
+            return 0.62 * sin(twoPi * primary * t) + 0.38 * sin(twoPi * secondary * t)
+        case .pleasantBirds:
+            let chirpGate = sin(twoPi * 5.5 * t) > -0.15 ? 1.0 : 0.20
+            let chirpFrequency = primary + (secondary - primary) * (progress < 0.5 ? progress * 2 : (1 - progress) * 2)
+            return chirpGate * sin(twoPi * chirpFrequency * t)
+        case .noisyBurst:
+            return 0.72 * deterministicNoise(sampleIndex) + 0.28 * sin(twoPi * secondary * t)
+        case .protectEarsMuffle:
+            let falling = primary + (secondary - primary) * progress
+            return 0.70 * sin(twoPi * falling * t) + 0.30 * sin(twoPi * (falling * 0.5) * t)
+        }
+    }
+
+    private static func deterministicNoise(_ sampleIndex: Int) -> Double {
+        var value = UInt64(sampleIndex) &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+        value ^= value >> 33
+        return (Double(value & 0xFFFF) / 32_767.5) - 1.0
     }
 
     func resetSession() {
@@ -364,5 +467,15 @@ final class MemoryCardDescribeService {
         #else
         NullMemoryCardAIAdapter()
         #endif
+    }
+}
+
+
+private extension Data {
+    mutating func appendLittleEndian<T: FixedWidthInteger>(_ value: T) {
+        var littleEndianValue = value.littleEndian
+        Swift.withUnsafeBytes(of: &littleEndianValue) { buffer in
+            append(contentsOf: buffer)
+        }
     }
 }

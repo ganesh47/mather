@@ -158,6 +158,24 @@ extension LearningLoopTests {
         XCTAssertTrue(SoundVolumeContent.safetyNote.contains("microphone meter comes later"))
     }
 
+    func testSoundVolumeCardsExposeExplicitHearingSafePlaybackExamples() {
+        let examples = SoundVolumeContent.cards.compactMap(\.soundExample)
+
+        XCTAssertEqual(examples.count, SoundVolumeContent.cards.count)
+        XCTAssertEqual(Set(examples).count, SoundVolumeContent.cards.count)
+        XCTAssertTrue(examples.allSatisfy { !$0.label.isEmpty })
+        XCTAssertTrue(examples.allSatisfy { $0.accessibilityLabel.contains("Play hearing-safe") })
+    }
+
+    func testSoundVolumePlaybackProfilesStayShortAndLowAmplitude() {
+        for example in SoundVolumeContent.cards.compactMap(\.soundExample) {
+            XCTAssertLessThanOrEqual(example.profile.durationSeconds, SoundExampleKind.hearingSafeMaximumDurationSeconds)
+            XCTAssertLessThanOrEqual(example.profile.peakAmplitude, SoundExampleKind.hearingSafeMaximumPeakAmplitude)
+            XCTAssertGreaterThan(example.profile.durationSeconds, 0)
+            XCTAssertGreaterThan(example.profile.peakAmplitude, 0)
+        }
+    }
+
     func testSoundVolumeQuizScoringUsesCorrectSafeAnswers() {
         let questions = SoundVolumeContent.quizQuestions
         let answers = Dictionary(uniqueKeysWithValues: questions.map { ($0.id, $0.correctChoice) })

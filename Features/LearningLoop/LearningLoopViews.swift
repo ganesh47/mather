@@ -39,6 +39,111 @@ struct LearningCardIntroView: View {
     }
 }
 
+struct SoundConceptFlashcardCarouselView: View {
+    let cards: [LearningConceptCard]
+    @Binding var selectedIndex: Int
+    let onPlaySound: (LearningConceptCard) -> Void
+
+    private var safeIndex: Int {
+        guard !cards.isEmpty else { return 0 }
+        return min(max(selectedIndex, 0), cards.count - 1)
+    }
+
+    private var activeCard: LearningConceptCard? {
+        guard cards.indices.contains(safeIndex) else { return nil }
+        return cards[safeIndex]
+    }
+
+    var body: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Flashcards")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(cards.isEmpty ? "No cards" : "Card \(safeIndex + 1) of \(cards.count)")
+                            .font(.caption.weight(.black).monospacedDigit())
+                            .foregroundStyle(MatherTheme.accent)
+                    }
+                    Spacer()
+                    Image(systemName: "speaker.wave.2.circle.fill")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .accessibilityHidden(true)
+                }
+
+                if let card = activeCard {
+                    HStack(alignment: .center, spacing: 14) {
+                        Text(card.visualKey)
+                            .font(.system(size: 48, weight: .bold))
+                            .frame(width: 64, height: 64)
+                            .background(MatherTheme.softBlue.opacity(0.22))
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(card.title)
+                                .font(.title3.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                            Text(card.explanation)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            selectedIndex = max(0, safeIndex - 1)
+                        } label: {
+                            Label("Back", systemImage: "chevron.left")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: true))
+                        .disabled(safeIndex == 0)
+
+                        Button {
+                            onPlaySound(card)
+                        } label: {
+                            Label("Play sound", systemImage: "speaker.wave.2.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: true))
+                        .accessibilityLabel(card.soundExample?.accessibilityLabel ?? "Play hearing-safe sound example")
+                        .accessibilityIdentifier("SoundLabPlaySound-\(card.id)")
+                        .disabled(card.soundExample == nil)
+
+                        Button {
+                            selectedIndex = min(cards.count - 1, safeIndex + 1)
+                        } label: {
+                            Label("Next", systemImage: "chevron.right")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: true))
+                        .disabled(safeIndex >= cards.count - 1)
+                    }
+
+                    Text("Short, low-volume examples only. No microphone or live loudness meter is used.")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.panelDeep)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MatherTheme.warm.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            }
+        }
+        .onChange(of: cards.count) { _, _ in
+            selectedIndex = safeIndex
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+
 struct ConceptQuizRoundView: View {
     let questions: [ConceptQuizQuestion]
     @Binding var answersByQuestionId: [String: String]
@@ -333,12 +438,14 @@ struct ConceptMixMatchRoundView: View {
 
 
 private enum SoundVolumeActivityStage: CaseIterable {
+    case flashcards
     case quiz
     case match
     case summary
 
     var title: String {
         switch self {
+        case .flashcards: return "Flashcards"
         case .quiz: return "Quiz"
         case .match: return "Mix + Match"
         case .summary: return "Stars"
@@ -347,14 +454,16 @@ private enum SoundVolumeActivityStage: CaseIterable {
 
     var primaryActionTitle: String {
         switch self {
+        case .flashcards: return "Go to Quiz"
         case .quiz: return "Go to Mix + Match"
         case .match: return "See Sound Score"
-        case .summary: return "Review Quiz"
+        case .summary: return "Review Flashcards"
         }
     }
 
     var primaryActionIcon: String {
         switch self {
+        case .flashcards: return "checkmark.circle.fill"
         case .quiz: return "rectangle.grid.2x2.fill"
         case .match: return "star.fill"
         case .summary: return "arrow.counterclockwise"
@@ -363,15 +472,17 @@ private enum SoundVolumeActivityStage: CaseIterable {
 
     var next: SoundVolumeActivityStage {
         switch self {
+        case .flashcards: return .quiz
         case .quiz: return .match
         case .match: return .summary
-        case .summary: return .quiz
+        case .summary: return .flashcards
         }
     }
 
     var previous: SoundVolumeActivityStage {
         switch self {
-        case .quiz: return .summary
+        case .flashcards: return .summary
+        case .quiz: return .flashcards
         case .match: return .quiz
         case .summary: return .match
         }
@@ -382,7 +493,8 @@ struct SoundVolumeLabView: View {
     @Bindable var appModel: AppModel
     @State private var introPageIndex = 0
     @State private var hasStartedActivities = false
-    @State private var activityStage: SoundVolumeActivityStage = .quiz
+    @State private var activityStage: SoundVolumeActivityStage = .flashcards
+    @State private var selectedSoundCardIndex = 0
     @State private var answersByQuestionId: [String: String] = [:]
     @State private var selectedMatchPairId: String?
     @State private var matchedPairIds: Set<String> = []
@@ -542,8 +654,8 @@ struct SoundVolumeLabView: View {
     private func advanceIntro() {
         if isLastIntroPage {
             hasStartedActivities = true
-            activityStage = .quiz
-            feedback = "Start with the quiz. Mix + Match comes on the next screen."
+            activityStage = .flashcards
+            feedback = "Start with flashcards. Tap Play sound for a short, hearing-safe example."
         } else {
             introPageIndex = SoundVolumeContent.clampedIntroPageIndex(safeIntroPageIndex + 1)
         }
@@ -589,6 +701,12 @@ struct SoundVolumeLabView: View {
     @ViewBuilder
     private var currentActivityStage: some View {
         switch activityStage {
+        case .flashcards:
+            SoundConceptFlashcardCarouselView(
+                cards: SoundVolumeContent.cards,
+                selectedIndex: $selectedSoundCardIndex,
+                onPlaySound: playSoundExample
+            )
         case .quiz:
             ConceptQuizRoundView(
                 questions: SoundVolumeContent.quizQuestions,
@@ -610,9 +728,10 @@ struct SoundVolumeLabView: View {
 
     private var activityStageControls: some View {
         HStack(spacing: 10) {
-            if activityStage != .quiz {
+            if activityStage != .flashcards {
                 Button {
                     activityStage = activityStage.previous
+                    updateFeedbackForCurrentStage()
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                         .font(.headline.weight(.black))
@@ -624,11 +743,7 @@ struct SoundVolumeLabView: View {
 
             Button {
                 activityStage = activityStage.next
-                if activityStage == .match {
-                    feedback = "Now match each sound clue to its safe idea."
-                } else if activityStage == .summary {
-                    feedback = "Review your Sound Lab score."
-                }
+                updateFeedbackForCurrentStage()
             } label: {
                 Label(activityStage.primaryActionTitle, systemImage: activityStage.primaryActionIcon)
                     .font(.headline.weight(.black))
@@ -636,6 +751,26 @@ struct SoundVolumeLabView: View {
             }
             .buttonStyle(PrimaryActionButtonStyle())
         }
+    }
+
+    private func updateFeedbackForCurrentStage() {
+        switch activityStage {
+        case .flashcards:
+            feedback = "Tap Play sound on each card for a short, hearing-safe example."
+        case .quiz:
+            feedback = "Now try the quiz. Use the flashcard clues you heard."
+        case .match:
+            feedback = "Now match each sound clue to its safe idea."
+        case .summary:
+            feedback = "Review your Sound Lab score."
+        }
+    }
+
+    private func playSoundExample(for card: LearningConceptCard) {
+        guard let soundExample = card.soundExample else { return }
+        appModel.speechService.playSoundExample(soundExample, enabled: appModel.featureFlags.audioEnabled)
+        appModel.hapticsService.cardPickup(enabled: appModel.featureFlags.hapticsEnabled)
+        feedback = "Played a short, hearing-safe \(soundExample.label) example for \(card.title)."
     }
 
     private func playSoundMatchHaptic(_ cue: ConceptMixMatchHapticCue) {
