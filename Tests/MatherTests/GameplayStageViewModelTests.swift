@@ -171,6 +171,42 @@ struct GameplayStageParityRegressionTests {
         let matched = viewModel.chooseRight(pair.right)
         #expect(matched)
         #expect(viewModel.correctCount == 1)
+        #expect(viewModel.lastMatchedPairID == pair.id)
+        #expect(
+            viewModel.turnGuidanceText == "Nice match! Pick another prompt card."
+                || viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready."
+        )
+    }
+
+    @Test
+    func matchTurnGuidanceExplainsFinishAndRecentSuccessState() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .easyMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 48)
+        var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory, turnItemCount: 2)
+        let firstPair = viewModel.activePairs[0]
+
+        #expect(viewModel.turnGuidanceText == "Pick a prompt card first, then tap its matching answer.")
+        #expect(viewModel.finishRequirementText == "4 matches left to finish")
+
+        viewModel.selectLeft(pairID: firstPair.id)
+        #expect(viewModel.turnGuidanceText == "Now tap the matching answer card.")
+
+        let firstMatched = viewModel.chooseRight(firstPair.right)
+        #expect(firstMatched)
+        #expect(viewModel.lastMatchedPairID == firstPair.id)
+        #expect(viewModel.finishRequirementText == "3 matches left to finish")
+
+        for pair in viewModel.activePairs where !viewModel.matchedPairIDs.contains(pair.id) {
+            viewModel.selectLeft(pairID: pair.id)
+            let matched = viewModel.chooseRight(pair.right)
+            #expect(matched)
+        }
+
+        #expect(viewModel.canAdvanceTurn)
+        #expect(viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready.")
+        viewModel.advanceTurn()
+        #expect(viewModel.lastMatchedPairID == nil)
     }
 
 

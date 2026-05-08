@@ -53,24 +53,39 @@ struct GameplayStagePanel: View {
 }
 
 struct GameplayDisplayCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let item: GameplayDisplayItem
     let compact: Bool
     var showsSubtitle = true
     var selected = false
     var matched = false
+    var correct = false
     var concealed = false
     var prominence: GameplayDisplayCardProminence = .normal
 
     var body: some View {
         VStack(spacing: compact ? 6 : 10) {
-            GameplayDisplayVisual(
-                item: item,
-                concealed: concealed,
-                visualSize: visualSize,
-                visualFrameWidth: visualFrameWidth,
-                visualFrameHeight: visualFrameHeight,
-                cornerRadius: isFeatured ? 28 : 22
-            )
+            ZStack(alignment: .topTrailing) {
+                GameplayDisplayVisual(
+                    item: item,
+                    concealed: concealed,
+                    visualSize: visualSize,
+                    visualFrameWidth: visualFrameWidth,
+                    visualFrameHeight: visualFrameHeight,
+                    cornerRadius: isFeatured ? 28 : 22,
+                    tint: stateTint
+                )
+                if correct || matched {
+                    Text(correct ? "✨" : "✓")
+                        .font(.system(size: compact ? 18 : 24, weight: .black, design: .rounded))
+                        .foregroundStyle(correct ? MatherTheme.coral : MatherTheme.accent)
+                        .padding(6)
+                        .background(Circle().fill(MatherTheme.card.opacity(0.92)))
+                        .offset(x: compact ? 4 : 8, y: compact ? -4 : -8)
+                        .accessibilityHidden(true)
+                }
+            }
             Text(concealed ? "Hidden match" : item.title)
                 .font(prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold()))
                 .multilineTextAlignment(.center)
@@ -92,12 +107,49 @@ struct GameplayDisplayCard: View {
         .padding(compact ? 10 : 14)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(matched ? MatherTheme.accent.opacity(0.22) : selected ? MatherTheme.softBlue : MatherTheme.card)
+                .fill(cardFill)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(selected ? MatherTheme.accent : .clear, lineWidth: 3)
+                .strokeBorder(cardBorder, lineWidth: borderWidth)
         )
+        .shadow(color: cardShadow, radius: correct ? 12 : 6, x: 0, y: correct ? 6 : 3)
+        .scaleEffect(correct && !reduceMotion ? 1.03 : 1)
+        .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.76), value: correct)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: selected)
+    }
+
+    private var cardFill: Color {
+        if correct { return MatherTheme.warm.opacity(0.34) }
+        if matched { return MatherTheme.accent.opacity(0.20) }
+        if selected { return MatherTheme.softBlue.opacity(0.85) }
+        return MatherTheme.card
+    }
+
+    private var cardBorder: Color {
+        if correct { return MatherTheme.coral }
+        if matched { return MatherTheme.accent }
+        if selected { return MatherTheme.panelDeep }
+        return MatherTheme.panelDeep.opacity(0.12)
+    }
+
+    private var borderWidth: CGFloat {
+        if correct { return 4 }
+        if selected || matched { return 3 }
+        return 1
+    }
+
+    private var cardShadow: Color {
+        if correct { return MatherTheme.coral.opacity(0.18) }
+        if matched { return MatherTheme.accent.opacity(0.14) }
+        return MatherTheme.panelDeep.opacity(0.08)
+    }
+
+    private var stateTint: Color {
+        if correct { return MatherTheme.warm }
+        if matched { return MatherTheme.accent }
+        if selected { return MatherTheme.softBlue }
+        return MatherTheme.softBlue
     }
 
     private var isFeatured: Bool { prominence == .featured }
@@ -131,6 +183,7 @@ private struct GameplayDisplayVisual: View {
     let visualFrameWidth: CGFloat
     let visualFrameHeight: CGFloat
     let cornerRadius: CGFloat
+    let tint: Color
 
     var body: some View {
         Group {
@@ -157,7 +210,13 @@ private struct GameplayDisplayVisual: View {
         .frame(width: visualFrameWidth, height: visualFrameHeight)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(MatherTheme.softBlue.opacity(0.45))
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.42), MatherTheme.card.opacity(0.82)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -270,6 +329,8 @@ struct GameplayMatchRewardBanner: View {
 }
 
 struct GameplayPairingStageShell: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let title: String
     let prompt: String
     let compact: Bool
@@ -283,6 +344,7 @@ struct GameplayPairingStageShell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
             GameplayStageTitle(title: title, prompt: prompt, detail: "\(viewModel.turnProgressText) • \(viewModel.correctCount)/\(viewModel.pairs.count)")
+            GameplayTurnGuidance(text: viewModel.turnGuidanceText, compact: compact)
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.activePairs) { pair in
                     Button {
@@ -293,6 +355,7 @@ struct GameplayPairingStageShell: View {
                             compact: compact,
                             selected: viewModel.selectedLeftID == pair.id,
                             matched: viewModel.matchedPairIDs.contains(pair.id),
+                            correct: viewModel.lastMatchedPairID == pair.id,
                             prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
                     }
@@ -313,8 +376,9 @@ struct GameplayPairingStageShell: View {
                             item: item,
                             compact: compact,
                             showsSubtitle: true,
-                            selected: viewModel.inspectedItemID == item.id,
+                            selected: viewModel.inspectedItemID == item.id && !viewModel.matchedPairIDs.contains(pairID(for: item)),
                             matched: viewModel.matchedPairIDs.contains(pairID(for: item)),
+                            correct: viewModel.lastMatchedPairID == pairID(for: item),
                             concealed: viewModel.shouldConcealRight(item),
                             prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
@@ -324,28 +388,34 @@ struct GameplayPairingStageShell: View {
                 }
             }
             if autoProgressSignature != nil {
-                GameplayMatchRewardBanner(text: viewModel.canAdvanceTurn ? "Great matches! Next turn is coming…" : "Great matches! Your reward is coming…")
+                GameplayMatchRewardBanner(text: "Turn complete! Tap Next turn now, or it will open automatically.")
+            } else if viewModel.isComplete {
+                GameplayMatchRewardBanner(text: "Stage complete — finish when you’re ready!")
             }
             if let item = viewModel.inspectedItem, !viewModel.shouldConcealRight(item) {
                 GameplayCardDetailCallout(item: item, compact: compact)
             }
-            HStack {
+            HStack(alignment: .center, spacing: 10) {
                 Button("Hint") { viewModel.hintCount += 1 }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 Spacer()
                 if viewModel.canAdvanceTurn {
-                    Button("Next turn") {
+                    Button(autoProgressSignature == nil ? "Next turn" : "Next turn now") {
                         cancelAutoProgress()
                         viewModel.advanceTurn()
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                } else {
+                } else if viewModel.isComplete {
                     Button("Finish stage") {
                         cancelAutoProgress()
                         onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                    .disabled(!viewModel.isComplete)
+                } else {
+                    Text(viewModel.finishRequirementText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(MatherTheme.ink.opacity(0.68))
+                        .multilineTextAlignment(.trailing)
                 }
             }
         }
@@ -358,8 +428,6 @@ struct GameplayPairingStageShell: View {
         let signature: String?
         if viewModel.canAdvanceTurn {
             signature = "turn-\(viewModel.activeTurnIndex)-\(viewModel.correctCount)"
-        } else if viewModel.isComplete {
-            signature = "complete-\(viewModel.correctCount)"
         } else {
             signature = nil
         }
@@ -371,11 +439,13 @@ struct GameplayPairingStageShell: View {
             try? await Task.sleep(for: .milliseconds(1_200))
             guard autoProgressSignature == signature else { return }
             if viewModel.canAdvanceTurn {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                if reduceMotion {
                     viewModel.advanceTurn()
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        viewModel.advanceTurn()
+                    }
                 }
-            } else if viewModel.isComplete {
-                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
             }
             autoProgressSignature = nil
             autoProgressTask = nil
@@ -394,6 +464,27 @@ struct GameplayPairingStageShell: View {
 
     private func pairID(for item: GameplayDisplayItem) -> String {
         viewModel.pairID(forRight: item)
+    }
+}
+
+private struct GameplayTurnGuidance: View {
+    let text: String
+    let compact: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("👀")
+                .font(.system(size: compact ? 15 : 18))
+                .accessibilityHidden(true)
+            Text(text)
+                .font(compact ? .caption.weight(.semibold) : .subheadline.weight(.semibold))
+                .foregroundStyle(MatherTheme.ink.opacity(0.74))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, compact ? 8 : 10)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(MatherTheme.softBlue.opacity(0.32)))
+        .accessibilityElement(children: .combine)
     }
 }
 
