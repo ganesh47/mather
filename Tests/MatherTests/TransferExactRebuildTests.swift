@@ -73,6 +73,8 @@ struct TransferExactRebuildTests {
     private func makeEngine() -> VerticalSliceEngine {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
+        flags.audioEnabled = false
+        flags.hapticsEnabled = false
         flags.makeBreakLoopV2Enabled = false
         flags.vs1GravitySplitEnabled = false
         return VerticalSliceEngine(
