@@ -117,6 +117,14 @@ struct GameplayMatchPair: Identifiable, Equatable, Hashable {
     let right: GameplayDisplayItem
 }
 
+enum GameplayMatchCardState: Equatable {
+    case idle
+    case selected
+    case inspected
+    case matched
+    case justMatched
+}
+
 struct GameplayMultipleChoiceQuestion: Identifiable, Equatable, Hashable {
     let id: String
     let prompt: String
@@ -214,18 +222,29 @@ struct GameplayMatchStageViewModel: Equatable {
     var correctCount: Int { matchedPairIDs.count }
     var isComplete: Bool { !pairs.isEmpty && matchedPairIDs.count == pairs.count }
     var turnCount: Int { max(1, Int(ceil(Double(max(pairs.count, 1)) / Double(turnItemCount)))) }
-    var turnProgressText: String { "Turn \(min(activeTurnIndex + 1, turnCount))/\(turnCount)" }
+    var turnProgressText: String { "Round \(min(activeTurnIndex + 1, turnCount)) of \(turnCount)" }
+    var matchedProgressText: String {
+        if pairs.isEmpty { return "No matches yet" }
+        return "\(correctCount) of \(pairs.count) matched"
+    }
     var turnGuidanceText: String {
-        if isComplete { return "All matches found. Finish the stage to save your score." }
-        if canAdvanceTurn { return "This turn is done. Move to the next mini-round when ready." }
-        if lastMatchedPairID != nil { return "Nice match! Pick another prompt card." }
-        if selectedLeftID == nil { return "Pick a prompt card first, then tap its matching answer." }
-        return "Now tap the matching answer card."
+        if isComplete { return "All matches found. Tap Finish stage." }
+        if canAdvanceTurn { return "This round is done. Tap Next round." }
+        if lastMatchedPairID != nil { return "Nice match. Pick another card." }
+        if selectedLeftID == nil { return "Pick a card. Then find its match." }
+        return "Now tap the card that goes with it."
     }
     var finishRequirementText: String {
         let remaining = max(pairs.count - correctCount, 0)
-        if remaining == 1 { return "1 match left to finish" }
-        return "\(remaining) matches left to finish"
+        if remaining == 0 { return "All matches found" }
+        if remaining == 1 { return "Find 1 more match" }
+        return "Find \(remaining) more matches"
+    }
+    var currentRoundRequirementText: String {
+        let remaining = activePairs.filter { !matchedPairIDs.contains($0.id) }.count
+        if remaining == 0 { return isComplete ? "Ready to finish" : "Ready for next round" }
+        if remaining == 1 { return "1 left this round" }
+        return "\(remaining) left this round"
     }
     var activePairs: [GameplayMatchPair] {
         let start = activeTurnIndex * turnItemCount
@@ -261,6 +280,22 @@ struct GameplayMatchStageViewModel: Equatable {
 
     func pairID(forRight item: GameplayDisplayItem) -> String {
         pairs.first(where: { $0.right.id == item.id })?.id ?? item.id
+    }
+
+    func cardState(forLeft pair: GameplayMatchPair) -> GameplayMatchCardState {
+        if lastMatchedPairID == pair.id { return .justMatched }
+        if matchedPairIDs.contains(pair.id) { return .matched }
+        if selectedLeftID == pair.id { return .selected }
+        if inspectedItemID == pair.left.id { return .inspected }
+        return .idle
+    }
+
+    func cardState(forRight item: GameplayDisplayItem) -> GameplayMatchCardState {
+        let pairID = pairID(forRight: item)
+        if lastMatchedPairID == pairID { return .justMatched }
+        if matchedPairIDs.contains(pairID) { return .matched }
+        if inspectedItemID == item.id { return .inspected }
+        return .idle
     }
 
     mutating func selectLeft(pairID: String) {

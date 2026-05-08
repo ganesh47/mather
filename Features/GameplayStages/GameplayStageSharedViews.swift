@@ -59,6 +59,7 @@ struct GameplayDisplayCard: View {
     let compact: Bool
     var showsSubtitle = true
     var selected = false
+    var inspected = false
     var matched = false
     var correct = false
     var concealed = false
@@ -76,10 +77,10 @@ struct GameplayDisplayCard: View {
                     cornerRadius: isFeatured ? 28 : 22,
                     tint: stateTint
                 )
-                if correct || matched {
-                    Text(correct ? "✨" : "✓")
-                        .font(.system(size: compact ? 18 : 24, weight: .black, design: .rounded))
-                        .foregroundStyle(correct ? MatherTheme.coral : MatherTheme.accent)
+                if showsStateBadge {
+                    Image(systemName: stateBadgeSystemName)
+                        .font(.system(size: compact ? 16 : 21, weight: .black, design: .rounded))
+                        .foregroundStyle(stateBadgeColor)
                         .padding(6)
                         .background(Circle().fill(MatherTheme.card.opacity(0.92)))
                         .offset(x: compact ? 4 : 8, y: compact ? -4 : -8)
@@ -98,7 +99,7 @@ struct GameplayDisplayCard: View {
                     .font(.caption.weight(.semibold))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(MatherTheme.ink.opacity(0.68))
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .minimumScaleFactor(0.76)
             }
         }
@@ -122,20 +123,22 @@ struct GameplayDisplayCard: View {
     private var cardFill: Color {
         if correct { return MatherTheme.warm.opacity(0.34) }
         if matched { return MatherTheme.accent.opacity(0.20) }
-        if selected { return MatherTheme.softBlue.opacity(0.85) }
+        if selected { return MatherTheme.coral.opacity(0.18) }
+        if inspected { return MatherTheme.softBlue.opacity(0.50) }
         return MatherTheme.card
     }
 
     private var cardBorder: Color {
         if correct { return MatherTheme.coral }
         if matched { return MatherTheme.accent }
-        if selected { return MatherTheme.panelDeep }
+        if selected { return MatherTheme.coral }
+        if inspected { return MatherTheme.softBlue }
         return MatherTheme.panelDeep.opacity(0.12)
     }
 
     private var borderWidth: CGFloat {
         if correct { return 4 }
-        if selected || matched { return 3 }
+        if selected || inspected || matched { return 3 }
         return 1
     }
 
@@ -148,8 +151,25 @@ struct GameplayDisplayCard: View {
     private var stateTint: Color {
         if correct { return MatherTheme.warm }
         if matched { return MatherTheme.accent }
-        if selected { return MatherTheme.softBlue }
+        if selected { return MatherTheme.coral }
+        if inspected { return MatherTheme.softBlue }
         return MatherTheme.softBlue
+    }
+
+    private var showsStateBadge: Bool {
+        selected || matched || correct
+    }
+
+    private var stateBadgeSystemName: String {
+        if correct { return "sparkles" }
+        if matched { return "checkmark.circle.fill" }
+        return "hand.tap.fill"
+    }
+
+    private var stateBadgeColor: Color {
+        if correct { return MatherTheme.coral }
+        if matched { return MatherTheme.accent }
+        return MatherTheme.coral
     }
 
     private var isFeatured: Bool { prominence == .featured }
@@ -344,6 +364,38 @@ struct GameplayMatchRewardBanner: View {
     }
 }
 
+struct GameplayMatchStatusStrip: View {
+    let matchedText: String
+    let roundText: String
+    let compact: Bool
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                statusPill(text: matchedText, systemImage: "checkmark.circle.fill", tint: MatherTheme.accent)
+                statusPill(text: roundText, systemImage: "target", tint: MatherTheme.coral)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                statusPill(text: matchedText, systemImage: "checkmark.circle.fill", tint: MatherTheme.accent)
+                statusPill(text: roundText, systemImage: "target", tint: MatherTheme.coral)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func statusPill(text: String, systemImage: String, tint: Color) -> some View {
+        Label(text, systemImage: systemImage)
+            .font((compact ? Font.caption : Font.subheadline).weight(.black))
+            .foregroundStyle(MatherTheme.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+            .padding(.horizontal, compact ? 9 : 12)
+            .padding(.vertical, compact ? 6 : 8)
+            .background(tint.opacity(0.16), in: Capsule())
+    }
+}
+
 struct GameplayPairingStageShell: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -359,19 +411,26 @@ struct GameplayPairingStageShell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
-            GameplayStageTitle(title: title, prompt: prompt, detail: "\(viewModel.turnProgressText) • \(viewModel.correctCount)/\(viewModel.pairs.count)")
+            GameplayStageTitle(title: title, prompt: prompt, detail: viewModel.turnProgressText)
             GameplayTurnGuidance(text: viewModel.turnGuidanceText, compact: compact)
+            GameplayMatchStatusStrip(
+                matchedText: viewModel.matchedProgressText,
+                roundText: viewModel.currentRoundRequirementText,
+                compact: compact
+            )
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.activePairs) { pair in
+                    let state = viewModel.cardState(forLeft: pair)
                     Button {
                         viewModel.selectLeft(pairID: pair.id)
                     } label: {
                         GameplayDisplayCard(
                             item: pair.left,
                             compact: compact,
-                            selected: viewModel.selectedLeftID == pair.id,
-                            matched: viewModel.matchedPairIDs.contains(pair.id),
-                            correct: viewModel.lastMatchedPairID == pair.id,
+                            selected: state == .selected,
+                            inspected: state == .inspected,
+                            matched: state == .matched,
+                            correct: state == .justMatched,
                             prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
                     }
@@ -381,6 +440,7 @@ struct GameplayPairingStageShell: View {
             }
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.shuffledRights) { item in
+                    let state = viewModel.cardState(forRight: item)
                     Button {
                         let wasMatching = viewModel.selectedLeftID != nil
                         let correct = viewModel.chooseRight(item)
@@ -392,9 +452,10 @@ struct GameplayPairingStageShell: View {
                             item: item,
                             compact: compact,
                             showsSubtitle: true,
-                            selected: viewModel.inspectedItemID == item.id && !viewModel.matchedPairIDs.contains(pairID(for: item)),
-                            matched: viewModel.matchedPairIDs.contains(pairID(for: item)),
-                            correct: viewModel.lastMatchedPairID == pairID(for: item),
+                            selected: state == .selected,
+                            inspected: state == .inspected,
+                            matched: state == .matched,
+                            correct: state == .justMatched,
                             concealed: viewModel.shouldConcealRight(item),
                             prominence: viewModel.activePairs.count == 1 ? .featured : .normal
                         )
@@ -515,10 +576,12 @@ private struct GameplayCardDetailCallout: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title)
                     .font(.headline.bold())
+                    .fixedSize(horizontal: false, vertical: true)
                 if !item.subtitle.isEmpty {
                     Text(item.subtitle)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.ink.opacity(0.72))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer()

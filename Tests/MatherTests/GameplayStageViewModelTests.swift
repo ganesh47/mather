@@ -139,7 +139,7 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.pairs.count == 4)
         #expect(viewModel.activePairs.count == 2)
         #expect(viewModel.turnCount == 2)
-        #expect(viewModel.turnProgressText == "Turn 1/2")
+        #expect(viewModel.turnProgressText == "Round 1 of 2")
 
         for pair in viewModel.activePairs {
             viewModel.selectLeft(pairID: pair.id)
@@ -151,7 +151,7 @@ struct GameplayStageParityRegressionTests {
         viewModel.advanceTurn()
         #expect(viewModel.activeTurnIndex == 1)
         #expect(viewModel.activePairs.count == 2)
-        #expect(viewModel.turnProgressText == "Turn 2/2")
+        #expect(viewModel.turnProgressText == "Round 2 of 2")
     }
 
     @Test
@@ -191,8 +191,8 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.correctCount == 1)
         #expect(viewModel.lastMatchedPairID == pair.id)
         #expect(
-            viewModel.turnGuidanceText == "Nice match! Pick another prompt card."
-                || viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready."
+            viewModel.turnGuidanceText == "Nice match. Pick another card."
+                || viewModel.turnGuidanceText == "This round is done. Tap Next round."
         )
     }
 
@@ -204,16 +204,21 @@ struct GameplayStageParityRegressionTests {
         var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory, turnItemCount: 2)
         let firstPair = viewModel.activePairs[0]
 
-        #expect(viewModel.turnGuidanceText == "Pick a prompt card first, then tap its matching answer.")
-        #expect(viewModel.finishRequirementText == "4 matches left to finish")
+        #expect(viewModel.turnProgressText == "Round 1 of 2")
+        #expect(viewModel.matchedProgressText == "0 of 4 matched")
+        #expect(viewModel.turnGuidanceText == "Pick a card. Then find its match.")
+        #expect(viewModel.finishRequirementText == "Find 4 more matches")
+        #expect(viewModel.currentRoundRequirementText == "2 left this round")
 
         viewModel.selectLeft(pairID: firstPair.id)
-        #expect(viewModel.turnGuidanceText == "Now tap the matching answer card.")
+        #expect(viewModel.turnGuidanceText == "Now tap the card that goes with it.")
 
         let firstMatched = viewModel.chooseRight(firstPair.right)
         #expect(firstMatched)
         #expect(viewModel.lastMatchedPairID == firstPair.id)
-        #expect(viewModel.finishRequirementText == "3 matches left to finish")
+        #expect(viewModel.matchedProgressText == "1 of 4 matched")
+        #expect(viewModel.finishRequirementText == "Find 3 more matches")
+        #expect(viewModel.currentRoundRequirementText == "1 left this round")
 
         for pair in viewModel.activePairs where !viewModel.matchedPairIDs.contains(pair.id) {
             viewModel.selectLeft(pairID: pair.id)
@@ -222,9 +227,35 @@ struct GameplayStageParityRegressionTests {
         }
 
         #expect(viewModel.canAdvanceTurn)
-        #expect(viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready.")
+        #expect(viewModel.currentRoundRequirementText == "Ready for next round")
+        #expect(viewModel.turnGuidanceText == "This round is done. Tap Next round.")
         viewModel.advanceTurn()
         #expect(viewModel.lastMatchedPairID == nil)
+    }
+
+    @Test
+    func matchCardStatesKeepSelectionAndCompletedMatchesDistinct() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .easyMemory }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 49)
+        var viewModel = GameplayMatchStageViewModel(thread: thread, round: round, mode: .easyMemory, turnItemCount: 2)
+        let firstPair = viewModel.activePairs[0]
+        let secondPair = viewModel.activePairs[1]
+
+        #expect(viewModel.cardState(forLeft: firstPair) == .idle)
+        viewModel.selectLeft(pairID: firstPair.id)
+        #expect(viewModel.cardState(forLeft: firstPair) == .selected)
+        #expect(viewModel.cardState(forRight: firstPair.right) == .idle)
+
+        let didMatchFirstPair = viewModel.chooseRight(firstPair.right)
+        #expect(didMatchFirstPair)
+        #expect(viewModel.cardState(forLeft: firstPair) == .justMatched)
+        #expect(viewModel.cardState(forRight: firstPair.right) == .justMatched)
+
+        viewModel.selectLeft(pairID: secondPair.id)
+        #expect(viewModel.cardState(forLeft: firstPair) == .matched)
+        #expect(viewModel.cardState(forLeft: secondPair) == .selected)
+        #expect(viewModel.cardState(forLeft: firstPair) != viewModel.cardState(forLeft: secondPair))
     }
 
 

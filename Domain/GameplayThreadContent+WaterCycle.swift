@@ -98,7 +98,7 @@ enum GameplayThreadCatalog {
             id: "water-cycle-easy-memory",
             kind: .easyMemory,
             title: "Order Match",
-            prompt: "Match each process to its cycle order clue.",
+            prompt: "Can you put the water cycle in order? Match each step to its number clue.",
             propertyTypeIDs: ["order"],
             maximumItemCount: 4
         ),
