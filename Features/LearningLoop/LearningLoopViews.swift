@@ -439,6 +439,7 @@ struct ConceptMixMatchRoundView: View {
 
 private enum SoundVolumeActivityStage: CaseIterable {
     case flashcards
+    case meterPitch
     case quiz
     case match
     case summary
@@ -446,6 +447,7 @@ private enum SoundVolumeActivityStage: CaseIterable {
     var title: String {
         switch self {
         case .flashcards: return "Flashcards"
+        case .meterPitch: return "Meter + Pitch"
         case .quiz: return "Quiz"
         case .match: return "Mix + Match"
         case .summary: return "Stars"
@@ -454,7 +456,8 @@ private enum SoundVolumeActivityStage: CaseIterable {
 
     var primaryActionTitle: String {
         switch self {
-        case .flashcards: return "Go to Quiz"
+        case .flashcards: return "Try Meter + Pitch"
+        case .meterPitch: return "Go to Quiz"
         case .quiz: return "Go to Mix + Match"
         case .match: return "See Sound Score"
         case .summary: return "Review Flashcards"
@@ -463,7 +466,8 @@ private enum SoundVolumeActivityStage: CaseIterable {
 
     var primaryActionIcon: String {
         switch self {
-        case .flashcards: return "checkmark.circle.fill"
+        case .flashcards: return "waveform"
+        case .meterPitch: return "checkmark.circle.fill"
         case .quiz: return "rectangle.grid.2x2.fill"
         case .match: return "star.fill"
         case .summary: return "arrow.counterclockwise"
@@ -472,7 +476,8 @@ private enum SoundVolumeActivityStage: CaseIterable {
 
     var next: SoundVolumeActivityStage {
         switch self {
-        case .flashcards: return .quiz
+        case .flashcards: return .meterPitch
+        case .meterPitch: return .quiz
         case .quiz: return .match
         case .match: return .summary
         case .summary: return .flashcards
@@ -482,7 +487,8 @@ private enum SoundVolumeActivityStage: CaseIterable {
     var previous: SoundVolumeActivityStage {
         switch self {
         case .flashcards: return .summary
-        case .quiz: return .flashcards
+        case .meterPitch: return .flashcards
+        case .quiz: return .meterPitch
         case .match: return .quiz
         case .summary: return .match
         }
@@ -500,6 +506,7 @@ struct SoundVolumeLabView: View {
     @State private var matchedPairIds: Set<String> = []
     @State private var matchShuffleSeed = UInt64.random(in: UInt64.min...UInt64.max)
     @State private var feedback = SoundVolumeContent.safetyNote
+    @State private var pitchChallengeState = SoundPitchChallengeState(challenge: SoundVolumeContent.pitchChallenge)
 
     private var introPages: [SoundVolumeIntroPage] { SoundVolumeContent.introPages }
     private var safeIntroPageIndex: Int { SoundVolumeContent.clampedIntroPageIndex(introPageIndex) }
@@ -559,6 +566,7 @@ struct SoundVolumeLabView: View {
             }
         }
         .onDisappear {
+            appModel.soundDetectionService.stopSoundLabMeter()
             if summary.starCount > 0 || matchedPairIds.count == SoundVolumeContent.matchPairs.count {
                 appModel.markExplorerLabModeCompleted(laneID: .physics, mode: .review)
                 appModel.setExplorerLabConceptConfidence(.steady, for: ConceptId(rawValue: "sound-volume"), laneID: .physics)
@@ -707,6 +715,8 @@ struct SoundVolumeLabView: View {
                 selectedIndex: $selectedSoundCardIndex,
                 onPlaySound: playSoundExample
             )
+        case .meterPitch:
+            soundMeterPitchActivity
         case .quiz:
             ConceptQuizRoundView(
                 questions: SoundVolumeContent.quizQuestions,
@@ -730,8 +740,7 @@ struct SoundVolumeLabView: View {
         HStack(spacing: 10) {
             if activityStage != .flashcards {
                 Button {
-                    activityStage = activityStage.previous
-                    updateFeedbackForCurrentStage()
+                    setActivityStage(activityStage.previous)
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                         .font(.headline.weight(.black))
@@ -742,8 +751,7 @@ struct SoundVolumeLabView: View {
             }
 
             Button {
-                activityStage = activityStage.next
-                updateFeedbackForCurrentStage()
+                setActivityStage(activityStage.next)
             } label: {
                 Label(activityStage.primaryActionTitle, systemImage: activityStage.primaryActionIcon)
                     .font(.headline.weight(.black))
@@ -753,10 +761,20 @@ struct SoundVolumeLabView: View {
         }
     }
 
+    private func setActivityStage(_ newStage: SoundVolumeActivityStage) {
+        if activityStage == .meterPitch && newStage != .meterPitch {
+            appModel.soundDetectionService.stopSoundLabMeter()
+        }
+        activityStage = newStage
+        updateFeedbackForCurrentStage()
+    }
+
     private func updateFeedbackForCurrentStage() {
         switch activityStage {
         case .flashcards:
             feedback = "Tap Play sound on each card for a short, hearing-safe example."
+        case .meterPitch:
+            feedback = "Try the local-only meter with normal room sounds, then answer the pitch card."
         case .quiz:
             feedback = "Now try the quiz. Use the flashcard clues you heard."
         case .match:
@@ -799,7 +817,7 @@ struct SoundVolumeLabView: View {
                             .font(.largeTitle.weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                             .minimumScaleFactor(0.75)
-                        Text("Quiz and match safe listening clues. No microphone permission or live meter is used.")
+                        Text("Try a local-only meter, pitch cards, quiz, and safe listening matches. No recording, no loudness rewards.")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
@@ -825,7 +843,7 @@ struct SoundVolumeLabView: View {
                 Text("Hearing-safe play")
                     .font(.headline.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text("No microphone permission, no live meter, and no loud-noise challenge in this round. Match the clues and choose safe actions.")
+                Text("The meter asks for microphone access only after you tap Start. Audio stays on this device as a loudness number only: no recording, no storage, no sending. No shouting or loud-noise challenge.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
@@ -864,7 +882,7 @@ struct SoundVolumeLabView: View {
             Text("Estimated loudness zones")
                 .font(.title2.weight(.black))
                 .foregroundStyle(MatherTheme.ink)
-            Text("These are learning examples, not a calibrated sound meter.")
+            Text("These are learning examples. The live meter is estimated, not calibrated safety equipment.")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
@@ -889,6 +907,169 @@ struct SoundVolumeLabView: View {
                     .accessibilityLabel("\(zone.label), estimated \(zone.estimatedRangeLabel). \(zone.safetyCopy)")
                 }
             }
+        }
+    }
+
+
+    private var soundMeterPitchActivity: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            soundMeterCard
+            pitchTeachingCard
+        }
+    }
+
+    private var soundMeterCard: some View {
+        let reading = appModel.soundDetectionService.meterReading
+        let permissionState = appModel.soundDetectionService.meterPermissionState
+        return CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "waveform.badge.magnifyingglass")
+                        .font(.title.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Hearing-safe sound meter")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(SoundMeterReading.privacyCopy)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(SoundMeterReading.safetyCopy)
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(MatherTheme.panelDeep)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(permissionState.title)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Spacer()
+                        Text("~\(Int(reading.estimatedDecibels.rounded())) dB")
+                            .font(.headline.monospacedDigit().weight(.black))
+                            .foregroundStyle(MatherTheme.accent)
+                    }
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(MatherTheme.softBlue.opacity(0.30))
+                            Capsule()
+                                .fill(meterFill(reading.bucket))
+                                .frame(width: max(CGFloat(12), proxy.size.width * CGFloat(reading.bucket.fillFraction)))
+                        }
+                    }
+                    .frame(height: 18)
+                    Text("\(reading.bucket.label): \(reading.bucket.targetCopy)")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                }
+                .padding(12)
+                .background(MatherTheme.card.opacity(0.70))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                Text(permissionState.guidance)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 10) {
+                    Button {
+                        appModel.soundDetectionService.startSoundLabMeter()
+                        feedback = "Meter started. Use normal room sounds only — no shouting and no points for loudness."
+                    } label: {
+                        Label("Start local meter", systemImage: "mic.circle.fill")
+                            .font(.headline.weight(.black))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+                    .accessibilityIdentifier("SoundLabStartLocalMeter")
+
+                    Button {
+                        appModel.soundDetectionService.stopSoundLabMeter()
+                        feedback = "Meter stopped. Audio was not recorded or saved."
+                    } label: {
+                        Label("Stop", systemImage: "stop.circle.fill")
+                            .font(.headline.weight(.black))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .accessibilityIdentifier("SoundLabStopLocalMeter")
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var pitchTeachingCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Pitch follow-up")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Pitch means how deep or bright a sound is. It is different from loudness, so you never need to be louder to learn pitch.")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                    ForEach(SoundVolumeContent.pitchBands) { band in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(band.visualKey).font(.largeTitle)
+                            Text(band.title)
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                            Text(band.frequencyRangeLabel)
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(MatherTheme.accent)
+                            Text(band.teachingCopy)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+                        .background(MatherTheme.softBlue.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+
+                Text(pitchChallengeState.challenge.prompt)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+
+                HStack(spacing: 8) {
+                    ForEach(pitchChallengeState.challenge.options) { band in
+                        Button {
+                            pitchChallengeState.select(band)
+                            feedback = pitchChallengeState.feedback
+                        } label: {
+                            Text("\(band.visualKey) \(band.title)")
+                                .font(.caption.weight(.black))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(pitchChallengeState.selectedBand == band ? MatherTheme.accent : MatherTheme.softBlue)
+                        .accessibilityIdentifier("SoundPitchChoice-\(band.rawValue)")
+                    }
+                }
+
+                Text(pitchChallengeState.feedback)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(pitchChallengeState.isCorrect ? MatherTheme.accent : MatherTheme.cardSubtitle)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func meterFill(_ bucket: SoundMeterLevelBucket) -> Color {
+        switch bucket {
+        case .quiet: return MatherTheme.softBlue
+        case .comfortable: return MatherTheme.accent
+        case .busy: return MatherTheme.warm
+        case .protect: return MatherTheme.coral
         }
     }
 

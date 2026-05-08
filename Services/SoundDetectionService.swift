@@ -22,6 +22,10 @@ final class SoundDetectionService {
     /// Momentarily true when a clap is detected; auto-resets after 500 ms.
     var clapDetected: Bool = false
 
+    /// Local-only RMS loudness estimate for Sound Lab meter UI. Audio is never stored or transmitted.
+    var meterReading = SoundMeterReading(rms: 0)
+    var meterPermissionState: SoundMeterPermissionState = .notStarted
+
     // MARK: - Private
 
     // nonisolated(unsafe): AVAudioEngine is not Sendable, but we only ever
@@ -37,11 +41,27 @@ final class SoundDetectionService {
     /// Does nothing if already listening.
     func startListening() {
         guard !isListening else { return }
+        let audioSession = AVAudioSession.sharedInstance()
+        guard audioSession.isInputAvailable else {
+            meterPermissionState = .unavailable
+            return
+        }
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
+            try audioSession.setActive(true, options: [])
+        } catch {
+            meterPermissionState = .denied
+            return
+        }
+
         let inputNode = audioEngine.inputNode
         let format = inputNode.inputFormat(forBus: 0)
-        // When the AVAudioSession category is .playback (set by SpeechService),
-        // inputFormat can return a zero-sample-rate format — installTap would crash.
-        guard format.sampleRate > 0 else { return }
+        // When input hardware is unavailable, inputFormat can return a
+        // zero-sample-rate format — installTap would crash.
+        guard format.sampleRate > 0 else {
+            meterPermissionState = .unavailable
+            return
+        }
 
         inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
             guard let channelData = buffer.floatChannelData?[0] else { return }
@@ -61,20 +81,31 @@ final class SoundDetectionService {
         do {
             try audioEngine.start()
             isListening = true
+            meterPermissionState = .listening
         } catch {
             // Silently fail: microphone permission may be denied, or the
             // audio session may be unavailable. Bond Blast still works without clap.
+            meterPermissionState = .denied
             inputNode.removeTap(onBus: 0)
         }
     }
 
     /// Stop listening and tear down the audio tap.
     func stopListening() {
-        guard isListening else { return }
+        guard isListening else {
+            previousRMS = 0
+            meterReading = SoundMeterReading(rms: 0)
+            meterPermissionState = .notStarted
+            clapResetTask?.cancel()
+            clapDetected = false
+            return
+        }
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
         isListening = false
         previousRMS = 0
+        meterReading = SoundMeterReading(rms: 0)
+        meterPermissionState = .notStarted
         clapResetTask?.cancel()
         clapDetected = false
     }
@@ -87,7 +118,16 @@ final class SoundDetectionService {
 
     // MARK: - Private helpers
 
+    func startSoundLabMeter() {
+        startListening()
+    }
+
+    func stopSoundLabMeter() {
+        stopListening()
+    }
+
     private func evaluateRMS(_ rms: Float) {
+        meterReading = SoundMeterReading(rms: rms)
         // Clap signature: near-silence followed by a sharp spike.
         if rms > 0.3 && previousRMS < 0.05 && !clapDetected {
             clapDetected = true
