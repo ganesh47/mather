@@ -21,6 +21,25 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Make & Break"].exists, "Home launcher should avoid copy-heavy child tiles")
     }
 
+
+    func testExplorerLabStreamPickerUsesSimpleReadableCardsOnIPhone() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact Explorer Lab picker regression only runs on iPhone simulators")
+        }
+
+        let app = launchExplorerLab()
+        XCTAssertTrue(app.staticTexts["Explorer Lab"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Pick a stream to explore"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Choose a subject stream first"].exists)
+
+        let numbers = app.buttons["lab-stream-card-numbers"]
+        let geometry = app.buttons["lab-stream-card-geometry"]
+        XCTAssertTrue(numbers.waitForExistence(timeout: 5))
+        XCTAssertTrue(geometry.waitForExistence(timeout: 5))
+        XCTAssertTrue(numbers.isHittable, "Expected the first Lab stream card to be reachable on compact iPhone")
+        XCTAssertTrue(geometry.isHittable, "Expected the second Lab stream card to be reachable on compact iPhone")
+    }
+
     func testBondBlastTargetTwelveKeepsLowAndMiddlePairsReachableOnIPhone() throws {
         guard UIDevice.current.userInterfaceIdiom == .phone else {
             throw XCTSkip("Compact Bond Blast reachability regression only runs on iPhone simulators")
@@ -337,6 +356,20 @@ final class CompactLayoutTests: XCTestCase {
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
             "-feature.roomQuestSafetyAcknowledged", "YES"
+        ]
+        app.launch()
+        return app
+    }
+
+    private func launchExplorerLab() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "lab"
         ]
         app.launch()
         return app
