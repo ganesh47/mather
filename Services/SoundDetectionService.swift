@@ -30,10 +30,11 @@ final class SoundDetectionService {
 
     // nonisolated(unsafe): AVAudioEngine is not Sendable, but we only ever
     // access it from @MainActor methods (start/stop are both @MainActor).
-    nonisolated(unsafe) private let audioEngine = AVAudioEngine()
+    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
     private var isListening = false
     private var previousRMS: Float = 0
     private var clapResetTask: Task<Void, Never>?
+    private var pendingMeterPermissionRequestID: UUID?
 
     // MARK: - Lifecycle
 
@@ -42,30 +43,41 @@ final class SoundDetectionService {
     func startListening() {
         guard !isListening else { return }
         let audioSession = AVAudioSession.sharedInstance()
-        guard audioSession.isInputAvailable else {
-            meterPermissionState = .unavailable
+
+        switch soundMeterPreflight(for: audioSession).startupDecision() {
+        case .requestPermission:
+            requestMicrophonePermission()
+            return
+        case .startMeter:
+            break
+        case .fail(let state):
+            resetSoundMeter(to: state)
             return
         }
+
         do {
             try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
             try audioSession.setActive(true, options: [])
         } catch {
-            meterPermissionState = .denied
+            resetSoundMeter(to: .unavailable)
             return
         }
 
-        let inputNode = audioEngine.inputNode
+        let engine = AVAudioEngine()
+        let inputNode = engine.inputNode
         let format = inputNode.inputFormat(forBus: 0)
         // When input hardware is unavailable, inputFormat can return a
         // zero-sample-rate format — installTap would crash.
-        guard format.sampleRate > 0 else {
-            meterPermissionState = .unavailable
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            resetSoundMeter(to: .unavailable)
             return
         }
 
+        inputNode.removeTap(onBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
             guard let channelData = buffer.floatChannelData?[0] else { return }
             let frameCount = Int(buffer.frameLength)
+            guard frameCount > 0 else { return }
             var sumOfSquares: Float = 0
             for i in 0..<frameCount {
                 sumOfSquares += channelData[i] * channelData[i]
@@ -79,19 +91,21 @@ final class SoundDetectionService {
         }
 
         do {
-            try audioEngine.start()
+            try engine.start()
+            audioEngine = engine
             isListening = true
             meterPermissionState = .listening
         } catch {
             // Silently fail: microphone permission may be denied, or the
             // audio session may be unavailable. Bond Blast still works without clap.
-            meterPermissionState = .denied
             inputNode.removeTap(onBus: 0)
+            resetSoundMeter(to: .unavailable)
         }
     }
 
     /// Stop listening and tear down the audio tap.
     func stopListening() {
+        pendingMeterPermissionRequestID = nil
         guard isListening else {
             previousRMS = 0
             meterReading = SoundMeterReading(rms: 0)
@@ -100,8 +114,9 @@ final class SoundDetectionService {
             clapDetected = false
             return
         }
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine?.stop()
+        audioEngine = nil
         isListening = false
         previousRMS = 0
         meterReading = SoundMeterReading(rms: 0)
@@ -138,5 +153,55 @@ final class SoundDetectionService {
             }
         }
         previousRMS = rms
+    }
+
+    private func requestMicrophonePermission() {
+        let requestID = UUID()
+        pendingMeterPermissionRequestID = requestID
+        meterPermissionState = .requestingPermission
+
+        AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+            Task { @MainActor [weak self] in
+                guard let self, self.pendingMeterPermissionRequestID == requestID else { return }
+                self.pendingMeterPermissionRequestID = nil
+                if granted {
+                    self.startListening()
+                } else {
+                    self.resetSoundMeter(to: .denied)
+                }
+            }
+        }
+    }
+
+    private func resetSoundMeter(to state: SoundMeterPermissionState) {
+        isListening = false
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine?.stop()
+        audioEngine = nil
+        previousRMS = 0
+        meterReading = SoundMeterReading(rms: 0)
+        meterPermissionState = state
+        clapResetTask?.cancel()
+        clapDetected = false
+    }
+
+    private func soundMeterPreflight(for audioSession: AVAudioSession) -> SoundMeterStartupPreflight {
+        SoundMeterStartupPreflight(
+            isInputAvailable: audioSession.isInputAvailable,
+            authorization: microphoneAuthorization(for: audioSession)
+        )
+    }
+
+    private func microphoneAuthorization(for audioSession: AVAudioSession) -> SoundMeterMicrophoneAuthorization {
+        switch audioSession.recordPermission {
+        case .undetermined:
+            return .undetermined
+        case .denied:
+            return .denied
+        case .granted:
+            return .granted
+        @unknown default:
+            return .unknown
+        }
     }
 }

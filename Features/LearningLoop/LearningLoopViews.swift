@@ -977,7 +977,7 @@ struct SoundVolumeLabView: View {
                 HStack(spacing: 10) {
                     Button {
                         appModel.soundDetectionService.startSoundLabMeter()
-                        feedback = "Meter started. Use normal room sounds only — no shouting and no points for loudness."
+                        feedback = soundMeterStartFeedback(for: appModel.soundDetectionService.meterPermissionState)
                     } label: {
                         Label("Start local meter", systemImage: "mic.circle.fill")
                             .font(.headline.weight(.black))
@@ -1070,6 +1070,21 @@ struct SoundVolumeLabView: View {
         case .comfortable: return MatherTheme.accent
         case .busy: return MatherTheme.warm
         case .protect: return MatherTheme.coral
+        }
+    }
+
+    private func soundMeterStartFeedback(for state: SoundMeterPermissionState) -> String {
+        switch state {
+        case .notStarted:
+            return "Meter is off. Sound Lab still works with hearing-safe examples and pitch cards."
+        case .requestingPermission:
+            return "Checking microphone access. If it is off, keep using no-mic learning mode."
+        case .listening:
+            return "Meter started. Use normal room sounds only — no shouting and no points for loudness."
+        case .unavailable:
+            return "Microphone is unavailable right now. Keep using no-mic learning mode with the safe example cards."
+        case .denied:
+            return "Microphone access is off. Keep using no-mic learning mode with the safe example cards."
         }
     }
 

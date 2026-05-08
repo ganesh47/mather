@@ -202,6 +202,33 @@ extension LearningLoopTests {
         XCTAssertFalse(SoundMeterLevelBucket.allCases.map(\.targetCopy).joined(separator: " ").localizedCaseInsensitiveContains("louder"))
     }
 
+    func testSoundMeterStartupPreflightDoesNotTouchAudioWhenUnavailableOrDenied() {
+        XCTAssertEqual(
+            SoundMeterStartupPreflight(isInputAvailable: false, authorization: .granted).startupDecision(),
+            .fail(.unavailable)
+        )
+        XCTAssertEqual(
+            SoundMeterStartupPreflight(isInputAvailable: true, authorization: .denied).startupDecision(),
+            .fail(.denied)
+        )
+        XCTAssertEqual(
+            SoundMeterStartupPreflight(isInputAvailable: true, authorization: .unknown).startupDecision(),
+            .fail(.unavailable)
+        )
+    }
+
+    func testSoundMeterStartupPreflightRequestsBeforeStartingEngine() {
+        XCTAssertEqual(
+            SoundMeterStartupPreflight(isInputAvailable: true, authorization: .undetermined).startupDecision(),
+            .requestPermission
+        )
+        XCTAssertEqual(
+            SoundMeterStartupPreflight(isInputAvailable: true, authorization: .granted).startupDecision(),
+            .startMeter
+        )
+        XCTAssertTrue(SoundMeterPermissionState.requestingPermission.guidance.contains("no-mic learning mode"))
+    }
+
     func testSoundPitchChallengeStateTeachesPitchWithoutMicrophone() {
         var state = SoundPitchChallengeState(challenge: SoundVolumeContent.pitchChallenge)
         XCTAssertFalse(state.isAnswered)
