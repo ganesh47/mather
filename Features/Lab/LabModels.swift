@@ -355,6 +355,7 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case memoryMatch
     case countryCards
     case fruitCards
+    case circuitSpark
 }
 
 extension LabActivityID {
@@ -390,6 +391,8 @@ extension LabActivityID {
             return .gameplayThread(.countries)
         case .fruitCards:
             return .gameplayThread(.fruits)
+        case .circuitSpark:
+            return .gameplayThread(.electronics)
         }
     }
 }
@@ -1056,7 +1059,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards, .circuitSpark:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -1515,8 +1518,8 @@ struct CapabilityLane: Identifiable, Equatable {
         CapabilityLane(
             id: .electronics,
             emoji: "💡",
-            promise: "Future: switches, circuits, sensors, and input/output systems.",
-            ageBandHint: "Future lane",
+            promise: "Build closed circuits, compare materials, and match magnet poles.",
+            ageBandHint: "Ages 4–12",
             modes: [.explore, .challenge, .review],
             ageEntries: [
                 CapabilityAgeEntry(ageBand: .preschool, posture: "switch and output", entryPlay: "light on/off"),
@@ -1524,7 +1527,15 @@ struct CapabilityLane: Identifiable, Equatable {
                 CapabilityAgeEntry(ageBand: .upperElementary, posture: "debug and sensors", entryPlay: "input/output"),
                 CapabilityAgeEntry(ageBand: .preteen, posture: "logic and systems", entryPlay: "gate puzzles"),
             ],
-            activities: []
+            activities: [
+                LabActivity(
+                    id: .circuitSpark,
+                    emoji: "💡",
+                    title: "Circuit Spark",
+                    tagline: "Match batteries, bulbs, switches, materials, and magnet poles",
+                    modes: [.learn, .explore, .review]
+                ),
+            ]
         ),
     ]
 

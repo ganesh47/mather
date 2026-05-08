@@ -38,6 +38,7 @@ struct LabRouteRegressionTests {
             .memoryMatch: .memory,
             .countryCards: .gameplayThread(.countries),
             .fruitCards: .gameplayThread(.fruits),
+            .circuitSpark: .gameplayThread(.electronics),
         ]
 
         #expect(Set(expectedRoutes.keys) == Set(LabActivityID.allCases))
@@ -53,6 +54,7 @@ struct LabRouteRegressionTests {
             .countryCards: .countries,
             .fruitCards: .fruits,
             .waterCycle: .waterCycle,
+            .circuitSpark: .electronics,
         ]
 
         for (activityID, threadID) in reusableThreadRoutes {
@@ -110,7 +112,7 @@ struct LabRouteRegressionTests {
     }
 
     @Test
-    func discoveryChemistryAndElectronicsShellsStayRegistered() throws {
+    func discoveryChemistryAndElectronicsLanesExposePlayableActivities() throws {
         let lanes = CapabilityLane.defaultExplorerLanes
         let discovery = try #require(lanes.first { $0.id == .discoveryCards })
         let chemistry = try #require(lanes.first { $0.id == .chemistry })
@@ -123,11 +125,15 @@ struct LabRouteRegressionTests {
         #expect(chemistry.activities.map(\.id) == [.fruitCards])
         #expect(chemistry.activities.first?.title == "Fruit Cards")
 
-        #expect(electronics.activities.isEmpty)
-        for futureShell in [chemistry, electronics] {
-            #expect(!futureShell.promise.isEmpty)
-            #expect(futureShell.starterMixMatchCards.count >= 8)
-            #expect(futureShell.modeChoiceCards.count == futureShell.modes.count)
+        #expect(electronics.activities.map(\.id) == [.circuitSpark])
+        #expect(electronics.activities.first?.title == "Circuit Spark")
+        #expect(electronics.activities.first?.accessibilityLabel.contains("batteries") == true)
+        #expect(electronics.accessibilityHint == "Choose an activity or review cards.")
+        #expect(!electronics.promise.contains("Future"))
+        for lane in [chemistry, electronics] {
+            #expect(!lane.promise.isEmpty)
+            #expect(lane.starterMixMatchCards.count >= 8)
+            #expect(lane.modeChoiceCards.count == lane.modes.count)
         }
     }
 
@@ -147,18 +153,19 @@ struct LabRouteRegressionTests {
     @Test
     func laneDetailPresentationPrioritizesActivitiesBeforeSupportMetadata() throws {
         let readyLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .numbers })
-        let futureLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .electronics })
+        let electronicsLane = try #require(CapabilityLane.defaultExplorerLanes.first { $0.id == .electronics })
 
         #expect(LabLaneDetailPresentation(lane: readyLane).sections == [
             .visualSummary,
             .activities,
             .progressStatus,
         ])
-        #expect(LabLaneDetailPresentation(lane: futureLane).sections == [
+        #expect(LabLaneDetailPresentation(lane: electronicsLane).sections == [
             .visualSummary,
-            .comingSoon,
+            .activities,
             .progressStatus,
         ])
+        #expect(LabLaneDetailPresentation(lane: electronicsLane).activityCountLabel == "1 game ready")
     }
 
     @Test
