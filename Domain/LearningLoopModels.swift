@@ -7,13 +7,92 @@ struct LearningConceptCard: Identifiable, Equatable {
     let explanation: String
     let visualKey: String
     let audioPrompt: String
+    let soundExample: SoundExampleKind?
 
-    init(id: String, title: String, explanation: String, visualKey: String, audioPrompt: String? = nil) {
+    init(
+        id: String,
+        title: String,
+        explanation: String,
+        visualKey: String,
+        audioPrompt: String? = nil,
+        soundExample: SoundExampleKind? = nil
+    ) {
         self.id = id
         self.title = title
         self.explanation = explanation
         self.visualKey = visualKey
         self.audioPrompt = audioPrompt ?? "Learn about \(title)."
+        self.soundExample = soundExample
+    }
+}
+
+struct SoundExamplePlaybackProfile: Equatable {
+    let durationSeconds: Double
+    let peakAmplitude: Double
+    let primaryFrequency: Double
+    let secondaryFrequency: Double?
+
+    init(durationSeconds: Double, peakAmplitude: Double, primaryFrequency: Double, secondaryFrequency: Double? = nil) {
+        self.durationSeconds = min(max(durationSeconds, 0.12), SoundExampleKind.hearingSafeMaximumDurationSeconds)
+        self.peakAmplitude = min(max(peakAmplitude, 0.01), SoundExampleKind.hearingSafeMaximumPeakAmplitude)
+        self.primaryFrequency = primaryFrequency
+        self.secondaryFrequency = secondaryFrequency
+    }
+}
+
+enum SoundExampleKind: String, CaseIterable, Equatable {
+    case decibelPulse
+    case quietChime
+    case conversationPulse
+    case trafficRumble
+    case sirenSweep
+    case headphonesLow
+    case pleasantBirds
+    case noisyBurst
+    case protectEarsMuffle
+
+    static let hearingSafeMaximumDurationSeconds = 0.65
+    static let hearingSafeMaximumPeakAmplitude = 0.18
+
+    var label: String {
+        switch self {
+        case .decibelPulse: return "dB pulse"
+        case .quietChime: return "quiet chime"
+        case .conversationPulse: return "talking pulse"
+        case .trafficRumble: return "traffic rumble"
+        case .sirenSweep: return "soft siren sweep"
+        case .headphonesLow: return "low headphone tone"
+        case .pleasantBirds: return "bird chirp"
+        case .noisyBurst: return "short noise burst"
+        case .protectEarsMuffle: return "muffled warning"
+        }
+    }
+
+    var accessibilityLabel: String {
+        "Play hearing-safe \(label) example"
+    }
+
+    var profile: SoundExamplePlaybackProfile {
+        switch self {
+        case .decibelPulse:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.38, peakAmplitude: 0.12, primaryFrequency: 660, secondaryFrequency: 880)
+        case .quietChime:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.46, peakAmplitude: 0.08, primaryFrequency: 523.25, secondaryFrequency: 659.25)
+        case .conversationPulse:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.52, peakAmplitude: 0.11, primaryFrequency: 220, secondaryFrequency: 330)
+        case .trafficRumble:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.48, peakAmplitude: 0.13, primaryFrequency: 110, secondaryFrequency: 165)
+        case .sirenSweep:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.12, primaryFrequency: 520, secondaryFrequency: 860)
+        case .headphonesLow:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.42, peakAmplitude: 0.09, primaryFrequency: 440, secondaryFrequency: 554.37)
+        case .pleasantBirds:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.10, primaryFrequency: 980, secondaryFrequency: 1320)
+        case .noisyBurst:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.32, peakAmplitude: 0.10, primaryFrequency: 260, secondaryFrequency: 520)
+        case .protectEarsMuffle:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.44, peakAmplitude: 0.08, primaryFrequency: 320, secondaryFrequency: 180)
+        }
     }
 }
 
@@ -273,15 +352,15 @@ enum SoundVolumeContent {
     ]
 
     static let cards: [LearningConceptCard] = [
-        LearningConceptCard(id: "decibel", title: "Decibel (dB)", explanation: "A decibel is a number for loudness. Bigger dB usually means a louder sound.", visualKey: "dB", audioPrompt: "A decibel, or dB, is a number for loudness."),
-        LearningConceptCard(id: "quiet", title: "Quiet", explanation: "Quiet sounds are soft and gentle, like a whisper or leaves.", visualKey: "🍃", audioPrompt: "Quiet sounds are soft and gentle."),
-        LearningConceptCard(id: "conversation", title: "Conversation", explanation: "A talking voice sits in the middle loudness zone.", visualKey: "💬", audioPrompt: "Conversation is a middle loudness zone."),
-        LearningConceptCard(id: "traffic", title: "Traffic", explanation: "Busy traffic is loud and can turn into noise pollution.", visualKey: "🚗", audioPrompt: "Traffic can be loud and unwanted."),
-        LearningConceptCard(id: "siren", title: "Siren", explanation: "Sirens warn us, but they are very loud. Move away and protect ears.", visualKey: "🚨", audioPrompt: "Sirens are very loud warning sounds."),
-        LearningConceptCard(id: "headphones", title: "Headphones", explanation: "Keep headphones low, take breaks, and never play a volume that hurts.", visualKey: "🎧", audioPrompt: "Headphones should stay low and safe."),
-        LearningConceptCard(id: "pleasant", title: "Pleasant Sound", explanation: "Pleasant sounds feel nice and safe, like birds or soft music.", visualKey: "🐦", audioPrompt: "Pleasant sounds feel nice and safe."),
-        LearningConceptCard(id: "unpleasant", title: "Noisy Sound", explanation: "Noisy sounds feel harsh, distracting, or unwanted.", visualKey: "📣", audioPrompt: "Noisy sounds are unwanted or harsh."),
-        LearningConceptCard(id: "protect-ears", title: "Protect Ears", explanation: "Lower volume, move away, cover ears, or ask a grown-up for help.", visualKey: "👂", audioPrompt: "Protect ears when sound is too loud."),
+        LearningConceptCard(id: "decibel", title: "Decibel (dB)", explanation: "A decibel is a number for loudness. Bigger dB usually means a louder sound.", visualKey: "dB", audioPrompt: "A decibel, or dB, is a number for loudness.", soundExample: .decibelPulse),
+        LearningConceptCard(id: "quiet", title: "Quiet", explanation: "Quiet sounds are soft and gentle, like a whisper or leaves.", visualKey: "🍃", audioPrompt: "Quiet sounds are soft and gentle.", soundExample: .quietChime),
+        LearningConceptCard(id: "conversation", title: "Conversation", explanation: "A talking voice sits in the middle loudness zone.", visualKey: "💬", audioPrompt: "Conversation is a middle loudness zone.", soundExample: .conversationPulse),
+        LearningConceptCard(id: "traffic", title: "Traffic", explanation: "Busy traffic is loud and can turn into noise pollution.", visualKey: "🚗", audioPrompt: "Traffic can be loud and unwanted.", soundExample: .trafficRumble),
+        LearningConceptCard(id: "siren", title: "Siren", explanation: "Sirens warn us, but they are very loud. Move away and protect ears.", visualKey: "🚨", audioPrompt: "Sirens are very loud warning sounds.", soundExample: .sirenSweep),
+        LearningConceptCard(id: "headphones", title: "Headphones", explanation: "Keep headphones low, take breaks, and never play a volume that hurts.", visualKey: "🎧", audioPrompt: "Headphones should stay low and safe.", soundExample: .headphonesLow),
+        LearningConceptCard(id: "pleasant", title: "Pleasant Sound", explanation: "Pleasant sounds feel nice and safe, like birds or soft music.", visualKey: "🐦", audioPrompt: "Pleasant sounds feel nice and safe.", soundExample: .pleasantBirds),
+        LearningConceptCard(id: "unpleasant", title: "Noisy Sound", explanation: "Noisy sounds feel harsh, distracting, or unwanted.", visualKey: "📣", audioPrompt: "Noisy sounds are unwanted or harsh.", soundExample: .noisyBurst),
+        LearningConceptCard(id: "protect-ears", title: "Protect Ears", explanation: "Lower volume, move away, cover ears, or ask a grown-up for help.", visualKey: "👂", audioPrompt: "Protect ears when sound is too loud.", soundExample: .protectEarsMuffle),
     ]
 
     static let quizQuestions: [ConceptQuizQuestion] = [
