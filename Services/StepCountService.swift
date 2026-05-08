@@ -2,6 +2,9 @@ import CoreMotion
 import Foundation
 import Observation
 
+typealias PedometerUpdateHandler = (CMPedometerData?, Error?) -> Void
+typealias PedometerUpdatesStarter = (Date, @escaping PedometerUpdateHandler) -> Void
+
 /// Pure, testable progress helper for small-step walking challenges.
 struct StepWalkProgress: Equatable {
     let requiredSteps: Int
@@ -37,17 +40,31 @@ enum StepCountMode: Equatable {
 @Observable
 final class StepCountService {
     nonisolated(unsafe) private let pedometer: CMPedometer
+    private let stepCountingAvailable: () -> Bool
+    private let startPedometerUpdates: PedometerUpdatesStarter
+    private let noStepUpdateFallbackDelay: Duration
+    private var noStepUpdateFallbackTask: Task<Void, Never>?
     private var startDate: Date?
 
     private(set) var progress = StepWalkProgress(requiredSteps: 1)
     private(set) var mode: StepCountMode = .idle
 
-    init(pedometer: CMPedometer = CMPedometer()) {
+    init(
+        pedometer: CMPedometer = CMPedometer(),
+        stepCountingAvailable: @escaping () -> Bool = { CMPedometer.isStepCountingAvailable() },
+        startPedometerUpdates: PedometerUpdatesStarter? = nil,
+        noStepUpdateFallbackDelay: Duration = .seconds(3)
+    ) {
         self.pedometer = pedometer
+        self.stepCountingAvailable = stepCountingAvailable
+        self.startPedometerUpdates = startPedometerUpdates ?? { date, handler in
+            pedometer.startUpdates(from: date, withHandler: handler)
+        }
+        self.noStepUpdateFallbackDelay = noStepUpdateFallbackDelay
     }
 
     var isStepCountingAvailable: Bool {
-        CMPedometer.isStepCountingAvailable()
+        stepCountingAvailable()
     }
 
     var isComplete: Bool { progress.isComplete }
@@ -65,27 +82,35 @@ final class StepCountService {
         }
 
         mode = .pedometer
-        pedometer.startUpdates(from: startDate ?? Date()) { [weak self] data, error in
+        scheduleNoStepUpdateFallback()
+        startPedometerUpdates(startDate ?? Date()) { [weak self] data, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 if error != nil {
-                    self.pedometer.stopUpdates()
-                    self.mode = .manualFallback(reason: "Motion permission was not available. Tap each small step instead.")
+                    self.useManualFallback(reason: "Motion permission was not available. Tap each small step instead.")
                     return
                 }
                 guard let data else { return }
                 self.progress.setCountedSteps(data.numberOfSteps.intValue)
+                if self.progress.countedSteps > 0 {
+                    self.noStepUpdateFallbackTask?.cancel()
+                    self.noStepUpdateFallbackTask = nil
+                }
             }
         }
     }
 
     func stop() {
+        noStepUpdateFallbackTask?.cancel()
+        noStepUpdateFallbackTask = nil
         pedometer.stopUpdates()
         startDate = nil
         mode = .idle
     }
 
     func useManualFallback(reason: String = "Tap after each small careful step.") {
+        noStepUpdateFallbackTask?.cancel()
+        noStepUpdateFallbackTask = nil
         pedometer.stopUpdates()
         mode = .manualFallback(reason: reason)
     }
@@ -102,5 +127,16 @@ final class StepCountService {
     // Exposed for tests and previews so no hardware/permission is required.
     func applyCountedSteps(_ steps: Int) {
         progress.setCountedSteps(steps)
+    }
+
+    private func scheduleNoStepUpdateFallback() {
+        noStepUpdateFallbackTask?.cancel()
+        let delay = noStepUpdateFallbackDelay
+        noStepUpdateFallbackTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self else { return }
+            guard case .pedometer = self.mode, self.progress.countedSteps == 0 else { return }
+            self.useManualFallback(reason: "If step sensing does not start, tap after each small careful step.")
+        }
     }
 }
