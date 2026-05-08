@@ -90,7 +90,7 @@ struct LabView: View {
                 Text("Explorer Lab")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
-                Text(selectedPath == .labs ? "Choose a subject stream first" : "Jump straight into a game")
+                Text(selectedPath == .labs ? "Pick a stream to explore" : "Jump straight into a game")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.accent)
             }
@@ -165,27 +165,17 @@ struct LabView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Subject streams")
+                    Text("Pick a stream")
                         .font(.title3.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text(CapabilityLane.subjectStreamSummary)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(MatherTheme.accent)
+                    Text("Pick one card. Details open next.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
 
-            LabDetailFlowLayout(spacing: 6) {
-                ForEach(lanes) { lane in
-                    Text(lane.subjectStreamShortLabel)
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(lane.id.themeColor)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(lane.id.themeColor.opacity(0.10), in: Capsule())
-                }
-            }
         }
         .padding(14)
         .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -194,7 +184,7 @@ struct LabView: View {
                 .stroke(MatherTheme.accent.opacity(0.18), lineWidth: 1)
         )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Subject streams: \(CapabilityLane.subjectStreamSummary)")
+        .accessibilityLabel("Pick a stream: \(CapabilityLane.subjectStreamSummary)")
     }
 
     private func guidedLabsIntro(compact: Bool) -> some View {
@@ -375,17 +365,18 @@ struct LabView: View {
         return Button {
             appModel.engine.showLabLane(lane.id)
         } label: {
-            Group {
-                if compact {
-                    compactLaneTile(lane, presentation: presentation, progress: progress, tint: tint)
-                } else {
-                    fullLaneCard(lane, presentation: presentation, progress: progress, tint: tint)
-                }
-            }
-            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            laneStreamTile(lane, presentation: presentation, tint: tint, compact: compact)
+            .background(
+                LinearGradient(
+                    colors: [tint.opacity(0.95), tint.opacity(0.70)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(tint.opacity(compact ? 0.28 : 0.18), lineWidth: compact ? 1.5 : 1)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.10 : 0.0), lineWidth: 1)
             )
             .shadow(
                 color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08),
@@ -394,49 +385,46 @@ struct LabView: View {
             .scaleEffect(!reduceMotion && playfulPulse ? 1.01 : 1.0, anchor: .center)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(presentation.accessibilityLabel). \(progress.progressSummaryLabel). \(progress.nextRecommendedModeLabel).")
+        .accessibilityIdentifier("lab-stream-card-\(lane.id.rawValue)")
+        .accessibilityLabel(presentation.accessibilityLabel)
         .accessibilityHint(presentation.accessibilityHint)
     }
 
-    private func compactLaneTile(
+    private func laneStreamTile(
         _ lane: CapabilityLane,
         presentation: LabLaneCardPresentation,
-        progress: CapabilityLaneProgress,
-        tint: Color
+        tint: Color,
+        compact: Bool
     ) -> some View {
-        VStack(spacing: 10) {
-            laneVisual(lane, tint: tint, size: 74)
+        VStack(alignment: .leading, spacing: compact ? 10 : 12) {
+            HStack(alignment: .top, spacing: 8) {
+                laneVisual(lane, tint: .white, size: compact ? 56 : 68)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: compact ? 22 : 26, weight: .black))
+                    .foregroundStyle(.white.opacity(0.86))
+                    .accessibilityHidden(true)
+            }
 
-            Text(presentation.title)
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(MatherTheme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.78)
-                .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
+
+            VStack(alignment: .leading, spacing: compact ? 4 : 6) {
+                Text(presentation.title)
+                    .font(.system(size: compact ? 18 : 22, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.76)
+                    .multilineTextAlignment(.leading)
+
+                Text(presentation.statusLine)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.white.opacity(0.88))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: 142, alignment: .center)
-    }
-
-    private func fullLaneCard(
-        _ lane: CapabilityLane,
-        presentation: LabLaneCardPresentation,
-        progress: CapabilityLaneProgress,
-        tint: Color
-    ) -> some View {
-        VStack(spacing: 12) {
-            laneVisual(lane, tint: tint, size: 86)
-
-            Text(presentation.title)
-                .font(.title3.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.78)
-                .multilineTextAlignment(.center)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .center)
+        .padding(compact ? 14 : 16)
+        .frame(maxWidth: .infinity, minHeight: compact ? 150 : 174, alignment: .leading)
     }
 
     private func compactProgressBadge(_ progress: CapabilityLaneProgress, tint: Color) -> some View {

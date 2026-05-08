@@ -462,8 +462,8 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
             symbolName: "sparkles.rectangle.stack.fill",
             artMotif: "guided compass path",
             title: "Labs",
-            subtitle: "Pick a subject stream, then follow a calm staged path when one is ready.",
-            callToAction: "Choose a subject"
+            subtitle: "Pick a learning stream, then follow a calm staged path when one is ready.",
+            callToAction: "Pick a stream"
         ),
         ExplorerPathPresentation(
             id: .games,
@@ -1006,6 +1006,7 @@ struct LabLaneCardPresentation: Equatable {
     let title: String
     let promiseLine: String
     let progressMicrocopy: String
+    let statusLine: String
     let openAffordanceLabel: String
     let accessibilityLabel: String
     let accessibilityHint: String
@@ -1016,9 +1017,12 @@ struct LabLaneCardPresentation: Equatable {
         title = lane.subjectStreamLabel
         promiseLine = lane.promise
         progressMicrocopy = "\(progress.progressSummaryLabel) • \(progress.nextRecommendedModeLabel)"
+        statusLine = lane.activities.isEmpty
+            ? "Coming soon"
+            : "\(lane.activities.count) game\(lane.activities.count == 1 ? "" : "s") ready"
         openAffordanceLabel = "Open"
-        accessibilityLabel = "\(lane.subjectStreamLabel) subject stream. \(lane.ageBandHint). \(lane.promise)"
-        accessibilityHint = "Opens \(lane.subjectStreamLabel) to choose staged labs and games."
+        accessibilityLabel = "\(lane.subjectStreamLabel). \(statusLine). \(lane.ageBandHint)."
+        accessibilityHint = "Opens \(lane.subjectStreamLabel) with staged labs, games, and progress details."
         sections = [
             .visualSummary,
         ]

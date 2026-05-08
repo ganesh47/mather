@@ -86,6 +86,8 @@ final class LabModelsTests: XCTestCase {
 
         XCTAssertEqual(presentation.title, "Numbers & Arithmetic")
         XCTAssertEqual(presentation.openAffordanceLabel, "Open")
+        XCTAssertEqual(presentation.statusLine, "3 games ready")
+        XCTAssertFalse(presentation.accessibilityLabel.contains("Build number bonds"))
         XCTAssertEqual(
             presentation.sections,
             [.visualSummary]
@@ -96,6 +98,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertFalse(presentation.sections.contains(.activities))
         XCTAssertTrue(presentation.accessibilityHint.contains("Opens Numbers & Arithmetic"))
+        XCTAssertTrue(presentation.accessibilityHint.contains("progress details"))
         XCTAssertFalse(presentation.sections.contains(.promise))
         XCTAssertFalse(presentation.sections.contains(.progressStatus))
     }
@@ -143,8 +146,8 @@ final class LabModelsTests: XCTestCase {
         let games = ExplorerPathPresentation.all[1]
 
         XCTAssertEqual(labs.title, "Labs")
-        XCTAssertTrue(labs.subtitle.contains("Pick a subject stream"))
-        XCTAssertEqual(labs.callToAction, "Choose a subject")
+        XCTAssertTrue(labs.subtitle.contains("Pick a learning stream"))
+        XCTAssertEqual(labs.callToAction, "Pick a stream")
         XCTAssertEqual(labs.symbolName, "sparkles.rectangle.stack.fill")
         XCTAssertTrue(labs.artworkAccessibilityLabel.contains("Labs"))
 
