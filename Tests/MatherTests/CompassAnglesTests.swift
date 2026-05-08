@@ -193,4 +193,29 @@ struct CompassWalkTurnTests {
         service.stop()
         #expect(service.mode == .idle)
     }
+
+    @MainActor
+    @Test func stepCountServiceFallsBackWhenPedometerProducesNoUpdates() async {
+        let service = StepCountService(
+            stepCountingAvailable: { true },
+            startPedometerUpdates: { _, _ in },
+            noStepUpdateFallbackDelay: .milliseconds(10)
+        )
+
+        service.start(requiredSteps: 2)
+        #expect(service.mode == .pedometer)
+
+        try? await Task.sleep(for: .milliseconds(30))
+
+        if case .manualFallback(let reason) = service.mode {
+            #expect(reason.contains("step sensing does not start"))
+        } else {
+            Issue.record("Expected no-update pedometer start to fall back to manual mode")
+        }
+
+        service.addManualStep()
+        service.addManualStep()
+        #expect(service.isComplete)
+        service.stop()
+    }
 }

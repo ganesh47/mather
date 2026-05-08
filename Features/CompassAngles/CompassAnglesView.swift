@@ -154,6 +154,7 @@ struct CompassAnglesView: View {
     @State private var sessionStart: Date = .now
     @State private var showDegreeLabel: Bool = false
     @State private var showTurnFallback: Bool = false
+    @State private var turnFallbackTask: Task<Void, Never>?
 
     private var level: CompassWalkTurnLevel { compassWalkTurnLevels[levelIndex % compassWalkTurnLevels.count] }
     private var currentYaw: Double { appModel.motionService.relativeYaw }
@@ -186,6 +187,7 @@ struct CompassAnglesView: View {
             appModel.motionService.startUpdates()
         }
         .onDisappear {
+            turnFallbackTask?.cancel()
             appModel.stepCountService.stop()
             appModel.motionService.stopRelativeYawTracking()
             appModel.motionService.stopUpdates()
@@ -533,12 +535,23 @@ struct CompassAnglesView: View {
     private func beginWalkPhase() {
         phase = .walking
         showDegreeLabel = false
+        turnFallbackTask?.cancel()
         appModel.motionService.stopRelativeYawTracking()
         stepService.start(requiredSteps: level.steps)
         appModel.speechService.speak(
             "Clear space. Walk \(level.steps) small careful steps \(level.walkDirection.title). No running.",
             enabled: appModel.featureFlags.audioEnabled
         )
+    }
+
+    private func scheduleTurnFallbackIfNeeded() {
+        turnFallbackTask?.cancel()
+        turnFallbackTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled, phase == .turning, !appModel.motionService.relativeYawResponsive {
+                showTurnFallback = true
+            }
+        }
     }
 
     private func checkWalkProgress() {
@@ -550,18 +563,14 @@ struct CompassAnglesView: View {
         appModel.motionService.startRelativeYawTracking()
         appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(level.turnHint, enabled: appModel.featureFlags.audioEnabled)
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3))
-            if phase == .turning, !appModel.motionService.relativeYawResponsive {
-                showTurnFallback = true
-            }
-        }
+        scheduleTurnFallbackIfNeeded()
     }
 
     private func checkSnap(yaw: Double) {
         guard phase == .turning else { return }
         showDegreeLabel = true
         if CompassMath.isInSnapZone(yaw: yaw, target: level.targetDeg) {
+            turnFallbackTask?.cancel()
             phase = .success
             wonCount += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
@@ -581,6 +590,7 @@ struct CompassAnglesView: View {
         phase = .ready
         showDegreeLabel = false
         showTurnFallback = false
+        turnFallbackTask?.cancel()
         stepService.stop()
         appModel.motionService.stopRelativeYawTracking()
     }
