@@ -239,7 +239,7 @@ extension LearningLoopTests {
         let thread = GameplayThreadCatalog.shapes
         let names = Set(thread.entities.map(\.name))
         XCTAssertTrue(names.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Diamond", "Star", "Heart"]))
-        XCTAssertEqual(thread.entities.count, 8)
+        XCTAssertEqual(thread.entities.count, 12)
     }
 
     func testShapeThreadEntitiesCarryVisualKeys() {

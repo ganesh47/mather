@@ -42,6 +42,8 @@ struct ReusableBondBlastBoard: View {
     let onComplete: (Int, Int, Int) -> Void
 
     @State private var mismatchedRightID: String?
+    @State private var autoProgressTask: Task<Void, Never>?
+    @State private var autoProgressSignature: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
@@ -78,6 +80,10 @@ struct ReusableBondBlastBoard: View {
 
             progressDots
 
+            if autoProgressSignature != nil {
+                GameplayMatchRewardBanner(text: viewModel.canAdvanceTurn ? "Great matches! Next turn is coming…" : "Great matches! Your reward is coming…")
+            }
+
             if let item = viewModel.inspectedItem, shouldShowDetail(for: item) {
                 GameplayBondBlastDetailCallout(item: item, compact: compact)
             }
@@ -87,18 +93,60 @@ struct ReusableBondBlastBoard: View {
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 Spacer()
                 if viewModel.canAdvanceTurn {
-                    Button("Next turn") { viewModel.advanceTurn() }
-                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                    Button("Next turn") {
+                        cancelAutoProgress()
+                        viewModel.advanceTurn()
+                    }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
                 } else {
-                    Button("Finish stage") { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
-                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                        .disabled(!viewModel.isComplete)
+                    Button("Finish stage") {
+                        cancelAutoProgress()
+                        onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+                    }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                    .disabled(!viewModel.isComplete)
                 }
             }
         }
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
         .accessibilityLabel("\(title). \(viewModel.correctCount) of \(viewModel.pairs.count) bonds matched.")
+        .onDisappear { cancelAutoProgress() }
+    }
+
+
+    private func scheduleAutoProgressIfReady() {
+        let signature: String?
+        if viewModel.canAdvanceTurn {
+            signature = "turn-\(viewModel.activeTurnIndex)-\(viewModel.correctCount)"
+        } else if viewModel.isComplete {
+            signature = "complete-\(viewModel.correctCount)"
+        } else {
+            signature = nil
+        }
+        guard let signature else { return }
+        guard autoProgressSignature != signature else { return }
+        cancelAutoProgress()
+        autoProgressSignature = signature
+        autoProgressTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1_200))
+            guard autoProgressSignature == signature else { return }
+            if viewModel.canAdvanceTurn {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                    viewModel.advanceTurn()
+                }
+            } else if viewModel.isComplete {
+                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+            }
+            autoProgressSignature = nil
+            autoProgressTask = nil
+        }
+    }
+
+    private func cancelAutoProgress() {
+        autoProgressTask?.cancel()
+        autoProgressTask = nil
+        autoProgressSignature = nil
     }
 
     private var instructionText: String {
@@ -155,9 +203,7 @@ struct ReusableBondBlastBoard: View {
                 actions.failure()
                 triggerMismatch(for: item.id)
             }
-            if viewModel.isComplete {
-                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
-            }
+            scheduleAutoProgressIfReady()
         } label: {
             GameplayDisplayCard(
                 item: item,

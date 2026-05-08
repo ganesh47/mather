@@ -4,7 +4,7 @@ import XCTest
 @MainActor
 final class CompactLayoutTests: XCTestCase {
 
-    func testIPadHomeRegularLayoutShowsFullMakeAndBreakTitle() throws {
+    func testIPadHomeRegularLayoutUsesSimpleChildLauncherTiles() throws {
         guard UIDevice.current.userInterfaceIdiom == .pad else {
             throw XCTSkip("iPad regular-layout regression only runs on iPad simulators")
         }
@@ -12,10 +12,13 @@ final class CompactLayoutTests: XCTestCase {
         let app = launchWithVS1()
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
 
-        let playCard = app.buttons["Play"]
-        XCTAssertTrue(playCard.waitForExistence(timeout: 5))
-        XCTAssertTrue(playCard.staticTexts["Make & Break"].waitForExistence(timeout: 5), "Expected the iPad home hero to expose the full Make & Break title")
-        XCTAssertTrue(playCard.staticTexts["Targets"].waitForExistence(timeout: 5), "Expected the iPad home hero subtitle to remain visible next to the title")
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["ExplorerLab"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["GamesEntry"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Play"].staticTexts["Targets"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["ExplorerLab"].staticTexts["Labs"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["GamesEntry"].staticTexts["Games"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Make & Break"].exists, "Home launcher should avoid copy-heavy child tiles")
     }
 
     func testBondBlastTargetTwelveKeepsLowAndMiddlePairsReachableOnIPhone() throws {

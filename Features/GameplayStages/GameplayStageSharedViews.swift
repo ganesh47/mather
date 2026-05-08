@@ -233,6 +233,26 @@ private struct CountryMapSilhouette: Shape {
     }
 }
 
+struct GameplayMatchRewardBanner: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text("★")
+                .font(.title3.bold())
+                .foregroundStyle(MatherTheme.warm)
+            Text(text)
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Capsule().fill(MatherTheme.warm.opacity(0.24)))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct GameplayPairingStageShell: View {
     let title: String
     let prompt: String
@@ -240,6 +260,9 @@ struct GameplayPairingStageShell: View {
     @Binding var viewModel: GameplayMatchStageViewModel
     let actions: GameplayStageFeedbackActions
     let onComplete: (Int, Int, Int) -> Void
+
+    @State private var autoProgressTask: Task<Void, Never>?
+    @State private var autoProgressSignature: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
@@ -268,7 +291,7 @@ struct GameplayPairingStageShell: View {
                         let correct = viewModel.chooseRight(item)
                         if correct { actions.success() }
                         else if wasMatching { actions.failure() }
-                        if viewModel.isComplete { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
+                        scheduleAutoProgressIfReady()
                     } label: {
                         GameplayDisplayCard(
                             item: item,
@@ -284,6 +307,9 @@ struct GameplayPairingStageShell: View {
                     .accessibilityLabel(viewModel.accessibilityLabel(for: item, side: .right))
                 }
             }
+            if autoProgressSignature != nil {
+                GameplayMatchRewardBanner(text: viewModel.canAdvanceTurn ? "Great matches! Next turn is coming…" : "Great matches! Your reward is coming…")
+            }
             if let item = viewModel.inspectedItem, !viewModel.shouldConcealRight(item) {
                 GameplayCardDetailCallout(item: item, compact: compact)
             }
@@ -292,17 +318,58 @@ struct GameplayPairingStageShell: View {
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 Spacer()
                 if viewModel.canAdvanceTurn {
-                    Button("Next turn") { viewModel.advanceTurn() }
-                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                    Button("Next turn") {
+                        cancelAutoProgress()
+                        viewModel.advanceTurn()
+                    }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
                 } else {
-                    Button("Finish stage") { onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount) }
-                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                        .disabled(!viewModel.isComplete)
+                    Button("Finish stage") {
+                        cancelAutoProgress()
+                        onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+                    }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                    .disabled(!viewModel.isComplete)
                 }
             }
         }
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
+        .onDisappear { cancelAutoProgress() }
+    }
+
+    private func scheduleAutoProgressIfReady() {
+        let signature: String?
+        if viewModel.canAdvanceTurn {
+            signature = "turn-\(viewModel.activeTurnIndex)-\(viewModel.correctCount)"
+        } else if viewModel.isComplete {
+            signature = "complete-\(viewModel.correctCount)"
+        } else {
+            signature = nil
+        }
+        guard let signature else { return }
+        guard autoProgressSignature != signature else { return }
+        cancelAutoProgress()
+        autoProgressSignature = signature
+        autoProgressTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1_200))
+            guard autoProgressSignature == signature else { return }
+            if viewModel.canAdvanceTurn {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                    viewModel.advanceTurn()
+                }
+            } else if viewModel.isComplete {
+                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+            }
+            autoProgressSignature = nil
+            autoProgressTask = nil
+        }
+    }
+
+    private func cancelAutoProgress() {
+        autoProgressTask?.cancel()
+        autoProgressTask = nil
+        autoProgressSignature = nil
     }
 
     private var columns: [GridItem] {
