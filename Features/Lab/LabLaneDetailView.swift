@@ -673,7 +673,7 @@ struct LabLaneDetailView: View {
             case .sumSprint:
                 appModel.sumSprintEngine.showDifficultyPick()
             case .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
-                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards:
+                 .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards, .circuitSpark:
                 break
             }
         }
@@ -714,4 +714,3 @@ struct LabLaneDetailView: View {
     }
 
 }
-

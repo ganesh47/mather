@@ -59,6 +59,66 @@ struct GameplayThreadContentTests {
     }
 
     @Test
+    func electronicsThreadCoversCircuitAndMagnetBasicsWithoutColorOnlyAnswers() {
+        let thread = GameplayThreadCatalog.electronics
+
+        #expect(thread.id == "electronics")
+        #expect(thread.category.id == "electronics")
+        #expect(thread.title == "Circuit Spark")
+        #expect(thread.entities.count == 8)
+        #expect(Set(thread.propertyTypes.map(\.id)) == Set(["part", "job", "rule"]))
+        #expect(Set(thread.entities.map(\.name)).isSuperset(of: [
+            "Battery",
+            "Bulb",
+            "Closed Circuit",
+            "Open Circuit",
+            "Switch",
+            "Conductor",
+            "Insulator",
+            "Magnet Poles",
+        ]))
+
+        let propertyValues = thread.entities.flatMap { $0.properties.map(\.value) }
+        for requiredValue in [
+            "Needs a loop",
+            "Lights in a closed circuit",
+            "Bulb on",
+            "Bulb off",
+            "Closed switch means on path",
+            "Copper helps the bulb",
+            "Not for the light path",
+            "Opposites attract",
+        ] {
+            #expect(propertyValues.contains(requiredValue), "Circuit Spark should teach \(requiredValue)")
+        }
+
+        #expect(thread.entities.allSatisfy { entity in
+            entity.properties.allSatisfy { property in
+                !property.value.isEmpty && !property.explanation.isEmpty
+            }
+        })
+    }
+
+    @Test
+    func electronicsStagesGeneratePlayableReusableRounds() {
+        let thread = GameplayThreadCatalog.electronics
+
+        #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+        #expect(thread.stages[1].propertyTypeIDs == ["part", "job"])
+        #expect(thread.stages[2].propertyTypeIDs == ["job", "rule"])
+        #expect(thread.stages[3].propertyTypeIDs == ["part", "job", "rule"])
+        #expect(thread.stages[4].propertyTypeIDs == ["job", "rule"])
+
+        for stage in thread.stages {
+            let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1024)
+            #expect(round.stageID == stage.id)
+            #expect(round.kind == stage.kind)
+            #expect(!round.items.isEmpty, "\(stage.id) should generate playable items")
+            #expect(round.items.count <= stage.maximumItemCount)
+        }
+    }
+
+    @Test
     func fruitEasyMemoryIncludesGrowTasteAndClimateFacts() throws {
         let thread = GameplayThreadCatalog.fruits
         let stage = try #require(thread.stages.first { $0.id == "fruit-easy-memory" })

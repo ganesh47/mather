@@ -136,6 +136,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(LabActivityID.waterCycle.appRoute, .gameplayThread(.waterCycle))
         XCTAssertEqual(LabActivityID.soundVolume.appRoute, .soundVolume)
         XCTAssertEqual(LabActivityID.memoryMatch.appRoute, .memory)
+        XCTAssertEqual(LabActivityID.circuitSpark.appRoute, .gameplayThread(.electronics))
     }
 
     func testExplorerPathSplitKeepsLabsAndGamesAsTopLevelChoices() {
@@ -315,6 +316,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.activity.id == .sumSprint && $0.directRoute == .sumSprint })
         XCTAssertTrue(entries.contains { $0.activity.id == .waterCycle && $0.directRoute == .gameplayThread(.waterCycle) })
         XCTAssertTrue(entries.contains { $0.activity.id == .memoryMatch && $0.directRoute == .memory })
+        XCTAssertTrue(entries.contains { $0.activity.id == .circuitSpark && $0.laneID == .electronics && $0.directRoute == .gameplayThread(.electronics) })
     }
 
 
@@ -677,6 +679,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
         XCTAssertEqual(LabActivityID.soundVolume.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.memoryMatch.sensorNeeds, [.noSpecialSensor])
+        XCTAssertEqual(LabActivityID.circuitSpark.sensorNeeds, [.noSpecialSensor])
     }
 
     func testUnavailableSensorAffordancesExposeVisibleFallbackCopy() {
@@ -798,6 +801,7 @@ extension LabModelsTests {
         XCTAssertEqual(LabActivityID.twoFingerProtractor.appRoute, .twoFingerProtractor)
         XCTAssertEqual(LabActivityID.symmetryFold.appRoute, .symmetryFold)
         XCTAssertEqual(LabActivityID.shapeGeometry.appRoute, .shapeGeometry)
+        XCTAssertEqual(LabActivityID.circuitSpark.appRoute, .gameplayThread(.electronics))
     }
 
     func testGeometryRememberDecksAreCalmReusableCards() throws {
