@@ -387,7 +387,7 @@ enum GameplayStageContentBuilder {
             let fallbackDistractors = pairs
                 .filter { $0.id != pair.id }
                 .map(\.right)
-            let distractors = uniqued(sameTypeDistractors + fallbackDistractors, excluding: pair.right.id)
+            let distractors = uniqued(sameTypeDistractors + fallbackDistractors, excluding: pair.right)
             let choices = deterministicOrder([pair.right] + Array(distractors.prefix(max(0, choicesPerQuestion - 1))), seed: stableSeed(pair.id))
             return GameplayMultipleChoiceQuestion(
                 id: "quiz-\(pair.id)",
@@ -431,14 +431,22 @@ enum GameplayStageContentBuilder {
         thread.propertyTypesByID[id]?.displayName ?? id
     }
 
-    private static func uniqued(_ items: [GameplayDisplayItem], excluding id: String) -> [GameplayDisplayItem] {
-        var seen = Set([id])
+    private static func uniqued(_ items: [GameplayDisplayItem], excluding answer: GameplayDisplayItem) -> [GameplayDisplayItem] {
+        var seenIDs = Set([answer.id])
+        var seenVisibleLabels = Set([visibleChoiceKey(answer)])
         var result: [GameplayDisplayItem] = []
-        for item in items where !seen.contains(item.id) {
-            seen.insert(item.id)
+        for item in items {
+            let visibleKey = visibleChoiceKey(item)
+            guard !seenIDs.contains(item.id), !seenVisibleLabels.contains(visibleKey) else { continue }
+            seenIDs.insert(item.id)
+            seenVisibleLabels.insert(visibleKey)
             result.append(item)
         }
         return result
+    }
+
+    private static func visibleChoiceKey(_ item: GameplayDisplayItem) -> String {
+        item.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private static func deterministicOrder<T: Identifiable>(_ items: [T], seed: UInt64) -> [T] where T.ID == String {

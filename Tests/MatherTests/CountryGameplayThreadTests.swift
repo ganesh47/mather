@@ -98,6 +98,39 @@ struct CountryGameplayThreadTests {
 
 
     @Test
+    func countryContinentQuizDoesNotRepeatVisibleAnswerLabels() throws {
+        let thread = CountryGameplayThread.thread
+        let selectedIDs = ["country-kenya", "country-egypt", "country-canada", "country-india"]
+        let items = try selectedIDs.map { entityID in
+            let entity = try #require(thread.entities.first { $0.id == entityID })
+            let continent = try #require(entity.properties.first { $0.typeID == "continent" })
+            return GameplayRoundItem(
+                id: "quiz-\(entityID)-continent",
+                entityID: entityID,
+                propertyID: continent.id,
+                propertyTypeID: continent.typeID
+            )
+        }
+        let round = GameplayRoundDefinition(
+            id: "country-continent-duplicates",
+            stageID: "multiple-choice",
+            kind: .multipleChoice,
+            items: items,
+            seed: 95
+        )
+
+        let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round, choicesPerQuestion: 4)
+        let kenyaQuestion = try #require(questions.first { $0.answer.entityID == "country-kenya" })
+
+        #expect(kenyaQuestion.prompt == "Which one matches Kenya?")
+        #expect(kenyaQuestion.answer.title == "Africa")
+        #expect(kenyaQuestion.choices.map(\.title).filter { $0 == "Africa" }.count == 1)
+        #expect(questions.allSatisfy { question in
+            Set(question.choices.map { $0.title.lowercased() }).count == question.choices.count
+        })
+    }
+
+    @Test
     func mapShapeQuizItemsCarryDrawableShapeKeys() throws {
         let thread = CountryGameplayThread.thread
         let stage = try #require(thread.stages.first { $0.kind == .multipleChoice })
