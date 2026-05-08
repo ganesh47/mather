@@ -103,6 +103,24 @@ struct GameplayStageViewModelTests {
         #expect(GameplayStageRenderSupport.touchTargetSize(compact: true) >= 54)
         #expect(GameplayStageRenderSupport.maximumContentWidth(compact: false) == 920)
     }
+    @Test func fruitFlashcardsExposeSpottingAffordanceState() throws {
+        let thread = GameplayThreadCatalog.fruits
+        let stage = try #require(thread.stages.first { $0.kind == .flashcards })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1021)
+        var viewModel = GameplayFlashcardStageViewModel(thread: thread, round: round)
+
+        let card = try #require(viewModel.activeCard)
+        #expect(card.isFruitCard)
+        #expect(card.discoveryPrompt.contains("flavor"))
+        #expect(!viewModel.spottedActiveCard)
+
+        viewModel.markActiveCardSpotted()
+
+        #expect(viewModel.spottedActiveCard)
+        #expect(viewModel.spottedFeedbackText.contains(card.title))
+        #expect(viewModel.exposureCount == 1)
+    }
+
 }
 
 struct GameplayStageParityRegressionTests {

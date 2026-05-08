@@ -154,19 +154,23 @@ struct GameplayDisplayCard: View {
 
     private var isFeatured: Bool { prominence == .featured }
     private var visualSize: CGFloat {
-        if isFeatured { return compact ? 104 : 140 }
+        if isFeatured { return item.isFruitCard ? (compact ? 126 : 168) : (compact ? 104 : 140) }
+        if item.isFruitCard { return compact ? 64 : 88 }
         return compact ? 40 : 58
     }
     private var visualFrameWidth: CGFloat {
-        if isFeatured { return compact ? 220 : 320 }
+        if isFeatured { return item.isFruitCard ? (compact ? 250 : 360) : (compact ? 220 : 320) }
+        if item.isFruitCard { return compact ? 104 : 132 }
         return compact ? 64 : 86
     }
     private var visualFrameHeight: CGFloat {
-        if isFeatured { return compact ? 170 : 240 }
+        if isFeatured { return item.isFruitCard ? (compact ? 190 : 260) : (compact ? 170 : 240) }
+        if item.isFruitCard { return compact ? 94 : 118 }
         return compact ? 58 : 78
     }
     private var minimumHeight: CGFloat {
-        if isFeatured { return compact ? 310 : 400 }
+        if isFeatured { return item.isFruitCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
+        if item.isFruitCard { return compact ? 160 : 202 }
         return compact ? 132 : 164
     }
 }
@@ -202,9 +206,21 @@ private struct GameplayDisplayVisual: View {
                     .accessibilityHidden(true)
                     .padding(visualAssetPadding)
             } else {
-                Text(item.visualKey ?? "✦")
-                    .font(.system(size: visualSize, weight: .regular, design: .rounded))
-                    .foregroundStyle(MatherTheme.ink)
+                ZStack {
+                    if item.isFruitCard && !concealed {
+                        Text("✨")
+                            .font(.system(size: max(18, visualSize * 0.26), weight: .bold, design: .rounded))
+                            .offset(x: -visualFrameWidth * 0.28, y: -visualFrameHeight * 0.28)
+                            .accessibilityHidden(true)
+                        Text("🌱")
+                            .font(.system(size: max(16, visualSize * 0.22), weight: .bold, design: .rounded))
+                            .offset(x: visualFrameWidth * 0.30, y: visualFrameHeight * 0.26)
+                            .accessibilityHidden(true)
+                    }
+                    Text(item.visualKey ?? "✦")
+                        .font(.system(size: visualSize, weight: .regular, design: .rounded))
+                        .foregroundStyle(MatherTheme.ink)
+                }
             }
         }
         .frame(width: visualFrameWidth, height: visualFrameHeight)
