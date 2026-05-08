@@ -247,7 +247,8 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.cardState(forLeft: firstPair) == .selected)
         #expect(viewModel.cardState(forRight: firstPair.right) == .idle)
 
-        #expect(viewModel.chooseRight(firstPair.right))
+        let didMatchFirstPair = viewModel.chooseRight(firstPair.right)
+        #expect(didMatchFirstPair)
         #expect(viewModel.cardState(forLeft: firstPair) == .justMatched)
         #expect(viewModel.cardState(forRight: firstPair.right) == .justMatched)
 
