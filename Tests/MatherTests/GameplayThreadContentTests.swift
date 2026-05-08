@@ -70,4 +70,26 @@ struct GameplayThreadContentTests {
             #expect(question.choices.allSatisfy { !$0.title.isEmpty })
         }
     }
+
+    @Test
+    func shapeThreadAddsRicherCardsAndNameCardsUseNeutralVisuals() throws {
+        let thread = GameplayThreadCatalog.shapes
+
+        #expect(thread.entities.count >= 12)
+        #expect(Set(thread.entities.map(\.name)).isSuperset(of: ["Pentagon", "Hexagon", "Crescent", "Trapezoid"]))
+
+        let nameStage = try #require(thread.stages.first { $0.id == "shapes-easy-memory" })
+        let nameItems = thread.entities.prefix(4).compactMap { entity -> GameplayRoundItem? in
+            guard let property = entity.properties.first(where: { $0.typeID == "name" }) else { return nil }
+            return GameplayRoundItem(id: "\(entity.id)::\(property.id)", entityID: entity.id, propertyID: property.id, propertyTypeID: property.typeID)
+        }
+        let round = GameplayRoundDefinition(id: "shape-names-test", stageID: nameStage.id, kind: nameStage.kind, items: nameItems, seed: 1006)
+        let namePairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(namePairs.count == 4)
+        #expect(namePairs.allSatisfy { $0.right.subtitle == "Name" })
+        #expect(namePairs.allSatisfy { $0.right.visualKey != $0.left.visualKey })
+        #expect(nameStage.maximumItemCount >= 8)
+    }
+
 }
