@@ -150,12 +150,28 @@ struct RectangleFactoryTests {
 
     @Test func instructionTextExplainsDragAndExactDotGoal() {
         let text = RectangleFactoryView.instructionText(for: 4)
-        #expect(text.contains("Drag the blue corner"))
+        #expect(text.contains("Drag the corner handle"))
         #expect(text.contains("Cover exactly 4 dots"))
+        #expect(!text.contains("blue"))
+    }
+
+    @Test func solvedStatusCopyMakesSuccessAndNextActionClear() {
+        #expect(RectangleFactoryView.solvedStatusTitle == "Perfect fit!")
+        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: false) == "Lift your finger to ship this 4-dot rectangle.")
+        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: true) == "All 4-dot rectangles are packed. Use the next button below.")
+    }
+
+    @Test func resetAndHandleAccessibilityCopyIsDiscoverable() {
+        #expect(RectangleFactoryView.resetButtonTitle == "Reset frame")
+        #expect(RectangleFactoryView.resetButtonAccessibilityLabel == "Reset rectangle frame")
+        #expect(RectangleFactoryView.resizeHandleAccessibilityLabel == "Resize corner handle")
+        #expect(RectangleFactoryView.resizeHandleAccessibilityHint(for: 9) == "Drag until the rectangle covers exactly 9 dots.")
     }
 
     @Test func advanceButtonTitleReflectsSequenceEnd() {
         #expect(RectangleFactoryView.advanceButtonTitle(hasNext: true) == "Next Number →")
         #expect(RectangleFactoryView.advanceButtonTitle(hasNext: false) == "All done! 🎉")
+        #expect(RectangleFactoryView.advanceButtonAccessibilityLabel(hasNext: true) == "Next number")
+        #expect(RectangleFactoryView.advanceButtonAccessibilityLabel(hasNext: false) == "All done")
     }
 }

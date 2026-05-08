@@ -158,6 +158,11 @@ struct RectangleFactoryView: View {
                     .transition(.scale.combined(with: .opacity))
             }
 
+            if valid {
+                solvedStatusBanner
+                    .transition(.scale.combined(with: .opacity))
+            }
+
             VStack(spacing: 10) {
                 Text("\(frameWidth) × \(frameHeight) = \(frameWidth * frameHeight)")
                     .font(.headline.weight(.bold))
@@ -283,6 +288,8 @@ struct RectangleFactoryView: View {
                             checkValidity()
                         }
                 )
+                .accessibilityLabel(Self.resizeHandleAccessibilityLabel)
+                .accessibilityHint(Self.resizeHandleAccessibilityHint(for: targetN))
         }
     }
 
@@ -308,11 +315,56 @@ struct RectangleFactoryView: View {
                     .padding(.horizontal, 24)
             }
 
-            Text("Shake to reset frame")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            Button(action: resetFrame) {
+                Label(Self.resetButtonTitle, systemImage: "arrow.counterclockwise")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .background(MatherTheme.card.opacity(0.96))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(MatherTheme.softBlue.opacity(0.45), lineWidth: 1.5)
+                    )
+            }
+            .accessibilityIdentifier("rectangle-factory-reset")
+            .accessibilityLabel(Self.resetButtonAccessibilityLabel)
+            .padding(.horizontal, 24)
                 .padding(.bottom, 16)
         }
+    }
+
+    private var solvedStatusBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 28, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(MatherTheme.accent)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(Self.solvedStatusTitle)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(Self.solvedStatusSubtitle(for: targetN, allFound: allFoundForN))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: 440)
+        .background(MatherTheme.accent.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(MatherTheme.accent.opacity(0.35), lineWidth: 1.5)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(Self.solvedStatusTitle) \(Self.solvedStatusSubtitle(for: targetN, allFound: allFoundForN))")
     }
 
     private func liveCountBadge(valid: Bool) -> some View {
@@ -384,6 +436,7 @@ struct RectangleFactoryView: View {
                             .background(MatherTheme.coral)
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
+                    .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
                 }
                 .padding(16)
                 .background(
@@ -413,6 +466,7 @@ struct RectangleFactoryView: View {
                         .background(MatherTheme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
+                .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
             }
         }
     }
@@ -619,7 +673,31 @@ struct RectangleFactoryView: View {
     }
 
     nonisolated static func instructionText(for n: Int) -> String {
-        "Drag the blue corner to resize the box. Cover exactly \(n) dots."
+        "Drag the corner handle to resize the box. Cover exactly \(n) dots."
+    }
+
+    nonisolated static var resizeHandleAccessibilityLabel: String {
+        "Resize corner handle"
+    }
+
+    nonisolated static func resizeHandleAccessibilityHint(for n: Int) -> String {
+        "Drag until the rectangle covers exactly \(n) dots."
+    }
+
+    nonisolated static var resetButtonTitle: String {
+        "Reset frame"
+    }
+
+    nonisolated static var resetButtonAccessibilityLabel: String {
+        "Reset rectangle frame"
+    }
+
+    nonisolated static var solvedStatusTitle: String {
+        "Perfect fit!"
+    }
+
+    nonisolated static func solvedStatusSubtitle(for n: Int, allFound: Bool) -> String {
+        allFound ? "All \(n)-dot rectangles are packed. Use the next button below." : "Lift your finger to ship this \(n)-dot rectangle."
     }
 
     nonisolated static func missionText(for n: Int) -> String {
@@ -642,6 +720,10 @@ struct RectangleFactoryView: View {
 
     nonisolated static func advanceButtonTitle(hasNext: Bool) -> String {
         hasNext ? "Next Number →" : "All done! 🎉"
+    }
+
+    nonisolated static func advanceButtonAccessibilityLabel(hasNext: Bool) -> String {
+        hasNext ? "Next number" : "All done"
     }
 
     /// Starting frame dimensions: one cell wider than the square-root floor,
