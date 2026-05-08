@@ -15,7 +15,7 @@ final class SpeechService {
     private(set) var lastSpeechDiagnostic: String?
     var hasSpokenSessionIntro = false
 
-    init(configureForPlayback: Bool = !Self.isRunningUnitTests) {
+    init(configureForPlayback: Bool = !SpeechService.isRunningUnitTests) {
         playbackEnabled = configureForPlayback
         // Use .playback category so prompts are audible even when the hardware
         // ringer/silent switch is off. .spokenAudio mode pauses other audio
