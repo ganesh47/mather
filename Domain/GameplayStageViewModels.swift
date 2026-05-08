@@ -168,6 +168,7 @@ struct GameplayMatchStageViewModel: Equatable {
     var inspectedItemID: String?
     var revealedRightIDs: Set<String> = []
     var matchedPairIDs: Set<String> = []
+    var lastMatchedPairID: String?
     var mismatchCount = 0
     var hintCount = 0
     var activeTurnIndex = 0
@@ -187,6 +188,17 @@ struct GameplayMatchStageViewModel: Equatable {
     var isComplete: Bool { !pairs.isEmpty && matchedPairIDs.count == pairs.count }
     var turnCount: Int { max(1, Int(ceil(Double(max(pairs.count, 1)) / Double(turnItemCount)))) }
     var turnProgressText: String { "Turn \(min(activeTurnIndex + 1, turnCount))/\(turnCount)" }
+    var turnGuidanceText: String {
+        if isComplete { return "All matches found. Finish the stage to save your score." }
+        if canAdvanceTurn { return "This turn is done. Move to the next mini-round when ready." }
+        if selectedLeftID == nil { return "Pick a prompt card first, then tap its matching answer." }
+        return "Now tap the matching answer card."
+    }
+    var finishRequirementText: String {
+        let remaining = max(pairs.count - correctCount, 0)
+        if remaining == 1 { return "1 match left to finish" }
+        return "\(remaining) matches left to finish"
+    }
     var activePairs: [GameplayMatchPair] {
         let start = activeTurnIndex * turnItemCount
         guard pairs.indices.contains(start) else { return [] }
@@ -227,10 +239,12 @@ struct GameplayMatchStageViewModel: Equatable {
         guard activePairs.contains(where: { $0.id == pairID }), !matchedPairIDs.contains(pairID) else { return }
         selectedLeftID = pairID
         inspectedItemID = activePairs.first(where: { $0.id == pairID })?.left.id
+        lastMatchedPairID = nil
     }
 
     mutating func inspect(_ item: GameplayDisplayItem) {
         inspectedItemID = inspectedItemID == item.id ? nil : item.id
+        lastMatchedPairID = nil
         if mode == .flipMemory, activePairs.contains(where: { $0.right.id == item.id }) {
             if revealedRightIDs.contains(item.id), inspectedItemID == nil {
                 revealedRightIDs.remove(item.id)
@@ -249,11 +263,13 @@ struct GameplayMatchStageViewModel: Equatable {
         let correct = pair.right.id == right.id
         if correct {
             matchedPairIDs.insert(pair.id)
+            lastMatchedPairID = pair.id
             self.selectedLeftID = nil
             inspectedItemID = right.id
             revealedRightIDs.insert(right.id)
         } else {
             mismatchCount += 1
+            lastMatchedPairID = nil
             inspectedItemID = right.id
             revealedRightIDs = Set([right.id])
         }
@@ -265,6 +281,7 @@ struct GameplayMatchStageViewModel: Equatable {
         activeTurnIndex = min(activeTurnIndex + 1, turnCount - 1)
         selectedLeftID = nil
         inspectedItemID = nil
+        lastMatchedPairID = nil
         revealedRightIDs.removeAll()
     }
 
