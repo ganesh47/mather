@@ -7,18 +7,27 @@ import FoundationModels
 @MainActor
 @Observable
 final class SpeechService {
-    private let synthesizer = AVSpeechSynthesizer()
+    private var synthesizer: AVSpeechSynthesizer?
     private var soundExamplePlayer: AVAudioPlayer?
+    private let playbackEnabled: Bool
     private var lastUtteranceID = UUID()
     private(set) var lastSpokenText: String?
     private(set) var lastSpeechDiagnostic: String?
     var hasSpokenSessionIntro = false
 
-    init() {
+    init(configureForPlayback: Bool = !SpeechService.isRunningUnitTests) {
+        playbackEnabled = configureForPlayback
         // Use .playback category so prompts are audible even when the hardware
         // ringer/silent switch is off. .spokenAudio mode pauses other audio
         // during speech; .duckOthers lowers (rather than cuts) background audio.
         // The in-app audio toggle (speak(_:enabled:)) remains the parent's control.
+        // Unit tests exercise engine state transitions with a real SpeechService;
+        // avoid activating CoreAudio there so CI cannot hang on simulator audio I/O.
+        guard configureForPlayback else {
+            lastSpeechDiagnostic = nil
+            return
+        }
+
         do {
             try configureAudioSession(mode: .spokenAudio)
             lastSpeechDiagnostic = nil
@@ -37,6 +46,9 @@ final class SpeechService {
         }
         lastSpokenText = text
         lastSpeechDiagnostic = nil
+        guard playbackEnabled else { return }
+        let synthesizer = synthesizer ?? AVSpeechSynthesizer()
+        self.synthesizer = synthesizer
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = 0.45
@@ -65,6 +77,12 @@ final class SpeechService {
             return
         }
 
+        guard playbackEnabled else {
+            lastSpeechDiagnostic = nil
+            lastSpokenText = nil
+            return
+        }
+
         do {
             try configureAudioSession(mode: .default)
             let player = try AVAudioPlayer(data: Self.hearingSafeWAVData(for: example))
@@ -78,6 +96,11 @@ final class SpeechService {
             lastSpeechDiagnostic = "Sound example playback failed: \(error.localizedDescription)"
             print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
         }
+    }
+
+
+    private static var isRunningUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     private func configureAudioSession(mode: AVAudioSession.Mode) throws {
