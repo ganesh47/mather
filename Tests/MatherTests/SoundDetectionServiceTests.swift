@@ -28,6 +28,16 @@ struct SoundDetectionServiceTests {
     func initialStateIsQuiescent() {
         let service = SoundDetectionService()
         #expect(!service.clapDetected)
+        #expect(service.meterPermissionState == .notStarted)
+        #expect(service.meterReading == SoundMeterReading(rms: 0))
+    }
+
+    @Test
+    func soundMeterStartsInPrivacySafeNoAudioState() {
+        let service = SoundDetectionService()
+        #expect(service.meterPermissionState.guidance.contains("does not record audio"))
+        #expect(SoundMeterReading.privacyCopy.contains("stores no audio"))
+        #expect(SoundMeterReading.privacyCopy.contains("sends no audio"))
     }
 
     // MARK: - startListening / stopListening idempotency
@@ -38,6 +48,7 @@ struct SoundDetectionServiceTests {
         // Calling stop before start should be a no-op (guarded by isListening).
         service.stopListening()
         #expect(!service.clapDetected)
+        #expect(service.meterPermissionState == .notStarted)
     }
 
     // startListening() calls AVAudioEngine.start() which requires real audio hardware.
@@ -88,5 +99,6 @@ struct SoundDetectionServiceTests {
         let service = SoundDetectionService()
         service.stopListening()
         #expect(!service.clapDetected)
+        #expect(service.meterPermissionState == .notStarted)
     }
 }

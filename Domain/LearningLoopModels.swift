@@ -282,6 +282,170 @@ enum SoundLoudnessZone: String, CaseIterable, Equatable {
     }
 }
 
+
+enum SoundMeterPermissionState: String, Equatable {
+    case notStarted
+    case listening
+    case unavailable
+    case denied
+
+    var title: String {
+        switch self {
+        case .notStarted: return "Meter off"
+        case .listening: return "Meter listening"
+        case .unavailable: return "Microphone unavailable"
+        case .denied: return "Microphone off"
+        }
+    }
+
+    var guidance: String {
+        switch self {
+        case .notStarted:
+            return "Start only when a grown-up says it is okay. Mather reads a local loudness number and does not record audio."
+        case .listening:
+            return "Use normal room sounds only. Do not shout — quieter is safer."
+        case .unavailable:
+            return "This device cannot read the microphone right now. You can still learn with the safe example cards."
+        case .denied:
+            return "Microphone access is off. Mather will keep the Sound Lab in no-mic learning mode."
+        }
+    }
+}
+
+enum SoundMeterLevelBucket: String, CaseIterable, Equatable {
+    case quiet
+    case comfortable
+    case busy
+    case protect
+
+    var label: String {
+        switch self {
+        case .quiet: return "Quiet"
+        case .comfortable: return "Comfortable"
+        case .busy: return "Busy"
+        case .protect: return "Protect ears"
+        }
+    }
+
+    var targetCopy: String {
+        switch self {
+        case .quiet: return "Soft room sounds. Great for reading."
+        case .comfortable: return "Normal talking zone. Keep it easy."
+        case .busy: return "Busy room. Take breaks if it feels tiring."
+        case .protect: return "Too much sound. Move away, lower volume, or cover ears."
+        }
+    }
+
+    var fillFraction: Double {
+        switch self {
+        case .quiet: return 0.22
+        case .comfortable: return 0.46
+        case .busy: return 0.70
+        case .protect: return 0.92
+        }
+    }
+}
+
+struct SoundMeterReading: Equatable {
+    let rms: Float
+    let estimatedDecibels: Double
+    let bucket: SoundMeterLevelBucket
+
+    static let privacyCopy = "Local microphone meter only: Mather computes an RMS loudness number on this device, stores no audio, and sends no audio anywhere."
+    static let safetyCopy = "Use normal room sounds. Do not shout, scream, or try to make the meter higher. Quieter is safer."
+
+    init(rms: Float) {
+        let clampedRMS = min(max(rms, 0), 1)
+        self.rms = clampedRMS
+        self.estimatedDecibels = SoundMeterReading.estimatedDecibels(forRMS: clampedRMS)
+        self.bucket = SoundMeterReading.bucket(forRMS: clampedRMS)
+    }
+
+    static func estimatedDecibels(forRMS rms: Float) -> Double {
+        let clamped = max(Double(min(max(rms, 0), 1)), 0.000_001)
+        return min(max(20 * log10(clamped) + 94, 20), 100)
+    }
+
+    static func bucket(forRMS rms: Float) -> SoundMeterLevelBucket {
+        let db = estimatedDecibels(forRMS: rms)
+        switch db {
+        case ..<50: return .quiet
+        case ..<70: return .comfortable
+        case ..<85: return .busy
+        default: return .protect
+        }
+    }
+}
+
+enum SoundPitchBand: String, CaseIterable, Equatable, Identifiable {
+    case low
+    case middle
+    case high
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .low: return "Low pitch"
+        case .middle: return "Middle pitch"
+        case .high: return "High pitch"
+        }
+    }
+
+    var visualKey: String {
+        switch self {
+        case .low: return "🐘"
+        case .middle: return "🎵"
+        case .high: return "🐦"
+        }
+    }
+
+    var teachingCopy: String {
+        switch self {
+        case .low: return "Low pitch sounds deep, like a drum or a big animal."
+        case .middle: return "Middle pitch sits near many singing and talking notes."
+        case .high: return "High pitch sounds bright, like a tiny bell or bird chirp."
+        }
+    }
+
+    var frequencyRangeLabel: String {
+        switch self {
+        case .low: return "about 80–250 Hz"
+        case .middle: return "about 250–900 Hz"
+        case .high: return "about 900 Hz or more"
+        }
+    }
+}
+
+struct SoundPitchChallenge: Identifiable, Equatable {
+    let id: String
+    let prompt: String
+    let correctBand: SoundPitchBand
+    let options: [SoundPitchBand]
+    let feedback: String
+
+    func isCorrect(_ band: SoundPitchBand) -> Bool {
+        band == correctBand
+    }
+}
+
+struct SoundPitchChallengeState: Equatable {
+    let challenge: SoundPitchChallenge
+    var selectedBand: SoundPitchBand?
+
+    var isAnswered: Bool { selectedBand != nil }
+    var isCorrect: Bool { selectedBand.map(challenge.isCorrect) ?? false }
+
+    var feedback: String {
+        guard let selectedBand else { return "Tap the pitch you think matches. No microphone is needed for this part." }
+        return challenge.isCorrect(selectedBand) ? challenge.feedback : "Not that one yet — listen for whether the sound is deep, middle, or bright."
+    }
+
+    mutating func select(_ band: SoundPitchBand) {
+        selectedBand = band
+    }
+}
+
 struct SoundVolumeIntroPage: Identifiable, Equatable {
     let id: String
     let eyebrow: String
@@ -293,7 +457,7 @@ struct SoundVolumeIntroPage: Identifiable, Equatable {
 }
 
 enum SoundVolumeContent {
-    static let safetyNote = "Use listening clues only — no screaming. Protect your ears. A live microphone meter comes later and is not used in this activity."
+    static let safetyNote = "Use hearing-safe clues only — no screaming, no shouting, and no points for loudness. Protect your ears."
 
     static func clampedIntroPageIndex(_ index: Int) -> Int {
         min(max(index, 0), introPages.count - 1)
@@ -317,7 +481,7 @@ enum SoundVolumeContent {
             id: "safety",
             eyebrow: "Step 2 of 5",
             title: "Use hearing-safe play",
-            subtitle: "Use listening clues only — no screaming, no loud-noise challenge, and no microphone permission in this activity.",
+            subtitle: "Use normal room sounds only — no screaming, no shouting, no loud-noise challenge, and no points for making the meter higher.",
             visualKey: "👂",
             primaryActionTitle: "Next: decibels",
             primaryActionIcon: "arrow.right.circle.fill"
@@ -335,7 +499,7 @@ enum SoundVolumeContent {
             id: "zones",
             eyebrow: "Step 4 of 5",
             title: "Sort sounds into zones",
-            subtitle: "The zone cards are examples, not a live sound meter. If a sound hurts, move away or protect your ears.",
+            subtitle: "The live meter is an estimate, not a calibrated safety tool. If a sound hurts, move away or protect your ears.",
             visualKey: "📊",
             primaryActionTitle: "Next: sound clues",
             primaryActionIcon: "arrow.right.circle.fill"
@@ -404,6 +568,16 @@ enum SoundVolumeContent {
     ]
 
     static let estimatedZones: [SoundLoudnessZone] = [.quiet, .normal, .loud, .tooLoud]
+
+    static let pitchBands = SoundPitchBand.allCases
+
+    static let pitchChallenge = SoundPitchChallenge(
+        id: "bird-high-pitch",
+        prompt: "A tiny bird chirp is usually which pitch?",
+        correctBand: .high,
+        options: [.low, .middle, .high],
+        feedback: "Yes — tiny chirps are bright, high-pitch sounds."
+    )
 
     static func zone(forEstimatedDecibels decibels: Double) -> SoundLoudnessZone {
         switch decibels {

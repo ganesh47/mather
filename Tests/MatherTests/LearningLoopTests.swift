@@ -122,10 +122,12 @@ extension LearningLoopTests {
 
         XCTAssertEqual(pages.map(\.id), ["welcome", "safety", "decibels", "zones", "clues"])
         XCTAssertEqual(pages.last?.primaryActionTitle, "Start Sound Lab")
-        XCTAssertTrue(pages[1].subtitle.contains("no microphone permission"))
+        XCTAssertTrue(pages[1].subtitle.contains("no shouting"))
+        XCTAssertTrue(pages[1].subtitle.contains("no points"))
         XCTAssertTrue(pages[1].subtitle.contains("no loud-noise challenge"))
         XCTAssertTrue(pages[2].subtitle.contains("decibel"))
-        XCTAssertTrue(pages[3].subtitle.contains("not a live sound meter"))
+        XCTAssertTrue(pages[3].subtitle.contains("estimate"))
+        XCTAssertTrue(pages[3].subtitle.contains("not a calibrated safety tool"))
     }
 
     func testSoundVolumeIntroPageLookupClampsOutOfRangeIndexes() {
@@ -155,7 +157,8 @@ extension LearningLoopTests {
             "Protect Ears",
         ]))
         XCTAssertTrue(SoundVolumeContent.safetyNote.contains("no screaming"))
-        XCTAssertTrue(SoundVolumeContent.safetyNote.contains("microphone meter comes later"))
+        XCTAssertTrue(SoundVolumeContent.safetyNote.contains("no shouting"))
+        XCTAssertTrue(SoundVolumeContent.safetyNote.contains("no points for loudness"))
     }
 
     func testSoundVolumeCardsExposeExplicitHearingSafePlaybackExamples() {
@@ -174,6 +177,47 @@ extension LearningLoopTests {
             XCTAssertGreaterThan(example.profile.durationSeconds, 0)
             XCTAssertGreaterThan(example.profile.peakAmplitude, 0)
         }
+    }
+
+
+    func testSoundMeterReadingBucketsArePureAndConservative() {
+        XCTAssertEqual(SoundMeterReading.bucket(forRMS: 0.001), .quiet)
+        XCTAssertEqual(SoundMeterReading.bucket(forRMS: 0.01), .comfortable)
+        XCTAssertEqual(SoundMeterReading.bucket(forRMS: 0.10), .busy)
+        XCTAssertEqual(SoundMeterReading.bucket(forRMS: 0.50), .protect)
+
+        let overRange = SoundMeterReading(rms: 2)
+        XCTAssertEqual(overRange.rms, 1)
+        XCTAssertEqual(overRange.bucket, .protect)
+        XCTAssertLessThanOrEqual(overRange.estimatedDecibels, 100)
+    }
+
+    func testSoundMeterCopyIsLocalOnlyAndDoesNotRewardLoudness() {
+        XCTAssertTrue(SoundMeterReading.privacyCopy.contains("Local microphone meter only"))
+        XCTAssertTrue(SoundMeterReading.privacyCopy.contains("stores no audio"))
+        XCTAssertTrue(SoundMeterReading.privacyCopy.contains("sends no audio"))
+        XCTAssertTrue(SoundMeterReading.safetyCopy.contains("Do not shout"))
+        XCTAssertTrue(SoundMeterReading.safetyCopy.contains("scream"))
+        XCTAssertTrue(SoundMeterReading.safetyCopy.contains("try to make the meter higher"))
+        XCTAssertFalse(SoundMeterLevelBucket.allCases.map(\.targetCopy).joined(separator: " ").localizedCaseInsensitiveContains("louder"))
+    }
+
+    func testSoundPitchChallengeStateTeachesPitchWithoutMicrophone() {
+        var state = SoundPitchChallengeState(challenge: SoundVolumeContent.pitchChallenge)
+        XCTAssertFalse(state.isAnswered)
+        XCTAssertTrue(state.feedback.contains("No microphone"))
+        XCTAssertEqual(SoundVolumeContent.pitchBands, [.low, .middle, .high])
+        XCTAssertTrue(SoundPitchBand.low.teachingCopy.contains("deep"))
+        XCTAssertTrue(SoundPitchBand.high.teachingCopy.contains("bright"))
+
+        state.select(.low)
+        XCTAssertTrue(state.isAnswered)
+        XCTAssertFalse(state.isCorrect)
+        XCTAssertTrue(state.feedback.contains("Not that one"))
+
+        state.select(.high)
+        XCTAssertTrue(state.isCorrect)
+        XCTAssertEqual(state.feedback, SoundVolumeContent.pitchChallenge.feedback)
     }
 
     func testSoundVolumeQuizScoringUsesCorrectSafeAnswers() {
