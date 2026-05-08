@@ -31,7 +31,8 @@ struct CountryGameplayThreadTests {
             "country-saudi-arabia",
         ])
         #expect(thread.entities.count >= 16)
-        #expect(Set(thread.entities.compactMap { $0.properties.first { $0.typeID == "continent" }?.value }).isSuperset(of: ["Asia", "Europe", "Africa", "North America", "South America", "Australia"]))
+        let representedContinents = Set(thread.entities.compactMap { $0.properties.first { $0.typeID == "continent" }?.value })
+        #expect(representedContinents.isSuperset(of: ["Asia", "Europe", "Africa", "North America", "South America", "Australia"]))
         #expect(Set(thread.propertyTypes.map(\.id)).isSuperset(of: requiredPropertyTypeIDs))
 
         for entity in thread.entities {
