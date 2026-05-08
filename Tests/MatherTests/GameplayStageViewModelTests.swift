@@ -172,7 +172,10 @@ struct GameplayStageParityRegressionTests {
         #expect(matched)
         #expect(viewModel.correctCount == 1)
         #expect(viewModel.lastMatchedPairID == pair.id)
-        #expect(viewModel.turnGuidanceText == "Now tap the matching answer card." || viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready.")
+        #expect(
+            viewModel.turnGuidanceText == "Nice match! Pick another prompt card."
+                || viewModel.turnGuidanceText == "This turn is done. Move to the next mini-round when ready."
+        )
     }
 
     @Test

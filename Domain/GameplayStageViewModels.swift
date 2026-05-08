@@ -191,6 +191,7 @@ struct GameplayMatchStageViewModel: Equatable {
     var turnGuidanceText: String {
         if isComplete { return "All matches found. Finish the stage to save your score." }
         if canAdvanceTurn { return "This turn is done. Move to the next mini-round when ready." }
+        if lastMatchedPairID != nil { return "Nice match! Pick another prompt card." }
         if selectedLeftID == nil { return "Pick a prompt card first, then tap its matching answer." }
         return "Now tap the matching answer card."
     }
