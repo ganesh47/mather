@@ -391,16 +391,23 @@ struct SoundMeterReading: Equatable {
     static let privacyCopy = "Local microphone meter only: Mather computes an RMS loudness number on this device, stores no audio, and sends no audio anywhere."
     static let safetyCopy = "Use normal room sounds. Do not shout, scream, or try to make the meter higher. Quieter is safer."
 
+    var roundedEstimatedDecibels: Int {
+        Int(estimatedDecibels.rounded())
+    }
+
     init(rms: Float) {
-        let clampedRMS = min(max(rms, 0), 1)
+        let clampedRMS = SoundMeterReading.normalizedRMS(rms)
         self.rms = clampedRMS
         self.estimatedDecibels = SoundMeterReading.estimatedDecibels(forRMS: clampedRMS)
         self.bucket = SoundMeterReading.bucket(forRMS: clampedRMS)
     }
 
     static func estimatedDecibels(forRMS rms: Float) -> Double {
-        let clamped = max(Double(min(max(rms, 0), 1)), 0.000_001)
-        return min(max(20 * log10(clamped) + 94, 20), 100)
+        let normalized = normalizedRMS(rms)
+        let clamped = max(Double(normalized), 0.000_001)
+        let decibels = 20 * log10(clamped) + 94
+        guard decibels.isFinite else { return 20 }
+        return min(max(decibels, 20), 100)
     }
 
     static func bucket(forRMS rms: Float) -> SoundMeterLevelBucket {
@@ -411,6 +418,11 @@ struct SoundMeterReading: Equatable {
         case ..<85: return .busy
         default: return .protect
         }
+    }
+
+    private static func normalizedRMS(_ rms: Float) -> Float {
+        guard rms.isFinite else { return rms == .infinity ? 1 : 0 }
+        return min(max(rms, 0), 1)
     }
 }
 

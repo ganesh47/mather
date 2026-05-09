@@ -79,14 +79,18 @@ final class SoundDetectionService {
             let frameCount = Int(buffer.frameLength)
             guard frameCount > 0 else { return }
             var sumOfSquares: Float = 0
+            var finiteSampleCount = 0
             for i in 0..<frameCount {
-                sumOfSquares += channelData[i] * channelData[i]
+                let sample = channelData[i]
+                guard sample.isFinite else { continue }
+                sumOfSquares += sample * sample
+                finiteSampleCount += 1
             }
-            let rms = (sumOfSquares / Float(frameCount)).squareRoot()
+            let rms = finiteSampleCount > 0 ? (sumOfSquares / Float(finiteSampleCount)).squareRoot() : 0
 
             // The audio tap runs on the audio I/O thread — marshal to @MainActor.
             Task { @MainActor [weak self] in
-                self?.evaluateRMS(rms)
+                self?.evaluateRMS(rms.isFinite ? rms : 0)
             }
         }
 
