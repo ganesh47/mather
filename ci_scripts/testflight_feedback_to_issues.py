@@ -25,6 +25,8 @@ LABEL_COLORS = {
     "type:feedback": "1d76db",
     "type:bug": "d73a4a",
 }
+TRANSIENT_HTTP_STATUS_CODES = {500, 502, 503, 504}
+DEFAULT_HTTP_RETRIES = 3
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,8 @@ def request_json(
     method: str = "GET",
     headers: dict[str, str] | None = None,
     payload: dict[str, Any] | None = None,
+    retries: int = DEFAULT_HTTP_RETRIES,
+    retry_statuses: set[int] | None = None,
 ) -> Any:
     body = None
     request_headers = {"Accept": "application/json"}
@@ -94,17 +98,32 @@ def request_json(
         body = json.dumps(payload).encode("utf-8")
         request_headers["Content-Type"] = "application/json"
 
-    request = urllib.request.Request(url, data=body, headers=request_headers, method=method)
-    try:
-        with urllib.request.urlopen(request) as response:
-            content = response.read()
-    except urllib.error.HTTPError as exc:
-        details = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"{method} {url} failed: {exc.code} {details}") from exc
+    transient_statuses = retry_statuses or TRANSIENT_HTTP_STATUS_CODES
+    last_error: urllib.error.HTTPError | None = None
+    for attempt in range(retries + 1):
+        request = urllib.request.Request(url, data=body, headers=request_headers, method=method)
+        try:
+            with urllib.request.urlopen(request) as response:
+                content = response.read()
+            if not content:
+                return None
+            return json.loads(content)
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if exc.code not in transient_statuses or attempt >= retries:
+                details = exc.read().decode("utf-8", errors="replace")
+                raise RuntimeError(f"{method} {url} failed: {exc.code} {details}") from exc
+            print(
+                f"{method} request failed with transient HTTP {exc.code}; "
+                f"retrying ({attempt + 1}/{retries})",
+                file=sys.stderr,
+            )
+            time.sleep(2 ** attempt)
 
-    if not content:
-        return None
-    return json.loads(content)
+    if last_error is not None:
+        details = last_error.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"{method} {url} failed: {last_error.code} {details}") from last_error
+    return None
 
 
 def asc_get(config: Config, path_or_url: str, params: dict[str, str] | None = None) -> Any:
