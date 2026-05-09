@@ -948,7 +948,7 @@ struct SoundVolumeLabView: View {
                             .font(.headline.weight(.black))
                             .foregroundStyle(MatherTheme.ink)
                         Spacer()
-                        Text("~\(Int(reading.estimatedDecibels.rounded())) dB")
+                        Text("~\(reading.roundedEstimatedDecibels) dB")
                             .font(.headline.monospacedDigit().weight(.black))
                             .foregroundStyle(MatherTheme.accent)
                     }

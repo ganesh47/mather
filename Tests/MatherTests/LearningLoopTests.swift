@@ -192,6 +192,21 @@ extension LearningLoopTests {
         XCTAssertLessThanOrEqual(overRange.estimatedDecibels, 100)
     }
 
+    func testSoundMeterReadingSanitizesNonFiniteRMSBeforeRenderingDecibels() {
+        let invalidReadings = [
+            SoundMeterReading(rms: .nan),
+            SoundMeterReading(rms: -.infinity),
+            SoundMeterReading(rms: .infinity),
+        ]
+
+        XCTAssertTrue(invalidReadings.allSatisfy { $0.rms.isFinite })
+        XCTAssertTrue(invalidReadings.allSatisfy { $0.estimatedDecibels.isFinite })
+        XCTAssertTrue(invalidReadings.allSatisfy { (20...100).contains($0.roundedEstimatedDecibels) })
+        XCTAssertEqual(SoundMeterReading(rms: .nan).bucket, .quiet)
+        XCTAssertEqual(SoundMeterReading(rms: -.infinity).bucket, .quiet)
+        XCTAssertEqual(SoundMeterReading(rms: .infinity).bucket, .protect)
+    }
+
     func testSoundMeterCopyIsLocalOnlyAndDoesNotRewardLoudness() {
         XCTAssertTrue(SoundMeterReading.privacyCopy.contains("Local microphone meter only"))
         XCTAssertTrue(SoundMeterReading.privacyCopy.contains("stores no audio"))
