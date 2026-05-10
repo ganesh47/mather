@@ -103,6 +103,11 @@ struct RectangleFactoryView: View {
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
 
+                    Text(Self.factorPairGuideText(for: targetN))
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(MatherTheme.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+
                     Label(Self.missionText(for: targetN), systemImage: "shippingbox.fill")
                         .font(.caption2.weight(.black))
                         .foregroundStyle(MatherTheme.coral)
@@ -164,10 +169,7 @@ struct RectangleFactoryView: View {
             }
 
             VStack(spacing: 10) {
-                Text("\(frameWidth) × \(frameHeight) = \(frameWidth * frameHeight)")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(valid ? MatherTheme.accent : MatherTheme.ink)
-                    .accessibilityLabel("Current rectangle \(frameWidth) by \(frameHeight) equals \(frameWidth * frameHeight)")
+                selectionMathPanel(valid: valid)
 
                 ZStack(alignment: .topLeading) {
                     factoryFloor(cellPitch: cellPitch)
@@ -367,19 +369,73 @@ struct RectangleFactoryView: View {
         .accessibilityLabel("\(Self.solvedStatusTitle) \(Self.solvedStatusSubtitle(for: targetN, allFound: allFoundForN))")
     }
 
-    private func liveCountBadge(valid: Bool) -> some View {
-        Text("\(frameWidth) × \(frameHeight) = \(frameWidth * frameHeight)")
-            .font(.system(size: 18, weight: .black, design: .rounded))
-            .foregroundStyle(valid ? .white : MatherTheme.ink)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(valid ? MatherTheme.accent : MatherTheme.card.opacity(0.96))
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(valid ? MatherTheme.accent : MatherTheme.softBlue.opacity(0.35), lineWidth: 2)
+    private func selectionMathPanel(valid: Bool) -> some View {
+        HStack(spacing: 10) {
+            mathPill(
+                title: Self.targetGoalTitle,
+                value: Self.targetGoalValue(for: targetN),
+                systemImage: "scope",
+                tint: MatherTheme.coral,
+                filled: false
             )
-            .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+
+            mathPill(
+                title: Self.selectionTitle,
+                value: Self.selectionEquationText(rows: frameHeight, columns: frameWidth),
+                systemImage: valid ? "checkmark.seal.fill" : "square.dashed",
+                tint: valid ? MatherTheme.accent : MatherTheme.softBlue,
+                filled: valid
+            )
+        }
+        .overlay(alignment: .bottom) {
+            Text(Self.selectionFeedbackText(rows: frameHeight, columns: frameWidth, target: targetN))
+                .font(.caption.weight(.black))
+                .foregroundStyle(valid ? MatherTheme.accent : MatherTheme.ink)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(MatherTheme.card.opacity(0.98))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke((valid ? MatherTheme.accent : MatherTheme.softBlue).opacity(0.35), lineWidth: 1)
+                )
+                .offset(y: 27)
+        }
+        .padding(.bottom, 22)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(Self.targetGoalTitle), \(Self.targetGoalValue(for: targetN)). \(Self.selectionTitle), \(Self.selectionEquationText(rows: frameHeight, columns: frameWidth)). \(Self.selectionFeedbackText(rows: frameHeight, columns: frameWidth, target: targetN))"
+        )
+    }
+
+    private func mathPill(title: String, value: String, systemImage: String, tint: Color, filled: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .black))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption2.weight(.black))
+                    .textCase(.uppercase)
+                    .foregroundStyle(filled ? .white.opacity(0.84) : MatherTheme.cardSubtitle)
+                Text(value)
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(filled ? .white : MatherTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+        }
+        .foregroundStyle(filled ? .white : tint)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: 260, minHeight: 64, alignment: .leading)
+        .background(filled ? tint : MatherTheme.card.opacity(0.96))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(tint.opacity(filled ? 0 : 0.36), lineWidth: 1.5)
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 8, y: 2)
     }
 
     private var discoveryCallout: some View {
@@ -575,7 +631,7 @@ struct RectangleFactoryView: View {
         guard !foundFactors.contains(key) else { return }
         foundFactors.insert(key)
         celebratingFactorKey = key
-        lastEquation = "\(min(frameWidth, frameHeight)) × \(max(frameWidth, frameHeight)) = \(targetN)"
+        lastEquation = Self.selectionEquationText(rows: frameHeight, columns: frameWidth)
         showEquation = true
         appModel.hapticsService.cardSnapCorrect(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
@@ -673,7 +729,47 @@ struct RectangleFactoryView: View {
     }
 
     nonisolated static func instructionText(for n: Int) -> String {
-        "Drag the corner handle to resize the box. Cover exactly \(n) dots."
+        "Drag the corner handle. Make rows × columns equal exactly \(n) dots."
+    }
+
+    nonisolated static func factorPairGuideText(for n: Int) -> String {
+        let pairs = sortedFactorPairs(for: n)
+        guard let first = pairs.first else {
+            return "Start with 1 row. Count every dot inside the frame."
+        }
+        if pairs.count == 1 {
+            return "Start with \(rowColumnPhrase(rows: first.rows, columns: first.columns)). That is the only perfect rectangle."
+        }
+        let next = pairs[1]
+        return "Start with \(rowColumnPhrase(rows: first.rows, columns: first.columns)). Then try \(rowColumnPhrase(rows: next.rows, columns: next.columns))."
+    }
+
+    nonisolated static var targetGoalTitle: String {
+        "Goal"
+    }
+
+    nonisolated static func targetGoalValue(for n: Int) -> String {
+        "\(n) dots"
+    }
+
+    nonisolated static var selectionTitle: String {
+        "Selected"
+    }
+
+    nonisolated static func selectionEquationText(rows: Int, columns: Int) -> String {
+        let area = rows * columns
+        return "\(rows) \(unit("row", rows)) × \(columns) \(unit("column", columns)) = \(area) \(unit("dot", area))"
+    }
+
+    nonisolated static func selectionFeedbackText(rows: Int, columns: Int, target: Int) -> String {
+        let area = rows * columns
+        if area == target {
+            return "Perfect: selected exactly \(target) dots."
+        }
+        if area < target {
+            return "Selected \(area) \(unit("dot", area)); need \(target - area) more."
+        }
+        return "Selected \(area) dots; \(area - target) too many."
     }
 
     nonisolated static var resizeHandleAccessibilityLabel: String {
@@ -709,8 +805,8 @@ struct RectangleFactoryView: View {
     }
 
     nonisolated static func discoverySpeech(width: Int, height: Int, target: Int) -> String {
-        let rows = min(width, height)
-        let columns = max(width, height)
+        let rows = height
+        let columns = width
         return "Nice packing! \(rows) rows of \(columns) makes \(target)."
     }
 
@@ -742,6 +838,29 @@ struct RectangleFactoryView: View {
         }
 
         return (columns: maxColumns, rows: maxRows)
+    }
+
+    nonisolated private static func sortedFactorPairs(for n: Int) -> [(rows: Int, columns: Int)] {
+        factorsOf(n)
+            .compactMap { key -> (rows: Int, columns: Int)? in
+                let parts = key.split(separator: "x").compactMap { Int($0) }
+                guard parts.count == 2 else { return nil }
+                return (rows: parts[0], columns: parts[1])
+            }
+            .sorted { lhs, rhs in
+                if lhs.rows == rhs.rows {
+                    return lhs.columns < rhs.columns
+                }
+                return lhs.rows < rhs.rows
+            }
+    }
+
+    nonisolated private static func rowColumnPhrase(rows: Int, columns: Int) -> String {
+        "\(rows) \(unit("row", rows)) of \(columns)"
+    }
+
+    nonisolated private static func unit(_ singular: String, _ count: Int) -> String {
+        count == 1 ? singular : "\(singular)s"
     }
 
     nonisolated static func smartStartDimensions(for n: Int) -> (width: Int, height: Int) {

@@ -144,15 +144,35 @@ struct RectangleFactoryTests {
     @Test func factoryStoryCopyStaysShortAndMathSpecific() {
         #expect(RectangleFactoryView.missionText(for: 4) == "Factory order: pack 4 dots with no gaps")
         #expect(RectangleFactoryView.openingSpeech(for: 4) == "Factory order! Can you pack 4 dots into a perfect rectangle?")
-        #expect(RectangleFactoryView.discoverySpeech(width: 2, height: 3, target: 6) == "Nice packing! 2 rows of 3 makes 6.")
+        #expect(RectangleFactoryView.discoverySpeech(width: 2, height: 3, target: 6) == "Nice packing! 3 rows of 2 makes 6.")
         #expect(RectangleFactoryView.transitionSpeech(from: 4, to: 6) == "Order 4 shipped! Next factory order: 6 dots.")
     }
 
     @Test func instructionTextExplainsDragAndExactDotGoal() {
         let text = RectangleFactoryView.instructionText(for: 4)
         #expect(text.contains("Drag the corner handle"))
-        #expect(text.contains("Cover exactly 4 dots"))
+        #expect(text.contains("rows × columns"))
+        #expect(text.contains("exactly 4 dots"))
         #expect(!text.contains("blue"))
+    }
+
+    @Test func factorPairGuideStartsWithSimpleRowsBeforeAbstraction() {
+        #expect(RectangleFactoryView.factorPairGuideText(for: 4) == "Start with 1 row of 4. Then try 2 rows of 2.")
+        #expect(RectangleFactoryView.factorPairGuideText(for: 7) == "Start with 1 row of 7. That is the only perfect rectangle.")
+    }
+
+    @Test func selectionEquationUsesVisualRowsAndColumns() {
+        #expect(RectangleFactoryView.targetGoalTitle == "Goal")
+        #expect(RectangleFactoryView.targetGoalValue(for: 4) == "4 dots")
+        #expect(RectangleFactoryView.selectionTitle == "Selected")
+        #expect(RectangleFactoryView.selectionEquationText(rows: 2, columns: 3) == "2 rows × 3 columns = 6 dots")
+        #expect(RectangleFactoryView.selectionEquationText(rows: 1, columns: 1) == "1 row × 1 column = 1 dot")
+    }
+
+    @Test func selectionFeedbackPreventsTargetFrameMismatch() {
+        #expect(RectangleFactoryView.selectionFeedbackText(rows: 2, columns: 3, target: 4) == "Selected 6 dots; 2 too many.")
+        #expect(RectangleFactoryView.selectionFeedbackText(rows: 1, columns: 3, target: 4) == "Selected 3 dots; need 1 more.")
+        #expect(RectangleFactoryView.selectionFeedbackText(rows: 2, columns: 2, target: 4) == "Perfect: selected exactly 4 dots.")
     }
 
     @Test func solvedStatusCopyMakesSuccessAndNextActionClear() {
