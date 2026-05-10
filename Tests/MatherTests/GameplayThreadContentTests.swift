@@ -64,9 +64,10 @@ struct GameplayThreadContentTests {
 
         #expect(thread.id == "electronics")
         #expect(thread.category.id == "electronics")
+        #expect(thread.category.title == "Electricity")
         #expect(thread.title == "Circuit Spark")
-        #expect(thread.entities.count == 8)
-        #expect(Set(thread.propertyTypes.map(\.id)) == Set(["part", "job", "rule"]))
+        #expect(thread.entities.count == 7)
+        #expect(Set(thread.propertyTypes.map(\.id)) == Set(["name", "symbol", "job", "safety"]))
         #expect(Set(thread.entities.map(\.name)).isSuperset(of: [
             "Battery",
             "Bulb",
@@ -113,6 +114,9 @@ struct GameplayThreadContentTests {
         #expect(!allCopy.localizedCaseInsensitiveContains("danger"))
 
         #expect(thread.entities.allSatisfy { entity in
+            Set(entity.properties.map(\.typeID)) == Set(["name", "symbol", "job", "safety"])
+        })
+        #expect(thread.entities.allSatisfy { entity in
             entity.properties.allSatisfy { property in
                 !property.value.isEmpty && !property.explanation.isEmpty
             }
@@ -124,10 +128,10 @@ struct GameplayThreadContentTests {
         let thread = GameplayThreadCatalog.electronics
 
         #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
-        #expect(thread.stages[1].propertyTypeIDs == ["part", "job"])
-        #expect(thread.stages[2].propertyTypeIDs == ["job", "rule"])
-        #expect(thread.stages[3].propertyTypeIDs == ["part", "job", "rule"])
-        #expect(thread.stages[4].propertyTypeIDs == ["job", "rule"])
+        #expect(thread.stages[1].propertyTypeIDs == ["name"])
+        #expect(thread.stages[2].propertyTypeIDs == ["name", "symbol"])
+        #expect(thread.stages[3].propertyTypeIDs == ["name", "symbol", "job", "safety"])
+        #expect(thread.stages[4].propertyTypeIDs == ["name", "symbol", "job", "safety"])
 
         for stage in thread.stages {
             let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1024)

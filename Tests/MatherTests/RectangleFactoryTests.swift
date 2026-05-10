@@ -137,15 +137,15 @@ struct RectangleFactoryTests {
     }
 
     @Test func completionSpeechDifferentiatesPrimeAndComposite() {
-        #expect(RectangleFactoryView.completionSpeech(for: 13) == "13 is prime. Only one factory box works!")
-        #expect(RectangleFactoryView.completionSpeech(for: 12) == "Factory complete! You found all 3 rectangles for 12!")
+        #expect(RectangleFactoryView.completionSpeech(for: 13) == "13 is prime. Only one rectangle works.")
+        #expect(RectangleFactoryView.completionSpeech(for: 12) == "You found all 3 rectangles for 12.")
     }
 
     @Test func factoryStoryCopyStaysShortAndMathSpecific() {
-        #expect(RectangleFactoryView.missionText(for: 4) == "Factory order: pack 4 dots with no gaps")
-        #expect(RectangleFactoryView.openingSpeech(for: 4) == "Factory order! Can you pack 4 dots into a perfect rectangle?")
-        #expect(RectangleFactoryView.discoverySpeech(width: 2, height: 3, target: 6) == "Nice packing! 3 rows of 2 makes 6.")
-        #expect(RectangleFactoryView.transitionSpeech(from: 4, to: 6) == "Order 4 shipped! Next factory order: 6 dots.")
+        #expect(RectangleFactoryView.missionText(for: 4) == "Make a rectangle with exactly 4 dots")
+        #expect(RectangleFactoryView.openingSpeech(for: 4) == "Can you make a rectangle with exactly 4 dots?")
+        #expect(RectangleFactoryView.discoverySpeech(width: 2, height: 3, target: 6) == "Yes. 2 rows of 3 makes 6.")
+        #expect(RectangleFactoryView.transitionSpeech(from: 4, to: 6) == "Done with 4. Next, make 6 dots.")
     }
 
     @Test func instructionTextExplainsDragAndExactDotGoal() {
@@ -177,8 +177,8 @@ struct RectangleFactoryTests {
 
     @Test func solvedStatusCopyMakesSuccessAndNextActionClear() {
         #expect(RectangleFactoryView.solvedStatusTitle == "Perfect fit!")
-        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: false) == "Lift your finger to ship this 4-dot rectangle.")
-        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: true) == "All 4-dot rectangles are packed. Use the next button below.")
+        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: false) == "Lift your finger to save this 4-dot rectangle.")
+        #expect(RectangleFactoryView.solvedStatusSubtitle(for: 4, allFound: true) == "All 4-dot rectangles are found. Use the next button below.")
     }
 
     @Test func resetAndHandleAccessibilityCopyIsDiscoverable() {

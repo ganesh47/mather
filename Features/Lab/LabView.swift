@@ -194,14 +194,9 @@ struct LabView: View {
                     Text("Guided path")
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text("Optional staged learning appears after the subject picker so other streams stay visible.")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
                 }
                 Spacer(minLength: 0)
             }
-
-            compactStageStrip(compact: compact)
 
             ForEach(guidedPaths) { path in
                 guidedPathCard(path)
@@ -287,16 +282,6 @@ struct LabView: View {
                     Text(path.title)
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text(path.subtitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                    if let primaryPlan = path.primaryPlan {
-                        Text("First: \(primaryPlan.title) • \(primaryPlan.estimatedLength)")
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(tint)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-                    }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right.circle.fill")
@@ -307,7 +292,7 @@ struct LabView: View {
             .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Open \(path.title). \(path.subtitle). Stages: \(path.stages.map(\.rawValue).joined(separator: ", "))")
+        .accessibilityLabel("Open \(path.title)")
     }
 
     private func directGamesSection(compact: Bool, width: CGFloat) -> some View {
@@ -416,11 +401,13 @@ struct LabView: View {
                     .minimumScaleFactor(0.76)
                     .multilineTextAlignment(.leading)
 
-                Text(presentation.statusLine)
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(.white.opacity(0.88))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+                if lane.id != .geometry {
+                    Text(presentation.statusLine)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                }
             }
         }
         .padding(compact ? 14 : 16)

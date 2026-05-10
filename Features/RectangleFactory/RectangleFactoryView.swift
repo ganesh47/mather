@@ -103,19 +103,14 @@ struct RectangleFactoryView: View {
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(Self.factorPairGuideText(for: targetN))
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(MatherTheme.accent)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Label(Self.missionText(for: targetN), systemImage: "shippingbox.fill")
+                    Label(Self.missionText(for: targetN), systemImage: "square.grid.3x3.fill")
                         .font(.caption2.weight(.black))
                         .foregroundStyle(MatherTheme.coral)
                         .padding(.horizontal, 9)
                         .padding(.vertical, 5)
                         .background(MatherTheme.coral.opacity(0.12))
                         .clipShape(Capsule())
-                        .accessibilityLabel("Factory story: \(Self.missionText(for: targetN))")
+                        .accessibilityLabel("Rectangle goal: \(Self.missionText(for: targetN))")
                 }
             }
             Spacer(minLength: 12)
@@ -724,8 +719,8 @@ struct RectangleFactoryView: View {
         let count = factorsOf(n).count
         let noun = count == 1 ? "rectangle" : "rectangles"
         return completionStyle(for: n) == .prime
-            ? "\(n) is prime. Only one factory box works!"
-            : "Factory complete! You found all \(count) \(noun) for \(n)!"
+            ? "\(n) is prime. Only one rectangle works."
+            : "You found all \(count) \(noun) for \(n)."
     }
 
     nonisolated static func instructionText(for n: Int) -> String {
@@ -793,25 +788,25 @@ struct RectangleFactoryView: View {
     }
 
     nonisolated static func solvedStatusSubtitle(for n: Int, allFound: Bool) -> String {
-        allFound ? "All \(n)-dot rectangles are packed. Use the next button below." : "Lift your finger to ship this \(n)-dot rectangle."
+        allFound ? "All \(n)-dot rectangles are found. Use the next button below." : "Lift your finger to save this \(n)-dot rectangle."
     }
 
     nonisolated static func missionText(for n: Int) -> String {
-        "Factory order: pack \(n) dots with no gaps"
+        "Make a rectangle with exactly \(n) dots"
     }
 
     nonisolated static func openingSpeech(for n: Int) -> String {
-        "Factory order! Can you pack \(n) dots into a perfect rectangle?"
+        "Can you make a rectangle with exactly \(n) dots?"
     }
 
     nonisolated static func discoverySpeech(width: Int, height: Int, target: Int) -> String {
-        let rows = height
-        let columns = width
-        return "Nice packing! \(rows) rows of \(columns) makes \(target)."
+        let rows = min(width, height)
+        let columns = max(width, height)
+        return "Yes. \(rows) rows of \(columns) makes \(target)."
     }
 
     nonisolated static func transitionSpeech(from previous: Int, to next: Int) -> String {
-        "Order \(previous) shipped! Next factory order: \(next) dots."
+        "Done with \(previous). Next, make \(next) dots."
     }
 
     nonisolated static func advanceButtonTitle(hasNext: Bool) -> String {

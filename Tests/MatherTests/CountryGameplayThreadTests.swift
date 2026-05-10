@@ -109,8 +109,12 @@ struct CountryGameplayThreadTests {
 
         #expect(round.items.count == min(stage.maximumItemCount, thread.entities.count))
         #expect(round.items.allSatisfy { $0.propertyTypeID == "flag" })
-        #expect(pairs.allSatisfy { pair in thread.entities.contains { $0.id == pair.left.entityID && $0.name == pair.left.title } })
-        #expect(pairs.allSatisfy { $0.right.subtitle == "Flag" })
+        #expect(pairs.allSatisfy { pair in pair.left.title == "Find this flag" })
+        #expect(pairs.allSatisfy { pair in pair.left.subtitle.isEmpty })
+        #expect(pairs.allSatisfy { pair in thread.entities.contains { $0.id == pair.right.entityID && $0.name == pair.right.title } })
+        #expect(pairs.allSatisfy { $0.right.subtitle == "Country name" })
+        #expect(pairs.allSatisfy { $0.right.visualKey == "Aa" })
+        #expect(pairs.allSatisfy { $0.right.visualAssetName == nil })
         #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
 

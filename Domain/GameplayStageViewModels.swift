@@ -419,11 +419,12 @@ enum GameplayStageContentBuilder {
             guard let entity = thread.entities.first(where: { $0.id == item.entityID }) else { return nil }
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
             let recallPrompt = nameRecallPrompt(thread: thread, property: property)
+            let isCountryFlagMatch = thread.id == "countries" && property?.typeID == "flag"
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
-                title: recallPrompt ?? entity.name,
-                subtitle: entity.summary,
+                title: isCountryFlagMatch ? "Find this flag" : (recallPrompt ?? entity.name),
+                subtitle: isCountryFlagMatch ? "" : entity.summary,
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
                 visualShapeKey: entity.visualShapeKey
@@ -431,11 +432,11 @@ enum GameplayStageContentBuilder {
             let right = GameplayDisplayItem(
                 id: "\(item.id)-right",
                 entityID: entity.id,
-                title: property?.value ?? entity.name,
-                subtitle: property.map { recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread) } ?? "Name",
-                visualKey: visualKey(for: property, fallbackEntity: entity),
-                visualAssetName: property?.visualAssetName,
-                visualShapeKey: property?.visualShapeKey
+                title: isCountryFlagMatch ? entity.name : (property?.value ?? entity.name),
+                subtitle: isCountryFlagMatch ? "Country name" : (property.map { recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread) } ?? "Name"),
+                visualKey: isCountryFlagMatch ? "Aa" : visualKey(for: property, fallbackEntity: entity),
+                visualAssetName: isCountryFlagMatch ? nil : property?.visualAssetName,
+                visualShapeKey: isCountryFlagMatch ? nil : property?.visualShapeKey
             )
             return GameplayMatchPair(id: item.id, left: left, right: right)
         }
@@ -503,6 +504,8 @@ enum GameplayStageContentBuilder {
             return "Name this animal"
         case "world-birds":
             return "Name this bird"
+        case "electronics":
+            return "Name this part"
         default:
             return nil
         }
@@ -516,6 +519,8 @@ enum GameplayStageContentBuilder {
             return "Animal name"
         case "world-birds":
             return "Bird name"
+        case "electronics":
+            return "Part name"
         default:
             return "Name"
         }

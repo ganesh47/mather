@@ -175,24 +175,24 @@ struct GameplayDisplayCard: View {
 
     private var isFeatured: Bool { prominence == .featured }
     private var visualSize: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 126 : 168) : (compact ? 104 : 140) }
-        if item.isFruitCard { return compact ? 64 : 88 }
-        return compact ? 40 : 58
+        if isFeatured { return compact ? 150 : 206 }
+        if item.isFruitCard { return compact ? 76 : 104 }
+        return compact ? 54 : 76
     }
     private var visualFrameWidth: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 250 : 360) : (compact ? 220 : 320) }
-        if item.isFruitCard { return compact ? 104 : 132 }
-        return compact ? 64 : 86
+        if isFeatured { return compact ? 280 : 420 }
+        if item.isFruitCard { return compact ? 124 : 154 }
+        return compact ? 88 : 116
     }
     private var visualFrameHeight: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 190 : 260) : (compact ? 170 : 240) }
-        if item.isFruitCard { return compact ? 94 : 118 }
-        return compact ? 58 : 78
+        if isFeatured { return compact ? 220 : 320 }
+        if item.isFruitCard { return compact ? 108 : 136 }
+        return compact ? 76 : 102
     }
     private var minimumHeight: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
-        if item.isFruitCard { return compact ? 160 : 202 }
-        return compact ? 118 : 164
+        if isFeatured { return compact ? 330 : 440 }
+        if item.isFruitCard { return compact ? 172 : 218 }
+        return compact ? 134 : 184
     }
 }
 

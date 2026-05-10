@@ -86,13 +86,15 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
-                    Text(lane.promise)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Label(presentation.activityCountLabel, systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
+                    if lane.id != .geometry {
+                        Text(lane.promise)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Label(presentation.activityCountLabel, systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(tint)
+                    }
                 }
 
                 Spacer(minLength: 0)
