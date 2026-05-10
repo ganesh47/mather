@@ -315,6 +315,8 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(Set(entries.map(\.id)).count, entries.count)
         XCTAssertTrue(entries.contains { $0.activity.id == .sumSprint && $0.directRoute == .sumSprint })
         XCTAssertTrue(entries.contains { $0.activity.id == .waterCycle && $0.directRoute == .gameplayThread(.waterCycle) })
+        XCTAssertTrue(entries.contains { $0.activity.id == .worldAnimalSafari && $0.laneID == .mapWorld && $0.directRoute == .gameplayThread(.worldAnimals) })
+        XCTAssertTrue(entries.contains { $0.activity.id == .worldBirdSafari && $0.laneID == .mapWorld && $0.directRoute == .gameplayThread(.worldBirds) })
         XCTAssertTrue(entries.contains { $0.activity.id == .memoryMatch && $0.directRoute == .memory })
         XCTAssertTrue(entries.contains { $0.activity.id == .circuitSpark && $0.laneID == .electronics && $0.directRoute == .gameplayThread(.electronics) })
     }

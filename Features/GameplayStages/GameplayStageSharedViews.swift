@@ -175,23 +175,27 @@ struct GameplayDisplayCard: View {
 
     private var isFeatured: Bool { prominence == .featured }
     private var visualSize: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 126 : 168) : (compact ? 104 : 140) }
+        if isFeatured { return item.isFruitCard || item.isSafariCard ? (compact ? 126 : 168) : (compact ? 104 : 140) }
         if item.isFruitCard { return compact ? 64 : 88 }
+        if item.isSafariCard { return compact ? 56 : 76 }
         return compact ? 40 : 58
     }
     private var visualFrameWidth: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 250 : 360) : (compact ? 220 : 320) }
+        if isFeatured { return item.isFruitCard || item.isSafariCard ? (compact ? 250 : 360) : (compact ? 220 : 320) }
         if item.isFruitCard { return compact ? 104 : 132 }
+        if item.isSafariCard { return compact ? 96 : 126 }
         return compact ? 64 : 86
     }
     private var visualFrameHeight: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 190 : 260) : (compact ? 170 : 240) }
+        if isFeatured { return item.isFruitCard || item.isSafariCard ? (compact ? 190 : 260) : (compact ? 170 : 240) }
         if item.isFruitCard { return compact ? 94 : 118 }
+        if item.isSafariCard { return compact ? 88 : 112 }
         return compact ? 58 : 78
     }
     private var minimumHeight: CGFloat {
-        if isFeatured { return item.isFruitCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
+        if isFeatured { return item.isFruitCard || item.isSafariCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
         if item.isFruitCard { return compact ? 160 : 202 }
+        if item.isSafariCard { return compact ? 150 : 194 }
         return compact ? 118 : 164
     }
 }
@@ -220,6 +224,10 @@ private struct GameplayDisplayVisual: View {
                 Image(assetName)
                     .resizable()
                     .scaledToFit()
+                    .accessibilityHidden(true)
+                    .padding(visualAssetPadding)
+            } else if let shapeKey = item.visualShapeKey, shapeKey.hasPrefix("safari-") {
+                SafariHabitatArtwork(shapeKey: shapeKey)
                     .accessibilityHidden(true)
                     .padding(visualAssetPadding)
             } else if let shapeKey = item.visualShapeKey {
@@ -342,6 +350,165 @@ private struct CountryMapSilhouette: Shape {
         default:
             return [CGPoint(x: 0.30, y: 0.12), CGPoint(x: 0.74, y: 0.28), CGPoint(x: 0.66, y: 0.76), CGPoint(x: 0.24, y: 0.86), CGPoint(x: 0.16, y: 0.42)]
         }
+    }
+}
+
+private struct SafariHabitatArtwork: View {
+    let shapeKey: String
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height)
+            ZStack {
+                habitatBackground
+                if shapeKey.hasPrefix("safari-world-") {
+                    SafariWorldBoard()
+                } else {
+                    habitatMotif(size: size)
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+
+    @ViewBuilder
+    private var habitatBackground: some View {
+        switch shapeKey {
+        case "safari-habitat-pond", "safari-habitat-wetland", "safari-habitat-coast":
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [.cyan.opacity(0.55), .blue.opacity(0.28)], startPoint: .top, endPoint: .bottom))
+        case "safari-habitat-desert":
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [.yellow.opacity(0.58), .orange.opacity(0.32)], startPoint: .top, endPoint: .bottom))
+        case "safari-habitat-mountain":
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [.mint.opacity(0.48), .gray.opacity(0.30)], startPoint: .top, endPoint: .bottom))
+        case "safari-habitat-rainforest", "safari-habitat-forest", "safari-habitat-grassland", "safari-habitat-garden", "safari-habitat-farm":
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [.green.opacity(0.52), .mint.opacity(0.26)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        default:
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [MatherTheme.softBlue.opacity(0.60), MatherTheme.card.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        }
+    }
+
+    @ViewBuilder
+    private func habitatMotif(size: CGFloat) -> some View {
+        switch shapeKey {
+        case "safari-habitat-pond":
+            SafariRipples().stroke(.blue.opacity(0.70), lineWidth: max(3, size * 0.035))
+            Image(systemName: "drop.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.blue)
+        case "safari-habitat-wetland":
+            SafariGrass().fill(.green.opacity(0.75))
+            Image(systemName: "water.waves").font(.system(size: size * 0.30, weight: .black)).foregroundStyle(.blue)
+        case "safari-habitat-desert":
+            SafariDunes().fill(.orange.opacity(0.62))
+            Image(systemName: "sun.max.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.yellow)
+        case "safari-habitat-mountain":
+            SafariMountains().fill(.gray.opacity(0.76))
+            Image(systemName: "mountain.2.fill").font(.system(size: size * 0.30, weight: .black)).foregroundStyle(.white.opacity(0.9))
+        case "safari-habitat-coast":
+            SafariDunes().fill(.yellow.opacity(0.50)).offset(y: size * 0.22)
+            Image(systemName: "sailboat.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.white)
+        case "safari-habitat-farm":
+            SafariGrass().fill(.green.opacity(0.70))
+            Image(systemName: "house.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.red.opacity(0.85))
+        case "safari-habitat-garden":
+            SafariGrass().fill(.green.opacity(0.72))
+            Image(systemName: "leaf.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.green)
+        default:
+            SafariTreeCanopy().fill(.green.opacity(0.72))
+            Image(systemName: "leaf.fill").font(.system(size: size * 0.34, weight: .black)).foregroundStyle(.green)
+        }
+    }
+}
+
+private struct SafariWorldBoard: View {
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+            ZStack {
+                Capsule()
+                    .fill(.green.opacity(0.55))
+                    .frame(width: width * 0.34, height: height * 0.24)
+                    .rotationEffect(.degrees(-18))
+                    .offset(x: -width * 0.20, y: -height * 0.06)
+                Capsule()
+                    .fill(.green.opacity(0.62))
+                    .frame(width: width * 0.26, height: height * 0.35)
+                    .rotationEffect(.degrees(18))
+                    .offset(x: width * 0.12, y: -height * 0.02)
+                Capsule()
+                    .fill(.green.opacity(0.50))
+                    .frame(width: width * 0.24, height: height * 0.18)
+                    .rotationEffect(.degrees(-8))
+                    .offset(x: width * 0.26, y: height * 0.20)
+                Image(systemName: "mappin.circle.fill")
+                    .font(.system(size: min(width, height) * 0.24, weight: .black))
+                    .foregroundStyle(MatherTheme.coral)
+            }
+        }
+    }
+}
+
+private struct SafariRipples: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for scale in [0.38, 0.58, 0.78] {
+            let width = rect.width * scale
+            let height = rect.height * scale * 0.42
+            path.addEllipse(in: CGRect(x: rect.midX - width / 2, y: rect.midY - height / 2, width: width, height: height))
+        }
+        return path
+    }
+}
+
+private struct SafariDunes: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY * 0.62))
+        path.addCurve(to: CGPoint(x: rect.maxX, y: rect.maxY * 0.66), control1: CGPoint(x: rect.width * 0.25, y: rect.height * 0.38), control2: CGPoint(x: rect.width * 0.68, y: rect.height * 0.86))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct SafariMountains: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX + rect.width * 0.06, y: rect.maxY * 0.78))
+        path.addLine(to: CGPoint(x: rect.width * 0.32, y: rect.height * 0.30))
+        path.addLine(to: CGPoint(x: rect.width * 0.50, y: rect.maxY * 0.78))
+        path.addLine(to: CGPoint(x: rect.width * 0.64, y: rect.height * 0.42))
+        path.addLine(to: CGPoint(x: rect.width * 0.94, y: rect.maxY * 0.78))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct SafariGrass: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for index in 0..<7 {
+            let x = rect.width * (0.12 + CGFloat(index) * 0.13)
+            path.move(to: CGPoint(x: x, y: rect.maxY * 0.82))
+            path.addQuadCurve(to: CGPoint(x: x + rect.width * 0.04, y: rect.maxY * 0.45), control: CGPoint(x: x - rect.width * 0.05, y: rect.maxY * 0.62))
+            path.addQuadCurve(to: CGPoint(x: x + rect.width * 0.08, y: rect.maxY * 0.82), control: CGPoint(x: x + rect.width * 0.10, y: rect.maxY * 0.62))
+        }
+        return path
+    }
+}
+
+private struct SafariTreeCanopy: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addEllipse(in: CGRect(x: rect.width * 0.12, y: rect.height * 0.18, width: rect.width * 0.42, height: rect.height * 0.42))
+        path.addEllipse(in: CGRect(x: rect.width * 0.38, y: rect.height * 0.16, width: rect.width * 0.46, height: rect.height * 0.46))
+        path.addRoundedRect(in: CGRect(x: rect.width * 0.43, y: rect.height * 0.48, width: rect.width * 0.14, height: rect.height * 0.36), cornerSize: CGSize(width: 8, height: 8))
+        return path
     }
 }
 

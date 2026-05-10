@@ -37,6 +37,8 @@ struct LabRouteRegressionTests {
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
             .countryCards: .gameplayThread(.countries),
+            .worldAnimalSafari: .gameplayThread(.worldAnimals),
+            .worldBirdSafari: .gameplayThread(.worldBirds),
             .fruitCards: .gameplayThread(.fruits),
             .circuitSpark: .gameplayThread(.electronics),
         ]
@@ -52,6 +54,8 @@ struct LabRouteRegressionTests {
     func explorerLabContentRoutesUseReusableGameplayThreads() {
         let reusableThreadRoutes: [LabActivityID: GameplayThreadID] = [
             .countryCards: .countries,
+            .worldAnimalSafari: .worldAnimals,
+            .worldBirdSafari: .worldBirds,
             .fruitCards: .fruits,
             .waterCycle: .waterCycle,
             .circuitSpark: .electronics,

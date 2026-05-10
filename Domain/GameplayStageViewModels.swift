@@ -105,9 +105,12 @@ struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
     }
 
     var isFruitCard: Bool { entityID.hasPrefix("fruit-") }
+    var isSafariCard: Bool { entityID.hasPrefix("world-animal-") || entityID.hasPrefix("world-bird-") }
 
     var discoveryPrompt: String {
-        isFruitCard ? "Spot the color, say the flavor, then tap I spotted it!" : "Tap the card, say one clue, then try the next one."
+        if isFruitCard { return "Spot the color, say the flavor, then tap I spotted it!" }
+        if isSafariCard { return "Spot the creature, say its home, then tap I spotted it!" }
+        return "Tap the card, say one clue, then try the next one."
     }
 }
 
@@ -174,7 +177,9 @@ struct GameplayFlashcardStageViewModel: Equatable {
 
     var spottedFeedbackText: String {
         guard let activeCard else { return "Clue spotted!" }
-        return activeCard.isFruitCard ? "Flavor badge unlocked for \(activeCard.title)!" : "Clue spotted for \(activeCard.title)!"
+        if activeCard.isFruitCard { return "Flavor badge unlocked for \(activeCard.title)!" }
+        if activeCard.isSafariCard { return "Safari stamp unlocked for \(activeCard.title)!" }
+        return "Clue spotted for \(activeCard.title)!"
     }
 
     mutating func markActiveCardSpotted() {

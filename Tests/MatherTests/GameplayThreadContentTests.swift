@@ -167,3 +167,110 @@ struct GameplayThreadContentTests {
     }
 
 }
+
+struct WorldSafariGameplayThreadTests {
+    @Test
+    func worldSafariThreadsReuseMemoryDeckContentAndExposeFiveStageLoop() {
+        let animals = GameplayThreadCatalog.thread(for: .worldAnimals)
+        let birds = GameplayThreadCatalog.thread(for: .worldBirds)
+
+        #expect(animals.id == "world-animals")
+        #expect(birds.id == "world-birds")
+        #expect(animals.category.id == "geography")
+        #expect(birds.category.title == "World Safari")
+        #expect(animals.entities.count == 12)
+        #expect(birds.entities.count == 12)
+        #expect(animals.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+        #expect(birds.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+
+        let memoryAnimalNames = Set(MemoryDeck.domesticAnimals.map(\.canonicalName))
+        let memoryBirdNames = Set(MemoryDeck.birds.map(\.canonicalName))
+        #expect(animals.entities.allSatisfy { memoryAnimalNames.contains($0.name) })
+        #expect(birds.entities.allSatisfy { memoryBirdNames.contains($0.name) })
+        #expect(birds.entities.allSatisfy { $0.visualAssetName?.hasPrefix("MemoryBird") == true })
+    }
+
+    @Test
+    func worldSafariContentHasHabitatRegionAndKidReadableFacts() {
+        for thread in [GameplayThreadCatalog.thread(for: .worldAnimals), GameplayThreadCatalog.thread(for: .worldBirds)] {
+            #expect(thread.entities.allSatisfy { !$0.summary.isEmpty })
+            #expect(thread.entities.allSatisfy { entity in
+                let typeIDs = Set(entity.properties.map(\.typeID))
+                return typeIDs.contains(thread.id == "world-animals" ? "habitat" : "home")
+                    && typeIDs.contains(thread.id == "world-animals" ? "world-place" : "world-region")
+                    && entity.properties.allSatisfy { !$0.value.isEmpty && !$0.explanation.isEmpty }
+            })
+            #expect(thread.entities.contains { entity in
+                entity.properties.contains { $0.visualShapeKey?.hasPrefix("safari-habitat-") == true }
+            })
+            #expect(thread.entities.contains { entity in
+                entity.properties.contains { $0.visualShapeKey?.hasPrefix("safari-world-") == true }
+            })
+        }
+    }
+
+    @Test
+    func worldSafariRoundsAndQuizChoicesArePlayableAndUnambiguous() throws {
+        for thread in [GameplayThreadCatalog.thread(for: .worldAnimals), GameplayThreadCatalog.thread(for: .worldBirds)] {
+            for stage in thread.stages {
+                let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1044)
+                #expect(!round.items.isEmpty, "\(stage.id) should produce a round")
+                #expect(round.items.count <= stage.maximumItemCount)
+                if !stage.propertyTypeIDs.isEmpty {
+                    let allowed = Set(stage.propertyTypeIDs)
+                    #expect(round.items.allSatisfy { item in
+                        guard let propertyTypeID = item.propertyTypeID else { return false }
+                        return allowed.contains(propertyTypeID)
+                    })
+                }
+            }
+
+            let quizStage = try #require(thread.stages.first { $0.kind == .multipleChoice })
+            let quizRound = SpacedRepetitionScheduler.makeRound(thread: thread, stage: quizStage, seed: 1044)
+            let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: quizRound)
+            #expect(questions.count == quizRound.items.count)
+            for question in questions {
+                #expect(question.choices.contains(question.answer))
+                #expect(Set(question.choices.map { $0.title.lowercased() }).count == question.choices.count)
+                #expect(question.choices.count >= 2)
+            }
+        }
+    }
+
+    @MainActor @Test
+    func worldCreatureGuideFallsBackAndSanitizesGeneratedClues() async {
+        let animal = MemoryDeck.birds[0]
+        let fallbackService = WorldCreatureGuideService(
+            appleIntelligenceEnabled: { false },
+            aiAdapter: StubWorldGuideAdapter(isAvailable: true, response: "Macaw lives in South American rainforests.")
+        )
+        let fallback = await fallbackService.clue(for: animal)
+        #expect(fallback.source == .curatedFallback)
+        #expect(fallback.text.localizedCaseInsensitiveContains("rainforests"))
+
+        let generatedService = WorldCreatureGuideService(
+            appleIntelligenceEnabled: { true },
+            aiAdapter: StubWorldGuideAdapter(isAvailable: true, response: "Macaw lives in South American rainforests.")
+        )
+        let generated = await generatedService.clue(for: animal)
+        #expect(generated.source == .appleIntelligence)
+        #expect(generated.text == "Macaw lives in South American rainforests.")
+
+        let unsafeService = WorldCreatureGuideService(
+            appleIntelligenceEnabled: { true },
+            aiAdapter: StubWorldGuideAdapter(isAvailable: true, response: "Pretend this predator can attack.")
+        )
+        let unsafe = await unsafeService.clue(for: animal)
+        #expect(unsafe.source == .curatedFallback)
+    }
+}
+
+@MainActor
+private struct StubWorldGuideAdapter: WorldCreatureGuideAIAdapter {
+    let isAvailable: Bool
+    let response: String?
+
+    func clue(for animal: MemoryAnimal, prompt: WorldCreatureGuidePrompt) async throws -> String? {
+        response
+    }
+}

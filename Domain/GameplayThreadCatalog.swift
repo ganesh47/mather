@@ -6,6 +6,8 @@ enum GameplayThreadID: String, Codable, CaseIterable, Hashable {
     case waterCycle = "water-cycle"
     case shapes
     case electronics
+    case worldAnimals = "world-animals"
+    case worldBirds = "world-birds"
 }
 
 extension GameplayThreadCatalog {
@@ -21,6 +23,10 @@ extension GameplayThreadCatalog {
             return shapes
         case .electronics:
             return electronics
+        case .worldAnimals:
+            return WorldSafariGameplayThreads.animals
+        case .worldBirds:
+            return WorldSafariGameplayThreads.birds
         }
     }
 
@@ -211,4 +217,244 @@ extension GameplayThreadCatalog {
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
     )
 
+}
+
+enum WorldSafariGameplayThreads {
+    static let animals = GameplayThreadDefinition(
+        id: GameplayThreadID.worldAnimals.rawValue,
+        title: "Animal Homes Safari",
+        category: safariCategory,
+        propertyTypes: animalPropertyTypes,
+        entities: WorldSafariContentAdapter.entities(
+            from: MemoryDeck.domesticAnimals,
+            sourceIDs: [
+                "cow", "dog", "cat", "duck", "frog", "camel",
+                "llama", "goat", "rabbit", "goldfish", "horse", "mouse",
+            ],
+            threadPrefix: "world-animal",
+            nameTypeID: "name",
+            habitatTypeID: "habitat",
+            regionTypeID: "world-place"
+        ),
+        stages: [
+            GameplayStageDefinition(id: "animal-safari-learn", kind: .flashcards, title: "Meet the Animals", prompt: "Tap a creature, hear its home clue, then spot one thing.", maximumItemCount: 8),
+            GameplayStageDefinition(id: "animal-safari-habitat-hop", kind: .easyMemory, title: "Habitat Hop", prompt: "Help each animal hop, swim, or trot to its home.", propertyTypeIDs: ["habitat", "world-place"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "animal-safari-explore", kind: .flipMemory, title: "Explore Tracks", prompt: "Remember animal homes, sounds, colors, and moves.", propertyTypeIDs: ["habitat", "sound", "movement", "colors"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "animal-safari-stamp-blast", kind: .bondBlast, title: "Safari Stamps", prompt: "Collect matches for homes, sounds, moves, and world places.", propertyTypeIDs: ["habitat", "world-place", "sound", "movement", "colors", "kind"], maximumItemCount: 9),
+            GameplayStageDefinition(id: "animal-safari-quiz", kind: .multipleChoice, title: "Animal Quiz", prompt: "Pick the picture clue that helps the animal home.", propertyTypeIDs: ["habitat", "world-place", "sound", "movement"], maximumItemCount: 6),
+        ],
+        progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
+    )
+
+    static let birds = GameplayThreadDefinition(
+        id: GameplayThreadID.worldBirds.rawValue,
+        title: "Bird World Tour",
+        category: safariCategory,
+        propertyTypes: birdPropertyTypes,
+        entities: WorldSafariContentAdapter.entities(
+            from: MemoryDeck.birds,
+            sourceIDs: [
+                "bird-a01", "bird-a02", "bird-a03", "bird-a05", "bird-a06", "bird-a12",
+                "bird-a18", "bird-b02", "bird-b03", "bird-b11", "bird-b16", "bird-b18",
+            ],
+            threadPrefix: "world-bird",
+            nameTypeID: "name",
+            habitatTypeID: "home",
+            regionTypeID: "world-region"
+        ),
+        stages: [
+            GameplayStageDefinition(id: "bird-safari-learn", kind: .flashcards, title: "Meet the Birds", prompt: "Tap a bird, hear its world clue, then spot its colors.", maximumItemCount: 8),
+            GameplayStageDefinition(id: "bird-safari-habitat-hop", kind: .easyMemory, title: "Habitat Hop", prompt: "Fly each bird to its habitat or world region.", propertyTypeIDs: ["home", "world-region"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "bird-safari-explore", kind: .flipMemory, title: "World Explore", prompt: "Remember homes, regions, colors, and sizes.", propertyTypeIDs: ["home", "world-region", "colors", "size"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "bird-safari-stamp-blast", kind: .bondBlast, title: "Safari Stamps", prompt: "Collect bird matches for home, region, colors, size, and lifespan.", propertyTypeIDs: ["home", "world-region", "colors", "size", "lifespan", "weight"], maximumItemCount: 9),
+            GameplayStageDefinition(id: "bird-safari-quiz", kind: .multipleChoice, title: "Bird Quiz", prompt: "Pick the clue that belongs with this bird.", propertyTypeIDs: ["home", "world-region", "colors", "size"], maximumItemCount: 6),
+        ],
+        progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
+    )
+
+    private static let safariCategory = GameplayCategory(
+        id: "geography",
+        title: "World Safari",
+        subtitle: "Animal homes, habitats, bird regions, and picture-first world clues"
+    )
+
+    private static let animalPropertyTypes: [GameplayPropertyType] = [
+        GameplayPropertyType(id: "name", displayName: "Name", prompt: "Find the animal name."),
+        GameplayPropertyType(id: "habitat", displayName: "Home", prompt: "Find where this animal lives."),
+        GameplayPropertyType(id: "world-place", displayName: "World Place", prompt: "Find the broad world place."),
+        GameplayPropertyType(id: "sound", displayName: "Sound", prompt: "Find the animal sound."),
+        GameplayPropertyType(id: "movement", displayName: "Moves", prompt: "Find how this animal moves."),
+        GameplayPropertyType(id: "colors", displayName: "Colors", prompt: "Find its colors."),
+        GameplayPropertyType(id: "kind", displayName: "Kind", prompt: "Find the animal kind."),
+    ]
+
+    private static let birdPropertyTypes: [GameplayPropertyType] = [
+        GameplayPropertyType(id: "name", displayName: "Name", prompt: "Find the bird name."),
+        GameplayPropertyType(id: "home", displayName: "Home", prompt: "Find the bird home."),
+        GameplayPropertyType(id: "world-region", displayName: "World Region", prompt: "Find the broad world region."),
+        GameplayPropertyType(id: "colors", displayName: "Colors", prompt: "Find the bird colors."),
+        GameplayPropertyType(id: "size", displayName: "Size", prompt: "Find the size clue."),
+        GameplayPropertyType(id: "lifespan", displayName: "Lifespan", prompt: "Find how long some can live."),
+        GameplayPropertyType(id: "weight", displayName: "Weight", prompt: "Find the weight clue."),
+    ]
+}
+
+enum WorldSafariContentAdapter {
+    static func entities(
+        from sourceDeck: [MemoryAnimal],
+        sourceIDs: [String],
+        threadPrefix: String,
+        nameTypeID: String,
+        habitatTypeID: String,
+        regionTypeID: String
+    ) -> [GameplayEntity] {
+        let byID = Dictionary(uniqueKeysWithValues: sourceDeck.map { ($0.id, $0) })
+        return sourceIDs.compactMap { sourceID in
+            guard let animal = byID[sourceID] else { return nil }
+            return entity(from: animal, threadPrefix: threadPrefix, nameTypeID: nameTypeID, habitatTypeID: habitatTypeID, regionTypeID: regionTypeID)
+        }
+    }
+
+    static func fallbackClue(for animal: MemoryAnimal) -> String {
+        let metadata = animal.metadata
+        if let habitat = metadata.habitat {
+            if metadata.deck == .birds {
+                return "\(animal.canonicalName) lives around \(habitat.lowercased())."
+            }
+            return "\(animal.canonicalName) feels at home in \(habitat.lowercased())."
+        }
+        if let movement = metadata.movement {
+            return "\(animal.canonicalName) \(movement.lowercased())."
+        }
+        return "\(animal.canonicalName) is ready for a safari clue."
+    }
+
+    static func sanitizedGeneratedClue(_ text: String, for animal: MemoryAnimal) -> String? {
+        let collapsed = text
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !collapsed.isEmpty, collapsed.count <= 120, !collapsed.contains("?") else { return nil }
+        let lowercased = collapsed.lowercased()
+        let blocked = [
+            "as an ai", "language model", "pretend", "roleplay", "click here", "http://", "https://",
+            "scary", "violent", "kill", "dead", "death", "blood", "disease", "danger", "weapon",
+            "mate", "mating", "predator", "prey", "hunt", "attack",
+        ]
+        guard !blocked.contains(where: { lowercased.contains($0) }) else { return nil }
+
+        let allowedTerms = metadataTerms(for: animal)
+        guard allowedTerms.contains(where: { lowercased.contains($0) }) else { return nil }
+        return collapsed.hasSuffix(".") || collapsed.hasSuffix("!") ? collapsed : collapsed + "."
+    }
+
+    private static func entity(
+        from animal: MemoryAnimal,
+        threadPrefix: String,
+        nameTypeID: String,
+        habitatTypeID: String,
+        regionTypeID: String
+    ) -> GameplayEntity {
+        let metadata = animal.metadata
+        let entityID = "\(threadPrefix)-\(animal.id)"
+        let habitat = metadata.habitat ?? "safe home place"
+        let region = safariRegion(for: animal)
+        let habitatKey = safariHabitatKey(for: animal)
+        var properties: [GameplayProperty] = [
+            property(entityID: entityID, typeID: nameTypeID, value: animal.canonicalName, explanation: "\(animal.canonicalName) is this creature's name.", visualKey: pictureEmoji(for: animal), visualAssetName: animal.imageAssetName),
+            property(entityID: entityID, typeID: habitatTypeID, value: habitat, explanation: "\(animal.canonicalName) lives in \(habitat.lowercased()).", visualKey: habitatSymbolName(for: habitatKey), visualShapeKey: habitatKey),
+            property(entityID: entityID, typeID: regionTypeID, value: region, explanation: "A broad world clue for \(animal.canonicalName) is \(region).", visualKey: "map", visualShapeKey: "safari-world-\(regionKey(for: region))"),
+            property(entityID: entityID, typeID: "kind", value: metadata.kind, explanation: "\(animal.canonicalName) is a \(metadata.kind).", visualKey: "pawprint.fill"),
+        ]
+        appendProperty(&properties, entityID: entityID, typeID: "sound", value: metadata.sound, explanationPrefix: "\(animal.canonicalName) can make")
+        appendProperty(&properties, entityID: entityID, typeID: "movement", value: metadata.movement, explanationPrefix: "\(animal.canonicalName)")
+        appendProperty(&properties, entityID: entityID, typeID: "colors", value: metadata.colors, explanationPrefix: "\(animal.canonicalName) can show")
+        appendProperty(&properties, entityID: entityID, typeID: "size", value: metadata.size, explanationPrefix: "\(animal.canonicalName) can be about")
+        appendProperty(&properties, entityID: entityID, typeID: "lifespan", value: metadata.lifespan, explanationPrefix: "Some \(animal.canonicalName) birds can live")
+        appendProperty(&properties, entityID: entityID, typeID: "weight", value: metadata.weight, explanationPrefix: "\(animal.canonicalName) can weigh about")
+
+        return GameplayEntity(
+            id: entityID,
+            name: animal.canonicalName,
+            summary: fallbackClue(for: animal),
+            visualKey: pictureEmoji(for: animal),
+            visualAssetName: animal.imageAssetName,
+            visualShapeKey: animal.imageAssetName == nil ? habitatKey : nil,
+            properties: properties
+        )
+    }
+
+    private static func appendProperty(_ properties: inout [GameplayProperty], entityID: String, typeID: String, value: String?, explanationPrefix: String) {
+        guard let value, !value.isEmpty else { return }
+        properties.append(property(entityID: entityID, typeID: typeID, value: value, explanation: "\(explanationPrefix) \(value.lowercased())."))
+    }
+
+    private static func property(
+        entityID: String,
+        typeID: String,
+        value: String,
+        explanation: String,
+        visualKey: String? = nil,
+        visualAssetName: String? = nil,
+        visualShapeKey: String? = nil
+    ) -> GameplayProperty {
+        GameplayProperty(id: "\(entityID)-\(typeID)", typeID: typeID, value: value, explanation: explanation, visualKey: visualKey, visualAssetName: visualAssetName, visualShapeKey: visualShapeKey)
+    }
+
+    private static func pictureEmoji(for animal: MemoryAnimal) -> String? {
+        animal.emoji ?? (animal.metadata.deck == .birds ? "bird.fill" : "pawprint.fill")
+    }
+
+    private static func safariHabitatKey(for animal: MemoryAnimal) -> String {
+        let habitat = (animal.metadata.habitat ?? "").lowercased()
+        if habitat.contains("pond") || habitat.contains("lake") || habitat.contains("stream") || habitat.contains("waterway") || habitat.contains("aquarium") { return "safari-habitat-pond" }
+        if habitat.contains("wetland") || habitat.contains("marsh") || habitat.contains("lagoon") { return "safari-habitat-wetland" }
+        if habitat.contains("rainforest") || habitat.contains("tropical") || habitat.contains("forest") || habitat.contains("woodland") || habitat.contains("canop") { return "safari-habitat-rainforest" }
+        if habitat.contains("desert") || habitat.contains("dry") { return "safari-habitat-desert" }
+        if habitat.contains("mountain") || habitat.contains("rocky") { return "safari-habitat-mountain" }
+        if habitat.contains("coast") || habitat.contains("island") || habitat.contains("atlantic") { return "safari-habitat-coast" }
+        if habitat.contains("garden") || habitat.contains("home") { return "safari-habitat-garden" }
+        if habitat.contains("farm") || habitat.contains("pasture") || habitat.contains("stable") || habitat.contains("barn") || habitat.contains("ranch") { return "safari-habitat-farm" }
+        return "safari-habitat-grassland"
+    }
+
+    private static func habitatSymbolName(for key: String) -> String {
+        switch key {
+        case "safari-habitat-pond": return "drop.fill"
+        case "safari-habitat-wetland": return "water.waves"
+        case "safari-habitat-rainforest": return "leaf.fill"
+        case "safari-habitat-desert": return "sun.max.fill"
+        case "safari-habitat-mountain": return "mountain.2.fill"
+        case "safari-habitat-coast": return "sailboat.fill"
+        case "safari-habitat-garden": return "house.fill"
+        case "safari-habitat-farm": return "house.fill"
+        default: return "globe.americas.fill"
+        }
+    }
+
+    private static func safariRegion(for animal: MemoryAnimal) -> String {
+        let habitat = (animal.metadata.habitat ?? "").lowercased()
+        if habitat.contains("south american") || habitat.contains("americas") || habitat.contains("atlantic") || habitat.contains("american") { return "Americas" }
+        if habitat.contains("australia") || habitat.contains("oceania") || habitat.contains("new guinea") || habitat.contains("island") { return "Australia and islands" }
+        if habitat.contains("india") || habitat.contains("sri lanka") || habitat.contains("asian") || habitat.contains("asia") { return "Asia" }
+        if habitat.contains("africa") { return "Africa" }
+        if habitat.contains("europe") { return "Europe and Asia" }
+        if habitat.contains("desert") { return "Dry world places" }
+        if habitat.contains("farm") || habitat.contains("home") || habitat.contains("garden") || habitat.contains("stable") || habitat.contains("barn") || habitat.contains("ranch") { return "Near people" }
+        return "World habitats"
+    }
+
+    private static func regionKey(for region: String) -> String {
+        region.lowercased().replacingOccurrences(of: " and ", with: "-").replacingOccurrences(of: " ", with: "-")
+    }
+
+    private static func metadataTerms(for animal: MemoryAnimal) -> Set<String> {
+        var terms = Set([animal.canonicalName.lowercased(), animal.name.lowercased()])
+        for card in animal.detailCards {
+            for chunk in card.value.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }) where chunk.count >= 4 {
+                terms.insert(String(chunk))
+            }
+        }
+        return terms
+    }
 }

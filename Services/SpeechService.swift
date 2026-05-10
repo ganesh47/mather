@@ -494,6 +494,68 @@ final class MemoryCardDescribeService {
 }
 
 
+struct WorldCreatureGuidePrompt: Equatable {
+    let systemInstruction: String
+    let userPrompt: String
+
+    static func childSafePrompt(for animal: MemoryAnimal) -> WorldCreatureGuidePrompt {
+        let facts = animal.detailCards
+            .prefix(5)
+            .map { "\($0.title): \($0.value)" }
+            .joined(separator: "; ")
+        return WorldCreatureGuidePrompt(
+            systemInstruction: "Write one factual clue for a child age 5 to 8. Use 120 characters or fewer. Use only supplied facts. Do not ask questions, roleplay, mention AI, use markdown, emoji, danger, predators, mating, illness, or death.",
+            userPrompt: "Creature: \(animal.canonicalName). Deck: \(animal.metadata.deck.displayName). Known facts: \(facts)."
+        )
+    }
+}
+
+@MainActor
+protocol WorldCreatureGuideAIAdapter {
+    var isAvailable: Bool { get }
+    func clue(for animal: MemoryAnimal, prompt: WorldCreatureGuidePrompt) async throws -> String?
+}
+
+private struct NullWorldCreatureGuideAIAdapter: WorldCreatureGuideAIAdapter {
+    var isAvailable: Bool { false }
+    func clue(for animal: MemoryAnimal, prompt: WorldCreatureGuidePrompt) async throws -> String? { nil }
+}
+
+@MainActor
+final class WorldCreatureGuideService {
+    enum Source: Equatable {
+        case curatedFallback
+        case appleIntelligence
+    }
+
+    struct Clue: Equatable {
+        let text: String
+        let source: Source
+    }
+
+    private let appleIntelligenceEnabled: () -> Bool
+    private let aiAdapter: any WorldCreatureGuideAIAdapter
+
+    init(
+        appleIntelligenceEnabled: @escaping () -> Bool = { false },
+        aiAdapter: (any WorldCreatureGuideAIAdapter)? = nil
+    ) {
+        self.appleIntelligenceEnabled = appleIntelligenceEnabled
+        self.aiAdapter = aiAdapter ?? NullWorldCreatureGuideAIAdapter()
+    }
+
+    func clue(for animal: MemoryAnimal) async -> Clue {
+        let prompt = WorldCreatureGuidePrompt.childSafePrompt(for: animal)
+        if appleIntelligenceEnabled(), aiAdapter.isAvailable,
+           let generated = try? await aiAdapter.clue(for: animal, prompt: prompt),
+           let sanitized = WorldSafariContentAdapter.sanitizedGeneratedClue(generated, for: animal) {
+            return Clue(text: sanitized, source: .appleIntelligence)
+        }
+        return Clue(text: WorldSafariContentAdapter.fallbackClue(for: animal), source: .curatedFallback)
+    }
+}
+
+
 private extension Data {
     mutating func appendLittleEndian<T: FixedWidthInteger>(_ value: T) {
         var littleEndianValue = value.littleEndian

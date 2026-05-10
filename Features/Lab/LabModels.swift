@@ -354,6 +354,8 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case soundVolume
     case memoryMatch
     case countryCards
+    case worldAnimalSafari
+    case worldBirdSafari
     case fruitCards
     case circuitSpark
 }
@@ -389,6 +391,10 @@ extension LabActivityID {
             return .memory
         case .countryCards:
             return .gameplayThread(.countries)
+        case .worldAnimalSafari:
+            return .gameplayThread(.worldAnimals)
+        case .worldBirdSafari:
+            return .gameplayThread(.worldBirds)
         case .fruitCards:
             return .gameplayThread(.fruits)
         case .circuitSpark:
@@ -1059,7 +1065,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards, .circuitSpark:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .worldAnimalSafari, .worldBirdSafari, .fruitCards, .circuitSpark:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -1468,6 +1474,20 @@ struct CapabilityLane: Identifiable, Equatable {
                     title: "Country Cards",
                     tagline: "Flashcards for capitals, flags, languages, currency, and continents",
                     modes: [.learn, .review, .challenge]
+                ),
+                LabActivity(
+                    id: .worldAnimalSafari,
+                    emoji: "🐾",
+                    title: "Animal Homes Safari",
+                    tagline: "Help animals find farms, ponds, deserts, mountains, and homes",
+                    modes: [.learn, .explore, .challenge]
+                ),
+                LabActivity(
+                    id: .worldBirdSafari,
+                    emoji: "🪽",
+                    title: "Bird World Tour",
+                    tagline: "Fly birds to habitats, colors, sizes, and world regions",
+                    modes: [.learn, .explore, .challenge]
                 ),
             ]
         ),

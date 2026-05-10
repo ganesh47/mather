@@ -144,7 +144,7 @@ struct GameplayStageViewModelsTests {
 struct GameplayThreadCatalogRegressionTests {
     @Test
     func allDirectGameplayEntriesUseFiveStageReusableThread() {
-        let directEntries: [GameplayThreadID] = [.countries, .fruits, .waterCycle]
+        let directEntries: [GameplayThreadID] = [.countries, .fruits, .waterCycle, .worldAnimals, .worldBirds]
 
         for id in directEntries {
             let thread = GameplayThreadCatalog.thread(for: id)
