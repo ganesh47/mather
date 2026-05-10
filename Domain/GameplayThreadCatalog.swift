@@ -209,7 +209,7 @@ extension GameplayThreadCatalog {
         ],
         stages: [
             GameplayStageDefinition(id: "electronics-flashcards", kind: .flashcards, title: "Spark Cards", prompt: "Meet safe circuit parts, jobs, and rules.", maximumItemCount: 8),
-            GameplayStageDefinition(id: "electronics-easy-memory", kind: .easyMemory, title: "Part Match", prompt: "Match each part to what it does.", propertyTypeIDs: ["part", "job"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "electronics-easy-memory", kind: .easyMemory, title: "Symbol Match", prompt: "Match each circuit symbol to its part name.", propertyTypeIDs: ["part"], maximumItemCount: 8),
             GameplayStageDefinition(id: "electronics-flip-memory", kind: .flipMemory, title: "Rule Flip", prompt: "Remember open, closed, and safety rules.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
             GameplayStageDefinition(id: "electronics-bond-blast", kind: .bondBlast, title: "Circuit Blast", prompt: "Connect safe parts, jobs, and rules.", propertyTypeIDs: ["part", "job", "rule"], maximumItemCount: 8),
             GameplayStageDefinition(id: "electronics-quiz", kind: .multipleChoice, title: "Spark Quiz", prompt: "Pick the best safe circuit clue.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
