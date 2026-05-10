@@ -241,10 +241,12 @@ struct GameplayThreadView: View {
     }
 
     private var scoreText: some View {
-        Text("Score \(navigation.summary().scorePoints)")
+        let summary = navigation.summary()
+        let text = navigation.stageResults.isEmpty ? "Learning" : "Score \(summary.scorePoints)"
+        Text(text)
             .font(.subheadline.weight(.semibold).monospacedDigit())
             .foregroundStyle(MatherTheme.ink.opacity(0.8))
-            .accessibilityLabel("Current score \(navigation.summary().scorePoints)")
+            .accessibilityLabel(navigation.stageResults.isEmpty ? "Learning stage in progress" : "Current score \(summary.scorePoints)")
     }
 }
 

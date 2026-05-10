@@ -67,34 +67,38 @@ struct GameplayDisplayCard: View {
 
     var body: some View {
         VStack(spacing: compact ? 6 : 10) {
-            ZStack(alignment: .topTrailing) {
-                GameplayDisplayVisual(
-                    item: item,
-                    concealed: concealed,
-                    visualSize: visualSize,
-                    visualFrameWidth: visualFrameWidth,
-                    visualFrameHeight: visualFrameHeight,
-                    cornerRadius: isFeatured ? 28 : 22,
-                    tint: stateTint
-                )
-                if showsStateBadge {
-                    Image(systemName: stateBadgeSystemName)
-                        .font(.system(size: compact ? 16 : 21, weight: .black, design: .rounded))
-                        .foregroundStyle(stateBadgeColor)
-                        .padding(6)
-                        .background(Circle().fill(MatherTheme.card.opacity(0.92)))
-                        .offset(x: compact ? 4 : 8, y: compact ? -4 : -8)
-                        .accessibilityHidden(true)
+            if showsVisual {
+                ZStack(alignment: .topTrailing) {
+                    GameplayDisplayVisual(
+                        item: item,
+                        concealed: concealed,
+                        visualSize: visualSize,
+                        visualFrameWidth: visualFrameWidth,
+                        visualFrameHeight: visualFrameHeight,
+                        cornerRadius: isFeatured || item.presentation == .visualOnly ? 28 : 22,
+                        tint: stateTint
+                    )
+                    if showsStateBadge {
+                        Image(systemName: stateBadgeSystemName)
+                            .font(.system(size: compact ? 16 : 21, weight: .black, design: .rounded))
+                            .foregroundStyle(stateBadgeColor)
+                            .padding(6)
+                            .background(Circle().fill(MatherTheme.card.opacity(0.92)))
+                            .offset(x: compact ? 4 : 8, y: compact ? -4 : -8)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
-            Text(concealed ? "Hidden match" : item.title)
-                .font(prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold()))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(MatherTheme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.76)
+            if showsTitle {
+                Text(concealed ? "Hidden match" : item.title)
+                    .font(titleFont)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(MatherTheme.ink)
+                    .lineLimit(item.presentation == .titleOnly ? 3 : 2)
+                    .minimumScaleFactor(0.76)
+            }
             let subtitle = concealed ? "Tap to check" : item.subtitle
-            if showsSubtitle && !subtitle.isEmpty {
+            if showsSubtitle && item.presentation == .visualWithTitle && !subtitle.isEmpty {
                 Text(subtitle)
                     .font(.caption.weight(.semibold))
                     .multilineTextAlignment(.center)
@@ -174,22 +178,35 @@ struct GameplayDisplayCard: View {
     }
 
     private var isFeatured: Bool { prominence == .featured }
+    private var showsVisual: Bool { concealed || item.presentation != .titleOnly }
+    private var showsTitle: Bool { concealed || item.presentation != .visualOnly }
+    private var titleFont: Font {
+        if item.presentation == .titleOnly {
+            return compact ? .title3.bold() : .title.bold()
+        }
+        return prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold())
+    }
     private var visualSize: CGFloat {
+        if item.presentation == .visualOnly { return compact ? 86 : 124 }
         if isFeatured { return item.isFruitCard ? (compact ? 126 : 168) : (compact ? 104 : 140) }
         if item.isFruitCard { return compact ? 64 : 88 }
         return compact ? 40 : 58
     }
     private var visualFrameWidth: CGFloat {
+        if item.presentation == .visualOnly { return compact ? 132 : 180 }
         if isFeatured { return item.isFruitCard ? (compact ? 250 : 360) : (compact ? 220 : 320) }
         if item.isFruitCard { return compact ? 104 : 132 }
         return compact ? 64 : 86
     }
     private var visualFrameHeight: CGFloat {
+        if item.presentation == .visualOnly { return compact ? 112 : 156 }
         if isFeatured { return item.isFruitCard ? (compact ? 190 : 260) : (compact ? 170 : 240) }
         if item.isFruitCard { return compact ? 94 : 118 }
         return compact ? 58 : 78
     }
     private var minimumHeight: CGFloat {
+        if item.presentation == .titleOnly { return compact ? 104 : 132 }
+        if item.presentation == .visualOnly { return compact ? 138 : 184 }
         if isFeatured { return item.isFruitCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
         if item.isFruitCard { return compact ? 160 : 202 }
         return compact ? 118 : 164
@@ -428,6 +445,7 @@ struct GameplayPairingStageShell: View {
                         GameplayDisplayCard(
                             item: pair.left,
                             compact: compact,
+                            showsSubtitle: false,
                             selected: state == .selected,
                             inspected: state == .inspected,
                             matched: state == .matched,
@@ -452,7 +470,7 @@ struct GameplayPairingStageShell: View {
                         GameplayDisplayCard(
                             item: item,
                             compact: compact,
-                            showsSubtitle: true,
+                            showsSubtitle: false,
                             selected: state == .selected,
                             inspected: state == .inspected,
                             matched: state == .matched,
@@ -487,6 +505,7 @@ struct GameplayPairingStageShell: View {
             }
         }
         .padding(compact ? 14 : 20)
+        .padding(.bottom, compact ? 12 : 8)
         .background(GameplayStagePanel())
         .onDisappear { cancelAutoProgress() }
     }
