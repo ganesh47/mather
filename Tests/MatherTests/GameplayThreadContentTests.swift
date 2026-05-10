@@ -144,7 +144,7 @@ struct GameplayThreadContentTests {
     }
 
     @Test
-    func shapeThreadAddsRicherCardsAndNameCardsUseNeutralVisuals() throws {
+    func shapeThreadAddsRicherCardsAndNameMatchUsesRecallPrompts() throws {
         let thread = GameplayThreadCatalog.shapes
 
         #expect(thread.entities.count >= 12)
@@ -159,8 +159,10 @@ struct GameplayThreadContentTests {
         let namePairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
 
         #expect(namePairs.count == 4)
-        #expect(namePairs.allSatisfy { $0.right.subtitle == "Name" })
-        #expect(namePairs.allSatisfy { $0.right.visualKey != $0.left.visualKey })
+        #expect(namePairs.allSatisfy { $0.left.title == "Name this shape" })
+        #expect(namePairs.allSatisfy { $0.left.title != $0.right.title })
+        #expect(namePairs.allSatisfy { $0.right.subtitle == "Shape name" })
+        #expect(namePairs.allSatisfy { $0.right.visualKey != nil && $0.right.visualKey != "Aa" })
         #expect(nameStage.maximumItemCount >= 8)
     }
 

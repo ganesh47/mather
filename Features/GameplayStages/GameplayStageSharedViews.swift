@@ -123,7 +123,7 @@ struct GameplayDisplayCard: View {
     private var cardFill: Color {
         if correct { return MatherTheme.warm.opacity(0.34) }
         if matched { return MatherTheme.accent.opacity(0.20) }
-        if selected { return MatherTheme.coral.opacity(0.18) }
+        if selected { return MatherTheme.softBlue.opacity(0.58) }
         if inspected { return MatherTheme.softBlue.opacity(0.50) }
         return MatherTheme.card
     }
@@ -131,7 +131,7 @@ struct GameplayDisplayCard: View {
     private var cardBorder: Color {
         if correct { return MatherTheme.coral }
         if matched { return MatherTheme.accent }
-        if selected { return MatherTheme.coral }
+        if selected { return MatherTheme.accent }
         if inspected { return MatherTheme.softBlue }
         return MatherTheme.panelDeep.opacity(0.12)
     }
@@ -145,13 +145,14 @@ struct GameplayDisplayCard: View {
     private var cardShadow: Color {
         if correct { return MatherTheme.coral.opacity(0.18) }
         if matched { return MatherTheme.accent.opacity(0.14) }
+        if selected { return MatherTheme.accent.opacity(0.12) }
         return MatherTheme.panelDeep.opacity(0.08)
     }
 
     private var stateTint: Color {
         if correct { return MatherTheme.warm }
         if matched { return MatherTheme.accent }
-        if selected { return MatherTheme.coral }
+        if selected { return MatherTheme.accent }
         if inspected { return MatherTheme.softBlue }
         return MatherTheme.softBlue
     }
@@ -169,7 +170,7 @@ struct GameplayDisplayCard: View {
     private var stateBadgeColor: Color {
         if correct { return MatherTheme.coral }
         if matched { return MatherTheme.accent }
-        return MatherTheme.coral
+        return MatherTheme.accent
     }
 
     private var isFeatured: Bool { prominence == .featured }
@@ -191,7 +192,7 @@ struct GameplayDisplayCard: View {
     private var minimumHeight: CGFloat {
         if isFeatured { return item.isFruitCard ? (compact ? 330 : 430) : (compact ? 310 : 400) }
         if item.isFruitCard { return compact ? 160 : 202 }
-        return compact ? 132 : 164
+        return compact ? 118 : 164
     }
 }
 
@@ -472,27 +473,16 @@ struct GameplayPairingStageShell: View {
             if let item = viewModel.inspectedItem, !viewModel.shouldConcealRight(item) {
                 GameplayCardDetailCallout(item: item, compact: compact)
             }
-            HStack(alignment: .center, spacing: 10) {
-                Button("Hint") { viewModel.hintCount += 1 }
-                    .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
-                Spacer()
-                if viewModel.canAdvanceTurn {
-                    Button(autoProgressSignature == nil ? "Next turn" : "Next turn now") {
-                        cancelAutoProgress()
-                        viewModel.advanceTurn()
-                    }
-                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                } else if viewModel.isComplete {
-                    Button("Finish stage") {
-                        cancelAutoProgress()
-                        onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
-                    }
-                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
-                } else {
-                    Text(viewModel.finishRequirementText)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(MatherTheme.ink.opacity(0.68))
-                        .multilineTextAlignment(.trailing)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 10) {
+                    hintControl
+                    Spacer(minLength: 8)
+                    footerProgressOrAction
+                }
+                VStack(alignment: .leading, spacing: 10) {
+                    hintControl
+                    footerProgressOrAction
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
@@ -533,6 +523,36 @@ struct GameplayPairingStageShell: View {
         autoProgressTask?.cancel()
         autoProgressTask = nil
         autoProgressSignature = nil
+    }
+
+    private var hintControl: some View {
+        Button("Hint") { viewModel.hintCount += 1 }
+            .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+    }
+
+    @ViewBuilder
+    private var footerProgressOrAction: some View {
+        if viewModel.canAdvanceTurn {
+            Button(autoProgressSignature == nil ? "Next turn" : "Next turn now") {
+                cancelAutoProgress()
+                viewModel.advanceTurn()
+            }
+            .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+        } else if viewModel.isComplete {
+            Button("Finish stage") {
+                cancelAutoProgress()
+                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+            }
+            .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+        } else {
+            Text(viewModel.finishRequirementText)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MatherTheme.ink.opacity(0.68))
+                .multilineTextAlignment(compact ? .leading : .trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private var columns: [GridItem] {

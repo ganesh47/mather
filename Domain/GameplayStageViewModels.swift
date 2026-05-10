@@ -418,10 +418,11 @@ enum GameplayStageContentBuilder {
         round.items.compactMap { item in
             guard let entity = thread.entities.first(where: { $0.id == item.entityID }) else { return nil }
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
+            let usesShapeNameRecallPrompt = isShapeNameRecallPrompt(thread: thread, property: property)
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
-                title: entity.name,
+                title: usesShapeNameRecallPrompt ? "Name this shape" : entity.name,
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
@@ -431,8 +432,8 @@ enum GameplayStageContentBuilder {
                 id: "\(item.id)-right",
                 entityID: entity.id,
                 title: property?.value ?? entity.name,
-                subtitle: property.map { propertyTypeTitle($0.typeID, in: thread) } ?? "Name",
-                visualKey: property?.visualKey,
+                subtitle: property.map { usesShapeNameRecallPrompt ? "Shape name" : propertyTypeTitle($0.typeID, in: thread) } ?? "Name",
+                visualKey: visualKey(for: property, fallbackEntity: entity),
                 visualAssetName: property?.visualAssetName,
                 visualShapeKey: property?.visualShapeKey
             )
@@ -491,6 +492,18 @@ enum GameplayStageContentBuilder {
 
     private static func propertyTypeTitle(_ id: String, in thread: GameplayThreadDefinition) -> String {
         thread.propertyTypesByID[id]?.displayName ?? id
+    }
+
+    private static func isShapeNameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?) -> Bool {
+        thread.id == "shapes" && property?.typeID == "name"
+    }
+
+    private static func visualKey(for property: GameplayProperty?, fallbackEntity entity: GameplayEntity) -> String? {
+        guard let property else { return entity.visualKey }
+        if property.typeID == "name", property.visualKey == nil || property.visualKey == "Aa" {
+            return entity.visualKey
+        }
+        return property.visualKey
     }
 
     private static func uniqued(_ items: [GameplayDisplayItem], excluding answer: GameplayDisplayItem) -> [GameplayDisplayItem] {
