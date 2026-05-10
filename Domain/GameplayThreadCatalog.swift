@@ -150,69 +150,69 @@ extension GameplayThreadCatalog {
     )
 
 
-    /// Kid-safe electronics cards for the Lab's first playable electricity and magnetism activity.
-    /// The facts avoid color-only cues and keep every choice readable as component, job, and rule text.
+    /// Kid-safe electronics cards for the Lab's first playable circuit activity.
+    /// The facts stay elementary: pretend battery, bulb, wire, switch, open/closed loop, and gentle safety.
     static let electronics: GameplayThreadDefinition = GameplayThreadDefinition(
         id: "electronics",
         title: "Circuit Spark",
         category: GameplayCategory(
             id: "electronics",
             title: "Electronics",
-            subtitle: "Closed circuits, switches, materials, bulbs, batteries, and magnet poles"
+            subtitle: "Pretend batteries, bulbs, wires, switches, open and closed circuits, and safety"
         ),
         propertyTypes: [
-            GameplayPropertyType(id: "part", displayName: "Part", prompt: "Find the circuit or magnet part."),
+            GameplayPropertyType(id: "part", displayName: "Part", prompt: "Find the safe circuit part."),
             GameplayPropertyType(id: "job", displayName: "Job", prompt: "Find what this part does."),
-            GameplayPropertyType(id: "rule", displayName: "Rule", prompt: "Find the rule that makes it work."),
+            GameplayPropertyType(id: "rule", displayName: "Rule", prompt: "Find the safe circuit rule."),
         ],
         entities: [
-            GameplayEntity(id: "electronics-battery", name: "Battery", summary: "A battery gives a circuit a push of electric energy.", visualKey: "🔋", properties: [
-                GameplayProperty(id: "electronics-battery-part", typeID: "part", value: "Battery", explanation: "The battery is the power part.", visualKey: "🔋"),
-                GameplayProperty(id: "electronics-battery-job", typeID: "job", value: "Gives power", explanation: "A battery pushes electric energy around a closed path."),
-                GameplayProperty(id: "electronics-battery-rule", typeID: "rule", value: "Needs a loop", explanation: "Power can do work only when the circuit path comes back around."),
+            GameplayEntity(id: "electronics-battery", name: "Battery", summary: "A pretend game battery gives a tiny circuit its power.", visualKey: "🔋", properties: [
+                GameplayProperty(id: "electronics-battery-part", typeID: "part", value: "Battery", explanation: "The battery is the safe pretend power part in this game.", visualKey: "🔋"),
+                GameplayProperty(id: "electronics-battery-job", typeID: "job", value: "Gives power", explanation: "The pretend battery can help the light turn on."),
+                GameplayProperty(id: "electronics-battery-rule", typeID: "rule", value: "Game batteries are pretend", explanation: "Batteries in this game are pretend and safe to play with on the screen."),
             ]),
-            GameplayEntity(id: "electronics-bulb", name: "Bulb", summary: "A bulb lights when current can travel through it in a closed circuit.", visualKey: "💡", properties: [
-                GameplayProperty(id: "electronics-bulb-part", typeID: "part", value: "Bulb", explanation: "The bulb is the light-making part.", visualKey: "💡"),
-                GameplayProperty(id: "electronics-bulb-job", typeID: "job", value: "Makes light", explanation: "A working bulb turns electric energy into light."),
-                GameplayProperty(id: "electronics-bulb-rule", typeID: "rule", value: "Lights in a closed circuit", explanation: "The bulb stays off when the path is broken."),
+            GameplayEntity(id: "electronics-bulb", name: "Bulb", summary: "A bulb or light turns on when the pretend circuit is closed.", visualKey: "💡", properties: [
+                GameplayProperty(id: "electronics-bulb-part", typeID: "part", value: "Bulb or light", explanation: "The bulb is the light-making part.", visualKey: "💡"),
+                GameplayProperty(id: "electronics-bulb-job", typeID: "job", value: "Makes light", explanation: "The light can shine when the path is complete."),
+                GameplayProperty(id: "electronics-bulb-rule", typeID: "rule", value: "Light on in closed circuit", explanation: "The light turns on when the wire path makes a full loop."),
             ]),
-            GameplayEntity(id: "electronics-closed-circuit", name: "Closed Circuit", summary: "A closed circuit is an unbroken loop from battery to bulb and back.", visualKey: "↻", properties: [
+            GameplayEntity(id: "electronics-wire", name: "Wire", summary: "A wire makes the path from the battery to the light and back.", visualKey: "➰", properties: [
+                GameplayProperty(id: "electronics-wire-part", typeID: "part", value: "Wire", explanation: "A wire is the path part.", visualKey: "➰"),
+                GameplayProperty(id: "electronics-wire-job", typeID: "job", value: "Makes a path", explanation: "A wire joins the battery, switch, and light."),
+                GameplayProperty(id: "electronics-wire-rule", typeID: "rule", value: "Path must meet both ends", explanation: "The wire path needs to meet both ends of the pretend battery."),
+            ]),
+            GameplayEntity(id: "electronics-switch", name: "Switch", summary: "A switch opens or closes the pretend circuit path.", visualKey: "⏻", properties: [
+                GameplayProperty(id: "electronics-switch-part", typeID: "part", value: "Switch", explanation: "The switch is the open-close part.", visualKey: "⏻"),
+                GameplayProperty(id: "electronics-switch-job", typeID: "job", value: "Opens or closes", explanation: "A switch can connect the path or make a gap."),
+                GameplayProperty(id: "electronics-switch-rule", typeID: "rule", value: "Closed switch can turn on", explanation: "When the switch closes, the path can be complete."),
+            ]),
+            GameplayEntity(id: "electronics-closed-circuit", name: "Closed Circuit", summary: "A closed circuit is a full loop from battery to light and back.", visualKey: "↻", properties: [
                 GameplayProperty(id: "electronics-closed-circuit-part", typeID: "part", value: "Closed loop", explanation: "The wire path comes all the way back."),
-                GameplayProperty(id: "electronics-closed-circuit-job", typeID: "job", value: "Lets current move", explanation: "Electric current can travel around a closed loop."),
+                GameplayProperty(id: "electronics-closed-circuit-job", typeID: "job", value: "Lets power reach the light", explanation: "A full loop lets the pretend battery help the light."),
                 GameplayProperty(id: "electronics-closed-circuit-rule", typeID: "rule", value: "Bulb on", explanation: "A complete path can turn the bulb on."),
             ]),
-            GameplayEntity(id: "electronics-open-circuit", name: "Open Circuit", summary: "An open circuit has a gap, so current cannot complete the trip.", visualKey: "⛔", properties: [
+            GameplayEntity(id: "electronics-open-circuit", name: "Open Circuit", summary: "An open circuit has a gap, so the pretend light stays off.", visualKey: "⛔", properties: [
                 GameplayProperty(id: "electronics-open-circuit-part", typeID: "part", value: "Broken path", explanation: "A gap breaks the circuit path."),
-                GameplayProperty(id: "electronics-open-circuit-job", typeID: "job", value: "Stops current", explanation: "Current cannot jump across the open gap in this game."),
+                GameplayProperty(id: "electronics-open-circuit-job", typeID: "job", value: "Keeps light off", explanation: "The pretend power cannot go around a path with a gap."),
                 GameplayProperty(id: "electronics-open-circuit-rule", typeID: "rule", value: "Bulb off", explanation: "A broken path keeps the bulb off."),
             ]),
-            GameplayEntity(id: "electronics-switch", name: "Switch", summary: "A switch opens or closes the circuit path.", visualKey: "⏻", properties: [
-                GameplayProperty(id: "electronics-switch-part", typeID: "part", value: "Switch", explanation: "The switch is the open-close part."),
-                GameplayProperty(id: "electronics-switch-job", typeID: "job", value: "Opens or closes", explanation: "A switch can connect the path or make a gap."),
-                GameplayProperty(id: "electronics-switch-rule", typeID: "rule", value: "Closed switch means on path", explanation: "When the switch closes, the path can be complete."),
+            GameplayEntity(id: "electronics-safe-circuit", name: "Safe Game Circuit", summary: "The circuits here are pretend screen circuits made for play.", visualKey: "✅", properties: [
+                GameplayProperty(id: "electronics-safe-circuit-part", typeID: "part", value: "Pretend circuit", explanation: "This game uses pretend parts on the screen.", visualKey: "✅"),
+                GameplayProperty(id: "electronics-safe-circuit-job", typeID: "job", value: "Safe to try here", explanation: "It is safe to tap and try the circuit parts in this game."),
+                GameplayProperty(id: "electronics-safe-circuit-rule", typeID: "rule", value: "Screen play is safe", explanation: "Build circuits in the game, not with real plug points."),
             ]),
-            GameplayEntity(id: "electronics-conductor", name: "Conductor", summary: "A conductor is a material that lets current move easily.", visualKey: "▰", properties: [
-                GameplayProperty(id: "electronics-conductor-part", typeID: "part", value: "Metal wire", explanation: "Metal wire is a common conductor."),
-                GameplayProperty(id: "electronics-conductor-job", typeID: "job", value: "Carries current", explanation: "Conductors make a path for electric current."),
-                GameplayProperty(id: "electronics-conductor-rule", typeID: "rule", value: "Copper helps the bulb", explanation: "Copper wire can help complete the circuit."),
-            ]),
-            GameplayEntity(id: "electronics-insulator", name: "Insulator", summary: "An insulator blocks current and helps keep touch parts safer.", visualKey: "□", properties: [
-                GameplayProperty(id: "electronics-insulator-part", typeID: "part", value: "Rubber cover", explanation: "Rubber is a common insulator."),
-                GameplayProperty(id: "electronics-insulator-job", typeID: "job", value: "Blocks current", explanation: "Insulators do not make an easy path for current."),
-                GameplayProperty(id: "electronics-insulator-rule", typeID: "rule", value: "Not for the light path", explanation: "A rubber gap will not complete the bulb circuit."),
-            ]),
-            GameplayEntity(id: "electronics-magnet-poles", name: "Magnet Poles", summary: "Magnets have north and south poles that push or pull each other.", visualKey: "🧲", properties: [
-                GameplayProperty(id: "electronics-magnet-poles-part", typeID: "part", value: "North and south poles", explanation: "A magnet has two named ends.", visualKey: "N/S"),
-                GameplayProperty(id: "electronics-magnet-poles-job", typeID: "job", value: "Push or pull", explanation: "Magnet poles can attract or repel."),
-                GameplayProperty(id: "electronics-magnet-poles-rule", typeID: "rule", value: "Opposites attract", explanation: "A north pole and a south pole pull together."),
+            GameplayEntity(id: "electronics-outlet-safety", name: "Outlet Safety", summary: "Plug points and outlets are grown-up only. Ask a grown-up and do not touch them.", visualKey: "🛑", properties: [
+                GameplayProperty(id: "electronics-outlet-safety-part", typeID: "part", value: "Plug point or outlet", explanation: "A plug point or outlet is for grown-ups.", visualKey: "🛑"),
+                GameplayProperty(id: "electronics-outlet-safety-job", typeID: "job", value: "Ask a grown-up", explanation: "Ask a grown-up before anything near a plug point or outlet."),
+                GameplayProperty(id: "electronics-outlet-safety-rule", typeID: "rule", value: "Do not touch outlets", explanation: "Do not touch plug points or outlets. Use the safe pretend battery in this game."),
             ]),
         ],
         stages: [
-            GameplayStageDefinition(id: "electronics-flashcards", kind: .flashcards, title: "Spark Cards", prompt: "Meet each part, job, and rule.", maximumItemCount: 8),
+            GameplayStageDefinition(id: "electronics-flashcards", kind: .flashcards, title: "Spark Cards", prompt: "Meet safe circuit parts, jobs, and rules.", maximumItemCount: 8),
             GameplayStageDefinition(id: "electronics-easy-memory", kind: .easyMemory, title: "Part Match", prompt: "Match each part to what it does.", propertyTypeIDs: ["part", "job"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "electronics-flip-memory", kind: .flipMemory, title: "Rule Flip", prompt: "Remember the circuit and magnet rules.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
-            GameplayStageDefinition(id: "electronics-bond-blast", kind: .bondBlast, title: "Circuit Blast", prompt: "Connect parts, jobs, and rules.", propertyTypeIDs: ["part", "job", "rule"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "electronics-quiz", kind: .multipleChoice, title: "Spark Quiz", prompt: "Pick the best circuit or magnet clue.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "electronics-flip-memory", kind: .flipMemory, title: "Rule Flip", prompt: "Remember open, closed, and safety rules.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
+            GameplayStageDefinition(id: "electronics-bond-blast", kind: .bondBlast, title: "Circuit Blast", prompt: "Connect safe parts, jobs, and rules.", propertyTypeIDs: ["part", "job", "rule"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "electronics-quiz", kind: .multipleChoice, title: "Spark Quiz", prompt: "Pick the best safe circuit clue.", propertyTypeIDs: ["job", "rule"], maximumItemCount: 6),
         ],
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
     )

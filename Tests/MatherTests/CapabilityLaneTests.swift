@@ -47,5 +47,26 @@ struct CapabilityLaneTests {
         #expect(CapabilityLaneID.chemistry.title == "Chemistry Lab")
         #expect(CapabilityLaneID.electronics.title == "Electronics Lab")
     }
-}
 
+    @Test
+    func electronicsRegistryStartsWithElementarySafeCircuitConcepts() throws {
+        let descriptor = try #require(CapabilityLaneRegistry.descriptor(for: .electronics))
+
+        #expect(descriptor.promise.contains("pretend batteries"))
+        #expect(descriptor.promise.contains("safety"))
+        #expect(descriptor.starterConcepts == [
+            "battery",
+            "bulb",
+            "wire",
+            "switch",
+            "open-circuit",
+            "closed-circuit",
+            "safety",
+        ])
+        let promise = descriptor.promise.lowercased()
+        #expect(!promise.contains("sensor"))
+        #expect(!promise.contains("logic"))
+        #expect(!descriptor.starterConcepts.contains("sensor"))
+        #expect(!descriptor.starterConcepts.contains("logic"))
+    }
+}

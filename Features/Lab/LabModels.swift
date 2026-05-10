@@ -1538,21 +1538,21 @@ struct CapabilityLane: Identifiable, Equatable {
         CapabilityLane(
             id: .electronics,
             emoji: "💡",
-            promise: "Build closed circuits, compare materials, and match magnet poles.",
-            ageBandHint: "Ages 4–12",
+            promise: "Try pretend batteries, bulbs, wires, switches, and safe open or closed circuits.",
+            ageBandHint: "Ages 5–8",
             modes: [.explore, .challenge, .review],
             ageEntries: [
-                CapabilityAgeEntry(ageBand: .preschool, posture: "switch and output", entryPlay: "light on/off"),
-                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "circuits and components", entryPlay: "wire paths"),
-                CapabilityAgeEntry(ageBand: .upperElementary, posture: "debug and sensors", entryPlay: "input/output"),
-                CapabilityAgeEntry(ageBand: .preteen, posture: "logic and systems", entryPlay: "gate puzzles"),
+                CapabilityAgeEntry(ageBand: .preschool, posture: "switch and light", entryPlay: "light on/off"),
+                CapabilityAgeEntry(ageBand: .earlyElementary, posture: "battery, wire, bulb", entryPlay: "open/closed paths"),
+                CapabilityAgeEntry(ageBand: .upperElementary, posture: "safe circuit sorting", entryPlay: "safe/unsafe choices"),
+                CapabilityAgeEntry(ageBand: .preteen, posture: "circuit stories", entryPlay: "explain the loop"),
             ],
             activities: [
                 LabActivity(
                     id: .circuitSpark,
                     emoji: "💡",
                     title: "Circuit Spark",
-                    tagline: "Match batteries, bulbs, switches, materials, and magnet poles",
+                    tagline: "Match pretend batteries, bulbs, wires, switches, open paths, closed paths, and safety",
                     modes: [.learn, .explore, .review]
                 ),
             ]
@@ -1627,14 +1627,14 @@ struct CapabilityLane: Identifiable, Equatable {
             MixMatchCard(laneID: .chemistry, concept: "safety", prompt: "unknown liquid", match: "ask grown-up"),
         ],
         .electronics: [
-            MixMatchCard(laneID: .electronics, concept: "component", prompt: "battery", match: "power"),
+            MixMatchCard(laneID: .electronics, concept: "component", prompt: "pretend battery", match: "power"),
             MixMatchCard(laneID: .electronics, concept: "component", prompt: "wire", match: "path"),
             MixMatchCard(laneID: .electronics, concept: "component", prompt: "switch", match: "open or close"),
-            MixMatchCard(laneID: .electronics, concept: "output", prompt: "lamp", match: "light"),
-            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "closed loop", match: "works"),
-            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "broken loop", match: "off"),
-            MixMatchCard(laneID: .electronics, concept: "sensor", prompt: "microphone", match: "hears sound"),
-            MixMatchCard(laneID: .electronics, concept: "logic", prompt: "two switches both on", match: "AND"),
+            MixMatchCard(laneID: .electronics, concept: "output", prompt: "bulb", match: "light"),
+            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "closed loop", match: "light on"),
+            MixMatchCard(laneID: .electronics, concept: "circuit", prompt: "open loop", match: "light off"),
+            MixMatchCard(laneID: .electronics, concept: "safety", prompt: "plug point or outlet", match: "ask grown-up"),
+            MixMatchCard(laneID: .electronics, concept: "safety", prompt: "game battery", match: "pretend and safe"),
         ],
     ]
 
