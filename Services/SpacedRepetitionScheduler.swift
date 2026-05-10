@@ -21,7 +21,8 @@ enum SpacedRepetitionScheduler {
         let selected = childSafeSelection(
             from: ranked,
             maximumItemCount: effectivePolicy.maximumItemCount,
-            stageKind: stage.kind
+            stageKind: stage.kind,
+            thread: thread
         )
         return GameplayRoundDefinition(
             id: "\(stage.id)-round-\(seed)",
@@ -80,7 +81,8 @@ enum SpacedRepetitionScheduler {
     private static func childSafeSelection(
         from ranked: [GameplayRoundItem],
         maximumItemCount: Int,
-        stageKind: GameplayStageKind
+        stageKind: GameplayStageKind,
+        thread: GameplayThreadDefinition
     ) -> [GameplayRoundItem] {
         let limit = max(1, maximumItemCount)
         guard stageKind == .easyMemory || stageKind == .flipMemory else {
@@ -89,10 +91,13 @@ enum SpacedRepetitionScheduler {
 
         var selected: [GameplayRoundItem] = []
         var selectedEntityIDs = Set<String>()
+        var selectedAnswerKeys = Set<String>()
         var deferred: [GameplayRoundItem] = []
         for item in ranked {
             guard selected.count < limit else { break }
-            if selectedEntityIDs.insert(item.entityID).inserted {
+            let answerKey = visibleAnswerKey(for: item, in: thread)
+            if selectedEntityIDs.insert(item.entityID).inserted,
+               selectedAnswerKeys.insert(answerKey).inserted {
                 selected.append(item)
             } else {
                 deferred.append(item)
@@ -102,6 +107,15 @@ enum SpacedRepetitionScheduler {
             selected.append(item)
         }
         return selected
+    }
+
+    private static func visibleAnswerKey(for item: GameplayRoundItem, in thread: GameplayThreadDefinition) -> String {
+        guard let entity = thread.entities.first(where: { $0.id == item.entityID }),
+              let property = entity.properties.first(where: { $0.id == item.propertyID }) ?? entity.properties.first
+        else {
+            return item.id.lowercased()
+        }
+        return "\(property.typeID)::\(property.value)".trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private static func rank(item: GameplayRoundItem, record: GameplayExposureRecord?, now: Date, seed: UInt64) -> GameplayItemRank {

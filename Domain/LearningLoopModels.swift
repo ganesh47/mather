@@ -728,6 +728,9 @@ enum SoundVolumeContent {
 
     static let pitchBands = SoundPitchBand.allCases
 
+    static let pitchFollowUpTitle = "Pitch follow-up"
+    static let pitchFollowUpRouteTitle = "Open pitch follow-up"
+
     static let pitchChallenge = SoundPitchChallenge(
         id: "bird-high-pitch",
         prompt: "A tiny bird chirp is usually which pitch?",

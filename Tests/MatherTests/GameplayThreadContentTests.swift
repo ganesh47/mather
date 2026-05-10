@@ -225,6 +225,25 @@ struct WorldCreatureGameplayThreadTests {
             #expect(pairs.allSatisfy { $0.right.subtitle == (threadID == .worldAnimals ? "Animal name" : "Bird name") })
         }
     }
+    @Test
+    func worldBirdsEasyMemoryStartsWithDeterministicPictureNameRoundWithoutDuplicateVisibleAnswers() throws {
+        let thread = GameplayThreadCatalog.worldBirds
+        let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        #expect(stage.propertyTypeIDs == ["name"])
+        #expect(stage.prompt.localizedCaseInsensitiveContains("picture"))
+        #expect(stage.prompt.localizedCaseInsensitiveContains("name"))
+
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1049)
+        let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(round.items.count == min(stage.maximumItemCount, thread.entities.count))
+        #expect(round.items.allSatisfy { $0.propertyTypeID == "name" })
+        #expect(pairs.allSatisfy { $0.left.title == "Name this bird" })
+        #expect(pairs.allSatisfy { $0.left.visualAssetName?.isEmpty == false })
+        #expect(pairs.allSatisfy { $0.right.subtitle == "Bird name" })
+        #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
+    }
+
 
     @Test
     func worldCreatureBondBlastHasEnoughFactProperties() throws {

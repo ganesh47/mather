@@ -243,8 +243,8 @@ struct GameplayMatchStageViewModel: Equatable {
     var currentRoundRequirementText: String {
         let remaining = activePairs.filter { !matchedPairIDs.contains($0.id) }.count
         if remaining == 0 { return isComplete ? "Ready to finish" : "Ready for next round" }
-        if remaining == 1 { return "1 left this round" }
-        return "\(remaining) left this round"
+        if remaining == 1 { return "1 pair left this round" }
+        return "\(remaining) pairs left this round"
     }
     var activePairs: [GameplayMatchPair] {
         let start = activeTurnIndex * turnItemCount

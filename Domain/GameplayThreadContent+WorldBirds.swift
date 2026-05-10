@@ -22,7 +22,7 @@ extension GameplayThreadCatalog {
         },
         stages: [
             GameplayStageDefinition(id: "world-birds-flashcards", kind: .flashcards, title: "Bird Cards", prompt: "Meet colorful birds from different world habitats.", maximumItemCount: 12),
-            GameplayStageDefinition(id: "world-birds-easy-memory", kind: .easyMemory, title: "Bird Match", prompt: "Match birds to names, homes, colors, and size clues.", propertyTypeIDs: ["name", "home", "colors", "size"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "world-birds-easy-memory", kind: .easyMemory, title: "Bird Match", prompt: "Start with one focused round matching each bird picture to its name.", propertyTypeIDs: ["name"], maximumItemCount: 8),
             GameplayStageDefinition(id: "world-birds-bond-blast", kind: .bondBlast, title: "Bird Blast", prompt: "Connect each bird with its home, colors, size, lifespan, and weight.", propertyTypeIDs: ["home", "colors", "size", "lifespan", "weight"], maximumItemCount: 12),
         ],
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)

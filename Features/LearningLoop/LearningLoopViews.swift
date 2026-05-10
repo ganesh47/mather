@@ -914,7 +914,7 @@ struct SoundVolumeLabView: View {
     private var soundMeterPitchActivity: some View {
         VStack(alignment: .leading, spacing: 14) {
             soundMeterCard
-            pitchTeachingCard
+            pitchFollowUpRouteCard
         }
     }
 
@@ -1003,62 +1003,29 @@ struct SoundVolumeLabView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private var pitchTeachingCard: some View {
+    private var pitchFollowUpRouteCard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Pitch follow-up")
+                Text(SoundVolumeContent.pitchFollowUpTitle)
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Pitch means how deep or bright a sound is. It is different from loudness, so you never need to be louder to learn pitch.")
+                Text("Open a focused pitch screen after the meter. Pitch is separate from loudness, so no microphone or louder sound is needed.")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-                    ForEach(SoundVolumeContent.pitchBands) { band in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(band.visualKey).font(.largeTitle)
-                            Text(band.title)
-                                .font(.headline.weight(.black))
-                                .foregroundStyle(MatherTheme.ink)
-                            Text(band.frequencyRangeLabel)
-                                .font(.caption.weight(.black))
-                                .foregroundStyle(MatherTheme.accent)
-                            Text(band.teachingCopy)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(MatherTheme.cardSubtitle)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-                        .background(MatherTheme.softBlue.opacity(0.18))
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .accessibilityElement(children: .combine)
-                    }
+                NavigationLink {
+                    SoundPitchFollowUpView(
+                        pitchChallengeState: $pitchChallengeState,
+                        onFeedback: { feedback = $0 }
+                    )
+                } label: {
+                    Label(SoundVolumeContent.pitchFollowUpRouteTitle, systemImage: "music.note.list")
+                        .font(.headline.weight(.black))
+                        .frame(maxWidth: .infinity)
                 }
-
-                Text(pitchChallengeState.challenge.prompt)
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(MatherTheme.ink)
-
-                HStack(spacing: 8) {
-                    ForEach(pitchChallengeState.challenge.options) { band in
-                        Button {
-                            pitchChallengeState.select(band)
-                            feedback = pitchChallengeState.feedback
-                        } label: {
-                            Text("\(band.visualKey) \(band.title)")
-                                .font(.caption.weight(.black))
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(pitchChallengeState.selectedBand == band ? MatherTheme.accent : MatherTheme.softBlue)
-                        .accessibilityIdentifier("SoundPitchChoice-\(band.rawValue)")
-                    }
-                }
-
-                Text(pitchChallengeState.feedback)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(pitchChallengeState.isCorrect ? MatherTheme.accent : MatherTheme.cardSubtitle)
+                .buttonStyle(PrimaryActionButtonStyle())
+                .accessibilityIdentifier("SoundPitchFollowUpRoute")
             }
         }
         .accessibilityElement(children: .contain)
@@ -1120,4 +1087,87 @@ struct SoundVolumeLabView: View {
             return MatherTheme.coral.opacity(0.20)
         }
     }
+}
+
+private struct SoundPitchFollowUpView: View {
+    @Binding var pitchChallengeState: SoundPitchChallengeState
+    let onFeedback: (String) -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(SoundVolumeContent.pitchFollowUpTitle)
+                            .font(.largeTitle.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                            .minimumScaleFactor(0.75)
+                        Text("Pitch means how deep or bright a sound is. It is different from loudness, so you never need to be louder to learn pitch.")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(MatherTheme.cardSubtitle)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                    ForEach(SoundVolumeContent.pitchBands) { band in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(band.visualKey).font(.largeTitle)
+                            Text(band.title)
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(MatherTheme.ink)
+                            Text(band.frequencyRangeLabel)
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(MatherTheme.accent)
+                            Text(band.teachingCopy)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(MatherTheme.cardSubtitle)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+                        .background(MatherTheme.softBlue.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+
+                CardSurface {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(pitchChallengeState.challenge.prompt)
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+
+                        HStack(spacing: 8) {
+                            ForEach(pitchChallengeState.challenge.options) { band in
+                                Button {
+                                    pitchChallengeState.select(band)
+                                    onFeedback(pitchChallengeState.feedback)
+                                } label: {
+                                    Text("\(band.visualKey) \(band.title)")
+                                        .font(.caption.weight(.black))
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(pitchChallengeState.selectedBand == band ? MatherTheme.accent : MatherTheme.softBlue)
+                                .accessibilityIdentifier("SoundPitchChoice-\(band.rawValue)")
+                            }
+                        }
+
+                        Text(pitchChallengeState.feedback)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(pitchChallengeState.isCorrect ? MatherTheme.accent : MatherTheme.cardSubtitle)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 18)
+            .padding(.bottom, 32)
+            .frame(maxWidth: 900)
+            .frame(maxWidth: .infinity)
+        }
+        .background(MatherTheme.background.ignoresSafeArea())
+        .navigationTitle(SoundVolumeContent.pitchFollowUpTitle)
+        .accessibilityIdentifier("SoundPitchFollowUpScreen")
+    }
+
 }

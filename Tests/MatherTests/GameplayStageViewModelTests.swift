@@ -208,7 +208,7 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.matchedProgressText == "0 of 4 matched")
         #expect(viewModel.turnGuidanceText == "Pick a card. Then find its match.")
         #expect(viewModel.finishRequirementText == "Find 4 more matches")
-        #expect(viewModel.currentRoundRequirementText == "2 left this round")
+        #expect(viewModel.currentRoundRequirementText == "2 pairs left this round")
 
         viewModel.selectLeft(pairID: firstPair.id)
         #expect(viewModel.turnGuidanceText == "Now tap the card that goes with it.")
@@ -218,7 +218,7 @@ struct GameplayStageParityRegressionTests {
         #expect(viewModel.lastMatchedPairID == firstPair.id)
         #expect(viewModel.matchedProgressText == "1 of 4 matched")
         #expect(viewModel.finishRequirementText == "Find 3 more matches")
-        #expect(viewModel.currentRoundRequirementText == "1 left this round")
+        #expect(viewModel.currentRoundRequirementText == "1 pair left this round")
 
         for pair in viewModel.activePairs where !viewModel.matchedPairIDs.contains(pair.id) {
             viewModel.selectLeft(pairID: pair.id)
