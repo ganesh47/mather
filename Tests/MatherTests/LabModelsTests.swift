@@ -114,7 +114,27 @@ final class LabModelsTests: XCTestCase {
         XCTAssertFalse(presentation.sections.contains(.ageEntries))
         XCTAssertFalse(presentation.sections.contains(.recall))
         XCTAssertTrue(presentation.sections.contains(.activities))
+        XCTAssertFalse(presentation.showsResearchQuest)
         XCTAssertEqual(numbers.activities.map(\.id), [.sumSprint, .rectangleFactory, .factoryCards])
+    }
+
+    func testGuidedPlanCardsKeepChildFacingFaceSparseWhilePreservingDetails() throws {
+        let geometryPath = try XCTUnwrap(GuidedLabPath.phaseOne.first { $0.laneID == .geometry })
+
+        for plan in geometryPath.sessionPlans {
+            let presentation = plan.cardPresentation
+
+            XCTAssertTrue(presentation.keepsDefaultFaceSparse)
+            XCTAssertEqual(presentation.defaultVisibleText, [plan.title])
+            XCTAssertFalse(presentation.defaultVisibleText.contains(plan.subtitle))
+            XCTAssertFalse(presentation.defaultVisibleText.contains(plan.masteryStateLabel))
+            XCTAssertFalse(presentation.defaultVisibleText.contains(plan.estimatedLength))
+            XCTAssertFalse(presentation.defaultVisibleText.contains(plan.recommendedNextActivity))
+            XCTAssertFalse(presentation.symbolName.isEmpty)
+            XCTAssertTrue(presentation.hiddenDetailAccessibilityLabel.contains(plan.subtitle))
+            XCTAssertTrue(presentation.hiddenDetailAccessibilityLabel.contains(plan.pathLabel))
+            XCTAssertTrue(presentation.disclosureDetailText.contains(plan.recommendedNextActivity))
+        }
     }
 
     func testPhysicsLaneAddsSoundLabAsThirdReadyActivity() throws {

@@ -32,10 +32,11 @@ struct LabLaneDetailView: View {
                     guidedSessionSection(tint: tint)
                     gamesSection(selectedLane, tint: tint)
                     supportPanel(selectedLane, progress: progress, tint: tint)
-                    researchQuestSection(selectedLane, tint: tint)
                     recallSection(selectedLane, tint: tint)
                 }
                 .padding(24)
+                .safeAreaPadding(.top, 12)
+                .safeAreaPadding(.bottom, 24)
             }
         }
         .onAppear {
@@ -143,60 +144,13 @@ struct LabLaneDetailView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private func researchQuestSection(_ lane: CapabilityLane, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Research quest", systemImage: "sparkles")
-                .font(.headline.weight(.black))
-                .foregroundStyle(tint)
-            Text("Try one tiny experiment, notice what changed, then earn a discovery spark.")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-            HStack(spacing: 10) {
-                researchQuestChip(icon: "lightbulb.fill", title: "Wonder", detail: lane.promise, tint: tint)
-                researchQuestChip(icon: "hand.tap.fill", title: "Try", detail: lane.isReady ? "Play a game" : "Preview ideas", tint: tint)
-                researchQuestChip(icon: "star.fill", title: "Notice", detail: "Collect a spark", tint: tint)
-            }
-        }
-        .padding(14)
-        .background(MatherTheme.card.opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Research quest. Try one tiny experiment, notice what changed, then earn a discovery spark.")
-    }
-
-    private func researchQuestChip(icon: String, title: String, detail: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Image(systemName: icon)
-                .font(.headline.weight(.black))
-                .foregroundStyle(tint)
-            Text(title)
-                .font(.caption.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-            Text(detail)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .lineLimit(2)
-                .minimumScaleFactor(0.75)
-        }
-        .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
-        .padding(10)
-        .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
     @ViewBuilder
     private func guidedSessionSection(tint: Color) -> some View {
         if !sessionPlans.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Guided path")
-                            .font(.title3.weight(.black))
-                            .foregroundStyle(MatherTheme.ink)
-                        Text("Learn → Remember → Play → Blast → Score")
-                            .font(.caption.weight(.black))
-                            .foregroundStyle(tint)
-                    }
-                    Spacer(minLength: 0)
-                }
+                Text("Guided path")
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
 
                 ForEach(sessionPlans) { plan in
                     conceptSessionPlanCard(plan, tint: tint)
@@ -216,22 +170,22 @@ struct LabLaneDetailView: View {
     private func conceptSessionPlanCard(_ plan: LabConceptSessionPlan, tint: Color) -> some View {
         let progress = appModel.labConceptSessionProgressStore.progress(for: plan)
         let detailsExpanded = expandedPlanDetails.contains(plan.id)
+        let presentation = plan.cardPresentation
 
         return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(plan.title)
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: presentation.symbolName)
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(tint)
+                    .frame(width: 56, height: 56)
+                    .background(MatherTheme.card.opacity(0.82), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityHidden(true)
+
+                Text(presentation.title)
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text(plan.subtitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
                         .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(plan.masteryStateLabel)
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(tint)
-                }
+                        .minimumScaleFactor(0.82)
 
                 Spacer(minLength: 0)
 
@@ -257,8 +211,6 @@ struct LabLaneDetailView: View {
                     .accessibilityLabel("Resume \(plan.title). \(progress.resumeCopy).")
             }
 
-            stageSummaryStrip(plan, progress: progress, tint: tint)
-
             Button {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                     if detailsExpanded {
@@ -273,11 +225,6 @@ struct LabLaneDetailView: View {
                         .font(.caption.weight(.black))
                         .foregroundStyle(tint)
                     Spacer(minLength: 0)
-                    Text("\(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
                 }
                 .padding(9)
                 .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -286,6 +233,21 @@ struct LabLaneDetailView: View {
             .accessibilityLabel(detailsExpanded ? "Hide guided path details" : "Show guided path details")
 
             if detailsExpanded {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(plan.subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(plan.masteryStateLabel) • \(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
+                        .font(.caption2.weight(.black))
+                        .foregroundStyle(tint)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(presentation.hiddenDetailAccessibilityLabel)
+
+                stageSummaryStrip(plan, progress: progress, tint: tint)
+
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
                     ForEach(plan.stages) { stage in
                         stagePlanCard(stage, progress: progress, tint: tint)
@@ -296,7 +258,7 @@ struct LabLaneDetailView: View {
         .padding(12)
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(plan.title). Primary action: \(startLabel(for: plan)). Path: \(plan.pathLabel).")
+        .accessibilityLabel("\(presentation.hiddenDetailAccessibilityLabel) Primary action: \(startLabel(for: plan)).")
     }
 
     private func stageSummaryStrip(_ plan: LabConceptSessionPlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
