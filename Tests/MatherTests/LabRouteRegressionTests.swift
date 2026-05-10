@@ -37,6 +37,8 @@ struct LabRouteRegressionTests {
             .soundVolume: .soundVolume,
             .memoryMatch: .memory,
             .countryCards: .gameplayThread(.countries),
+            .worldAnimalCards: .gameplayThread(.worldAnimals),
+            .worldBirdCards: .gameplayThread(.worldBirds),
             .fruitCards: .gameplayThread(.fruits),
             .circuitSpark: .gameplayThread(.electronics),
         ]
@@ -52,6 +54,8 @@ struct LabRouteRegressionTests {
     func explorerLabContentRoutesUseReusableGameplayThreads() {
         let reusableThreadRoutes: [LabActivityID: GameplayThreadID] = [
             .countryCards: .countries,
+            .worldAnimalCards: .worldAnimals,
+            .worldBirdCards: .worldBirds,
             .fruitCards: .fruits,
             .waterCycle: .waterCycle,
             .circuitSpark: .electronics,
@@ -59,7 +63,13 @@ struct LabRouteRegressionTests {
 
         for (activityID, threadID) in reusableThreadRoutes {
             #expect(activityID.appRoute == .gameplayThread(threadID))
-            #expect(GameplayThreadCatalog.thread(for: threadID).stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+            let stageKinds = GameplayThreadCatalog.thread(for: threadID).stages.map(\.kind)
+            #expect(!stageKinds.isEmpty)
+            if threadID == .worldAnimals || threadID == .worldBirds {
+                #expect(stageKinds == [.flashcards, .easyMemory, .bondBlast])
+            } else {
+                #expect(stageKinds == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+            }
         }
     }
 

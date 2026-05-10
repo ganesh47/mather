@@ -418,11 +418,11 @@ enum GameplayStageContentBuilder {
         round.items.compactMap { item in
             guard let entity = thread.entities.first(where: { $0.id == item.entityID }) else { return nil }
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
-            let usesShapeNameRecallPrompt = isShapeNameRecallPrompt(thread: thread, property: property)
+            let recallPrompt = nameRecallPrompt(thread: thread, property: property)
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
-                title: usesShapeNameRecallPrompt ? "Name this shape" : entity.name,
+                title: recallPrompt ?? entity.name,
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
@@ -432,7 +432,7 @@ enum GameplayStageContentBuilder {
                 id: "\(item.id)-right",
                 entityID: entity.id,
                 title: property?.value ?? entity.name,
-                subtitle: property.map { usesShapeNameRecallPrompt ? "Shape name" : propertyTypeTitle($0.typeID, in: thread) } ?? "Name",
+                subtitle: property.map { recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread) } ?? "Name",
                 visualKey: visualKey(for: property, fallbackEntity: entity),
                 visualAssetName: property?.visualAssetName,
                 visualShapeKey: property?.visualShapeKey
@@ -494,8 +494,31 @@ enum GameplayStageContentBuilder {
         thread.propertyTypesByID[id]?.displayName ?? id
     }
 
-    private static func isShapeNameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?) -> Bool {
-        thread.id == "shapes" && property?.typeID == "name"
+    private static func nameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?) -> String? {
+        guard property?.typeID == "name" else { return nil }
+        switch thread.id {
+        case "shapes":
+            return "Name this shape"
+        case "world-animals":
+            return "Name this animal"
+        case "world-birds":
+            return "Name this bird"
+        default:
+            return nil
+        }
+    }
+
+    private static func nameRecallSubtitle(thread: GameplayThreadDefinition) -> String {
+        switch thread.id {
+        case "shapes":
+            return "Shape name"
+        case "world-animals":
+            return "Animal name"
+        case "world-birds":
+            return "Bird name"
+        default:
+            return "Name"
+        }
     }
 
     private static func visualKey(for property: GameplayProperty?, fallbackEntity entity: GameplayEntity) -> String? {
