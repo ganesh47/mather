@@ -187,11 +187,17 @@ struct SettingsView: View {
         }
     }
 
+    private var profileOptions: [KidProfileOption] {
+        appModel.profileStore.profiles.map { profile in
+            KidProfileOption(id: profile.id, label: "\(profile.emoji) \(profile.name)")
+        }
+    }
+
     private var activeProfilePicker: some View {
         Picker("Active profile", selection: activeProfileBinding) {
-            ForEach(appModel.profileStore.profiles, id: \.id) { profile in
-                Text("\(profile.emoji) \(profile.name)")
-                    .tag(profile.id)
+            ForEach(profileOptions) { option in
+                Text(option.label)
+                    .tag(option.id)
             }
         }
     }
@@ -302,6 +308,11 @@ struct SettingsView: View {
             .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
         }
     }
+}
+
+private struct KidProfileOption: Identifiable {
+    let id: String
+    let label: String
 }
 
 private struct RoomQuestSettingsEntry: View {
