@@ -59,7 +59,7 @@ struct GameplayThreadContentTests {
     }
 
     @Test
-    func electronicsThreadCoversCircuitAndMagnetBasicsWithoutColorOnlyAnswers() {
+    func electronicsThreadCoversElementaryCircuitAndSafetyBasics() {
         let thread = GameplayThreadCatalog.electronics
 
         #expect(thread.id == "electronics")
@@ -70,27 +70,47 @@ struct GameplayThreadContentTests {
         #expect(Set(thread.entities.map(\.name)).isSuperset(of: [
             "Battery",
             "Bulb",
+            "Wire",
+            "Switch",
             "Closed Circuit",
             "Open Circuit",
-            "Switch",
-            "Conductor",
-            "Insulator",
-            "Magnet Poles",
+            "Safe Game Circuit",
+            "Outlet Safety",
         ]))
 
         let propertyValues = thread.entities.flatMap { $0.properties.map(\.value) }
         for requiredValue in [
-            "Needs a loop",
-            "Lights in a closed circuit",
+            "Game batteries are pretend",
+            "Bulb or light",
+            "Wire",
+            "Closed switch can turn on",
+            "Light on in closed circuit",
             "Bulb on",
             "Bulb off",
-            "Closed switch means on path",
-            "Copper helps the bulb",
-            "Not for the light path",
-            "Opposites attract",
+            "Screen play is safe",
+            "Do not touch outlets",
         ] {
             #expect(propertyValues.contains(requiredValue), "Circuit Spark should teach \(requiredValue)")
         }
+
+        let propertyCopy = thread.entities.flatMap { entity in
+            entity.properties.flatMap { [$0.value, $0.explanation] }
+        }
+        let contentParts = [thread.category.subtitle]
+            + thread.stages.map(\.prompt)
+            + thread.entities.map(\.summary)
+            + propertyCopy
+        let allCopy = contentParts.joined(separator: " ")
+        #expect(allCopy.contains("Ask a grown-up"))
+        #expect(allCopy.contains("plug point") && allCopy.contains("outlet"))
+        #expect(allCopy.contains("pretend") && allCopy.contains("safe"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("magnet"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("sensor"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("logic"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("conductor"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("insulator"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("shock"))
+        #expect(!allCopy.localizedCaseInsensitiveContains("danger"))
 
         #expect(thread.entities.allSatisfy { entity in
             entity.properties.allSatisfy { property in

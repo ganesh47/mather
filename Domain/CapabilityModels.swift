@@ -72,11 +72,11 @@ enum CapabilityLaneRegistry {
         CapabilityLaneDescriptor(
             id: .electronics,
             emoji: "💡",
-            promise: "Future: switches, circuits, sensors, and input/output systems.",
-            ageBand: .future,
+            promise: "Try pretend batteries, bulbs, wires, switches, open and closed circuits, and safety.",
+            ageBand: .ages4To12,
             stages: [.concrete, .pictorial, .abstract, .transfer, .review],
             supportedPlayModes: [.explore, .challenge, .review],
-            starterConcepts: ["component", "output", "circuit", "sensor", "logic"]
+            starterConcepts: ["battery", "bulb", "wire", "switch", "open-circuit", "closed-circuit", "safety"]
         ),
     ]
 
