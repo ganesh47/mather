@@ -22,7 +22,7 @@ extension GameplayThreadCatalog {
         },
         stages: [
             GameplayStageDefinition(id: "world-animals-flashcards", kind: .flashcards, title: "Animal Cards", prompt: "Meet animals and notice where they live.", maximumItemCount: 12),
-            GameplayStageDefinition(id: "world-animals-easy-memory", kind: .easyMemory, title: "Animal Match", prompt: "Match animals to names, homes, sounds, and moves.", propertyTypeIDs: ["name", "habitat", "movement", "sound"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "world-animals-easy-memory", kind: .easyMemory, title: "Animal Match", prompt: "Start with one focused round matching each animal picture to its name.", propertyTypeIDs: ["name"], maximumItemCount: 8),
             GameplayStageDefinition(id: "world-animals-bond-blast", kind: .bondBlast, title: "Animal Blast", prompt: "Connect each animal with its home, movement, sound, colors, and kind.", propertyTypeIDs: ["habitat", "movement", "sound", "colors", "kind"], maximumItemCount: 12),
         ],
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)

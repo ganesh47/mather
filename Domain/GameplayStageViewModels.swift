@@ -92,6 +92,12 @@ struct GameplayStageNavigationState: Equatable {
 }
 
 struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
+    enum Presentation: Equatable, Hashable {
+        case visualWithTitle
+        case visualOnly
+        case titleOnly
+    }
+
     let id: String
     let entityID: String
     let title: String
@@ -99,6 +105,27 @@ struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
     let visualKey: String?
     let visualAssetName: String?
     let visualShapeKey: String?
+    let presentation: Presentation
+
+    init(
+        id: String,
+        entityID: String,
+        title: String,
+        subtitle: String,
+        visualKey: String?,
+        visualAssetName: String?,
+        visualShapeKey: String?,
+        presentation: Presentation = .visualWithTitle
+    ) {
+        self.id = id
+        self.entityID = entityID
+        self.title = title
+        self.subtitle = subtitle
+        self.visualKey = visualKey
+        self.visualAssetName = visualAssetName
+        self.visualShapeKey = visualShapeKey
+        self.presentation = presentation
+    }
 
     var spokenText: String {
         [title, subtitle].filter { !$0.isEmpty }.joined(separator: ". ")
@@ -225,7 +252,7 @@ struct GameplayMatchStageViewModel: Equatable {
     var turnProgressText: String { "Round \(min(activeTurnIndex + 1, turnCount)) of \(turnCount)" }
     var matchedProgressText: String {
         if pairs.isEmpty { return "No matches yet" }
-        return "\(correctCount) of \(pairs.count) matched"
+        return "\(correctCount) of \(pairs.count) pairs matched"
     }
     var turnGuidanceText: String {
         if isComplete { return "All matches found. Tap Finish stage." }
@@ -269,7 +296,10 @@ struct GameplayMatchStageViewModel: Equatable {
         if side == .right && shouldConcealRight(item) {
             return "hidden \(role) card"
         }
-        return "\(role): \(item.title), \(item.subtitle)"
+        return [item.title, item.subtitle]
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+            .withNonEmptyPrefix("\(role): ")
     }
 
     func shouldConcealRight(_ item: GameplayDisplayItem) -> Bool {
@@ -409,7 +439,8 @@ enum GameplayStageContentBuilder {
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
-                visualShapeKey: entity.visualShapeKey
+                visualShapeKey: entity.visualShapeKey,
+                presentation: .visualWithTitle
             )
         }
     }
@@ -418,7 +449,8 @@ enum GameplayStageContentBuilder {
         round.items.compactMap { item in
             guard let entity = thread.entities.first(where: { $0.id == item.entityID }) else { return nil }
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
-            let recallPrompt = nameRecallPrompt(thread: thread, property: property)
+            let recallPrompt = nameRecallPrompt(thread: thread, property: property, kind: round.kind)
+            let visualNameMatch = usesVisualNameMatch(thread: thread, property: property, kind: round.kind)
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
@@ -426,16 +458,18 @@ enum GameplayStageContentBuilder {
                 subtitle: entity.summary,
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
-                visualShapeKey: entity.visualShapeKey
+                visualShapeKey: entity.visualShapeKey,
+                presentation: visualNameMatch ? .visualOnly : .visualWithTitle
             )
             let right = GameplayDisplayItem(
                 id: "\(item.id)-right",
                 entityID: entity.id,
-                title: property?.value ?? entity.name,
-                subtitle: property.map { recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread) } ?? "Name",
-                visualKey: visualKey(for: property, fallbackEntity: entity),
-                visualAssetName: property?.visualAssetName,
-                visualShapeKey: property?.visualShapeKey
+                title: visualNameMatch ? entity.name : (property?.value ?? entity.name),
+                subtitle: property.map { visualNameMatch ? nameRecallSubtitle(thread: thread) : (recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread)) } ?? "Name",
+                visualKey: visualNameMatch ? nil : visualKey(for: property, fallbackEntity: entity),
+                visualAssetName: visualNameMatch ? nil : property?.visualAssetName,
+                visualShapeKey: visualNameMatch ? nil : property?.visualShapeKey,
+                presentation: visualNameMatch ? .titleOnly : .visualWithTitle
             )
             return GameplayMatchPair(id: item.id, left: left, right: right)
         }
@@ -494,9 +528,13 @@ enum GameplayStageContentBuilder {
         thread.propertyTypesByID[id]?.displayName ?? id
     }
 
-    private static func nameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?) -> String? {
-        guard property?.typeID == "name" else { return nil }
+    private static func nameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> String? {
+        guard property?.typeID == "name" || (kind == .easyMemory && thread.id == "countries" && property?.typeID == "flag") || (kind == .easyMemory && thread.id == "electronics" && property?.typeID == "part") else { return nil }
         switch thread.id {
+        case "countries":
+            return "Name this flag"
+        case "electronics":
+            return "Name this symbol"
         case "shapes":
             return "Name this shape"
         case "world-animals":
@@ -510,6 +548,10 @@ enum GameplayStageContentBuilder {
 
     private static func nameRecallSubtitle(thread: GameplayThreadDefinition) -> String {
         switch thread.id {
+        case "countries":
+            return "Country name"
+        case "electronics":
+            return "Part name"
         case "shapes":
             return "Shape name"
         case "world-animals":
@@ -518,6 +560,16 @@ enum GameplayStageContentBuilder {
             return "Bird name"
         default:
             return "Name"
+        }
+    }
+
+    private static func usesVisualNameMatch(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> Bool {
+        guard kind == .easyMemory else { return false }
+        switch (thread.id, property?.typeID) {
+        case ("countries", "flag"), ("electronics", "part"), ("world-animals", "name"), ("world-birds", "name"):
+            return true
+        default:
+            return false
         }
     }
 
@@ -558,6 +610,12 @@ enum GameplayStageContentBuilder {
             hash &*= 1_099_511_628_211
         }
         return hash
+    }
+}
+
+private extension String {
+    func withNonEmptyPrefix(_ prefix: String) -> String {
+        isEmpty ? prefix.trimmingCharacters(in: .whitespacesAndNewlines) : prefix + self
     }
 }
 

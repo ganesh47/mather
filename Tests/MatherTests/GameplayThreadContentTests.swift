@@ -124,7 +124,8 @@ struct GameplayThreadContentTests {
         let thread = GameplayThreadCatalog.electronics
 
         #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
-        #expect(thread.stages[1].propertyTypeIDs == ["part", "job"])
+        #expect(thread.stages[1].propertyTypeIDs == ["part"])
+        #expect(thread.stages[1].prompt.localizedCaseInsensitiveContains("symbol"))
         #expect(thread.stages[2].propertyTypeIDs == ["job", "rule"])
         #expect(thread.stages[3].propertyTypeIDs == ["part", "job", "rule"])
         #expect(thread.stages[4].propertyTypeIDs == ["job", "rule"])
@@ -136,6 +137,23 @@ struct GameplayThreadContentTests {
             #expect(!round.items.isEmpty, "\(stage.id) should generate playable items")
             #expect(round.items.count <= stage.maximumItemCount)
         }
+    }
+
+    @Test
+    func electronicsEasyMemoryPairsSymbolOnlyCardsWithPartNames() throws {
+        let thread = GameplayThreadCatalog.electronics
+        let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1062)
+        let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(round.items.allSatisfy { $0.propertyTypeID == "part" })
+        #expect(pairs.allSatisfy { $0.left.title == "Name this symbol" })
+        #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
+        #expect(pairs.allSatisfy { $0.left.visualKey != nil || $0.left.visualAssetName != nil })
+        #expect(pairs.allSatisfy { $0.right.subtitle == "Part name" })
+        #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
+        #expect(pairs.allSatisfy { $0.right.visualKey == nil && $0.right.visualAssetName == nil })
+        #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
 
     @Test
@@ -243,7 +261,27 @@ struct WorldCreatureGameplayThreadTests {
             #expect(pairs.count == nameItems.count)
             #expect(pairs.allSatisfy { $0.left.title != $0.right.title })
             #expect(pairs.allSatisfy { $0.right.subtitle == (threadID == .worldAnimals ? "Animal name" : "Bird name") })
+            #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
+            #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
+            #expect(pairs.allSatisfy { $0.right.visualKey == nil && $0.right.visualAssetName == nil })
         }
+    }
+    @Test
+    func worldAnimalsEasyMemoryStartsWithPictureNameRound() throws {
+        let thread = GameplayThreadCatalog.worldAnimals
+        let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        #expect(stage.propertyTypeIDs == ["name"])
+        #expect(stage.prompt.localizedCaseInsensitiveContains("picture"))
+        #expect(stage.prompt.localizedCaseInsensitiveContains("name"))
+
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1053)
+        let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(round.items.allSatisfy { $0.propertyTypeID == "name" })
+        #expect(pairs.allSatisfy { $0.left.title == "Name this animal" })
+        #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
+        #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
+        #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
     @Test
     func worldBirdsEasyMemoryStartsWithDeterministicPictureNameRoundWithoutDuplicateVisibleAnswers() throws {
@@ -261,6 +299,9 @@ struct WorldCreatureGameplayThreadTests {
         #expect(pairs.allSatisfy { $0.left.title == "Name this bird" })
         #expect(pairs.allSatisfy { $0.left.visualAssetName?.isEmpty == false })
         #expect(pairs.allSatisfy { $0.right.subtitle == "Bird name" })
+        #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
+        #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
+        #expect(pairs.allSatisfy { $0.right.visualKey == nil && $0.right.visualAssetName == nil })
         #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
 

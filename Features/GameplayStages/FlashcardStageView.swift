@@ -27,7 +27,8 @@ struct FlashcardStageView: View {
                     GameplayDisplayCard(
                         item: card,
                         compact: compact,
-                        prominence: card.isFruitCard || viewModel.cards.count == 1 ? .featured : .normal
+                        showsSubtitle: false,
+                        prominence: .featured
                     )
                 }
                 .buttonStyle(.plain)

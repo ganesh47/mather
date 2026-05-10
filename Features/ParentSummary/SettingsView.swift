@@ -39,6 +39,13 @@ struct SettingsView: View {
         )
     }
 
+    private var activeProfileBinding: Binding<String> {
+        Binding(
+            get: { appModel.profileStore.activeProfileId },
+            set: { appModel.profileStore.setActiveProfile(id: $0) }
+        )
+    }
+
     private func smokeStep(_ text: String) -> some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
@@ -167,27 +174,8 @@ struct SettingsView: View {
                 Text("Each profile keeps session data separate. Parent summary combines all profiles.")
                     .foregroundStyle(MatherTheme.cardSubtitle)
 
-                Picker("Active profile", selection: Binding(
-                    get: { appModel.profileStore.activeProfileId },
-                    set: { appModel.profileStore.setActiveProfile(id: $0) }
-                )) {
-                    ForEach(appModel.profileStore.profiles, id: \.id) { profile in
-                        Text("\(profile.emoji) \(profile.name)")
-                            .tag(profile.id)
-                    }
-                }
-
-                Group {
-                    if ResponsiveLayout.isWide(horizontalSizeClass) {
-                        HStack(alignment: .top, spacing: 12) {
-                            profileInputs
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            profileInputs
-                        }
-                    }
-                }
+                activeProfilePicker
+                profileInputLayout
 
                 Button("Add profile") {
                     appModel.profileStore.addProfile(name: newProfileName, emoji: newProfileEmoji)
@@ -195,6 +183,34 @@ struct SettingsView: View {
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
                 .accessibilityIdentifier("settings-add-profile")
+            }
+        }
+    }
+
+    private var profileOptions: [KidProfileOption] {
+        appModel.profileStore.profiles.map { profile in
+            KidProfileOption(id: profile.id, label: "\(profile.emoji) \(profile.name)")
+        }
+    }
+
+    private var activeProfilePicker: some View {
+        Picker("Active profile", selection: activeProfileBinding) {
+            ForEach(profileOptions) { option in
+                Text(option.label)
+                    .tag(option.id)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var profileInputLayout: some View {
+        if ResponsiveLayout.isWide(horizontalSizeClass) {
+            HStack(alignment: .top, spacing: 12) {
+                profileInputs
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                profileInputs
             }
         }
     }
@@ -292,6 +308,11 @@ struct SettingsView: View {
             .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.7)))
         }
     }
+}
+
+private struct KidProfileOption: Identifiable {
+    let id: String
+    let label: String
 }
 
 private struct RoomQuestSettingsEntry: View {
