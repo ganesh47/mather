@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 
 /// Reusable deterministic content for learn → quiz → match loops.
@@ -323,6 +324,108 @@ enum SoundMeterMicrophoneAuthorization: Equatable {
     case unknown
 }
 
+
+enum SoundMeterStartupPhase: String, Equatable {
+    case idle
+    case preflight
+    case requestingPermission
+    case permissionDenied
+    case activatingSession
+    case sessionActivationFailed
+    case routeUnavailable
+    case checkingInputFormat
+    case inputFormatUnavailable
+    case installingAudioTap
+    case startingAudioEngine
+    case engineStartFailed
+    case preparingRecorder
+    case recorderStartFailed
+    case listening
+}
+
+enum SoundMeterStartupFailure: String, Equatable {
+    case permissionDenied
+    case sessionActivation
+    case routeUnavailable
+    case inputFormatUnavailable
+    case engineStart
+    case recorderStart
+}
+
+struct SoundMeterAudioFormatSnapshot: Equatable {
+    let sampleRate: Double
+    let channelCount: UInt32
+    let commonFormat: AVAudioCommonFormat
+    let isInterleaved: Bool
+
+    init(sampleRate: Double, channelCount: UInt32, commonFormat: AVAudioCommonFormat = .pcmFormatFloat32, isInterleaved: Bool = false) {
+        self.sampleRate = sampleRate
+        self.channelCount = channelCount
+        self.commonFormat = commonFormat
+        self.isInterleaved = isInterleaved
+    }
+
+    init(format: AVAudioFormat) {
+        self.sampleRate = format.sampleRate
+        self.channelCount = format.channelCount
+        self.commonFormat = format.commonFormat
+        self.isInterleaved = format.isInterleaved
+    }
+
+    var isUsableForAudioTap: Bool {
+        sampleRate.isFinite
+            && sampleRate > 0
+            && channelCount > 0
+            && commonFormat == .pcmFormatFloat32
+            && !isInterleaved
+    }
+}
+
+struct SoundMeterStartupDiagnostics: Equatable {
+    let phase: SoundMeterStartupPhase
+    let authorization: SoundMeterMicrophoneAuthorization?
+    let isInputAvailable: Bool?
+    let routeInputCount: Int?
+    let inputSampleRate: Double?
+    let inputChannelCount: UInt32?
+    let failure: SoundMeterStartupFailure?
+
+    init(
+        phase: SoundMeterStartupPhase = .idle,
+        authorization: SoundMeterMicrophoneAuthorization? = nil,
+        isInputAvailable: Bool? = nil,
+        routeInputCount: Int? = nil,
+        inputSampleRate: Double? = nil,
+        inputChannelCount: UInt32? = nil,
+        failure: SoundMeterStartupFailure? = nil
+    ) {
+        self.phase = phase
+        self.authorization = authorization
+        self.isInputAvailable = isInputAvailable
+        self.routeInputCount = routeInputCount
+        self.inputSampleRate = inputSampleRate
+        self.inputChannelCount = inputChannelCount
+        self.failure = failure
+    }
+
+    func updating(
+        phase: SoundMeterStartupPhase? = nil,
+        routeInputCount: Int? = nil,
+        format: SoundMeterAudioFormatSnapshot? = nil,
+        failure: SoundMeterStartupFailure? = nil
+    ) -> SoundMeterStartupDiagnostics {
+        SoundMeterStartupDiagnostics(
+            phase: phase ?? self.phase,
+            authorization: authorization,
+            isInputAvailable: isInputAvailable,
+            routeInputCount: routeInputCount ?? self.routeInputCount,
+            inputSampleRate: format?.sampleRate ?? inputSampleRate,
+            inputChannelCount: format?.channelCount ?? inputChannelCount,
+            failure: failure ?? self.failure
+        )
+    }
+}
+
 enum SoundMeterStartupDecision: Equatable {
     case requestPermission
     case startMeter
@@ -418,6 +521,11 @@ struct SoundMeterReading: Equatable {
         case ..<85: return .busy
         default: return .protect
         }
+    }
+
+    static func rms(fromDecibelFS decibelFS: Float) -> Float {
+        guard decibelFS.isFinite else { return 0 }
+        return normalizedRMS(pow(10, decibelFS / 20))
     }
 
     private static func normalizedRMS(_ rms: Float) -> Float {

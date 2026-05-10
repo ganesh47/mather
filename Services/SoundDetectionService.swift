@@ -25,16 +25,20 @@ final class SoundDetectionService {
     /// Local-only RMS loudness estimate for Sound Lab meter UI. Audio is never stored or transmitted.
     var meterReading = SoundMeterReading(rms: 0)
     var meterPermissionState: SoundMeterPermissionState = .notStarted
+    var meterStartupDiagnostics = SoundMeterStartupDiagnostics()
 
     // MARK: - Private
 
     // nonisolated(unsafe): AVAudioEngine is not Sendable, but we only ever
     // access it from @MainActor methods (start/stop are both @MainActor).
     nonisolated(unsafe) private var audioEngine: AVAudioEngine?
+    private var meterRecorder: AVAudioRecorder?
     private var isListening = false
     private var previousRMS: Float = 0
     private var clapResetTask: Task<Void, Never>?
+    private var meterPollingTask: Task<Void, Never>?
     private var pendingMeterPermissionRequestID: UUID?
+    private var pendingMeterStartAction: (@MainActor () -> Void)?
 
     // MARK: - Lifecycle
 
@@ -44,36 +48,61 @@ final class SoundDetectionService {
         guard !isListening else { return }
         let audioSession = AVAudioSession.sharedInstance()
 
-        switch soundMeterPreflight(for: audioSession).startupDecision() {
+        let preflight = soundMeterPreflight(for: audioSession)
+        meterStartupDiagnostics = SoundMeterStartupDiagnostics(
+            phase: .preflight,
+            authorization: preflight.authorization,
+            isInputAvailable: preflight.isInputAvailable
+        )
+
+        switch preflight.startupDecision() {
         case .requestPermission:
-            requestMicrophonePermission()
+            requestMicrophonePermission { [weak self] in
+                self?.startListening()
+            }
             return
         case .startMeter:
             break
         case .fail(let state):
-            resetSoundMeter(to: state)
+            resetSoundMeter(to: state, phase: startupPhase(for: state), failure: startupFailure(for: state))
             return
         }
 
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .activatingSession)
         do {
             try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
             try audioSession.setActive(true, options: [])
         } catch {
-            resetSoundMeter(to: .unavailable)
+            resetSoundMeter(to: .unavailable, phase: .sessionActivationFailed, failure: .sessionActivation)
+            return
+        }
+
+        guard audioSession.isInputAvailable, !audioSession.currentRoute.inputs.isEmpty else {
+            resetSoundMeter(to: .unavailable, phase: .routeUnavailable, failure: .routeUnavailable)
             return
         }
 
         let engine = AVAudioEngine()
         let inputNode = engine.inputNode
-        let format = inputNode.inputFormat(forBus: 0)
-        // When input hardware is unavailable, inputFormat can return a
-        // zero-sample-rate format — installTap would crash.
-        guard format.sampleRate > 0, format.channelCount > 0 else {
-            resetSoundMeter(to: .unavailable)
+        let format = inputNode.outputFormat(forBus: 0)
+        let formatSnapshot = SoundMeterAudioFormatSnapshot(format: format)
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(
+            phase: .checkingInputFormat,
+            routeInputCount: audioSession.currentRoute.inputs.count,
+            format: formatSnapshot
+        )
+        // When input hardware is unavailable or the route changes, the input
+        // node can expose a zero/unknown format. Installing a tap with that
+        // format can raise an Objective-C/AudioUnit assertion instead of a
+        // catchable Swift error, so fail closed before the tap boundary.
+        guard formatSnapshot.isUsableForAudioTap else {
+            resetSoundMeter(to: .unavailable, phase: .inputFormatUnavailable, failure: .inputFormatUnavailable, format: formatSnapshot)
             return
         }
 
         inputNode.removeTap(onBus: 0)
+        engine.prepare()
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .installingAudioTap, format: formatSnapshot)
         inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
             guard let channelData = buffer.floatChannelData?[0] else { return }
             let frameCount = Int(buffer.frameLength)
@@ -94,26 +123,34 @@ final class SoundDetectionService {
             }
         }
 
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .startingAudioEngine)
         do {
             try engine.start()
             audioEngine = engine
             isListening = true
             meterPermissionState = .listening
+            meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .listening)
         } catch {
             // Silently fail: microphone permission may be denied, or the
             // audio session may be unavailable. Bond Blast still works without clap.
             inputNode.removeTap(onBus: 0)
-            resetSoundMeter(to: .unavailable)
+            resetSoundMeter(to: .unavailable, phase: .engineStartFailed, failure: .engineStart)
         }
     }
 
     /// Stop listening and tear down the audio tap.
     func stopListening() {
         pendingMeterPermissionRequestID = nil
+        pendingMeterStartAction = nil
+        meterPollingTask?.cancel()
+        meterPollingTask = nil
+        meterRecorder?.stop()
+        meterRecorder = nil
         guard isListening else {
             previousRMS = 0
             meterReading = SoundMeterReading(rms: 0)
             meterPermissionState = .notStarted
+            meterStartupDiagnostics = SoundMeterStartupDiagnostics(phase: .idle)
             clapResetTask?.cancel()
             clapDetected = false
             return
@@ -125,6 +162,7 @@ final class SoundDetectionService {
         previousRMS = 0
         meterReading = SoundMeterReading(rms: 0)
         meterPermissionState = .notStarted
+        meterStartupDiagnostics = SoundMeterStartupDiagnostics(phase: .idle)
         clapResetTask?.cancel()
         clapDetected = false
     }
@@ -138,7 +176,8 @@ final class SoundDetectionService {
     // MARK: - Private helpers
 
     func startSoundLabMeter() {
-        startListening()
+        guard !isListening else { return }
+        startRecorderBackedSoundLabMeter()
     }
 
     func stopSoundLabMeter() {
@@ -159,34 +198,156 @@ final class SoundDetectionService {
         previousRMS = rms
     }
 
-    private func requestMicrophonePermission() {
+    private func startRecorderBackedSoundLabMeter() {
+        let audioSession = AVAudioSession.sharedInstance()
+        let preflight = soundMeterPreflight(for: audioSession)
+        meterStartupDiagnostics = SoundMeterStartupDiagnostics(
+            phase: .preflight,
+            authorization: preflight.authorization,
+            isInputAvailable: preflight.isInputAvailable
+        )
+
+        switch preflight.startupDecision() {
+        case .requestPermission:
+            requestMicrophonePermission { [weak self] in
+                self?.startRecorderBackedSoundLabMeter()
+            }
+            return
+        case .startMeter:
+            break
+        case .fail(let state):
+            resetSoundMeter(to: state, phase: startupPhase(for: state), failure: startupFailure(for: state))
+            return
+        }
+
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .activatingSession)
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
+            try audioSession.setActive(true, options: [])
+        } catch {
+            resetSoundMeter(to: .unavailable, phase: .sessionActivationFailed, failure: .sessionActivation)
+            return
+        }
+
+        guard audioSession.isInputAvailable, !audioSession.currentRoute.inputs.isEmpty else {
+            resetSoundMeter(to: .unavailable, phase: .routeUnavailable, failure: .routeUnavailable)
+            return
+        }
+
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(
+            phase: .preparingRecorder,
+            routeInputCount: audioSession.currentRoute.inputs.count
+        )
+
+        do {
+            let recorder = try makeMeterRecorder()
+            recorder.isMeteringEnabled = true
+            guard recorder.prepareToRecord(), recorder.record() else {
+                resetSoundMeter(to: .unavailable, phase: .recorderStartFailed, failure: .recorderStart)
+                return
+            }
+
+            meterRecorder = recorder
+            isListening = true
+            meterPermissionState = .listening
+            meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .listening)
+            startMeterPolling()
+        } catch {
+            resetSoundMeter(to: .unavailable, phase: .recorderStartFailed, failure: .recorderStart)
+        }
+    }
+
+    private func makeMeterRecorder() throws -> AVAudioRecorder {
+        let url = URL(fileURLWithPath: "/dev/null")
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44_100.0,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue,
+        ]
+        return try AVAudioRecorder(url: url, settings: settings)
+    }
+
+    private func startMeterPolling() {
+        meterPollingTask?.cancel()
+        meterPollingTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, let recorder = self.meterRecorder else { return }
+                recorder.updateMeters()
+                let rms = SoundMeterReading.rms(fromDecibelFS: recorder.averagePower(forChannel: 0))
+                self.evaluateRMS(rms)
+                try? await Task.sleep(for: .milliseconds(160))
+            }
+        }
+    }
+
+    private func requestMicrophonePermission(then startAction: @escaping @MainActor () -> Void) {
         let requestID = UUID()
         pendingMeterPermissionRequestID = requestID
+        pendingMeterStartAction = startAction
         meterPermissionState = .requestingPermission
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .requestingPermission)
 
         AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
             Task { @MainActor [weak self] in
                 guard let self, self.pendingMeterPermissionRequestID == requestID else { return }
+                let startAction = self.pendingMeterStartAction
                 self.pendingMeterPermissionRequestID = nil
+                self.pendingMeterStartAction = nil
                 if granted {
-                    self.startListening()
+                    startAction?()
                 } else {
-                    self.resetSoundMeter(to: .denied)
+                    self.resetSoundMeter(to: .denied, phase: .permissionDenied, failure: .permissionDenied)
                 }
             }
         }
     }
 
-    private func resetSoundMeter(to state: SoundMeterPermissionState) {
+    private func resetSoundMeter(
+        to state: SoundMeterPermissionState,
+        phase: SoundMeterStartupPhase? = nil,
+        failure: SoundMeterStartupFailure? = nil,
+        format: SoundMeterAudioFormatSnapshot? = nil
+    ) {
         isListening = false
+        meterPollingTask?.cancel()
+        meterPollingTask = nil
+        meterRecorder?.stop()
+        meterRecorder = nil
         audioEngine?.inputNode.removeTap(onBus: 0)
         audioEngine?.stop()
         audioEngine = nil
         previousRMS = 0
         meterReading = SoundMeterReading(rms: 0)
         meterPermissionState = state
+        meterStartupDiagnostics = meterStartupDiagnostics.updating(
+            phase: phase ?? startupPhase(for: state),
+            format: format,
+            failure: failure ?? startupFailure(for: state)
+        )
         clapResetTask?.cancel()
         clapDetected = false
+    }
+
+    private func startupPhase(for state: SoundMeterPermissionState) -> SoundMeterStartupPhase {
+        switch state {
+        case .notStarted: return .idle
+        case .requestingPermission: return .requestingPermission
+        case .listening: return .listening
+        case .unavailable: return .routeUnavailable
+        case .denied: return .permissionDenied
+        }
+    }
+
+    private func startupFailure(for state: SoundMeterPermissionState) -> SoundMeterStartupFailure? {
+        switch state {
+        case .notStarted, .requestingPermission, .listening:
+            return nil
+        case .unavailable:
+            return .routeUnavailable
+        case .denied:
+            return .permissionDenied
+        }
     }
 
     private func soundMeterPreflight(for audioSession: AVAudioSession) -> SoundMeterStartupPreflight {

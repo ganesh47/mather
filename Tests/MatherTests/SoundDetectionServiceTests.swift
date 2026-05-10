@@ -1,3 +1,4 @@
+import AVFoundation
 import Testing
 @testable import Mather
 
@@ -38,6 +39,44 @@ struct SoundDetectionServiceTests {
         #expect(service.meterPermissionState.guidance.contains("does not record audio"))
         #expect(SoundMeterReading.privacyCopy.contains("stores no audio"))
         #expect(SoundMeterReading.privacyCopy.contains("sends no audio"))
+    }
+
+    @Test
+    func initialStartupDiagnosticsArePrivacySafeAndIdle() {
+        let service = SoundDetectionService()
+        #expect(service.meterStartupDiagnostics.phase == .idle)
+        #expect(service.meterStartupDiagnostics.authorization == nil)
+        #expect(service.meterStartupDiagnostics.routeInputCount == nil)
+        #expect(service.meterStartupDiagnostics.inputSampleRate == nil)
+        #expect(service.meterStartupDiagnostics.failure == nil)
+    }
+
+    @Test
+    func audioTapFormatSnapshotFailsClosedForUnsafeFormats() {
+        #expect(SoundMeterAudioFormatSnapshot(sampleRate: 44_100, channelCount: 1).isUsableForAudioTap)
+        #expect(!SoundMeterAudioFormatSnapshot(sampleRate: 0, channelCount: 1).isUsableForAudioTap)
+        #expect(!SoundMeterAudioFormatSnapshot(sampleRate: .nan, channelCount: 1).isUsableForAudioTap)
+        #expect(!SoundMeterAudioFormatSnapshot(sampleRate: 44_100, channelCount: 0).isUsableForAudioTap)
+        #expect(!SoundMeterAudioFormatSnapshot(sampleRate: 44_100, channelCount: 1, commonFormat: .pcmFormatInt16).isUsableForAudioTap)
+        #expect(!SoundMeterAudioFormatSnapshot(sampleRate: 44_100, channelCount: 1, isInterleaved: true).isUsableForAudioTap)
+    }
+
+    @Test
+    func startupDiagnosticsCaptureOnlyCoarseAudioState() {
+        let diagnostics = SoundMeterStartupDiagnostics(
+            phase: .checkingInputFormat,
+            authorization: .granted,
+            isInputAvailable: true,
+            routeInputCount: 1
+        ).updating(format: SoundMeterAudioFormatSnapshot(sampleRate: 48_000, channelCount: 1))
+
+        #expect(diagnostics.phase == .checkingInputFormat)
+        #expect(diagnostics.authorization == .granted)
+        #expect(diagnostics.isInputAvailable == true)
+        #expect(diagnostics.routeInputCount == 1)
+        #expect(diagnostics.inputSampleRate == 48_000)
+        #expect(diagnostics.inputChannelCount == 1)
+        #expect(diagnostics.failure == nil)
     }
 
     // MARK: - startListening / stopListening idempotency
