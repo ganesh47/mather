@@ -612,6 +612,9 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
     var startAffordanceLabel: String { "Start" }
     var continueAffordanceLabel: String { "Continue" }
     var pathLabel: String { stageOrder.map(\.rawValue).joined(separator: " → ") }
+    var cardPresentation: LabConceptSessionPlanCardPresentation {
+        LabConceptSessionPlanCardPresentation(plan: self)
+    }
 
     static func plan(for id: String) -> LabConceptSessionPlan? {
         switch id {
@@ -731,6 +734,54 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         ]
     )
 
+}
+
+struct LabConceptSessionPlanCardPresentation: Equatable {
+    let title: String
+    let symbolName: String
+    let hiddenDetailAccessibilityLabel: String
+    let defaultVisibleText: [String]
+    let disclosureDetailText: [String]
+
+    init(plan: LabConceptSessionPlan) {
+        title = plan.title
+        symbolName = Self.symbolName(for: plan)
+        hiddenDetailAccessibilityLabel = [
+            plan.title,
+            plan.subtitle,
+            plan.masteryStateLabel,
+            plan.estimatedLength,
+            "Next: \(plan.recommendedNextActivity).",
+            "Path: \(plan.pathLabel).",
+        ].joined(separator: " ")
+        defaultVisibleText = [plan.title]
+        disclosureDetailText = [
+            plan.subtitle,
+            plan.masteryStateLabel,
+            plan.estimatedLength,
+            plan.recommendedNextActivity,
+            plan.pathLabel,
+        ]
+    }
+
+    var keepsDefaultFaceSparse: Bool {
+        defaultVisibleText == [title]
+    }
+
+    private static func symbolName(for plan: LabConceptSessionPlan) -> String {
+        switch plan.id {
+        case LabConceptSessionPlan.numbersNumberBondsTo10.id:
+            return "10.circle.fill"
+        case LabConceptSessionPlan.geometryShapeNames.id:
+            return "square.on.circle.fill"
+        case LabConceptSessionPlan.geometryAnglesBasic.id:
+            return "angle"
+        case LabConceptSessionPlan.geometrySymmetryFolds.id:
+            return "square.split.2x1.fill"
+        default:
+            return plan.stages.first?.stage.symbolName ?? "sparkles"
+        }
+    }
 }
 
 struct GuidedLabPath: Identifiable, Equatable {
@@ -1047,6 +1098,7 @@ struct LabLaneDetailPresentation: Equatable {
     let title: String
     let activityCountLabel: String
     let sections: [LabLaneCardSection]
+    let showsResearchQuest: Bool
 
     init(lane: CapabilityLane) {
         laneID = lane.id
@@ -1059,6 +1111,7 @@ struct LabLaneDetailPresentation: Equatable {
             lane.isReady ? .activities : .comingSoon,
             .progressStatus,
         ]
+        showsResearchQuest = false
     }
 }
 
