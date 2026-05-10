@@ -167,3 +167,80 @@ struct GameplayThreadContentTests {
     }
 
 }
+
+struct WorldCreatureGameplayThreadTests {
+    @Test
+    func worldCreatureThreadsResolveFromCatalogAndUseMemoryDeckSource() {
+        let animalThread = GameplayThreadCatalog.thread(for: .worldAnimals)
+        let birdThread = GameplayThreadCatalog.thread(for: .worldBirds)
+
+        #expect(animalThread.id == "world-animals")
+        #expect(birdThread.id == "world-birds")
+        #expect(animalThread.category.id == "geography-world")
+        #expect(birdThread.category.id == "geography-world")
+        #expect(animalThread.entities.map(\.name) == MemoryDeck.domesticAnimals.prefix(12).map(\.name))
+        #expect(birdThread.entities.map(\.name) == MemoryDeck.birds.prefix(12).map(\.name))
+        #expect(birdThread.entities.allSatisfy { $0.visualAssetName?.isEmpty == false })
+        #expect(animalThread.entities.allSatisfy { $0.visualKey?.isEmpty == false })
+    }
+
+    @Test
+    func worldCreatureThreadsHaveNonEmptyEntitiesAndResolvableStageProperties() {
+        for threadID in [GameplayThreadID.worldAnimals, .worldBirds] {
+            let thread = GameplayThreadCatalog.thread(for: threadID)
+            let propertyTypeIDs = Set(thread.propertyTypes.map(\.id))
+
+            #expect(!thread.entities.isEmpty)
+            #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .bondBlast])
+            #expect(thread.entities.allSatisfy { !$0.properties.isEmpty })
+            #expect(thread.entities.allSatisfy { entity in
+                Set(entity.properties.map(\.typeID)).isSubset(of: propertyTypeIDs)
+            })
+            #expect(thread.stages.allSatisfy { stage in
+                Set(stage.propertyTypeIDs).isSubset(of: propertyTypeIDs)
+            })
+
+            for stage in thread.stages {
+                let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1044)
+                #expect(!round.items.isEmpty, "\(stage.id) should generate playable items")
+                #expect(round.items.count <= stage.maximumItemCount)
+            }
+        }
+    }
+
+    @Test
+    func worldCreatureEasyMemoryAvoidsIdenticalNamePromptAndAnswerDuplicates() throws {
+        for threadID in [GameplayThreadID.worldAnimals, .worldBirds] {
+            let thread = GameplayThreadCatalog.thread(for: threadID)
+            let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+            let nameItems = thread.entities.prefix(4).compactMap { entity -> GameplayRoundItem? in
+                guard let property = entity.properties.first(where: { $0.typeID == "name" }) else { return nil }
+                return GameplayRoundItem(id: "\(entity.id)::\(property.id)", entityID: entity.id, propertyID: property.id, propertyTypeID: property.typeID)
+            }
+            let round = GameplayRoundDefinition(id: "\(thread.id)-names-test", stageID: stage.id, kind: stage.kind, items: nameItems, seed: 1044)
+            let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+            #expect(pairs.count == nameItems.count)
+            #expect(pairs.allSatisfy { $0.left.title != $0.right.title })
+            #expect(pairs.allSatisfy { $0.right.subtitle == (threadID == .worldAnimals ? "Animal name" : "Bird name") })
+        }
+    }
+
+    @Test
+    func worldCreatureBondBlastHasEnoughFactProperties() throws {
+        let animalThread = GameplayThreadCatalog.worldAnimals
+        let birdThread = GameplayThreadCatalog.worldBirds
+
+        let animalStage = try #require(animalThread.stages.first { $0.kind == .bondBlast })
+        let birdStage = try #require(birdThread.stages.first { $0.kind == .bondBlast })
+
+        #expect(animalStage.propertyTypeIDs.count >= 5)
+        #expect(birdStage.propertyTypeIDs.count >= 5)
+        #expect(animalThread.entities.allSatisfy { entity in
+            Set(animalStage.propertyTypeIDs).isSubset(of: Set(entity.properties.map(\.typeID)))
+        })
+        #expect(birdThread.entities.allSatisfy { entity in
+            Set(birdStage.propertyTypeIDs).isSubset(of: Set(entity.properties.map(\.typeID)))
+        })
+    }
+}

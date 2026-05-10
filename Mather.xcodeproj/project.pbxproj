@@ -48,6 +48,8 @@
 		A912D0000000000000000021 /* GameplayThreadContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912D0000000000000000020 /* GameplayThreadContentTests.swift */; };
 		A912C0000000000000000013 /* CountryGameplayThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000012 /* CountryGameplayThread.swift */; };
 		A912E0000000000000000011 /* GameplayThreadContent+WaterCycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912E0000000000000000010 /* GameplayThreadContent+WaterCycle.swift */; };
+		B10440000000000000000011 /* GameplayThreadContent+WorldAnimals.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10440000000000000000010 /* GameplayThreadContent+WorldAnimals.swift */; };
+		B10440000000000000000021 /* GameplayThreadContent+WorldBirds.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10440000000000000000020 /* GameplayThreadContent+WorldBirds.swift */; };
 		A912E0000000000000000021 /* WaterCycleGameplayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912E0000000000000000020 /* WaterCycleGameplayThreadTests.swift */; };
 		A912C0000000000000000021 /* GameplayStageViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000020 /* GameplayStageViewModels.swift */; };
 		A912C0000000000000000031 /* GameplayThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912C0000000000000000030 /* GameplayThreadView.swift */; };
@@ -117,6 +119,8 @@
 		A912D0000000000000000020 /* GameplayThreadContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadContentTests.swift; sourceTree = "<group>"; };
 		A912C0000000000000000012 /* CountryGameplayThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryGameplayThread.swift; sourceTree = "<group>"; };
 		A912E0000000000000000010 /* GameplayThreadContent+WaterCycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WaterCycle.swift"; sourceTree = "<group>"; };
+		B10440000000000000000010 /* GameplayThreadContent+WorldAnimals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldAnimals.swift"; sourceTree = "<group>"; };
+		B10440000000000000000020 /* GameplayThreadContent+WorldBirds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldBirds.swift"; sourceTree = "<group>"; };
 		A912E0000000000000000020 /* WaterCycleGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleGameplayThreadTests.swift; sourceTree = "<group>"; };
 		A912C0000000000000000020 /* GameplayStageViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModels.swift; sourceTree = "<group>"; };
 		A912C0000000000000000030 /* GameplayThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadView.swift; sourceTree = "<group>"; };
@@ -187,6 +191,8 @@
 				A912D0000000000000000010 /* GameplayThreadCatalog.swift */,
 				A912C0000000000000000012 /* CountryGameplayThread.swift */,
 				A912E0000000000000000010 /* GameplayThreadContent+WaterCycle.swift */,
+				B10440000000000000000010 /* GameplayThreadContent+WorldAnimals.swift */,
+				B10440000000000000000020 /* GameplayThreadContent+WorldBirds.swift */,
 				A912C0000000000000000020 /* GameplayStageViewModels.swift */,
 				111111111111111111111112 /* SpacedRepetitionModels.swift */,
 				4BE99DB8FC85397C3E504E0B /* ProblemGenerator.swift */,
@@ -401,6 +407,8 @@
 				A912D0000000000000000011 /* GameplayThreadCatalog.swift in Sources */,
 				A912C0000000000000000013 /* CountryGameplayThread.swift in Sources */,
 				A912E0000000000000000011 /* GameplayThreadContent+WaterCycle.swift in Sources */,
+				B10440000000000000000011 /* GameplayThreadContent+WorldAnimals.swift in Sources */,
+				B10440000000000000000021 /* GameplayThreadContent+WorldBirds.swift in Sources */,
 				A912C0000000000000000021 /* GameplayStageViewModels.swift in Sources */,
 				A912C0000000000000000031 /* GameplayThreadView.swift in Sources */,
 				A912C0000000000000000041 /* FlashcardStageView.swift in Sources */,

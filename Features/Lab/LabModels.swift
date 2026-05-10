@@ -354,6 +354,8 @@ enum LabActivityID: String, CaseIterable, Hashable {
     case soundVolume
     case memoryMatch
     case countryCards
+    case worldAnimalCards
+    case worldBirdCards
     case fruitCards
     case circuitSpark
 }
@@ -389,6 +391,10 @@ extension LabActivityID {
             return .memory
         case .countryCards:
             return .gameplayThread(.countries)
+        case .worldAnimalCards:
+            return .gameplayThread(.worldAnimals)
+        case .worldBirdCards:
+            return .gameplayThread(.worldBirds)
         case .fruitCards:
             return .gameplayThread(.fruits)
         case .circuitSpark:
@@ -1059,7 +1065,7 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .fruitCards, .circuitSpark:
+        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .worldAnimalCards, .worldBirdCards, .fruitCards, .circuitSpark:
             return [.noSpecialSensor]
         case .symmetryFold, .angleCannon, .gravityArtist:
             return [.motion]
@@ -1467,6 +1473,20 @@ struct CapabilityLane: Identifiable, Equatable {
                     emoji: "🌍",
                     title: "Country Cards",
                     tagline: "Flashcards for capitals, flags, languages, currency, and continents",
+                    modes: [.learn, .review, .challenge]
+                ),
+                LabActivity(
+                    id: .worldAnimalCards,
+                    emoji: "🐾",
+                    title: "World Animals",
+                    tagline: "Learn animal homes, sounds, movement, colors, and kinds",
+                    modes: [.learn, .review, .challenge]
+                ),
+                LabActivity(
+                    id: .worldBirdCards,
+                    emoji: "🦜",
+                    title: "World Birds",
+                    tagline: "Learn bird homes, colors, size, weight, and lifespan",
                     modes: [.learn, .review, .challenge]
                 ),
             ]

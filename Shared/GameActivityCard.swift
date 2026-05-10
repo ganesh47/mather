@@ -190,7 +190,7 @@ struct GameActivityCard: View {
                 .font(.system(size: 48, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
                 .offset(x: 20, y: 12)
-        case .memoryMatch, .countryCards, .fruitCards:
+        case .memoryMatch, .countryCards, .worldAnimalCards, .worldBirdCards, .fruitCards:
             Image(systemName: "rectangle.on.rectangle.angled")
                 .font(.system(size: 48, weight: .bold))
                 .foregroundStyle(tint.opacity(0.35))
