@@ -80,7 +80,7 @@ struct CountryGameplayThreadTests {
 
         let easy = try round(kind: .easyMemory, thread: thread)
         #expect(!easy.items.isEmpty)
-        #expect(easy.items.allSatisfy { ["flag", "capital", "continent"].contains($0.propertyTypeID ?? "") })
+        #expect(easy.items.allSatisfy { $0.propertyTypeID == "flag" })
         #expect(!GameplayStageContentBuilder.matchPairs(thread: thread, round: easy).isEmpty)
 
         let flip = try round(kind: .flipMemory, thread: thread)
@@ -94,6 +94,24 @@ struct CountryGameplayThreadTests {
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: quiz)
         #expect(!questions.isEmpty)
         #expect(questions.allSatisfy { $0.choices.contains($0.answer) })
+    }
+
+    @Test
+    func countryEasyMemoryStartsWithDeterministicFlagNameRoundWithoutDuplicateVisibleAnswers() throws {
+        let thread = CountryGameplayThread.thread
+        let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        #expect(stage.propertyTypeIDs == ["flag"])
+        #expect(stage.prompt.localizedCaseInsensitiveContains("country name"))
+        #expect(stage.prompt.localizedCaseInsensitiveContains("flag"))
+
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 912)
+        let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(round.items.count == min(stage.maximumItemCount, thread.entities.count))
+        #expect(round.items.allSatisfy { $0.propertyTypeID == "flag" })
+        #expect(pairs.allSatisfy { pair in thread.entities.contains { $0.id == pair.left.entityID && $0.name == pair.left.title } })
+        #expect(pairs.allSatisfy { $0.right.subtitle == "Flag" })
+        #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
 
 

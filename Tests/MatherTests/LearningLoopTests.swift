@@ -273,6 +273,13 @@ extension LearningLoopTests {
         XCTAssertTrue(state.isCorrect)
         XCTAssertEqual(state.feedback, SoundVolumeContent.pitchChallenge.feedback)
     }
+    func testSoundPitchFollowUpHasDedicatedRouteCopyAndQuizContent() {
+        XCTAssertEqual(SoundVolumeContent.pitchFollowUpTitle, "Pitch follow-up")
+        XCTAssertEqual(SoundVolumeContent.pitchFollowUpRouteTitle, "Open pitch follow-up")
+        XCTAssertEqual(SoundVolumeContent.pitchChallenge.prompt, "A tiny bird chirp is usually which pitch?")
+        XCTAssertEqual(SoundVolumeContent.pitchChallenge.options, [.low, .middle, .high])
+    }
+
 
     func testSoundVolumeQuizScoringUsesCorrectSafeAnswers() {
         let questions = SoundVolumeContent.quizQuestions
