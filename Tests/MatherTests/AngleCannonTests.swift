@@ -158,4 +158,15 @@ struct AngleCannonScenarioTests {
         #expect(AngleCannonView.projectilePoint(on: points, progress: 0.5) == CGPoint(x: 10, y: 10))
         #expect(AngleCannonView.projectilePoint(on: points, progress: 1) == CGPoint(x: 20, y: 0))
     }
+
+    @Test func delayedCallbackGuardRejectsStaleActivityRevisions() {
+        #expect(
+            AngleCannonView.shouldAcceptDelayedCallback(scheduledRevision: 7, currentRevision: 7),
+            "Callbacks from the active Angle Cannon lifecycle should still run"
+        )
+        #expect(
+            !AngleCannonView.shouldAcceptDelayedCallback(scheduledRevision: 7, currentRevision: 8),
+            "Callbacks scheduled before disappear/recalibration should be ignored"
+        )
+    }
 }
