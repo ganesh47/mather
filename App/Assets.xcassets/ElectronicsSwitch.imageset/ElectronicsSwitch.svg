@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Switch illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <rect x="48" y="152" width="160" height="32" rx="16" fill="#B7C9E2" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="74" cy="168" r="18" fill="#F7FBFF" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="184" cy="168" r="18" fill="#F7FBFF" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><line x1="80" y1="151" x2="160" y2="88" stroke="#2F80ED" stroke-width="14" stroke-linecap="round"/><circle cx="160" cy="88" r="13" fill="#2F80ED"/><path d="M56 70h42M77 49v42" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M158 49h42" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

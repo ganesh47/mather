@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Bulb illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <path d="M128 40c-42 0-72 31-72 70 0 24 12 43 31 57 10 8 15 17 15 29h52c0-12 5-21 15-29 19-14 31-33 31-57 0-39-30-70-72-70z" fill="#FFE177" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M101 197h54M106 219h44" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M102 121c10-18 42-18 52 0" fill="none" stroke="#F59E0B" stroke-width="8"/><path d="M82 62 66 46M174 62l16-16M128 31V14" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Safe pretend circuit illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <circle cx="128" cy="126" r="78" fill="#D9FBE8" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M91 126l25 25 53-59" fill="none" stroke="#22966B" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><path d="M61 199c36 27 98 29 134 0" fill="none" stroke="#2F80ED" stroke-width="10" stroke-linecap="round"/><rect x="74" y="43" width="48" height="24" rx="8" fill="#7ADCB4" stroke="#243B53" stroke-width="8"/><circle cx="178" cy="54" r="14" fill="#FFE177" stroke="#243B53" stroke-width="8"/>
+</svg>
