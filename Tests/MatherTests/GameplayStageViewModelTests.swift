@@ -93,6 +93,45 @@ struct GameplayStageViewModelTests {
         let quizResult = viewModel.choose(firstQuestion.answer)
         #expect(quizResult)
         #expect(viewModel.correctCount == 1)
+        #expect(viewModel.progressText == "1 of 4")
+        #expect(!viewModel.advanceAfterCorrectChoice())
+        #expect(viewModel.progressText == "2 of 4")
+    }
+
+    @Test
+    func multipleChoiceWrongAnswerStaysOnCurrentQuestionUntilCorrect() throws {
+        let thread = GameplaySampleThreads.countries
+        let stage = try #require(thread.stages.first { $0.kind == .multipleChoice })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 4)
+        var viewModel = GameplayMultipleChoiceStageViewModel(thread: thread, round: round)
+        let firstQuestion = try #require(viewModel.activeQuestion)
+        let wrongChoice = try #require(firstQuestion.choices.first { !firstQuestion.isCorrect($0) })
+
+        let wrongResult = viewModel.choose(wrongChoice)
+
+        #expect(!wrongResult)
+        #expect(viewModel.activeQuestion == firstQuestion)
+        #expect(viewModel.activeIndex == 0)
+        #expect(viewModel.progressText == "1 of 4")
+        #expect(viewModel.mistakeCount == 1)
+        #expect(viewModel.correctCount == 0)
+        #expect(!viewModel.canAdvanceAfterCorrectChoice)
+        #expect(!viewModel.advanceAfterCorrectChoice())
+
+        let correctResult = viewModel.choose(firstQuestion.answer)
+
+        #expect(correctResult)
+        #expect(viewModel.activeQuestion == firstQuestion)
+        #expect(viewModel.activeIndex == 0)
+        #expect(viewModel.correctCount == 1)
+        #expect(viewModel.mistakeCount == 1)
+        #expect(viewModel.canAdvanceAfterCorrectChoice)
+
+        let completedStage = viewModel.advanceAfterCorrectChoice()
+
+        #expect(!completedStage)
+        #expect(viewModel.activeIndex == 1)
+        #expect(viewModel.activeQuestion?.id != firstQuestion.id)
         #expect(viewModel.progressText == "2 of 4")
     }
 

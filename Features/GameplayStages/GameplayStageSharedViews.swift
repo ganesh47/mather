@@ -94,8 +94,9 @@ struct GameplayDisplayCard: View {
                     .font(titleFont)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(MatherTheme.ink)
-                    .lineLimit(item.presentation == .titleOnly ? 3 : 2)
+                    .lineLimit(titleLineLimit)
                     .minimumScaleFactor(0.76)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             let subtitle = concealed ? "Tap to check" : item.subtitle
             if showsSubtitle && item.presentation == .visualWithTitle && !subtitle.isEmpty {
@@ -185,6 +186,10 @@ struct GameplayDisplayCard: View {
             return compact ? .title3.bold() : .title.bold()
         }
         return prominence == .featured ? (compact ? .title3.bold() : .title.bold()) : (compact ? .headline.bold() : .title3.bold())
+    }
+    private var titleLineLimit: Int {
+        if item.presentation == .titleOnly { return 4 }
+        return compact ? 3 : 2
     }
     private var visualSize: CGFloat {
         if item.presentation == .visualOnly { return compact ? 86 : 124 }
