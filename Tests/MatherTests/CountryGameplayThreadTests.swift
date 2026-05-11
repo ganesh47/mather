@@ -88,6 +88,11 @@ struct CountryGameplayThreadTests {
 
         let flip = try round(kind: .flipMemory, thread: thread)
         #expect(flip.items.allSatisfy { ["flag", "capital", "currency"].contains($0.propertyTypeID ?? "") })
+        let flipPairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: flip)
+        let flipFlagCards = flipPairs.filter { $0.id.contains("-flag") }.map(\.right)
+        #expect(!flipFlagCards.isEmpty)
+        #expect(flipFlagCards.allSatisfy { $0.presentation == .visualOnly })
+        #expect(flipFlagCards.allSatisfy { $0.subtitle == "Flag" })
 
         let bondBlast = try round(kind: .bondBlast, thread: thread)
         #expect(bondBlast.items.count == 10)
@@ -167,6 +172,41 @@ struct CountryGameplayThreadTests {
         #expect(!mapShapeAnswers.isEmpty)
         #expect(mapShapeAnswers.allSatisfy { $0.visualShapeKey == $0.entityID })
         #expect(mapShapeAnswers.allSatisfy { $0.visualAssetName == nil })
+    }
+
+    @Test
+    func flagQuizChoicesShowVisualOnlyFlagsWhileKeepingAccessibleNames() throws {
+        let thread = CountryGameplayThread.thread
+        let selectedIDs = ["country-india", "country-japan", "country-france", "country-egypt"]
+        let items = try selectedIDs.map { entityID in
+            let entity = try #require(thread.entities.first { $0.id == entityID })
+            let flag = try #require(entity.properties.first { $0.typeID == "flag" })
+            return GameplayRoundItem(
+                id: "quiz-\(entityID)-flag",
+                entityID: entityID,
+                propertyID: flag.id,
+                propertyTypeID: flag.typeID
+            )
+        }
+        let round = GameplayRoundDefinition(
+            id: "country-flag-visual-only",
+            stageID: "multiple-choice",
+            kind: .multipleChoice,
+            items: items,
+            seed: 1074
+        )
+
+        let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round, choicesPerQuestion: 4)
+
+        #expect(!questions.isEmpty)
+        #expect(questions.allSatisfy { question in
+            question.choices.allSatisfy { choice in
+                choice.presentation == .visualOnly
+                    && choice.subtitle == "Flag"
+                    && (choice.visualKey != nil || choice.visualAssetName != nil)
+                    && choice.spokenText.contains("flag")
+            }
+        })
     }
 
     @Test

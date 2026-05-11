@@ -489,6 +489,7 @@ enum GameplayStageContentBuilder {
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
             let recallPrompt = nameRecallPrompt(thread: thread, property: property, kind: round.kind)
             let visualNameMatch = usesVisualNameMatch(thread: thread, property: property, kind: round.kind)
+            let visualPropertyPrompt = usesVisualPropertyPrompt(thread: thread, property: property, kind: round.kind)
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
@@ -502,12 +503,12 @@ enum GameplayStageContentBuilder {
             let right = GameplayDisplayItem(
                 id: "\(item.id)-right",
                 entityID: entity.id,
-                title: visualNameMatch ? entity.name : (property?.value ?? entity.name),
-                subtitle: property.map { visualNameMatch ? nameRecallSubtitle(thread: thread) : (recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread)) } ?? "Name",
+                title: rightTitle(entity: entity, property: property, visualNameMatch: visualNameMatch),
+                subtitle: rightSubtitle(thread: thread, property: property, recallPrompt: recallPrompt, visualNameMatch: visualNameMatch),
                 visualKey: visualNameMatch ? nil : visualKey(for: property, fallbackEntity: entity),
                 visualAssetName: visualNameMatch ? nil : property?.visualAssetName,
                 visualShapeKey: visualNameMatch ? nil : property?.visualShapeKey,
-                presentation: visualNameMatch ? .titleOnly : .visualWithTitle
+                presentation: rightPresentation(visualNameMatch: visualNameMatch, visualPropertyPrompt: visualPropertyPrompt)
             )
             return GameplayMatchPair(id: item.id, left: left, right: right)
         }
@@ -602,13 +603,35 @@ enum GameplayStageContentBuilder {
     }
 
     private static func usesVisualNameMatch(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> Bool {
-        guard kind == .easyMemory else { return false }
         switch (thread.id, property?.typeID) {
         case ("countries", "flag"), ("electronics", "part"), ("world-animals", "name"), ("world-birds", "name"):
-            return true
+            return kind == .easyMemory
+        case ("shapes", "name"):
+            return kind == .easyMemory || kind == .bondBlast
         default:
             return false
         }
+    }
+
+    private static func usesVisualPropertyPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> Bool {
+        kind != .easyMemory && thread.id == "countries" && property?.typeID == "flag"
+    }
+
+    private static func rightTitle(entity: GameplayEntity, property: GameplayProperty?, visualNameMatch: Bool) -> String {
+        visualNameMatch ? entity.name : (property?.value ?? entity.name)
+    }
+
+    private static func rightSubtitle(thread: GameplayThreadDefinition, property: GameplayProperty?, recallPrompt: String?, visualNameMatch: Bool) -> String {
+        guard let property else { return "Name" }
+        if visualNameMatch { return nameRecallSubtitle(thread: thread) }
+        if recallPrompt != nil { return nameRecallSubtitle(thread: thread) }
+        return propertyTypeTitle(property.typeID, in: thread)
+    }
+
+    private static func rightPresentation(visualNameMatch: Bool, visualPropertyPrompt: Bool) -> GameplayDisplayItem.Presentation {
+        if visualNameMatch { return .titleOnly }
+        if visualPropertyPrompt { return .visualOnly }
+        return .visualWithTitle
     }
 
     private static func visualKey(for property: GameplayProperty?, fallbackEntity entity: GameplayEntity) -> String? {
@@ -673,5 +696,9 @@ enum GameplayStageRenderSupport {
 
     static func maximumContentWidth(compact: Bool) -> CGFloat {
         compact ? .infinity : 920
+    }
+
+    static func showsStagePrompt(kind: GameplayStageKind, compact: Bool) -> Bool {
+        !(compact && kind == .easyMemory)
     }
 }

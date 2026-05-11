@@ -4,17 +4,20 @@ struct GameplayStageTitle: View {
     let title: String
     let prompt: String
     let detail: String
+    let showsPrompt: Bool
 
-    init(stage: GameplayStageDefinition, detail: String) {
+    init(stage: GameplayStageDefinition, detail: String, showsPrompt: Bool = true) {
         self.title = stage.title
         self.prompt = stage.prompt
         self.detail = detail
+        self.showsPrompt = showsPrompt
     }
 
-    init(title: String, prompt: String, detail: String = "") {
+    init(title: String, prompt: String, detail: String = "", showsPrompt: Bool = true) {
         self.title = title
         self.prompt = prompt
         self.detail = detail
+        self.showsPrompt = showsPrompt
     }
 
     var body: some View {
@@ -24,10 +27,14 @@ struct GameplayStageTitle: View {
                     .font(.title2.bold())
                     .foregroundStyle(MatherTheme.ink)
                     .accessibilityAddTraits(.isHeader)
-                Text(prompt)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(MatherTheme.ink.opacity(0.72))
+                if showsPrompt {
+                    Text(prompt)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.ink.opacity(0.72))
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel([title, prompt].filter { !$0.isEmpty }.joined(separator: ". "))
             Spacer()
             if !detail.isEmpty {
                 Text(detail)
@@ -427,6 +434,7 @@ struct GameplayPairingStageShell: View {
     let title: String
     let prompt: String
     let compact: Bool
+    var showsStagePrompt = true
     @Binding var viewModel: GameplayMatchStageViewModel
     let actions: GameplayStageFeedbackActions
     let onComplete: (Int, Int, Int) -> Void
@@ -436,7 +444,7 @@ struct GameplayPairingStageShell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
-            GameplayStageTitle(title: title, prompt: prompt, detail: viewModel.turnProgressText)
+            GameplayStageTitle(title: title, prompt: prompt, detail: viewModel.turnProgressText, showsPrompt: showsStagePrompt)
             GameplayTurnGuidance(text: viewModel.turnGuidanceText, compact: compact)
             GameplayMatchStatusStrip(
                 matchedText: viewModel.matchedProgressText,

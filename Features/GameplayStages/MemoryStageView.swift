@@ -16,6 +16,14 @@ struct MemoryStageView: View {
     }
 
     var body: some View {
-        GameplayPairingStageShell(title: stage.title, prompt: stage.prompt, compact: compact, viewModel: $viewModel, actions: actions, onComplete: onComplete)
+        GameplayPairingStageShell(
+            title: stage.title,
+            prompt: stage.prompt,
+            compact: compact,
+            showsStagePrompt: GameplayStageRenderSupport.showsStagePrompt(kind: stage.kind, compact: compact),
+            viewModel: $viewModel,
+            actions: actions,
+            onComplete: onComplete
+        )
     }
 }

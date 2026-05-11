@@ -212,9 +212,19 @@ struct GameplayThreadContentTests {
         #expect(namePairs.count == 4)
         #expect(namePairs.allSatisfy { $0.left.title == "Name this shape" })
         #expect(namePairs.allSatisfy { $0.left.title != $0.right.title })
+        #expect(namePairs.allSatisfy { $0.left.presentation == .visualOnly })
         #expect(namePairs.allSatisfy { $0.right.subtitle == "Shape name" })
-        #expect(namePairs.allSatisfy { $0.right.visualKey != nil && $0.right.visualKey != "Aa" })
+        #expect(namePairs.allSatisfy { $0.right.presentation == .titleOnly })
+        #expect(namePairs.allSatisfy { $0.right.visualKey == nil && $0.right.visualAssetName == nil })
         #expect(nameStage.maximumItemCount >= 8)
+
+        let bondStage = try #require(thread.stages.first { $0.id == "shapes-bond-blast" })
+        let bondRound = GameplayRoundDefinition(id: "shape-bond-names-test", stageID: bondStage.id, kind: bondStage.kind, items: nameItems, seed: 1069)
+        let bondPairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: bondRound)
+
+        #expect(bondPairs.allSatisfy { $0.left.title == "Name this shape" })
+        #expect(bondPairs.allSatisfy { $0.left.presentation == .visualOnly })
+        #expect(bondPairs.allSatisfy { $0.right.presentation == .titleOnly })
     }
 
 }

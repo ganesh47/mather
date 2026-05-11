@@ -71,6 +71,7 @@ struct GameplayThreadView: View {
                 .padding(compact ? 14 : 24)
                 .frame(maxWidth: .infinity)
             }
+            .safeAreaPadding(.bottom, compact ? 18 : 10)
             .background(MatherTheme.background.ignoresSafeArea())
         }
         .navigationTitle(thread.title)
