@@ -418,13 +418,31 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
         return "\(min(activeIndex + 1, questions.count)) of \(questions.count)"
     }
 
+    var selectedChoiceIsCorrect: Bool {
+        guard let question = activeQuestion,
+              let selectedChoiceID,
+              let choice = question.choices.first(where: { $0.id == selectedChoiceID })
+        else { return false }
+        return question.isCorrect(choice)
+    }
+
     mutating func choose(_ choice: GameplayDisplayItem) -> Bool {
         guard let question = activeQuestion else { return false }
+        if selectedChoiceIsCorrect { return true }
         selectedChoiceID = choice.id
         let correct = question.isCorrect(choice)
-        if correct { correctCount += 1 } else { mistakeCount += 1 }
-        activeIndex += 1
+        if correct {
+            correctCount += 1
+        } else {
+            mistakeCount += 1
+        }
         return correct
+    }
+
+    mutating func advanceAfterCorrectAnswer() {
+        guard selectedChoiceIsCorrect else { return }
+        activeIndex += 1
+        selectedChoiceID = nil
     }
 }
 

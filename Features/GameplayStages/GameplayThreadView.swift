@@ -207,24 +207,28 @@ struct GameplayThreadView: View {
                         .foregroundStyle(MatherTheme.ink)
                 }
                 Spacer()
-                Text("Stage \(min(navigation.activeStageIndex + 1, max(thread.stages.count, 1)))/\(thread.stages.count)")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(MatherTheme.ink)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(MatherTheme.card))
+                if !compact {
+                    Text("Stage \(min(navigation.activeStageIndex + 1, max(thread.stages.count, 1)))/\(thread.stages.count)")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(MatherTheme.ink)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(MatherTheme.card))
+                }
             }
-            HStack(spacing: 10) {
-                ProgressView(value: navigation.progressFraction(for: thread))
-                    .tint(MatherTheme.accent)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityLabel("Gameplay thread progress")
-                    .accessibilityValue("Stage \(min(navigation.activeStageIndex + 1, max(thread.stages.count, 1))) of \(thread.stages.count)")
-                Text("\(Int((navigation.progressFraction(for: thread) * 100).rounded()))%")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .monospacedDigit()
-                    .accessibilityHidden(true)
+            if !compact {
+                HStack(spacing: 10) {
+                    ProgressView(value: navigation.progressFraction(for: thread))
+                        .tint(MatherTheme.accent)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityLabel("Gameplay thread progress")
+                        .accessibilityValue("Stage \(min(navigation.activeStageIndex + 1, max(thread.stages.count, 1))) of \(thread.stages.count)")
+                    Text("\(Int((navigation.progressFraction(for: thread) * 100).rounded()))%")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .monospacedDigit()
+                        .accessibilityHidden(true)
+                }
             }
         }
     }
@@ -235,8 +239,10 @@ struct GameplayThreadView: View {
                 .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 .accessibilityLabel("Retry current stage")
                 .accessibilityIdentifier("GameplayStageRetryButton")
-            Spacer(minLength: 0)
-            scoreText
+            if !compact {
+                Spacer(minLength: 0)
+                scoreText
+            }
         }
     }
 

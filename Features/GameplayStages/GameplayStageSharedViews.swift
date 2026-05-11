@@ -4,17 +4,20 @@ struct GameplayStageTitle: View {
     let title: String
     let prompt: String
     let detail: String
+    let compact: Bool
 
-    init(stage: GameplayStageDefinition, detail: String) {
+    init(stage: GameplayStageDefinition, detail: String, compact: Bool = false) {
         self.title = stage.title
         self.prompt = stage.prompt
         self.detail = detail
+        self.compact = compact
     }
 
-    init(title: String, prompt: String, detail: String = "") {
+    init(title: String, prompt: String, detail: String = "", compact: Bool = false) {
         self.title = title
         self.prompt = prompt
         self.detail = detail
+        self.compact = compact
     }
 
     var body: some View {
@@ -29,7 +32,7 @@ struct GameplayStageTitle: View {
                     .foregroundStyle(MatherTheme.ink.opacity(0.72))
             }
             Spacer()
-            if !detail.isEmpty {
+            if !compact && !detail.isEmpty {
                 Text(detail)
                     .font(.caption.weight(.bold).monospacedDigit())
                     .foregroundStyle(MatherTheme.accent)
@@ -429,13 +432,15 @@ struct GameplayPairingStageShell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
-            GameplayStageTitle(title: title, prompt: prompt, detail: viewModel.turnProgressText)
+            GameplayStageTitle(title: title, prompt: prompt, detail: viewModel.turnProgressText, compact: compact)
             GameplayTurnGuidance(text: viewModel.turnGuidanceText, compact: compact)
-            GameplayMatchStatusStrip(
-                matchedText: viewModel.matchedProgressText,
-                roundText: viewModel.currentRoundRequirementText,
-                compact: compact
-            )
+            if !compact {
+                GameplayMatchStatusStrip(
+                    matchedText: viewModel.matchedProgressText,
+                    roundText: viewModel.currentRoundRequirementText,
+                    compact: compact
+                )
+            }
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.activePairs) { pair in
                     let state = viewModel.cardState(forLeft: pair)

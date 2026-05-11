@@ -93,7 +93,30 @@ struct GameplayStageViewModelTests {
         let quizResult = viewModel.choose(firstQuestion.answer)
         #expect(quizResult)
         #expect(viewModel.correctCount == 1)
+        #expect(viewModel.progressText == "1 of 4")
+        viewModel.advanceAfterCorrectAnswer()
         #expect(viewModel.progressText == "2 of 4")
+    }
+
+
+    @Test
+    func multipleChoiceWrongAnswerStaysOnSameQuestionUntilCorrectAdvance() {
+        let thread = GameplaySampleThreads.countries
+        let stage = thread.stages.first { $0.kind == .multipleChoice }!
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 8)
+        var viewModel = GameplayMultipleChoiceStageViewModel(thread: thread, round: round)
+        let firstQuestion = viewModel.activeQuestion!
+        let wrongChoice = firstQuestion.choices.first { !firstQuestion.isCorrect($0) }!
+
+        #expect(!viewModel.choose(wrongChoice))
+        #expect(viewModel.mistakeCount == 1)
+        #expect(viewModel.activeQuestion?.id == firstQuestion.id)
+        #expect(viewModel.progressText == "1 of 4")
+
+        #expect(viewModel.choose(firstQuestion.answer))
+        #expect(viewModel.activeQuestion?.id == firstQuestion.id)
+        viewModel.advanceAfterCorrectAnswer()
+        #expect(viewModel.activeQuestion?.id != firstQuestion.id)
     }
 
     @Test

@@ -18,7 +18,7 @@ struct FlashcardStageView: View {
 
     var body: some View {
         VStack(spacing: compact ? 12 : 18) {
-            GameplayStageTitle(stage: stage, detail: viewModel.progressText)
+            GameplayStageTitle(stage: stage, detail: viewModel.progressText, compact: compact)
             if let card = viewModel.activeCard {
                 Button {
                     viewModel.markExposure()

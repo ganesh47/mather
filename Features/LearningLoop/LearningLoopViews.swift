@@ -147,52 +147,138 @@ struct SoundConceptFlashcardCarouselView: View {
 struct ConceptQuizRoundView: View {
     let questions: [ConceptQuizQuestion]
     @Binding var answersByQuestionId: [String: String]
+    @State private var activeIndex = 0
+    @State private var selectedChoice: String?
+    @State private var celebratingQuestionId: String?
+
+    private var safeIndex: Int {
+        guard !questions.isEmpty else { return 0 }
+        return min(max(activeIndex, 0), questions.count - 1)
+    }
+
+    private var activeQuestion: ConceptQuizQuestion? {
+        guard questions.indices.contains(safeIndex) else { return nil }
+        return questions[safeIndex]
+    }
+
+    private var progressText: String {
+        guard !questions.isEmpty else { return "0 of 0" }
+        return "Question \(safeIndex + 1) of \(questions.count)"
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Quiz")
-                .font(.title2.weight(.black))
-                .foregroundStyle(MatherTheme.ink)
-            ForEach(questions) { question in
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(question.prompt)
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(MatherTheme.ink)
-                    HStack(spacing: 8) {
-                        ForEach(question.choices, id: \.self) { choice in
-                            Button {
-                                answersByQuestionId[question.id] = choice
-                            } label: {
-                                Text(choice)
-                                    .font(.subheadline.weight(.bold))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity)
-                                    .background(choiceFill(for: choice, in: question))
-                                    .foregroundStyle(MatherTheme.ink)
-                                    .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(choice) answer")
-                        }
+        CardSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Quiz")
+                            .font(.title2.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+                        Text(progressText)
+                            .font(.caption.weight(.black).monospacedDigit())
+                            .foregroundStyle(MatherTheme.accent)
                     }
-                    if let selected = answersByQuestionId[question.id] {
-                        Text(question.isCorrect(selected) ? question.feedback : "Try again — look back at the learn cards.")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(question.isCorrect(selected) ? .green : MatherTheme.coral)
+                    Spacer()
+                    if isComplete {
+                        Label("Done", systemImage: "checkmark.seal.fill")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(MatherTheme.accent)
                     }
                 }
-                .padding(14)
-                .background(MatherTheme.card)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+                if let question = activeQuestion, !isComplete {
+                    activeQuestionCard(question)
+                } else {
+                    Text("Quiz complete — great listening detective work!")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MatherTheme.softBlue.opacity(0.28))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+            }
+        }
+        .sensoryFeedback(.success, trigger: celebratingQuestionId)
+        .onChange(of: questions.count) { _, _ in
+            activeIndex = min(activeIndex, max(questions.count - 1, 0))
+            selectedChoice = nil
+            celebratingQuestionId = nil
+        }
+    }
+
+    private var isComplete: Bool {
+        !questions.isEmpty && activeIndex >= questions.count
+    }
+
+    private func activeQuestionCard(_ question: ConceptQuizQuestion) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(question.prompt)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .accessibilityAddTraits(.isHeader)
+            VStack(spacing: 8) {
+                ForEach(question.choices, id: \.self) { choice in
+                    Button {
+                        choose(choice, for: question)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text(choice)
+                                .font(.subheadline.weight(.bold))
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.76)
+                            Spacer(minLength: 0)
+                            if selectedChoice == choice {
+                                Image(systemName: question.isCorrect(choice) ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .font(.headline.weight(.black))
+                            }
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(choiceFill(for: choice, in: question))
+                        .foregroundStyle(MatherTheme.ink)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .scaleEffect(celebratingQuestionId == question.id && selectedChoice == choice ? 1.04 : 1.0)
+                        .animation(.spring(response: 0.24, dampingFraction: 0.62), value: celebratingQuestionId)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(celebratingQuestionId == question.id)
+                    .accessibilityLabel("\(choice) answer")
+                }
+            }
+            if let selectedChoice {
+                Text(question.isCorrect(selectedChoice) ? question.feedback : "Try again — this question stays here until you find the safe answer.")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(question.isCorrect(selectedChoice) ? .green : MatherTheme.coral)
+                    .accessibilityIdentifier("SoundVolumeQuizFeedback")
+            }
+        }
+        .padding(14)
+        .background(MatherTheme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func choose(_ choice: String, for question: ConceptQuizQuestion) {
+        guard celebratingQuestionId == nil else { return }
+        selectedChoice = choice
+        answersByQuestionId[question.id] = choice
+        if question.isCorrect(choice) {
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.62)) {
+                celebratingQuestionId = question.id
+            }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                guard celebratingQuestionId == question.id else { return }
+                activeIndex = min(activeIndex + 1, questions.count)
+                selectedChoice = nil
+                celebratingQuestionId = nil
             }
         }
     }
 
     private func choiceFill(for choice: String, in question: ConceptQuizQuestion) -> Color {
-        guard let selected = answersByQuestionId[question.id], selected == choice else {
+        guard selectedChoice == choice else {
             return MatherTheme.softBlue.opacity(0.45)
         }
         return question.isCorrect(choice) ? .green.opacity(0.28) : MatherTheme.coral.opacity(0.28)
@@ -758,6 +844,16 @@ struct SoundVolumeLabView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryActionButtonStyle())
+            .disabled(!canAdvanceCurrentActivity)
+        }
+    }
+
+    private var canAdvanceCurrentActivity: Bool {
+        switch activityStage {
+        case .quiz:
+            return SoundVolumeContent.quizQuestions.allSatisfy { answersByQuestionId[$0.id] == $0.correctChoice }
+        default:
+            return true
         }
     }
 

@@ -161,7 +161,7 @@ struct GameplayThreadDefinition: Identifiable, Codable, Equatable {
 
     static let defaultStages: [GameplayStageDefinition] = [
         GameplayStageDefinition(id: "flashcards", kind: .flashcards, title: "Look + Learn", prompt: "Meet each card.", maximumItemCount: 6),
-        GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Easy Memory", prompt: "Match with the cards still visible.", maximumItemCount: 6),
+        GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Easy Memory", prompt: "Match visible cards.", maximumItemCount: 6),
         GameplayStageDefinition(id: "flip-memory", kind: .flipMemory, title: "Flip Memory", prompt: "Remember where the matches are.", maximumItemCount: 6),
         GameplayStageDefinition(id: "bond-blast", kind: .bondBlast, title: "Bond Blast", prompt: "Connect names, pictures, and facts.", maximumItemCount: 6),
         GameplayStageDefinition(id: "multiple-choice", kind: .multipleChoice, title: "Quiz", prompt: "Pick the best answer.")

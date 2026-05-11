@@ -50,7 +50,8 @@ struct ReusableBondBlastBoard: View {
             GameplayStageTitle(
                 title: title,
                 prompt: instructionText,
-                detail: "\(viewModel.turnProgressText) • \(viewModel.correctCount)/\(viewModel.pairs.count)"
+                detail: "\(viewModel.turnProgressText) • \(viewModel.correctCount)/\(viewModel.pairs.count)",
+                compact: compact
             )
 
             HStack(alignment: .top, spacing: compact ? 10 : 16) {
