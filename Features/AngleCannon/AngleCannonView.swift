@@ -38,6 +38,9 @@ struct AngleCannonView: View {
     @State private var projectileProgress: Double = 0
     @State private var projectileAnimating = false
     @State private var pendingHit: Bool? = nil
+    /// Monotonic token used to ignore delayed calibration/fire callbacks after the
+    /// activity disappears or a new shot lifecycle begins.
+    @State private var lifecycleRevision = 0
 
     // MARK: - Constants
 
@@ -102,11 +105,15 @@ struct AngleCannonView: View {
         }
         .onAppear {
             sessionStart = .now
+            lifecycleRevision &+= 1
             appModel.motionService.startUpdates()
             pickTarget()
-            autoCalibrateNeutral()
+            autoCalibrateNeutral(revision: lifecycleRevision)
         }
         .onDisappear {
+            lifecycleRevision &+= 1
+            projectileAnimating = false
+            pendingHit = nil
             appModel.motionService.stopUpdates()
             guard roundsWon > 0 else { return }
             appModel.gameSessionStore.save(
@@ -122,18 +129,22 @@ struct AngleCannonView: View {
 
     /// Records neutralRoll after a short delay so the child has time to settle.
     /// Shows a "Hold steady…" banner during the wait.
-    private func autoCalibrateNeutral() {
+    private func autoCalibrateNeutral(revision: Int) {
         guard neutralRoll == nil else { return }
         calibrating = true
         calibrationProgress = 0
         Task { @MainActor in
             for progress in [0.25, 0.55, 0.82] {
                 try? await Task.sleep(for: .milliseconds(150))
+                guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision),
+                      neutralRoll == nil else { return }
                 withAnimation(.easeOut(duration: 0.12)) {
                     calibrationProgress = progress
                 }
             }
             try? await Task.sleep(for: .milliseconds(150))
+            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision),
+                  neutralRoll == nil else { return }
             neutralRoll = appModel.motionService.tiltRoll
             calibrationProgress = 1
             withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
@@ -483,6 +494,10 @@ struct AngleCannonView: View {
                        y: a.y + (b.y - a.y) * t)
     }
 
+    nonisolated static func shouldAcceptDelayedCallback(scheduledRevision: Int, currentRevision: Int) -> Bool {
+        scheduledRevision == currentRevision
+    }
+
     // MARK: - Layout helpers
 
     private func cannonOrigin(in size: CGSize) -> CGPoint {
@@ -553,12 +568,14 @@ struct AngleCannonView: View {
     // MARK: - Actions
 
     private func fire() {
-        guard neutralRoll != nil else { return }
+        guard neutralRoll != nil, firedAngleDeg == nil, !projectileAnimating else { return }
 
         // Kick animation
+        let revision = lifecycleRevision
         firePulse = true
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(150))
+            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision) else { return }
             firePulse = false
         }
 
@@ -572,6 +589,7 @@ struct AngleCannonView: View {
         withAnimation(.linear(duration: 0.9)) { projectileProgress = 1 }
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
+            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision) else { return }
             resolveShotFeedback()
         }
     }
@@ -600,7 +618,8 @@ struct AngleCannonView: View {
         pickTarget()
         // Re-calibrate neutral for each new target (fresh tilt reference)
         neutralRoll = nil
-        autoCalibrateNeutral()
+        lifecycleRevision &+= 1
+        autoCalibrateNeutral(revision: lifecycleRevision)
     }
 
     private func pickTarget() {
