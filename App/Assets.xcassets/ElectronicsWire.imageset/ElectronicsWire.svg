@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Wire illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <path d="M42 148c25-62 72 58 103-5 28-56 52-10 69 25" fill="none" stroke="#2F80ED" stroke-width="18" stroke-linecap="round"/><path d="M42 148c25-62 72 58 103-5 28-56 52-10 69 25" fill="none" stroke="#243B53" stroke-width="28" stroke-linecap="round" opacity="0.18"/><circle cx="42" cy="148" r="16" fill="#F59E0B" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="214" cy="168" r="16" fill="#F59E0B" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

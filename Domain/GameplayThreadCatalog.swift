@@ -166,45 +166,45 @@ extension GameplayThreadCatalog {
             GameplayPropertyType(id: "rule", displayName: "Rule", prompt: "Find the safe circuit rule."),
         ],
         entities: [
-            GameplayEntity(id: "electronics-battery", name: "Battery", summary: "A pretend game battery gives a tiny circuit its power.", visualKey: "🔋", properties: [
-                GameplayProperty(id: "electronics-battery-part", typeID: "part", value: "Battery", explanation: "The battery is the safe pretend power part in this game.", visualKey: "🔋"),
-                GameplayProperty(id: "electronics-battery-job", typeID: "job", value: "Gives power", explanation: "The pretend battery can help the light turn on."),
-                GameplayProperty(id: "electronics-battery-rule", typeID: "rule", value: "Game batteries are pretend", explanation: "Batteries in this game are pretend and safe to play with on the screen."),
+            GameplayEntity(id: "electronics-battery", name: "Battery", summary: "A pretend game battery gives a tiny circuit its power.", visualAssetName: "ElectronicsBattery", properties: [
+                GameplayProperty(id: "electronics-battery-part", typeID: "part", value: "Battery", explanation: "The battery is the safe pretend power part in this game.", visualAssetName: "ElectronicsBattery"),
+                GameplayProperty(id: "electronics-battery-job", typeID: "job", value: "Gives power", explanation: "The pretend battery can help the light turn on.", visualAssetName: "ElectronicsBattery"),
+                GameplayProperty(id: "electronics-battery-rule", typeID: "rule", value: "Game batteries are pretend", explanation: "Batteries in this game are pretend and safe to play with on the screen.", visualAssetName: "ElectronicsSafeCircuit"),
             ]),
-            GameplayEntity(id: "electronics-bulb", name: "Bulb", summary: "A bulb or light turns on when the pretend circuit is closed.", visualKey: "💡", properties: [
-                GameplayProperty(id: "electronics-bulb-part", typeID: "part", value: "Bulb or light", explanation: "The bulb is the light-making part.", visualKey: "💡"),
-                GameplayProperty(id: "electronics-bulb-job", typeID: "job", value: "Makes light", explanation: "The light can shine when the path is complete."),
-                GameplayProperty(id: "electronics-bulb-rule", typeID: "rule", value: "Light on in closed circuit", explanation: "The light turns on when the wire path makes a full loop."),
+            GameplayEntity(id: "electronics-bulb", name: "Bulb", summary: "A bulb or light turns on when the pretend circuit is closed.", visualAssetName: "ElectronicsBulb", properties: [
+                GameplayProperty(id: "electronics-bulb-part", typeID: "part", value: "Bulb or light", explanation: "The bulb is the light-making part.", visualAssetName: "ElectronicsBulb"),
+                GameplayProperty(id: "electronics-bulb-job", typeID: "job", value: "Makes light", explanation: "The light can shine when the path is complete.", visualAssetName: "ElectronicsBulb"),
+                GameplayProperty(id: "electronics-bulb-rule", typeID: "rule", value: "Light on in closed circuit", explanation: "The light turns on when the wire path makes a full loop.", visualAssetName: "ElectronicsClosedCircuit"),
             ]),
-            GameplayEntity(id: "electronics-wire", name: "Wire", summary: "A wire makes the path from the battery to the light and back.", visualKey: "➰", properties: [
-                GameplayProperty(id: "electronics-wire-part", typeID: "part", value: "Wire", explanation: "A wire is the path part.", visualKey: "➰"),
-                GameplayProperty(id: "electronics-wire-job", typeID: "job", value: "Makes a path", explanation: "A wire joins the battery, switch, and light."),
-                GameplayProperty(id: "electronics-wire-rule", typeID: "rule", value: "Path must meet both ends", explanation: "The wire path needs to meet both ends of the pretend battery."),
+            GameplayEntity(id: "electronics-wire", name: "Wire", summary: "A wire makes the path from the battery to the light and back.", visualAssetName: "ElectronicsWire", properties: [
+                GameplayProperty(id: "electronics-wire-part", typeID: "part", value: "Wire", explanation: "A wire is the path part.", visualAssetName: "ElectronicsWire"),
+                GameplayProperty(id: "electronics-wire-job", typeID: "job", value: "Makes a path", explanation: "A wire joins the battery, switch, and light.", visualAssetName: "ElectronicsWire"),
+                GameplayProperty(id: "electronics-wire-rule", typeID: "rule", value: "Path must meet both ends", explanation: "The wire path needs to meet both ends of the pretend battery.", visualAssetName: "ElectronicsClosedCircuit"),
             ]),
-            GameplayEntity(id: "electronics-switch", name: "Switch", summary: "A switch opens or closes the pretend circuit path.", visualKey: "⏻", properties: [
-                GameplayProperty(id: "electronics-switch-part", typeID: "part", value: "Switch", explanation: "The switch is the open-close part.", visualKey: "⏻"),
-                GameplayProperty(id: "electronics-switch-job", typeID: "job", value: "Opens or closes", explanation: "A switch can connect the path or make a gap."),
-                GameplayProperty(id: "electronics-switch-rule", typeID: "rule", value: "Closed switch can turn on", explanation: "When the switch closes, the path can be complete."),
+            GameplayEntity(id: "electronics-switch", name: "Switch", summary: "A switch opens or closes the pretend circuit path.", visualAssetName: "ElectronicsSwitch", properties: [
+                GameplayProperty(id: "electronics-switch-part", typeID: "part", value: "Switch", explanation: "The switch is the open-close part.", visualAssetName: "ElectronicsSwitch"),
+                GameplayProperty(id: "electronics-switch-job", typeID: "job", value: "Opens or closes", explanation: "A switch can connect the path or make a gap.", visualAssetName: "ElectronicsSwitch"),
+                GameplayProperty(id: "electronics-switch-rule", typeID: "rule", value: "Closed switch can turn on", explanation: "When the switch closes, the path can be complete.", visualAssetName: "ElectronicsClosedCircuit"),
             ]),
-            GameplayEntity(id: "electronics-closed-circuit", name: "Closed Circuit", summary: "A closed circuit is a full loop from battery to light and back.", visualKey: "↻", properties: [
-                GameplayProperty(id: "electronics-closed-circuit-part", typeID: "part", value: "Closed loop", explanation: "The wire path comes all the way back."),
-                GameplayProperty(id: "electronics-closed-circuit-job", typeID: "job", value: "Lets power reach the light", explanation: "A full loop lets the pretend battery help the light."),
-                GameplayProperty(id: "electronics-closed-circuit-rule", typeID: "rule", value: "Bulb on", explanation: "A complete path can turn the bulb on."),
+            GameplayEntity(id: "electronics-closed-circuit", name: "Closed Circuit", summary: "A closed circuit is a full loop from battery to light and back.", visualAssetName: "ElectronicsClosedCircuit", properties: [
+                GameplayProperty(id: "electronics-closed-circuit-part", typeID: "part", value: "Closed loop", explanation: "The wire path comes all the way back.", visualAssetName: "ElectronicsClosedCircuit"),
+                GameplayProperty(id: "electronics-closed-circuit-job", typeID: "job", value: "Lets power reach the light", explanation: "A full loop lets the pretend battery help the light.", visualAssetName: "ElectronicsClosedCircuit"),
+                GameplayProperty(id: "electronics-closed-circuit-rule", typeID: "rule", value: "Bulb on", explanation: "A complete path can turn the bulb on.", visualAssetName: "ElectronicsClosedCircuit"),
             ]),
-            GameplayEntity(id: "electronics-open-circuit", name: "Open Circuit", summary: "An open circuit has a gap, so the pretend light stays off.", visualKey: "⛔", properties: [
-                GameplayProperty(id: "electronics-open-circuit-part", typeID: "part", value: "Broken path", explanation: "A gap breaks the circuit path."),
-                GameplayProperty(id: "electronics-open-circuit-job", typeID: "job", value: "Keeps light off", explanation: "The pretend power cannot go around a path with a gap."),
-                GameplayProperty(id: "electronics-open-circuit-rule", typeID: "rule", value: "Bulb off", explanation: "A broken path keeps the bulb off."),
+            GameplayEntity(id: "electronics-open-circuit", name: "Open Circuit", summary: "An open circuit has a gap, so the pretend light stays off.", visualAssetName: "ElectronicsOpenCircuit", properties: [
+                GameplayProperty(id: "electronics-open-circuit-part", typeID: "part", value: "Broken path", explanation: "A gap breaks the circuit path.", visualAssetName: "ElectronicsOpenCircuit"),
+                GameplayProperty(id: "electronics-open-circuit-job", typeID: "job", value: "Keeps light off", explanation: "The pretend power cannot go around a path with a gap.", visualAssetName: "ElectronicsOpenCircuit"),
+                GameplayProperty(id: "electronics-open-circuit-rule", typeID: "rule", value: "Bulb off", explanation: "A broken path keeps the bulb off.", visualAssetName: "ElectronicsOpenCircuit"),
             ]),
-            GameplayEntity(id: "electronics-safe-circuit", name: "Safe Game Circuit", summary: "The circuits here are pretend screen circuits made for play.", visualKey: "✅", properties: [
-                GameplayProperty(id: "electronics-safe-circuit-part", typeID: "part", value: "Pretend circuit", explanation: "This game uses pretend parts on the screen.", visualKey: "✅"),
-                GameplayProperty(id: "electronics-safe-circuit-job", typeID: "job", value: "Safe to try here", explanation: "It is safe to tap and try the circuit parts in this game."),
-                GameplayProperty(id: "electronics-safe-circuit-rule", typeID: "rule", value: "Screen play is safe", explanation: "Build circuits in the game, not with real plug points."),
+            GameplayEntity(id: "electronics-safe-circuit", name: "Safe Game Circuit", summary: "The circuits here are pretend screen circuits made for play.", visualAssetName: "ElectronicsSafeCircuit", properties: [
+                GameplayProperty(id: "electronics-safe-circuit-part", typeID: "part", value: "Pretend circuit", explanation: "This game uses pretend parts on the screen.", visualAssetName: "ElectronicsSafeCircuit"),
+                GameplayProperty(id: "electronics-safe-circuit-job", typeID: "job", value: "Safe to try here", explanation: "It is safe to tap and try the circuit parts in this game.", visualAssetName: "ElectronicsSafeCircuit"),
+                GameplayProperty(id: "electronics-safe-circuit-rule", typeID: "rule", value: "Screen play is safe", explanation: "Build circuits in the game, not with real plug points.", visualAssetName: "ElectronicsSafeCircuit"),
             ]),
-            GameplayEntity(id: "electronics-outlet-safety", name: "Outlet Safety", summary: "Plug points and outlets are grown-up only. Ask a grown-up and do not touch them.", visualKey: "🛑", properties: [
-                GameplayProperty(id: "electronics-outlet-safety-part", typeID: "part", value: "Plug point or outlet", explanation: "A plug point or outlet is for grown-ups.", visualKey: "🛑"),
-                GameplayProperty(id: "electronics-outlet-safety-job", typeID: "job", value: "Ask a grown-up", explanation: "Ask a grown-up before anything near a plug point or outlet."),
-                GameplayProperty(id: "electronics-outlet-safety-rule", typeID: "rule", value: "Do not touch outlets", explanation: "Do not touch plug points or outlets. Use the safe pretend battery in this game."),
+            GameplayEntity(id: "electronics-outlet-safety", name: "Outlet Safety", summary: "Plug points and outlets are grown-up only. Ask a grown-up and do not touch them.", visualAssetName: "ElectronicsOutletSafety", properties: [
+                GameplayProperty(id: "electronics-outlet-safety-part", typeID: "part", value: "Plug point or outlet", explanation: "A plug point or outlet is for grown-ups.", visualAssetName: "ElectronicsOutletSafety"),
+                GameplayProperty(id: "electronics-outlet-safety-job", typeID: "job", value: "Ask a grown-up", explanation: "Ask a grown-up before anything near a plug point or outlet.", visualAssetName: "ElectronicsOutletSafety"),
+                GameplayProperty(id: "electronics-outlet-safety-rule", typeID: "rule", value: "Do not touch outlets", explanation: "Do not touch plug points or outlets. Use the safe pretend battery in this game.", visualAssetName: "ElectronicsOutletSafety"),
             ]),
         ],
         stages: [

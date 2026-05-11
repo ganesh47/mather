@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Outlet safety illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <rect x="72" y="44" width="112" height="150" rx="28" fill="#FFFFFF" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="108" cy="111" r="10" fill="#243B53"/><circle cx="148" cy="111" r="10" fill="#243B53"/><path d="M128 139v20" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M62 197l132-132" stroke="#E85D75" stroke-width="18" stroke-linecap="round"/><circle cx="128" cy="128" r="88" fill="none" stroke="#E85D75" stroke-width="14"/><path d="M53 49l20 20M203 49l-20 20" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

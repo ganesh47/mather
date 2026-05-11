@@ -78,6 +78,24 @@ struct GameplayThreadContentTests {
             "Outlet Safety",
         ]))
 
+        let expectedAssetNames: Set<String> = [
+            "ElectronicsBattery",
+            "ElectronicsBulb",
+            "ElectronicsWire",
+            "ElectronicsSwitch",
+            "ElectronicsClosedCircuit",
+            "ElectronicsOpenCircuit",
+            "ElectronicsSafeCircuit",
+            "ElectronicsOutletSafety",
+        ]
+        #expect(Set(thread.entities.compactMap(\.visualAssetName)) == expectedAssetNames)
+        #expect(thread.entities.allSatisfy { $0.visualKey == nil })
+        #expect(thread.entities.allSatisfy { entity in
+            entity.properties.allSatisfy { property in
+                property.visualAssetName.map(expectedAssetNames.contains) == true && property.visualKey == nil
+            }
+        })
+
         let propertyValues = thread.entities.flatMap { $0.properties.map(\.value) }
         for requiredValue in [
             "Game batteries are pretend",

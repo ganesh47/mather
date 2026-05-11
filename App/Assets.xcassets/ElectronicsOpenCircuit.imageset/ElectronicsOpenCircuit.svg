@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Open circuit with gap illustration">
+  <rect width="256" height="256" rx="48" fill="#F7FBFF"/>
+  <circle cx="206" cy="50" r="24" fill="#FFE9A8" opacity="0.75"/>
+  <path d="M70 132a58 58 0 0 1 93-46" fill="none" stroke="#2F80ED" stroke-width="12" stroke-linecap="round"/><path d="M184 120a58 58 0 0 1-98 52" fill="none" stroke="#2F80ED" stroke-width="12" stroke-linecap="round"/><circle cx="74" cy="132" r="14" fill="#F59E0B" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="184" cy="120" r="14" fill="#F59E0B" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M108 105h40" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M116 184h32" stroke="#243B53" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M151 64l39 39M190 64l-39 39" stroke="#E85D75" stroke-width="12" stroke-linecap="round"/>
+</svg>
