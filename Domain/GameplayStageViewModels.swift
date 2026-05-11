@@ -437,6 +437,7 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
     let questions: [GameplayMultipleChoiceQuestion]
     var activeIndex = 0
     var selectedChoiceID: String?
+    var selectedChoiceWasCorrect: Bool?
     var correctCount = 0
     var mistakeCount = 0
 
@@ -456,13 +457,44 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
         return "\(min(activeIndex + 1, questions.count)) of \(questions.count)"
     }
 
+    var canAdvanceAfterCorrectChoice: Bool {
+        selectedChoiceWasCorrect == true
+    }
+
+    func isSelected(_ choice: GameplayDisplayItem) -> Bool {
+        selectedChoiceID == choice.id
+    }
+
+    func isSelectedCorrect(_ choice: GameplayDisplayItem) -> Bool {
+        isSelected(choice) && selectedChoiceWasCorrect == true
+    }
+
+    func isSelectedIncorrect(_ choice: GameplayDisplayItem) -> Bool {
+        isSelected(choice) && selectedChoiceWasCorrect == false
+    }
+
     mutating func choose(_ choice: GameplayDisplayItem) -> Bool {
         guard let question = activeQuestion else { return false }
+        if selectedChoiceWasCorrect == true {
+            return question.isCorrect(choice)
+        }
         selectedChoiceID = choice.id
         let correct = question.isCorrect(choice)
-        if correct { correctCount += 1 } else { mistakeCount += 1 }
-        activeIndex += 1
+        selectedChoiceWasCorrect = correct
+        if correct {
+            correctCount += 1
+        } else {
+            mistakeCount += 1
+        }
         return correct
+    }
+
+    mutating func advanceAfterCorrectChoice() -> Bool {
+        guard canAdvanceAfterCorrectChoice else { return false }
+        activeIndex += 1
+        selectedChoiceID = nil
+        selectedChoiceWasCorrect = nil
+        return isComplete
     }
 }
 
