@@ -243,6 +243,9 @@ private struct GameplayDisplayVisual: View {
                 CountryMapShapeArtwork(shapeKey: shapeKey)
                     .accessibilityHidden(true)
                     .padding(visualAssetPadding)
+            } else if let artworkKey = item.electronicsArtworkKey {
+                ElectronicsCircuitArtwork(key: artworkKey, tint: tint)
+                    .padding(electronicsArtworkPadding)
             } else {
                 ZStack {
                     if item.isFruitCard && !concealed {
@@ -280,6 +283,10 @@ private struct GameplayDisplayVisual: View {
 
     private var visualAssetPadding: CGFloat {
         max(4, min(14, visualFrameHeight * 0.08))
+    }
+
+    private var electronicsArtworkPadding: CGFloat {
+        max(8, min(24, visualFrameHeight * 0.12))
     }
 }
 

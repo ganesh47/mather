@@ -67,12 +67,17 @@ struct GameActivityCard: View {
                         endPoint: .bottomTrailing
                     )
                 )
-            Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
-                .font(.title2.weight(.black))
-                .foregroundStyle(tint.opacity(canLaunch ? 1 : 0.45))
-            Text(activity.emoji)
-                .font(.system(size: 26))
-                .offset(x: 12, y: 12)
+            if let artworkKey = activity.id.electronicsArtworkKey {
+                ElectronicsCircuitArtwork(key: artworkKey, tint: tint)
+                    .padding(10)
+            } else {
+                Image(systemName: canLaunch ? "play.circle.fill" : "exclamationmark.triangle.fill")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(tint.opacity(canLaunch ? 1 : 0.45))
+                Text(activity.emoji)
+                    .font(.system(size: 26))
+                    .offset(x: 12, y: 12)
+            }
         }
         .frame(width: 68, height: 68)
         .accessibilityLabel(activity.artworkAccessibilityLabel)
@@ -118,10 +123,15 @@ struct GameActivityCard: View {
         ZStack {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(tint.opacity(0.12))
-            visualMotif
-            Text(activity.emoji)
-                .font(.system(size: 38))
-                .offset(x: -18, y: -14)
+            if let artworkKey = activity.id.electronicsArtworkKey {
+                ElectronicsCircuitArtwork(key: artworkKey, tint: tint)
+                    .padding(12)
+            } else {
+                visualMotif
+                Text(activity.emoji)
+                    .font(.system(size: 38))
+                    .offset(x: -18, y: -14)
+            }
         }
         .frame(width: 104, height: 96)
         .accessibilityLabel(activity.artworkAccessibilityLabel)
