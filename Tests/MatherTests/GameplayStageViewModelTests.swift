@@ -94,7 +94,8 @@ struct GameplayStageViewModelTests {
         #expect(quizResult)
         #expect(viewModel.correctCount == 1)
         #expect(viewModel.progressText == "1 of 4")
-        #expect(!viewModel.advanceAfterCorrectChoice())
+        let didFinishAfterFirstCorrectChoice = viewModel.advanceAfterCorrectChoice()
+        #expect(!didFinishAfterFirstCorrectChoice)
         #expect(viewModel.progressText == "2 of 4")
     }
 
@@ -116,7 +117,8 @@ struct GameplayStageViewModelTests {
         #expect(viewModel.mistakeCount == 1)
         #expect(viewModel.correctCount == 0)
         #expect(!viewModel.canAdvanceAfterCorrectChoice)
-        #expect(!viewModel.advanceAfterCorrectChoice())
+        let didAdvanceAfterWrongChoice = viewModel.advanceAfterCorrectChoice()
+        #expect(!didAdvanceAfterWrongChoice)
 
         let correctResult = viewModel.choose(firstQuestion.answer)
 
