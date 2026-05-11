@@ -133,8 +133,46 @@ struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
 
     var isFruitCard: Bool { entityID.hasPrefix("fruit-") }
 
+    var electronicsArtworkKey: ElectronicsArtworkKey? {
+        ElectronicsArtworkKey(entityID: entityID)
+    }
+
     var discoveryPrompt: String {
         isFruitCard ? "Spot the color, say the flavor, then tap I spotted it!" : "Tap the card, say one clue, then try the next one."
+    }
+}
+
+enum ElectronicsArtworkKey: String, CaseIterable, Equatable, Hashable {
+    case battery
+    case bulb
+    case wire
+    case switchControl
+    case closedCircuit
+    case openCircuit
+    case safeCircuit
+    case outletSafety
+
+    init?(entityID: String) {
+        switch entityID {
+        case "electronics-battery":
+            self = .battery
+        case "electronics-bulb":
+            self = .bulb
+        case "electronics-wire":
+            self = .wire
+        case "electronics-switch":
+            self = .switchControl
+        case "electronics-closed-circuit":
+            self = .closedCircuit
+        case "electronics-open-circuit":
+            self = .openCircuit
+        case "electronics-safe-circuit":
+            self = .safeCircuit
+        case "electronics-outlet-safety":
+            self = .outletSafety
+        default:
+            return nil
+        }
     }
 }
 

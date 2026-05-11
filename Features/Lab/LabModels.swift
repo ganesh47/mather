@@ -401,6 +401,17 @@ extension LabActivityID {
             return .gameplayThread(.electronics)
         }
     }
+
+    var electronicsArtworkKey: ElectronicsArtworkKey? {
+        switch self {
+        case .circuitSpark:
+            return .closedCircuit
+        case .sumSprint, .roomQuest, .symmetryFold, .rectangleFactory, .factoryCards, .angleCannon,
+             .twoFingerProtractor, .gravityArtist, .compassAngles, .shapeGeometry, .waterCycle, .soundVolume,
+             .memoryMatch, .countryCards, .worldAnimalCards, .worldBirdCards, .fruitCards:
+            return nil
+        }
+    }
 }
 
 

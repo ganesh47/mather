@@ -157,6 +157,19 @@ struct GameplayThreadContentTests {
     }
 
     @Test
+    func electronicsCardsResolveToDeterministicVectorArtworkKeys() {
+        let thread = GameplayThreadCatalog.electronics
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: thread.stages[0], seed: 1071)
+        let cards = GameplayStageContentBuilder.flashcards(thread: thread, round: round)
+        let mappedKeys = Set(cards.compactMap(\.electronicsArtworkKey))
+
+        #expect(mappedKeys == Set(ElectronicsArtworkKey.allCases))
+        #expect(GameplayThreadCatalog.fruits.entities.allSatisfy { ElectronicsArtworkKey(entityID: $0.id) == nil })
+        #expect(LabActivityID.circuitSpark.electronicsArtworkKey == .closedCircuit)
+        #expect(LabActivityID.fruitCards.electronicsArtworkKey == nil)
+    }
+
+    @Test
     func fruitEasyMemoryIncludesGrowTasteAndClimateFacts() throws {
         let thread = GameplayThreadCatalog.fruits
         let stage = try #require(thread.stages.first { $0.id == "fruit-easy-memory" })
