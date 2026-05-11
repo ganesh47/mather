@@ -440,7 +440,7 @@ enum GameplayStageContentBuilder {
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
                 visualShapeKey: entity.visualShapeKey,
-                presentation: .visualWithTitle
+                presentation: flashcardPresentation(thread: thread, entity: entity)
             )
         }
     }
@@ -451,6 +451,8 @@ enum GameplayStageContentBuilder {
             let property = entity.properties.first { $0.id == item.propertyID } ?? entity.properties.first
             let recallPrompt = nameRecallPrompt(thread: thread, property: property, kind: round.kind)
             let visualNameMatch = usesVisualNameMatch(thread: thread, property: property, kind: round.kind)
+            let leftPresentation = promptPresentation(thread: thread, property: property, kind: round.kind, visualNameMatch: visualNameMatch)
+            let rightPresentation = answerPresentation(thread: thread, property: property, visualNameMatch: visualNameMatch)
             let left = GameplayDisplayItem(
                 id: "\(item.id)-left",
                 entityID: entity.id,
@@ -459,17 +461,17 @@ enum GameplayStageContentBuilder {
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
                 visualShapeKey: entity.visualShapeKey,
-                presentation: visualNameMatch ? .visualOnly : .visualWithTitle
+                presentation: leftPresentation
             )
             let right = GameplayDisplayItem(
                 id: "\(item.id)-right",
                 entityID: entity.id,
                 title: visualNameMatch ? entity.name : (property?.value ?? entity.name),
-                subtitle: property.map { visualNameMatch ? nameRecallSubtitle(thread: thread) : (recallPrompt == nil ? propertyTypeTitle($0.typeID, in: thread) : nameRecallSubtitle(thread: thread)) } ?? "Name",
+                subtitle: answerSubtitle(thread: thread, property: property, recallPrompt: recallPrompt, visualNameMatch: visualNameMatch),
                 visualKey: visualNameMatch ? nil : visualKey(for: property, fallbackEntity: entity),
                 visualAssetName: visualNameMatch ? nil : property?.visualAssetName,
                 visualShapeKey: visualNameMatch ? nil : property?.visualShapeKey,
-                presentation: visualNameMatch ? .titleOnly : .visualWithTitle
+                presentation: rightPresentation
             )
             return GameplayMatchPair(id: item.id, left: left, right: right)
         }
@@ -528,6 +530,50 @@ enum GameplayStageContentBuilder {
         thread.propertyTypesByID[id]?.displayName ?? id
     }
 
+    private static func flashcardPresentation(thread: GameplayThreadDefinition, entity: GameplayEntity) -> GameplayDisplayItem.Presentation {
+        // Shape flashcards are often used for visual recognition practice. Keep the
+        // visible card face picture-only while preserving title/summary for speech.
+        thread.id == "shapes" && hasEntityVisual(entity) ? .visualOnly : .visualWithTitle
+    }
+
+    private static func promptPresentation(
+        thread: GameplayThreadDefinition,
+        property: GameplayProperty?,
+        kind: GameplayStageKind,
+        visualNameMatch: Bool
+    ) -> GameplayDisplayItem.Presentation {
+        if visualNameMatch { return .visualOnly }
+        if thread.id == "shapes" { return .visualOnly }
+        return .visualWithTitle
+    }
+
+    private static func answerPresentation(
+        thread: GameplayThreadDefinition,
+        property: GameplayProperty?,
+        visualNameMatch: Bool
+    ) -> GameplayDisplayItem.Presentation {
+        if visualNameMatch { return .titleOnly }
+        if thread.id == "countries" && property?.typeID == "flag" { return .visualOnly }
+        return .visualWithTitle
+    }
+
+    private static func answerSubtitle(
+        thread: GameplayThreadDefinition,
+        property: GameplayProperty?,
+        recallPrompt: String?,
+        visualNameMatch: Bool
+    ) -> String {
+        guard let property else { return "Name" }
+        if visualNameMatch { return "" }
+        if thread.id == "countries" && property.typeID == "flag" { return "" }
+        if recallPrompt != nil { return nameRecallSubtitle(thread: thread) }
+        return propertyTypeTitle(property.typeID, in: thread)
+    }
+
+    private static func hasEntityVisual(_ entity: GameplayEntity) -> Bool {
+        entity.visualKey != nil || entity.visualAssetName != nil || entity.visualShapeKey != nil
+    }
+
     private static func nameRecallPrompt(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> String? {
         guard property?.typeID == "name" || (kind == .easyMemory && thread.id == "countries" && property?.typeID == "flag") || (kind == .easyMemory && thread.id == "electronics" && property?.typeID == "part") else { return nil }
         switch thread.id {
@@ -566,7 +612,7 @@ enum GameplayStageContentBuilder {
     private static func usesVisualNameMatch(thread: GameplayThreadDefinition, property: GameplayProperty?, kind: GameplayStageKind) -> Bool {
         guard kind == .easyMemory else { return false }
         switch (thread.id, property?.typeID) {
-        case ("countries", "flag"), ("electronics", "part"), ("world-animals", "name"), ("world-birds", "name"):
+        case ("countries", "flag"), ("electronics", "part"), ("shapes", "name"), ("world-animals", "name"), ("world-birds", "name"):
             return true
         default:
             return false

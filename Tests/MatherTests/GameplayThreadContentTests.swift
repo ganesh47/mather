@@ -199,8 +199,11 @@ struct GameplayThreadContentTests {
         #expect(namePairs.count == 4)
         #expect(namePairs.allSatisfy { $0.left.title == "Name this shape" })
         #expect(namePairs.allSatisfy { $0.left.title != $0.right.title })
-        #expect(namePairs.allSatisfy { $0.right.subtitle == "Shape name" })
-        #expect(namePairs.allSatisfy { $0.right.visualKey != nil && $0.right.visualKey != "Aa" })
+        #expect(namePairs.allSatisfy { $0.left.presentation == .visualOnly })
+        #expect(namePairs.allSatisfy { $0.right.presentation == .titleOnly })
+        #expect(namePairs.allSatisfy { $0.right.subtitle.isEmpty })
+        #expect(namePairs.allSatisfy { $0.right.visualKey == nil })
+        #expect(GameplayStageContentBuilder.flashcards(thread: thread, round: GameplayRoundDefinition(id: "shape-flashcards-test", stageID: "shapes-flashcards", kind: .flashcards, items: nameItems, seed: 1069)).allSatisfy { $0.presentation == .visualOnly })
         #expect(nameStage.maximumItemCount >= 8)
     }
 

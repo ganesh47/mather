@@ -116,10 +116,27 @@ struct CountryGameplayThreadTests {
         #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
         #expect(pairs.allSatisfy { $0.left.visualAssetName != nil || $0.left.visualKey != nil })
         #expect(pairs.allSatisfy { pair in thread.entities.contains { $0.id == pair.right.entityID && $0.name == pair.right.title } })
-        #expect(pairs.allSatisfy { $0.right.subtitle == "Country name" })
+        #expect(pairs.allSatisfy { $0.right.subtitle.isEmpty })
         #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
         #expect(pairs.allSatisfy { $0.right.visualKey == nil && $0.right.visualAssetName == nil })
         #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
+    }
+
+    @Test
+    func countryFlipMemoryFlagAnswerCardsAreFlagOnly() throws {
+        let thread = CountryGameplayThread.thread
+        let stage = try #require(thread.stages.first { $0.kind == .flipMemory })
+        let flagItems = thread.entities.prefix(4).compactMap { entity -> GameplayRoundItem? in
+            guard let flag = entity.properties.first(where: { $0.typeID == "flag" }) else { return nil }
+            return GameplayRoundItem(id: "\(entity.id)::\(flag.id)", entityID: entity.id, propertyID: flag.id, propertyTypeID: flag.typeID)
+        }
+        let round = GameplayRoundDefinition(id: "country-flags-test", stageID: stage.id, kind: stage.kind, items: flagItems, seed: 1074)
+        let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
+
+        #expect(!pairs.isEmpty)
+        #expect(pairs.allSatisfy { $0.right.presentation == .visualOnly })
+        #expect(pairs.allSatisfy { $0.right.subtitle.isEmpty })
+        #expect(pairs.allSatisfy { $0.right.visualAssetName != nil || $0.right.visualKey != nil })
     }
 
 
