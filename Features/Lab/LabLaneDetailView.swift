@@ -90,9 +90,6 @@ struct LabLaneDetailView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
-                    Label(presentation.activityCountLabel, systemImage: lane.isReady ? "gamecontroller.fill" : "sparkles")
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(tint)
                 }
 
                 Spacer(minLength: 0)
@@ -107,7 +104,7 @@ struct LabLaneDetailView: View {
         )
         .shadow(color: colorScheme == .dark ? .black.opacity(0.3) : .black.opacity(0.08), radius: 8, y: 4)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(lane.title). \(lane.promise). \(progress.progressSummaryLabel).")
+        .accessibilityLabel("\(lane.title). \(lane.promise). \(presentation.activityCountLabel). \(progress.progressSummaryLabel).")
     }
 
     private func supportPanel(_ lane: CapabilityLane, progress: CapabilityLaneProgress, tint: Color) -> some View {
@@ -238,15 +235,9 @@ struct LabLaneDetailView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("\(plan.masteryStateLabel) • \(plan.estimatedLength) • Next: \(plan.recommendedNextActivity)")
-                        .font(.caption2.weight(.black))
-                        .foregroundStyle(tint)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(presentation.hiddenDetailAccessibilityLabel)
-
-                stageSummaryStrip(plan, progress: progress, tint: tint)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)], spacing: 8) {
                     ForEach(plan.stages) { stage in
@@ -261,29 +252,6 @@ struct LabLaneDetailView: View {
         .accessibilityLabel("\(presentation.hiddenDetailAccessibilityLabel) Primary action: \(startLabel(for: plan)).")
     }
 
-    private func stageSummaryStrip(_ plan: LabConceptSessionPlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
-        LabDetailFlowLayout(spacing: 6) {
-            ForEach(plan.stages) { stage in
-                let state = progressState(for: stage.stage, progress: progress)
-                HStack(spacing: 4) {
-                    Image(systemName: stage.stage.symbolName)
-                        .font(.caption2.weight(.black))
-                    Text(stage.stage.rawValue)
-                        .font(.caption2.weight(.black))
-                    if let state {
-                        Text(state)
-                            .font(.caption2.weight(.heavy))
-                    }
-                }
-                .foregroundStyle(state == nil ? MatherTheme.cardSubtitle : tint)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background((state == nil ? MatherTheme.panel.opacity(0.58) : tint.opacity(0.12)), in: Capsule())
-            }
-        }
-        .accessibilityLabel("Guided stages: \(plan.pathLabel)")
-    }
-
     private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
         let state = progressState(for: stage.stage, progress: progress)
         return VStack(alignment: .leading, spacing: 7) {
@@ -295,14 +263,6 @@ struct LabLaneDetailView: View {
                     .font(.caption.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Spacer(minLength: 0)
-                if let state {
-                    Text(state)
-                        .font(.caption2.weight(.heavy))
-                        .foregroundStyle(tint)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .background(tint.opacity(0.12), in: Capsule())
-                }
             }
 
             Text(stage.title)
@@ -314,11 +274,6 @@ struct LabLaneDetailView: View {
                 .font(.caption)
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .lineLimit(3)
-
-            Text(stage.timerPolicy.childCopy)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .lineLimit(2)
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -332,7 +287,7 @@ struct LabLaneDetailView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(stage.accessibilityLabel)
+        .accessibilityLabel(stage.accessibilityLabel(withProgressState: state))
     }
 
     private func gamesSection(_ lane: CapabilityLane, tint: Color) -> some View {
