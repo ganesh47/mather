@@ -133,8 +133,22 @@ final class LabModelsTests: XCTestCase {
             XCTAssertFalse(presentation.symbolName.isEmpty)
             XCTAssertTrue(presentation.hiddenDetailAccessibilityLabel.contains(plan.subtitle))
             XCTAssertTrue(presentation.hiddenDetailAccessibilityLabel.contains(plan.pathLabel))
-            XCTAssertTrue(presentation.disclosureDetailText.contains(plan.recommendedNextActivity))
+            XCTAssertEqual(presentation.disclosureDetailText, [plan.subtitle])
+            XCTAssertFalse(presentation.disclosureDetailText.contains(plan.masteryStateLabel))
+            XCTAssertFalse(presentation.disclosureDetailText.contains(plan.estimatedLength))
+            XCTAssertFalse(presentation.disclosureDetailText.contains(plan.recommendedNextActivity))
+            XCTAssertFalse(presentation.disclosureDetailText.contains(plan.pathLabel))
         }
+    }
+
+    func testStagePlanKeepsProgressAndTimerDetailsInAccessibilityOnly() throws {
+        let stage = try XCTUnwrap(LabConceptSessionPlan.numbersNumberBondsTo10.stages.first)
+        let label = stage.accessibilityLabel(withProgressState: "Done")
+
+        XCTAssertTrue(label.contains(stage.title))
+        XCTAssertTrue(label.contains(stage.childCopy))
+        XCTAssertTrue(label.contains(stage.timerPolicy.childCopy))
+        XCTAssertTrue(label.contains("Progress: Done."))
     }
 
     func testPhysicsLaneAddsSoundLabAsThirdReadyActivity() throws {

@@ -595,6 +595,16 @@ struct LabSessionStagePlan: Identifiable, Equatable {
     var accessibilityLabel: String {
         "\(stage.rawValue). \(title). \(childCopy)"
     }
+
+    func accessibilityLabel(withProgressState progressState: String?) -> String {
+        [
+            accessibilityLabel,
+            timerPolicy.childCopy,
+            progressState.map { "Progress: \($0)." },
+        ]
+        .compactMap { $0 }
+        .joined(separator: " ")
+    }
 }
 
 struct LabConceptSessionPlan: Identifiable, Equatable {
@@ -757,10 +767,6 @@ struct LabConceptSessionPlanCardPresentation: Equatable {
         defaultVisibleText = [plan.title]
         disclosureDetailText = [
             plan.subtitle,
-            plan.masteryStateLabel,
-            plan.estimatedLength,
-            plan.recommendedNextActivity,
-            plan.pathLabel,
         ]
     }
 
