@@ -139,6 +139,14 @@ struct GameplayStageViewModelsTests {
         #expect(GameplayStageRenderSupport.cardMinimumWidth(availableWidth: 390, compact: true) >= 132)
         #expect(GameplayStageRenderSupport.cardMinimumWidth(availableWidth: 820, compact: false) == 180)
     }
+
+    @Test
+    func compactEasyMemoryCollapsesExplanatoryStagePrompt() {
+        #expect(!GameplayStageRenderSupport.showsStagePrompt(kind: .easyMemory, compact: true))
+        #expect(GameplayStageRenderSupport.showsStagePrompt(kind: .easyMemory, compact: false))
+        #expect(GameplayStageRenderSupport.showsStagePrompt(kind: .flipMemory, compact: true))
+        #expect(GameplayStageRenderSupport.showsStagePrompt(kind: .multipleChoice, compact: true))
+    }
 }
 
 struct GameplayThreadCatalogRegressionTests {
