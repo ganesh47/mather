@@ -100,7 +100,10 @@ struct BondMatchView: View {
         .frame(maxWidth: 760)
         .frame(maxWidth: .infinity, alignment: .center)
         .onAppear {
-            setupShuffledOrder()
+            reconcileShuffledOrder()
+        }
+        .onChange(of: state.pairs.map(\.right)) { _, _ in
+            reconcileShuffledOrder()
         }
         .onChange(of: shakeDetected) { _, shook in
             guard shook else { return }
@@ -411,17 +414,35 @@ struct BondMatchView: View {
 
     // MARK: - Private helpers
 
-    private func setupShuffledOrder() {
-        shuffledRightValues = state.pairs.map(\.right).shuffled()
+    private func reconcileShuffledOrder() {
+        let rightValues = state.pairs.map(\.right)
+        guard Self.rightOrderNeedsReset(existingRightValues: shuffledRightValues, pairRightValues: rightValues) else { return }
+        shuffledRightValues = rightValues.shuffled()
+    }
+
+    nonisolated static func rightOrderNeedsReset(existingRightValues: [Int], pairRightValues: [Int]) -> Bool {
+        existingRightValues.count != pairRightValues.count || Set(existingRightValues) != Set(pairRightValues)
+    }
+
+    nonisolated static func shuffledUnmatchedRightValues(
+        existingRightValues: [Int],
+        matchedRightValues: Set<Int>,
+        shuffle: ([Int]) -> [Int] = { $0.shuffled() }
+    ) -> [Int] {
+        var unmatched = shuffle(existingRightValues.filter { !matchedRightValues.contains($0) })
+        return existingRightValues.map { value in
+            guard !matchedRightValues.contains(value) else { return value }
+            return unmatched.isEmpty ? value : unmatched.removeFirst()
+        }
     }
 
     /// Re-shuffle only the unmatched right values in place.
     private func shuffleUnmatchedRight() {
-        let matched   = Set(state.pairs.filter(\.isMatched).map(\.right))
-        var unmatched = shuffledRightValues.filter { !matched.contains($0) }.shuffled()
-        shuffledRightValues = shuffledRightValues.map { val in
-            matched.contains(val) ? val : unmatched.removeFirst()
-        }
+        let matched = Set(state.pairs.filter(\.isMatched).map(\.right))
+        shuffledRightValues = Self.shuffledUnmatchedRightValues(
+            existingRightValues: shuffledRightValues,
+            matchedRightValues: matched
+        )
     }
 
     private func triggerMismatch(for value: Int) {

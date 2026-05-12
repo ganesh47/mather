@@ -528,6 +528,35 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func duplicateBondMatchCompletionIsIgnoredDuringCelebration() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        var completedSummary: SessionSummaryDraft?
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { completedSummary = $0 }
+        )
+
+        engine.startBondBlastFinale(target: 2)
+        guard let pairId = engine.bondMatchState?.pairs.first?.id else {
+            Issue.record("Expected a single Bond Blast pair for target 2")
+            return
+        }
+
+        engine.matchPair(id: pairId)
+        engine.matchPair(id: pairId)
+
+        await waitFor("bond blast finale summary") { engine.route == .sessionSummary }
+        #expect(completedSummary?.problemsCompleted == 1)
+        #expect(engine.currentSession.problems.count == 1)
+    }
+
+    @Test
     func bondMatchCompletesSessionWhenAllPairsMatched() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
