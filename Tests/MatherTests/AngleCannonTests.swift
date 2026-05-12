@@ -169,4 +169,15 @@ struct AngleCannonScenarioTests {
             "Callbacks scheduled before disappear/recalibration should be ignored"
         )
     }
+
+    @Test func delayedCallbackGuardRejectsCancelledTasks() {
+        #expect(
+            !AngleCannonView.shouldAcceptDelayedCallback(
+                scheduledRevision: 7,
+                currentRevision: 7,
+                isCancelled: true
+            ),
+            "Cancelled delayed work should not update Angle Cannon state even if its lifecycle revision still matches"
+        )
+    }
 }
