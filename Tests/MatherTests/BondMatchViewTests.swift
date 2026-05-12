@@ -69,4 +69,9 @@ struct BondMatchViewTests {
         #expect(pairs.allSatisfy { $0.left <= $0.right })
         #expect(pairs.allSatisfy { $0.left + $0.right == 1000 })
     }
+
+    @Test func delayedMismatchResetRejectsStaleBondBlastRevisions() {
+        #expect(BondMatchView.shouldAcceptDelayedMismatchReset(scheduledRevision: 4, currentRevision: 4))
+        #expect(!BondMatchView.shouldAcceptDelayedMismatchReset(scheduledRevision: 4, currentRevision: 5))
+    }
 }
