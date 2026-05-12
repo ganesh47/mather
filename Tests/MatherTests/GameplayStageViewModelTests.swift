@@ -308,6 +308,12 @@ struct GameplayStageParityRegressionTests {
     }
 
     @Test
+    func reusableBondBlastDelayedMismatchResetRejectsStaleRevisions() {
+        #expect(ReusableBondBlastBoard.shouldAcceptDelayedMismatchReset(scheduledRevision: 8, currentRevision: 8))
+        #expect(!ReusableBondBlastBoard.shouldAcceptDelayedMismatchReset(scheduledRevision: 8, currentRevision: 9))
+    }
+
+    @Test
     func waterBondBlastAcceptsArbitraryGameplayMatchPairDataInFocusedTurns() {
         let thread = GameplayThreadCatalog.waterCycle
         let stage = thread.stages.first { $0.kind == .bondBlast }!

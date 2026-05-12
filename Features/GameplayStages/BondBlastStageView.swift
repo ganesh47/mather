@@ -42,6 +42,8 @@ struct ReusableBondBlastBoard: View {
     let onComplete: (Int, Int, Int) -> Void
 
     @State private var mismatchedRightID: String?
+    @State private var mismatchResetTask: Task<Void, Never>?
+    @State private var mismatchResetRevision = 0
     @State private var autoProgressTask: Task<Void, Never>?
     @State private var autoProgressSignature: String?
 
@@ -111,7 +113,10 @@ struct ReusableBondBlastBoard: View {
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
         .accessibilityLabel("\(title). \(viewModel.correctCount) of \(viewModel.pairs.count) bonds matched.")
-        .onDisappear { cancelAutoProgress() }
+        .onDisappear {
+            cancelAutoProgress()
+            cancelMismatchReset()
+        }
     }
 
 
@@ -260,11 +265,28 @@ struct ReusableBondBlastBoard: View {
     }
 
     private func triggerMismatch(for itemID: String) {
+        mismatchResetTask?.cancel()
+        mismatchResetRevision &+= 1
+        let revision = mismatchResetRevision
         mismatchedRightID = itemID
-        Task { @MainActor in
+        mismatchResetTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled,
+                  Self.shouldAcceptDelayedMismatchReset(scheduledRevision: revision, currentRevision: mismatchResetRevision) else { return }
             mismatchedRightID = nil
+            mismatchResetTask = nil
         }
+    }
+
+    private func cancelMismatchReset() {
+        mismatchResetRevision &+= 1
+        mismatchResetTask?.cancel()
+        mismatchResetTask = nil
+        mismatchedRightID = nil
+    }
+
+    nonisolated static func shouldAcceptDelayedMismatchReset(scheduledRevision: Int, currentRevision: Int) -> Bool {
+        scheduledRevision == currentRevision
     }
 
     nonisolated static func shouldRevealRightCard(selectedPairID: String?, pairID: String, isMatched: Bool) -> Bool {

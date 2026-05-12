@@ -48,6 +48,9 @@ struct BondMatchView: View {
     @State private var shuffledRightValues: [Int] = []
     /// Right-value that is currently wobbling after a mismatch.
     @State private var mismatchedRightValue: Int? = nil
+    /// Cancels stale mismatch animation resets when Bond Blast exits or restarts.
+    @State private var mismatchResetTask: Task<Void, Never>? = nil
+    @State private var mismatchResetRevision = 0
 
     enum DragReleaseResolution: Equatable {
         case cancel
@@ -112,6 +115,7 @@ struct BondMatchView: View {
         }
         .sensoryFeedback(.success, trigger: state.matchCount)
         .accessibilityLabel("\(vocabulary.accessibilityLabel) \(state.matchCount) of \(state.pairs.count) matched.")
+        .onDisappear { cancelMismatchReset() }
     }
 
     // MARK: - Subviews
@@ -421,10 +425,27 @@ struct BondMatchView: View {
     }
 
     private func triggerMismatch(for value: Int) {
+        mismatchResetTask?.cancel()
+        mismatchResetRevision &+= 1
+        let revision = mismatchResetRevision
         mismatchedRightValue = value
-        Task { @MainActor in
+        mismatchResetTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled,
+                  Self.shouldAcceptDelayedMismatchReset(scheduledRevision: revision, currentRevision: mismatchResetRevision) else { return }
             mismatchedRightValue = nil
+            mismatchResetTask = nil
         }
+    }
+
+    private func cancelMismatchReset() {
+        mismatchResetRevision &+= 1
+        mismatchResetTask?.cancel()
+        mismatchResetTask = nil
+        mismatchedRightValue = nil
+    }
+
+    nonisolated static func shouldAcceptDelayedMismatchReset(scheduledRevision: Int, currentRevision: Int) -> Bool {
+        scheduledRevision == currentRevision
     }
 }
