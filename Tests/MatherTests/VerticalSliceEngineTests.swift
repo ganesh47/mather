@@ -783,6 +783,63 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func bondBlastDuplicateFinalMatchOnlyCompletesProblemOnce() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        var completedSummary: SessionSummaryDraft?
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { completedSummary = $0 }
+        )
+        engine.startBondBlastFinale(target: 10)
+
+        let pairIds = try #require(engine.bondMatchState?.pairs.map(\.id))
+        let finalPairId = try #require(pairIds.last)
+        for id in pairIds.dropLast() {
+            engine.matchPair(id: id)
+        }
+
+        engine.matchPair(id: finalPairId)
+        engine.matchPair(id: finalPairId)
+
+        await waitFor("bond blast duplicate final match completion") { engine.route == .sessionSummary }
+        #expect(engine.currentSession.problems.count == 1)
+        #expect(completedSummary?.problemsCompleted == 1)
+    }
+
+    @Test
+    func bondBlastPendingCompletionDoesNotAdvanceAfterLeavingSession() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = true
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0.05,
+            saveSummary: { _ in }
+        )
+        engine.startBondBlastFinale(target: 10)
+
+        for id in engine.bondMatchState?.pairs.map(\.id) ?? [] {
+            engine.matchPair(id: id)
+        }
+        #expect(engine.showCelebration)
+
+        engine.showHome()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(engine.route == .home)
+        #expect(engine.currentSession.problems.count == 1)
+    }
+
+    @Test
     func bondMatchNotFiredOnIntermediateProblems() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true
