@@ -62,6 +62,9 @@ final class VerticalSliceEngine {
     var showCelebration = false
     var completedSummary: SessionSummaryDraft?
 
+    private var pendingStageAdvanceTask: Task<Void, Never>?
+    private var pendingStageAdvanceToken: UUID?
+
     private let telemetryWriter: TelemetryWriter
     private let featureFlags: FeatureFlagService
     private let speechService: SpeechService
@@ -124,6 +127,7 @@ final class VerticalSliceEngine {
     var sumSprintStageCardCount: Int { sumSprintBurstState?.totalPairs ?? 0 }
 
     func show(_ route: AppRoute) {
+        cancelPendingStageAdvance()
         gameplayReturnRoute = nil
         self.route = route
     }
@@ -168,6 +172,7 @@ final class VerticalSliceEngine {
     }
 
     func startSession() {
+        cancelPendingStageAdvance()
         // Freeze the active theme from the user's current selection — unless a custom
         // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
         if !hasInjectedTheme {
@@ -483,6 +488,7 @@ final class VerticalSliceEngine {
     func matchPair(id: UUID) {
         guard isBondBlastStage,
               !showCelebration,
+              pendingStageAdvanceTask == nil,
               let problem = currentProblem,
               var state = bondMatchState,
               let idx = state.pairs.firstIndex(where: { $0.id == id }),
@@ -571,11 +577,14 @@ final class VerticalSliceEngine {
     }
 
     private func completeStage(successMessage: String) {
+        guard pendingStageAdvanceTask == nil else { return }
+
+        let completedStage = currentStage
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
-        let next = resolvedNextStage(after: currentStage)
-        recordStageTransition(from: currentStage, to: next)
+        let next = resolvedNextStage(after: completedStage)
+        recordStageTransition(from: completedStage, to: next)
 
         // A problem is complete when the next stage is .done (the last meaningful
         // stage has been cleared). This handles all paths: with/without transfer,
@@ -583,7 +592,7 @@ final class VerticalSliceEngine {
         let isProblemComplete = next == .done
         if isProblemComplete {
             recordProblemCompletion(transferCorrect: true)
-            if currentStage == .bondMatch {
+            if completedStage == .bondMatch {
                 hapticsService.bondMatchComplete(enabled: featureFlags.hapticsEnabled)
             } else {
                 hapticsService.success(enabled: featureFlags.hapticsEnabled)
@@ -596,8 +605,17 @@ final class VerticalSliceEngine {
         // is deferred into the Task so the overlay has time to render and animate.
         // celebrationDuration is injected — unit tests pass 0 to skip the wait.
         showCelebration = true
-        Task { @MainActor in
+        let transitionToken = UUID()
+        pendingStageAdvanceToken = transitionToken
+        pendingStageAdvanceTask = Task { @MainActor in
+            defer {
+                if pendingStageAdvanceToken == transitionToken {
+                    pendingStageAdvanceToken = nil
+                    pendingStageAdvanceTask = nil
+                }
+            }
             try? await Task.sleep(for: .seconds(celebrationDuration))
+            guard !Task.isCancelled, pendingStageAdvanceToken == transitionToken, currentStage == completedStage else { return }
             showCelebration = false
             currentStage = next
             currentProblemState.stage = next
@@ -607,6 +625,13 @@ final class VerticalSliceEngine {
                 prepareForStage(next)
             }
         }
+    }
+
+    private func cancelPendingStageAdvance() {
+        pendingStageAdvanceTask?.cancel()
+        pendingStageAdvanceTask = nil
+        pendingStageAdvanceToken = nil
+        showCelebration = false
     }
 
     private func prepareForStage(_ stage: SliceStage) {
@@ -694,6 +719,7 @@ final class VerticalSliceEngine {
             equationRightInput = ""
             transferLeftCount = 0
             transferRightCount = 0
+            bondMatchState = nil
             gravitySplitState = nil
             gravitySplitNeutralRoll = nil
             sumSprintBurstState = nil
