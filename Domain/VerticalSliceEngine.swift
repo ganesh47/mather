@@ -467,14 +467,14 @@ final class VerticalSliceEngine {
 
     /// Called by BondMatchView when the child begins dragging or taps a left card.
     func bondDragStarted(pairId: UUID) {
-        guard isBondBlastStage else { return }
+        guard isBondBlastStage, !showCelebration else { return }
         hapticsService.cardPickup(enabled: featureFlags.hapticsEnabled)
         logBondMatchTelemetry("pair_drag_started", extra: ["pair_id": pairId.uuidString])
     }
 
     /// Called by BondMatchView when a dragged card is hovering near a snap target.
     func bondNearTarget() {
-        guard isBondBlastStage else { return }
+        guard isBondBlastStage, !showCelebration else { return }
         hapticsService.cardNearSnap(enabled: featureFlags.hapticsEnabled)
     }
 
@@ -482,9 +482,11 @@ final class VerticalSliceEngine {
     /// Advances to `.done` when all pairs are matched.
     func matchPair(id: UUID) {
         guard isBondBlastStage,
+              !showCelebration,
               let problem = currentProblem,
               var state = bondMatchState,
-              let idx = state.pairs.firstIndex(where: { $0.id == id }) else { return }
+              let idx = state.pairs.firstIndex(where: { $0.id == id }),
+              !state.pairs[idx].isMatched else { return }
 
         state.pairs[idx].isMatched = true
         let pair = state.pairs[idx]
@@ -505,7 +507,7 @@ final class VerticalSliceEngine {
 
     /// Called when the child drops a card on the wrong target.
     func mismatchPair() {
-        guard isBondBlastStage, let problem = currentProblem else { return }
+        guard isBondBlastStage, !showCelebration, let problem = currentProblem else { return }
         logBondMatchTelemetry("pair_mismatch", extra: [:])
         hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
         let msg = "Try again! Find two numbers that make \(problem.target)."

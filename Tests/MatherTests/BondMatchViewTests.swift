@@ -74,4 +74,20 @@ struct BondMatchViewTests {
         #expect(BondMatchView.shouldAcceptDelayedMismatchReset(scheduledRevision: 4, currentRevision: 4))
         #expect(!BondMatchView.shouldAcceptDelayedMismatchReset(scheduledRevision: 4, currentRevision: 5))
     }
+
+    @Test func rightOrderResetDetectsNewBondBlastTargetValues() {
+        #expect(!BondMatchView.rightOrderNeedsReset(existingRightValues: [5, 4, 3], pairRightValues: [3, 5, 4]))
+        #expect(BondMatchView.rightOrderNeedsReset(existingRightValues: [5, 4, 3], pairRightValues: [7, 6, 5, 4]))
+    }
+
+    @Test func unmatchedRightShufflePreservesMatchedRowsAndDoesNotDropValues() {
+        let shuffled = BondMatchView.shuffledUnmatchedRightValues(
+            existingRightValues: [5, 4, 3],
+            matchedRightValues: [4],
+            shuffle: { Array($0.reversed()) }
+        )
+
+        #expect(shuffled == [3, 4, 5])
+    }
+
 }
