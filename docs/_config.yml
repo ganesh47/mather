@@ -1,0 +1,11 @@
+title: Mather
+description: App information and privacy details for Mather, an iPhone and iPad learning playground for children.
+url: "https://ganesh47.github.io"
+baseurl: "/mather"
+
+markdown: kramdown
+plugins: []
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
