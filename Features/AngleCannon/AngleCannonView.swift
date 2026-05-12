@@ -41,6 +41,11 @@ struct AngleCannonView: View {
     /// Monotonic token used to ignore delayed calibration/fire callbacks after the
     /// activity disappears or a new shot lifecycle begins.
     @State private var lifecycleRevision = 0
+    /// Handles for delayed callbacks so route changes/reset can cancel work eagerly,
+    /// instead of relying only on the lifecycle token after sleep wakes.
+    @State private var calibrationTask: Task<Void, Never>? = nil
+    @State private var firePulseTask: Task<Void, Never>? = nil
+    @State private var shotFeedbackTask: Task<Void, Never>? = nil
 
     // MARK: - Constants
 
@@ -106,14 +111,13 @@ struct AngleCannonView: View {
         .onAppear {
             sessionStart = .now
             lifecycleRevision &+= 1
+            cancelDelayedCallbacks()
             appModel.motionService.startUpdates()
             pickTarget()
             autoCalibrateNeutral(revision: lifecycleRevision)
         }
         .onDisappear {
-            lifecycleRevision &+= 1
-            projectileAnimating = false
-            pendingHit = nil
+            invalidateActivityLifecycle()
             appModel.motionService.stopUpdates()
             guard roundsWon > 0 else { return }
             appModel.gameSessionStore.save(
@@ -131,20 +135,27 @@ struct AngleCannonView: View {
     /// Shows a "Hold steady…" banner during the wait.
     private func autoCalibrateNeutral(revision: Int) {
         guard neutralRoll == nil else { return }
+        calibrationTask?.cancel()
         calibrating = true
         calibrationProgress = 0
-        Task { @MainActor in
+        calibrationTask = Task { @MainActor in
             for progress in [0.25, 0.55, 0.82] {
                 try? await Task.sleep(for: .milliseconds(150))
-                guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision),
-                      neutralRoll == nil else { return }
+                guard Self.shouldAcceptDelayedCallback(
+                    scheduledRevision: revision,
+                    currentRevision: lifecycleRevision,
+                    isCancelled: Task.isCancelled
+                ), neutralRoll == nil else { return }
                 withAnimation(.easeOut(duration: 0.12)) {
                     calibrationProgress = progress
                 }
             }
             try? await Task.sleep(for: .milliseconds(150))
-            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision),
-                  neutralRoll == nil else { return }
+            guard Self.shouldAcceptDelayedCallback(
+                scheduledRevision: revision,
+                currentRevision: lifecycleRevision,
+                isCancelled: Task.isCancelled
+            ), neutralRoll == nil else { return }
             neutralRoll = appModel.motionService.tiltRoll
             calibrationProgress = 1
             withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
@@ -181,8 +192,7 @@ struct AngleCannonView: View {
             }
             Spacer()
             Button {
-                appModel.engine.showHome()
-                appModel.motionService.stopUpdates()
+                leaveAngleCannon()
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30, weight: .bold))
@@ -494,8 +504,12 @@ struct AngleCannonView: View {
                        y: a.y + (b.y - a.y) * t)
     }
 
-    nonisolated static func shouldAcceptDelayedCallback(scheduledRevision: Int, currentRevision: Int) -> Bool {
-        scheduledRevision == currentRevision
+    nonisolated static func shouldAcceptDelayedCallback(
+        scheduledRevision: Int,
+        currentRevision: Int,
+        isCancelled: Bool = false
+    ) -> Bool {
+        !isCancelled && scheduledRevision == currentRevision
     }
 
     // MARK: - Layout helpers
@@ -567,15 +581,50 @@ struct AngleCannonView: View {
 
     // MARK: - Actions
 
+    private func leaveAngleCannon() {
+        invalidateActivityLifecycle()
+        appModel.motionService.stopUpdates()
+        appModel.engine.showHome()
+    }
+
+    private func invalidateActivityLifecycle() {
+        lifecycleRevision &+= 1
+        cancelDelayedCallbacks()
+        calibrating = false
+        calibrationProgress = 0
+        projectileAnimating = false
+        pendingHit = nil
+        firePulse = false
+    }
+
+    private func cancelDelayedCallbacks() {
+        calibrationTask?.cancel()
+        calibrationTask = nil
+        cancelDelayedShotCallbacks()
+    }
+
+    private func cancelDelayedShotCallbacks() {
+        firePulseTask?.cancel()
+        firePulseTask = nil
+        shotFeedbackTask?.cancel()
+        shotFeedbackTask = nil
+    }
+
     private func fire() {
         guard neutralRoll != nil, firedAngleDeg == nil, !projectileAnimating else { return }
 
         // Kick animation
         let revision = lifecycleRevision
+        firePulseTask?.cancel()
+        shotFeedbackTask?.cancel()
         firePulse = true
-        Task { @MainActor in
+        firePulseTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(150))
-            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision) else { return }
+            guard Self.shouldAcceptDelayedCallback(
+                scheduledRevision: revision,
+                currentRevision: lifecycleRevision,
+                isCancelled: Task.isCancelled
+            ) else { return }
             firePulse = false
         }
 
@@ -587,20 +636,27 @@ struct AngleCannonView: View {
         projectileAnimating = true
         projectileProgress = 0
         withAnimation(.linear(duration: 0.9)) { projectileProgress = 1 }
-        Task { @MainActor in
+        shotFeedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(900))
-            guard Self.shouldAcceptDelayedCallback(scheduledRevision: revision, currentRevision: lifecycleRevision) else { return }
+            guard Self.shouldAcceptDelayedCallback(
+                scheduledRevision: revision,
+                currentRevision: lifecycleRevision,
+                isCancelled: Task.isCancelled
+            ) else { return }
             resolveShotFeedback()
         }
     }
 
     /// Reset shot state but KEEP neutralRoll so the child doesn't lose calibration.
     private func resetShot() {
+        lifecycleRevision &+= 1
+        cancelDelayedShotCallbacks()
         firedAngleDeg = nil
         hitTarget = false
         projectileProgress = 0
         projectileAnimating = false
         pendingHit = nil
+        firePulse = false
         // Deliberately NOT resetting neutralRoll — keeps aim baseline between retries.
     }
 
@@ -610,7 +666,7 @@ struct AngleCannonView: View {
                 level = 2
                 roundsWon = 0
             } else {
-                appModel.engine.showHome()
+                leaveAngleCannon()
                 return
             }
         }
@@ -618,7 +674,7 @@ struct AngleCannonView: View {
         pickTarget()
         // Re-calibrate neutral for each new target (fresh tilt reference)
         neutralRoll = nil
-        lifecycleRevision &+= 1
+        calibrationTask?.cancel()
         autoCalibrateNeutral(revision: lifecycleRevision)
     }
 
