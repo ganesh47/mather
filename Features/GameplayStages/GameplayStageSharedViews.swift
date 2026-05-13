@@ -456,6 +456,9 @@ struct GameplayPairingStageShell: View {
                 roundText: viewModel.currentRoundRequirementText,
                 compact: compact
             )
+            if viewModel.isComplete {
+                completionActionBanner
+            }
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.activePairs) { pair in
                     let state = viewModel.cardState(forLeft: pair)
@@ -569,6 +572,38 @@ struct GameplayPairingStageShell: View {
             .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
     }
 
+    private var completionActionBanner: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("All matches found")
+                    .font((compact ? Font.subheadline : Font.headline).weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text("Finish this stage when you’re ready.")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(MatherTheme.ink.opacity(0.68))
+            }
+            Spacer(minLength: 8)
+            finishStageButton
+        }
+        .padding(.horizontal, compact ? 12 : 14)
+        .padding(.vertical, compact ? 10 : 12)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(MatherTheme.accent.opacity(0.14)))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(MatherTheme.accent.opacity(0.24), lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+    }
+
+    private var finishStageButton: some View {
+        Button("Finish stage") {
+            cancelAutoProgress()
+            onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+        }
+        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+        .accessibilityIdentifier("gameplay-match-finish-stage")
+    }
+
     @ViewBuilder
     private var footerProgressOrAction: some View {
         if viewModel.canAdvanceTurn {
@@ -578,11 +613,7 @@ struct GameplayPairingStageShell: View {
             }
             .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
         } else if viewModel.isComplete {
-            Button("Finish stage") {
-                cancelAutoProgress()
-                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
-            }
-            .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+            EmptyView()
         } else {
             Text(viewModel.finishRequirementText)
                 .font(.caption.weight(.bold))
