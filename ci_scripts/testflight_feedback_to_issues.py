@@ -216,8 +216,8 @@ def first_non_empty(*values: Any) -> str | None:
     return None
 
 
-def list_existing_feedback_ids(config: Config) -> set[str]:
-    feedback_ids: set[str] = set()
+def list_existing_feedback_issues(config: Config) -> dict[str, dict[str, Any]]:
+    feedback_issues: dict[str, dict[str, Any]] = {}
     page = 1
 
     while True:
@@ -245,13 +245,17 @@ def list_existing_feedback_ids(config: Config) -> set[str]:
                 continue
             feedback_id = body[start:end].strip()
             if feedback_id:
-                feedback_ids.add(feedback_id)
+                feedback_issues[feedback_id] = issue
 
         if len(issues) < 100:
             break
         page += 1
 
-    return feedback_ids
+    return feedback_issues
+
+
+def list_existing_feedback_ids(config: Config) -> set[str]:
+    return set(list_existing_feedback_issues(config))
 
 
 def build_issue_title(feedback: dict[str, Any], kind: str) -> str:
@@ -329,6 +333,132 @@ def summarize_crash_context(attrs: dict[str, Any]) -> list[str]:
     return lines
 
 
+def fetch_crash_log_text(config: Config, feedback_id: str) -> str | None:
+    """Fetch a beta feedback crash log when App Store Connect exposes one."""
+    endpoints = [
+        f"/v1/betaFeedbackCrashSubmissions/{feedback_id}/crashLog",
+    ]
+    for endpoint in endpoints:
+        try:
+            response = asc_get(config, endpoint)
+        except RuntimeError as exc:
+            print(f"Crash log unavailable for feedback {feedback_id}: {exc}")
+            continue
+        data = response.get("data") if isinstance(response, dict) else None
+        if not isinstance(data, dict):
+            continue
+        attrs = data.get("attributes", {})
+        log_text = first_non_empty(
+            attrs.get("logText"),
+            attrs.get("text"),
+            attrs.get("content"),
+        )
+        if log_text:
+            return log_text
+    return None
+
+
+def _sanitize_crash_log_fragment(value: str) -> str:
+    """Keep crash snippets useful while dropping addresses/UUID-like values."""
+    import re
+
+    sanitized = re.sub(r"0x[0-9A-Fa-f]+", "0x…", value.strip())
+    sanitized = re.sub(
+        r"\b[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\b",
+        "<uuid>",
+        sanitized,
+    )
+    sanitized = re.sub(r"/[^\s]+", "<path>", sanitized)
+    return sanitized[:240]
+
+
+def summarize_crash_log_text(log_text: str, app_module: str = "Mather") -> list[str]:
+    """Return a privacy-safe, short crash summary from raw ASC crash log text.
+
+    The raw log can contain device and tester-adjacent diagnostics, so only
+    exception/termination lines and the first app-module stack frames are kept.
+    """
+    lines = [line.rstrip() for line in log_text.splitlines()]
+    summary: list[str] = []
+
+    for prefix in ["Exception Type:", "Exception Codes:", "Termination Reason:"]:
+        match = next((line for line in lines if line.strip().startswith(prefix)), None)
+        if match:
+            summary.append(f"- {prefix[:-1]}: `{_sanitize_crash_log_fragment(match.split(':', 1)[1])}`")
+
+    crashed_thread = next(
+        (line.strip() for line in lines if line.strip().lower().startswith("thread") and "crashed" in line.lower()),
+        None,
+    )
+    if crashed_thread:
+        summary.append(f"- Crashed thread: `{_sanitize_crash_log_fragment(crashed_thread)}`")
+
+    app_frames: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or app_module not in stripped:
+            continue
+        # Typical iOS crash frame: "0   Mather  0x... symbol + offset".
+        parts = stripped.split()
+        if len(parts) >= 4 and parts[0].isdigit():
+            frame_no = parts[0]
+            module = parts[1]
+            symbol = " ".join(parts[3:])
+            app_frames.append(f"  - frame {frame_no} `{module}`: `{_sanitize_crash_log_fragment(symbol)}`")
+        elif app_module in stripped:
+            app_frames.append(f"  - `{_sanitize_crash_log_fragment(stripped)}`")
+        if len(app_frames) >= 6:
+            break
+
+    if app_frames:
+        summary.append("- Top app frames:")
+        summary.extend(app_frames)
+
+    return summary
+
+
+def build_crash_log_summary_section(config: Config, feedback_id: str) -> list[str]:
+    log_text = fetch_crash_log_text(config, feedback_id)
+    if not log_text:
+        return []
+    summary = summarize_crash_log_text(log_text)
+    if not summary:
+        return []
+    return [
+        "## Privacy-safe crash log summary",
+        "<!-- ASC Crash Log Summary -->",
+        *summary,
+        "",
+        "Raw App Store Connect crash diagnostics are intentionally not copied into GitHub.",
+        "",
+    ]
+
+
+def update_existing_crash_issue_if_possible(
+    config: Config,
+    *,
+    feedback: dict[str, Any],
+    issue: dict[str, Any],
+) -> bool:
+    if issue.get("state") != "open":
+        return False
+    body = issue.get("body") or ""
+    if "<!-- ASC Crash Log Summary -->" in body:
+        return False
+    section = build_crash_log_summary_section(config, feedback["id"])
+    if not section:
+        return False
+    updated_body = body.rstrip() + "\n\n" + "\n".join(section).rstrip() + "\n"
+    github_request(
+        config,
+        f"/repos/{config.github_repository}/issues/{issue['number']}",
+        method="PATCH",
+        payload={"body": updated_body},
+    )
+    print(f"Updated issue #{issue['number']} with privacy-safe crash log summary")
+    return True
+
+
 def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str:
     attrs = feedback.get("attributes", {})
     build = get_related_resource(feedback, "build") or {}
@@ -395,6 +525,7 @@ def build_issue_body(config: Config, feedback: dict[str, Any], kind: str) -> str
             "- Pull full crash details from App Store Connect locally rather than copying raw diagnostics into GitHub.",
             "",
         ])
+        lines.extend(build_crash_log_summary_section(config, feedback["id"]))
 
     if kind == "screenshot":
         lines.extend([
@@ -451,20 +582,27 @@ def sync_feedback_kind(
 ) -> int:
     created_count = 0
     feedback_items = fetch_feedback_collection(config, endpoint)
-    existing_feedback_ids = list_existing_feedback_ids(config)
+    existing_feedback_issues = list_existing_feedback_issues(config)
     print(f"Fetched {len(feedback_items)} {kind} feedback item(s)")
-    print(f"Found {len(existing_feedback_ids)} existing TestFlight issue marker(s)")
+    print(f"Found {len(existing_feedback_issues)} existing TestFlight issue marker(s)")
 
     for feedback in feedback_items:
         feedback_id = feedback["id"]
-        if feedback_id in existing_feedback_ids:
+        existing_issue = existing_feedback_issues.get(feedback_id)
+        if existing_issue:
+            if kind == "crash":
+                update_existing_crash_issue_if_possible(
+                    config,
+                    feedback=feedback,
+                    issue=existing_issue,
+                )
             print(f"Skipping existing issue for feedback {feedback_id}")
             continue
 
         title = build_issue_title(feedback, kind)
         body = build_issue_body(config, feedback, kind)
         issue = create_issue(config, title, body, labels)
-        existing_feedback_ids.add(feedback_id)
+        existing_feedback_issues[feedback_id] = issue
         created_count += 1
         print(f"Created issue #{issue['number']} for feedback {feedback_id}")
 
