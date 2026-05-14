@@ -432,6 +432,45 @@ def build_crash_log_summary_section(config: Config, feedback_id: str) -> list[st
     ]
 
 
+def _crash_log_summary_text(section: list[str]) -> str:
+    return "\n".join(section).rstrip()
+
+
+def _replace_existing_crash_log_summary(body: str, replacement: str) -> str | None:
+    heading = "## Privacy-safe crash log summary"
+    marker = "<!-- ASC Crash Log Summary -->"
+    start = body.find(heading)
+    if start == -1 or marker not in body[start:]:
+        return None
+
+    next_heading = body.find("\n## ", start + len(heading))
+    if next_heading == -1:
+        return body[:start].rstrip() + "\n\n" + replacement + "\n"
+    return body[:start].rstrip() + "\n\n" + replacement + "\n" + body[next_heading:]
+
+
+def _has_feature_level_app_frame(summary_text: str) -> bool:
+    feature_tokens = [
+        "AngleCannon",
+        "MotionService",
+        "GameplayStage",
+        "AppModel",
+        "LabView",
+        "BondBlast",
+        "SoundDetection",
+    ]
+    return any(token in summary_text for token in feature_tokens)
+
+
+def _summary_should_refresh(existing: str, replacement: str) -> bool:
+    if existing.strip() == replacement.strip():
+        return False
+    # Prefer a refreshed summary when Apple/Xcode later exposes symbolicated
+    # feature frames. This lets an issue like #1097 move from app-entry-only
+    # frames to actionable frames without copying the raw crash log.
+    return _has_feature_level_app_frame(replacement) or not _has_feature_level_app_frame(existing)
+
+
 def update_existing_crash_issue_if_possible(
     config: Config,
     *,
@@ -441,19 +480,28 @@ def update_existing_crash_issue_if_possible(
     if issue.get("state") != "open":
         return False
     body = issue.get("body") or ""
-    if "<!-- ASC Crash Log Summary -->" in body:
-        return False
     section = build_crash_log_summary_section(config, feedback["id"])
     if not section:
         return False
-    updated_body = body.rstrip() + "\n\n" + "\n".join(section).rstrip() + "\n"
+
+    summary_text = _crash_log_summary_text(section)
+    existing_replaced = _replace_existing_crash_log_summary(body, summary_text)
+    action = "with"
+    if existing_replaced is None:
+        updated_body = body.rstrip() + "\n\n" + summary_text + "\n"
+    else:
+        if not _summary_should_refresh(body, summary_text):
+            return False
+        updated_body = existing_replaced
+        action = "with refreshed"
+
     github_request(
         config,
         f"/repos/{config.github_repository}/issues/{issue['number']}",
         method="PATCH",
         payload={"body": updated_body},
     )
-    print(f"Updated issue #{issue['number']} with privacy-safe crash log summary")
+    print(f"Updated issue #{issue['number']} {action} privacy-safe crash log summary")
     return True
 
 
