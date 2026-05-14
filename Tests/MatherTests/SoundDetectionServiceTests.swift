@@ -79,6 +79,31 @@ struct SoundDetectionServiceTests {
         #expect(diagnostics.failure == nil)
     }
 
+    @Test
+    func audioTapRMSIgnoresEmptyBuffers() {
+        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44_100, channels: 1, interleaved: false)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 0)!
+        buffer.frameLength = 0
+
+        #expect(SoundDetectionService.audioTapRMS(from: buffer) == nil)
+    }
+
+    @Test
+    func audioTapRMSSanitizesNonFiniteSamples() {
+        let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44_100, channels: 1, interleaved: false)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4)!
+        buffer.frameLength = 4
+        let samples = buffer.floatChannelData![0]
+        samples[0] = 0.3
+        samples[1] = .nan
+        samples[2] = .infinity
+        samples[3] = 0.4
+
+        let rms = SoundDetectionService.audioTapRMS(from: buffer)
+        #expect(rms != nil)
+        #expect(abs(rms! - 0.35355338) < 0.0001)
+    }
+
     // MARK: - startListening / stopListening idempotency
 
     @Test
