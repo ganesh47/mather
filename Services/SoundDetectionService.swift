@@ -104,22 +104,11 @@ final class SoundDetectionService {
         engine.prepare()
         meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .installingAudioTap, format: formatSnapshot)
         inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
-            guard let channelData = buffer.floatChannelData?[0] else { return }
-            let frameCount = Int(buffer.frameLength)
-            guard frameCount > 0 else { return }
-            var sumOfSquares: Float = 0
-            var finiteSampleCount = 0
-            for i in 0..<frameCount {
-                let sample = channelData[i]
-                guard sample.isFinite else { continue }
-                sumOfSquares += sample * sample
-                finiteSampleCount += 1
-            }
-            let rms = finiteSampleCount > 0 ? (sumOfSquares / Float(finiteSampleCount)).squareRoot() : 0
+            guard let rms = SoundDetectionService.audioTapRMS(from: buffer) else { return }
 
             // The audio tap runs on the audio I/O thread — marshal to @MainActor.
             Task { @MainActor [weak self] in
-                self?.evaluateRMS(rms.isFinite ? rms : 0)
+                self?.evaluateRMS(rms)
             }
         }
 
@@ -182,6 +171,25 @@ final class SoundDetectionService {
 
     func stopSoundLabMeter() {
         stopListening()
+    }
+
+    static func audioTapRMS(from buffer: AVAudioPCMBuffer) -> Float? {
+        let frameCount = min(Int(buffer.frameLength), Int(buffer.frameCapacity))
+        guard frameCount > 0, buffer.format.channelCount > 0 else { return nil }
+        guard let channels = buffer.floatChannelData else { return nil }
+
+        let channelData = channels[0]
+        var sumOfSquares: Float = 0
+        var finiteSampleCount = 0
+        for i in 0..<frameCount {
+            let sample = channelData[i]
+            guard sample.isFinite else { continue }
+            sumOfSquares += sample * sample
+            finiteSampleCount += 1
+        }
+        guard finiteSampleCount > 0 else { return 0 }
+        let rms = (sumOfSquares / Float(finiteSampleCount)).squareRoot()
+        return rms.isFinite ? rms : 0
     }
 
     private func evaluateRMS(_ rms: Float) {
