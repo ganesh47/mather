@@ -396,17 +396,15 @@ def summarize_crash_log_text(log_text: str, app_module: str = "Mather") -> list[
     app_frames: list[str] = []
     for line in lines:
         stripped = line.strip()
-        if not stripped or app_module not in stripped:
-            continue
-        # Typical iOS crash frame: "0   Mather  0x... symbol + offset".
+        # Only keep actual numeric stack frames, not process metadata such as
+        # "Process: Mather", "Path:", "Identifier:", or binary image lines.
         parts = stripped.split()
-        if len(parts) >= 4 and parts[0].isdigit():
-            frame_no = parts[0]
-            module = parts[1]
-            symbol = " ".join(parts[3:])
-            app_frames.append(f"  - frame {frame_no} `{module}`: `{_sanitize_crash_log_fragment(symbol)}`")
-        elif app_module in stripped:
-            app_frames.append(f"  - `{_sanitize_crash_log_fragment(stripped)}`")
+        if len(parts) < 4 or not parts[0].isdigit() or parts[1] != app_module:
+            continue
+        frame_no = parts[0]
+        module = parts[1]
+        symbol = " ".join(parts[3:])
+        app_frames.append(f"  - frame {frame_no} `{module}`: `{_sanitize_crash_log_fragment(symbol)}`")
         if len(app_frames) >= 6:
             break
 
