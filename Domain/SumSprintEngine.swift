@@ -241,6 +241,7 @@ final class SumSprintEngine {
         applyLeitnerUpdate(factKey: card.fact.factKey, correct: false, firstTry: false)
 
         showIncorrectFeedback = true
+        let cardID = cards[currentCardIndex].id
         feedbackTask = Task { @MainActor [weak self] in
             guard let self else { return }
             if self.feedbackDuration > 0 {
@@ -249,6 +250,11 @@ final class SumSprintEngine {
             guard !Task.isCancelled else { return }
             self.showIncorrectFeedback = false
             self.feedbackTask = nil
+            guard self.phase == .session,
+                  self.cards.indices.contains(self.currentCardIndex),
+                  self.cards[self.currentCardIndex].id == cardID
+            else { return }
+            self.startCardTimer()
         }
     }
 

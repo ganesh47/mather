@@ -408,6 +408,11 @@ struct SumSprintEngineTests {
         #expect(engine.currentCardIndex == 0)
         #expect(engine.showIncorrectFeedback == false)
         #expect(engine.showTimeoutFeedback == false)
+        #expect(engine.cardTimeRemaining > 0)
+
+        let restartedRemaining = engine.cardTimeRemaining
+        try await Task.sleep(for: .milliseconds(250))
+        #expect(engine.cardTimeRemaining < restartedRemaining)
     }
 
     @Test
