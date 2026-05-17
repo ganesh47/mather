@@ -682,6 +682,72 @@ struct RoomQuestEngineTests {
         #expect(engine.phase == .complete)
     }
 
+    @Test
+    func roomQuestCompletionCallbackFiresOnlyAfterTransferWithCollectedTokens() {
+        let engine = makeEngine()
+        engine.startSession()
+        guard let p = engine.problem else { return }
+        var summaries: [RoomQuestSessionSummary] = []
+        engine.onSessionComplete = { summaries.append($0) }
+
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+        #expect(summaries.isEmpty)
+
+        engine.markSpotVisited(index: 0)
+        engine.markSpotVisited(index: 1)
+        engine.markReturned()
+        engine.submitPictorial()
+        engine.equationLeftInput = String(p.decompositionA)
+        engine.equationRightInput = String(p.decompositionB)
+        engine.submitAbstract()
+        engine.transferLeftCount = p.decompositionA
+        engine.transferRightCount = p.decompositionB
+        engine.submitTransfer()
+
+        #expect(summaries.count == 1)
+        #expect(summaries[0].startedAt == engine.sessionStartedAt)
+        #expect(summaries[0].target == p.target)
+        #expect(summaries[0].collectedTokenCount == p.decompositionA + p.decompositionB)
+        #expect(summaries[0].abstractCorrect)
+    }
+
+    @Test
+    func routeQuestCompletionCallbackUsesCompletedStationTokens() {
+        let motionService = MotionService()
+        let engine = makeEngine(routeQuestEnabled: true, motionService: motionService)
+        engine.startSession()
+        guard let p = engine.problem else { return }
+        var summaries: [RoomQuestSessionSummary] = []
+        engine.onSessionComplete = { summaries.append($0) }
+
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+        engine.confirmRouteStart()
+        motionService.applyRelativeYaw(45)
+        engine.checkRouteTurn()
+        engine.confirmRouteSteps()
+        engine.acceptCurrentSpotWithParentConsent()
+        motionService.applyRelativeYaw(-90)
+        engine.checkRouteTurn()
+        engine.confirmRouteSteps()
+        engine.acceptCurrentSpotWithParentConsent()
+        engine.confirmRouteReturnHome()
+        engine.submitPictorial()
+        engine.equationLeftInput = String(p.decompositionA)
+        engine.equationRightInput = String(p.decompositionB)
+        engine.submitAbstract()
+        engine.transferLeftCount = p.decompositionA
+        engine.transferRightCount = p.decompositionB
+        engine.submitTransfer()
+
+        #expect(summaries.count == 1)
+        #expect(summaries[0].collectedTokenCount == p.decompositionA + p.decompositionB)
+        #expect(summaries[0].abstractCorrect)
+    }
+
     // MARK: - Pause / resume
 
     @Test

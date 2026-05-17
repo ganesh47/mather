@@ -215,5 +215,14 @@ final class AppModel {
             )
             self?.completePendingLabGameplay(with: summary)
         }
+        roomQuestEngine.onSessionComplete = { [weak gameSessionStore] summary in
+            gameSessionStore?.save(
+                gameName: "Room Quest",
+                startedAt: summary.startedAt,
+                scoreValue: summary.collectedTokenCount,
+                scoreLabel: "tokens collected",
+                detail: summary.abstractCorrect ? "transfer correct" : "transfer retry"
+            )
+        }
     }
 }

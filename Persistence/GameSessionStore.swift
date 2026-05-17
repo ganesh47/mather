@@ -20,8 +20,25 @@ final class GameSessionStore {
         scoreLabel: String,
         detail: String? = nil
     ) {
+        let profileId = activeProfileIdProvider()
+        let descriptor = FetchDescriptor<StoredGameSession>(
+            predicate: #Predicate { session in
+                session.profileId == profileId
+                    && session.gameName == gameName
+                    && session.startedAt == startedAt
+            },
+            sortBy: [SortDescriptor(\StoredGameSession.startedAt, order: .reverse)]
+        )
+
+        if let matchingSessions = try? modelContext.fetch(descriptor),
+           !matchingSessions.isEmpty {
+            matchingSessions.dropFirst().forEach { modelContext.delete($0) }
+            try? modelContext.save()
+            return
+        }
+
         let session = StoredGameSession(
-            profileId: activeProfileIdProvider(),
+            profileId: profileId,
             gameName: gameName,
             startedAt: startedAt,
             durationSeconds: Date().timeIntervalSince(startedAt),
