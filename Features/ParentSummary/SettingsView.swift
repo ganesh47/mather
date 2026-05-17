@@ -99,8 +99,8 @@ struct SettingsView: View {
         .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
-                appModel.historyStore.clearAll()
-                appModel.gameSessionStore.clearAll()
+                appModel.historyStore.clearActiveProfile()
+                appModel.gameSessionStore.clearActiveProfile()
                 appModel.telemetryWriter.clearEventsForActiveProfile()
             }
         } message: {

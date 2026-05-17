@@ -68,7 +68,7 @@ final class GameSessionStore {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    func clearAll() {
+    func clearActiveProfile() {
         let profileId = activeProfileIdProvider()
         let descriptor = FetchDescriptor<StoredGameSession>(
             predicate: #Predicate { $0.profileId == profileId }
@@ -76,6 +76,10 @@ final class GameSessionStore {
         guard let sessions = try? modelContext.fetch(descriptor) else { return }
         sessions.forEach { modelContext.delete($0) }
         try? modelContext.save()
+    }
+
+    func clearAll() {
+        clearActiveProfile()
     }
 
     func clearAllProfiles() {

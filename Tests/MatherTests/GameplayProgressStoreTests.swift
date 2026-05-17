@@ -108,6 +108,39 @@ struct GameplayProgressStoreTests {
     }
 
     @Test
+    func clearActiveProfilePreservesOtherProfileGameSessions() throws {
+        let schema = Schema([StoredGameSession.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: config)
+        let context = ModelContext(container)
+        var activeProfileId = "profile-a"
+        let store = GameSessionStore(modelContext: context, activeProfileIdProvider: { activeProfileId })
+
+        store.save(
+            gameName: "Sum Sprint",
+            startedAt: Date(timeIntervalSince1970: 9_000),
+            scoreValue: 4,
+            scoreLabel: "profile A"
+        )
+        activeProfileId = "profile-b"
+        store.save(
+            gameName: "Room Quest",
+            startedAt: Date(timeIntervalSince1970: 10_000),
+            scoreValue: 7,
+            scoreLabel: "profile B"
+        )
+
+        activeProfileId = "profile-a"
+        store.clearActiveProfile()
+
+        let fetched = try context.fetch(FetchDescriptor<StoredGameSession>())
+        #expect(fetched.count == 1)
+        #expect(fetched[0].profileId == "profile-b")
+        #expect(fetched[0].gameName == "Room Quest")
+        #expect(fetched[0].scoreLabel == "profile B")
+    }
+
+    @Test
     func appSchemaIncludesGameplayProgressModels() throws {
         let schema = Schema([
             StoredSessionSummary.self,
