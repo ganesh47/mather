@@ -87,6 +87,28 @@ struct SessionHistoryStoreTests {
     }
 
     @Test
+    func clearActiveProfilePreservesOtherProfileSummaries() throws {
+        let schema = Schema([StoredSessionSummary.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: config)
+        let context = ModelContext(container)
+        var activeProfileId = "profile-a"
+        let store = SessionHistoryStore(modelContext: context, activeProfileIdProvider: { activeProfileId })
+
+        store.save(makeDraft(sessionId: "a-session"))
+        activeProfileId = "profile-b"
+        store.save(makeDraft(sessionId: "b-session"))
+
+        activeProfileId = "profile-a"
+        store.clearActiveProfile()
+
+        let fetched = try context.fetch(FetchDescriptor<StoredSessionSummary>())
+        #expect(fetched.count == 1)
+        #expect(fetched[0].profileId == "profile-b")
+        #expect(fetched[0].sessionId == "b-session")
+    }
+
+    @Test
     func saveMultipleSessionsAreAllPersisted() throws {
         let (store, context) = try makeInMemoryStore()
         store.save(makeDraft(sessionId: "aaa", problemsCompleted: 3))

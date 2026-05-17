@@ -36,7 +36,7 @@ final class SessionHistoryStore {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    func clearAll() {
+    func clearActiveProfile() {
         let profileId = activeProfileIdProvider()
         let descriptor = FetchDescriptor<StoredSessionSummary>(
             predicate: #Predicate { $0.profileId == profileId }
@@ -46,6 +46,10 @@ final class SessionHistoryStore {
             modelContext.delete(session)
         }
         try? modelContext.save()
+    }
+
+    func clearAll() {
+        clearActiveProfile()
     }
 
     func clearAllProfiles() {
