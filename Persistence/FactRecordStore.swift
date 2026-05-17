@@ -20,13 +20,17 @@ final class FactRecordStore {
     // MARK: - Fetch
 
     func fetchAll() -> [StoredFactRecord] {
-        let descriptor = FetchDescriptor<StoredFactRecord>()
+        let profileId = activeProfileIdProvider()
+        let descriptor = FetchDescriptor<StoredFactRecord>(
+            predicate: #Predicate { $0.profileId == profileId }
+        )
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
     func record(forKey key: String) -> StoredFactRecord? {
+        let profileId = activeProfileIdProvider()
         var descriptor = FetchDescriptor<StoredFactRecord>(
-            predicate: #Predicate { $0.factKey == key }
+            predicate: #Predicate { $0.profileId == profileId && $0.factKey == key }
         )
         descriptor.fetchLimit = 1
         return try? modelContext.fetch(descriptor).first
@@ -41,7 +45,7 @@ final class FactRecordStore {
         } else {
             let parts = factKey.split(separator: "+").compactMap { Int($0) }
             guard parts.count == 2 else { return }
-            let new = StoredFactRecord(factKey: factKey, addendA: parts[0], addendB: parts[1])
+            let new = StoredFactRecord(profileId: activeProfileIdProvider(), factKey: factKey, addendA: parts[0], addendB: parts[1])
             update(new)
             modelContext.insert(new)
         }
