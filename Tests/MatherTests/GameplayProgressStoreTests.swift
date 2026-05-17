@@ -83,6 +83,31 @@ struct GameplayProgressStoreTests {
     }
 
     @Test
+    func duplicateGameSessionSavesForSameProfileGameAndStartCreateOneRow() throws {
+        let (context, profileId) = try makeGameplayProgressContext()
+        let gameSessionStore = GameSessionStore(modelContext: context, activeProfileIdProvider: { profileId })
+        let started = Date(timeIntervalSince1970: 7_000)
+
+        gameSessionStore.save(
+            gameName: "Room Quest",
+            startedAt: started,
+            scoreValue: 5,
+            scoreLabel: "tokens collected"
+        )
+        gameSessionStore.save(
+            gameName: "Room Quest",
+            startedAt: started,
+            scoreValue: 99,
+            scoreLabel: "inflated duplicate"
+        )
+
+        let gameSessions = gameSessionStore.sessions(forGame: "Room Quest")
+        #expect(gameSessions.count == 1)
+        #expect(gameSessions[0].scoreValue == 5)
+        #expect(gameSessions[0].scoreLabel == "tokens collected")
+    }
+
+    @Test
     func appSchemaIncludesGameplayProgressModels() throws {
         let schema = Schema([
             StoredSessionSummary.self,

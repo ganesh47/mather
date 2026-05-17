@@ -14,6 +14,14 @@ enum RoomPhase: Equatable {
     indirect case paused(resumingTo: RoomPhase)     // hard pause — any phase
 }
 
+struct RoomQuestSessionSummary: Equatable {
+    let startedAt: Date
+    let endedAt: Date
+    let target: Int
+    let collectedTokenCount: Int
+    let abstractCorrect: Bool
+}
+
 @MainActor
 @Observable
 final class RoomQuestEngine {
@@ -53,7 +61,10 @@ final class RoomQuestEngine {
     private let scanner: RoomQuestScanner
     private let stationStore: RoomQuestStationStore
     var onExitToHome: (() -> Void)?
+    var onSessionComplete: (@MainActor (RoomQuestSessionSummary) -> Void)?
     private(set) var sessionStartedAt: Date = .now
+    private(set) var collectedTokenCount = 0
+    private var collectedStationRoles: Set<RoomQuestStationRole> = []
 
     private(set) var scanState: RoomQuestScanState = .idle
 
@@ -92,6 +103,8 @@ final class RoomQuestEngine {
         loadSavedReferenceState()
         setupStartedAt = .now
         sessionStartedAt = .now
+        collectedTokenCount = 0
+        collectedStationRoles = []
         route = nil
         routeProgress = nil
         phase = featureFlags.roomQuestSafetyAcknowledged ? .setup : .safetyAck
@@ -428,6 +441,7 @@ final class RoomQuestEngine {
     func markSpotVisited(index: Int) {
         guard let station = stations[safe: index] else { return }
         let quantity = station.quantity
+        collectTokens(for: station.role, quantity: quantity)
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestSpotVisited,
             payload: [
@@ -598,6 +612,7 @@ final class RoomQuestEngine {
     }
 
     func submitTransfer() {
+        guard phase == .onScreenTransfer else { return }
         guard let p = problem else { return }
         let correct = transferLeftCount == p.decompositionA && transferRightCount == p.decompositionB
         finishSession(abstractCorrect: correct)
@@ -673,16 +688,30 @@ final class RoomQuestEngine {
 
     private func finishSession(abstractCorrect: Bool) {
         guard let p = problem else { return }
+        let endedAt = Date.now
         try? telemetryWriter.append(SliceEvent(
             type: .roomQuestCompleted,
             payload: ["target": String(p.target), "abstract_correct": String(abstractCorrect)]
         ))
         phase = .complete
         feedbackMessage = abstractCorrect ? "Well done! You made \(p.target)." : "Good try!"
+        onSessionComplete?(RoomQuestSessionSummary(
+            startedAt: sessionStartedAt,
+            endedAt: endedAt,
+            target: p.target,
+            collectedTokenCount: collectedTokenCount,
+            abstractCorrect: abstractCorrect
+        ))
         if abstractCorrect {
             hapticsService.success(enabled: featureFlags.hapticsEnabled)
             flashCelebration()
         }
+    }
+
+    private func collectTokens(for role: RoomQuestStationRole, quantity: Int) {
+        guard !collectedStationRoles.contains(role) else { return }
+        collectedStationRoles.insert(role)
+        collectedTokenCount += quantity
     }
 
     private func enterRouteNode(index: Int) {
@@ -739,6 +768,9 @@ final class RoomQuestEngine {
             ))
         }
         if completed != nil {
+            if case .station(let role, let quantity) = node.kind {
+                collectTokens(for: role, quantity: quantity)
+            }
             let completionPayload = RouteQuestTelemetry.payload(
                 route: route,
                 node: node,
