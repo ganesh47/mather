@@ -140,7 +140,7 @@ let compassWalkTurnLevels: [CompassWalkTurnLevel] = [
     CompassWalkTurnLevel(id: 2, walkDirection: .right, steps: 2, targetDeg: 180),
     CompassWalkTurnLevel(id: 3, walkDirection: .forward, steps: 4, targetDeg: 45),
     CompassWalkTurnLevel(id: 4, walkDirection: .left, steps: 2, targetDeg: -90),
-    CompassWalkTurnLevel(id: 5, walkDirection: .forward, steps: 3, targetDeg: 270)
+    CompassWalkTurnLevel(id: 5, walkDirection: .forward, steps: 3, targetDeg: -90)
 ]
 
 // MARK: - Main view

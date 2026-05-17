@@ -117,6 +117,13 @@ struct CompassAnglesTests {
         #expect(CompassAnglesView.bodyRelativeHint(for: 180).contains("Keep turning"))
     }
 
+    @Test func finalLevelUsesLeftTurnCopyForLeftTurnSnapTarget() {
+        let finalLevel = compassWalkTurnLevels.last
+        #expect(finalLevel?.targetDeg == -90)
+        #expect(finalLevel?.turnHint == "Then turn left 90°.")
+        #expect(finalLevel?.instruction.contains("turn left 90 degrees") == true)
+    }
+
 }
 
 @Suite("Compass Walk + Turn sequencing")
