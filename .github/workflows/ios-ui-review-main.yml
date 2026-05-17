@@ -40,6 +40,12 @@ jobs:
             brew install xcodegen
           fi
 
+      - name: Install media tools
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            brew install ffmpeg
+          fi
+
       - name: Generate project
         run: xcodegen generate
 
@@ -144,32 +150,12 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          mkdir -p ci-screenshots
-          BUNDLE="UITestResults-${DEVICE_FAMILY}.xcresult"
-
-          if [[ -d "$BUNDLE" ]]; then
-            # Xcode 16+: bulk-export all attachments then move PNGs to flat directory.
-            # The --type directory flag bypasses the xcresulttool JSON manifest format,
-            # which changed in Xcode 16 and broke per-attachment payloadRef extraction.
-            xcrun xcresulttool export \
-              --path "$BUNDLE" \
-              --output-path ci-screenshots/exported \
-              --type directory 2>/dev/null || true
-            find ci-screenshots/exported -name "*.png" -exec mv {} ci-screenshots/ \; 2>/dev/null || true
-            rm -rf ci-screenshots/exported
-            COUNT=$(find ci-screenshots -name "*.png" | wc -l | tr -d ' ')
-            echo "Extracted $COUNT PNG(s) from xcresult bundle"
-          else
-            echo "No xcresult bundle found at $BUNDLE, skipping extraction"
-          fi
-
-          SIM_ID=$(xcrun simctl list devices booted \
-            | grep -E '\([-A-F0-9]+\)' | head -1 \
-            | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
-          if [[ -n "$SIM_ID" ]]; then
-            xcrun simctl io "$SIM_ID" screenshot \
-              "ci-screenshots/simulator-final-state-${DEVICE_FAMILY}.png" 2>/dev/null || true
-          fi
+          ci_scripts/collect_ui_review_artifacts.sh \
+            "UITestResults-${DEVICE_FAMILY}.xcresult" \
+            "ci-videos/ui-tests-${DEVICE_FAMILY}.mp4" \
+            ci-screenshots \
+            ci-device-state \
+            ci-contact-sheets
 
       - name: Shutdown simulator
         if: always()
@@ -193,6 +179,24 @@ jobs:
         with:
           name: ui-review-screenshots-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-screenshots/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload device state screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-review-device-state-${{ matrix.device-family }}-${{ github.run_number }}
+          path: ci-device-state/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload video contact sheets
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-review-contact-sheets-${{ matrix.device-family }}-${{ github.run_number }}
+          path: ci-contact-sheets/
           if-no-files-found: ignore
           retention-days: 30
 
