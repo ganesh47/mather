@@ -88,29 +88,16 @@ struct GameActivityCard: View {
     private var detailBody: some View {
         HStack(alignment: .center, spacing: 14) {
             detailVisualBox
-            VStack(alignment: .leading, spacing: 4) {
-                Text(activity.title)
-                    .font(.title3.weight(.black))
-                    .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.82)
-                Text(activity.tagline)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(MatherTheme.cardSubtitle)
-                    .lineLimit(2)
-                sensorAffordanceRow
-                if !canLaunch {
-                    Text("Try this on a device with motion sensing. Nothing is counted as wrong.")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(MatherTheme.cardSubtitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+            Text(activity.title)
+                .font(.title3.weight(.black))
+                .foregroundStyle(canLaunch ? MatherTheme.ink : MatherTheme.ink.opacity(0.55))
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
+                .multilineTextAlignment(.leading)
             Spacer(minLength: 6)
-            detailPlayButton
         }
         .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
         .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -135,19 +122,6 @@ struct GameActivityCard: View {
         }
         .frame(width: 104, height: 96)
         .accessibilityLabel(activity.artworkAccessibilityLabel)
-    }
-
-    private var detailPlayButton: some View {
-        ZStack {
-            Circle()
-                .fill(canLaunch ? tint : MatherTheme.cardSubtitle.opacity(0.35))
-            Image(systemName: canLaunch ? "play.fill" : "lock.open.trianglebadge.exclamationmark")
-                .font(.title2.weight(.black))
-                .foregroundStyle(.white)
-                .offset(x: canLaunch ? 2 : 0)
-        }
-        .frame(width: 64, height: 64)
-        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -213,46 +187,10 @@ struct GameActivityCard: View {
         }
     }
 
-    private var sensorAffordanceRow: some View {
-        LabDetailFlowLayout(spacing: 4) {
-            ForEach(activity.id.sensorAffordances(with: sensorCapabilities)) { affordance in
-                Label {
-                    Text(affordance.displayLabel)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                } icon: {
-                    Image(systemName: sensorIcon(for: affordance.need, isAvailable: affordance.isAvailable))
-                }
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(affordance.isAvailable ? tint : MatherTheme.cardSubtitle)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(
-                    (affordance.isAvailable ? tint.opacity(0.10) : MatherTheme.panel.opacity(0.72)),
-                    in: Capsule()
-                )
-                .accessibilityLabel(affordance.accessibilityLabel)
-                .accessibilityHint(affordance.accessibilityHint)
-            }
-        }
-    }
-
     private var sensorSummary: String {
         activity.id
             .sensorAffordances(with: sensorCapabilities)
             .map(\.displayLabel)
             .joined(separator: ". ")
-    }
-
-    private func sensorIcon(for need: LabSensorNeed, isAvailable: Bool) -> String {
-        if !isAvailable { return "exclamationmark.triangle.fill" }
-        switch need {
-        case .noSpecialSensor: return "hand.tap.fill"
-        case .motion: return "gyroscope"
-        case .compass: return "location.north.line.fill"
-        case .cameraMarkerMode: return "camera.viewfinder"
-        case .stepCounting: return "figure.walk"
-        case .haptics: return "waveform"
-        }
     }
 }
