@@ -29,7 +29,8 @@ final class CompactLayoutTests: XCTestCase {
 
         let app = launchExplorerLab()
         XCTAssertTrue(app.staticTexts["Explorer Lab"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Pick a stream to explore"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Pick a stream to explore"].exists)
+        XCTAssertFalse(app.staticTexts["Pick a stream"].exists)
         XCTAssertFalse(app.staticTexts["Choose a subject stream first"].exists)
 
         let numbers = app.buttons["lab-stream-card-numbers"]

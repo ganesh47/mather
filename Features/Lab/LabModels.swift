@@ -483,7 +483,7 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
             artMotif: "guided compass path",
             title: "Labs",
             subtitle: "Pick a learning stream, then follow a calm staged path when one is ready.",
-            callToAction: "Pick a stream"
+            callToAction: "Open streams"
         ),
         ExplorerPathPresentation(
             id: .games,
@@ -495,6 +495,15 @@ struct ExplorerPathPresentation: Identifiable, Equatable {
             callToAction: "Play now"
         ),
     ]
+}
+
+struct ExplorerCatalogRoutePresentation: Equatable {
+    let selectedPath: ExplorerPathID
+
+    var showsPathSelector: Bool { false }
+    var showsLabsStreamPrompt: Bool { false }
+    var showsDirectGames: Bool { selectedPath == .games }
+    var showsLabStreams: Bool { selectedPath == .labs }
 }
 
 enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {

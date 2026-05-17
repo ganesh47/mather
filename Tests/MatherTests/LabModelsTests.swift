@@ -182,7 +182,7 @@ final class LabModelsTests: XCTestCase {
 
         XCTAssertEqual(labs.title, "Labs")
         XCTAssertTrue(labs.subtitle.contains("Pick a learning stream"))
-        XCTAssertEqual(labs.callToAction, "Pick a stream")
+        XCTAssertEqual(labs.callToAction, "Open streams")
         XCTAssertEqual(labs.symbolName, "sparkles.rectangle.stack.fill")
         XCTAssertTrue(labs.artworkAccessibilityLabel.contains("Labs"))
 
@@ -192,6 +192,21 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(games.callToAction, "Play now")
         XCTAssertEqual(games.symbolName, "gamecontroller.fill")
         XCTAssertTrue(games.artworkAccessibilityLabel.contains("Games"))
+    }
+
+    func testExplorerCatalogRoutesHidePathSelectorWhilePreservingGamesRoute() {
+        let labs = ExplorerCatalogRoutePresentation(selectedPath: .labs)
+        let games = ExplorerCatalogRoutePresentation(selectedPath: .games)
+
+        XCTAssertFalse(labs.showsPathSelector)
+        XCTAssertFalse(labs.showsLabsStreamPrompt)
+        XCTAssertTrue(labs.showsLabStreams)
+        XCTAssertFalse(labs.showsDirectGames)
+
+        XCTAssertFalse(games.showsPathSelector)
+        XCTAssertFalse(games.showsLabsStreamPrompt)
+        XCTAssertFalse(games.showsLabStreams)
+        XCTAssertTrue(games.showsDirectGames)
     }
 
     func testGuidedStageArtworkMetadataAvoidsEmbeddedTextDependency() {
