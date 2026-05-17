@@ -672,7 +672,7 @@ final class StoredRoomQuestStationReference {
 
 @Model
 final class StoredFactRecord {
-    @Attribute(.unique) var factKey: String  // "\(addendA)+\(addendB)"
+    var factKey: String  // "\(addendA)+\(addendB)"
     var profileId: String = KidProfilePersistence.defaultProfileId
     var addendA: Int
     var addendB: Int
