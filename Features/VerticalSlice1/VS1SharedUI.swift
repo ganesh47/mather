@@ -224,3 +224,84 @@ struct VS1StageRail: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+struct ParentUnlockRequest: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let detail: String
+    let unlockLabel: String
+}
+
+struct ParentUnlockSheet: View {
+    let request: ParentUnlockRequest
+    var onCancel: () -> Void
+    var onUnlock: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 44, weight: .black))
+                .foregroundStyle(MatherTheme.softBlue)
+                .frame(width: 72, height: 72)
+                .background(MatherTheme.softBlue.opacity(0.14), in: Circle())
+
+            VStack(spacing: 8) {
+                Text("Parent unlock")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.ink)
+                Text(request.detail)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(MatherTheme.cardSubtitle)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HoldToUnlockButton(title: request.unlockLabel, action: onUnlock)
+
+            Button("Cancel", action: onCancel)
+                .font(.headline.weight(.black))
+                .foregroundStyle(MatherTheme.softBlue)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(MatherTheme.softBlue.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("parent-unlock-cancel-button")
+        }
+        .padding(24)
+        .presentationDetents([.height(360)])
+        .presentationDragIndicator(.visible)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("parent-unlock-sheet")
+    }
+}
+
+private struct HoldToUnlockButton: View {
+    let title: String
+    var action: () -> Void
+
+    @State private var isPressing = false
+
+    var body: some View {
+        Button(action: {}) {
+            Label(title, systemImage: isPressing ? "lock.open.fill" : "lock.fill")
+                .font(.headline.weight(.black))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 58)
+                .background(MatherTheme.accent, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(DarkModeCTAOverlay())
+                .scaleEffect(isPressing ? 0.98 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("parent-unlock-hold-button")
+        .accessibilityLabel(title)
+        .onLongPressGesture(
+            minimumDuration: 0.9,
+            maximumDistance: 48,
+            pressing: { pressing in
+                withAnimation(.easeOut(duration: 0.12)) {
+                    isPressing = pressing
+                }
+            },
+            perform: action
+        )
+    }
+}

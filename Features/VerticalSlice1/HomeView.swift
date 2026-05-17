@@ -5,6 +5,9 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
 
+    @State private var pendingParentUnlock: ParentUnlockRequest?
+    @State private var pendingParentAction: ParentHomeAction?
+
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
@@ -29,6 +32,13 @@ struct HomeView: View {
                 }
             }
         }
+        .sheet(item: $pendingParentUnlock) { request in
+            ParentUnlockSheet(
+                request: request,
+                onCancel: { clearParentUnlock() },
+                onUnlock: { unlockPendingParentAction() }
+            )
+        }
     }
 
     // MARK: - Child launcher
@@ -41,7 +51,7 @@ struct HomeView: View {
                 gradient: [MatherTheme.warm, MatherTheme.accent],
                 accessibilityIdentifier: "Play"
             ) {
-                appModel.pickProfileThenRun { appModel.engine.showSessionConfig() }
+                requestParentAction(.sessionSetup)
             }
             childLauncherTile(
                 title: "Labs",
@@ -112,7 +122,7 @@ struct HomeView: View {
 
     private var childQuickStartBand: some View {
         Button {
-            appModel.pickProfileThenRun { appModel.engine.showSessionConfig() }
+            requestParentAction(.sessionSetup)
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: "play.circle.fill")
@@ -164,7 +174,7 @@ struct HomeView: View {
                     icon: "chart.bar.fill",
                     tint: MatherTheme.warm
                 ) {
-                    appModel.engine.showParentSummary()
+                    requestParentAction(.parentSummary)
                 }
 
                 parentControlButton(
@@ -172,7 +182,7 @@ struct HomeView: View {
                     icon: "gearshape.fill",
                     tint: MatherTheme.softBlue
                 ) {
-                    appModel.engine.showSettings()
+                    requestParentAction(.settings)
                 }
             }
         }
@@ -195,5 +205,71 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
+    }
+
+    private func requestParentAction(_ action: ParentHomeAction) {
+        if appModel.featureFlags.testModeEnabled {
+            runParentAction(action)
+            return
+        }
+        pendingParentAction = action
+        pendingParentUnlock = action.unlockRequest
+    }
+
+    private func unlockPendingParentAction() {
+        guard let action = pendingParentAction else {
+            clearParentUnlock()
+            return
+        }
+        clearParentUnlock()
+        runParentAction(action)
+    }
+
+    private func clearParentUnlock() {
+        pendingParentUnlock = nil
+        pendingParentAction = nil
+    }
+
+    private func runParentAction(_ action: ParentHomeAction) {
+        switch action {
+        case .sessionSetup:
+            appModel.pickProfileThenRun { appModel.engine.showSessionConfig() }
+        case .parentSummary:
+            appModel.engine.showParentSummary()
+        case .settings:
+            appModel.engine.showSettings()
+        }
+    }
+}
+
+private enum ParentHomeAction {
+    case sessionSetup
+    case parentSummary
+    case settings
+
+    var unlockRequest: ParentUnlockRequest {
+        switch self {
+        case .sessionSetup:
+            return ParentUnlockRequest(
+                id: "session-setup",
+                title: "Session setup",
+                detail: "A parent unlock is required before changing session setup.",
+                unlockLabel: "Hold to open session setup"
+            )
+        case .parentSummary:
+            return ParentUnlockRequest(
+                id: "parent-summary",
+                title: "Parent Summary",
+                detail: "A parent unlock is required before opening progress and history.",
+                unlockLabel: "Hold to open Parent Summary"
+            )
+        case .settings:
+            return ParentUnlockRequest(
+                id: "settings",
+                title: "Settings",
+                detail: "A parent unlock is required before changing app settings.",
+                unlockLabel: "Hold to open Settings"
+            )
+        }
     }
 }

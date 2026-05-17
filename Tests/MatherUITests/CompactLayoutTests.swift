@@ -61,6 +61,23 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(parentControls.frame.minY, nextUp.frame.maxY, "Expected parent controls to read as secondary controls after child actions")
     }
 
+    func testParentLockedActionsUseHoldUnlockOutsideTestMode() throws {
+        let app = launchWithoutParentBypass()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
+
+        app.buttons["Play"].tap()
+        XCTAssertTrue(app.staticTexts["Parent unlock"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["A parent unlock is required before changing session setup."].exists)
+        app.buttons["parent-unlock-cancel-button"].tap()
+
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
+        app.buttons["Settings"].tap()
+        let unlockButton = app.buttons["parent-unlock-hold-button"]
+        XCTAssertTrue(unlockButton.waitForExistence(timeout: 5))
+        unlockButton.press(forDuration: 1.1)
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 10))
+    }
+
     func testGeometryGuidedPathCardsUseReadableShortActionsOnIPhone() throws {
         guard UIDevice.current.userInterfaceIdiom == .phone else {
             throw XCTSkip("Compact guided path regression only runs on iPhone simulators")
@@ -444,6 +461,19 @@ final class CompactLayoutTests: XCTestCase {
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES"
+        ]
+        app.launch()
+        return app
+    }
+
+    private func launchWithoutParentBypass() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "NO",
             "-feature.skipProfilePicker", "YES"
         ]
         app.launch()

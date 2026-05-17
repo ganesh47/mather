@@ -205,7 +205,7 @@ final class ScreenshotTests: XCTestCase {
         let app = launchFamilySettingsWithSeededHistory(count: 7)
         _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
 
-        app.buttons["Settings"].tap()
+        openParentLockedSettings(in: app)
         _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
         XCTAssertTrue(app.staticTexts["7 saved locally across all games"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["settings-view-full-history"].exists)
@@ -572,6 +572,15 @@ final class ScreenshotTests: XCTestCase {
         }
 
         XCTAssertTrue(makePrompt.waitForExistence(timeout: 15), "Expected concrete stage after tapping Start Session")
+    }
+
+    private func openParentLockedSettings(in app: XCUIApplication) {
+        app.buttons["Settings"].tap()
+        if app.staticTexts["Parent unlock"].waitForExistence(timeout: 2) {
+            let unlockButton = app.buttons["parent-unlock-hold-button"]
+            XCTAssertTrue(unlockButton.waitForExistence(timeout: 5))
+            unlockButton.press(forDuration: 1.1)
+        }
     }
 
     /// Attaches a full-screen screenshot to the test result with `.keepAlways` lifetime.
