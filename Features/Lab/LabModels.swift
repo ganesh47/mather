@@ -281,7 +281,7 @@ struct LabRememberStageExecution: Equatable {
     }
 
     var isComplete: Bool {
-        !deck.cards.isEmpty && Set(reviewedCardIDs).isSuperset(of: deck.cards.map(\.id))
+        !deck.cards.isEmpty && correctCardIDs.isSuperset(of: deck.cards.map(\.id))
     }
 
     var usesPunitiveCountdown: Bool { deck.hasPunitiveCountdown }

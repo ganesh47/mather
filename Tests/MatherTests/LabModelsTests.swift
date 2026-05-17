@@ -402,6 +402,26 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(execution.progressLabel, "2 / \(deck.cards.count)")
     }
 
+    func testRememberStageExecutionDoesNotCompleteAfterIncorrectFinalAnswer() throws {
+        let deck = LabRememberStageDeck.numbersNumberBondsTo10
+        let finalIndex = deck.cards.count - 1
+        let reviewedCardIDs = deck.cards.dropLast().map(\.id)
+        let correctCardIDs = Set(reviewedCardIDs)
+        var execution = LabRememberStageExecution(
+            deck: deck,
+            currentIndex: finalIndex,
+            reviewedCardIDs: reviewedCardIDs,
+            correctCardIDs: correctCardIDs
+        )
+        let finalCard = try XCTUnwrap(execution.currentCard)
+
+        XCTAssertFalse(execution.submit(answer: "not \(finalCard.answer)"))
+
+        XCTAssertTrue(execution.reviewedCardIDs.contains(finalCard.id))
+        XCTAssertFalse(execution.correctCardIDs.contains(finalCard.id))
+        XCTAssertFalse(execution.isComplete)
+    }
+
     func testNumbersRememberStageRoutesToReusableRememberDeck() throws {
         let plan = LabConceptSessionPlan.numbersNumberBondsTo10
         let remember = try XCTUnwrap(plan.stages.first { $0.stage == .remember })
