@@ -26,31 +26,20 @@ struct MatherApp: App {
     }
 
     private static func makeModelContainer(schema: Schema) -> ModelContainer {
+        let storeURL = SwiftDataStoreRecovery.defaultStoreURL()
+        let configuration = ModelConfiguration(schema: schema, url: storeURL)
         do {
-            return try ModelContainer(for: schema)
+            return try ModelContainer(for: schema, configurations: configuration)
         } catch {
-            // Migration failure (common on major OS upgrades). Wipe the store and start fresh
-            // rather than crashing — history and progress data is recoverable from iCloud backup.
-            deleteSwiftDataStore(for: schema)
+            // Migration failure (common on major OS upgrades). Quarantine only Mather's
+            // configured SwiftData store so unrelated app-support sqlite files are preserved.
+            SwiftDataStoreRecovery.quarantineStore(at: storeURL)
             do {
-                return try ModelContainer(for: schema)
+                return try ModelContainer(for: schema, configurations: configuration)
             } catch {
                 fatalError("Failed to create model container after store reset: \(error)")
             }
         }
-    }
-
-    private static func deleteSwiftDataStore(for schema: Schema) {
-        let fm = FileManager.default
-        guard let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
-        let storeDir = appSupport
-        let extensions = ["sqlite", "sqlite-shm", "sqlite-wal"]
-        do {
-            let files = try fm.contentsOfDirectory(at: storeDir, includingPropertiesForKeys: nil)
-            for url in files where extensions.contains(url.pathExtension) {
-                try? fm.removeItem(at: url)
-            }
-        } catch { /* best effort */ }
     }
 
     var body: some Scene {

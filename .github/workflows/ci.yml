@@ -31,6 +31,9 @@ jobs:
       - name: Generate project
         run: xcodegen generate
 
+      - name: Verify generated project is committed
+        run: git diff --exit-code Mather.xcodeproj
+
       - name: Choose simulator destination
         run: |
           set -euo pipefail

@@ -31,6 +31,7 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
 
     private(set) var activeSession: Session?
     private(set) var verifyFeedback: VerifyFeedback? = nil
+    private var verificationTask: Task<Void, Never>? = nil
 
     /// Called whenever the verify result changes to `.close` or `.noMatch` so the engine
     /// can fire speech. Set by `AppModel` at startup.
@@ -50,6 +51,7 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
         mode: RoomQuestScanMode,
         savedReference: RoomQuestSavedReference?
     ) async throws -> RoomQuestMarkerScanResult {
+        cancelActiveSession()
         verifyFeedback = nil
         locationService.requestWhenInUseIfNeeded()
         locationService.startUpdates()
@@ -88,14 +90,16 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
             activeSession = nil
 
         case .verify:
+            verificationTask?.cancel()
             let savedRef = session.savedReference
             let currentLocation = locationService.lastLocation
             let expectedRole = session.expectedRole
             let continuation = session.continuation
+            let sessionID = session.id
             let thresholds = featureFlags?.placeMatchThresholds ?? .default
             verifyFeedback = .evaluating
 
-            Task.detached { [weak self, savedRef, currentLocation, thresholds] in
+            verificationTask = Task.detached { [weak self, savedRef, currentLocation, thresholds] in
                 let (result, wasGPS, gpsMetres, visionDist) = PlaceMatchService.evaluate(
                     savedLatitude: savedRef?.latitude,
                     savedLongitude: savedRef?.longitude,
@@ -109,11 +113,14 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
                 let gpsStr   = gpsMetres.map   { String(format: "%.1f m", $0) } ?? "n/a"
                 let visStr   = visionDist.map  { String(format: "%.3f",   $0) } ?? "n/a"
                 print("[PlaceMatch] result=\(result) wasGPS=\(wasGPS) GPS=\(gpsStr) Vision=\(visStr)")
+                guard !Task.isCancelled else { return }
                 await MainActor.run { [weak self] in
-                    guard let self, self.activeSession != nil else {
-                        // Session was cancelled while PlaceMatchService ran — ignore.
+                    guard let self,
+                          self.activeSession?.id == sessionID else {
+                        // Session was cancelled or replaced while PlaceMatchService ran.
                         return
                     }
+                    self.verificationTask = nil
                     switch result {
                     case .match:
                         self.verifyFeedback = .match
@@ -177,7 +184,16 @@ final class RoomQuestLiveScanner: NSObject, RoomQuestScanner {
     }
 
     func cancelScan() {
-        guard let session = activeSession else { return }
+        cancelActiveSession()
+    }
+
+    private func cancelActiveSession() {
+        verificationTask?.cancel()
+        verificationTask = nil
+        guard let session = activeSession else {
+            verifyFeedback = nil
+            return
+        }
         session.continuation.resume(throwing: RoomQuestScannerError.cancelled)
         locationService.stopUpdates()
         activeSession = nil
