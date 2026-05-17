@@ -8,32 +8,25 @@ struct HomeView: View {
     var body: some View {
         ZStack {
             MatherTheme.background.ignoresSafeArea()
-            ScrollView {
-                VStack(spacing: 20) {
-                    Text("Mather")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
-                        .foregroundStyle(MatherTheme.ink)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: ResponsiveLayout.isWide(horizontalSizeClass) ? 20 : 14) {
+                        Text("Mather")
+                            .font(.system(size: ResponsiveLayout.isWide(horizontalSizeClass) ? 48 : 44, weight: .black, design: .rounded))
+                            .foregroundStyle(MatherTheme.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                    childLauncherGrid
+                        childLauncherGrid
 
-                    HStack(spacing: 14) {
-                        Button("Parent Summary") {
-                            appModel.engine.showParentSummary()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.warm.opacity(0.65)))
+                        childQuickStartBand
 
-                        Button("Settings") {
-                            appModel.engine.showSettings()
-                        }
-                        .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.55)))
+                        parentControlsBand
                     }
-
-                    Spacer(minLength: 0)
+                    .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
+                    .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: proxy.size.height, alignment: .top)
                 }
-                .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
-                .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
-                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -114,6 +107,93 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
+        .accessibilityLabel(title)
+    }
+
+    private var childQuickStartBand: some View {
+        Button {
+            appModel.pickProfileThenRun { appModel.engine.showSessionConfig() }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 34, weight: .black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .frame(width: 52, height: 52)
+                    .background(MatherTheme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Next up")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+                    Text("Start a short Targets round")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MatherTheme.cardSubtitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.title2.weight(.black))
+                    .foregroundStyle(MatherTheme.accent)
+                    .accessibilityHidden(true)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
+            .background(MatherTheme.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(MatherTheme.accent.opacity(0.16), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("home-child-next-up")
+        .accessibilityLabel("Next up, start a short Targets round")
+    }
+
+    private var parentControlsBand: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Parent controls", systemImage: "person.2.fill")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+
+            HStack(spacing: 10) {
+                parentControlButton(
+                    title: "Parent Summary",
+                    icon: "chart.bar.fill",
+                    tint: MatherTheme.warm
+                ) {
+                    appModel.engine.showParentSummary()
+                }
+
+                parentControlButton(
+                    title: "Settings",
+                    icon: "gearshape.fill",
+                    tint: MatherTheme.softBlue
+                ) {
+                    appModel.engine.showSettings()
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MatherTheme.panel.opacity(0.58), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("home-parent-controls")
+    }
+
+    private func parentControlButton(title: String, icon: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(MatherTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(tint.opacity(0.18), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
         .accessibilityLabel(title)
     }
 }

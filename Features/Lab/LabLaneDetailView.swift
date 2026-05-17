@@ -183,22 +183,25 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.82)
+                        .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
 
                 Button {
                     start(plan)
                 } label: {
-                    Label(startLabel(for: plan), systemImage: appModel.labConceptSessionProgressStore.hasProgress(for: plan) ? "arrow.clockwise.circle.fill" : "play.fill")
+                    Label(visibleStartLabel(for: plan), systemImage: appModel.labConceptSessionProgressStore.hasProgress(for: plan) ? "arrow.clockwise.circle.fill" : "play.fill")
                         .font(.caption.weight(.black))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                        .frame(minWidth: 92, minHeight: 44)
                         .background(tint, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(startLabel(for: plan)) \(plan.title)")
                 .accessibilityHint("This is the primary next action for the guided path. Games remain directly playable below.")
+                .accessibilityIdentifier("guided-plan-action-\(plan.id)")
             }
 
             if let progress {
@@ -250,6 +253,7 @@ struct LabLaneDetailView: View {
         .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(presentation.hiddenDetailAccessibilityLabel) Primary action: \(startLabel(for: plan)).")
+        .accessibilityIdentifier("guided-plan-card-\(plan.id)")
     }
 
     private func stagePlanCard(_ stage: LabSessionStagePlan, progress: LabConceptSessionProgress?, tint: Color) -> some View {
@@ -547,6 +551,12 @@ struct LabLaneDetailView: View {
 
     private func startLabel(for plan: LabConceptSessionPlan) -> String {
         appModel.labConceptSessionProgressStore.resumeLabel(for: plan)
+    }
+
+    private func visibleStartLabel(for plan: LabConceptSessionPlan) -> String {
+        appModel.labConceptSessionProgressStore.hasProgress(for: plan)
+            ? plan.continueAffordanceLabel
+            : plan.startAffordanceLabel
     }
 
     private func progressState(for stage: GuidedLabStage, progress: LabConceptSessionProgress?) -> String? {

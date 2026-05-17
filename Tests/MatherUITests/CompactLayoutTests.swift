@@ -40,6 +40,44 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(geometry.isHittable, "Expected the second Lab stream card to be reachable on compact iPhone")
     }
 
+    func testHomeCompactUsesFirstViewportBelowChildTiles() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact home first-viewport regression only runs on iPhone simulators")
+        }
+
+        let app = launchWithVS1()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
+
+        let games = app.buttons["GamesEntry"]
+        let nextUp = app.buttons["home-child-next-up"]
+        let parentControls = app.otherElements["home-parent-controls"]
+
+        XCTAssertTrue(games.waitForExistence(timeout: 5))
+        XCTAssertTrue(nextUp.waitForExistence(timeout: 5))
+        XCTAssertTrue(parentControls.waitForExistence(timeout: 5))
+        XCTAssertTrue(nextUp.isHittable, "Expected child-first next-up action to occupy the compact home lower viewport")
+        XCTAssertGreaterThanOrEqual(nextUp.frame.minY, games.frame.maxY, "Expected the lower band to sit after child launcher tiles")
+        XCTAssertGreaterThanOrEqual(parentControls.frame.minY, nextUp.frame.maxY, "Expected parent controls to read as secondary controls after child actions")
+    }
+
+    func testGeometryGuidedPathCardsUseReadableShortActionsOnIPhone() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact guided path regression only runs on iPhone simulators")
+        }
+
+        let app = launchGeometryLane()
+        XCTAssertTrue(app.staticTexts["Guided path"].waitForExistence(timeout: 10))
+
+        let shapeCard = app.otherElements["guided-plan-card-geometry-shape-names"]
+        let shapeAction = app.buttons["guided-plan-action-geometry-shape-names"]
+        XCTAssertTrue(shapeCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(shapeAction.waitForExistence(timeout: 5))
+        XCTAssertTrue(shapeAction.staticTexts["Start"].exists, "Expected guided path CTA to use short visible copy")
+        XCTAssertGreaterThanOrEqual(shapeAction.frame.height, 44, "Expected guided path CTA to keep a 44 pt hit target")
+        XCTAssertGreaterThanOrEqual(shapeAction.frame.width, 44, "Expected guided path CTA to keep a 44 pt hit target")
+        XCTAssertTrue(shapeAction.label.contains("Start Shape Lab"), "Expected the accessibility label to keep the full guided path context")
+    }
+
     func testBondBlastTargetTwelveKeepsLowAndMiddlePairsReachableOnIPhone() throws {
         guard UIDevice.current.userInterfaceIdiom == .phone else {
             throw XCTSkip("Compact Bond Blast reachability regression only runs on iPhone simulators")
@@ -166,6 +204,15 @@ final class CompactLayoutTests: XCTestCase {
         }
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         XCTAssertTrue(start.isHittable, "Expected Start Session to be reachable by scrolling on compact setup")
+        for _ in 0..<3 where app.buttons["start-session-button"].frame.maxY > app.frame.maxY - 24 {
+            app.swipeUp()
+        }
+        let spacedStart = app.buttons["start-session-button"]
+        XCTAssertLessThanOrEqual(
+            spacedStart.frame.maxY,
+            app.frame.maxY - 24,
+            "Expected Start Session to keep comfortable bottom spacing above the compact safe area"
+        )
 
         let back = app.buttons["back-to-home-button"]
         if !back.isHittable {
@@ -375,13 +422,28 @@ final class CompactLayoutTests: XCTestCase {
         return app
     }
 
+    private func launchGeometryLane() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "geometryLane"
+        ]
+        app.launch()
+        return app
+    }
+
     private func launchWithVS1() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
-            "-feature.testModeEnabled", "YES"
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES"
         ]
         app.launch()
         return app

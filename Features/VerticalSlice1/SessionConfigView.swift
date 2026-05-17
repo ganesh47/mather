@@ -38,7 +38,7 @@ struct SessionConfigView: View {
                         .frame(minHeight: horizontalSizeClass == .regular ? max(proxy.size.height - 24, 0) : nil, alignment: .center)
                         .padding(.horizontal, 24)
                         .padding(.top, horizontalSizeClass == .regular ? 20 : 14)
-                        .padding(.bottom, 32)
+                        .padding(.bottom, horizontalSizeClass == .regular ? 32 : 84)
                     }
                     .scrollIndicators(.visible)
                 }
