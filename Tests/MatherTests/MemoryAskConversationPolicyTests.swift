@@ -60,15 +60,26 @@ struct MemoryAskConversationPolicyTests {
     @MainActor
     @Test func fallbackUsesCustomFactCardsWhenMetadataHasNoGenericTurns() async {
         let policy = MemoryAskConversationPolicy()
-        let evaporation = MemoryDeck.waterCycle.first { $0.id == "water-cycle-evaporation" }!
-        let fruit = MemoryDeck.fruits.first { $0.detailCards.contains { $0.title == "Taste" } }!
+        let customFactOnlyCard = MemoryAnimal(
+            id: "custom-fact-only",
+            name: "Sprout",
+            picture: .text("Sprout"),
+            metadata: MemoryCardMetadata(
+                deck: .fruits,
+                category: "plant growth",
+                kind: "plant growth",
+                factCards: [
+                    MemoryFactCard(title: "Concept", value: "A seed starting to grow"),
+                    MemoryFactCard(title: "Action", value: "The first leaves push upward"),
+                    MemoryFactCard(title: "Where", value: "In warm soil")
+                ]
+            )
+        )
 
-        let waterSession = await policy.startSession(for: evaporation)
-        let fruitSession = await policy.startSession(for: fruit)
+        let session = await policy.startSession(for: customFactOnlyCard)
 
-        #expect(waterSession.suggestedTurns.contains { $0.id == "fact-concept" || $0.id == "fact-action" })
-        #expect(waterSession.suggestedTurns.contains { $0.answer.localizedCaseInsensitiveContains("Action:") })
-        #expect(fruitSession.suggestedTurns.contains { $0.id == "fact-taste" || $0.id == "fact-usually-found" })
+        #expect(session.suggestedTurns.map(\.id) == ["fact-concept", "fact-action", "fact-where"])
+        #expect(session.suggestedTurns.contains { $0.answer.localizedCaseInsensitiveContains("Action:") })
     }
 
     @MainActor
