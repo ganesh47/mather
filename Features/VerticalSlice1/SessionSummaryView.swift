@@ -5,6 +5,8 @@ struct SessionSummaryView: View {
     @State private var scale: CGFloat = 0.7
     @State private var opacity: Double = 0
     @State private var confettiBurst = false
+    @State private var pendingParentUnlock: ParentUnlockRequest?
+    @State private var pendingParentAction: ParentSummaryAction?
 
     private var summary: SessionSummaryDraft? { appModel.engine.completedSummary }
     private var problemsSolvedText: String {
@@ -66,7 +68,7 @@ struct SessionSummaryView: View {
 
                 VStack(spacing: 12) {
                     Button("Play again") {
-                        appModel.engine.showSessionConfig()
+                        requestParentAction(.sessionSetup)
                     }
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("session-summary-play-again-button")
@@ -82,7 +84,7 @@ struct SessionSummaryView: View {
                     .accessibilityIdentifier("session-summary-done-button")
 
                     Button("Parent summary") {
-                        appModel.engine.showParentSummary()
+                        requestParentAction(.parentSummary)
                     }
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.secondary)
@@ -100,6 +102,13 @@ struct SessionSummaryView: View {
             withAnimation(.easeOut(duration: 0.9)) {
                 confettiBurst = true
             }
+        }
+        .sheet(item: $pendingParentUnlock) { request in
+            ParentUnlockSheet(
+                request: request,
+                onCancel: { clearParentUnlock() },
+                onUnlock: { unlockPendingParentAction() }
+            )
         }
     }
 
@@ -156,5 +165,61 @@ struct SessionSummaryView: View {
             }
         }
         .allowsHitTesting(false)
+    }
+
+    private func requestParentAction(_ action: ParentSummaryAction) {
+        if appModel.featureFlags.testModeEnabled {
+            runParentAction(action)
+            return
+        }
+        pendingParentAction = action
+        pendingParentUnlock = action.unlockRequest
+    }
+
+    private func unlockPendingParentAction() {
+        guard let action = pendingParentAction else {
+            clearParentUnlock()
+            return
+        }
+        clearParentUnlock()
+        runParentAction(action)
+    }
+
+    private func clearParentUnlock() {
+        pendingParentUnlock = nil
+        pendingParentAction = nil
+    }
+
+    private func runParentAction(_ action: ParentSummaryAction) {
+        switch action {
+        case .sessionSetup:
+            appModel.engine.showSessionConfig()
+        case .parentSummary:
+            appModel.engine.showParentSummary()
+        }
+    }
+}
+
+private enum ParentSummaryAction {
+    case sessionSetup
+    case parentSummary
+
+    var unlockRequest: ParentUnlockRequest {
+        switch self {
+        case .sessionSetup:
+            return ParentUnlockRequest(
+                id: "summary-session-setup",
+                title: "Play again",
+                detail: "A parent unlock is required before changing setup for another session.",
+                unlockLabel: "Hold to open session setup"
+            )
+        case .parentSummary:
+            return ParentUnlockRequest(
+                id: "summary-parent-summary",
+                title: "Parent Summary",
+                detail: "A parent unlock is required before opening progress and history.",
+                unlockLabel: "Hold to open Parent Summary"
+            )
+        }
     }
 }

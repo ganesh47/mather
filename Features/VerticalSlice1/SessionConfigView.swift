@@ -72,8 +72,18 @@ struct SessionConfigView: View {
     private var setupCard: some View {
         CardSurface {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Session setup")
-                    .font(.title.weight(.black))
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text("Session setup")
+                        .font(.title.weight(.black))
+
+                    Label("Parent only", systemImage: "lock.shield.fill")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(MatherTheme.softBlue)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(MatherTheme.softBlue.opacity(0.12), in: Capsule())
+                        .accessibilityIdentifier("session-setup-parent-only-badge")
+                }
                 Text("Keep sessions short and consistent.")
                     .font(.headline)
                     .foregroundStyle(MatherTheme.ink.opacity(0.6))
