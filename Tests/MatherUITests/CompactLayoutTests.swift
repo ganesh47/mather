@@ -61,14 +61,16 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(parentControls.frame.minY, nextUp.frame.maxY, "Expected parent controls to read as secondary controls after child actions")
     }
 
-    func testParentLockedActionsUseHoldUnlockOutsideTestMode() throws {
+    func testChildSessionStartSkipsParentUnlockButParentControlsStayLocked() throws {
         let app = launchWithoutParentBypass()
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
 
         app.buttons["Play"].tap()
-        XCTAssertTrue(app.staticTexts["Parent unlock"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["A parent unlock is required before changing session setup."].exists)
-        app.buttons["parent-unlock-cancel-button"].tap()
+        XCTAssertTrue(app.staticTexts["Session setup"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Parent unlock"].exists)
+
+        app.buttons["Back to Home"].tap()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 10))
 
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
         app.buttons["Settings"].tap()

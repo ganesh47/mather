@@ -208,7 +208,7 @@ struct HomeView: View {
     }
 
     private func requestParentAction(_ action: ParentHomeAction) {
-        if appModel.featureFlags.testModeEnabled {
+        if appModel.featureFlags.testModeEnabled || !action.requiresParentUnlock {
             runParentAction(action)
             return
         }
@@ -246,6 +246,15 @@ private enum ParentHomeAction {
     case sessionSetup
     case parentSummary
     case settings
+
+    var requiresParentUnlock: Bool {
+        switch self {
+        case .sessionSetup:
+            return false
+        case .parentSummary, .settings:
+            return true
+        }
+    }
 
     var unlockRequest: ParentUnlockRequest {
         switch self {
