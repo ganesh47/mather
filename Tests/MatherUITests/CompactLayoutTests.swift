@@ -354,6 +354,24 @@ final class CompactLayoutTests: XCTestCase {
         XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
     }
 
+    func testCountryCardsCompactGameplayControlsStayPinned() throws {
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("Compact Country Cards controls regression only runs on iPhone simulators")
+        }
+
+        let app = launchCountryCardsThread()
+        XCTAssertTrue(app.staticTexts["Country Cards"].waitForExistence(timeout: 10))
+
+        let retry = app.buttons["GameplayStageRetryButton"]
+        let score = app.staticTexts["GameplayStageScoreLabel"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 5))
+        XCTAssertTrue(score.waitForExistence(timeout: 5))
+        XCTAssertTrue(retry.isHittable, "Expected Retry to stay pinned without scrolling on compact Country Cards")
+        XCTAssertTrue(score.isHittable, "Expected Score/Learning label to stay pinned without scrolling on compact Country Cards")
+        XCTAssertLessThanOrEqual(retry.frame.maxY, app.frame.maxY, "Expected pinned controls to stay inside the viewport")
+        XCTAssertLessThanOrEqual(score.frame.maxY, app.frame.maxY, "Expected pinned score label to stay inside the viewport")
+    }
+
 
     private func advanceStoryAnchorIfPresent(_ app: XCUIApplication) {
         let startBuilding = app.buttons["story-anchor-start-button"]
@@ -451,6 +469,20 @@ final class CompactLayoutTests: XCTestCase {
             "-feature.testModeEnabled", "YES",
             "-feature.skipProfilePicker", "YES",
             "-uiTest.startRoute", "geometryLane"
+        ]
+        app.launch()
+        return app
+    }
+
+    private func launchCountryCardsThread() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "countryCards"
         ]
         app.launch()
         return app

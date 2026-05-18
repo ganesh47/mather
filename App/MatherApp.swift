@@ -80,6 +80,8 @@ private extension MatherApp {
             appModel.engine.showLabLane(.geometry)
         case "watercycle", "water-cycle", "watercyclethread", "water-cycle-thread":
             appModel.engine.showWaterCycle()
+        case "countries", "countrycards", "country-cards", "countrycardsthread", "country-cards-thread":
+            appModel.engine.showCountriesGameplayThread()
         case "watercyclelab", "water-cycle-lab", "legacy-watercycle", "legacy-water-cycle":
             appModel.engine.showLegacyWaterCycleLab()
         case "bondblast", "bond-blast", "bondblastfinale", "bond-blast-finale":
