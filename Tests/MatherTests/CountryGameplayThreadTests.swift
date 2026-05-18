@@ -12,6 +12,8 @@ struct CountryGameplayThreadTests {
         #expect(thread.id == "countries")
         #expect(thread.title == "Country Cards")
         #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])
+        #expect(thread.stages.map(\.title) == ["Look + Learn", "Flag Match", "Capital Match", "Currency Match", "Continent Quiz"])
+        #expect(thread.stages.map(\.propertyTypeIDs) == [[], ["flag"], ["capital"], ["currency"], ["continent"]])
         #expect(thread.entities.map(\.id) == [
             "country-india",
             "country-japan",
@@ -87,18 +89,18 @@ struct CountryGameplayThreadTests {
         #expect(easyPairs.allSatisfy { $0.right.presentation == .titleOnly })
 
         let flip = try round(kind: .flipMemory, thread: thread)
-        #expect(flip.items.allSatisfy { ["flag", "capital", "currency"].contains($0.propertyTypeID ?? "") })
+        #expect(flip.items.allSatisfy { $0.propertyTypeID == "capital" })
         let flipPairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: flip)
-        let flipFlagCards = flipPairs.filter { $0.id.contains("-flag") }.map(\.right)
-        #expect(!flipFlagCards.isEmpty)
-        #expect(flipFlagCards.allSatisfy { $0.presentation == .visualOnly })
-        #expect(flipFlagCards.allSatisfy { $0.subtitle == "Flag" })
+        #expect(!flipPairs.isEmpty)
+        #expect(flipPairs.allSatisfy { $0.right.subtitle == "Capital" })
+        #expect(flipPairs.allSatisfy { $0.right.presentation == .visualWithTitle })
 
         let bondBlast = try round(kind: .bondBlast, thread: thread)
         #expect(bondBlast.items.count == 10)
-        #expect(bondBlast.items.allSatisfy { ["capital", "currency", "continent", "language", "map-shape"].contains($0.propertyTypeID ?? "") })
+        #expect(bondBlast.items.allSatisfy { $0.propertyTypeID == "currency" })
 
         let quiz = try round(kind: .multipleChoice, thread: thread)
+        #expect(quiz.items.allSatisfy { $0.propertyTypeID == "continent" })
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: quiz)
         #expect(!questions.isEmpty)
         #expect(questions.allSatisfy { $0.choices.contains($0.answer) })
@@ -108,6 +110,7 @@ struct CountryGameplayThreadTests {
     func countryEasyMemoryStartsWithDeterministicFlagNameRoundWithoutDuplicateVisibleAnswers() throws {
         let thread = CountryGameplayThread.thread
         let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        #expect(stage.title == "Flag Match")
         #expect(stage.propertyTypeIDs == ["flag"])
         #expect(stage.prompt.localizedCaseInsensitiveContains("country name"))
         #expect(stage.prompt.localizedCaseInsensitiveContains("flag"))
@@ -164,8 +167,24 @@ struct CountryGameplayThreadTests {
     @Test
     func mapShapeQuizItemsCarryDrawableShapeKeys() throws {
         let thread = CountryGameplayThread.thread
-        let stage = try #require(thread.stages.first { $0.kind == .multipleChoice })
-        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 18)
+        let selectedIDs = ["country-india", "country-france", "country-egypt", "country-brazil"]
+        let items = try selectedIDs.map { entityID in
+            let entity = try #require(thread.entities.first { $0.id == entityID })
+            let mapShape = try #require(entity.properties.first { $0.typeID == "map-shape" })
+            return GameplayRoundItem(
+                id: "quiz-\(entityID)-map-shape",
+                entityID: entityID,
+                propertyID: mapShape.id,
+                propertyTypeID: mapShape.typeID
+            )
+        }
+        let round = GameplayRoundDefinition(
+            id: "country-map-shape-drawable",
+            stageID: "map-shape-quiz",
+            kind: .multipleChoice,
+            items: items,
+            seed: 18
+        )
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round)
         let mapShapeAnswers = questions.map(\.answer).filter { $0.subtitle == "Map Shape" }
 

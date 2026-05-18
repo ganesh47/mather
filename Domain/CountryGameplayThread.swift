@@ -222,10 +222,10 @@ enum CountryGameplayThread {
         ],
         stages: [
             GameplayStageDefinition(id: "flashcards", kind: .flashcards, title: "Look + Learn", prompt: "Meet each country, flag, capital, map clue, language, and money.", maximumItemCount: 8),
-            GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Easy Memory", prompt: "Start with one focused round matching each flag to its country name.", propertyTypeIDs: ["flag"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "flip-memory", kind: .flipMemory, title: "Flip Memory", prompt: "Flip and remember flags, capitals, and currencies.", propertyTypeIDs: ["flag", "capital", "currency"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "bond-blast", kind: .bondBlast, title: "Bond Blast", prompt: "Connect each country to mixed facts.", propertyTypeIDs: ["capital", "currency", "continent", "language", "map-shape"], maximumItemCount: 10),
-            GameplayStageDefinition(id: "multiple-choice", kind: .multipleChoice, title: "Quiz", prompt: "Pick the best country fact.", propertyTypeIDs: ["capital", "currency", "flag", "map-shape", "continent", "language"], maximumItemCount: 12)
+            GameplayStageDefinition(id: "easy-memory", kind: .easyMemory, title: "Flag Match", prompt: "Match each flag to a title-only country name card.", propertyTypeIDs: ["flag"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "flip-memory", kind: .flipMemory, title: "Capital Match", prompt: "Flip and remember which capital city belongs to each country.", propertyTypeIDs: ["capital"], maximumItemCount: 8),
+            GameplayStageDefinition(id: "bond-blast", kind: .bondBlast, title: "Currency Match", prompt: "Connect each country to the money used there.", propertyTypeIDs: ["currency"], maximumItemCount: 10),
+            GameplayStageDefinition(id: "multiple-choice", kind: .multipleChoice, title: "Continent Quiz", prompt: "Pick the continent for each country.", propertyTypeIDs: ["continent"], maximumItemCount: 12)
         ]
     )
 
