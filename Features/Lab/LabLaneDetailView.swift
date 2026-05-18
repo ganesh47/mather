@@ -301,8 +301,10 @@ struct LabLaneDetailView: View {
                 .foregroundStyle(MatherTheme.ink)
 
             if lane.isReady {
-                ForEach(lane.activities) { activity in
-                    activityCard(activity, lane: lane, tint: tint)
+                LazyVGrid(columns: gameLauncherColumns, spacing: 12) {
+                    ForEach(lane.activities) { activity in
+                        activityCard(activity, lane: lane, tint: tint)
+                    }
                 }
             } else {
                 Label("Games coming soon", systemImage: "sparkles")
@@ -321,11 +323,15 @@ struct LabLaneDetailView: View {
             activity: activity,
             tint: tint,
             canLaunch: activity.id.canDirectLaunch(with: sensorCapabilities),
-            layoutMode: .detail,
+            layoutMode: .grid,
             sensorCapabilities: sensorCapabilities
         ) {
             launch(activity.id)
         }
+    }
+
+    private var gameLauncherColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 132, maximum: 220), spacing: 12)]
     }
 
     private func recallSection(_ lane: CapabilityLane, tint: Color) -> some View {

@@ -915,8 +915,8 @@ final class ScreenshotTests: XCTestCase {
         snapshot(app, "UXReview-LabGames-GridCards")
     }
 
-    /// Phase 3: Geometry lane detail renders GameActivityCard in detail layout.
-    func testScreenshot_UXReview_GeometryLaneDetail() {
+    /// Phase 3: Geometry lane detail renders sparse icon-name game launchers.
+    func testScreenshot_UXReview_GeometryLaneIconNameLaunchers() {
         let app = launchApp(with: [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
@@ -926,7 +926,7 @@ final class ScreenshotTests: XCTestCase {
         ])
 
         _ = app.staticTexts["Geometry"].waitForExistence(timeout: 10)
-        snapshot(app, "UXReview-GeometryLane-DetailCards")
+        snapshot(app, "UXReview-GeometryLane-IconNameLaunchers")
     }
 
     /// Phase 4: Shape Names thread navigates through flashcards → name match stages.
