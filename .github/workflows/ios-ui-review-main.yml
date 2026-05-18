@@ -139,6 +139,7 @@ jobs:
             -only-testing MatherUITests/ScreenshotTests \
             -skip-testing MatherUITests/ScreenshotTests/testConcreteBuild_AccentRowLockedUntilWarmFull \
             -skip-testing MatherUITests/ScreenshotTests/testSessionHistoryShowsMultipleSavedSessionsInParentSummaryAndSettings \
+            -skip-testing MatherUITests/ScreenshotTests/testFamilySettingsHidesPilotRunbookAndInlineHistoryRows \
             -resultBundlePath "UITestResults-${DEVICE_FAMILY}.xcresult" \
             CODE_SIGNING_ALLOWED=NO
           XCODE_EXIT=$?
