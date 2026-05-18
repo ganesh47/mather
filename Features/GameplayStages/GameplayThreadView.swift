@@ -66,12 +66,23 @@ struct GameplayThreadView: View {
                     activeStage(compact: compact)
                         .id(navigation.stageAttemptID)
                         .frame(maxWidth: GameplayStageRenderSupport.maximumContentWidth(compact: compact))
-                    controls(compact: compact)
                 }
                 .padding(compact ? 14 : 24)
+                .padding(.bottom, compact ? 86 : 78)
                 .frame(maxWidth: .infinity)
             }
-            .safeAreaPadding(.bottom, compact ? 18 : 10)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                controls(compact: compact)
+                    .padding(.horizontal, compact ? 14 : 24)
+                    .padding(.top, compact ? 8 : 10)
+                    .padding(.bottom, compact ? 10 : 12)
+                    .background(.ultraThinMaterial)
+                    .overlay(alignment: .top) {
+                        Rectangle()
+                            .fill(MatherTheme.panelDeep.opacity(0.12))
+                            .frame(height: 1)
+                    }
+            }
             .background(MatherTheme.background.ignoresSafeArea())
         }
         .navigationTitle(thread.title)
@@ -248,6 +259,7 @@ struct GameplayThreadView: View {
             .font(.subheadline.weight(.semibold).monospacedDigit())
             .foregroundStyle(MatherTheme.ink.opacity(0.8))
             .accessibilityLabel(navigation.stageResults.isEmpty ? "Learning stage in progress" : "Current score \(summary.scorePoints)")
+            .accessibilityIdentifier("GameplayStageScoreLabel")
     }
 }
 
