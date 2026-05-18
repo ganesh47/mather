@@ -45,6 +45,44 @@ struct MemoryAskConversationPolicyTests {
     }
 
     @MainActor
+    @Test func fallbackProvidesTurnsForEveryMemoryDeckCard() async {
+        let policy = MemoryAskConversationPolicy()
+
+        for deck in MemoryView.DeckSelection.allCases {
+            for animal in deck.animals {
+                let session = await policy.startSession(for: animal)
+                #expect(session.source == .deterministicFallback)
+                #expect(!session.suggestedTurns.isEmpty, "Missing ask turns for \(deck.menuLabel): \(animal.id)")
+            }
+        }
+    }
+
+    @MainActor
+    @Test func fallbackUsesCustomFactCardsWhenMetadataHasNoGenericTurns() async {
+        let policy = MemoryAskConversationPolicy()
+        let customFactOnlyCard = MemoryAnimal(
+            id: "custom-fact-only",
+            name: "Sprout",
+            picture: .text("Sprout"),
+            metadata: MemoryCardMetadata(
+                deck: .fruits,
+                category: "plant growth",
+                kind: "plant growth",
+                factCards: [
+                    MemoryFactCard(title: "Concept", value: "A seed starting to grow"),
+                    MemoryFactCard(title: "Action", value: "The first leaves push upward"),
+                    MemoryFactCard(title: "Where", value: "In warm soil")
+                ]
+            )
+        )
+
+        let session = await policy.startSession(for: customFactOnlyCard)
+
+        #expect(session.suggestedTurns.map(\.id) == ["fact-concept", "fact-action", "fact-where"])
+        #expect(session.suggestedTurns.contains { $0.answer.localizedCaseInsensitiveContains("Action:") })
+    }
+
+    @MainActor
     @Test func availableProviderCanSupplyBoundedSuggestedTurnsOnly() async {
         let provider = StubTurnProvider(
             isAvailable: true,

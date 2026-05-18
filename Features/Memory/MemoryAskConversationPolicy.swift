@@ -191,7 +191,33 @@ final class MemoryAskConversationPolicy {
             ))
         }
 
+        if turns.count < 3 {
+            for turn in detailCardTurns(for: animal) where !turns.contains(where: { $0.id == turn.id }) {
+                turns.append(turn)
+                if turns.count == 3 { break }
+            }
+        }
+
         return Array(turns.prefix(3))
+    }
+
+    private static func detailCardTurns(for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
+        let name = animal.canonicalName
+        let skippedTitles = Set(["name"])
+        return animal.detailCards.compactMap { card in
+            let title = clean(card.title)
+            let value = clean(card.value)
+            guard !title.isEmpty,
+                  !value.isEmpty,
+                  !skippedTitles.contains(title.lowercased()) else { return nil }
+            let id = "fact-\(words(in: title).joined(separator: "-"))"
+            guard id != "fact-" else { return nil }
+            return MemoryAskSuggestedTurn(
+                id: id,
+                question: "What does \(title.lowercased()) tell us about \(name)?",
+                answer: "\(title): \(value)."
+            )
+        }
     }
 
     private static func clean(_ text: String) -> String {
