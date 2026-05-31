@@ -632,10 +632,9 @@ final class ScreenshotTests: XCTestCase {
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
-        advanceStoryAnchorIfPresent(in: app, snapshotPrefix: snapshotPrefix, shouldSnapshot: !skipInitialConcreteSnapshot)
+        waitForLoopV2ConcreteStage(in: app, target: target, snapshotPrefix: snapshotPrefix, shouldSnapshotStoryAnchor: !skipInitialConcreteSnapshot)
 
         let concreteStageButton = concreteStageButton(for: target, in: app)
-        XCTAssertTrue(concreteStageButton.waitForExistence(timeout: 15), "Expected concrete stage for target \(target)")
         if !skipInitialConcreteSnapshot {
             snapshot(app, "\(snapshotPrefix)-Concrete")
         }
@@ -701,6 +700,39 @@ final class ScreenshotTests: XCTestCase {
             leftCard.tap()
             rightCard.tap()
         }
+    }
+
+    private func waitForLoopV2ConcreteStage(
+        in app: XCUIApplication,
+        target: Int,
+        snapshotPrefix: String,
+        shouldSnapshotStoryAnchor: Bool
+    ) {
+        let concreteStageButton = concreteStageButton(for: target, in: app)
+        let deadline = Date().addingTimeInterval(30)
+        var attemptedStoryAnchor = false
+
+        repeat {
+            if concreteStageButton.exists {
+                return
+            }
+
+            if !attemptedStoryAnchor,
+               storyAnchorIsPresent(in: app) {
+                advanceStoryAnchorIfPresent(in: app, snapshotPrefix: snapshotPrefix, shouldSnapshot: shouldSnapshotStoryAnchor)
+                attemptedStoryAnchor = true
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+
+        XCTAssertTrue(concreteStageButton.waitForExistence(timeout: 1), "Expected concrete stage for target \(target)")
+    }
+
+    private func storyAnchorIsPresent(in app: XCUIApplication) -> Bool {
+        app.otherElements["story-anchor-card"].exists
+            || app.buttons["story-anchor-start-button"].exists
+            || app.buttons["Start building"].exists
     }
 
 
