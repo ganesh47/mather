@@ -291,6 +291,38 @@ struct MemoryViewTests {
     }
 
     @MainActor
+    @Test func memoryCardModelsKeepPictureAndNameFacesPure() {
+        let cow = MemoryDeck.domesticAnimals[0]
+        let flag = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!
+
+        let cowPicture = MemoryView.learningCardModel(
+            for: MemoryCard(pairId: cow.id, content: .picture(cow)),
+            difficulty: .easy,
+            isIncorrect: false
+        )
+        let cowLabel = MemoryView.learningCardModel(
+            for: MemoryCard(pairId: cow.id, content: .label(cow)),
+            difficulty: .easy,
+            isIncorrect: false
+        )
+        let flagPicture = MemoryView.learningCardModel(
+            for: MemoryCard(pairId: flag.id, content: .picture(flag)),
+            difficulty: .easy,
+            isIncorrect: false
+        )
+        let flagLabel = MemoryView.learningCardModel(
+            for: MemoryCard(pairId: flag.id, content: .label(flag)),
+            difficulty: .easy,
+            isIncorrect: false
+        )
+
+        #expect(cowPicture.display == .emoji("🐄"))
+        #expect(cowLabel.display == .text("Cow"))
+        #expect(flagPicture.display == .asset("MemoryFlagIndia"))
+        #expect(flagLabel.display == .text("India"))
+    }
+
+    @MainActor
     @Test func faceDownMemoryCardsDoNotExposeHiddenAnswerToAccessibility() {
         let bird = MemoryDeck.birds[0]
         let hidden = MemoryCard(pairId: bird.id, content: .picture(bird))
