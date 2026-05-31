@@ -65,7 +65,9 @@ struct LabRouteRegressionTests {
             #expect(activityID.appRoute == .gameplayThread(threadID))
             let stageKinds = GameplayThreadCatalog.thread(for: threadID).stages.map(\.kind)
             #expect(!stageKinds.isEmpty)
-            if threadID == .worldAnimals || threadID == .worldBirds {
+            if threadID == .worldAnimals {
+                #expect(stageKinds == [.flashcards, .easyMemory, .flipMemory, .multipleChoice, .bondBlast])
+            } else if threadID == .worldBirds {
                 #expect(stageKinds == [.flashcards, .easyMemory, .bondBlast])
             } else {
                 #expect(stageKinds == [.flashcards, .easyMemory, .flipMemory, .bondBlast, .multipleChoice])

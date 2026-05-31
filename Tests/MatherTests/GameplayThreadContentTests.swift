@@ -270,7 +270,11 @@ struct WorldCreatureGameplayThreadTests {
             let propertyTypeIDs = Set(thread.propertyTypes.map(\.id))
 
             #expect(!thread.entities.isEmpty)
-            #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .bondBlast])
+            if threadID == .worldAnimals {
+                #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .flipMemory, .multipleChoice, .bondBlast])
+            } else {
+                #expect(thread.stages.map(\.kind) == [.flashcards, .easyMemory, .bondBlast])
+            }
             #expect(thread.entities.allSatisfy { !$0.properties.isEmpty })
             #expect(thread.entities.allSatisfy { entity in
                 Set(entity.properties.map(\.typeID)).isSubset(of: propertyTypeIDs)
@@ -310,7 +314,8 @@ struct WorldCreatureGameplayThreadTests {
     @Test
     func worldAnimalsEasyMemoryStartsWithPictureNameRound() throws {
         let thread = GameplayThreadCatalog.worldAnimals
-        let stage = try #require(thread.stages.first { $0.kind == .easyMemory })
+        let stage = try #require(thread.stages.first { $0.id == "world-animals-name-match" })
+        #expect(stage.title == "Name Match")
         #expect(stage.propertyTypeIDs == ["name"])
         #expect(stage.prompt.localizedCaseInsensitiveContains("picture"))
         #expect(stage.prompt.localizedCaseInsensitiveContains("name"))
@@ -324,6 +329,52 @@ struct WorldCreatureGameplayThreadTests {
         #expect(pairs.allSatisfy { $0.right.presentation == .titleOnly })
         #expect(Set(pairs.map { $0.right.title.lowercased() }).count == pairs.count)
     }
+
+    @Test
+    func worldAnimalsProgressesThroughNameHabitatDietAndMixedStages() throws {
+        let thread = GameplayThreadCatalog.worldAnimals
+        let propertyTypeIDs = Set(thread.propertyTypes.map(\.id))
+
+        #expect(propertyTypeIDs.isSuperset(of: ["name", "habitat", "diet"]))
+        #expect(thread.stages.map(\.id) == [
+            "world-animals-flashcards",
+            "world-animals-name-match",
+            "world-animals-habitat-match",
+            "world-animals-diet-quiz",
+            "world-animals-bond-blast"
+        ])
+        #expect(thread.stages.map(\.title) == [
+            "Animal Cards",
+            "Name Match",
+            "Habitat Match",
+            "Food Quiz",
+            "Animal Blast"
+        ])
+
+        let habitatStage = try #require(thread.stages.first { $0.id == "world-animals-habitat-match" })
+        let dietStage = try #require(thread.stages.first { $0.id == "world-animals-diet-quiz" })
+        let mixedStage = try #require(thread.stages.first { $0.id == "world-animals-bond-blast" })
+
+        #expect(habitatStage.kind == .flipMemory)
+        #expect(habitatStage.propertyTypeIDs == ["habitat"])
+        #expect(dietStage.kind == .multipleChoice)
+        #expect(dietStage.propertyTypeIDs == ["diet"])
+        #expect(mixedStage.propertyTypeIDs == ["name", "habitat", "diet", "movement", "sound", "colors", "kind"])
+
+        let dietValues = Set(thread.entities.compactMap { entity in
+            entity.properties.first { $0.typeID == "diet" }?.value
+        })
+
+        #expect(dietValues == Set([
+            "Herbivore: mostly eats plants",
+            "Carnivore: mostly eats meat",
+            "Omnivore: eats plants and animals"
+        ]))
+        #expect(thread.entities.allSatisfy { entity in
+            Set(["name", "habitat", "diet"]).isSubset(of: Set(entity.properties.map(\.typeID)))
+        })
+    }
+
     @Test
     func worldBirdsEasyMemoryStartsWithDeterministicPictureNameRoundWithoutDuplicateVisibleAnswers() throws {
         let thread = GameplayThreadCatalog.worldBirds
