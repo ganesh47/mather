@@ -158,6 +158,16 @@ struct AngleCannonTests {
             "The degree label should appear only as the successful-hit abstract reveal"
         )
     }
+
+    // MARK: - Child control hit targets
+
+    @Test
+    func childControlsMeetMinimumHitTarget() {
+        #expect(
+            AngleCannonView.childControlMinimumHitTarget >= 80,
+            "Angle Cannon child-facing controls should preserve at least 80pt touch targets"
+        )
+    }
 }
 
 @Suite("AngleCannonScenario")
