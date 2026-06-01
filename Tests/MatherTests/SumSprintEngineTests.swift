@@ -28,6 +28,16 @@ struct SumSprintEngineTests {
         return (engine, flags)
     }
 
+    private func waitFor(_ description: String, timeoutNanoseconds: UInt64 = 2_000_000_000, condition: @escaping @MainActor () -> Bool) async {
+        let deadline = DispatchTime.now().uptimeNanoseconds + timeoutNanoseconds
+        while DispatchTime.now().uptimeNanoseconds < deadline {
+            if await MainActor.run(body: condition) { return }
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+        Issue.record("Timed out waiting for \(description)")
+    }
+
     // MARK: - Session start
 
     @Test
@@ -100,8 +110,9 @@ struct SumSprintEngineTests {
         let sumStr = String(fact.sum)
         for ch in sumStr { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        // Wait for async feedback task to complete (feedbackDuration = 0)
-        try await Task.sleep(for: .milliseconds(50))
+        await waitFor("advance to second Sum Sprint card") {
+            engine.currentCardIndex == 1
+        }
         #expect(engine.currentCardIndex == 1)
     }
 
@@ -113,7 +124,9 @@ struct SumSprintEngineTests {
         let fact0 = engine.cards[0].fact
         for ch in String(fact0.sum) { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        try await Task.sleep(for: .milliseconds(50))
+        await waitFor("first Sum Sprint answer to advance and increment streak") {
+            engine.currentCardIndex == 1 && engine.currentStreak == 1
+        }
         #expect(engine.currentStreak == 1)
 
         // Answer second card incorrectly (enter wrong number)
@@ -131,7 +144,9 @@ struct SumSprintEngineTests {
             let fact = engine.cards[i].fact
             for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
             engine.submitAnswer()
-            try await Task.sleep(for: .milliseconds(50))
+            await waitFor("Sum Sprint correct answer \(i + 1) to resolve") {
+                engine.currentCardIndex == i + 1 && engine.currentStreak == i + 1
+            }
         }
         #expect(engine.currentStreak == 3)
         #expect(engine.peakStreak == 3)
@@ -147,7 +162,9 @@ struct SumSprintEngineTests {
             let fact = engine.cards[i].fact
             for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
             engine.submitAnswer()
-            try await Task.sleep(for: .milliseconds(50))
+            await waitFor("Sum Sprint streak answer \(i + 1) to resolve") {
+                engine.currentCardIndex == i + 1 && engine.currentStreak == i + 1
+            }
         }
 
         // Wrong answer on card 4
@@ -168,7 +185,9 @@ struct SumSprintEngineTests {
         let fact = engine.cards[0].fact
         for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        try await Task.sleep(for: .milliseconds(50))
+        await waitFor("Sum Sprint fact promotion to be recorded") {
+            engine.factStore.record(forKey: fact.factKey)?.boxRawValue == LeitnerBox.box1.rawValue
+        }
 
         let record = engine.factStore.record(forKey: fact.factKey)
         #expect(record != nil)
@@ -188,7 +207,9 @@ struct SumSprintEngineTests {
 
         for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        try await Task.sleep(for: .milliseconds(50))
+        await waitFor("Sum Sprint box 1 promotion to be recorded") {
+            engine.factStore.record(forKey: fact.factKey)?.boxRawValue == LeitnerBox.box2.rawValue
+        }
 
         let record = engine.factStore.record(forKey: fact.factKey)
         #expect(record?.boxRawValue == LeitnerBox.box2.rawValue)
@@ -249,7 +270,9 @@ struct SumSprintEngineTests {
             let fact = engine.cards[i].fact
             for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
             engine.submitAnswer()
-            try await Task.sleep(for: .milliseconds(50))
+            await waitFor("Sum Sprint card \(i + 1) to resolve") {
+                engine.currentCardIndex == i + 1 || engine.phase == .summary
+            }
         }
 
         #expect(engine.phase == .summary)
@@ -265,7 +288,9 @@ struct SumSprintEngineTests {
             let fact = engine.cards[i].fact
             for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
             engine.submitAnswer()
-            try await Task.sleep(for: .milliseconds(50))
+            await waitFor("Sum Sprint summary card \(i + 1) to resolve") {
+                engine.currentCardIndex == i + 1 || engine.phase == .summary
+            }
         }
 
         #expect(engine.completedSummary?.cards.count == 10)
@@ -368,7 +393,9 @@ struct SumSprintEngineTests {
         let fact = engine.cards[0].fact
         for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        try await Task.sleep(for: .milliseconds(80))
+        await waitFor("Sum Sprint timer reset after card advance") {
+            engine.currentCardIndex == 1
+        }
         // After advance, timer should have been reset to ≈12s again
         #expect(engine.cardTimeRemaining <= initialRemaining + 1.0)
         #expect(engine.currentCardIndex == 1)
@@ -380,7 +407,9 @@ struct SumSprintEngineTests {
         engine.selectDifficulty(.standard)
         // Manually fire timeout
         engine.setCardTimeRemainingForTests(0.05)   // nearly expired
-        try await Task.sleep(for: .milliseconds(300))   // allow timer task to fire
+        await waitFor("Sum Sprint timeout to mark card") {
+            engine.cards[0].timedOut == true
+        }
         #expect(engine.cards[0].timedOut == true)
     }
 
@@ -389,7 +418,9 @@ struct SumSprintEngineTests {
         let (engine, _) = try makeEngine(feedbackDuration: 0)
         engine.selectDifficulty(.sprint)
         engine.setCardTimeRemainingForTests(0.05)
-        try await Task.sleep(for: .milliseconds(300))
+        await waitFor("Sum Sprint sprint timeout to mark card") {
+            engine.cards[0].timedOut == true
+        }
         #expect(engine.cards[0].timedOut == true)
     }
 
@@ -402,7 +433,9 @@ struct SumSprintEngineTests {
         engine.setCardTimeRemainingForTests(0.05)
         engine.submitAnswer()
 
-        try await Task.sleep(for: .milliseconds(350))
+        await waitFor("Sum Sprint incorrect feedback to clear without timeout") {
+            engine.showIncorrectFeedback == false && engine.showTimeoutFeedback == false
+        }
 
         #expect(engine.cards[0].timedOut == false)
         #expect(engine.currentCardIndex == 0)
@@ -421,7 +454,9 @@ struct SumSprintEngineTests {
         engine.selectDifficulty(.sprint)
         // Force immediate timeout on card 0
         engine.setCardTimeRemainingForTests(0.05)
-        try await Task.sleep(for: .milliseconds(300))
+        await waitFor("Sum Sprint sprint requeue timeout path to resolve") {
+            engine.cards[0].timedOut == true
+        }
         // Requeue append happens only after all original cards are processed,
         // so this test should assert the timeout path, not immediate appended cards.
         #expect(engine.cards[0].timedOut == true)
@@ -437,7 +472,9 @@ struct SumSprintEngineTests {
             let fact = engine.cards[i].fact
             for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
             engine.submitAnswer()
-            try await Task.sleep(for: .milliseconds(50))
+            await waitFor("Sum Sprint difficulty summary card \(i + 1) to resolve") {
+                engine.currentCardIndex == i + 1 || engine.phase == .summary
+            }
         }
         #expect(engine.completedSummary?.difficulty == .standard)
     }
@@ -449,7 +486,9 @@ struct SumSprintEngineTests {
         let fact = engine.cards[0].fact
         for ch in String(fact.sum) { engine.appendDigit(Int(String(ch))!) }
         engine.submitAnswer()
-        try await Task.sleep(for: .milliseconds(50))
+        await waitFor("Sum Sprint fastest-card elapsed time to be recorded") {
+            engine.cards[0].elapsedSeconds != nil
+        }
         #expect(engine.cards[0].elapsedSeconds != nil)
     }
 }
