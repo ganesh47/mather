@@ -74,7 +74,8 @@ struct MixMatchRecallViewTests {
         let hiddenModel = MemoryView.learningCardModel(for: hiddenLabelCard, difficulty: .hard, isIncorrect: false)
 
         #expect(hiddenModel.display == .text("India"))
-        #expect(hiddenModel.accessibilityLabel == "India")
+        #expect(hiddenModel.accessibilityLabel == "Face down memory card")
+        #expect(hiddenModel.accessibilityHint == "Tap to turn this card over.")
         #expect(hiddenModel.isFaceDown == true)
     }
 }

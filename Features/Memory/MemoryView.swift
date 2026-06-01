@@ -1701,7 +1701,7 @@ struct MemoryView: View {
         return LearningCardViewModel(
             id: card.id.uuidString,
             display: display,
-            accessibilityLabel: accessibilityLabel(for: card),
+            accessibilityLabel: accessibilityLabel(for: card, difficulty: difficulty),
             accessibilityHint: accessibilityHint(for: card, difficulty: difficulty),
             isFaceDown: difficulty.faceDown && !card.isSelected && !card.isMatched,
             isSelected: card.isSelected,
