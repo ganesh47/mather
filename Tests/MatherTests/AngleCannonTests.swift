@@ -136,6 +136,28 @@ struct AngleCannonTests {
             #expect(snapped == expected, "Angle \(input)° should snap to \(expected)°, got \(snapped)°")
         }
     }
+
+    // MARK: - CPA degree label reveal
+
+    @Test
+    func degreeLabelStaysHiddenBeforeHit() {
+        #expect(
+            !AngleCannonView.shouldRevealDegreeLabel(hitTarget: false, firedAngleDeg: nil),
+            "Aiming before the first shot must not reveal numeric degree labels"
+        )
+        #expect(
+            !AngleCannonView.shouldRevealDegreeLabel(hitTarget: false, firedAngleDeg: 45),
+            "Miss feedback must not reveal the abstract degree label"
+        )
+    }
+
+    @Test
+    func degreeLabelRevealsOnlyAfterSuccessfulHit() {
+        #expect(
+            AngleCannonView.shouldRevealDegreeLabel(hitTarget: true, firedAngleDeg: 45),
+            "The degree label should appear only as the successful-hit abstract reveal"
+        )
+    }
 }
 
 @Suite("AngleCannonScenario")
