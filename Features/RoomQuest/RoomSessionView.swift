@@ -579,7 +579,7 @@ private func roomReturningChromeButton(title: String, systemImage: String, acces
             .background(.white.opacity(0.9), in: Capsule())
     }
     .accessibilityIdentifier(accessibilityID)
-    .accessibilityLabel(accessibilityID)
+    .accessibilityLabel(title)
     .accessibilityAddTraits(.isButton)
 }
 
