@@ -59,12 +59,12 @@ struct NumberStoryStageVocabulary: Equatable {
             )
         case .sumSprint:
             return NumberStoryStageVocabulary(
-                title: "Sum Sprint",
+                title: "Story Matches",
                 targetReminder: "Make \(target)",
-                instruction: "Tap a sum sentence, then tap its total.",
+                instruction: "Tap a story number sentence, then tap its total.",
                 leftLabel: "Sentence",
                 rightLabel: "Total",
-                accessibilityLabel: "Sum Sprint. Match each sum sentence to its total."
+                accessibilityLabel: "Story Matches. Match each story number sentence to its total."
             )
         case .bondBlast:
             return NumberStoryStageVocabulary(
