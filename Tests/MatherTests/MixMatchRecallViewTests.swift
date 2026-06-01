@@ -64,7 +64,7 @@ struct MixMatchRecallViewTests {
         let model = MemoryView.learningCardModel(for: pictureCard, difficulty: .hard, isIncorrect: true)
 
         #expect(model.display == .asset("MemoryFlagIndia"))
-        #expect(model.accessibilityLabel == "Flag of India")
+        #expect(model.accessibilityLabel == "Flag of India, selected")
         #expect(model.accessibilityHint == "Tap to choose this card.")
         #expect(model.isFaceDown == false)
         #expect(model.isSelected == true)
