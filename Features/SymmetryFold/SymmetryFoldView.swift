@@ -148,7 +148,7 @@ struct SymmetryFoldView: View {
 
     // MARK: - Constants
 
-    private let maxTiltRadians: Double = .pi / 4
+    private static let maxTiltRadians: Double = .pi / 4
     private static let holdDuration: Double = 0.8
     private static let challengeDuration: Double = 8.0
 
@@ -177,7 +177,7 @@ struct SymmetryFoldView: View {
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
             guard let neutral = neutralRoll, !success else { return }
             let delta = roll - neutral
-            let newFold = max(0.0, min(-delta / maxTiltRadians, 1.0))
+            let newFold = Self.foldAngle(tiltRoll: roll, neutralRoll: neutral)
             foldAngle = newFold
             updateWrongDirectionCue(delta: delta)
             updateHoldProgress(for: newFold)
@@ -641,6 +641,11 @@ struct SymmetryFoldView: View {
 
     nonisolated static func successSpeech(for shapeName: String) -> String {
         "Perfectly folded! The line of symmetry makes both sides of the \(shapeName) match."
+    }
+
+    nonisolated static func foldAngle(tiltRoll: Double, neutralRoll: Double) -> Double {
+        let delta = tiltRoll - neutralRoll
+        return max(0.0, min(-delta / maxTiltRadians, 1.0))
     }
 
     nonisolated static var nearMatchHint: String {
