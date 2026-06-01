@@ -148,7 +148,7 @@ struct SymmetryFoldView: View {
 
     // MARK: - Constants
 
-    private static let maxTiltRadians: Double = .pi / 4
+    nonisolated private static let maxTiltRadians: Double = .pi / 4
     private static let holdDuration: Double = 0.8
     private static let challengeDuration: Double = 8.0
 
