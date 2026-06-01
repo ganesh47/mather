@@ -310,7 +310,7 @@ struct AngleCannonView: View {
             }
 
             // Degree label — revealed only on hit (CPA abstract reveal)
-            if hitTarget, let fired = firedAngleDeg {
+            if Self.shouldRevealDegreeLabel(hitTarget: hitTarget, firedAngleDeg: firedAngleDeg), let fired = firedAngleDeg {
                 VStack(spacing: 2) {
                     Text("\(Int(fired))°")
                         .font(.system(size: 52, weight: .black, design: .rounded))
@@ -382,17 +382,6 @@ struct AngleCannonView: View {
                 .transition(.scale.combined(with: .opacity))
             }
 
-            // Aim angle readout while aiming (shows during aim, not before)
-            if neutralRoll != nil, firedAngleDeg == nil {
-                Text("\(Int(currentAngleDeg))°")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(MatherTheme.coral)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-                    .position(x: cannon.x + 80, y: cannon.y - 50)
-                    .animation(.none, value: currentAngleDeg)
-            }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.6), value: hitTarget)
         .animation(.easeOut(duration: 0.25), value: firedAngleDeg != nil)
@@ -488,6 +477,10 @@ struct AngleCannonView: View {
 
     nonisolated static func isHit(firedDeg: Double, targetDeg: Double, toleranceDeg: Double) -> Bool {
         abs(firedDeg - targetDeg) <= toleranceDeg
+    }
+
+    nonisolated static func shouldRevealDegreeLabel(hitTarget: Bool, firedAngleDeg: Double?) -> Bool {
+        hitTarget && firedAngleDeg != nil
     }
 
     nonisolated static func projectilePoint(on points: [CGPoint], progress: Double) -> CGPoint? {
