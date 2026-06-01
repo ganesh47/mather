@@ -19,7 +19,7 @@ struct TransferIntentTests {
         let engine = makeEngine()
         engine.startSession()
 
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
         try await advanceToTransfer(engine, problem: problem)
 
         #expect(engine.feedbackMessage.contains("\(problem.decompositionA)"))
@@ -46,10 +46,10 @@ struct TransferIntentTests {
     }
 
     @Test
-    func transferSideAdjustmentClampsEachSideIndependently() {
+    func transferSideAdjustmentClampsEachSideIndependently() throws {
         let engine = makeEngine()
         engine.startSession()
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
 
         engine.adjustTransfer(by: problem.target + 5, side: .left)
         engine.adjustTransfer(by: -3, side: .left)
@@ -67,7 +67,7 @@ struct TransferIntentTests {
         let engine = makeEngine()
         engine.startSession()
 
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
         try await advanceToTransfer(engine, problem: problem)
 
         engine.adjustTransfer(by: problem.decompositionA, side: .left)

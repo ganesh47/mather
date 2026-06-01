@@ -19,7 +19,7 @@ struct TransferExactRebuildTests {
         let engine = makeEngine()
 
         engine.startSession()
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
 
         try await advanceToTransfer(engine, problem: problem)
 
@@ -37,7 +37,7 @@ struct TransferExactRebuildTests {
         let engine = makeEngine()
 
         engine.startSession()
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
 
         try await advanceToTransfer(engine, problem: problem)
 
@@ -110,10 +110,7 @@ struct TransferExactRebuildTests {
             return currentProblem
         }
 
-        guard let currentProblem = engine.currentProblem else {
-            Issue.record("No current problem to advance from.")
-            return SliceProblem(target: 0, decompositionA: 0, decompositionB: 0)
-        }
+        let currentProblem = try #require(engine.currentProblem)
 
         engine.adjustConcrete(by: currentProblem.target)
         engine.submitCurrentStage()
