@@ -25,7 +25,7 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_Home_VS1Disabled() {
         let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
         snapshot(app, "Home-VS1Disabled")
     }
 
@@ -33,17 +33,17 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_AppearanceModes_HomeAndSessionConfig() {
         let light = launchWithVS1(appearance: .light)
-        _ = light.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(light.staticTexts["Mather"], timeout: 10)
         snapshot(light, "Appearance-Light-Home")
         light.buttons["Play"].tap()
-        _ = light.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(light.staticTexts["Session setup"], timeout: 10)
         snapshot(light, "Appearance-Light-SessionConfig")
 
         let dark = launchWithVS1(appearance: .dark)
-        _ = dark.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(dark.staticTexts["Mather"], timeout: 10)
         snapshot(dark, "Appearance-Dark-Home")
         dark.buttons["Play"].tap()
-        _ = dark.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(dark.staticTexts["Session setup"], timeout: 10)
         snapshot(dark, "Appearance-Dark-SessionConfig")
     }
 
@@ -51,16 +51,16 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_Settings_MakeBreakLoopBuiltIn() {
         let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
 
         app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 3)
+        requireExists(app.staticTexts["Settings"], timeout: 3)
         XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
         XCTAssertTrue(app.staticTexts["Make it → Gravity Split → Sum Sprint → Bond Blast is built in for every target."].waitForExistence(timeout: 5))
         snapshot(app, "Settings-MakeBreakLoopBuiltIn")
 
         app.buttons["Home"].tap()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 3)
+        requireExists(app.staticTexts["Mather"], timeout: 3)
         snapshot(app, "Home-MakeBreakLoopBuiltIn")
     }
 
@@ -69,21 +69,21 @@ final class ScreenshotTests: XCTestCase {
     func testScreenshot_SessionConfig() {
         // Pre-enable VS1 via launch argument to skip Settings navigation.
         let app = launchWithVS1()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
 
         let playButton = app.buttons["Play"]
-        _ = playButton.waitForExistence(timeout: 5)
+        requireExists(playButton, timeout: 5)
         playButton.tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
         snapshot(app, "SessionConfig")
     }
 
     func testScreenshot_SessionConfig_PlanetsTheme() {
         let app = launchWithVS1()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
 
         app.buttons["Play"].tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
         XCTAssertTrue(app.buttons["theme-card-space"].waitForExistence(timeout: 5))
         app.buttons["theme-card-space"].tap()
         snapshot(app, "SessionConfig-PlanetsTheme")
@@ -93,12 +93,12 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_ConcreteBuildView() {
         let app = launchWithVS1()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
 
         let playButton = app.buttons["Play"]
-        _ = playButton.waitForExistence(timeout: 5)
+        requireExists(playButton, timeout: 5)
         playButton.tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
 
         startSessionAndWaitForConcrete(in: app)
         snapshot(app, "ConcreteBuild-Initial")
@@ -110,12 +110,12 @@ final class ScreenshotTests: XCTestCase {
     /// both the failure feedback banner and the celebration state.
     func testScreenshot_ConcreteBuild_FailureThenSuccess() {
         let app = launchWithLegacyVS1AndHaptics()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
 
         let playButton = app.buttons["Play"]
-        _ = playButton.waitForExistence(timeout: 5)
+        requireExists(playButton, timeout: 5)
         playButton.tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
 
         startSessionAndWaitForConcrete(in: app)
         snapshot(app, "ConcreteBuild-BeforeInput")
@@ -133,7 +133,7 @@ final class ScreenshotTests: XCTestCase {
         submitButton.tap()
 
         // After a correct answer the stage advances to Bond Blast in the pictorial slot.
-        _ = app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Bond Blast!"], timeout: 10)
         snapshot(app, "Pictorial-AfterConcreteSuccess")
     }
 
@@ -145,23 +145,23 @@ final class ScreenshotTests: XCTestCase {
 
     func testScreenshot_ParentSummary() {
         let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
         app.buttons["Parent Summary"].tap()
-        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
         snapshot(app, "ParentSummary-Empty")
 
         // Navigate to Settings from Parent Summary
         let settingsButton = app.buttons["Settings"].firstMatch
-        _ = settingsButton.waitForExistence(timeout: 5)
+        requireExists(settingsButton, timeout: 5)
         settingsButton.tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Settings"], timeout: 10)
         snapshot(app, "Settings-FromParentSummary")
 
         // Tap clear — confirm dialog should appear
         let clearButton = app.buttons["Clear session history"]
-        _ = clearButton.waitForExistence(timeout: 5)
+        requireExists(clearButton, timeout: 5)
         clearButton.tap()
-        _ = app.alerts["Clear all session data?"].waitForExistence(timeout: 5)
+        requireExists(app.alerts["Clear all session data?"], timeout: 5)
         snapshot(app, "Settings-ClearConfirmDialog")
 
         // Dismiss with Cancel
@@ -171,16 +171,16 @@ final class ScreenshotTests: XCTestCase {
 
     func testSessionHistoryShowsMultipleSavedSessionsInParentSummaryAndSettings() {
         let app = launchWithSeededHistory(count: 2)
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
 
         app.buttons["Parent Summary"].tap()
-        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(waitForHistoryRow(app, identifier: "parent-summary-session-1", fallbackLabel: "Session 2", timeout: 5))
 
         app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Settings"], timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(app.buttons["settings-view-full-history"].waitForExistence(timeout: 5))
@@ -189,10 +189,10 @@ final class ScreenshotTests: XCTestCase {
 
     func testParentSummaryShowsGameScoresWhenMakeBreakHasNoProgress() {
         let app = launchWithSeededGameHistory(count: 2)
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
 
         app.buttons["Parent Summary"].tap()
-        _ = app.staticTexts["Parent Summary"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
 
         XCTAssertTrue(app.staticTexts["No completed Make & Break practice yet"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Game scores"].waitForExistence(timeout: 5))
@@ -203,10 +203,10 @@ final class ScreenshotTests: XCTestCase {
 
     func testFamilySettingsHidesPilotRunbookAndInlineHistoryRows() {
         let app = launchFamilySettingsWithSeededHistory(count: 7)
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Mather"], timeout: 5)
 
         openParentLockedSettings(in: app)
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Settings"], timeout: 10)
         XCTAssertTrue(app.staticTexts["7 saved locally across all games"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["settings-view-full-history"].exists)
         XCTAssertTrue(app.buttons["settings-clear-history"].exists)
@@ -221,21 +221,21 @@ final class ScreenshotTests: XCTestCase {
     /// pilot-only runbook. Family Settings keeps this hidden unless test mode is active.
     func testScreenshot_PilotRunbook() {
         let app = launchWithLegacyVS1()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
         snapshot(app, "iPhone-Home")
 
         // Navigate to Settings and capture the pilot-only runbook
         app.buttons["Settings"].tap()
-        _ = app.staticTexts["Settings"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Settings"], timeout: 10)
         XCTAssertFalse(app.switches["settings-loop-v2-toggle"].exists)
-        _ = app.staticTexts["Pilot smoke test"].waitForExistence(timeout: 5)
+        requireExists(app.staticTexts["Pilot smoke test"], timeout: 5)
         snapshot(app, "iPhone-Settings-PilotRunbook")
         app.buttons["Home"].tap()
 
         // Run one full problem to verify no crash on compact layout
-        _ = app.buttons["Play"].waitForExistence(timeout: 10)
+        requireExists(app.buttons["Play"], timeout: 10)
         app.buttons["Play"].tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
         snapshot(app, "iPhone-SessionConfig")
 
         startSessionAndWaitForConcrete(in: app)
@@ -247,7 +247,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(submitButton.waitForExistence(timeout: 5))
         submitButton.tap()
 
-        _ = app.staticTexts["Bond Blast!"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Bond Blast!"], timeout: 10)
         snapshot(app, "iPhone-SplitView")
     }
 
@@ -302,10 +302,10 @@ final class ScreenshotTests: XCTestCase {
     /// includes screenshots and assertions across both low and higher problem targets.
     func testScreenshot_Issue222LoopV2_AcrossFourTargetsIncludingTwelve() {
         let app = launchWithLoopV2()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Mather"], timeout: 10)
 
         app.buttons["Play"].tap()
-        _ = app.staticTexts["Session setup"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Session setup"], timeout: 10)
         startSessionAndWaitForConcrete(in: app)
 
         completeLoopV2Problem(
@@ -654,13 +654,14 @@ final class ScreenshotTests: XCTestCase {
         }
 
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
+        var reachedSumSprintAfterCompleteSplit = false
         if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
            !sumSprintTitle.exists {
             completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            _ = sumSprintTitle.waitForExistence(timeout: 3)
+            reachedSumSprintAfterCompleteSplit = sumSprintTitle.waitForExistence(timeout: 3)
         }
 
-        if !sumSprintTitle.exists {
+        if !reachedSumSprintAfterCompleteSplit && !sumSprintTitle.exists {
             for _ in 0..<leftPanCount {
                 if sumSprintTitle.exists { break }
                 tapGravityIncrement(
@@ -943,7 +944,7 @@ final class ScreenshotTests: XCTestCase {
             "-uiTest.startRoute", "labGames"
         ])
 
-        _ = app.staticTexts["Games"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Games"], timeout: 10)
         snapshot(app, "UXReview-LabGames-GridCards")
     }
 
@@ -957,7 +958,7 @@ final class ScreenshotTests: XCTestCase {
             "-uiTest.startRoute", "geometryLane"
         ])
 
-        _ = app.staticTexts["Geometry"].waitForExistence(timeout: 10)
+        requireExists(app.staticTexts["Geometry"], timeout: 10)
         snapshot(app, "UXReview-GeometryLane-IconNameLaunchers")
     }
 
@@ -977,8 +978,25 @@ final class ScreenshotTests: XCTestCase {
         let nextBtn = app.buttons["GameplayStageNextButton"]
         if nextBtn.waitForExistence(timeout: 3) {
             nextBtn.tap()
-            _ = app.staticTexts["Name Match"].waitForExistence(timeout: 5)
+            requireExists(app.staticTexts["Name Match"], timeout: 5)
             snapshot(app, "UXReview-ShapeThread-02-NameMatch")
         }
+    }
+
+    @discardableResult
+    private func requireExists(
+        _ element: XCUIElement,
+        timeout: TimeInterval,
+        _ message: String? = nil,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIElement {
+        XCTAssertTrue(
+            element.waitForExistence(timeout: timeout),
+            message ?? "Expected \(element) to exist before continuing",
+            file: file,
+            line: line
+        )
+        return element
     }
 }
