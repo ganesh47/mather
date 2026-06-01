@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct ElectronicsCircuitArtwork: View {
-    static let canvasSize: CGFloat = 120
+    nonisolated static let canvasSize: CGFloat = 120
 
     let key: ElectronicsArtworkKey
     var tint: Color = MatherTheme.accent
 
-    static func fittingScale(for proposedSize: CGSize) -> CGFloat {
+    nonisolated static func fittingScale(for proposedSize: CGSize) -> CGFloat {
         let availableSize = min(proposedSize.width, proposedSize.height)
         guard availableSize > 0 else { return 0 }
         return availableSize / canvasSize
