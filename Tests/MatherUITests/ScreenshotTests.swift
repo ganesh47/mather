@@ -958,7 +958,7 @@ final class ScreenshotTests: XCTestCase {
             "-uiTest.startRoute", "geometryLane"
         ])
 
-        requireExists(app.staticTexts["Geometry"], timeout: 10)
+        requireExists(app.staticTexts["Geometry Lab"], timeout: 10)
         snapshot(app, "UXReview-GeometryLane-IconNameLaunchers")
     }
 
