@@ -166,17 +166,16 @@ final class CompactLayoutTests: XCTestCase {
         app.buttons["Start Session"].tap()
 
         let makeLabel = app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Make '"))
-        _ = makeLabel.waitForExistence(timeout: 15)
+        XCTAssertTrue(makeLabel.waitForExistence(timeout: 15))
 
         let warmRowLastCell = app.otherElements["counter-cell-4"]
-        if !warmRowLastCell.waitForExistence(timeout: 3) {
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        _ = warmRowLastCell.waitForExistence(timeout: 5)
+        XCTAssertTrue(warmRowLastCell.waitForExistence(timeout: 5))
+        XCTAssertTrue(warmRowLastCell.isHittable, "Expected warm-row counter cell to be reachable without scrolling")
         warmRowLastCell.tap()
 
         let accentRowFirstCell = app.otherElements["counter-cell-5"]
-        _ = accentRowFirstCell.waitForExistence(timeout: 5)
+        XCTAssertTrue(accentRowFirstCell.waitForExistence(timeout: 5))
+        XCTAssertTrue(accentRowFirstCell.isHittable, "Expected accent-row counter cell to be reachable without scrolling")
         accentRowFirstCell.tap()
 
         let concreteSubmit = app.buttons.element(matching: NSPredicate(format: "label BEGINSWITH 'That is '"))
