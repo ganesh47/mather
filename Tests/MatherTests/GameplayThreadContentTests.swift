@@ -4,6 +4,18 @@ import Testing
 
 struct GameplayThreadContentTests {
     @Test
+    func electronicsArtworkScaleFitsCompactCardProposals() {
+        #expect(abs(ElectronicsCircuitArtwork.fittingScale(for: CGSize(width: 48, height: 80)) - 0.4) < 0.0001)
+        #expect(abs(ElectronicsCircuitArtwork.fittingScale(for: CGSize(width: 104, height: 96)) - 0.8) < 0.0001)
+    }
+
+    @Test
+    func electronicsArtworkScaleHandlesCollapsedProposals() {
+        #expect(ElectronicsCircuitArtwork.fittingScale(for: CGSize(width: 0, height: 48)) == 0)
+        #expect(ElectronicsCircuitArtwork.fittingScale(for: CGSize(width: 48, height: 0)) == 0)
+    }
+
+    @Test
     func fruitsThreadHasCuratedEntityAndPropertyCoverage() {
         let thread = GameplayThreadCatalog.fruits
 

@@ -1,34 +1,27 @@
 import SwiftUI
 
 struct ElectronicsCircuitArtwork: View {
+    static let canvasSize: CGFloat = 120
+
     let key: ElectronicsArtworkKey
     var tint: Color = MatherTheme.accent
 
+    static func fittingScale(for proposedSize: CGSize) -> CGFloat {
+        let availableSize = min(proposedSize.width, proposedSize.height)
+        guard availableSize > 0 else { return 0 }
+        return availableSize / canvasSize
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            let size = min(proxy.size.width, proxy.size.height)
-            let lineWidth = max(3, size * 0.055)
+            let lineWidth = Self.canvasSize * 0.055
             ZStack {
-                switch key {
-                case .battery:
-                    battery(lineWidth: lineWidth)
-                case .bulb:
-                    bulb(lineWidth: lineWidth)
-                case .wire:
-                    wire(lineWidth: lineWidth)
-                case .switchControl:
-                    switchControl(lineWidth: lineWidth)
-                case .closedCircuit:
-                    circuit(closed: true, lineWidth: lineWidth)
-                case .openCircuit:
-                    circuit(closed: false, lineWidth: lineWidth)
-                case .safeCircuit:
-                    safeCircuit(lineWidth: lineWidth)
-                case .outletSafety:
-                    outletSafety(lineWidth: lineWidth)
-                }
+                artwork(lineWidth: lineWidth)
             }
+            .frame(width: Self.canvasSize, height: Self.canvasSize)
+            .scaleEffect(Self.fittingScale(for: proxy.size))
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
         }
         .aspectRatio(1, contentMode: .fit)
         .accessibilityHidden(true)
@@ -37,6 +30,28 @@ struct ElectronicsCircuitArtwork: View {
     private var wireColor: Color { MatherTheme.panelDeep.opacity(0.82) }
     private var glowColor: Color { MatherTheme.warm }
     private var dangerColor: Color { MatherTheme.coral }
+
+    @ViewBuilder
+    private func artwork(lineWidth: CGFloat) -> some View {
+        switch key {
+        case .battery:
+            battery(lineWidth: lineWidth)
+        case .bulb:
+            bulb(lineWidth: lineWidth)
+        case .wire:
+            wire(lineWidth: lineWidth)
+        case .switchControl:
+            switchControl(lineWidth: lineWidth)
+        case .closedCircuit:
+            circuit(closed: true, lineWidth: lineWidth)
+        case .openCircuit:
+            circuit(closed: false, lineWidth: lineWidth)
+        case .safeCircuit:
+            safeCircuit(lineWidth: lineWidth)
+        case .outletSafety:
+            outletSafety(lineWidth: lineWidth)
+        }
+    }
 
     @ViewBuilder
     private func battery(lineWidth: CGFloat) -> some View {
