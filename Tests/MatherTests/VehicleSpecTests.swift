@@ -165,7 +165,7 @@ struct VehicleSpecTests {
         )
         engine.startSession()
         let firstNoun = engine.activeTheme.counterNoun
-        guard let problem = engine.currentProblem else { return }
+        let problem = try #require(engine.currentProblem)
 
         // Complete all 4 CPA stages.
         engine.adjustConcrete(by: problem.target)
