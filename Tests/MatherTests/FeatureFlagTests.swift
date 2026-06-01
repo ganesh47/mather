@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import Mather
 
+@MainActor
 struct FeatureFlagTests {
 
     @Test func selectedThemeIdDefaultsToClassic() {
