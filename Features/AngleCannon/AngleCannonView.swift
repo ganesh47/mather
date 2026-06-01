@@ -53,6 +53,7 @@ struct AngleCannonView: View {
     private let maxTiltRadians: Double = .pi / 4
     private let angleRange: ClosedRange<Double> = 10...80
     private let targetPool: [Double] = [15, 30, 45, 60, 75]
+    nonisolated static var childControlMinimumHitTarget: CGFloat { 80 }
     /// Target symbols — rendered at the landing position for delight
     private let scenarios = AngleCannonScenario.defaultScenarios
     @State private var scenario = AngleCannonScenario.defaultScenarios[0]
@@ -396,14 +397,14 @@ struct AngleCannonView: View {
             if projectileAnimating {
                 ProgressView("Watching the arc…")
                     .font(.headline.weight(.bold))
-                    .frame(minWidth: 180, minHeight: 60)
+                    .frame(minWidth: 180, minHeight: Self.childControlMinimumHitTarget)
             } else if hitTarget {
                 Button("Next →") {
                     advanceRound()
                 }
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
-                .frame(minWidth: 140, minHeight: 60)
+                .frame(minWidth: 140, minHeight: Self.childControlMinimumHitTarget)
                 .background(MatherTheme.accent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .accessibilityIdentifier("angle-cannon-next-button")
             } else if firedAngleDeg == nil {
@@ -412,7 +413,7 @@ struct AngleCannonView: View {
                 }
                 .font(.system(size: 22, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
-                .frame(minWidth: 140, minHeight: 60)
+                .frame(minWidth: 140, minHeight: Self.childControlMinimumHitTarget)
                 .background(
                     neutralRoll != nil ? MatherTheme.coral : MatherTheme.coral.opacity(0.35),
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -427,7 +428,7 @@ struct AngleCannonView: View {
                 }
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(.white)
-                .frame(minWidth: 140, minHeight: 60)
+                .frame(minWidth: 140, minHeight: Self.childControlMinimumHitTarget)
                 .background(MatherTheme.ink.opacity(0.7),
                             in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .accessibilityIdentifier("angle-cannon-retry-button")
