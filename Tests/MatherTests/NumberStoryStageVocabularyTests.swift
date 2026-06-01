@@ -85,9 +85,14 @@ struct NumberStoryStageVocabularyTests {
                         .vocabulary(for: prompt, stage: stage)
                         .searchableText
                         .lowercased()
+                    let fallbackText = NumberStoryStageVocabulary
+                        .fallback(stage: stage, target: problem.target)
+                        .searchableText
+                        .lowercased()
 
                     for term in bannedTerms {
                         #expect(!text.contains(term))
+                        #expect(!fallbackText.contains(term))
                     }
                 }
             }
