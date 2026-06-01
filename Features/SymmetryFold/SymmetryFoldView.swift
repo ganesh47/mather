@@ -190,11 +190,16 @@ struct SymmetryFoldView: View {
             holdTask?.cancel()
             challengeTask?.cancel()
             appModel.motionService.stopUpdates()
-            guard currentLevel > 1 else { return }
+            let completedLevelCount = Self.completedLevelCount(
+                currentLevel: currentLevel,
+                totalLevels: levels.count,
+                currentLevelSucceeded: success
+            )
+            guard completedLevelCount > 0 else { return }
             appModel.gameSessionStore.save(
                 gameName: "Symmetry Fold",
                 startedAt: sessionStart,
-                scoreValue: currentLevel - 1,
+                scoreValue: completedLevelCount,
                 scoreLabel: "levels"
             )
         }
@@ -665,6 +670,16 @@ struct SymmetryFoldView: View {
     nonisolated static func mirrorMissionLabel(currentLevel: Int, totalLevels: Int) -> String {
         let collected = max(0, min(currentLevel - 1, totalLevels))
         return "Mirror mission • \(collected)/\(totalLevels) badges"
+    }
+
+    nonisolated static func completedLevelCount(
+        currentLevel: Int,
+        totalLevels: Int,
+        currentLevelSucceeded: Bool
+    ) -> Int {
+        let completedBeforeCurrent = max(0, currentLevel - 1)
+        let completed = completedBeforeCurrent + (currentLevelSucceeded ? 1 : 0)
+        return max(0, min(completed, totalLevels))
     }
 
     nonisolated static func challengeCountdownText(for secondsRemaining: Double) -> String {
