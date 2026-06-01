@@ -179,6 +179,7 @@
 		E780230B5E9CE516E821A00E /* LabModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 547B4F588C6009F6C7BED5BD /* LabModels.swift */; };
 		E7BC585ED5E051F82BC8F71B /* RoomQuestEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C0EC27EA8E30BDA854CE9E /* RoomQuestEngineTests.swift */; };
 		E921D7C5007EF8C7E44CAB98 /* RouteQuestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */; };
+		E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */; };
 		EA514902B3549363146AF031 /* SessionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */; };
 		ECD8D5A562596BB07C9DDD9E /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */; };
 		EF44551359C1EF6A68E0542C /* GroupedNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3E611E8AE4A6487A373E5C /* GroupedNumberView.swift */; };
@@ -388,6 +389,7 @@
 		ECFA05754CC31E013A31DED6 /* LearningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCard.swift; sourceTree = "<group>"; };
 		ECFF09E7C4882057E1DFE232 /* GameplayThreadContent+Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+Shapes.swift"; sourceTree = "<group>"; };
 		EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipMemoryStageView.swift; sourceTree = "<group>"; };
+		F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsViewTests.swift; sourceTree = "<group>"; };
 		F24A213AAF0604928B164968 /* FlashcardStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashcardStageView.swift; sourceTree = "<group>"; };
 		F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintEngineTests.swift; sourceTree = "<group>"; };
 		F524E9BE37DC9742658E9AAC /* CountryGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryGameplayThreadTests.swift; sourceTree = "<group>"; };
@@ -503,6 +505,7 @@
 				93FE96782037787E5D19BB7A /* ConcreteBuildViewTests.swift */,
 				F524E9BE37DC9742658E9AAC /* CountryGameplayThreadTests.swift */,
 				42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */,
+				F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */,
 				1C8860EA72978DA67542C17D /* FactRecordStoreTests.swift */,
 				2763860DCF54A19D357794B7 /* FeatureFlagTests.swift */,
 				067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */,
@@ -939,6 +942,7 @@
 				7612AD75CE6F5D18E40574F0 /* CountryGameplayThreadTests.swift in Sources */,
 				A4B5AFA2FA430D40BDBDD100 /* ExplorerLabMasteryStoreTests.swift in Sources */,
 				E6C705C8FA9F7D0FB49B864D /* FactRecordStoreTests.swift in Sources */,
+				E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */,
 				C83522C9248AECC33815B967 /* FeatureFlagTests.swift in Sources */,
 				DB3C8F8C5DBDACE7D281EEEA /* GameplayProgressStoreTests.swift in Sources */,
 				CDD69C30B5B6E38E0F8D13A6 /* GameplaySchedulerTests.swift in Sources */,

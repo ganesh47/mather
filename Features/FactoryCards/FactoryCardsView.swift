@@ -293,11 +293,14 @@ struct FactoryCardsView: View {
                 try? await Task.sleep(nanoseconds: 750_000_000)
                 currentIndex += 1
                 selectedTotal = nil
-                faceUp = !difficulty.startsFaceDown
                 if roundComplete {
                     appModel.hapticsService.bondMatchComplete(enabled: appModel.featureFlags.hapticsEnabled)
                     appModel.speechService.speak("Cards packed. Ready for the factory challenge.", enabled: appModel.featureFlags.audioEnabled)
                 } else {
+                    faceUp = !difficulty.startsFaceDown
+                    if Self.shouldRequireFirstLook(forAdvancedIndex: currentIndex, totalSteps: round.steps.count) {
+                        didCompleteFirstLook = false
+                    }
                     speakCurrentPrompt()
                 }
             }
@@ -328,6 +331,10 @@ struct FactoryCardsView: View {
         if total == selectedTotal, step.fact.matches(product: total) { return MatherTheme.accent }
         if total == selectedTotal { return MatherTheme.danger }
         return MatherTheme.softBlue.opacity(0.18)
+    }
+
+    nonisolated static func shouldRequireFirstLook(forAdvancedIndex index: Int, totalSteps: Int) -> Bool {
+        index < totalSteps
     }
 
     private func saveIfNeeded() {
