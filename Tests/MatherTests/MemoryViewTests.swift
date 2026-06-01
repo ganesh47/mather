@@ -326,10 +326,13 @@ struct MemoryViewTests {
     @Test func faceDownMemoryCardsDoNotExposeHiddenAnswerToAccessibility() {
         let bird = MemoryDeck.birds[0]
         let hidden = MemoryCard(pairId: bird.id, content: .picture(bird))
+        let hiddenLabel = MemoryCard(pairId: bird.id, content: .label(bird))
         let selected = MemoryCard(pairId: bird.id, content: .picture(bird), isSelected: true)
 
         #expect(MemoryView.accessibilityLabel(for: hidden, difficulty: .hard) == "Face down memory card")
         #expect(MemoryView.accessibilityHint(for: hidden, difficulty: .hard) == "Tap to turn this card over.")
+        #expect(MemoryView.accessibilityLabel(for: hiddenLabel, difficulty: .hard) == "Face down memory card")
+        #expect(MemoryView.accessibilityHint(for: hiddenLabel, difficulty: .hard) == "Tap to turn this card over.")
         #expect(MemoryView.accessibilityLabel(for: selected, difficulty: .hard).contains(bird.canonicalName))
         #expect(MemoryView.accessibilityLabel(for: selected, difficulty: .hard).contains("selected"))
     }
