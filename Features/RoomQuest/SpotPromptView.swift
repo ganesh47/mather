@@ -231,7 +231,7 @@ private func roomChromeButton(title: String, systemImage: String, accessibilityI
             .background(.black.opacity(0.18), in: Capsule())
     }
     .accessibilityIdentifier(accessibilityID)
-    .accessibilityLabel(accessibilityID)
+    .accessibilityLabel(title)
     .accessibilityAddTraits(.isButton)
 }
 
