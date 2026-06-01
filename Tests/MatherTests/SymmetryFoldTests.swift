@@ -128,6 +128,21 @@ struct SymmetryFoldTests {
     }
 
     @Test
+    func completedLevelCountIncludesSolvedCurrentLevel() {
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 1, totalLevels: 6, currentLevelSucceeded: false) == 0)
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 1, totalLevels: 6, currentLevelSucceeded: true) == 1)
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 4, totalLevels: 6, currentLevelSucceeded: false) == 3)
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 4, totalLevels: 6, currentLevelSucceeded: true) == 4)
+    }
+
+    @Test
+    func completedLevelCountPersistsFinalSolvedLevel() {
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 6, totalLevels: 6, currentLevelSucceeded: false) == 5)
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 6, totalLevels: 6, currentLevelSucceeded: true) == 6)
+        #expect(SymmetryFoldView.completedLevelCount(currentLevel: 99, totalLevels: 6, currentLevelSucceeded: true) == 6)
+    }
+
+    @Test
     func challengeCountdownRoundsUpAndClamps() {
         #expect(SymmetryFoldView.challengeCountdownText(for: 7.01) == "8s left")
         #expect(SymmetryFoldView.challengeCountdownText(for: 0.2) == "1s left")
