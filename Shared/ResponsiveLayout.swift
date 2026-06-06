@@ -73,6 +73,12 @@ enum ResponsiveLayout {
         return [GridItem(.adaptive(minimum: minimum, maximum: maximum), spacing: 16)]
     }
 
+    static var profileEmojiPickerMinimumTouchTarget: CGFloat { 80 }
+
+    static func profileEmojiPickerColumns() -> [GridItem] {
+        [GridItem(.adaptive(minimum: profileEmojiPickerMinimumTouchTarget), spacing: 12)]
+    }
+
 
     static func memoryCardMinimumWidth(for difficulty: MemoryDifficulty) -> CGFloat {
         switch difficulty {

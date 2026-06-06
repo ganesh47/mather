@@ -152,14 +152,17 @@ struct ProfilePickerView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 8)], spacing: 8) {
+            LazyVGrid(columns: ResponsiveLayout.profileEmojiPickerColumns(), spacing: 12) {
                 ForEach(KidProfileStore.emojiChoices, id: \.self) { emoji in
                     Button {
                         newEmoji = emoji
                     } label: {
                         Text(emoji)
                             .font(.system(size: 32))
-                            .frame(width: 52, height: 52)
+                            .frame(
+                                width: ResponsiveLayout.profileEmojiPickerMinimumTouchTarget,
+                                height: ResponsiveLayout.profileEmojiPickerMinimumTouchTarget
+                            )
                             .background(newEmoji == emoji ? MatherTheme.accent.opacity(0.2) : MatherTheme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay(

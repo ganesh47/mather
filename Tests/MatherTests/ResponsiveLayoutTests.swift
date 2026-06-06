@@ -16,6 +16,11 @@ struct ResponsiveLayoutTests {
         #expect(ResponsiveLayout.profilePickerMaxWidth(for: .compact) == .infinity)
     }
 
+    @MainActor @Test func profileEmojiPickerUsesChildSizedTouchTargets() {
+        #expect(ResponsiveLayout.profileEmojiPickerMinimumTouchTarget == 80)
+        #expect(ResponsiveLayout.profileEmojiPickerColumns().count == 1)
+    }
+
     @MainActor @Test func contentPaddingAndWidthsStayTabletAware() {
         #expect(ResponsiveLayout.contentPadding(for: .compact) == 24)
         #expect(ResponsiveLayout.contentPadding(for: .regular) == 48)
