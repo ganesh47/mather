@@ -333,11 +333,13 @@ struct TwoFingerProtractorView: View {
                             if showDegreeLabel {
                                 degreeLabel
                                     .transition(.scale.combined(with: .opacity))
+                                    .allowsHitTesting(false)
                             }
 
                             // Hint when no fingers
                             if touch1 == nil {
                                 hintOverlay
+                                    .allowsHitTesting(false)
                             }
                         }
                     }
@@ -555,7 +557,7 @@ struct TwoFingerProtractorView: View {
                 .padding(.horizontal, 24)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            Text("Place two fingers to measure an angle")
+            Text(bottomInstruction)
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
@@ -598,6 +600,19 @@ struct TwoFingerProtractorView: View {
         .padding(24)
         .background(MatherTheme.card.opacity(0.9))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var bottomInstruction: String {
+        if matched {
+            return "Great angle. Move on when you're ready."
+        }
+        if touch1 != nil && touch2 == nil {
+            return "Add one more finger to measure the angle."
+        }
+        if touch1 != nil && touch2 != nil {
+            return "Move your fingers until the angle matches the target."
+        }
+        return "Place two fingers to measure an angle"
     }
 
     // MARK: - Canvas drawing
