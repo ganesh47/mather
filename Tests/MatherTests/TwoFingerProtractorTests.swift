@@ -145,6 +145,15 @@ struct TwoFingerProtractorTests {
         #expect(!drifted.matched)
         #expect(!drifted.newlyMatched)
     }
+
+    @Test func matchTransitionDoesNotRecountWhileStillMatched() {
+        let stillMatched = ProtractorMath.matchTransition(previouslyMatched: true,
+                                                         measured: 91,
+                                                         target: 90,
+                                                         tolerance: 5)
+        #expect(stillMatched.matched)
+        #expect(!stillMatched.newlyMatched)
+    }
 }
 
 @Suite("ProtractorScenes")
