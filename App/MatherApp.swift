@@ -74,14 +74,45 @@ private extension MatherApp {
             appModel.engine.showLab()
         case "labgames", "lab-games":
             appModel.engine.showLabGames()
+        case "sumsprint", "sum-sprint":
+            appModel.sumSprintEngine.showDifficultyPick()
+            appModel.engine.showSumSprint()
+        case "roomquest", "room-quest":
+            appModel.engine.showRoomQuest()
+        case "symmetryfold", "symmetry-fold":
+            appModel.engine.showSymmetryFold()
+        case "rectanglefactory", "rectangle-factory":
+            appModel.engine.showRectangleFactory()
+        case "factorycards", "factory-cards":
+            appModel.engine.showFactoryCards()
+        case "anglecannon", "angle-cannon":
+            appModel.engine.showAngleCannon()
+        case "twofingerprotractor", "two-finger-protractor", "protractor":
+            appModel.engine.showTwoFingerProtractor()
+        case "gravityartist", "gravity-artist":
+            appModel.engine.showGravityArtist()
+        case "compassangles", "compass-angles", "compasswalk", "compass-walk":
+            appModel.engine.showCompassAngles()
+        case "soundvolume", "sound-volume", "soundlab", "sound-lab":
+            appModel.engine.showSoundVolume()
         case "shapegeometry", "shape-geometry", "shapes":
             appModel.engine.showShapeGeometry()
         case "geometrylane", "geometry-lane":
             appModel.engine.showLabLane(.geometry)
+        case "memory", "memorymatch", "memory-match":
+            appModel.engine.showMemory()
         case "watercycle", "water-cycle", "watercyclethread", "water-cycle-thread":
             appModel.engine.showWaterCycle()
         case "countries", "countrycards", "country-cards", "countrycardsthread", "country-cards-thread":
             appModel.engine.showCountriesGameplayThread()
+        case "worldanimals", "world-animals", "worldanimalcards", "world-animal-cards":
+            appModel.engine.showGameplayThread(.worldAnimals)
+        case "worldbirds", "world-birds", "worldbirdcards", "world-bird-cards":
+            appModel.engine.showGameplayThread(.worldBirds)
+        case "fruits", "fruitcards", "fruit-cards":
+            appModel.engine.showGameplayThread(.fruits)
+        case "electronics", "circuitspark", "circuit-spark":
+            appModel.engine.showGameplayThread(.electronics)
         case "watercyclelab", "water-cycle-lab", "legacy-watercycle", "legacy-water-cycle":
             appModel.engine.showLegacyWaterCycleLab()
         case "bondblast", "bond-blast", "bondblastfinale", "bond-blast-finale":

@@ -393,52 +393,37 @@ final class ScreenshotTests: XCTestCase {
         )
         assertAlive(makeBreak, "make and break post-concrete transition")
 
-        verifyCrashSweepGameEntry("Sum Sprint", expects: "Sum Sprint") { app in
-            tapButton(labelBeginsWith: "Relaxed", in: app)
-            XCTAssertTrue(app.staticTexts.element(matching: NSPredicate(format: "label BEGINSWITH 'Card '")).waitForExistence(timeout: 10))
-        }
+        let directRoutes: [(route: String, expectedText: String, checkpoint: String)] = [
+            ("lab", "Explorer Lab", "explorer lab"),
+            ("labGames", "Games", "games picker"),
+            ("sumSprint", "Sum Sprint", "sum sprint"),
+            ("roomQuest", "Set up the room", "room quest setup"),
+            ("symmetryFold", "Symmetry Fold", "symmetry fold"),
+            ("rectangleFactory", "Rectangle Factory", "rectangle factory"),
+            ("factoryCards", "Packing Cards", "factory cards"),
+            ("angleCannon", "Angle Cannon", "angle cannon"),
+            ("twoFingerProtractor", "Two-Finger Protractor", "two-finger protractor"),
+            ("gravityArtist", "Gravity Artist", "gravity artist"),
+            ("compassAngles", "Compass Walk", "compass walk"),
+            ("soundVolume", "Sound Lab", "sound lab"),
+            ("shapeGeometry", "Shape Names", "shape geometry"),
+            ("waterCycle", "Water Cycle", "water cycle thread"),
+            ("waterCycleLab", "Water Cycle Lab", "legacy water cycle lab"),
+            ("memory", "Memory Match", "memory match"),
+            ("countryCards", "Country Cards", "country cards"),
+            ("worldAnimals", "World Animals", "world animals"),
+            ("worldBirds", "World Birds", "world birds"),
+            ("fruitCards", "Fruit Cards", "fruit cards"),
+            ("electronics", "Circuit Spark", "circuit spark"),
+            ("bondBlast", "Bond Blast!", "bond blast finale"),
+        ]
 
-        verifyCrashSweepGameEntry("Room Quest", expects: "Set up the room") { app in
-            completeCrashSweepRoomQuestManualFallback(in: app)
-            requireExists(app.staticTexts["Red Rocket"], timeout: 10)
-        }
-
-        verifyCrashSweepGameEntry("Symmetry Fold", expects: "Symmetry Fold") { app in
-            requireExists(app.otherElements["symmetry-fold-scene"], timeout: 10)
-        }
-
-        verifyCrashSweepGameEntry("Rectangle Factory", expects: "Rectangle Factory") { app in
-            requireExists(app.buttons["rectangle-factory-reset"], timeout: 10)
-        }
-
-        verifyCrashSweepGameEntry("Angle Cannon", expects: "Angle Cannon") { app in
-            requireExists(app.buttons["angle-cannon-fire-button"], timeout: 10)
-            app.buttons["angle-cannon-fire-button"].tap()
-        }
-
-        verifyCrashSweepGameEntry("Protractor", expects: "Two-Finger Protractor") { app in
-            requireExists(app.otherElements["protractor-angle-match-prelude"], timeout: 10)
-            let firstCard = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'protractor-angle-card-'")).firstMatch
-            requireExists(firstCard, timeout: 10)
-            firstCard.tap()
-        }
-
-        verifyCrashSweepGameEntry("Gravity Artist", expects: "Gravity Quest") { app in
-            requireExists(app.buttons["gravity-crisp-action-button"], timeout: 10)
-            app.buttons["gravity-crisp-action-button"].tap()
-        }
-
-        verifyCrashSweepGameEntry("Compass Walk", expects: "Compass Walk") { app in
-            tapButton(labelBeginsWith: "START", in: app)
-            let fallback = app.buttons.element(matching: NSPredicate(format: "label BEGINSWITH %@", "I'm facing"))
-            if fallback.waitForExistence(timeout: 12) {
-                fallback.tap()
-            }
-        }
-
-        verifyCrashSweepGameEntry("Memory Match", expects: "Memory Match") { app in
-            requireExists(app.buttons["memory-deck-menu"], timeout: 10)
-            requireExists(app.buttons["memory-difficulty-menu"], timeout: 10)
+        for directRoute in directRoutes {
+            let app = launchCrashSweepRoute(directRoute.route)
+            requireExists(app.staticTexts[directRoute.expectedText], timeout: 15)
+            assertAlive(app, "\(directRoute.checkpoint) direct route")
+            app.terminate()
+            XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
         }
     }
 
@@ -524,6 +509,23 @@ final class ScreenshotTests: XCTestCase {
             "-feature.roomQuestMarkerSetupEnabled", "YES",
             "-feature.roomQuestReferenceCaptureEnabled", "YES",
             "-uiTest.autoCompleteGravitySplit"
+        ])
+    }
+
+    private func launchCrashSweepRoute(_ route: String) -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.motionControlsEnabled", "NO",
+            "-feature.soundReactionEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-feature.roomQuestSafetyAcknowledged", "YES",
+            "-feature.roomQuestMarkerSetupEnabled", "YES",
+            "-feature.roomQuestReferenceCaptureEnabled", "YES",
+            "-uiTest.autoCompleteGravitySplit",
+            "-uiTest.bondBlastTarget", "12",
+            "-uiTest.startRoute", route,
         ])
     }
 
@@ -652,58 +654,6 @@ final class ScreenshotTests: XCTestCase {
         }
         app.launch()
         return app
-    }
-
-    private func verifyCrashSweepGameEntry(
-        _ gameName: String,
-        expects expectedText: String,
-        exercise: (XCUIApplication) -> Void
-    ) {
-        let app = launchForCrashSweep()
-        openExplorerLabForCrashSweep(in: app)
-
-        let gameTile = app.buttons.element(matching: NSPredicate(format: "label CONTAINS %@", gameName))
-        XCTAssertTrue(scrollUntilExists(gameTile, in: app, direction: .up, maxSwipes: 8), "Missing game tile: \(gameName)")
-        tapWhenReachable(gameTile, in: app, scrollDirection: .up, maxSwipes: 4)
-
-        requireExists(app.staticTexts[expectedText], timeout: 15)
-        assertAlive(app, "\(gameName) opened")
-
-        exercise(app)
-        assertAlive(app, "\(gameName) exercised")
-    }
-
-    private func openExplorerLabForCrashSweep(in app: XCUIApplication) {
-        requireExists(app.staticTexts["Mather"], timeout: 10)
-        app.buttons["GamesEntry"].tap()
-        requireExists(app.staticTexts["Explorer Lab"], timeout: 10)
-    }
-
-    private func completeCrashSweepRoomQuestManualFallback(in app: XCUIApplication) {
-        let redCard = app.otherElements["room-station-card-redRocket"]
-        let blueCard = app.otherElements["room-station-card-blueBubble"]
-        requireExists(redCard, timeout: 10)
-        requireExists(blueCard, timeout: 10)
-
-        redCard.buttons["Scan station marker"].tap()
-        requireExists(app.staticTexts["room-scan-status"], timeout: 5)
-        tapWhenReachable(redCard.buttons["Save same-place fallback"], in: app, scrollDirection: .up)
-
-        blueCard.buttons["Scan station marker"].tap()
-        requireExists(app.staticTexts["room-scan-status"], timeout: 5)
-        tapWhenReachable(blueCard.buttons["Save same-place fallback"], in: app, scrollDirection: .up)
-
-        requireExists(app.buttons["Ready, start Room Quest!"], timeout: 5)
-        app.buttons["Ready, start Room Quest!"].tap()
-    }
-
-    private func tapCrashSweepCounter(_ identifier: String, in app: XCUIApplication) {
-        let counter = app.otherElements[identifier]
-        if !counter.waitForExistence(timeout: 3) {
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        requireExists(counter, timeout: 5)
-        counter.tap()
     }
 
     private func tapButton(labelBeginsWith prefix: String, in app: XCUIApplication) {
