@@ -663,8 +663,9 @@ final class ScreenshotTests: XCTestCase {
         let app = launchForCrashSweep()
         openExplorerLabForCrashSweep(in: app)
 
-        requireExists(app.buttons[gameName], timeout: 10)
-        app.buttons[gameName].tap()
+        let gameTile = app.buttons[gameName]
+        XCTAssertTrue(scrollUntilExists(gameTile, in: app, direction: .up, maxSwipes: 8), "Missing game tile: \(gameName)")
+        tapWhenReachable(gameTile, in: app, scrollDirection: .up, maxSwipes: 4)
 
         requireExists(app.staticTexts[expectedText], timeout: 15)
         assertAlive(app, "\(gameName) opened")
@@ -675,7 +676,7 @@ final class ScreenshotTests: XCTestCase {
 
     private func openExplorerLabForCrashSweep(in app: XCUIApplication) {
         requireExists(app.staticTexts["Mather"], timeout: 10)
-        app.buttons["ExplorerLab"].tap()
+        app.buttons["GamesEntry"].tap()
         requireExists(app.staticTexts["Explorer Lab"], timeout: 10)
     }
 
