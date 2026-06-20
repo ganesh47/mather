@@ -48,12 +48,15 @@
 		2EEF996C071A5985EBA9646B /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */; };
 		30A171142A2C7ECF758109BE /* ResponsiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */; };
 		329C9965E6D9AD988934EB70 /* MemoryGalleryTVRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */; };
+		3317FEF0838DE009DAEF51B7 /* SumSprintPartyTVRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A4D019E0AB8DA7749332EA /* SumSprintPartyTVRoundTests.swift */; };
+		334DF049B90427A9C94FAA13 /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */; };
 		34DE37BF5680E415897E050B /* GameplaySampleThreads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EADCE17D35CAE2DE5B7C4BA /* GameplaySampleThreads.swift */; };
 		35FD0D94E4C550D6A69EDA3B /* MixMatchRecallViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123D7243C121679FDB225E40 /* MixMatchRecallViewTests.swift */; };
 		388F1605AC5009767EFB7F00 /* ResponsiveLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */; };
 		38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */; };
 		3A2191B9DC40AAD1D0915808 /* SensorCapabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157718747997491EAA58488C /* SensorCapabilityService.swift */; };
 		3D43E7A118690E1610686ED2 /* RoomQuestStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3FA86EA00E9865ECE7DC64 /* RoomQuestStationStore.swift */; };
+		3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */; };
 		3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */; };
 		3F7CA345284169CF6C6F9796 /* ElectronicsCircuitArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */; };
 		406C3FEA95214CE100610901 /* GravityArtistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B095D79E7B14DFBAAEDC223 /* GravityArtistTests.swift */; };
@@ -72,6 +75,7 @@
 		4CB8E6289BE2BD95813E3B9A /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */; };
 		4D1AA6EA86EADDD1EBCD1F2C /* GameplayStageViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F76B8BE6B3409EDE0B4CBF /* GameplayStageViewModelTests.swift */; };
 		5032EE3DF5732E53D7FE3B3A /* LearningLoopModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */; };
+		521C2782BA0163B3216ACD9B /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */; };
 		53EB2EBB27E37A71B6205534 /* GameplayStageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 788A6A49D5B41AEFB50725EA /* GameplayStageModels.swift */; };
 		547A424F8ABA1E591352CAA8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F5E1261557B57C9FD31842 /* SettingsView.swift */; };
 		54CBAF0A5868D81125A2E2FD /* TwoFingerProtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */; };
@@ -133,10 +137,6 @@
 		A1289C7C722DE12CC1720FCC /* GroupedNumberRepresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */; };
 		A2C06BF6454B822874F8221F /* RoomQuestScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1045712502442FED9B5B13C9 /* RoomQuestScanner.swift */; };
 		A3608BF3DBB1D294B4BE1BB5 /* SumSprintGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */; };
-		A11810000000000000000003 /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000004 /* SumSprintPartyTVRound.swift */; };
-		A11810000000000000000005 /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000004 /* SumSprintPartyTVRound.swift */; };
-		A11810000000000000000006 /* SumSprintPartyTVRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */; };
-		A11810000000000000000008 /* SumSprintPartyTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000002 /* SumSprintPartyTVView.swift */; };
 		A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4C11FE8A80968AE7EA69CC /* AppModel.swift */; };
 		A4B5AFA2FA430D40BDBDD100 /* ExplorerLabMasteryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */; };
 		A580D6F96249197C9148D59D /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B3F29980CE5E67E05A4F30F /* HapticsService.swift */; };
@@ -356,9 +356,6 @@
 		A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpecTests.swift; sourceTree = "<group>"; };
 		A1B4A5B93ABCEBAB19EC49F6 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
 		A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceTheme.swift; sourceTree = "<group>"; };
-		A11810000000000000000002 /* SumSprintPartyTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVView.swift; sourceTree = "<group>"; };
-		A11810000000000000000004 /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
-		A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRoundTests.swift; sourceTree = "<group>"; };
 		A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachineTests.swift; sourceTree = "<group>"; };
 		A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameActivityCard.swift; sourceTree = "<group>"; };
 		AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpec.swift; sourceTree = "<group>"; };
@@ -371,6 +368,7 @@
 		B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayPreludeModels.swift; sourceTree = "<group>"; };
 		B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabRememberStageView.swift; sourceTree = "<group>"; };
 		BD8A34215EE8D8788E7185EB /* MatherTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTheme.swift; sourceTree = "<group>"; };
+		C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
 		C5C0EC27EA8E30BDA854CE9E /* RoomQuestEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestEngineTests.swift; sourceTree = "<group>"; };
 		C6840F2651B5C50EE285F52B /* GameplayStageViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModels.swift; sourceTree = "<group>"; };
 		C6F76B8BE6B3409EDE0B4CBF /* GameplayStageViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModelTests.swift; sourceTree = "<group>"; };
@@ -392,6 +390,7 @@
 		D4C3639AE166C4F815BCA5C7 /* MatherUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MatherUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D534592E2580F9BC9AF7AC2D /* TelemetryWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryWriter.swift; sourceTree = "<group>"; };
 		D5A56FCB9103BAE6E2941CA3 /* MemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryView.swift; sourceTree = "<group>"; };
+		D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVView.swift; sourceTree = "<group>"; };
 		D69ADFE340625CE2247C439C /* AngleCannonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleCannonTests.swift; sourceTree = "<group>"; };
 		D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryVarietyTests.swift; sourceTree = "<group>"; };
 		D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryStageVocabulary.swift; sourceTree = "<group>"; };
@@ -413,6 +412,7 @@
 		ECFA05754CC31E013A31DED6 /* LearningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCard.swift; sourceTree = "<group>"; };
 		ECFF09E7C4882057E1DFE232 /* GameplayThreadContent+Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+Shapes.swift"; sourceTree = "<group>"; };
 		EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipMemoryStageView.swift; sourceTree = "<group>"; };
+		F1A4D019E0AB8DA7749332EA /* SumSprintPartyTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRoundTests.swift; sourceTree = "<group>"; };
 		F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsViewTests.swift; sourceTree = "<group>"; };
 		F24A213AAF0604928B164968 /* FlashcardStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashcardStageView.swift; sourceTree = "<group>"; };
 		F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintEngineTests.swift; sourceTree = "<group>"; };
@@ -501,7 +501,7 @@
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
 				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
-				A11810000000000000000002 /* SumSprintPartyTVView.swift */,
+				D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */,
 			);
 			path = AppTV;
 			sourceTree = "<group>";
@@ -585,7 +585,7 @@
 				5116EC9E8413634D723C411E /* SoundDetectionServiceTests.swift */,
 				F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */,
 				CCCDFB3421635BB25E3A75BB /* SumSprintGeneratorTests.swift */,
-				A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */,
+				F1A4D019E0AB8DA7749332EA /* SumSprintPartyTVRoundTests.swift */,
 				01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */,
 				FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */,
 				288594261DFE5DC67971E64C /* ThemeTests.swift */,
@@ -676,7 +676,7 @@
 				37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */,
 				D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */,
 				576411C3ACD2B1B55F53CC89 /* SumSprintModels.swift */,
-				A11810000000000000000004 /* SumSprintPartyTVRound.swift */,
+				C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */,
 				B049757C9324E4EA88DAB861 /* TimerChallengePolicy.swift */,
 				AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */,
 				9435179B05EDA7984881930C /* VehicleTheme.swift */,
@@ -1012,8 +1012,8 @@
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
 				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
 				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
-				A11810000000000000000003 /* SumSprintPartyTVRound.swift in Sources */,
-				A11810000000000000000008 /* SumSprintPartyTVView.swift in Sources */,
+				521C2782BA0163B3216ACD9B /* SumSprintPartyTVRound.swift in Sources */,
+				3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1074,7 +1074,7 @@
 				B12859476E7412137808484E /* SoundDetectionServiceTests.swift in Sources */,
 				6F640A24F421DC2A0B558205 /* SumSprintEngineTests.swift in Sources */,
 				461CE6B56C4B4F4C6A818ED9 /* SumSprintGeneratorTests.swift in Sources */,
-				A11810000000000000000006 /* SumSprintPartyTVRoundTests.swift in Sources */,
+				3317FEF0838DE009DAEF51B7 /* SumSprintPartyTVRoundTests.swift in Sources */,
 				5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */,
 				E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */,
 				0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */,
@@ -1209,7 +1209,7 @@
 				3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */,
 				A3608BF3DBB1D294B4BE1BB5 /* SumSprintGenerator.swift in Sources */,
 				10EB0242F0C3D40604D246E8 /* SumSprintModels.swift in Sources */,
-				A11810000000000000000005 /* SumSprintPartyTVRound.swift in Sources */,
+				334DF049B90427A9C94FAA13 /* SumSprintPartyTVRound.swift in Sources */,
 				15787BD39C82C1965DA839A0 /* SumSprintSessionView.swift in Sources */,
 				4ABC4A6418596E71AD701541 /* SumSprintSummaryView.swift in Sources */,
 				DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */,
