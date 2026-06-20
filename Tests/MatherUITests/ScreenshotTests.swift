@@ -403,7 +403,7 @@ final class ScreenshotTests: XCTestCase {
             ("factoryCards", "Packing Cards", "factory cards"),
             ("angleCannon", "Angle Cannon", "angle cannon"),
             ("twoFingerProtractor", "Two-Finger Protractor", "two-finger protractor"),
-            ("gravityArtist", "Gravity Artist", "gravity artist"),
+            ("gravityArtist", "Gravity Quest", "gravity artist"),
             ("compassAngles", "Compass Walk", "compass walk"),
             ("soundVolume", "Sound Lab", "sound lab"),
             ("shapeGeometry", "Shape Names", "shape geometry"),
