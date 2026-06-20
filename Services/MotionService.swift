@@ -129,8 +129,8 @@ final class MotionService {
         if referenceAttitude == nil {
             referenceAttitude = motion.attitude.copy() as? CMAttitude
         }
-        if let ref = referenceAttitude {
-            let current = motion.attitude.copy() as! CMAttitude
+        if let ref = referenceAttitude,
+           let current = motion.attitude.copy() as? CMAttitude {
             current.multiply(byInverseOf: ref)
             relativeYaw = Self.bodyRelativeYawDegrees(fromCoreMotionYawRadians: current.yaw)
             relativeYawResponsive = true

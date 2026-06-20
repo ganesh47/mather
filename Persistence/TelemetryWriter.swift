@@ -14,7 +14,12 @@ final class TelemetryWriter {
     convenience init() {
         let schema = Schema([StoredTelemetryEvent.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: schema, configurations: config)
+        let container: ModelContainer
+        do {
+            container = try ModelContainer(for: schema, configurations: config)
+        } catch {
+            fatalError("In-memory TelemetryWriter container failed to initialize: \(error)")
+        }
         self.init(modelContext: ModelContext(container), activeProfileIdProvider: { KidProfileStore.defaultProfileId })
     }
 
