@@ -32,16 +32,18 @@ final class SpeechService {
             try configureAudioSession(mode: .spokenAudio)
             lastSpeechDiagnostic = nil
         } catch {
-            lastSpeechDiagnostic = "Audio session setup failed: \(error.localizedDescription)"
-            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            let msg = "Audio session setup failed: \(error.localizedDescription)"
+            lastSpeechDiagnostic = msg
+            print("[Mather][SpeechService] \(msg)")
         }
     }
 
     func speak(_ text: String, enabled: Bool) {
         guard !text.isEmpty else { return }
         guard enabled else {
-            lastSpeechDiagnostic = "Speech skipped because audio prompts are disabled."
-            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            let msg = "Speech skipped because audio prompts are disabled."
+            lastSpeechDiagnostic = msg
+            print("[Mather][SpeechService] \(msg)")
             return
         }
         lastSpokenText = text
@@ -72,8 +74,9 @@ final class SpeechService {
 
     func playSoundExample(_ example: SoundExampleKind, enabled: Bool) {
         guard enabled else {
-            lastSpeechDiagnostic = "Sound example skipped because audio prompts are disabled."
-            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            let msg = "Sound example skipped because audio prompts are disabled."
+            lastSpeechDiagnostic = msg
+            print("[Mather][SpeechService] \(msg)")
             return
         }
 
@@ -93,8 +96,9 @@ final class SpeechService {
             lastSpokenText = nil
             player.play()
         } catch {
-            lastSpeechDiagnostic = "Sound example playback failed: \(error.localizedDescription)"
-            print("[Mather][SpeechService] \(lastSpeechDiagnostic!)")
+            let msg = "Sound example playback failed: \(error.localizedDescription)"
+            lastSpeechDiagnostic = msg
+            print("[Mather][SpeechService] \(msg)")
         }
     }
 

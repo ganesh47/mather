@@ -872,7 +872,9 @@ final class VerticalSliceEngine {
             transferCorrect: transferCorrect
         )
         currentSession.problems.append(problemSession)
-        try? telemetryWriter.append(problemSession.events[0])
+        if let event = problemSession.events.first {
+            try? telemetryWriter.append(event)
+        }
     }
 
     private func promptForCurrentStage() -> String {
