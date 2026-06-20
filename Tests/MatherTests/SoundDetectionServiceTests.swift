@@ -4,16 +4,12 @@ import Testing
 
 /// Tests for SoundDetectionService.
 ///
-/// The primary regression target is the `installTap` crash when
-/// `inputNode.inputFormat(forBus:)` returns a zero-sample-rate format.
-/// This happens when SpeechService has set the AVAudioSession category to
-/// `.playback`, which disables microphone hardware — the input format becomes
-/// invalid (sampleRate=0) and passing it to `installTap` raises an exception.
+/// The primary regression target is microphone startup safety. Bond Blast clap
+/// detection now uses the same recorder-backed meter path as Sound Lab so it
+/// does not install an AVAudioEngine tap on the audio I/O thread.
 ///
-/// Fix: guard `format.sampleRate > 0` before calling `installTap`.
-///
-/// Because AVAudioEngine requires real audio hardware, these tests exercise the
-/// service's state machine and guard logic directly without driving the engine.
+/// Because live microphone startup requires real audio hardware, these tests
+/// exercise the service's state machine and guard logic without driving input.
 @MainActor
 struct SoundDetectionServiceTests {
 
@@ -115,9 +111,8 @@ struct SoundDetectionServiceTests {
         #expect(service.meterPermissionState == .notStarted)
     }
 
-    // startListening() calls AVAudioEngine.start() which requires real audio hardware.
-    // AVAudioEngine crashes the test host on the simulator (AURemoteIO -10851), so
-    // these tests only run on device where the guard logic matters most.
+    // startListening() starts live microphone metering, so these tests only run
+    // on device where the guard logic matters most.
     #if !targetEnvironment(simulator)
 
     @Test

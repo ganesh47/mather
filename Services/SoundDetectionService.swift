@@ -3,13 +3,13 @@ import Observation
 
 /// Detects hand-clap events via microphone RMS spike analysis.
 ///
-/// Uses AVAudioEngine (NOT SoundAnalysis) for low latency and zero ML model
-/// overhead. A clap signature is an RMS spike from near-silence (< 0.05) to
-/// above 0.3 within one ~46 ms buffer window.
+/// Uses an AVAudioRecorder-backed meter for low overhead and zero ML model
+/// dependency. A clap signature is an RMS spike from near-silence (< 0.05) to
+/// above 0.3 during a meter polling window.
 ///
-/// **Privacy**: Audio data is never stored or transmitted — the tap computes
+/// **Privacy**: Audio data is never stored or transmitted — metering computes
 /// only an RMS scalar. The service is started only when
-/// `featureFlags.soundReactionEnabled` is true (default: true), and stops
+/// `featureFlags.soundReactionEnabled` is true (default: false), and stops
 /// immediately when BondMatchView disappears.
 ///
 /// Requires `NSMicrophoneUsageDescription` in Info.plist.
@@ -29,8 +29,8 @@ final class SoundDetectionService {
 
     // MARK: - Private
 
-    // nonisolated(unsafe): AVAudioEngine is not Sendable, but we only ever
-    // access it from @MainActor methods (start/stop are both @MainActor).
+    // nonisolated(unsafe): AVAudioEngine is kept only for defensive teardown of
+    // older tap-backed starts; current starts use AVAudioRecorder metering.
     nonisolated(unsafe) private var audioEngine: AVAudioEngine?
     private var meterRecorder: AVAudioRecorder?
     private var isListening = false
@@ -45,89 +45,10 @@ final class SoundDetectionService {
     /// Request microphone access (if not yet granted) and begin listening.
     /// Does nothing if already listening.
     func startListening() {
-        guard !isListening else { return }
-        let audioSession = AVAudioSession.sharedInstance()
-
-        let preflight = soundMeterPreflight(for: audioSession)
-        meterStartupDiagnostics = SoundMeterStartupDiagnostics(
-            phase: .preflight,
-            authorization: preflight.authorization,
-            isInputAvailable: preflight.isInputAvailable
-        )
-
-        switch preflight.startupDecision() {
-        case .requestPermission:
-            requestMicrophonePermission { [weak self] in
-                self?.startListening()
-            }
-            return
-        case .startMeter:
-            break
-        case .fail(let state):
-            resetSoundMeter(to: state, phase: startupPhase(for: state), failure: startupFailure(for: state))
-            return
-        }
-
-        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .activatingSession)
-        do {
-            try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
-        } catch {
-            resetSoundMeter(to: .unavailable, phase: .sessionActivationFailed, failure: .sessionActivation)
-            return
-        }
-
-        guard audioSession.isInputAvailable, !audioSession.currentRoute.inputs.isEmpty else {
-            resetSoundMeter(to: .unavailable, phase: .routeUnavailable, failure: .routeUnavailable)
-            return
-        }
-
-        let engine = AVAudioEngine()
-        let inputNode = engine.inputNode
-        let format = inputNode.outputFormat(forBus: 0)
-        let formatSnapshot = SoundMeterAudioFormatSnapshot(format: format)
-        meterStartupDiagnostics = meterStartupDiagnostics.updating(
-            phase: .checkingInputFormat,
-            routeInputCount: audioSession.currentRoute.inputs.count,
-            format: formatSnapshot
-        )
-        // When input hardware is unavailable or the route changes, the input
-        // node can expose a zero/unknown format. Installing a tap with that
-        // format can raise an Objective-C/AudioUnit assertion instead of a
-        // catchable Swift error, so fail closed before the tap boundary.
-        guard formatSnapshot.isUsableForAudioTap else {
-            resetSoundMeter(to: .unavailable, phase: .inputFormatUnavailable, failure: .inputFormatUnavailable, format: formatSnapshot)
-            return
-        }
-
-        inputNode.removeTap(onBus: 0)
-        engine.prepare()
-        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .installingAudioTap, format: formatSnapshot)
-        inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
-            guard let rms = SoundDetectionService.audioTapRMS(from: buffer) else { return }
-
-            // The audio tap runs on the audio I/O thread — marshal to @MainActor.
-            Task { @MainActor [weak self] in
-                self?.evaluateRMS(rms)
-            }
-        }
-
-        meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .startingAudioEngine)
-        do {
-            try engine.start()
-            audioEngine = engine
-            isListening = true
-            meterPermissionState = .listening
-            meterStartupDiagnostics = meterStartupDiagnostics.updating(phase: .listening)
-        } catch {
-            // Silently fail: microphone permission may be denied, or the
-            // audio session may be unavailable. Bond Blast still works without clap.
-            inputNode.removeTap(onBus: 0)
-            resetSoundMeter(to: .unavailable, phase: .engineStartFailed, failure: .engineStart)
-        }
+        startRecorderBackedSoundLabMeter()
     }
 
-    /// Stop listening and tear down the audio tap.
+    /// Stop listening and tear down microphone metering.
     func stopListening() {
         pendingMeterPermissionRequestID = nil
         pendingMeterStartAction = nil
