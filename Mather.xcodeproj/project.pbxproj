@@ -21,6 +21,7 @@
 		0F799699251E181629E1C3F8 /* GameActivityCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */; };
 		10EB0242F0C3D40604D246E8 /* SumSprintModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576411C3ACD2B1B55F53CC89 /* SumSprintModels.swift */; };
 		112A284BDF426C840BE1B8CB /* LabLaneDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C13E59DB0E8C3C0F5D863FF /* LabLaneDetailView.swift */; };
+		12978B14FA3C86099A34FC4F /* AngleArcadeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */; };
 		138E4B58418EE08549CF1407 /* LabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B42394C64D2D5C8DC32CE604 /* LabView.swift */; };
 		14D458B1148DC15E9444204F /* CompassAnglesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F89B7EA97FE105036E4EB5F /* CompassAnglesView.swift */; };
 		14DE12583C593EE688E0C1E6 /* MemoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56FCB9103BAE6E2941CA3 /* MemoryView.swift */; };
@@ -30,6 +31,7 @@
 		17BE88060C10E1B1E35E439F /* CompactLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */; };
 		1880E12717CE04AA936CCDA9 /* GameplayStageViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6840F2651B5C50EE285F52B /* GameplayStageViewModels.swift */; };
 		19F4E103CE0765211AAF66E7 /* GroupedNumberRepresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A181025AE1DD3CABF30F968 /* GroupedNumberRepresentationTests.swift */; };
+		1A7B774DEC63CE5479722F6D /* AngleArcadeModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */; };
 		1AAC31299B73107856FF555C /* TransferIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */; };
 		1CAB4FE9FAA2F4CD4CF15811 /* TelemetryWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D534592E2580F9BC9AF7AC2D /* TelemetryWriter.swift */; };
 		1ED4CA54DD386B5AFD07D0A2 /* LabModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F451B67C2A515584DDB54A4 /* LabModelsTests.swift */; };
@@ -95,6 +97,7 @@
 		6EF0C5C2A7F0FFD50254907C /* GravitySplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892C73ABB87A9BFDC46D9896 /* GravitySplitView.swift */; };
 		6F5C05185F5CEFD78EBD34BF /* SplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32A026C6F2490BFE57BBD4B6 /* SplitView.swift */; };
 		6F640A24F421DC2A0B558205 /* SumSprintEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */; };
+		6FCBEF02AFFDFDA13749BB83 /* AngleArcadeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */; };
 		706B158BD7E09EDC4FA754A4 /* SliceSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E23D56BDC809F3EA92AFCB5 /* SliceSessionView.swift */; };
 		7152D501D6B4641F75716E04 /* StoryAnchorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848B1652547224E6778C19F0 /* StoryAnchorView.swift */; };
 		73677957CEDF883A4CC75D9E /* LabConceptSessionProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92740460961DA8CA221823A6 /* LabConceptSessionProgressStore.swift */; };
@@ -196,6 +199,7 @@
 		E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */; };
 		EA514902B3549363146AF031 /* SessionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */; };
 		ECD8D5A562596BB07C9DDD9E /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */; };
+		ED8BB99A44A3C701068F03D6 /* AngleArcadeTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */; };
 		EF44551359C1EF6A68E0542C /* GroupedNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3E611E8AE4A6487A373E5C /* GroupedNumberView.swift */; };
 		EF711D2300E02AA521E096B8 /* TwoFingerProtractorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5664E2D1E683B5945DB14EC8 /* TwoFingerProtractorView.swift */; };
 		F132D0108E586BDB792A9446 /* SmartPlayProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */; };
@@ -236,6 +240,7 @@
 		0E23D56BDC809F3EA92AFCB5 /* SliceSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceSessionView.swift; sourceTree = "<group>"; };
 		0F3E611E8AE4A6487A373E5C /* GroupedNumberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberView.swift; sourceTree = "<group>"; };
 		1045712502442FED9B5B13C9 /* RoomQuestScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestScanner.swift; sourceTree = "<group>"; };
+		11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeTVView.swift; sourceTree = "<group>"; };
 		123D7243C121679FDB225E40 /* MixMatchRecallViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixMatchRecallViewTests.swift; sourceTree = "<group>"; };
 		12757B691EB1421D33AAADD3 /* LabRouteRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabRouteRegressionTests.swift; sourceTree = "<group>"; };
 		128EAA2ABCC936C76AD253C9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -259,6 +264,7 @@
 		2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicyTests.swift; sourceTree = "<group>"; };
 		2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingChallengeTests.swift; sourceTree = "<group>"; };
 		2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartPlayProvider.swift; sourceTree = "<group>"; };
+		2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeModel.swift; sourceTree = "<group>"; };
 		2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryViewTests.swift; sourceTree = "<group>"; };
 		2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteQuestModels.swift; sourceTree = "<group>"; };
@@ -271,6 +277,7 @@
 		36ECB3EFD8245E65E2F31BD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintEngine.swift; sourceTree = "<group>"; };
 		383EE87126C22A00D3232A1E /* NumberStoryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryModels.swift; sourceTree = "<group>"; };
+		3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeModelTests.swift; sourceTree = "<group>"; };
 		3ABD019864C46683CF30CA35 /* GameplayThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadView.swift; sourceTree = "<group>"; };
 		3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryContent.swift; sourceTree = "<group>"; };
 		3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayout.swift; sourceTree = "<group>"; };
@@ -498,6 +505,7 @@
 		164629017D683675FC8851CF /* AppTV */ = {
 			isa = PBXGroup;
 			children = (
+				11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */,
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
 				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
@@ -532,6 +540,7 @@
 		25FB5EFDA536B37D6A1D2832 /* MatherTests */ = {
 			isa = PBXGroup;
 			children = (
+				3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */,
 				D69ADFE340625CE2247C439C /* AngleCannonTests.swift */,
 				E63765A2998A3C2FD04B62AC /* ArrayPreludeModelsTests.swift */,
 				7E3256A636C3B109D53BE146 /* BondMatchViewTests.swift */,
@@ -640,6 +649,7 @@
 		4356714DEE880CBB965F848D /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */,
 				B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */,
 				479CE24CCC2244CAA1135B24 /* CapabilityLane.swift */,
 				8C221EA39753544B4F0EE9E7 /* CapabilityModels.swift */,
@@ -1007,6 +1017,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				12978B14FA3C86099A34FC4F /* AngleArcadeModel.swift in Sources */,
+				ED8BB99A44A3C701068F03D6 /* AngleArcadeTVView.swift in Sources */,
 				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
 				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
@@ -1021,6 +1033,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A7B774DEC63CE5479722F6D /* AngleArcadeModelTests.swift in Sources */,
 				FCCD21AF414D3FAFDA10A9A4 /* AngleCannonTests.swift in Sources */,
 				08341A75D0D385BC7222C172 /* ArrayPreludeModelsTests.swift in Sources */,
 				84CB43226EBB48F26DDF03A8 /* BondMatchViewTests.swift in Sources */,
@@ -1103,6 +1116,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FCBEF02AFFDFDA13749BB83 /* AngleArcadeModel.swift in Sources */,
 				0A87802FC06B98D73B797D40 /* AngleCannonView.swift in Sources */,
 				A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */,
 				067AD3849B44423F0AB55906 /* ArrayPreludeModels.swift in Sources */,
