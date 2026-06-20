@@ -133,6 +133,10 @@
 		A1289C7C722DE12CC1720FCC /* GroupedNumberRepresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */; };
 		A2C06BF6454B822874F8221F /* RoomQuestScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1045712502442FED9B5B13C9 /* RoomQuestScanner.swift */; };
 		A3608BF3DBB1D294B4BE1BB5 /* SumSprintGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */; };
+		A11810000000000000000003 /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000004 /* SumSprintPartyTVRound.swift */; };
+		A11810000000000000000005 /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000004 /* SumSprintPartyTVRound.swift */; };
+		A11810000000000000000006 /* SumSprintPartyTVRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */; };
+		A11810000000000000000008 /* SumSprintPartyTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11810000000000000000002 /* SumSprintPartyTVView.swift */; };
 		A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4C11FE8A80968AE7EA69CC /* AppModel.swift */; };
 		A4B5AFA2FA430D40BDBDD100 /* ExplorerLabMasteryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */; };
 		A580D6F96249197C9148D59D /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B3F29980CE5E67E05A4F30F /* HapticsService.swift */; };
@@ -352,6 +356,9 @@
 		A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpecTests.swift; sourceTree = "<group>"; };
 		A1B4A5B93ABCEBAB19EC49F6 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
 		A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceTheme.swift; sourceTree = "<group>"; };
+		A11810000000000000000002 /* SumSprintPartyTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVView.swift; sourceTree = "<group>"; };
+		A11810000000000000000004 /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
+		A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRoundTests.swift; sourceTree = "<group>"; };
 		A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachineTests.swift; sourceTree = "<group>"; };
 		A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameActivityCard.swift; sourceTree = "<group>"; };
 		AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpec.swift; sourceTree = "<group>"; };
@@ -494,6 +501,7 @@
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
 				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
+				A11810000000000000000002 /* SumSprintPartyTVView.swift */,
 			);
 			path = AppTV;
 			sourceTree = "<group>";
@@ -577,6 +585,7 @@
 				5116EC9E8413634D723C411E /* SoundDetectionServiceTests.swift */,
 				F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */,
 				CCCDFB3421635BB25E3A75BB /* SumSprintGeneratorTests.swift */,
+				A11810000000000000000007 /* SumSprintPartyTVRoundTests.swift */,
 				01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */,
 				FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */,
 				288594261DFE5DC67971E64C /* ThemeTests.swift */,
@@ -667,6 +676,7 @@
 				37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */,
 				D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */,
 				576411C3ACD2B1B55F53CC89 /* SumSprintModels.swift */,
+				A11810000000000000000004 /* SumSprintPartyTVRound.swift */,
 				B049757C9324E4EA88DAB861 /* TimerChallengePolicy.swift */,
 				AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */,
 				9435179B05EDA7984881930C /* VehicleTheme.swift */,
@@ -1002,6 +1012,8 @@
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
 				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
 				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
+				A11810000000000000000003 /* SumSprintPartyTVRound.swift in Sources */,
+				A11810000000000000000008 /* SumSprintPartyTVView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1062,6 +1074,7 @@
 				B12859476E7412137808484E /* SoundDetectionServiceTests.swift in Sources */,
 				6F640A24F421DC2A0B558205 /* SumSprintEngineTests.swift in Sources */,
 				461CE6B56C4B4F4C6A818ED9 /* SumSprintGeneratorTests.swift in Sources */,
+				A11810000000000000000006 /* SumSprintPartyTVRoundTests.swift in Sources */,
 				5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */,
 				E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */,
 				0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */,
@@ -1196,6 +1209,7 @@
 				3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */,
 				A3608BF3DBB1D294B4BE1BB5 /* SumSprintGenerator.swift in Sources */,
 				10EB0242F0C3D40604D246E8 /* SumSprintModels.swift in Sources */,
+				A11810000000000000000005 /* SumSprintPartyTVRound.swift in Sources */,
 				15787BD39C82C1965DA839A0 /* SumSprintSessionView.swift in Sources */,
 				4ABC4A6418596E71AD701541 /* SumSprintSummaryView.swift in Sources */,
 				DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */,

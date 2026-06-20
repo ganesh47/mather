@@ -53,6 +53,7 @@ targets:
           - "**/*.swift"
       - path: Domain/MemoryContent.swift
       - path: Domain/MemoryGalleryTVRound.swift
+      - path: Domain/SumSprintPartyTVRound.swift
       - path: App/Assets.xcassets
     settings:
       base:
