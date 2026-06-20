@@ -360,6 +360,73 @@ final class ScreenshotTests: XCTestCase {
         )
     }
 
+    // MARK: - Deep crash sweep
+
+    func testDeepCrashSweep_ExplorerLabAndCoreSurfaces() {
+        let shell = launchForCrashSweep()
+        requireExists(shell.staticTexts["Mather"], timeout: 10)
+
+        shell.buttons["Settings"].tap()
+        requireExists(shell.staticTexts["Settings"], timeout: 10)
+        assertAlive(shell, "settings")
+
+        shell.buttons["Home"].tap()
+        requireExists(shell.staticTexts["Mather"], timeout: 10)
+
+        shell.buttons["Parent Summary"].tap()
+        requireExists(shell.staticTexts["Parent Summary"], timeout: 10)
+        assertAlive(shell, "parent summary")
+
+        let makeBreak = launchForCrashSweep()
+        requireExists(makeBreak.staticTexts["Mather"], timeout: 10)
+        makeBreak.buttons["Play"].tap()
+        requireExists(makeBreak.staticTexts["Session setup"], timeout: 10)
+        startSessionAndWaitForConcrete(in: makeBreak)
+        assertAlive(makeBreak, "make and break concrete stage")
+
+        fillConcreteTarget(6, in: makeBreak)
+        tapButton(labelBeginsWith: "That is ", in: makeBreak)
+        XCTAssertTrue(
+            makeBreak.staticTexts["Gravity Split"].waitForExistence(timeout: 15)
+                || makeBreak.staticTexts["Sum Sprint"].waitForExistence(timeout: 15)
+                || makeBreak.staticTexts["Bond Blast!"].waitForExistence(timeout: 15)
+        )
+        assertAlive(makeBreak, "make and break post-concrete transition")
+
+        let directRoutes: [(route: String, expectedText: String, checkpoint: String)] = [
+            ("lab", "Explorer Lab", "explorer lab"),
+            ("labGames", "Games", "games picker"),
+            ("sumSprint", "Sum Sprint", "sum sprint"),
+            ("roomQuest", "Set up the room", "room quest setup"),
+            ("symmetryFold", "Symmetry Fold", "symmetry fold"),
+            ("rectangleFactory", "Rectangle Factory", "rectangle factory"),
+            ("factoryCards", "Packing Cards", "factory cards"),
+            ("angleCannon", "Angle Cannon", "angle cannon"),
+            ("twoFingerProtractor", "Two-Finger Protractor", "two-finger protractor"),
+            ("gravityArtist", "Gravity Quest", "gravity artist"),
+            ("compassAngles", "Compass Walk", "compass walk"),
+            ("soundVolume", "Sound Lab", "sound lab"),
+            ("shapeGeometry", "Shape Names", "shape geometry"),
+            ("waterCycle", "Water Cycle", "water cycle thread"),
+            ("waterCycleLab", "Water Cycle Lab", "legacy water cycle lab"),
+            ("memory", "Memory Match", "memory match"),
+            ("countryCards", "Country Cards", "country cards"),
+            ("worldAnimals", "World Animals", "world animals"),
+            ("worldBirds", "World Birds", "world birds"),
+            ("fruitCards", "Fruit Cards", "fruit cards"),
+            ("electronics", "Circuit Spark", "circuit spark"),
+            ("bondBlast", "Bond Blast!", "bond blast finale"),
+        ]
+
+        for directRoute in directRoutes {
+            let app = launchCrashSweepRoute(directRoute.route)
+            requireExists(app.staticTexts[directRoute.expectedText], timeout: 15)
+            assertAlive(app, "\(directRoute.checkpoint) direct route")
+            app.terminate()
+            XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
+        }
+    }
+
     // MARK: - Helpers
 
     /// Launches the app with CI-appropriate flags pre-configured via UserDefaults injection.
@@ -427,6 +494,38 @@ final class ScreenshotTests: XCTestCase {
             "-feature.testModeEnabled", "YES",
             "-feature.skipProfilePicker", "YES",
             "-uiTest.startRoute", "waterCycleLab"
+        ])
+    }
+
+    private func launchForCrashSweep() -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.motionControlsEnabled", "NO",
+            "-feature.soundReactionEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-feature.roomQuestSafetyAcknowledged", "YES",
+            "-feature.roomQuestMarkerSetupEnabled", "YES",
+            "-feature.roomQuestReferenceCaptureEnabled", "YES",
+            "-uiTest.autoCompleteGravitySplit"
+        ])
+    }
+
+    private func launchCrashSweepRoute(_ route: String) -> XCUIApplication {
+        launchApp(with: [
+            "-feature.audioEnabled", "NO",
+            "-feature.hapticsEnabled", "NO",
+            "-feature.motionControlsEnabled", "NO",
+            "-feature.soundReactionEnabled", "NO",
+            "-feature.testModeEnabled", "YES",
+            "-feature.skipProfilePicker", "YES",
+            "-feature.roomQuestSafetyAcknowledged", "YES",
+            "-feature.roomQuestMarkerSetupEnabled", "YES",
+            "-feature.roomQuestReferenceCaptureEnabled", "YES",
+            "-uiTest.autoCompleteGravitySplit",
+            "-uiTest.bondBlastTarget", "12",
+            "-uiTest.startRoute", route,
         ])
     }
 
@@ -555,6 +654,16 @@ final class ScreenshotTests: XCTestCase {
         }
         app.launch()
         return app
+    }
+
+    private func tapButton(labelBeginsWith prefix: String, in app: XCUIApplication) {
+        let button = app.buttons.element(matching: NSPredicate(format: "label BEGINSWITH %@", prefix))
+        requireExists(button, timeout: 10)
+        button.tap()
+    }
+
+    private func assertAlive(_ app: XCUIApplication, _ checkpoint: String) {
+        XCTAssertNotEqual(app.state, .notRunning, "App crashed or exited at checkpoint: \(checkpoint)")
     }
 
     private func startSessionAndWaitForConcrete(in app: XCUIApplication) {

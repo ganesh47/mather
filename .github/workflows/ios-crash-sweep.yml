@@ -1,0 +1,138 @@
+name: iOS Crash Sweep
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ios-crash-sweep.yml"
+      - "Tests/MatherUITests/ScreenshotTests.swift"
+      - "App/**"
+      - "Domain/**"
+      - "Features/**"
+      - "Persistence/**"
+      - "Services/**"
+      - "Shared/**"
+      - "project.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crash-sweep:
+    name: Deep UI Crash Sweep
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Choose simulator destination
+        run: |
+          set -euo pipefail
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | grep -v "26\." | head -n 1 || true)"
+            if [[ -n "$line" ]]; then
+              id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
+              echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
+              echo "Using simulator: $name ($id)"
+              exit 0
+            fi
+          done
+          for name in "iPhone 16 Pro" "iPhone 16" "iPhone 15" "iPhone 17"; do
+            line="$(xcrun simctl list devices available | grep -F "$name (" | head -n 1 || true)"
+            if [[ -n "$line" ]]; then
+              id="$(sed -E "s/.*\(([A-F0-9-]+)\).*/\1/" <<<"$line")"
+              echo "SIM_DESTINATION=id=$id" >> "$GITHUB_ENV"
+              echo "Using simulator fallback: $name ($id)"
+              exit 0
+            fi
+          done
+          echo "No preferred iPhone simulator found" >&2
+          xcrun simctl list devices available
+          exit 1
+
+      - name: Resolve dependencies
+        run: xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
+
+      - name: Build for testing
+        run: |
+          xcodebuild build-for-testing \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Boot simulator
+        timeout-minutes: 8
+        run: |
+          SIM_ID="${SIM_DESTINATION#id=}"
+          xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+          for i in $(seq 1 40); do
+            STATE=$(xcrun simctl list devices | grep -F "$SIM_ID" \
+              | grep -oE 'Booted|Shutdown|Booting' | head -1 || echo "Unknown")
+            echo "[$i/40] $STATE"
+            [[ "$STATE" == "Booted" ]] && {
+              echo "Simulator booted: $SIM_ID"
+              sleep 10
+              exit 0
+            }
+            sleep 5
+          done
+          echo "Simulator did not reach Booted state after 200s" >&2
+          xcrun simctl list devices | grep -F "$SIM_ID" >&2
+          exit 1
+
+      - name: Run deep crash sweep UI tests
+        timeout-minutes: 25
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project Mather.xcodeproj \
+            -scheme Mather \
+            -destination "$SIM_DESTINATION" \
+            -only-testing MatherUITests/ScreenshotTests/testDeepCrashSweep_ExplorerLabAndCoreSurfaces \
+            -resultBundlePath CrashSweepResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Capture final simulator screenshot
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p crash-sweep-artifacts
+          SIM_ID="${SIM_DESTINATION#id=}"
+          xcrun simctl io "$SIM_ID" screenshot crash-sweep-artifacts/final-state.png 2>/dev/null || true
+          xcrun simctl spawn "$SIM_ID" log collect \
+            --last 20m \
+            --output crash-sweep-artifacts/simulator.logarchive 2>/dev/null || true
+
+      - name: Upload crash sweep result bundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: crash-sweep-xcresult-${{ github.run_number }}
+          path: CrashSweepResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload crash sweep diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: crash-sweep-diagnostics-${{ github.run_number }}
+          path: crash-sweep-artifacts
+          if-no-files-found: ignore
+          retention-days: 30
