@@ -21,7 +21,7 @@ jobs:
     env:
       DEVICE_FAMILY: ${{ matrix.device-family }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           persist-credentials: false
 
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload UI result bundle
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ui-review-results-${{ matrix.device-family }}-${{ github.run_number }}
           path: UITestResults-${{ matrix.device-family }}.xcresult
@@ -176,7 +176,7 @@ jobs:
 
       - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ui-review-screenshots-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-screenshots/
@@ -185,7 +185,7 @@ jobs:
 
       - name: Upload device state screenshots
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ui-review-device-state-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-device-state/
@@ -194,7 +194,7 @@ jobs:
 
       - name: Upload video contact sheets
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ui-review-contact-sheets-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-contact-sheets/
@@ -203,7 +203,7 @@ jobs:
 
       - name: Upload UI test video
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ui-review-video-${{ matrix.device-family }}-${{ github.run_number }}
           path: ci-videos/
