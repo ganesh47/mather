@@ -21,6 +21,7 @@ final class FeatureFlagService {
         static let makeBreakLoopV2Enabled = "feature.makeBreakLoopV2Enabled"
         static let motionControlsEnabled = "feature.motionControlsEnabled"
         static let soundReactionEnabled = "feature.soundReactionEnabled"
+        static let soundReactionResetMigrationVersion = "feature.soundReactionResetMigrationVersion"
         static let roomQuestSafetyAcknowledged = "feature.roomQuestSafetyAcknowledged"
         static let roomQuestMarkerSetupEnabled = "feature.roomQuestMarkerSetupEnabled"
         static let roomQuestReferenceCaptureEnabled = "feature.roomQuestReferenceCaptureEnabled"
@@ -74,7 +75,7 @@ final class FeatureFlagService {
         didSet { defaults.set(motionControlsEnabled, forKey: Keys.motionControlsEnabled) }
     }
 
-    /// Enables AVAudioEngine clap detection in Bond Blast.
+    /// Enables optional microphone clap detection in Bond Blast.
     /// Defaults to false; parent can opt in after reviewing microphone behavior.
     var soundReactionEnabled: Bool {
         didSet { defaults.set(soundReactionEnabled, forKey: Keys.soundReactionEnabled) }
@@ -147,10 +148,19 @@ final class FeatureFlagService {
     }
 
     private let defaults: UserDefaults
+    private static let currentSoundReactionResetMigrationVersion = 1
 
     private static func hasLaunchArgumentOverride(for key: String) -> Bool {
         ProcessInfo.processInfo.arguments.contains(key) ||
             ProcessInfo.processInfo.arguments.contains("-\(key)")
+    }
+
+    private static func migrateSoundReactionPreferenceIfNeeded(defaults: UserDefaults) {
+        guard !hasLaunchArgumentOverride(for: Keys.soundReactionEnabled) else { return }
+        guard defaults.integer(forKey: Keys.soundReactionResetMigrationVersion) < currentSoundReactionResetMigrationVersion else { return }
+
+        defaults.set(false, forKey: Keys.soundReactionEnabled)
+        defaults.set(currentSoundReactionResetMigrationVersion, forKey: Keys.soundReactionResetMigrationVersion)
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -182,6 +192,7 @@ final class FeatureFlagService {
             Keys.placeMatchVisionMatch: Double(PlaceMatchThresholds.default.visionMatchDistance),
             Keys.placeMatchVisionClose: Double(PlaceMatchThresholds.default.visionCloseDistance),
         ])
+        Self.migrateSoundReactionPreferenceIfNeeded(defaults: defaults)
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)

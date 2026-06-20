@@ -74,6 +74,32 @@ struct FeatureFlagTests {
         let flags2 = FeatureFlagService(defaults: defaults)
         #expect(!flags2.soundReactionEnabled)
     }
+
+    @Test func staleSoundReactionOptInIsResetOnceOnUpgrade() {
+        let suiteName = "FeatureFlagTests.staleSoundReactionOptInIsResetOnceOnUpgrade"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defaults.set(true, forKey: "feature.soundReactionEnabled")
+
+        let flags = FeatureFlagService(defaults: defaults)
+
+        #expect(!flags.soundReactionEnabled)
+        #expect(!defaults.bool(forKey: "feature.soundReactionEnabled"))
+        #expect(defaults.integer(forKey: "feature.soundReactionResetMigrationVersion") == 1)
+    }
+
+    @Test func soundReactionParentOptInPersistsAfterResetMigration() {
+        let suiteName = "FeatureFlagTests.soundReactionParentOptInPersistsAfterResetMigration"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        _ = FeatureFlagService(defaults: defaults)
+        let flags1 = FeatureFlagService(defaults: defaults)
+        flags1.soundReactionEnabled = true
+
+        let flags2 = FeatureFlagService(defaults: defaults)
+        #expect(flags2.soundReactionEnabled)
+    }
 }
 
 // MARK: - Route Quest rollout
