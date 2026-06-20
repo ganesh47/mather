@@ -51,6 +51,8 @@ targets:
       - path: AppTV
         includes:
           - "**/*.swift"
+      - path: Domain/MemoryContent.swift
+      - path: Domain/MemoryGalleryTVRound.swift
       - path: App/Assets.xcassets
     settings:
       base:

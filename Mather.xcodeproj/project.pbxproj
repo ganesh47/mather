@@ -47,6 +47,7 @@
 		2EDF3ECAFFF88B127C476E23 /* RouteQuestModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E03630CF5371D46C896D8A2B /* RouteQuestModelsTests.swift */; };
 		2EEF996C071A5985EBA9646B /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */; };
 		30A171142A2C7ECF758109BE /* ResponsiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */; };
+		329C9965E6D9AD988934EB70 /* MemoryGalleryTVRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */; };
 		34DE37BF5680E415897E050B /* GameplaySampleThreads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EADCE17D35CAE2DE5B7C4BA /* GameplaySampleThreads.swift */; };
 		35FD0D94E4C550D6A69EDA3B /* MixMatchRecallViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123D7243C121679FDB225E40 /* MixMatchRecallViewTests.swift */; };
 		388F1605AC5009767EFB7F00 /* ResponsiveLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */; };
@@ -75,6 +76,7 @@
 		547A424F8ABA1E591352CAA8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F5E1261557B57C9FD31842 /* SettingsView.swift */; };
 		54CBAF0A5868D81125A2E2FD /* TwoFingerProtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */; };
 		555A0D80EB93DAF706D08DCB /* PairingChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */; };
+		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */; };
 		5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */; };
 		5CE1DFBF8D1C2A3B1BE945D7 /* FactoryCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA57A8B34A66D341922064FD /* FactoryCardsView.swift */; };
@@ -142,6 +144,7 @@
 		AD23681094CEC90B58309E61 /* LaneMasteryState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3532C8409F42C5B9DB67FE2B /* LaneMasteryState.swift */; };
 		AD25DE80FB639941F8FED967 /* LearningCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B53717367D538E7DE828161 /* LearningCardTests.swift */; };
 		B0308880F0715867E50261B2 /* MemoryViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */; };
+		B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */; };
 		B12859476E7412137808484E /* SoundDetectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5116EC9E8413634D723C411E /* SoundDetectionServiceTests.swift */; };
 		B1BF9BACC018161AFD8CC164 /* LabRememberStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */; };
 		B1D13901772E368293EA0433 /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 773A254BB7C08DB897DED232 /* GameSessionStore.swift */; };
@@ -167,6 +170,7 @@
 		CE1461FB45DB9A0355BAE6DC /* GameplayThreadContent+WaterCycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD171B9D7D588D72C7E9D71 /* GameplayThreadContent+WaterCycle.swift */; };
 		CEBDCF605AF7D4D69464156A /* GameplayThreadContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B50F577B24DB96387857D4F /* GameplayThreadContentTests.swift */; };
 		D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */; };
+		D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */; };
 		D2F4940226141CE989EBDF64 /* LabRouteRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12757B691EB1421D33AAADD3 /* LabRouteRegressionTests.swift */; };
 		D4B429F154A0C75454821970 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128EAA2ABCC936C76AD253C9 /* Assets.xcassets */; };
 		D6B77D0E1066EF25C62E070A /* VehicleSpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */; };
@@ -176,6 +180,7 @@
 		DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4672C3C1769CB0F788B925E2 /* SwiftDataStoreRecovery.swift */; };
 		DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */; };
 		E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */; };
+		E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */; };
 		E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A34215EE8D8788E7185EB /* MatherTheme.swift */; };
 		E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */; };
@@ -315,6 +320,7 @@
 		71E7E1C15EE20D21F179D1E2 /* LearningLoopViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningLoopViews.swift; sourceTree = "<group>"; };
 		7597E3916440E75B1DC72E66 /* SumSprintSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintSummaryView.swift; sourceTree = "<group>"; };
 		773A254BB7C08DB897DED232 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
+		778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryTVRoundTests.swift; sourceTree = "<group>"; };
 		788A6A49D5B41AEFB50725EA /* GameplayStageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageModels.swift; sourceTree = "<group>"; };
 		78F5E1261557B57C9FD31842 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7BF01F4BE2F8CA4783F74177 /* GameplayThreadContent+WorldBirds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldBirds.swift"; sourceTree = "<group>"; };
@@ -353,6 +359,7 @@
 		AFD37E9E79CB13908866EFD5 /* RectangleFactoryOnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleFactoryOnboardingTests.swift; sourceTree = "<group>"; };
 		B049757C9324E4EA88DAB861 /* TimerChallengePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChallengePolicy.swift; sourceTree = "<group>"; };
 		B42394C64D2D5C8DC32CE604 /* LabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabView.swift; sourceTree = "<group>"; };
+		B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryTVRound.swift; sourceTree = "<group>"; };
 		B557BC960B2E1946C97F0B6A /* SliceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceModels.swift; sourceTree = "<group>"; };
 		B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayPreludeModels.swift; sourceTree = "<group>"; };
 		B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabRememberStageView.swift; sourceTree = "<group>"; };
@@ -402,6 +409,7 @@
 		F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsViewTests.swift; sourceTree = "<group>"; };
 		F24A213AAF0604928B164968 /* FlashcardStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashcardStageView.swift; sourceTree = "<group>"; };
 		F27A140FE20F5F42F54DD237 /* SumSprintEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintEngineTests.swift; sourceTree = "<group>"; };
+		F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryTVView.swift; sourceTree = "<group>"; };
 		F524E9BE37DC9742658E9AAC /* CountryGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryGameplayThreadTests.swift; sourceTree = "<group>"; };
 		F63A1076A1793340A1C5D287 /* MemoryArtStyleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryArtStyleTests.swift; sourceTree = "<group>"; };
 		F7B5305570771ED55816AC6B /* GameplayProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayProgressStore.swift; sourceTree = "<group>"; };
@@ -485,6 +493,7 @@
 			children = (
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
+				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
 			);
 			path = AppTV;
 			sourceTree = "<group>";
@@ -545,6 +554,7 @@
 				F63A1076A1793340A1C5D287 /* MemoryArtStyleTests.swift */,
 				2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */,
 				D9E6A4D2C61679954D59F25A /* MemoryContentTests.swift */,
+				778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */,
 				F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */,
 				D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */,
 				2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */,
@@ -641,6 +651,7 @@
 				C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */,
 				E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */,
 				3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */,
+				B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */,
 				CFCDB830BCA71408B46E1A4F /* NumberStoryGenerator.swift */,
 				383EE87126C22A00D3232A1E /* NumberStoryModels.swift */,
 				D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */,
@@ -988,6 +999,9 @@
 			files = (
 				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
 				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
+				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
+				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
+				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1025,6 +1039,7 @@
 				1676C6C5EF99E76129ACB09B /* MemoryArtStyleTests.swift in Sources */,
 				DC2C0CD91CED290951B27D8A /* MemoryAskConversationPolicyTests.swift in Sources */,
 				8B9A40A248A28C090985C01B /* MemoryContentTests.swift in Sources */,
+				329C9965E6D9AD988934EB70 /* MemoryGalleryTVRoundTests.swift in Sources */,
 				5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */,
 				DA45F6891A71F34545469DA0 /* MemoryVarietyTests.swift in Sources */,
 				B0308880F0715867E50261B2 /* MemoryViewTests.swift in Sources */,
@@ -1134,6 +1149,7 @@
 				E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */,
 				22A0CD7284D1F688A690C8D2 /* MemoryAskConversationPolicy.swift in Sources */,
 				6430BD262BFC404FD8D8F11B /* MemoryContent.swift in Sources */,
+				56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */,
 				7490086270DAF9207569780C /* MemoryStageView.swift in Sources */,
 				14DE12583C593EE688E0C1E6 /* MemoryView.swift in Sources */,
 				CC97AD66C0B0801D7DA15C40 /* MixMatchRecallView.swift in Sources */,
