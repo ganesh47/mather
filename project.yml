@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.ganesh47
   deploymentTarget:
     iOS: "18.0"
+    tvOS: "18.0"
 settings:
   base:
     SWIFT_VERSION: 6.0
@@ -43,6 +44,25 @@ targets:
       testTargets:
         - MatherTests
         - MatherUITests
+  MatherTV:
+    type: application
+    platform: tvOS
+    sources:
+      - path: AppTV
+        includes:
+          - "**/*.swift"
+      - path: App/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_NAME: MatherTV
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.MatherTV
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Mather TV
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TVOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "3"
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+    scheme: {}
   MatherUITests:
     type: bundle.ui-testing
     platform: iOS
