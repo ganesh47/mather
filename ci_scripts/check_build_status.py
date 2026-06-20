@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot check: has v0.1.8 landed in TestFlight?"""
+"""One-shot check: has the target app version landed in TestFlight?"""
 import json, os, sys, time, urllib.request
 import jwt
 
@@ -7,7 +7,7 @@ app_id      = os.environ["APP_STORE_CONNECT_APP_ID"]
 issuer_id   = os.environ["APP_STORE_CONNECT_ISSUER_ID"]
 key_id      = os.environ["APP_STORE_CONNECT_KEY_ID"]
 private_key = os.environ["APP_STORE_CONNECT_PRIVATE_KEY"].replace("\\n", "\n")
-target_ver  = os.environ.get("TARGET_VERSION", "0.1.8")
+target_ver  = os.environ.get("TARGET_VERSION", "2.6.85")
 
 now = int(time.time())
 token = jwt.encode(
