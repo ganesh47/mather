@@ -50,6 +50,7 @@
 		34DE37BF5680E415897E050B /* GameplaySampleThreads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EADCE17D35CAE2DE5B7C4BA /* GameplaySampleThreads.swift */; };
 		35FD0D94E4C550D6A69EDA3B /* MixMatchRecallViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123D7243C121679FDB225E40 /* MixMatchRecallViewTests.swift */; };
 		388F1605AC5009767EFB7F00 /* ResponsiveLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */; };
+		38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */; };
 		3A2191B9DC40AAD1D0915808 /* SensorCapabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157718747997491EAA58488C /* SensorCapabilityService.swift */; };
 		3D43E7A118690E1610686ED2 /* RoomQuestStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3FA86EA00E9865ECE7DC64 /* RoomQuestStationStore.swift */; };
 		3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */; };
@@ -165,6 +166,7 @@
 		CEBDCF605AF7D4D69464156A /* GameplayThreadContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B50F577B24DB96387857D4F /* GameplayThreadContentTests.swift */; };
 		D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */; };
 		D2F4940226141CE989EBDF64 /* LabRouteRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12757B691EB1421D33AAADD3 /* LabRouteRegressionTests.swift */; };
+		D4B429F154A0C75454821970 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128EAA2ABCC936C76AD253C9 /* Assets.xcassets */; };
 		D6B77D0E1066EF25C62E070A /* VehicleSpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */; };
 		DA45F6891A71F34545469DA0 /* MemoryVarietyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */; };
 		DB3C8F8C5DBDACE7D281EEEA /* GameplayProgressStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */; };
@@ -172,6 +174,7 @@
 		DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4672C3C1769CB0F788B925E2 /* SwiftDataStoreRecovery.swift */; };
 		DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */; };
 		E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */; };
+		E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */; };
 		E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A34215EE8D8788E7185EB /* MatherTheme.swift */; };
 		E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */; };
 		E52D76FF8EA2C75FBBC82E3B /* CapabilityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C221EA39753544B4F0EE9E7 /* CapabilityModels.swift */; };
@@ -291,6 +294,7 @@
 		5B3A14DB8CB30729E7702637 /* CapabilityLaneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapabilityLaneTests.swift; sourceTree = "<group>"; };
 		5BDB51F823663A838C970D5C /* StepCountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepCountService.swift; sourceTree = "<group>"; };
 		5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberRepresentation.swift; sourceTree = "<group>"; };
+		5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTVRootView.swift; sourceTree = "<group>"; };
 		5CDAD3065F9042019DC1AA5A /* NumberStoryStageVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryStageVocabularyTests.swift; sourceTree = "<group>"; };
 		616C29585296A089FD218C08 /* SpacedRepetitionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionModels.swift; sourceTree = "<group>"; };
 		6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleGameplayThreadTests.swift; sourceTree = "<group>"; };
@@ -333,6 +337,7 @@
 		93FE96782037787E5D19BB7A /* ConcreteBuildViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcreteBuildViewTests.swift; sourceTree = "<group>"; };
 		9435179B05EDA7984881930C /* VehicleTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleTheme.swift; sourceTree = "<group>"; };
 		969F62B7FCBE4533272D8C65 /* CardReviewScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewScheduler.swift; sourceTree = "<group>"; };
+		998B80B6AEDE18E3983ABB9D /* MatherTV.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MatherTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestUITests.swift; sourceTree = "<group>"; };
 		9C46ED7E65F16A1DF70CB677 /* RectangleFactoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleFactoryView.swift; sourceTree = "<group>"; };
 		A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpecTests.swift; sourceTree = "<group>"; };
@@ -359,6 +364,7 @@
 		CA9C7E1D1DB31287EE04B0F8 /* RouteSupportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSupportViews.swift; sourceTree = "<group>"; };
 		CCCDFB3421635BB25E3A75BB /* SumSprintGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintGeneratorTests.swift; sourceTree = "<group>"; };
 		CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferIntentTests.swift; sourceTree = "<group>"; };
+		CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTVApp.swift; sourceTree = "<group>"; };
 		CE8229E7972721FCD8BA70DA /* GameplaySchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySchedulerTests.swift; sourceTree = "<group>"; };
 		CF686A72FE9ECF34FB0DF13E /* GravityArtistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GravityArtistView.swift; sourceTree = "<group>"; };
 		CFCDB830BCA71408B46E1A4F /* NumberStoryGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryGenerator.swift; sourceTree = "<group>"; };
@@ -468,6 +474,15 @@
 				71E7E1C15EE20D21F179D1E2 /* LearningLoopViews.swift */,
 			);
 			path = LearningLoop;
+			sourceTree = "<group>";
+		};
+		164629017D683675FC8851CF /* AppTV */ = {
+			isa = PBXGroup;
+			children = (
+				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
+				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
+			);
+			path = AppTV;
 			sourceTree = "<group>";
 		};
 		17AC38778B657066B28213D3 /* ParentSummary */ = {
@@ -674,6 +689,7 @@
 			children = (
 				E8DA96C428EF71E628E7BF19 /* Mather.app */,
 				E1C7741AD8CC742E6F122094 /* MatherTests.xctest */,
+				998B80B6AEDE18E3983ABB9D /* MatherTV.app */,
 				D4C3639AE166C4F815BCA5C7 /* MatherUITests.xctest */,
 			);
 			name = Products;
@@ -683,6 +699,7 @@
 			isa = PBXGroup;
 			children = (
 				983AC0CE814D710AF1AC322F /* App */,
+				164629017D683675FC8851CF /* AppTV */,
 				4356714DEE880CBB965F848D /* Domain */,
 				880735622E099C2F3076D196 /* Features */,
 				25FB5EFDA536B37D6A1D2832 /* MatherTests */,
@@ -835,6 +852,24 @@
 			productReference = E1C7741AD8CC742E6F122094 /* MatherTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		DEFA767B4A52B7DE96277429 /* MatherTV */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D961FA5E6437CB89C0E2B7AE /* Build configuration list for PBXNativeTarget "MatherTV" */;
+			buildPhases = (
+				0081E7D164F06E57D2733A3C /* Sources */,
+				B21ED06C24BAF995DB90E995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MatherTV;
+			packageProductDependencies = (
+			);
+			productName = MatherTV;
+			productReference = 998B80B6AEDE18E3983ABB9D /* MatherTV.app */;
+			productType = "com.apple.product-type.application";
+		};
 		EBB21EB8D628FFE2CF3BFC62 /* Mather */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 89A84BF7EAE5EFB1BFBE2497 /* Build configuration list for PBXNativeTarget "Mather" */;
@@ -884,6 +919,10 @@
 						DevelopmentTeam = J3387FUR8X;
 						ProvisioningStyle = Automatic;
 					};
+					DEFA767B4A52B7DE96277429 = {
+						DevelopmentTeam = J3387FUR8X;
+						ProvisioningStyle = Automatic;
+					};
 					EBB21EB8D628FFE2CF3BFC62 = {
 						DevelopmentTeam = J3387FUR8X;
 						ProvisioningStyle = Automatic;
@@ -910,6 +949,7 @@
 			projectRoot = "";
 			targets = (
 				EBB21EB8D628FFE2CF3BFC62 /* Mather */,
+				DEFA767B4A52B7DE96277429 /* MatherTV */,
 				235ADFFD5E4B9449B3C96CC2 /* MatherTests */,
 				F047D1397C174048DC36B748 /* MatherUITests */,
 			);
@@ -917,6 +957,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B21ED06C24BAF995DB90E995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4B429F154A0C75454821970 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E143B58FF670B6AAB447204E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -928,6 +976,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0081E7D164F06E57D2733A3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
+				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0CE3F20B7993D0A704252F5C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1201,12 +1258,32 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = Mather;
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
 			};
 			name = Release;
+		};
+		2363F053F9A49F1112F8E165 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Mather TV";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ganesh47.MatherTV;
+				PRODUCT_NAME = MatherTV;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
 		};
 		3D0CE21E53D1979D9BE66368 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1263,6 +1340,26 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mather.app/Mather";
 			};
 			name = Debug;
+		};
+		7BEB80EDD6DE860F923950BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Mather TV";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ganesh47.MatherTV;
+				PRODUCT_NAME = MatherTV;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
 		};
 		9540CFD8163EEE92F2E1A5A1 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1361,10 +1458,10 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Mather;
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
 			};
 			name = Debug;
 		};
@@ -1422,6 +1519,15 @@
 			buildConfigurations = (
 				4C5DA1D95142AE7196CB7152 /* Debug */,
 				9540CFD8163EEE92F2E1A5A1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D961FA5E6437CB89C0E2B7AE /* Build configuration list for PBXNativeTarget "MatherTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2363F053F9A49F1112F8E165 /* Debug */,
+				7BEB80EDD6DE860F923950BD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
