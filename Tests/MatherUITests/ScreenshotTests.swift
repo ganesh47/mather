@@ -662,7 +662,7 @@ final class ScreenshotTests: XCTestCase {
         let app = launchForCrashSweep()
         openExplorerLabForCrashSweep(in: app)
 
-        let gameTile = app.buttons[gameName]
+        let gameTile = app.buttons.element(matching: NSPredicate(format: "label CONTAINS %@", gameName))
         XCTAssertTrue(scrollUntilExists(gameTile, in: app, direction: .up, maxSwipes: 8), "Missing game tile: \(gameName)")
         tapWhenReachable(gameTile, in: app, scrollDirection: .up, maxSwipes: 4)
 
