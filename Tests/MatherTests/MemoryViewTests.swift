@@ -558,7 +558,7 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func allMemoryCardsExposeStructuredMetadata() {
-        let allAnimals = MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle + MemoryDeck.fruits
+        let allAnimals = MemoryDeck.allDeckAnimals
 
         #expect(MemoryDeck.allAnimalsById.count == allAnimals.count)
         #expect(allAnimals.allSatisfy { !$0.metadata.category.isEmpty })
