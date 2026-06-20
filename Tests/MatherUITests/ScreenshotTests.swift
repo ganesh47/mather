@@ -384,8 +384,7 @@ final class ScreenshotTests: XCTestCase {
         startSessionAndWaitForConcrete(in: makeBreak)
         assertAlive(makeBreak, "make and break concrete stage")
 
-        tapCrashSweepCounter("counter-cell-4", in: makeBreak)
-        tapCrashSweepCounter("counter-cell-5", in: makeBreak)
+        fillConcreteTarget(6, in: makeBreak)
         tapButton(labelBeginsWith: "That is ", in: makeBreak)
         XCTAssertTrue(
             makeBreak.staticTexts["Gravity Split"].waitForExistence(timeout: 15)
