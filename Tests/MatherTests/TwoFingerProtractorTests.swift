@@ -260,7 +260,7 @@ struct AngleMatchPreludeTests {
 
         #expect(state.select(cardID: visual.id) == .ignored)
         #expect(state.completedLevelIndex == pair.levelIndex)
-        #expect(state.cards.filter { $0.pairID == pair.id }.allSatisfy(\.isMatched))
+        #expect(state.cards.filter { $0.pairID == pair.id }.allSatisfy { $0.isMatched })
     }
 
     @Test func childFacingAngleMatchCopyAvoidsPressureWords() {
