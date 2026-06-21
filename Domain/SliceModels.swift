@@ -450,12 +450,17 @@ struct SumSprintBurstState: Equatable {
 
     static func cardsFormValidMatch(_ lhs: SumSprintBurstCard, _ rhs: SumSprintBurstCard) -> Bool {
         if let promptTotal = lhs.content.promptTotal, let sumValue = rhs.content.sumValue {
-            return promptTotal == sumValue
+            return promptTotal == sumValue && cardsHaveCompatiblePairIdentity(lhs, rhs)
         }
         if let promptTotal = rhs.content.promptTotal, let sumValue = lhs.content.sumValue {
-            return promptTotal == sumValue
+            return promptTotal == sumValue && cardsHaveCompatiblePairIdentity(rhs, lhs)
         }
         return false
+    }
+
+    private static func cardsHaveCompatiblePairIdentity(_ prompt: SumSprintBurstCard, _ sum: SumSprintBurstCard) -> Bool {
+        guard case .decoratedSum = sum.content else { return true }
+        return prompt.pairId == sum.pairId
     }
 
     static func make(for problem: SliceProblem) -> SumSprintBurstState {

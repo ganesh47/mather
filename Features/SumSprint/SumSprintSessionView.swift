@@ -43,20 +43,6 @@ struct SumSprintSessionView: View {
                 }
             }
 
-            // Countdown ring — top-right corner, only when timed mode active
-            if engine.difficulty != .relaxed {
-                VStack {
-                    HStack {
-                        Spacer()
-                        countdownRing
-                            .padding(.top, 12)
-                            .padding(.trailing, ResponsiveLayout.contentPadding(for: horizontalSizeClass))
-                    }
-                    Spacer()
-                }
-                .allowsHitTesting(false)
-            }
-
             // Correct feedback overlay
             if engine.showCorrectFeedback {
                 feedbackOverlay(symbol: "✓", color: MatherTheme.accent)
@@ -93,9 +79,10 @@ struct SumSprintSessionView: View {
                     }
                 }
                 Spacer()
-                // Space reserved for countdown ring in timed modes
                 if engine.difficulty != .relaxed {
-                    Color.clear.frame(width: 64, height: 1)
+                    countdownRing
+                        .frame(width: 64, height: 64)
+                        .allowsHitTesting(false)
                 }
                 Button {
                     engine.exitToHome()

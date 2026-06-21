@@ -718,27 +718,22 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
-    func sumSprintAcceptsEquivalentTotalCardsWhenTotalsRepeat() {
+    func sumSprintRejectsDecoratedDuplicateTotalsFromOtherPairs() {
         let state = SumSprintBurstState.make(for: SliceProblem(target: 5, decompositionA: 1, decompositionB: 4))
 
         let prompt = state.cards.first { card in
             if case .prompt("1 + 4") = card.content { return true }
             return false
         }!
+        let matchingTotal = state.cards.first { card in
+            card.pairId == prompt.pairId && card.content.sumValue == 5
+        }!
         let equivalentTotalFromOtherPair = state.cards.first { card in
             card.pairId != prompt.pairId && card.content.sumValue == 5
         }!
 
-        #expect(SumSprintBurstState.cardsFormValidMatch(prompt, equivalentTotalFromOtherPair))
-
-        var crossMatchedState = state
-        let promptIndex = crossMatchedState.cards.firstIndex(where: { $0.id == prompt.id })!
-        let totalIndex = crossMatchedState.cards.firstIndex(where: { $0.id == equivalentTotalFromOtherPair.id })!
-        crossMatchedState.cards[promptIndex].isMatched = true
-        crossMatchedState.cards[totalIndex].isMatched = true
-
-        #expect(crossMatchedState.matchedPairs == 1)
-        #expect(!crossMatchedState.isComplete)
+        #expect(SumSprintBurstState.cardsFormValidMatch(prompt, matchingTotal))
+        #expect(!SumSprintBurstState.cardsFormValidMatch(prompt, equivalentTotalFromOtherPair))
     }
 
     @Test
