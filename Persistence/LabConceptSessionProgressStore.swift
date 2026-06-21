@@ -2,6 +2,7 @@ import Foundation
 
 final class LabConceptSessionProgressStore {
     static let defaultStorageKey = "labConceptSessionProgress.v1"
+    private static let defaultActiveProfileId = "default-profile"
 
     private let storage: ExplorerLabMasteryKeyValueStore
     private let storageKey: String
@@ -12,7 +13,7 @@ final class LabConceptSessionProgressStore {
     init(
         storage: ExplorerLabMasteryKeyValueStore = UserDefaults.standard,
         storageKey: String = LabConceptSessionProgressStore.defaultStorageKey,
-        activeProfileIdProvider: @escaping () -> String = { KidProfilePersistence.defaultProfileId },
+        activeProfileIdProvider: @escaping () -> String = { LabConceptSessionProgressStore.defaultActiveProfileId },
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
