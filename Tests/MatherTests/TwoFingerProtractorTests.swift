@@ -94,6 +94,18 @@ struct TwoFingerProtractorTests {
         }
     }
 
+    @Test func angleWrapsAcrossZeroDegreesToUseInteriorAngle() {
+        let r: Double = 100
+        let t1 = CGPoint(x: center.x + r * cos(350 * .pi / 180),
+                         y: center.y + r * sin(350 * .pi / 180))
+        let t2 = CGPoint(x: center.x + r * cos(10 * .pi / 180),
+                         y: center.y + r * sin(10 * .pi / 180))
+
+        let result = ProtractorMath.angleDegrees(t1: t1, t2: t2, pivot: center)
+
+        #expect(abs(result - 20) < 1)
+    }
+
     // MARK: - Snap zone
 
     @Test func snapZoneWithinTolerance() {
@@ -235,6 +247,20 @@ struct AngleMatchPreludeTests {
 
         #expect(state.isComplete)
         #expect(state.completedLevelIndex == state.pairs.last?.levelIndex)
+    }
+
+    @Test func selectingMatchedCardIsIgnoredAndPreservesCompletedPair() {
+        var state = AngleMatchState.prelude(from: protractorLevels, pairCount: 2)
+        let pair = state.pairs[0]
+        let visual = state.cards.first { $0.pairID == pair.id && $0.side == .visual }!
+        let value = state.cards.first { $0.pairID == pair.id && $0.side == .value }!
+
+        #expect(state.select(cardID: visual.id) == .selected)
+        #expect(state.select(cardID: value.id) == .matched(pairID: pair.id, completed: false))
+
+        #expect(state.select(cardID: visual.id) == .ignored)
+        #expect(state.completedLevelIndex == pair.levelIndex)
+        #expect(state.cards.filter { $0.pairID == pair.id }.allSatisfy(\.isMatched))
     }
 
     @Test func childFacingAngleMatchCopyAvoidsPressureWords() {

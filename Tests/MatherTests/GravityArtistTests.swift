@@ -114,6 +114,65 @@ struct GravityArtistTests {
         #expect(tx > cannon.x)
         #expect(tx < canvasW)
     }
+
+    @Test func launchArcUsesLockedPowerAfterPowerSelectionChanges() {
+        var state = GravityArtistRoundState()
+        state.selectPower(1)
+        let locked = state.lockPrediction(angleDeg: 45)
+
+        state.selectPower(3)
+        let fired = state.fireLockedPrediction()
+
+        #expect(locked.power == 1)
+        #expect(fired == locked)
+        #expect(state.selectedPower == 1)
+    }
+
+    @Test func powerSelectionIsMutableAgainAfterNewRoundStarts() {
+        var state = GravityArtistRoundState()
+        _ = state.lockPrediction(angleDeg: 45)
+        #expect(state.phase == .predicted)
+
+        state.startNewRound(targetAngle: 55)
+        state.selectPower(3)
+
+        #expect(state.phase == .aim)
+        #expect(state.selectedPower == 3)
+        #expect(state.targetAngle == 55)
+        #expect(state.predictedLaunch == nil)
+        #expect(state.firedLaunch == nil)
+    }
+
+    @Test func geometryDependentArcRecomputesForResizedCanvasFromSameLaunch() {
+        let launch = GravityArtistLaunch(angleDeg: 45, power: 2)
+        let compact = CGSize(width: 600, height: 400)
+        let expanded = CGSize(width: 900, height: 700)
+
+        let compactArc = GravityArtistPhysics.arcPoints(launch: launch, canvasSize: compact)
+        let expandedArc = GravityArtistPhysics.arcPoints(launch: launch, canvasSize: expanded)
+
+        #expect(compactArc.first == GravityArtistPhysics.cannonOrigin(in: compact))
+        #expect(expandedArc.first == GravityArtistPhysics.cannonOrigin(in: expanded))
+        #expect(compactArc.last?.y ?? 0 <= GravityArtistPhysics.groundY(in: compact) + 20)
+        #expect(expandedArc.last?.y ?? 0 <= GravityArtistPhysics.groundY(in: expanded) + 20)
+        #expect(compactArc.first != expandedArc.first)
+    }
+
+    @Test func targetXRecomputesWithinResizedCanvasForSameTarget() {
+        let targetAngle = 55.0
+        let power = 2
+        let compact = CGSize(width: 420, height: 320)
+        let expanded = CGSize(width: 840, height: 640)
+
+        let compactX = GravityArtistPhysics.targetX(angleDeg: targetAngle, power: power, canvasSize: compact)
+        let expandedX = GravityArtistPhysics.targetX(angleDeg: targetAngle, power: power, canvasSize: expanded)
+
+        #expect(compactX >= GravityArtistPhysics.cannonOrigin(in: compact).x + 40)
+        #expect(compactX <= compact.width - 40)
+        #expect(expandedX >= GravityArtistPhysics.cannonOrigin(in: expanded).x + 40)
+        #expect(expandedX <= expanded.width - 40)
+        #expect(expandedX != compactX)
+    }
 }
 
 @Suite("GravitySensorPhysics")
