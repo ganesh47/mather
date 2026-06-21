@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "stateDir": ".clawpatch",
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "target/**",
+    ".build/**",
+    ".git/**",
+    ".clawpatch/**"
+  ],
+  "provider": {
+    "name": "codex",
+    "model": null
+  },
+  "commands": {
+    "typecheck": "xcodegen generate && git diff --exit-code Mather.xcodeproj && xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather && xcodebuild build-for-testing -project Mather.xcodeproj -scheme Mather -destination \"generic/platform=iOS Simulator\" CODE_SIGNING_ALLOWED=NO",
+    "lint": null,
+    "format": null,
+    "test": "xcodegen generate && git diff --exit-code Mather.xcodeproj && xcodebuild test -project Mather.xcodeproj -scheme Mather -destination \"platform=iOS Simulator,name=iPhone 16,OS=latest\" -only-testing MatherTests CODE_SIGNING_ALLOWED=NO"
+  },
+  "review": {
+    "maxContextFiles": 24,
+    "maxOwnedFiles": 12,
+    "maxFindingsPerFeature": 10,
+    "minConfidenceToFix": "medium"
+  },
+  "git": {
+    "requireCleanWorktreeForFix": true,
+    "commit": false,
+    "openPr": false
+  }
+}
