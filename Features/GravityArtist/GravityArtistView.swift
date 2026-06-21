@@ -28,6 +28,14 @@ enum GravityArtistPhysics {
 
     static let velocityForPower: [Int: Double] = [1: 200, 2: 350, 3: 500]
 
+    nonisolated static func cannonOrigin(in size: CGSize) -> CGPoint {
+        CGPoint(x: size.width * 0.12, y: size.height * 0.88)
+    }
+
+    nonisolated static func groundY(in size: CGSize) -> Double {
+        size.height * 0.88
+    }
+
     /// Parabolic arc points from cannon origin.
     /// `angleDeg` is the launch angle above horizontal (0–80°).
     /// `velocity` is initial speed (pt/s).
@@ -90,6 +98,76 @@ enum GravityArtistPhysics {
         // Clamp to drawable area with 40pt margin
         return max(cannonOrigin.x + 40, min(x, canvasWidth - 40))
     }
+
+    nonisolated static func arcPoints(launch: GravityArtistLaunch, canvasSize: CGSize) -> [CGPoint] {
+        arcPoints(
+            angleDeg: launch.angleDeg,
+            velocity: launch.velocity,
+            cannonOrigin: cannonOrigin(in: canvasSize),
+            canvasHeight: groundY(in: canvasSize)
+        )
+    }
+
+    nonisolated static func targetX(angleDeg: Double, power: Int, canvasSize: CGSize) -> Double {
+        targetX(
+            angleDeg: angleDeg,
+            velocity: velocityForPower[power] ?? velocityForPower[2]!,
+            cannonOrigin: cannonOrigin(in: canvasSize),
+            canvasWidth: canvasSize.width,
+            canvasHeight: groundY(in: canvasSize)
+        )
+    }
+}
+
+enum GravityArtistPhase: Equatable {
+    case aim
+    case predicted
+    case fired
+}
+
+struct GravityArtistLaunch: Equatable {
+    let angleDeg: Double
+    let power: Int
+
+    var velocity: Double {
+        GravityArtistPhysics.velocityForPower[power] ?? GravityArtistPhysics.velocityForPower[2]!
+    }
+}
+
+struct GravityArtistRoundState: Equatable {
+    var selectedPower: Int = 2
+    var targetAngle: Double = 45
+    var targetPower: Int = 2
+    var predictedLaunch: GravityArtistLaunch?
+    var firedLaunch: GravityArtistLaunch?
+    var phase: GravityArtistPhase = .aim
+
+    mutating func selectPower(_ power: Int) {
+        guard phase == .aim else { return }
+        selectedPower = power
+    }
+
+    mutating func lockPrediction(angleDeg: Double) -> GravityArtistLaunch {
+        let launch = GravityArtistLaunch(angleDeg: angleDeg, power: selectedPower)
+        predictedLaunch = launch
+        phase = .predicted
+        return launch
+    }
+
+    mutating func fireLockedPrediction() -> GravityArtistLaunch? {
+        guard let predictedLaunch else { return nil }
+        firedLaunch = predictedLaunch
+        phase = .fired
+        return predictedLaunch
+    }
+
+    mutating func startNewRound(targetAngle: Double) {
+        self.targetAngle = targetAngle
+        targetPower = selectedPower
+        predictedLaunch = nil
+        firedLaunch = nil
+        phase = .aim
+    }
 }
 
 // MARK: - View
@@ -101,23 +179,18 @@ struct GravityArtistView: View {
     @State private var neutralRoll: Double? = nil
     @State private var currentAngle: Double = 45       // degrees, 5–80
 
-    // Power
-    @State private var selectedPower: Int = 2           // 1/2/3
-
     // Game state
+    @State private var roundState = GravityArtistRoundState()
     @State private var predictedArcPoints: [CGPoint]? = nil
     @State private var firedArcPoints: [CGPoint]? = nil
     @State private var targetX: Double = 0
     @State private var hitTarget: Bool = false
     @State private var roundsPlayed: Int = 0
     @State private var successStreak: Int = 0
-    @State private var phase: GamePhase = .aim
     @State private var sessionStart: Date = .now
 
     // Canvas geometry captured from GeometryReader
     @State private var canvasSize: CGSize = .zero
-
-    private enum GamePhase { case aim, predicted, fired }
 
     private let hitRadius: Double = 50   // pt — generous for ages 8–10
 
@@ -136,15 +209,17 @@ struct GravityArtistView: View {
                         }
                     }
                     .onAppear {
-                        canvasSize = geo.size
-                        setupNewRound(size: geo.size)
+                        handleCanvasSizeChange(geo.size)
+                    }
+                    .onChange(of: geo.size) { _, newSize in
+                        handleCanvasSizeChange(newSize)
                     }
                 }
                 bottomBar
             }
         }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
-            guard phase == .aim else { return }
+            guard roundState.phase == .aim else { return }
             if neutralRoll == nil { neutralRoll = roll }
             let delta = roll - neutralRoll!
             let raw = 45 + delta / (.pi / 4) * 35
@@ -178,9 +253,9 @@ struct GravityArtistView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 HStack(spacing: 6) {
-                    missionBadge("1 Predict", isActive: phase == .aim)
-                    missionBadge("2 Simulate", isActive: phase == .predicted)
-                    missionBadge("3 Learn", isActive: phase == .fired)
+                    missionBadge("1 Predict", isActive: roundState.phase == .aim)
+                    missionBadge("2 Simulate", isActive: roundState.phase == .predicted)
+                    missionBadge("3 Learn", isActive: roundState.phase == .fired)
                 }
             }
             Spacer()
@@ -216,7 +291,7 @@ struct GravityArtistView: View {
     }
 
     private var phaseHint: String {
-        switch phase {
+        switch roundState.phase {
         case .aim:       return "Guess where the pebble will roll"
         case .predicted: return "Prediction locked — tilt, watch, and compare"
         case .fired:     return hitTarget ? "You predicted gravity!" : "New guess: what changed?"
@@ -227,8 +302,8 @@ struct GravityArtistView: View {
 
     private func arcCanvas(size: CGSize) -> some View {
         Canvas { ctx, canvasSize in
-            let cannon = cannonOrigin(in: canvasSize)
-            let groundY = canvasSize.height * 0.88
+            let cannon = GravityArtistPhysics.cannonOrigin(in: canvasSize)
+            let groundY = GravityArtistPhysics.groundY(in: canvasSize)
 
             drawGravityTray(ctx: ctx, size: canvasSize)
 
@@ -262,8 +337,8 @@ struct GravityArtistView: View {
             }
 
             // Live preview arc when aiming (faint, solid)
-            if phase == .aim {
-                let liveVelocity = GravityArtistPhysics.velocityForPower[selectedPower] ?? 350
+            if roundState.phase == .aim {
+                let liveVelocity = GravityArtistPhysics.velocityForPower[roundState.selectedPower] ?? 350
                 let livePts = GravityArtistPhysics.arcPoints(
                     angleDeg: currentAngle, velocity: liveVelocity,
                     cannonOrigin: cannon, canvasHeight: groundY)
@@ -347,14 +422,15 @@ struct GravityArtistView: View {
         VStack(spacing: 6) {
             ForEach([3, 2, 1], id: \.self) { p in
                 Button {
-                    selectedPower = p
+                    roundState.selectPower(p)
                 } label: {
                     let size: CGFloat = p == 1 ? 18 : p == 2 ? 26 : 34
                     Image(systemName: "circle.fill")
                         .font(.system(size: size))
-                        .foregroundStyle(selectedPower == p ? MatherTheme.accent : MatherTheme.ink.opacity(0.3))
+                        .foregroundStyle(roundState.selectedPower == p ? MatherTheme.accent : MatherTheme.ink.opacity(0.3))
                 }
                 .frame(width: 44, height: 44)
+                .disabled(roundState.phase != .aim)
             }
         }
         .padding(10)
@@ -389,7 +465,7 @@ struct GravityArtistView: View {
         VStack(spacing: 10) {
             conceptCard
             HStack(spacing: 16) {
-                switch phase {
+                switch roundState.phase {
                 case .aim:
                     crispActionButton(title: "PREDICT ROLL", fill: MatherTheme.warm) {
                         handlePredict()
@@ -419,7 +495,7 @@ struct GravityArtistView: View {
         let contract = LabActivityID.gravityArtist.introConceptCard
 
         return HStack(alignment: .top, spacing: 10) {
-            Image(systemName: phase == .fired ? (hitTarget ? "star.fill" : "lightbulb.fill") : "questionmark.bubble.fill")
+            Image(systemName: roundState.phase == .fired ? (hitTarget ? "star.fill" : "lightbulb.fill") : "questionmark.bubble.fill")
                 .font(.headline.weight(.black))
                 .foregroundStyle(MatherTheme.warm)
             VStack(alignment: .leading, spacing: 3) {
@@ -443,7 +519,7 @@ struct GravityArtistView: View {
 
     private var conceptCardText: String {
         let contract = LabActivityID.gravityArtist.introConceptCard
-        switch phase {
+        switch roundState.phase {
         case .aim:
             return contract?.childPrompt ?? "Predict the path first."
         case .predicted:
@@ -474,13 +550,8 @@ struct GravityArtistView: View {
 
     private func handlePredict() {
         guard canvasSize != .zero else { return }
-        let cannon = cannonOrigin(in: canvasSize)
-        let groundY = canvasSize.height * 0.88
-        let v = GravityArtistPhysics.velocityForPower[selectedPower] ?? 350
-        predictedArcPoints = GravityArtistPhysics.arcPoints(
-            angleDeg: currentAngle, velocity: v,
-            cannonOrigin: cannon, canvasHeight: groundY)
-        phase = .predicted
+        let launch = roundState.lockPrediction(angleDeg: currentAngle)
+        predictedArcPoints = GravityArtistPhysics.arcPoints(launch: launch, canvasSize: canvasSize)
         appModel.speechService.speak(
             "Prediction locked. Now fire!",
             enabled: appModel.featureFlags.audioEnabled
@@ -489,23 +560,18 @@ struct GravityArtistView: View {
 
     private func handleFire() {
         guard canvasSize != .zero else { return }
-        let cannon = cannonOrigin(in: canvasSize)
-        let groundY = canvasSize.height * 0.88
-        let v = GravityArtistPhysics.velocityForPower[selectedPower] ?? 350
-        let fired = GravityArtistPhysics.arcPoints(
-            angleDeg: currentAngle, velocity: v,
-            cannonOrigin: cannon, canvasHeight: groundY)
+        guard let launch = roundState.fireLockedPrediction() else { return }
+        let fired = GravityArtistPhysics.arcPoints(launch: launch, canvasSize: canvasSize)
         firedArcPoints = fired
-        let landX = fired.last?.x ?? cannon.x
+        let landX = fired.last?.x ?? GravityArtistPhysics.cannonOrigin(in: canvasSize).x
         hitTarget = GravityArtistPhysics.isHit(firedLandingX: landX, targetX: targetX, hitRadius: hitRadius)
-        phase = .fired
         roundsPlayed += 1
 
         if hitTarget {
             successStreak += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
-                "Bull's eye! The launch angle was \(Int(currentAngle.rounded())) degrees.",
+                "Bull's eye! The launch angle was \(Int(launch.angleDeg.rounded())) degrees.",
                 enabled: appModel.featureFlags.audioEnabled
             )
         } else {
@@ -524,26 +590,54 @@ struct GravityArtistView: View {
     }
 
     private func setupNewRound(size: CGSize) {
-        let cannon = cannonOrigin(in: size)
-        let groundY = size.height * 0.88
         // Randomise target angle and power to keep rounds varied
         let angles = [20.0, 30.0, 45.0, 55.0, 65.0]
-        let targetAngle = angles.randomElement() ?? 45
-        let v = GravityArtistPhysics.velocityForPower[selectedPower] ?? 350
+        roundState.startNewRound(targetAngle: angles.randomElement() ?? 45)
         targetX = GravityArtistPhysics.targetX(
-            angleDeg: targetAngle, velocity: v,
-            cannonOrigin: cannon, canvasWidth: size.width, canvasHeight: groundY)
+            angleDeg: roundState.targetAngle,
+            power: roundState.targetPower,
+            canvasSize: size
+        )
         predictedArcPoints = nil
         firedArcPoints = nil
         hitTarget = false
-        phase = .aim
         neutralRoll = nil
         currentAngle = 45
     }
 
     // MARK: - Helpers
 
+    private func handleCanvasSizeChange(_ size: CGSize) {
+        guard size != .zero else { return }
+        let needsInitialRound = canvasSize == .zero
+        canvasSize = size
+        if needsInitialRound {
+            setupNewRound(size: size)
+        } else {
+            refreshGeometryDependentState(size: size)
+        }
+    }
+
+    private func refreshGeometryDependentState(size: CGSize) {
+        targetX = GravityArtistPhysics.targetX(
+            angleDeg: roundState.targetAngle,
+            power: roundState.targetPower,
+            canvasSize: size
+        )
+
+        if let predictedLaunch = roundState.predictedLaunch {
+            predictedArcPoints = GravityArtistPhysics.arcPoints(launch: predictedLaunch, canvasSize: size)
+        }
+
+        if let firedLaunch = roundState.firedLaunch {
+            let fired = GravityArtistPhysics.arcPoints(launch: firedLaunch, canvasSize: size)
+            firedArcPoints = fired
+            let landX = fired.last?.x ?? GravityArtistPhysics.cannonOrigin(in: size).x
+            hitTarget = GravityArtistPhysics.isHit(firedLandingX: landX, targetX: targetX, hitRadius: hitRadius)
+        }
+    }
+
     private func cannonOrigin(in size: CGSize) -> CGPoint {
-        CGPoint(x: size.width * 0.12, y: size.height * 0.88)
+        GravityArtistPhysics.cannonOrigin(in: size)
     }
 }
