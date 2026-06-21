@@ -43,6 +43,7 @@ final class VerticalSliceEngine {
     private var sessionStartedAt: Date = .now
     private var problemStartedAt: Date = .now
     private let sessionTimeLimitSeconds: TimeInterval = 7 * 60
+    private let gravitySplitTiltStep: Double = 0.16
 
     var concreteWarmCount = 0
     var concreteAccentCount = 0
@@ -524,8 +525,37 @@ final class VerticalSliceEngine {
     // MARK: - Gravity Split actions
 
     func adjustGravitySplitByTilt(_ tiltRoll: Double) {
-        guard currentStage == .gravitySplit else { return }
-        gravitySplitNeutralRoll = tiltRoll
+        guard currentStage == .gravitySplit,
+              var state = gravitySplitState,
+              !state.isLocked else { return }
+
+        guard let neutralRoll = gravitySplitNeutralRoll else {
+            gravitySplitNeutralRoll = tiltRoll
+            return
+        }
+
+        let rollDelta = tiltRoll - neutralRoll
+        let steps = Int((abs(rollDelta) / gravitySplitTiltStep).rounded(.down))
+        guard steps > 0 else { return }
+
+        let previousLeft = state.leftCount
+        let previousRight = state.rightCount
+        if rollDelta < 0 {
+            state.adjustLeft(by: steps - state.leftCount)
+        } else {
+            state.adjustRight(by: steps - state.rightCount)
+        }
+        gravitySplitState = state
+
+        if state.leftCount != previousLeft || state.rightCount != previousRight {
+            hapticsService.counterSettle(enabled: featureFlags.hapticsEnabled)
+            hapticsService.counterSlide(enabled: featureFlags.hapticsEnabled)
+        }
+
+        if state.isLocked, let problem = currentProblem {
+            hapticsService.balanceLock(enabled: featureFlags.hapticsEnabled)
+            completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
+        }
     }
 
     func adjustGravitySplitByTap(delta: Int, side: TransferSide = .left) {

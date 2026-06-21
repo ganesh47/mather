@@ -23,6 +23,7 @@ struct GravitySplitView: View {
     // MARK: - Local animation state
 
     @State private var lockScale: CGFloat = 1.0
+    @State private var lockedAutoAdvanceTask: Task<Void, Never>? = nil
 
     // MARK: - Derived
 
@@ -62,11 +63,18 @@ struct GravitySplitView: View {
             guard shook else { return }
             onShakeHandled()
         }
+        .onAppear {
+            updateLockedAutoAdvance(isLocked: state.isLocked)
+        }
         .onChange(of: state.isLocked) { _, locked in
+            updateLockedAutoAdvance(isLocked: locked)
             guard locked else { return }
             withAnimation(.spring(response: 0.38, dampingFraction: 0.48)) {
                 lockScale = 1.06
             }
+        }
+        .onDisappear {
+            cancelLockedAutoAdvance()
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
@@ -616,6 +624,25 @@ struct GravitySplitView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func updateLockedAutoAdvance(isLocked: Bool) {
+        guard isLocked else {
+            cancelLockedAutoAdvance()
+            return
+        }
+        guard lockedAutoAdvanceTask == nil else { return }
+        lockedAutoAdvanceTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            lockedAutoAdvanceTask = nil
+            onSubmit()
+        }
+    }
+
+    private func cancelLockedAutoAdvance() {
+        lockedAutoAdvanceTask?.cancel()
+        lockedAutoAdvanceTask = nil
     }
 }
 

@@ -1105,6 +1105,39 @@ struct VerticalSliceEngineTests {
     }
 
     @Test
+    func gravitySplitTiltAdjustsCountsAndCanAdvancePuzzle() async throws {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.vs1GravitySplitEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+
+        let engine = VerticalSliceEngine(
+            featureFlags: flags,
+            telemetryWriter: TelemetryWriter(),
+            speechService: SpeechService(),
+            celebrationDuration: 0,
+            saveSummary: { _ in }
+        )
+        engine.startSession()
+        try await advanceToGravitySplit(engine)
+
+        guard let problem = engine.currentProblem else { return }
+
+        engine.adjustGravitySplitByTilt(0)
+        engine.adjustGravitySplitByTilt(-Double(problem.decompositionA) * 0.18)
+        #expect(engine.gravitySplitState?.leftCount == problem.decompositionA)
+        #expect(engine.gravitySplitState?.rightCount == 0)
+        #expect(engine.currentStage == .gravitySplit)
+
+        engine.adjustGravitySplitByTilt(Double(problem.decompositionB) * 0.18)
+        await waitFor("gravity split advances after tilt lock") {
+            engine.currentStage != .gravitySplit
+        }
+
+        #expect(engine.currentStage != .gravitySplit)
+    }
+
+    @Test
     func gravitySplitStartsFromZeroAndUnsolved() async throws {
         let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
         flags.testModeEnabled = true

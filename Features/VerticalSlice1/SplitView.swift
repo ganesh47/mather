@@ -142,7 +142,10 @@ struct SplitView: View {
         .padding(.horizontal, 12)
         .background(fill.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .onTapGesture { onAdjust(delta) }
+        .onTapGesture {
+            guard let adjustment = Self.bucketTapAdjustment(isLocked: isLocked, delta: delta) else { return }
+            onAdjust(adjustment)
+        }
     }
 
     // Lay out filled dots in rows of 5. Very large story targets can otherwise
@@ -164,5 +167,9 @@ struct SplitView: View {
             remaining -= rowSize
         }
         return rows
+    }
+
+    nonisolated static func bucketTapAdjustment(isLocked: Bool, delta: Int) -> Int? {
+        isLocked ? nil : delta
     }
 }

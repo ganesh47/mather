@@ -51,6 +51,7 @@ struct BondMatchView: View {
     /// Cancels stale mismatch animation resets when Bond Blast exits or restarts.
     @State private var mismatchResetTask: Task<Void, Never>? = nil
     @State private var mismatchResetRevision = 0
+    @State private var consumedCurrentClap = false
 
     enum DragReleaseResolution: Equatable {
         case cancel
@@ -113,12 +114,18 @@ struct BondMatchView: View {
             onShakeHandled()
         }
         .onChange(of: clapDetected) { _, clapped in
-            guard clapped, state.isComplete else { return }
-            onClapHandled()
+            handleClapChange(clapped)
+        }
+        .onChange(of: state.isComplete) { _, isComplete in
+            guard isComplete else { return }
+            handleCompletionChange()
         }
         .sensoryFeedback(.success, trigger: state.matchCount)
         .accessibilityLabel("\(vocabulary.accessibilityLabel) \(state.matchCount) of \(state.pairs.count) matched.")
-        .onDisappear { cancelMismatchReset() }
+        .onDisappear {
+            cancelMismatchReset()
+            consumedCurrentClap = false
+        }
     }
 
     // MARK: - Subviews
@@ -468,5 +475,28 @@ struct BondMatchView: View {
 
     nonisolated static func shouldAcceptDelayedMismatchReset(scheduledRevision: Int, currentRevision: Int) -> Bool {
         scheduledRevision == currentRevision
+    }
+
+    private func handleClapChange(_ clapped: Bool) {
+        guard clapped else {
+            consumedCurrentClap = false
+            return
+        }
+        consumeClapIfNeeded()
+    }
+
+    private func handleCompletionChange() {
+        guard clapDetected else { return }
+        consumeClapIfNeeded()
+    }
+
+    private func consumeClapIfNeeded() {
+        guard Self.shouldConsumeClap(clapDetected: clapDetected, alreadyConsumed: consumedCurrentClap) else { return }
+        consumedCurrentClap = true
+        onClapHandled()
+    }
+
+    nonisolated static func shouldConsumeClap(clapDetected: Bool, alreadyConsumed: Bool) -> Bool {
+        clapDetected && !alreadyConsumed
     }
 }

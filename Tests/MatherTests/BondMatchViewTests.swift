@@ -80,6 +80,12 @@ struct BondMatchViewTests {
         #expect(BondMatchView.rightOrderNeedsReset(existingRightValues: [5, 4, 3], pairRightValues: [7, 6, 5, 4]))
     }
 
+    @Test func clapEventsAreConsumedEvenBeforeCompletion() {
+        #expect(BondMatchView.shouldConsumeClap(clapDetected: true, alreadyConsumed: false))
+        #expect(!BondMatchView.shouldConsumeClap(clapDetected: true, alreadyConsumed: true))
+        #expect(!BondMatchView.shouldConsumeClap(clapDetected: false, alreadyConsumed: false))
+    }
+
     @Test func unmatchedRightShufflePreservesMatchedRowsAndDoesNotDropValues() {
         let shuffled = BondMatchView.shuffledUnmatchedRightValues(
             existingRightValues: [5, 4, 3],
@@ -90,4 +96,16 @@ struct BondMatchViewTests {
         #expect(shuffled == [3, 4, 5])
     }
 
+}
+
+struct SplitViewTests {
+    @Test func lockedBucketTapDoesNotAdjustSplit() {
+        #expect(SplitView.bucketTapAdjustment(isLocked: true, delta: 1) == nil)
+        #expect(SplitView.bucketTapAdjustment(isLocked: true, delta: -1) == nil)
+    }
+
+    @Test func unlockedBucketTapKeepsRequestedAdjustment() {
+        #expect(SplitView.bucketTapAdjustment(isLocked: false, delta: 1) == 1)
+        #expect(SplitView.bucketTapAdjustment(isLocked: false, delta: -1) == -1)
+    }
 }
