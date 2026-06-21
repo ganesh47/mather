@@ -30,7 +30,12 @@ struct CardReviewScheduler {
     private let clock: Clock
     private let configuration: Configuration
 
-    init(now: Date = Date(), configuration: Configuration = Configuration()) {
+    init(configuration: Configuration = Configuration()) {
+        self.clock = Date.init
+        self.configuration = configuration
+    }
+
+    init(now: Date, configuration: Configuration = Configuration()) {
         self.clock = { now }
         self.configuration = configuration
     }

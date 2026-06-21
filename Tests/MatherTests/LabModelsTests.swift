@@ -508,6 +508,25 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(second.resumeLabel(for: plan), "Start")
     }
 
+    func testLabConceptProgressStoreDefaultProfileMatchesKidProfileDefault() throws {
+        let storage = InMemoryLabConceptSessionProgressDefaults()
+        let plan = LabConceptSessionPlan.numbersNumberBondsTo10
+        let defaultStore = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress.default-profile"
+        )
+        let appDefaultStore = LabConceptSessionProgressStore(
+            storage: storage,
+            storageKey: "test.lab-progress.default-profile",
+            activeProfileIdProvider: { KidProfilePersistence.defaultProfileId }
+        )
+
+        defaultStore.beginGuidedStage(.remember, in: plan, at: Date(timeIntervalSince1970: 3_500))
+
+        XCTAssertEqual(appDefaultStore.currentStage(for: plan), .remember)
+        XCTAssertEqual(appDefaultStore.resumeLabel(for: plan), "Continue: Remember")
+    }
+
     func testRememberStageDeckUsesNumberBondRouteWithoutCountdown() throws {
         let plan = LabConceptSessionPlan.numbersNumberBondsTo10
         let rememberStage = try XCTUnwrap(plan.stages.first { $0.stage == .remember })

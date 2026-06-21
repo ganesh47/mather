@@ -124,6 +124,13 @@ struct RectangleFactoryTests {
         #expect(composites.count >= 6)
     }
 
+    @MainActor
+    @Test func completedTargetCountIncludesSolvedCurrentTarget() {
+        #expect(RectangleFactoryView.completedTargetCount(sequenceIndex: 0, allFoundForCurrentTarget: false) == 0)
+        #expect(RectangleFactoryView.completedTargetCount(sequenceIndex: 0, allFoundForCurrentTarget: true) == 1)
+        #expect(RectangleFactoryView.completedTargetCount(sequenceIndex: 9, allFoundForCurrentTarget: true) == 10)
+    }
+
     // MARK: - Completion helpers
 
     @Test func completionStyleMarksPrimeTargets() {

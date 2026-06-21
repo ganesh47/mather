@@ -84,6 +84,26 @@ struct CardReviewSchedulerTests {
     }
 
     @Test
+    func defaultInitializerUsesLiveClockForDueDecisions() {
+        let reviewedAt = Date().addingTimeInterval(-24 * 60 * 60 - 1)
+        let dueCard = makeCard(
+            id: "live-due",
+            laneID: .numbers,
+            conceptID: "number-bond",
+            progress: CardProgress(
+                timesSeen: 1,
+                correctCount: 1,
+                currentCorrectStreak: 1,
+                lastReviewedAt: reviewedAt,
+                lastReviewResult: .correct
+            )
+        )
+        let scheduler = CardReviewScheduler()
+
+        #expect(scheduler.isDue(dueCard))
+    }
+
+    @Test
     func reviewQueueInterleavesByLaneAndConceptWithinDueWindow() {
         let scheduler = CardReviewScheduler(now: now)
         let cards = [
