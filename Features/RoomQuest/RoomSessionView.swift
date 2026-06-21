@@ -109,10 +109,10 @@ struct RoomSessionView: View {
             RoomSetupView(engine: engine)
 
         case .routeNode(let idx):
-            RouteQuestNodeView(engine: engine, nodeIndex: idx)
+            RouteQuestNodeView(engine: engine, nodeIndex: idx, onRequestAbandon: { requestAbandonSession(reason: $0) })
 
         case .spot(let idx):
-            SpotPromptView(engine: engine, spotIndex: idx)
+            SpotPromptView(engine: engine, spotIndex: idx, onRequestAbandon: { requestAbandonSession(reason: $0) })
 
         case .returning:
             ReturningView(engine: engine, onRequestAbandon: { requestAbandonSession(reason: $0) })
@@ -263,6 +263,7 @@ struct RoomSessionView: View {
 private struct RouteQuestNodeView: View {
     @Bindable var engine: RoomQuestEngine
     let nodeIndex: Int
+    let onRequestAbandon: (String) -> Void
 
     private var node: RouteQuestNode? {
         engine.currentRouteNode
@@ -272,7 +273,7 @@ private struct RouteQuestNodeView: View {
         if let node {
             switch node.kind {
             case .station:
-                SpotPromptView(engine: engine, spotIndex: nodeIndex)
+                SpotPromptView(engine: engine, spotIndex: nodeIndex, onRequestAbandon: onRequestAbandon)
             default:
                 routeInstructionView(for: node)
             }
