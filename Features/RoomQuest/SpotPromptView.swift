@@ -7,6 +7,7 @@ import UIKit
 struct SpotPromptView: View {
     @Bindable var engine: RoomQuestEngine
     let spotIndex: Int
+    let onRequestAbandon: (String) -> Void
 
     private var station: RoomQuestStation? {
         engine.currentStation
@@ -92,7 +93,7 @@ struct SpotPromptView: View {
                 }
 
                 roomChromeButton(title: "Home", systemImage: "house.circle.fill", accessibilityID: "room-home-button") {
-                    engine.onExitToHome?()
+                    onRequestAbandon("parent_home")
                 }
             }
             .padding(24)

@@ -225,4 +225,65 @@ struct CompassWalkTurnTests {
         #expect(service.isComplete)
         service.stop()
     }
+
+    @MainActor
+    @Test func stepCountServiceIgnoresStalePedometerCallbacksAfterRestart() async {
+        var handlers: [PedometerUpdateHandler] = []
+        let service = StepCountService(
+            stepCountingAvailable: { true },
+            startPedometerUpdates: { _, handler in
+                handlers.append(handler)
+            },
+            noStepUpdateFallbackDelay: .seconds(60)
+        )
+
+        service.start(requiredSteps: 2)
+        service.applyCountedSteps(1)
+        service.start(requiredSteps: 3)
+
+        #expect(handlers.count == 2)
+        #expect(service.mode == .pedometer)
+        #expect(service.countedSteps == 0)
+
+        handlers[0](nil, TestPedometerError.stale)
+        await Task.yield()
+
+        #expect(service.mode == .pedometer)
+        #expect(service.countedSteps == 0)
+
+        handlers[1](nil, TestPedometerError.current)
+        await Task.yield()
+
+        if case .manualFallback(let reason) = service.mode {
+            #expect(reason.contains("Motion permission"))
+        } else {
+            Issue.record("Expected the active pedometer callback to move to manual fallback")
+        }
+    }
+
+    @MainActor
+    @Test func stepCountServiceIgnoresCallbacksAfterStop() async {
+        var handler: PedometerUpdateHandler?
+        let service = StepCountService(
+            stepCountingAvailable: { true },
+            startPedometerUpdates: { _, callback in
+                handler = callback
+            },
+            noStepUpdateFallbackDelay: .seconds(60)
+        )
+
+        service.start(requiredSteps: 2)
+        service.stop()
+
+        handler?(nil, TestPedometerError.stale)
+        await Task.yield()
+
+        #expect(service.mode == .idle)
+        #expect(service.countedSteps == 0)
+    }
+
+    private enum TestPedometerError: Error {
+        case stale
+        case current
+    }
 }

@@ -170,6 +170,26 @@ final class RoomQuestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 5))
     }
 
+    func testRoomQuestSpotHomeUsesAbandonConfirmation() {
+        let app = launchWithRoomQuestAndSafetyAck()
+        _ = app.staticTexts["Mather"].waitForExistence(timeout: 5)
+
+        openRoomQuest(app)
+        _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 5)
+        completeSetupViaManualFallback(app)
+
+        XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForSpotStage(app, timeout: 10))
+
+        app.buttons["room-home-button"].tap()
+        XCTAssertTrue(app.alerts["End Room Quest?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.alerts["End Room Quest?"].buttons["Keep playing"].exists)
+        XCTAssertTrue(app.alerts["End Room Quest?"].buttons["End session"].exists)
+
+        app.alerts["End Room Quest?"].buttons["End session"].tap()
+        XCTAssertTrue(app.staticTexts["Mather"].waitForExistence(timeout: 5))
+    }
+
     // MARK: - Global settings handoff
 
     func testSettingsKeepsMinimalRoomQuestEntryThatReturnsToSetup() {

@@ -45,6 +45,7 @@ final class StepCountService {
     private let noStepUpdateFallbackDelay: Duration
     private var noStepUpdateFallbackTask: Task<Void, Never>?
     private var startDate: Date?
+    private var activeSessionID: UUID?
 
     private(set) var progress = StepWalkProgress(requiredSteps: 1)
     private(set) var mode: StepCountMode = .idle
@@ -75,6 +76,8 @@ final class StepCountService {
         stop()
         progress = StepWalkProgress(requiredSteps: requiredSteps)
         startDate = Date()
+        let sessionID = UUID()
+        activeSessionID = sessionID
 
         guard isStepCountingAvailable else {
             mode = .manualFallback(reason: "Step sensing is not available here. Tap each small step instead.")
@@ -82,10 +85,11 @@ final class StepCountService {
         }
 
         mode = .pedometer
-        scheduleNoStepUpdateFallback()
+        scheduleNoStepUpdateFallback(for: sessionID)
         startPedometerUpdates(startDate ?? Date()) { [weak self] data, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                guard self.activeSessionID == sessionID else { return }
                 if error != nil {
                     self.useManualFallback(reason: "Motion permission was not available. Tap each small step instead.")
                     return
@@ -105,6 +109,7 @@ final class StepCountService {
         noStepUpdateFallbackTask = nil
         pedometer.stopUpdates()
         startDate = nil
+        activeSessionID = nil
         mode = .idle
     }
 
@@ -112,6 +117,7 @@ final class StepCountService {
         noStepUpdateFallbackTask?.cancel()
         noStepUpdateFallbackTask = nil
         pedometer.stopUpdates()
+        activeSessionID = nil
         mode = .manualFallback(reason: reason)
     }
 
@@ -129,12 +135,13 @@ final class StepCountService {
         progress.setCountedSteps(steps)
     }
 
-    private func scheduleNoStepUpdateFallback() {
+    private func scheduleNoStepUpdateFallback(for sessionID: UUID) {
         noStepUpdateFallbackTask?.cancel()
         let delay = noStepUpdateFallbackDelay
         noStepUpdateFallbackTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }
+            guard self.activeSessionID == sessionID else { return }
             guard case .pedometer = self.mode, self.progress.countedSteps == 0 else { return }
             self.useManualFallback(reason: "If step sensing does not start, tap after each small careful step.")
         }
