@@ -124,6 +124,7 @@ struct RectangleFactoryTests {
         #expect(composites.count >= 6)
     }
 
+    @MainActor
     @Test func completedTargetCountIncludesSolvedCurrentTarget() {
         #expect(RectangleFactoryView.completedTargetCount(sequenceIndex: 0, allFoundForCurrentTarget: false) == 0)
         #expect(RectangleFactoryView.completedTargetCount(sequenceIndex: 0, allFoundForCurrentTarget: true) == 1)
