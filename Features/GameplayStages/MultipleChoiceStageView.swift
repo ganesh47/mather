@@ -2,14 +2,17 @@ import SwiftUI
 
 struct MultipleChoiceStageView: View {
     let stage: GameplayStageDefinition
+    let attemptID: String
     let actions: GameplayStageFeedbackActions
     let compact: Bool
     let onComplete: (Int, Int, Int) -> Void
     @State private var viewModel: GameplayMultipleChoiceStageViewModel
     @State private var showCorrectCelebration = false
+    @State private var delayedAdvanceTask: Task<Void, Never>?
 
-    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
+    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, attemptID: String, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
         self.stage = stage
+        self.attemptID = attemptID
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
@@ -73,29 +76,43 @@ struct MultipleChoiceStageView: View {
         }
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
+        .onDisappear {
+            cancelDelayedAdvance()
+        }
     }
 
     @MainActor
     private func choose(_ choice: GameplayDisplayItem) {
+        cancelDelayedAdvance()
         let correct = viewModel.choose(choice)
         if correct {
             actions.success()
             withAnimation(.spring(response: 0.28, dampingFraction: 0.64)) {
                 showCorrectCelebration = true
             }
-            Task { @MainActor in
+            let taskAttemptID = attemptID
+            delayedAdvanceTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 850_000_000)
+                guard !Task.isCancelled, taskAttemptID == attemptID else { return }
                 withAnimation(.easeOut(duration: 0.16)) {
                     showCorrectCelebration = false
                 }
+                guard !Task.isCancelled, taskAttemptID == attemptID else { return }
                 if viewModel.advanceAfterCorrectChoice() {
                     onComplete(viewModel.correctCount, viewModel.mistakeCount, 0)
                 }
+                delayedAdvanceTask = nil
             }
         } else {
             showCorrectCelebration = false
             actions.failure()
         }
+    }
+
+    @MainActor
+    private func cancelDelayedAdvance() {
+        delayedAdvanceTask?.cancel()
+        delayedAdvanceTask = nil
     }
 
     private func choiceColumns(for question: GameplayMultipleChoiceQuestion) -> [GridItem] {

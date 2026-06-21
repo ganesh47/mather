@@ -114,9 +114,10 @@ struct GameplayThreadView: View {
                     complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
             case .multipleChoice:
-                MultipleChoiceStageView(thread: thread, stage: stage, round: round, actions: actions, compact: compact) { correct, mistakes, hints in
+                MultipleChoiceStageView(thread: thread, stage: stage, round: round, attemptID: navigation.stageAttemptID, actions: actions, compact: compact) { correct, mistakes, hints in
                     complete(stage: stage, round: round, correct: correct, mistakes: mistakes, hints: hints)
                 }
+                .id(navigation.stageAttemptID)
             }
         } else {
             Text("No stage is available yet.")

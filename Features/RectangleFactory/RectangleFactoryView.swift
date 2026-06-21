@@ -31,6 +31,7 @@ struct RectangleFactoryView: View {
     @State private var showEquation: Bool = false
     @State private var lastEquation: String = ""
     @State private var allFoundForN: Bool = false
+    @State private var completedTargetCount: Int = 0
     @State private var celebratingFactorKey: String?
 
     // MARK: - Grid constants
@@ -57,14 +58,15 @@ struct RectangleFactoryView: View {
         }
         .onAppear {
             sessionStart = .now
+            completedTargetCount = 0
             loadN(RectangleFactoryView.nSequence[0], speakPrompt: true)
         }
         .onDisappear {
-            guard sequenceIndex > 0 else { return }
+            guard completedTargetCount > 0 else { return }
             appModel.gameSessionStore.save(
                 gameName: "Rectangle Factory",
                 startedAt: sessionStart,
-                scoreValue: sequenceIndex,
+                scoreValue: completedTargetCount,
                 scoreLabel: "numbers factored"
             )
         }
@@ -650,6 +652,7 @@ struct RectangleFactoryView: View {
         let allFactors = Self.factorsOf(targetN)
         guard foundFactors.count >= allFactors.count else { return }
         allFoundForN = true
+        completedTargetCount = max(completedTargetCount, Self.completedTargetCount(sequenceIndex: sequenceIndex, allFoundForCurrentTarget: true))
         appModel.hapticsService.bondMatchComplete(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
             Self.completionSpeech(for: targetN),
@@ -686,6 +689,12 @@ struct RectangleFactoryView: View {
         if speakPrompt {
             appModel.speechService.speak(Self.openingSpeech(for: n), enabled: appModel.featureFlags.audioEnabled)
         }
+    }
+
+    static func completedTargetCount(sequenceIndex: Int, allFoundForCurrentTarget: Bool) -> Int {
+        let completedBeforeCurrent = min(max(sequenceIndex, 0), nSequence.count)
+        guard allFoundForCurrentTarget else { return completedBeforeCurrent }
+        return min(completedBeforeCurrent + 1, nSequence.count)
     }
 
     private func resetFrame() {

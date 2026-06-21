@@ -12,7 +12,7 @@ final class LabConceptSessionProgressStore {
     init(
         storage: ExplorerLabMasteryKeyValueStore = UserDefaults.standard,
         storageKey: String = LabConceptSessionProgressStore.defaultStorageKey,
-        activeProfileIdProvider: @escaping () -> String = { "default" },
+        activeProfileIdProvider: @escaping () -> String = { KidProfilePersistence.defaultProfileId },
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
