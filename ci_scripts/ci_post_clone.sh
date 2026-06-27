@@ -25,6 +25,14 @@ else
   echo "--- ci_post_clone: no tag — keeping MARKETING_VERSION as-is (dev build) ---"
 fi
 
+if [ -n "${CI_BUILD_NUMBER:-}" ]; then
+  echo "--- ci_post_clone: stamping CURRENT_PROJECT_VERSION=${CI_BUILD_NUMBER} ---"
+  sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: ${CI_BUILD_NUMBER}/" \
+    "$CI_PRIMARY_REPOSITORY_PATH/project.yml"
+else
+  echo "--- ci_post_clone: no CI_BUILD_NUMBER — keeping CURRENT_PROJECT_VERSION as-is ---"
+fi
+
 echo "--- ci_post_clone: regenerating Mather.xcodeproj ---"
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 xcodegen generate

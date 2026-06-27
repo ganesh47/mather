@@ -59,13 +59,13 @@ targets:
     settings:
       base:
         PRODUCT_NAME: MatherTV
-        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.MatherTV
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.Mather
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Mather TV
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         TVOS_DEPLOYMENT_TARGET: "18.0"
         TARGETED_DEVICE_FAMILY: "3"
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: MatherTVAppIcon
     scheme: {}
   MatherUITests:
     type: bundle.ui-testing
