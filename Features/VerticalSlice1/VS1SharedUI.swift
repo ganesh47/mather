@@ -279,29 +279,74 @@ private struct HoldToUnlockButton: View {
     var action: () -> Void
 
     @State private var isPressing = false
+    @State private var holdProgress = 0.0
+    @State private var showTapHint = false
 
     var body: some View {
-        Button(action: {}) {
-            Label(title, systemImage: isPressing ? "lock.open.fill" : "lock.fill")
-                .font(.headline.weight(.black))
-                .foregroundStyle(.white)
+        VStack(spacing: 10) {
+            Button(action: showHoldHint) {
+                ZStack(alignment: .leading) {
+                    GeometryReader { proxy in
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(.white.opacity(0.24))
+                            .frame(width: proxy.size.width * holdProgress)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                    Label(isPressing ? "Keep holding..." : title, systemImage: isPressing ? "lock.open.fill" : "lock.fill")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 58)
+                }
                 .frame(maxWidth: .infinity, minHeight: 58)
                 .background(MatherTheme.accent, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay(DarkModeCTAOverlay())
                 .scaleEffect(isPressing ? 0.98 : 1.0)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("parent-unlock-hold-button")
+            .accessibilityLabel(title)
+            .accessibilityHint("Press and hold until the lock opens.")
+            .onLongPressGesture(
+                minimumDuration: 0.9,
+                maximumDistance: 48,
+                pressing: updatePressing,
+                perform: completeUnlock
+            )
+
+            Text(showTapHint ? "Press and hold until the lock opens." : "Hold until the lock opens.")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .multilineTextAlignment(.center)
+                .accessibilityIdentifier("parent-unlock-hold-helper")
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("parent-unlock-hold-button")
-        .accessibilityLabel(title)
-        .onLongPressGesture(
-            minimumDuration: 0.9,
-            maximumDistance: 48,
-            pressing: { pressing in
-                withAnimation(.easeOut(duration: 0.12)) {
-                    isPressing = pressing
-                }
-            },
-            perform: action
-        )
+    }
+
+    private func showHoldHint() {
+        withAnimation(.easeOut(duration: 0.12)) {
+            showTapHint = true
+        }
+    }
+
+    private func updatePressing(_ pressing: Bool) {
+        showTapHint = false
+        withAnimation(.easeOut(duration: 0.12)) {
+            isPressing = pressing
+        }
+
+        if pressing {
+            withAnimation(.linear(duration: 0.9)) {
+                holdProgress = 1.0
+            }
+        } else {
+            withAnimation(.easeOut(duration: 0.16)) {
+                holdProgress = 0.0
+            }
+        }
+    }
+
+    private func completeUnlock() {
+        holdProgress = 1.0
+        action()
     }
 }
