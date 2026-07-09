@@ -47,6 +47,15 @@ class Config:
         return self.github_repository.split("/", 1)[1]
 
 
+class APIRequestError(RuntimeError):
+    def __init__(self, method: str, url: str, code: int, details: str) -> None:
+        self.method = method
+        self.url = url
+        self.code = code
+        self.details = details
+        super().__init__(f"{method} {url} failed: {code} {details}")
+
+
 def require_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
@@ -112,7 +121,7 @@ def request_json(
             last_error = exc
             if exc.code not in transient_statuses or attempt >= retries:
                 details = exc.read().decode("utf-8", errors="replace")
-                raise RuntimeError(f"{method} {url} failed: {exc.code} {details}") from exc
+                raise APIRequestError(method, url, exc.code, details) from exc
             print(
                 f"{method} request failed with transient HTTP {exc.code}; "
                 f"retrying ({attempt + 1}/{retries})",
@@ -122,7 +131,7 @@ def request_json(
 
     if last_error is not None:
         details = last_error.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"{method} {url} failed: {last_error.code} {details}") from last_error
+        raise APIRequestError(method, url, last_error.code, details) from last_error
     return None
 
 
@@ -627,7 +636,16 @@ def sync_feedback_kind(
     labels: list[str],
 ) -> int:
     created_count = 0
-    feedback_items = fetch_feedback_collection(config, endpoint)
+    try:
+        feedback_items = fetch_feedback_collection(config, endpoint)
+    except APIRequestError as exc:
+        if is_missing_feedback_collection(exc, endpoint):
+            print(
+                f"Skipping {kind} feedback sync because App Store Connect did not expose "
+                f"collection {endpoint}: HTTP {exc.code}"
+            )
+            return 0
+        raise
     existing_feedback_issues = list_existing_feedback_issues(config)
     print(f"Fetched {len(feedback_items)} {kind} feedback item(s)")
     print(f"Found {len(existing_feedback_issues)} existing TestFlight issue marker(s)")
@@ -653,6 +671,18 @@ def sync_feedback_kind(
         print(f"Created issue #{issue['number']} for feedback {feedback_id}")
 
     return created_count
+
+
+def is_missing_feedback_collection(exc: APIRequestError, endpoint: str) -> bool:
+    if exc.code != 404 or endpoint not in exc.url:
+        return False
+    return (
+        "NOT_FOUND" in exc.details
+        and (
+            "There is no resource of type" in exc.details
+            or "The specified resource does not exist" in exc.details
+        )
+    )
 
 
 def parse_labels() -> list[str]:
