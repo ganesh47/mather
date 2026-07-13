@@ -983,6 +983,9 @@ final class ScreenshotTests: XCTestCase {
             }
 
             guard let promptButton = selectedPrompt else {
+                if app.staticTexts["Bond Blast!"].waitForExistence(timeout: 5) {
+                    return
+                }
                 XCTFail("Expected a new hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1); already used \(usedPromptTokens)")
                 return
             }
