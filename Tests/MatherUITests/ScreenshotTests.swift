@@ -314,7 +314,9 @@ final class ScreenshotTests: XCTestCase {
             concreteCellIndex: 5,
             leftPanCount: 3,
             rightPanCount: 3,
-            expectedSumSprintPairs: 2,
+            // Target 6 now exposes three deterministic Sum Sprint pairs before
+            // advancing to the Bond Blast finale.
+            expectedSumSprintPairs: 3,
             bondPairs: [(1, 5), (2, 4), (3, 3)],
             snapshotPrefix: "Issue222-Target6"
         )
