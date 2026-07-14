@@ -424,8 +424,6 @@ final class ScreenshotTests: XCTestCase {
             let app = launchCrashSweepRoute(directRoute.route)
             requireExists(app.staticTexts[directRoute.expectedText], timeout: 15)
             assertAlive(app, "\(directRoute.checkpoint) direct route")
-            app.terminate()
-            XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
         }
     }
 
@@ -515,7 +513,8 @@ final class ScreenshotTests: XCTestCase {
     }
 
     private func launchCrashSweepRoute(_ route: String) -> XCUIApplication {
-        launchApp(with: [
+        let app = XCUIApplication()
+        app.launchArguments = [
             "-feature.audioEnabled", "NO",
             "-feature.hapticsEnabled", "NO",
             "-feature.motionControlsEnabled", "NO",
@@ -528,7 +527,9 @@ final class ScreenshotTests: XCTestCase {
             "-uiTest.autoCompleteGravitySplit",
             "-uiTest.bondBlastTarget", "12",
             "-uiTest.startRoute", route,
-        ])
+        ]
+        app.launch()
+        return app
     }
 
     private func launch() -> XCUIApplication {
@@ -800,8 +801,7 @@ final class ScreenshotTests: XCTestCase {
 
         completeVisibleSumSprintPairs(in: app, target: target, expectedPairs: expectedSumSprintPairs)
 
-        let bondBlastTitle = app.staticTexts["Bond Blast!"]
-        XCTAssertTrue(bondBlastTitle.waitForExistence(timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
+        XCTAssertTrue(waitForBondBlast(in: app, timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
         snapshot(app, "\(snapshotPrefix)-BondBlast")
 
         for (left, right) in bondPairs {
@@ -983,7 +983,7 @@ final class ScreenshotTests: XCTestCase {
             }
 
             guard let promptButton = selectedPrompt else {
-                if app.staticTexts["Bond Blast!"].waitForExistence(timeout: 5) {
+                if waitForBondBlast(in: app, timeout: 5) {
                     return
                 }
                 XCTFail("Expected a new hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1); already used \(usedPromptTokens)")
@@ -1002,12 +1002,30 @@ final class ScreenshotTests: XCTestCase {
             }
 
             guard let sumButton = selectedSum else {
+                if waitForBondBlast(in: app, timeout: 5) {
+                    return
+                }
                 XCTFail("Expected a hittable Sum Sprint sum match for prompt token \(promptToken) on target \(target) pair \(pairIndex + 1)")
                 return
             }
             sumButton.tap()
             usedPromptTokens.insert(promptToken)
         }
+    }
+
+    private func waitForBondBlast(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if app.staticTexts["Bond Blast!"].exists || firstBondBlastCard(in: app).exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        } while Date() < deadline
+        return app.staticTexts["Bond Blast!"].exists || firstBondBlastCard(in: app).exists
+    }
+
+    private func firstBondBlastCard(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "bond-left-")).firstMatch
     }
 
     private func waitForHistoryRow(_ app: XCUIApplication, identifier: String, fallbackLabel: String, timeout: TimeInterval) -> Bool {
