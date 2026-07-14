@@ -971,15 +971,17 @@ final class ScreenshotTests: XCTestCase {
             var selectedPrompt: XCUIElement?
             var promptToken = ""
 
-            for index in 0..<promptButtons.count {
-                let button = promptButtons.element(boundBy: index)
-                let identifier = button.identifier
-                guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1), button.isHittable else { continue }
-                let candidateToken = String(identifier.dropFirst(promptPrefix.count))
-                guard !usedPromptTokens.contains(candidateToken) else { continue }
-                promptToken = candidateToken
-                selectedPrompt = button
-                break
+            if promptButtons.firstMatch.waitForExistence(timeout: 2) {
+                for index in 0..<promptButtons.count {
+                    let button = promptButtons.element(boundBy: index)
+                    let identifier = button.identifier
+                    guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1), button.isHittable else { continue }
+                    let candidateToken = String(identifier.dropFirst(promptPrefix.count))
+                    guard !usedPromptTokens.contains(candidateToken) else { continue }
+                    promptToken = candidateToken
+                    selectedPrompt = button
+                    break
+                }
             }
 
             guard let promptButton = selectedPrompt else {
@@ -993,12 +995,14 @@ final class ScreenshotTests: XCTestCase {
 
             let sumButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", sumPrefix))
             var selectedSum: XCUIElement?
-            for index in 0..<sumButtons.count {
-                let button = sumButtons.element(boundBy: index)
-                let identifier = button.identifier
-                guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1), button.isHittable else { continue }
-                selectedSum = button
-                break
+            if sumButtons.firstMatch.waitForExistence(timeout: 2) {
+                for index in 0..<sumButtons.count {
+                    let button = sumButtons.element(boundBy: index)
+                    let identifier = button.identifier
+                    guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1), button.isHittable else { continue }
+                    selectedSum = button
+                    break
+                }
             }
 
             guard let sumButton = selectedSum else {
