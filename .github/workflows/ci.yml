@@ -34,6 +34,14 @@ jobs:
       - name: Verify generated project is committed
         run: git diff --exit-code Mather.xcodeproj
 
+      - name: Build tvOS app
+        run: |
+          xcodebuild build \
+            -project Mather.xcodeproj \
+            -scheme MatherTV \
+            -destination "generic/platform=tvOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Choose simulator destination
         run: |
           set -euo pipefail

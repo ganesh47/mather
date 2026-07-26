@@ -2,68 +2,89 @@ import SwiftUI
 
 struct MatherTVRootView: View {
     @FocusState private var focusedAction: MatherTVAction.ID?
-    @State private var selectedAction = MatherTVAction.angle
+    @State private var activeGame: MatherTVAction?
+    @State private var lastFocusedAction = MatherTVAction.memory
 
     private let actions = MatherTVAction.allCases
 
     var body: some View {
+        Group {
+            if let activeGame {
+                gameView(for: activeGame)
+                    .id(activeGame.id)
+                    .overlay(alignment: .top) {
+                        Label("Menu  ·  All games", systemImage: "chevron.backward")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.68))
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, 13)
+                            .background(.black.opacity(0.26), in: Capsule())
+                            .padding(.top, 28)
+                            .accessibilityHidden(true)
+                    }
+                    .onExitCommand {
+                        exitGame(activeGame)
+                    }
+            } else {
+                launcher
+            }
+        }
+        .onAppear {
+            focusLauncher()
+        }
+    }
+
+    private var launcher: some View {
         ZStack {
             MatherTVBackdrop()
 
-            VStack(alignment: .leading, spacing: 42) {
+            VStack(alignment: .leading, spacing: 46) {
                 header
 
-                HStack(alignment: .center, spacing: 34) {
-                    actionMenu
-                    selectedActionPanel
+                HStack(spacing: 30) {
+                    ForEach(actions) { action in
+                        Button {
+                            openGame(action)
+                        } label: {
+                            MatherTVGameCard(
+                                action: action,
+                                isFocused: focusedAction == action.id
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .focused($focusedAction, equals: action.id)
+                        .accessibilityLabel(action.title)
+                        .accessibilityHint(action.accessibilityHint)
+                        .accessibilityIdentifier("tv-mode-\(action.id)")
+                    }
                 }
+
+                Label("Swipe to choose, then press select to play.", systemImage: "hand.tap.fill")
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.66))
             }
-            .frame(maxWidth: 1480, alignment: .leading)
-            .padding(.horizontal, 92)
+            .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 90)
             .padding(.vertical, 76)
-        }
-        .onAppear {
-            focusedAction = selectedAction.id
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Mather TV Lab")
+            Text("Choose a game")
                 .font(.system(size: 72, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
 
-            Text("A couch-ready shell for focus/select math play.")
+            Text("One game at a time. Press Menu anytime to come back here.")
                 .font(.system(size: 30, weight: .medium, design: .rounded))
                 .foregroundStyle(.white.opacity(0.76))
         }
         .accessibilityElement(children: .combine)
     }
 
-    private var actionMenu: some View {
-        VStack(spacing: 24) {
-            ForEach(actions) { action in
-                Button {
-                    selectedAction = action
-                } label: {
-                    MatherTVActionRow(
-                        action: action,
-                        isFocused: focusedAction == action.id,
-                        isSelected: selectedAction == action
-                    )
-                }
-                .buttonStyle(.plain)
-                .focused($focusedAction, equals: action.id)
-                .accessibilityHint(action.accessibilityHint)
-                .accessibilityIdentifier("tv-mode-\(action.id)")
-            }
-        }
-        .frame(width: 560)
-    }
-
     @ViewBuilder
-    private var selectedActionPanel: some View {
-        switch selectedAction {
+    private func gameView(for action: MatherTVAction) -> some View {
+        switch action {
         case .memory:
             MemoryGalleryTVView()
         case .angle:
@@ -72,61 +93,64 @@ struct MatherTVRootView: View {
             SumSprintPartyTVView()
         }
     }
+
+    private func openGame(_ action: MatherTVAction) {
+        lastFocusedAction = action
+        focusedAction = nil
+        activeGame = action
+    }
+
+    private func exitGame(_ action: MatherTVAction) {
+        lastFocusedAction = action
+        activeGame = nil
+        focusLauncher()
+    }
+
+    private func focusLauncher() {
+        guard activeGame == nil else { return }
+        Task { @MainActor in
+            focusedAction = lastFocusedAction.id
+        }
+    }
 }
 
-private struct MatherTVActionRow: View {
+private struct MatherTVGameCard: View {
     let action: MatherTVAction
     let isFocused: Bool
-    let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 22) {
+        VStack(alignment: .leading, spacing: 24) {
             Image(systemName: action.symbolName)
-                .font(.system(size: 42, weight: .bold))
-                .frame(width: 70, height: 70)
+                .font(.system(size: 58, weight: .bold))
+                .frame(width: 96, height: 96)
                 .foregroundStyle(isFocused ? Color(red: 0.09, green: 0.13, blue: 0.19) : .white)
-                .background(iconBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(isFocused ? .white : .white.opacity(0.12), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(action.title)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(isFocused ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
+            Text(action.title)
+                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .foregroundStyle(isFocused ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
+                .lineLimit(2)
 
-                Text(action.subtitle)
-                    .font(.system(size: 21, weight: .medium, design: .rounded))
-                    .foregroundStyle(isFocused ? Color(red: 0.15, green: 0.20, blue: 0.29) : .white.opacity(0.65))
-                    .lineLimit(2)
-            }
+            Text(action.subtitle)
+                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .foregroundStyle(isFocused ? Color(red: 0.15, green: 0.20, blue: 0.29) : .white.opacity(0.68))
 
             Spacer(minLength: 0)
+
+            Label("Play", systemImage: "play.fill")
+                .font(.system(size: 23, weight: .bold, design: .rounded))
+                .foregroundStyle(isFocused ? Color(red: 0.08, green: 0.28, blue: 0.39) : .white.opacity(0.72))
         }
-        .padding(24)
-        .frame(width: 560, height: 132)
-        .background(rowBackground, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(rowStroke)
-        .scaleEffect(isFocused ? 1.055 : 1.0)
-        .shadow(color: .black.opacity(isFocused ? 0.35 : 0.16), radius: isFocused ? 24 : 10, x: 0, y: isFocused ? 18 : 8)
+        .padding(32)
+        .frame(width: 500, height: 390, alignment: .topLeading)
+        .background(isFocused ? .white : .white.opacity(0.08), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .stroke(isFocused ? Color(red: 0.55, green: 0.88, blue: 1.0) : .white.opacity(0.14), lineWidth: isFocused ? 4 : 2)
+        )
+        .scaleEffect(isFocused ? 1.045 : 1.0)
+        .shadow(color: .black.opacity(isFocused ? 0.36 : 0.16), radius: isFocused ? 28 : 10, x: 0, y: isFocused ? 18 : 8)
         .animation(.spring(response: 0.28, dampingFraction: 0.78), value: isFocused)
-        .animation(.easeInOut(duration: 0.18), value: isSelected)
-    }
-
-    private var iconBackground: some ShapeStyle {
-        isFocused ? .white : .white.opacity(0.12)
-    }
-
-    private var rowBackground: some ShapeStyle {
-        if isFocused {
-            return AnyShapeStyle(.white)
-        }
-        if isSelected {
-            return AnyShapeStyle(Color(red: 0.10, green: 0.32, blue: 0.42).opacity(0.74))
-        }
-        return AnyShapeStyle(.white.opacity(0.08))
-    }
-
-    private var rowStroke: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .stroke(isSelected ? Color(red: 0.55, green: 0.88, blue: 1.0).opacity(0.78) : .white.opacity(0.12), lineWidth: 2)
     }
 }
 
@@ -188,9 +212,9 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
 
     var accessibilityHint: String {
         switch self {
-        case .memory: "Selects the Memory Gallery picture matching game."
-        case .angle: "Selects the Angle Arcade prototype."
-        case .sprint: "Selects the Sum Sprint Party answer game."
+        case .memory: "Opens the Memory Gallery picture matching game."
+        case .angle: "Opens the Angle Arcade aiming game."
+        case .sprint: "Opens the Sum Sprint Party answer game."
         }
     }
 }

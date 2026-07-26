@@ -19,30 +19,31 @@ struct AngleArcadeTVView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            header
+        ZStack {
+            MatherTVBackdrop()
 
-            AngleArcadeFieldView(
-                target: target,
-                prediction: prediction,
-                firedShot: firedShot
-            )
-            .frame(height: 314)
-            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Color.white.opacity(0.14), lineWidth: 2)
-            )
+            VStack(alignment: .leading, spacing: 28) {
+                header
 
-            controls
+                AngleArcadeFieldView(
+                    target: target,
+                    prediction: prediction,
+                    firedShot: firedShot
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 520)
+                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .stroke(Color.white.opacity(0.14), lineWidth: 2)
+                )
+
+                controls
+            }
+            .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 90)
+            .padding(.vertical, 66)
         }
-        .padding(34)
-        .frame(width: 790, height: 604, alignment: .topLeading)
-        .background(Color(red: 0.05, green: 0.11, blue: 0.16).opacity(0.82), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(Color(red: 0.55, green: 0.88, blue: 1.0).opacity(0.24), lineWidth: 2)
-        )
         .onAppear {
             focusedAction = .fire
         }
@@ -57,11 +58,11 @@ struct AngleArcadeTVView: View {
         HStack(alignment: .top, spacing: 24) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Angle Arcade")
-                    .font(.system(size: 46, weight: .bold, design: .rounded))
+                    .font(.system(size: 70, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text(target.title)
-                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .font(.system(size: 30, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1.0))
             }
 
@@ -71,11 +72,11 @@ struct AngleArcadeTVView: View {
                 ForEach(targets.indices, id: \.self) { index in
                     Circle()
                         .fill(index == targetIndex ? Color(red: 1.0, green: 0.76, blue: 0.30) : Color.white.opacity(0.28))
-                        .frame(width: 18, height: 18)
+                        .frame(width: 20, height: 20)
                         .accessibilityHidden(true)
                 }
             }
-            .padding(.top, 14)
+            .padding(.top, 20)
         }
     }
 
@@ -91,8 +92,8 @@ struct AngleArcadeTVView: View {
                 primaryAction()
             } label: {
                 Label(firedShot == nil ? "Fire" : "Replay", systemImage: firedShot == nil ? "paperplane.fill" : "arrow.clockwise")
-                    .font(.system(size: 25, weight: .bold, design: .rounded))
-                    .frame(width: 156, height: 74)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .frame(width: 220, height: 92)
             }
             .buttonStyle(.borderedProminent)
             .focused($focusedAction, equals: .fire)
