@@ -102,3 +102,109 @@ struct MemoryGalleryTVRound: Equatable {
         return Array(values[split...]) + Array(values[..<split])
     }
 }
+
+struct MemoryGalleryTVGame: Equatable {
+    enum Phase: Equatable {
+        case choosingCategory
+        case playing
+        case completed
+    }
+
+    static let roundsPerGame = 6
+
+    private(set) var phase: Phase = .choosingCategory
+    private(set) var category: MemoryGalleryTVCategory?
+    private(set) var roundIndex = 0
+    private(set) var completedRoundCount = 0
+    private(set) var correctCount = 0
+    private(set) var streak = 0
+    private(set) var bestStreak = 0
+    private(set) var selectedAnswerID: String?
+    private(set) var lastAnswerWasCorrect: Bool?
+
+    var round: MemoryGalleryTVRound? {
+        guard let category, phase == .playing else { return nil }
+        return MemoryGalleryTVRound.make(category: category, index: roundIndex)
+    }
+
+    var hasAnsweredCurrentRound: Bool {
+        selectedAnswerID != nil
+    }
+
+    var progressText: String {
+        switch phase {
+        case .choosingCategory:
+            return "Choose a gallery"
+        case .playing:
+            let visibleRound = hasAnsweredCurrentRound ? completedRoundCount : completedRoundCount + 1
+            return "Picture \(min(visibleRound, Self.roundsPerGame)) of \(Self.roundsPerGame)"
+        case .completed:
+            return "\(Self.roundsPerGame) pictures complete"
+        }
+    }
+
+    mutating func start(category: MemoryGalleryTVCategory) {
+        self.category = category
+        phase = .playing
+        roundIndex = 0
+        completedRoundCount = 0
+        correctCount = 0
+        streak = 0
+        bestStreak = 0
+        selectedAnswerID = nil
+        lastAnswerWasCorrect = nil
+    }
+
+    @discardableResult
+    mutating func select(answerID: String) -> Bool {
+        guard
+            phase == .playing,
+            selectedAnswerID == nil,
+            let round
+        else {
+            return false
+        }
+
+        let isCorrect = answerID == round.correctAnswerID
+        selectedAnswerID = answerID
+        lastAnswerWasCorrect = isCorrect
+        completedRoundCount += 1
+
+        if isCorrect {
+            correctCount += 1
+            streak += 1
+            bestStreak = max(bestStreak, streak)
+        } else {
+            streak = 0
+        }
+
+        return isCorrect
+    }
+
+    mutating func advance() {
+        guard phase == .playing, selectedAnswerID != nil else { return }
+
+        if completedRoundCount >= Self.roundsPerGame {
+            phase = .completed
+            selectedAnswerID = nil
+            lastAnswerWasCorrect = nil
+            return
+        }
+
+        roundIndex += 1
+        selectedAnswerID = nil
+        lastAnswerWasCorrect = nil
+    }
+
+    mutating func replay() {
+        guard let category else {
+            chooseAnotherCategory()
+            return
+        }
+        start(category: category)
+    }
+
+    mutating func chooseAnotherCategory() {
+        self = MemoryGalleryTVGame()
+    }
+}

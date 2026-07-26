@@ -4,86 +4,73 @@ struct MemoryGalleryTVView: View {
     @FocusState private var focusedCategory: MemoryGalleryTVCategory.ID?
     @FocusState private var focusedAnswerID: String?
     @FocusState private var nextButtonFocused: Bool
+    @FocusState private var focusedCompletionAction: CompletionAction?
 
-    @State private var selectedCategory: MemoryGalleryTVCategory = .animals
-    @State private var roundIndex = 0
-    @State private var selectedAnswerID: String?
-    @State private var correctCount = 0
-
-    private var round: MemoryGalleryTVRound {
-        MemoryGalleryTVRound.make(category: selectedCategory, index: roundIndex)
-    }
-
-    private var answeredCorrectly: Bool {
-        MemoryGalleryTVRound.isCorrect(selectionID: selectedAnswerID, for: round)
-    }
+    @State private var game = MemoryGalleryTVGame()
 
     var body: some View {
         ZStack {
             MatherTVBackdrop()
 
-            VStack(alignment: .leading, spacing: 34) {
-                header
-                categoryShelf
-                roundStage
+            switch game.phase {
+            case .choosingCategory:
+                categoryChooser
+            case .playing:
+                if let round = game.round {
+                    playScreen(round: round)
+                }
+            case .completed:
+                completionScreen
             }
-            .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, 90)
-            .padding(.vertical, 66)
         }
         .onAppear {
-            focusedCategory = selectedCategory.id
+            focusFirstCategory()
         }
     }
 
-    private var header: some View {
-        HStack(alignment: .bottom) {
+    private var categoryChooser: some View {
+        VStack(alignment: .leading, spacing: 46) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Memory Gallery")
                     .font(.system(size: 70, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .accessibilityIdentifier("tv-memory-gallery-title")
 
-                Text(round.category.prompt)
+                Text("Pick a gallery, then match six big pictures. No timer—just play.")
                     .font(.system(size: 30, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.74))
                     .accessibilityIdentifier("tv-memory-gallery-prompt")
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Memory Gallery. \(round.category.prompt)")
+            .accessibilityLabel("Memory Gallery. Pick a gallery, then match six big pictures. There is no timer.")
 
-            Spacer(minLength: 24)
+            categoryShelf
 
-            VStack(alignment: .trailing, spacing: 8) {
-                Text("\(correctCount)")
-                    .font(.system(size: 60, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(red: 0.78, green: 0.94, blue: 0.66))
-
-                Text("matched")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.62))
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(correctCount) matched")
+            Label("Swipe to choose a gallery, then press select.", systemImage: "hand.tap.fill")
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.62))
         }
+        .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 90)
+        .padding(.vertical, 76)
     }
 
     private var categoryShelf: some View {
         HStack(spacing: 22) {
             ForEach(MemoryGalleryTVCategory.allCases) { category in
                 Button {
-                    selectCategory(category)
+                    start(category)
                 } label: {
                     MemoryGalleryCategoryTile(
                         category: category,
                         isFocused: focusedCategory == category.id,
-                        isSelected: selectedCategory == category
+                        isSelected: false
                     )
                 }
                 .buttonStyle(.plain)
                 .focused($focusedCategory, equals: category.id)
                 .accessibilityLabel("\(category.title), \(category.subtitle)")
-                .accessibilityHint("Selects the \(category.title) memory category.")
+                .accessibilityHint("Starts a six-picture \(category.title) matching game.")
                 .accessibilityIdentifier("tv-memory-category-\(category.id)")
             }
         }
@@ -91,24 +78,76 @@ struct MemoryGalleryTVView: View {
         .accessibilityLabel("Category shelf")
     }
 
-    private var roundStage: some View {
+    private func playScreen(round: MemoryGalleryTVRound) -> some View {
+        VStack(alignment: .leading, spacing: 32) {
+            playHeader(round: round)
+            roundStage(round: round)
+        }
+        .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 90)
+        .padding(.vertical, 66)
+    }
+
+    private func playHeader(round: MemoryGalleryTVRound) -> some View {
+        HStack(alignment: .center, spacing: 28) {
+            Image(systemName: round.category.symbolName)
+                .font(.system(size: 38, weight: .black))
+                .frame(width: 68, height: 68)
+                .foregroundStyle(Color(red: 0.07, green: 0.12, blue: 0.18))
+                .background(.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text(round.category.title)
+                    .font(.system(size: 42, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(game.progressText)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.64))
+            }
+
+            Spacer()
+
+            scorePill(title: "Matched", value: game.correctCount, symbol: "checkmark")
+            scorePill(title: "Streak", value: game.streak, symbol: "flame.fill")
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(round.category.title). \(game.progressText). \(game.correctCount) matched. Streak \(game.streak).")
+    }
+
+    private func scorePill(title: String, value: Int, symbol: String) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: symbol)
+                .font(.system(size: 25, weight: .black))
+            Text("\(value)")
+                .font(.system(size: 35, weight: .black, design: .rounded))
+            Text(title)
+                .font(.system(size: 21, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.64))
+        }
+        .foregroundStyle(Color(red: 0.78, green: 0.94, blue: 0.66))
+        .padding(.horizontal, 22)
+        .padding(.vertical, 13)
+        .background(.white.opacity(0.08), in: Capsule())
+    }
+
+    private func roundStage(round: MemoryGalleryTVRound) -> some View {
         HStack(alignment: .top, spacing: 42) {
-            promptPanel
+            promptPanel(round: round)
 
             VStack(alignment: .leading, spacing: 22) {
                 Text("Choose the matching name")
                     .font(.system(size: 32, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
-                answerGrid
+                answerGrid(round: round)
 
-                feedbackBar
+                feedbackBar(round: round)
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
     }
 
-    private var promptPanel: some View {
+    private func promptPanel(round: MemoryGalleryTVRound) -> some View {
         VStack(alignment: .leading, spacing: 26) {
             Text("Picture")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -118,14 +157,29 @@ struct MemoryGalleryTVView: View {
                 .frame(width: 520, height: 360)
                 .accessibilityHidden(true)
 
-            Text(accessibilityName(for: round.promptCard))
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.44))
-                .lineLimit(1)
-                .opacity(selectedAnswerID == nil ? 0 : 1)
+            if game.hasAnsweredCurrentRound {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(accessibilityName(for: round.promptCard))
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    if let fact = learningFact(for: round.promptCard) {
+                        Text("\(fact.title): \(fact.value)")
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.68))
+                            .lineLimit(2)
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            } else {
+                Text("Look closely, then choose.")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.48))
+            }
         }
         .padding(36)
-        .frame(width: 600, height: 560, alignment: .leading)
+        .frame(width: 600, height: 610, alignment: .leading)
         .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 30, style: .continuous)
@@ -137,7 +191,7 @@ struct MemoryGalleryTVView: View {
         .accessibilityIdentifier("tv-memory-picture-prompt")
     }
 
-    private var answerGrid: some View {
+    private func answerGrid(round: MemoryGalleryTVRound) -> some View {
         LazyVGrid(
             columns: [
                 GridItem(.fixed(390), spacing: 22),
@@ -152,12 +206,12 @@ struct MemoryGalleryTVView: View {
                     MemoryGalleryAnswerTile(
                         answer: answer,
                         isFocused: focusedAnswerID == answer.id,
-                        state: answerState(for: answer)
+                        state: answerState(for: answer, round: round)
                     )
                 }
                 .buttonStyle(.plain)
                 .focused($focusedAnswerID, equals: answer.id)
-                .disabled(selectedAnswerID != nil)
+                .disabled(game.hasAnsweredCurrentRound)
                 .accessibilityLabel(accessibilityName(for: answer))
                 .accessibilityHint("Select to match this name with the picture.")
                 .accessibilityIdentifier("tv-memory-answer-\(answer.id)")
@@ -166,19 +220,19 @@ struct MemoryGalleryTVView: View {
     }
 
     @ViewBuilder
-    private var feedbackBar: some View {
-        if let selectedAnswerID {
+    private func feedbackBar(round: MemoryGalleryTVRound) -> some View {
+        if let selectedAnswerID = game.selectedAnswerID {
             HStack(spacing: 20) {
-                Image(systemName: answeredCorrectly ? "checkmark.circle.fill" : "arrow.uturn.backward.circle.fill")
+                Image(systemName: game.lastAnswerWasCorrect == true ? "checkmark.circle.fill" : "sparkles")
                     .font(.system(size: 38, weight: .bold))
-                    .foregroundStyle(answeredCorrectly ? Color(red: 0.78, green: 0.94, blue: 0.66) : Color(red: 1.0, green: 0.78, blue: 0.42))
+                    .foregroundStyle(game.lastAnswerWasCorrect == true ? Color(red: 0.78, green: 0.94, blue: 0.66) : Color(red: 1.0, green: 0.78, blue: 0.42))
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(answeredCorrectly ? "Matched!" : "Try the next picture")
+                    Text(game.lastAnswerWasCorrect == true ? celebrationCopy : "Good try—now you know!")
                         .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
 
-                    Text(answeredCorrectly ? "That was \(accessibilityName(for: round.promptCard))." : "The answer was \(accessibilityName(for: round.promptCard)).")
+                    Text(game.lastAnswerWasCorrect == true ? "You found \(accessibilityName(for: round.promptCard))." : "This is \(accessibilityName(for: round.promptCard)).")
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.68))
                 }
@@ -188,7 +242,7 @@ struct MemoryGalleryTVView: View {
                 Button {
                     nextRound()
                 } label: {
-                    Label("Next picture", systemImage: "forward.fill")
+                    Label(nextActionTitle, systemImage: game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "sparkles" : "forward.fill")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .padding(.horizontal, 24)
                         .padding(.vertical, 18)
@@ -197,7 +251,7 @@ struct MemoryGalleryTVView: View {
                 .focused($nextButtonFocused)
                 .background(nextButtonFocused ? .white : Color(red: 0.55, green: 0.88, blue: 1.0).opacity(0.20), in: Capsule())
                 .foregroundStyle(nextButtonFocused ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
-                .accessibilityIdentifier("tv-memory-next-picture")
+                .accessibilityIdentifier(game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "tv-memory-see-results" : "tv-memory-next-picture")
             }
             .padding(24)
             .frame(width: 802)
@@ -207,8 +261,8 @@ struct MemoryGalleryTVView: View {
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
                     .stroke(.white.opacity(0.14), lineWidth: 1)
             )
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(feedbackAccessibilityLabel(selectedAnswerID: selectedAnswerID))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(feedbackAccessibilityLabel(selectedAnswerID: selectedAnswerID, round: round))
         } else {
             Text("No timer. Take your time and press select when the focused name matches the picture.")
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
@@ -219,38 +273,170 @@ struct MemoryGalleryTVView: View {
         }
     }
 
-    private func selectCategory(_ category: MemoryGalleryTVCategory) {
-        selectedCategory = category
-        roundIndex = 0
-        selectedAnswerID = nil
-        focusedCategory = category.id
+    private var completionScreen: some View {
+        VStack(spacing: 30) {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.97, green: 0.80, blue: 0.30).opacity(0.18))
+                    .frame(width: 190, height: 190)
+                Image(systemName: completionSymbol)
+                    .font(.system(size: 94, weight: .black))
+                    .foregroundStyle(Color(red: 0.98, green: 0.84, blue: 0.38))
+            }
+
+            VStack(spacing: 10) {
+                Text(completionTitle)
+                    .font(.system(size: 66, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .accessibilityIdentifier("tv-memory-completion-title")
+                Text("You explored six \(game.category?.title.lowercased() ?? "gallery") pictures.")
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.70))
+            }
+
+            HStack(spacing: 24) {
+                completionStat(value: "\(game.correctCount)/\(MemoryGalleryTVGame.roundsPerGame)", label: "matched", symbol: "checkmark.circle.fill")
+                completionStat(value: "\(game.bestStreak)", label: "best streak", symbol: "flame.fill")
+            }
+
+            HStack(spacing: 24) {
+                Button {
+                    replay()
+                } label: {
+                    Label("Play this gallery again", systemImage: "arrow.clockwise")
+                        .font(.system(size: 25, weight: .black, design: .rounded))
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 21)
+                }
+                .buttonStyle(.plain)
+                .focused($focusedCompletionAction, equals: .replay)
+                .foregroundStyle(focusedCompletionAction == .replay ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
+                .background(focusedCompletionAction == .replay ? .white : .white.opacity(0.10), in: Capsule())
+                .accessibilityIdentifier("tv-memory-replay")
+
+                Button {
+                    chooseAnotherGallery()
+                } label: {
+                    Label("Choose another gallery", systemImage: "rectangle.stack.fill")
+                        .font(.system(size: 25, weight: .black, design: .rounded))
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 21)
+                }
+                .buttonStyle(.plain)
+                .focused($focusedCompletionAction, equals: .chooseGallery)
+                .foregroundStyle(focusedCompletionAction == .chooseGallery ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
+                .background(focusedCompletionAction == .chooseGallery ? .white : .white.opacity(0.10), in: Capsule())
+                .accessibilityIdentifier("tv-memory-choose-gallery")
+            }
+        }
+        .frame(maxWidth: 1500, maxHeight: .infinity)
+        .padding(70)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func completionStat(value: String, label: String, symbol: String) -> some View {
+        HStack(spacing: 15) {
+            Image(systemName: symbol)
+                .font(.system(size: 34, weight: .black))
+                .foregroundStyle(Color(red: 0.78, green: 0.94, blue: 0.66))
+            Text(value)
+                .font(.system(size: 43, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+            Text(label)
+                .font(.system(size: 23, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.62))
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 19)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private var celebrationCopy: String {
+        switch game.streak {
+        case 3...: return "\(game.streak) in a row!"
+        case 2: return "Two in a row!"
+        default: return "Matched!"
+        }
+    }
+
+    private var nextActionTitle: String {
+        game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "See results" : "Next picture"
+    }
+
+    private var completionTitle: String {
+        switch game.correctCount {
+        case MemoryGalleryTVGame.roundsPerGame: return "Perfect gallery!"
+        case 4...: return "Gallery star!"
+        default: return "Gallery explored!"
+        }
+    }
+
+    private var completionSymbol: String {
+        game.correctCount == MemoryGalleryTVGame.roundsPerGame ? "star.circle.fill" : "sparkles"
+    }
+
+    private func learningFact(for animal: MemoryAnimal) -> MemoryFactCard? {
+        animal.detailCards.first { $0.title != "Kind" } ?? animal.detailCards.first
+    }
+
+    private func start(_ category: MemoryGalleryTVCategory) {
+        game.start(category: category)
+        focusFirstAnswer()
     }
 
     private func choose(_ answer: MemoryAnimal) {
-        selectedAnswerID = answer.id
-        if answer.id == round.correctAnswerID {
-            correctCount += 1
+        guard !game.hasAnsweredCurrentRound else { return }
+        game.select(answerID: answer.id)
+        focusedAnswerID = nil
+        Task { @MainActor in
+            nextButtonFocused = true
         }
-        nextButtonFocused = true
     }
 
     private func nextRound() {
-        let nextIndex = roundIndex + 1
-        let nextRound = MemoryGalleryTVRound.make(category: selectedCategory, index: nextIndex)
-        roundIndex = nextIndex
-        selectedAnswerID = nil
-        focusedAnswerID = nextRound.answerChoices.first?.id
+        game.advance()
         nextButtonFocused = false
+        if game.phase == .completed {
+            Task { @MainActor in
+                focusedCompletionAction = .replay
+            }
+        } else {
+            focusFirstAnswer()
+        }
     }
 
-    private func answerState(for answer: MemoryAnimal) -> MemoryGalleryAnswerTile.State {
-        guard let selectedAnswerID else { return .idle }
+    private func replay() {
+        game.replay()
+        focusedCompletionAction = nil
+        focusFirstAnswer()
+    }
+
+    private func chooseAnotherGallery() {
+        game.chooseAnotherCategory()
+        focusedCompletionAction = nil
+        focusFirstCategory()
+    }
+
+    private func focusFirstCategory() {
+        Task { @MainActor in
+            focusedCategory = MemoryGalleryTVCategory.allCases.first?.id
+        }
+    }
+
+    private func focusFirstAnswer() {
+        Task { @MainActor in
+            focusedAnswerID = game.round?.answerChoices.first?.id
+        }
+    }
+
+    private func answerState(for answer: MemoryAnimal, round: MemoryGalleryTVRound) -> MemoryGalleryAnswerTile.State {
+        guard let selectedAnswerID = game.selectedAnswerID else { return .idle }
         if answer.id == round.correctAnswerID { return .correct }
         if answer.id == selectedAnswerID { return .incorrect }
         return .dimmed
     }
 
-    private func feedbackAccessibilityLabel(selectedAnswerID: String) -> String {
+    private func feedbackAccessibilityLabel(selectedAnswerID: String, round: MemoryGalleryTVRound) -> String {
         if selectedAnswerID == round.correctAnswerID {
             return "Correct. \(accessibilityName(for: round.promptCard)) matched."
         }
@@ -273,6 +459,11 @@ struct MemoryGalleryTVView: View {
         default:
             return animal.name
         }
+    }
+
+    private enum CompletionAction: Hashable {
+        case replay
+        case chooseGallery
     }
 }
 
