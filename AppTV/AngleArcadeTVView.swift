@@ -228,8 +228,14 @@ private struct AngleArcadeFieldView: View {
         color: Color,
         dashed: Bool
     ) {
-        let mapped = points.map { screenPoint($0, origin: origin, scale: scale) }
-            .filter { $0.x <= size.width + 20 && $0.y >= -20 && $0.y <= size.height + 20 }
+        let screenPoints: [CGPoint] = points.map { point in
+            screenPoint(point, origin: origin, scale: scale)
+        }
+        let mapped: [CGPoint] = screenPoints.filter { point in
+            point.x <= size.width + 20
+                && point.y >= -20
+                && point.y <= size.height + 20
+        }
         guard mapped.count > 1 else { return }
 
         var path = Path()
