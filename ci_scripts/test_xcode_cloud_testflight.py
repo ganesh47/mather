@@ -3,6 +3,7 @@ import plistlib
 import tempfile
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 from ci_scripts.xcode_cloud_testflight import (
     AppStoreConnectClient,
@@ -13,6 +14,7 @@ from ci_scripts.xcode_cloud_testflight import (
     find_build,
     inspect_ipa,
     normalize_private_key,
+    run_altool,
 )
 
 
@@ -70,23 +72,13 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
         self.assertEqual(find_build(builds, "149")["id"], "new")
         self.assertIsNone(find_build(builds, "150"))
 
-    def test_individual_key_altool_arguments(self) -> None:
-        args = altool_auth_args(
-            key_id="KEY",
-            issuer_id="",
-            private_key_path=__import__("pathlib").Path("/tmp/key.p8"),
-        )
-        self.assertIn("--api-key-subject", args)
-        self.assertIn("user", args)
+    def test_rejects_individual_key_for_altool(self) -> None:
+        with self.assertRaises(ReleaseError):
+            altool_auth_args(key_id="KEY", issuer_id="")
 
     def test_team_key_altool_arguments(self) -> None:
-        args = altool_auth_args(
-            key_id="KEY",
-            issuer_id="ISSUER",
-            private_key_path=__import__("pathlib").Path("/tmp/key.p8"),
-        )
-        self.assertNotIn("--api-key-subject", args)
-        self.assertIn("ISSUER", args)
+        args = altool_auth_args(key_id="KEY", issuer_id="ISSUER")
+        self.assertEqual(args, ["--apiKey", "KEY", "--apiIssuer", "ISSUER"])
 
     def test_validate_app_uses_file_and_tvos_options(self) -> None:
         args = altool_command_args(
@@ -94,7 +86,6 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             ipa_path=Path("/tmp/MatherTV.ipa"),
             key_id="KEY",
             issuer_id="ISSUER",
-            private_key_path=Path("/tmp/key.p8"),
         )
         self.assertEqual(
             args[:8],
@@ -106,7 +97,7 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
                 "/tmp/MatherTV.ipa",
                 "-t",
                 "tvos",
-                "--api-key",
+                "--apiKey",
             ],
         )
 
@@ -116,7 +107,6 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             ipa_path=Path("/tmp/MatherTV.ipa"),
             key_id="KEY",
             issuer_id="ISSUER",
-            private_key_path=Path("/tmp/key.p8"),
         )
         self.assertEqual(args[2:7], [
             "--upload-app",
@@ -133,8 +123,23 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
                 ipa_path=Path("/tmp/MatherTV.ipa"),
                 key_id="KEY",
                 issuer_id="ISSUER",
-                private_key_path=Path("/tmp/key.p8"),
             )
+
+    def test_altool_runs_beside_standard_private_keys_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            key_path = workspace / "private_keys" / "AuthKey_KEY.p8"
+            with patch("ci_scripts.xcode_cloud_testflight.subprocess.run") as run:
+                run_altool(
+                    "--validate-app",
+                    ipa_path=workspace / "MatherTV.ipa",
+                    key_id="KEY",
+                    issuer_id="ISSUER",
+                    private_key_path=key_path,
+                )
+        run.assert_called_once()
+        self.assertEqual(run.call_args.kwargs["cwd"], workspace)
+        self.assertTrue(run.call_args.kwargs["check"])
 
     def test_inspects_expected_tvos_ipa(self) -> None:
         info = {

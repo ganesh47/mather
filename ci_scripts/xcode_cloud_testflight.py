@@ -300,20 +300,12 @@ def inspect_ipa(
     return info
 
 
-def altool_auth_args(
-    *, key_id: str, issuer_id: str, private_key_path: Path
-) -> list[str]:
-    args = [
-        "--api-key",
-        key_id,
-        "--api-issuer",
-        issuer_id or "user",
-        "--p8-file-path",
-        str(private_key_path),
-    ]
+def altool_auth_args(*, key_id: str, issuer_id: str) -> list[str]:
     if not issuer_id:
-        args.extend(["--api-key-subject", "user"])
-    return args
+        raise ReleaseError(
+            "altool requires a team App Store Connect API key with an issuer ID"
+        )
+    return ["--apiKey", key_id, "--apiIssuer", issuer_id]
 
 
 def run_altool(
@@ -329,10 +321,9 @@ def run_altool(
         ipa_path=ipa_path,
         key_id=key_id,
         issuer_id=issuer_id,
-        private_key_path=private_key_path,
     )
     print(f"Running Apple {command.removeprefix('--').replace('-', ' ')}", flush=True)
-    subprocess.run(args, check=True)
+    subprocess.run(args, check=True, cwd=private_key_path.parent.parent)
 
 
 def altool_command_args(
@@ -341,7 +332,6 @@ def altool_command_args(
     ipa_path: Path,
     key_id: str,
     issuer_id: str,
-    private_key_path: Path,
 ) -> list[str]:
     if command not in {"--validate-app", "--upload-app"}:
         raise ReleaseError(f"Unsupported altool command: {command}")
@@ -356,7 +346,6 @@ def altool_command_args(
         *altool_auth_args(
             key_id=key_id,
             issuer_id=issuer_id,
-            private_key_path=private_key_path,
         ),
         "--output-format",
         "json",
@@ -560,7 +549,9 @@ def release(args: argparse.Namespace) -> None:
         if args.artifact_only:
             return
 
-        private_key_path = workspace_path / f"AuthKey_{key_id}.p8"
+        private_key_directory = workspace_path / "private_keys"
+        private_key_directory.mkdir(mode=0o700)
+        private_key_path = private_key_directory / f"AuthKey_{key_id}.p8"
         private_key_path.write_text(normalize_private_key(private_key))
         private_key_path.chmod(0o600)
         run_altool(
