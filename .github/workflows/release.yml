@@ -74,7 +74,9 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode.app
 
       - name: Install App Store Connect client dependencies
-        run: pip3 install -r ci_scripts/testflight-feedback-requirements.txt
+        run: |
+          python3 -m venv .venv-testflight
+          .venv-testflight/bin/pip install -r ci_scripts/testflight-feedback-requirements.txt
 
       - name: Build signed tvOS export and publish to TestFlight
         env:
@@ -83,7 +85,7 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
-          python3 ci_scripts/xcode_cloud_testflight.py \
+          .venv-testflight/bin/python ci_scripts/xcode_cloud_testflight.py \
             --workflow-id "08111c64-7aa6-4651-b181-b86c25543bc5" \
             --repository-id "3d717c8d-4c65-4f36-821b-94e10b4f639a" \
             --tag "${GITHUB_REF_NAME}"
