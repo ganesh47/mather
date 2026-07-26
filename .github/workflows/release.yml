@@ -2,7 +2,7 @@ name: Release
 
 # Triggered when a tag like v1.2.3 is pushed.
 # This job creates the GitHub Release entry with notes.
-# The actual iOS archive + TestFlight distribution is handled by
+# The signed iOS and tvOS archives plus TestFlight distribution are handled by
 # Xcode Cloud, which watches for tag changes matching v*.*.* independently.
 
 on:
@@ -51,7 +51,7 @@ jobs:
             --notes "$(cat <<'EOF'
           ## Mather ${{ steps.version.outputs.tag }}
 
-          TestFlight build distributed automatically via Xcode Cloud.
+          iOS and tvOS TestFlight builds distributed automatically via Xcode Cloud.
           To sideload directly: clone this tag and open in Xcode → deploy to iPad via USB/WiFi.
 
           See the [commit history](https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.tag }}) for details.
