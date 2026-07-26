@@ -25,6 +25,12 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Test TestFlight release helper
+        run: |
+          python3 -m venv .venv-testflight
+          .venv-testflight/bin/pip install -r ci_scripts/testflight-feedback-requirements.txt
+          .venv-testflight/bin/python -m unittest ci_scripts/test_xcode_cloud_testflight.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
