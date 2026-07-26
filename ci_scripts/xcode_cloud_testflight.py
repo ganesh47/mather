@@ -324,14 +324,35 @@ def run_altool(
     issuer_id: str,
     private_key_path: Path,
 ) -> None:
-    command_args = [command]
-    if command == "--upload-app":
-        command_args.append("-f")
-    args = [
+    args = altool_command_args(
+        command,
+        ipa_path=ipa_path,
+        key_id=key_id,
+        issuer_id=issuer_id,
+        private_key_path=private_key_path,
+    )
+    print(f"Running Apple {command.removeprefix('--').replace('-', ' ')}", flush=True)
+    subprocess.run(args, check=True)
+
+
+def altool_command_args(
+    command: str,
+    *,
+    ipa_path: Path,
+    key_id: str,
+    issuer_id: str,
+    private_key_path: Path,
+) -> list[str]:
+    if command not in {"--validate-app", "--upload-app"}:
+        raise ReleaseError(f"Unsupported altool command: {command}")
+    return [
         "xcrun",
         "altool",
-        *command_args,
+        command,
+        "-f",
         str(ipa_path),
+        "-t",
+        "tvos",
         *altool_auth_args(
             key_id=key_id,
             issuer_id=issuer_id,
@@ -340,8 +361,6 @@ def run_altool(
         "--output-format",
         "json",
     ]
-    print(f"Running Apple {command.removeprefix('--').replace('-', ' ')}", flush=True)
-    subprocess.run(args, check=True)
 
 
 def prerelease_version_id(

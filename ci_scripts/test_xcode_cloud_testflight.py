@@ -7,6 +7,7 @@ from pathlib import Path
 from ci_scripts.xcode_cloud_testflight import (
     AppStoreConnectClient,
     ReleaseError,
+    altool_command_args,
     altool_auth_args,
     choose_app_store_export,
     find_build,
@@ -86,6 +87,54 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
         )
         self.assertNotIn("--api-key-subject", args)
         self.assertIn("ISSUER", args)
+
+    def test_validate_app_uses_file_and_tvos_options(self) -> None:
+        args = altool_command_args(
+            "--validate-app",
+            ipa_path=Path("/tmp/MatherTV.ipa"),
+            key_id="KEY",
+            issuer_id="ISSUER",
+            private_key_path=Path("/tmp/key.p8"),
+        )
+        self.assertEqual(
+            args[:8],
+            [
+                "xcrun",
+                "altool",
+                "--validate-app",
+                "-f",
+                "/tmp/MatherTV.ipa",
+                "-t",
+                "tvos",
+                "--api-key",
+            ],
+        )
+
+    def test_upload_app_uses_file_and_tvos_options(self) -> None:
+        args = altool_command_args(
+            "--upload-app",
+            ipa_path=Path("/tmp/MatherTV.ipa"),
+            key_id="KEY",
+            issuer_id="ISSUER",
+            private_key_path=Path("/tmp/key.p8"),
+        )
+        self.assertEqual(args[2:7], [
+            "--upload-app",
+            "-f",
+            "/tmp/MatherTV.ipa",
+            "-t",
+            "tvos",
+        ])
+
+    def test_rejects_unknown_altool_command(self) -> None:
+        with self.assertRaises(ReleaseError):
+            altool_command_args(
+                "--delete-app",
+                ipa_path=Path("/tmp/MatherTV.ipa"),
+                key_id="KEY",
+                issuer_id="ISSUER",
+                private_key_path=Path("/tmp/key.p8"),
+            )
 
     def test_inspects_expected_tvos_ipa(self) -> None:
         info = {
