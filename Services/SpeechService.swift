@@ -222,15 +222,15 @@ struct MemoryCardAIPrompt: Equatable {
     let systemInstruction: String
     let userPrompt: String
 
-    static func childSafePrompt(for animal: MemoryAnimal) -> MemoryCardAIPrompt {
+    static func childSafePrompt(for animal: MemoryAnimal, curatedDescription: String) -> MemoryCardAIPrompt {
         let facts = animal.detailCards
             .prefix(5)
             .map { "\($0.title): \($0.value)" }
             .joined(separator: "; ")
         let deckName = animal.metadata.deck.displayName
         return MemoryCardAIPrompt(
-            systemInstruction: "Write for a child age 5 to 8. Be factual, warm, and concise. Use no more than two short sentences and 220 total characters. Do not ask questions, roleplay, invent facts, mention AI, use markdown, emoji, lists, or include unsafe instructions.",
-            userPrompt: "Explain this Memory Match card in simple factual words. Deck: \(deckName). Card: \(animal.canonicalName). Only use these known facts: \(facts)."
+            systemInstruction: "Rewrite supplied educational copy for a child age 5 to 8. Preserve its meaning and use only supplied facts. Be warm and concise. Use no more than two short sentences and 220 total characters. Do not add facts, ask questions, roleplay, mention AI, use markdown, emoji, lists, or include unsafe instructions.",
+            userPrompt: "Rewrite this Memory Match description in simple factual words. Deck: \(deckName). Card: \(animal.canonicalName). Curated description: \(curatedDescription) Supporting facts: \(facts). Return only the rewritten description."
         )
     }
 }
@@ -250,19 +250,24 @@ private struct NullMemoryCardAIAdapter: MemoryCardAIAdapter {
 private struct FoundationModelsMemoryCardAIAdapter: MemoryCardAIAdapter {
     var isAvailable: Bool {
         if #available(iOS 26.0, macOS 26.0, *) {
-            return false
+            return SystemLanguageModel.default.availability == .available
         }
         return false
     }
 
     func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String? {
-        guard isAvailable else { return nil }
-        _ = prompt
-        // Intentionally guarded and fallback-first until the FoundationModels API
-        // is enabled for this app target. The prompt and sanitizer are production
-        // boundaries: short, factual, child-safe copy in; deterministic fallback out
-        // whenever the platform model is unavailable or returns unsuitable text.
-        return nil
+        guard #available(iOS 26.0, macOS 26.0, *), isAvailable else { return nil }
+        _ = animal
+
+        let session = LanguageModelSession(
+            model: SystemLanguageModel.default,
+            instructions: prompt.systemInstruction
+        )
+        let response = try await session.respond(
+            to: prompt.userPrompt,
+            options: GenerationOptions(sampling: .greedy, maximumResponseTokens: 80)
+        )
+        return response.content
     }
 }
 #endif
@@ -271,6 +276,7 @@ private struct FoundationModelsMemoryCardAIAdapter: MemoryCardAIAdapter {
 final class MemoryCardDescribeService {
     private let appleIntelligenceEnabled: () -> Bool
     private let aiAdapter: any MemoryCardAIAdapter
+    private var generatedDescriptionCache: [String: String] = [:]
 
     init(
         appleIntelligenceEnabled: @escaping () -> Bool = { true },
@@ -281,19 +287,34 @@ final class MemoryCardDescribeService {
     }
 
     func describe(_ animal: MemoryAnimal) async -> MemoryCardDescription {
-        let prompt = MemoryCardAIPrompt.childSafePrompt(for: animal)
-        if appleIntelligenceEnabled(), aiAdapter.isAvailable,
-           let generated = try? await aiAdapter.shortDescription(for: animal, prompt: prompt),
-           let sanitized = sanitizeGeneratedDescription(generated) {
+        let fallback = fallbackDescription(for: animal)
+        guard appleIntelligenceEnabled(), aiAdapter.isAvailable else { return fallback }
+
+        if let cached = generatedDescriptionCache[animal.id] {
             return MemoryCardDescription(
                 title: animal.canonicalName,
-                shortDescription: sanitized,
-                factChips: fallbackFactChips(for: animal),
+                shortDescription: cached,
+                factChips: fallback.factChips,
                 source: .appleIntelligence
             )
         }
 
-        return fallbackDescription(for: animal)
+        let prompt = MemoryCardAIPrompt.childSafePrompt(
+            for: animal,
+            curatedDescription: fallback.shortDescription
+        )
+        if let generated = try? await aiAdapter.shortDescription(for: animal, prompt: prompt),
+           let sanitized = sanitizeGeneratedDescription(generated) {
+            generatedDescriptionCache[animal.id] = sanitized
+            return MemoryCardDescription(
+                title: animal.canonicalName,
+                shortDescription: sanitized,
+                factChips: fallback.factChips,
+                source: .appleIntelligence
+            )
+        }
+
+        return fallback
     }
 
     func fallbackDescription(for animal: MemoryAnimal) -> MemoryCardDescription {

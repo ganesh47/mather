@@ -1,7 +1,7 @@
 # Spec: Memory Ask About This Card
 
 **Issue**: #380  
-**Status**: UI slice implemented
+**Status**: UI slice and Memory description rewrite implemented
 **Author**: Codex  
 **Date**: 2026-04-27
 
@@ -50,7 +50,13 @@ The session is local to the Learn sheet. `MemoryAskConversationPolicy` owns no p
 
 ## Feature Flag
 
-Flag name: `FeatureFlags.memoryCardAppleIntelligenceEnabled` gates any future Apple Intelligence suggested-turn provider. Deterministic fallback remains available when the Learn sheet is available.
+Flag name: `FeatureFlags.memoryCardAppleIntelligenceEnabled` gates the Apple Intelligence Memory description rewrite and any future Apple Intelligence suggested-turn provider. Deterministic fallback remains available when the Learn sheet is available.
+
+## Apple Intelligence Description Rewrite
+
+On iOS 26 or later, `MemoryCardDescribeService` checks the on-device system model at runtime. When it is available, Mather asks it to rewrite the embedded card description for ages 5–8 using only the supplied description and card facts. Accepted output is limited to two short sentences, sanitized, cached in memory, and labeled `Apple Intelligence + <deck guide>`.
+
+Generation is optional enhancement only. Mather displays embedded copy immediately and keeps it whenever the device is ineligible, Apple Intelligence is disabled, the model is not ready, generation fails, or output violates policy. Generated output cannot change fact chips, suggested questions, answers, scoring, or progression. No prompt, model transcript, or generated description is persisted.
 
 ## Out of Scope
 
@@ -63,7 +69,7 @@ Flag name: `FeatureFlags.memoryCardAppleIntelligenceEnabled` gates any future Ap
 
 ## Open Questions
 
-- [ ] Should parent settings expose a separate Ask toggle, or is the existing Learn/Apple Intelligence flag enough for the first implementation?
+- [x] Use the existing Apple Intelligence feature flag for the first implementation; no child-facing toggle is required.
 - [ ] What telemetry event names should be used if aggregate turn-selection analytics are added?
 
 ## References

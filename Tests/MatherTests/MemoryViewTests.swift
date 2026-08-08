@@ -548,12 +548,29 @@ struct MemoryViewTests {
 
 @Suite("MemoryCardDescribeService")
 struct MemoryCardDescribeServiceTests {
-    private struct StubAIAdapter: MemoryCardAIAdapter {
+    private enum StubError: Error {
+        case generationFailed
+    }
+
+    @MainActor
+    private final class StubAIAdapter: MemoryCardAIAdapter {
         let isAvailable: Bool
         let response: String?
+        let throwsError: Bool
+        private(set) var invocationCount = 0
+        private(set) var lastPrompt: MemoryCardAIPrompt?
+
+        init(isAvailable: Bool, response: String?, throwsError: Bool = false) {
+            self.isAvailable = isAvailable
+            self.response = response
+            self.throwsError = throwsError
+        }
 
         func shortDescription(for animal: MemoryAnimal, prompt: MemoryCardAIPrompt) async throws -> String? {
-            response
+            invocationCount += 1
+            lastPrompt = prompt
+            if throwsError { throw StubError.generationFailed }
+            return response
         }
     }
 
@@ -637,25 +654,31 @@ struct MemoryCardDescribeServiceTests {
     }
 
     @Test func appleIntelligencePromptStaysChildSafeAndFactBound() {
-        let prompt = MemoryCardAIPrompt.childSafePrompt(for: MemoryDeck.planets.first { $0.id == "planet-earth" }!)
+        let prompt = MemoryCardAIPrompt.childSafePrompt(
+            for: MemoryDeck.planets.first { $0.id == "planet-earth" }!,
+            curatedDescription: "Earth is our home planet. It has blue oceans and white clouds."
+        )
 
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("child age 5 to 8"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("two short sentences"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("220 total characters"))
-        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("Do not ask questions"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("Do not add facts"))
+        #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("ask questions"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("roleplay"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("markdown"))
         #expect(prompt.systemInstruction.localizedCaseInsensitiveContains("emoji"))
-        #expect(prompt.userPrompt.localizedCaseInsensitiveContains("Only use these known facts"))
+        #expect(prompt.userPrompt.localizedCaseInsensitiveContains("Curated description"))
+        #expect(prompt.userPrompt.contains("Earth is our home planet"))
         #expect(prompt.userPrompt.contains("Earth"))
         #expect(prompt.userPrompt.contains("Order: 3rd from the Sun"))
         #expect(prompt.userPrompt.contains("Fun Fact: It has one moon"))
     }
 
     @MainActor @Test func appleIntelligenceDisabledFallsBackEvenWhenAdapterCanRespond() async {
+        let adapter = StubAIAdapter(isAvailable: true, response: "A rocket zooms high and can reach space.")
         let service = MemoryCardDescribeService(
             appleIntelligenceEnabled: { false },
-            aiAdapter: StubAIAdapter(isAvailable: true, response: "A rocket zooms high and can reach space.")
+            aiAdapter: adapter
         )
 
         let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
@@ -663,6 +686,47 @@ struct MemoryCardDescribeServiceTests {
         #expect(description.source == .curatedFallback)
         #expect(description.shortDescription.localizedCaseInsensitiveContains("vehicle"))
         #expect(description.shortDescription.localizedCaseInsensitiveContains("space"))
+        #expect(adapter.invocationCount == 0)
+    }
+
+    @MainActor @Test func unavailableAdapterFallsBackWithoutGeneration() async {
+        let adapter = StubAIAdapter(isAvailable: false, response: "This must not be used.")
+        let service = MemoryCardDescribeService(appleIntelligenceEnabled: { true }, aiAdapter: adapter)
+
+        let description = await service.describe(MemoryDeck.vehicles.first { $0.id == "rocket" }!)
+
+        #expect(description.source == .curatedFallback)
+        #expect(adapter.invocationCount == 0)
+    }
+
+    @MainActor @Test func generationFailureAndNilResponseFallBack() async {
+        let rocket = MemoryDeck.vehicles.first { $0.id == "rocket" }!
+        let adapters = [
+            StubAIAdapter(isAvailable: true, response: nil),
+            StubAIAdapter(isAvailable: true, response: nil, throwsError: true)
+        ]
+
+        for adapter in adapters {
+            let service = MemoryCardDescribeService(appleIntelligenceEnabled: { true }, aiAdapter: adapter)
+            let description = await service.describe(rocket)
+
+            #expect(description.source == .curatedFallback)
+            #expect(adapter.invocationCount == 1)
+        }
+    }
+
+    @MainActor @Test func acceptedDescriptionIsCachedPerCard() async {
+        let adapter = StubAIAdapter(isAvailable: true, response: "A rocket zooms high and can reach space.")
+        let service = MemoryCardDescribeService(appleIntelligenceEnabled: { true }, aiAdapter: adapter)
+        let rocket = MemoryDeck.vehicles.first { $0.id == "rocket" }!
+
+        let first = await service.describe(rocket)
+        let second = await service.describe(rocket)
+
+        #expect(first == second)
+        #expect(first.source == .appleIntelligence)
+        #expect(adapter.invocationCount == 1)
+        #expect(adapter.lastPrompt?.userPrompt.contains("Curated description:") == true)
     }
 
     @MainActor @Test func generatedDescriptionsAreSanitizedBeforeUse() async {

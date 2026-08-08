@@ -11,6 +11,7 @@ Technology investigations and trade-off analyses for Mather.
 | [Playful Themes for VS1](Research-Playful-Themes-for-VS1) | [#79](https://github.com/ganesh47/mather/issues/79) | Recommend reusable Vehicle-first structured theme framework; defer open parking-lot map to a later spec |
 | [Memory — Multi-Mix-Match Visual Category Flashcard Game](Memory-Multi-Mix-Match.md) | [#249](https://github.com/ganesh47/mather/issues/249) | Research completed; future spec can be scheduled when Memory returns to the roadmap |
 | [Performance Tracing](Performance-Tracing.md) | [#251](https://github.com/ganesh47/mather/issues/251) | Baseline profiling plan defined across Instruments, telemetry spans, CI metrics, and a debug overlay |
+| [Apple Intelligence for Memory Card Descriptions](Apple-Intelligence-Memory-Card-Rewriting.md) | n/a | Adopt a bounded on-device rewrite with an iOS 18 curated fallback |
 
 ## Active
 

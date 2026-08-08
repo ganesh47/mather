@@ -87,6 +87,7 @@ struct MemoryView: View {
     @State private var learningContent: MemoryLearningContent? = nil
     @State private var askSession: MemoryAskConversationSession? = nil
     @State private var latestAskResponse: MemoryAskResponse? = nil
+    @State private var descriptionTask: Task<Void, Never>? = nil
 
     init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil) {
         self.appModel = appModel
@@ -187,7 +188,11 @@ struct MemoryView: View {
 
             if showRoundComplete { roundCompleteOverlay }
         }
-        .sheet(item: $learningContent) { content in
+        .sheet(item: $learningContent, onDismiss: {
+            descriptionTask?.cancel()
+            askSession = nil
+            latestAskResponse = nil
+        }) { content in
             learningSheet(for: content)
         }
         .onAppear {
@@ -195,6 +200,7 @@ struct MemoryView: View {
             dealRound()
         }
         .onDisappear {
+            descriptionTask?.cancel()
             guard roundsPlayed > 0 else { return }
             appModel.gameSessionStore.save(
                 gameName: "Memory Match",
@@ -598,6 +604,7 @@ struct MemoryView: View {
     private func handleDoubleTap(_ card: MemoryCard) {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
         let selectedAnimal = animal(for: card)
+        descriptionTask?.cancel()
         askSession = nil
         latestAskResponse = nil
         learningContent = Self.learningContent(
@@ -605,8 +612,9 @@ struct MemoryView: View {
             deckSelection: deckSelection,
             description: appModel.memoryCardDescribeService.fallbackDescription(for: selectedAnimal)
         )
-        Task { @MainActor in
+        descriptionTask = Task { @MainActor in
             let description = await appModel.memoryCardDescribeService.describe(selectedAnimal)
+            guard !Task.isCancelled, learningContent?.animal.id == selectedAnimal.id else { return }
             learningContent = Self.learningContent(for: selectedAnimal, deckSelection: deckSelection, description: description)
         }
     }
@@ -714,6 +722,7 @@ struct MemoryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
+                        descriptionTask?.cancel()
                         learningContent = nil
                         askSession = nil
                         latestAskResponse = nil
@@ -726,6 +735,7 @@ struct MemoryView: View {
     }
 
     private func dealRound() {
+        descriptionTask?.cancel()
         let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
         cards = Self.buildCards(for: roundAnimals).shuffled()

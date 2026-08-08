@@ -5,7 +5,7 @@ layout: default
 
 # Mather Privacy Policy
 
-_Last updated: 2026-05-12_
+_Last updated: 2026-08-08_
 
 Mather is a children’s learning app in active development. This page describes the privacy posture of the current codebase and TestFlight-era app behavior.
 
@@ -48,6 +48,8 @@ When a sensor is unavailable, disabled, or permission-gated, Mather aims to prov
 ## Network and third parties
 
 The current app code is designed around local gameplay and local persistence. The repository uses GitHub, Xcode Cloud, and App Store Connect/TestFlight for development, CI, release, and tester feedback workflows.
+
+On supported devices, Mather may use Apple's on-device Foundation Models framework to rewrite an embedded Memory Match description in simpler child-friendly language. The prompt contains only Mather's bundled card name, curated description, and curated facts. Prompts, model transcripts, and generated descriptions are not sent to Mather servers, included in Mather telemetry, or persisted by Mather. If the model is unavailable or its output does not pass Mather's checks, the app keeps the embedded description.
 
 TestFlight and App Store Connect may collect crash reports, diagnostics, and tester feedback under Apple’s terms and privacy practices. Public GitHub issues intentionally avoid raw crash payloads, tester identity/contact details, exact device identifiers, and signed Apple feedback URLs.
 
