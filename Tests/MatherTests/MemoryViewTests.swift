@@ -682,7 +682,7 @@ struct MemoryCardDescribeServiceTests {
 
         #expect(description.source == .appleIntelligence)
         #expect(description.shortDescription == "A rocket zooms high and can reach space.")
-        #expect(description.factChips.count == 4)
+        #expect(description.factChips.map(\.title) == ["Kind", "Use", "Moves", "Sound", "Colors"])
     }
 
     @Test func appleIntelligencePromptStaysChildSafeAndFactBound() {
