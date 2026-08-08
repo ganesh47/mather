@@ -92,6 +92,7 @@
 		67092AB1292087FE5821B774 /* SpacedRepetitionScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4A5B93ABCEBAB19EC49F6 /* SpacedRepetitionScheduler.swift */; };
 		691959C8204F7EB3277F2926 /* VehicleSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */; };
 		6A7A05890727E70C65FBA182 /* GameplayThreadCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D5588291CDA598046BCB6 /* GameplayThreadCatalog.swift */; };
+		6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */; };
 		6D1D0FF96EBD4238CCF37EB4 /* RectangleFactoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AD35E38E6ACEE1DF4AB812F /* RectangleFactoryTests.swift */; };
 		6E8014E6E81A7ECC088456D5 /* MultipleChoiceStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925AC0A00DB8E032BFB696BB /* MultipleChoiceStageView.swift */; };
 		6EF0C5C2A7F0FFD50254907C /* GravitySplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892C73ABB87A9BFDC46D9896 /* GravitySplitView.swift */; };
@@ -162,6 +163,7 @@
 		B85E09E6B9F4BBF953A3FD49 /* CapabilityLane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 479CE24CCC2244CAA1135B24 /* CapabilityLane.swift */; };
 		B8BDA0C56AD75A007554942F /* SpotPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCD4C8917D5860736F0F192 /* SpotPromptView.swift */; };
 		B8C505B0ADB2C5A6FA25D6CB /* ConcreteBuildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564AB9C763C10252EE5A2846 /* ConcreteBuildView.swift */; };
+		B984FCE5483DCCB107FE5E07 /* CompareCampTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EF10163D07336252CEAE42B /* CompareCampTVView.swift */; };
 		B9E51CE352C2F2EE84050C32 /* FactRecordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0EA4CACF4806645904C6A6 /* FactRecordStore.swift */; };
 		BB913D05F7D884574BC05A04 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893845D3340A27F687CF2A30 /* SessionConfigView.swift */; };
 		BD615CEA7E05371830F03ECD /* SliceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B557BC960B2E1946C97F0B6A /* SliceModels.swift */; };
@@ -238,6 +240,7 @@
 		0B50F577B24DB96387857D4F /* GameplayThreadContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadContentTests.swift; sourceTree = "<group>"; };
 		0CF08322D6BC0124F2FD4871 /* TransferCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferCheckView.swift; sourceTree = "<group>"; };
 		0E23D56BDC809F3EA92AFCB5 /* SliceSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceSessionView.swift; sourceTree = "<group>"; };
+		0EF10163D07336252CEAE42B /* CompareCampTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampTVView.swift; sourceTree = "<group>"; };
 		0F3E611E8AE4A6487A373E5C /* GroupedNumberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberView.swift; sourceTree = "<group>"; };
 		1045712502442FED9B5B13C9 /* RoomQuestScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestScanner.swift; sourceTree = "<group>"; };
 		11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeTVView.swift; sourceTree = "<group>"; };
@@ -319,6 +322,7 @@
 		6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleGameplayThreadTests.swift; sourceTree = "<group>"; };
 		62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayoutTests.swift; sourceTree = "<group>"; };
 		6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalSliceEngineTests.swift; sourceTree = "<group>"; };
+		69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeDetectiveTVView.swift; sourceTree = "<group>"; };
 		6A181025AE1DD3CABF30F968 /* GroupedNumberRepresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberRepresentationTests.swift; sourceTree = "<group>"; };
 		6A29E7A58DAED343241CCEA8 /* PlaceMatchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceMatchService.swift; sourceTree = "<group>"; };
 		6A74CE23F3D2B93F449906B1 /* RoomSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSessionView.swift; sourceTree = "<group>"; };
@@ -506,9 +510,11 @@
 			isa = PBXGroup;
 			children = (
 				11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */,
+				0EF10163D07336252CEAE42B /* CompareCampTVView.swift */,
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
 				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
+				69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */,
 				D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */,
 			);
 			path = AppTV;
@@ -1019,11 +1025,13 @@
 			files = (
 				12978B14FA3C86099A34FC4F /* AngleArcadeModel.swift in Sources */,
 				ED8BB99A44A3C701068F03D6 /* AngleArcadeTVView.swift in Sources */,
+				B984FCE5483DCCB107FE5E07 /* CompareCampTVView.swift in Sources */,
 				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
 				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
 				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
 				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
+				6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */,
 				521C2782BA0163B3216ACD9B /* SumSprintPartyTVRound.swift in Sources */,
 				3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */,
 			);
