@@ -993,8 +993,8 @@
 			targets = (
 				EBB21EB8D628FFE2CF3BFC62 /* Mather */,
 				DEFA767B4A52B7DE96277429 /* MatherTV */,
-				235ADFFD5E4B9449B3C96CC2 /* MatherTests */,
 				F047D1397C174048DC36B748 /* MatherUITests */,
+				235ADFFD5E4B9449B3C96CC2 /* MatherTests */,
 			);
 		};
 /* End PBXProject section */
