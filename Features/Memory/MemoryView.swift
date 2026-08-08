@@ -303,6 +303,11 @@ struct MemoryView: View {
                 }
                 .accessibilityIdentifier("memory-difficulty-menu")
             }
+
+            Text(Self.deckSummaryText(for: deckSelection))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .accessibilityIdentifier("memory-deck-card-count")
         }
     }
 
@@ -527,9 +532,20 @@ struct MemoryView: View {
         return chosen
     }
 
-    static func updatedRecentPairHistory(previous: [String], newRoundAnimals: [MemoryAnimal], pairCount: Int) -> [String] {
-        let historyWindow = max(pairCount * 2, pairCount)
+    static func updatedRecentPairHistory(previous: [String], newRoundAnimals: [MemoryAnimal], pairCount: Int, deckCount: Int? = nil) -> [String] {
+        let effectiveDeckCount = deckCount ?? max(pairCount * 3, pairCount)
+        let historyWindow = max(pairCount, effectiveDeckCount - pairCount)
         return Array((previous + newRoundAnimals.map(\.id)).suffix(historyWindow))
+    }
+
+    static func deckSummaryText(for deckSelection: DeckSelection) -> String {
+        let count = deckSelection.animals.count
+        let subject: String
+        switch deckSelection {
+        case .vehicles: subject = "vehicle"
+        default: subject = "learning"
+        }
+        return "\(count) \(subject) cards to explore"
     }
 
     static let directStageDifficulties: [MemoryDifficulty] = [.easy, .medium, .hard]
@@ -671,6 +687,29 @@ struct MemoryView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
 
+                    Text("What to remember")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(MatherTheme.ink)
+
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
+                        ForEach(content.factChips, id: \.self) { fact in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(fact.title)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(artStyle.ornamentColor)
+
+                                Text(fact.value)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(MatherTheme.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                    }
+                    .accessibilityIdentifier("memory-learning-fact-chips")
+
                     MemoryAskConversationSection(
                         session: askSession,
                         latestResponse: latestAskResponse,
@@ -692,25 +731,6 @@ struct MemoryView: View {
                             appModel.speechService.speakLearningDetails(latestAskResponse.spokenText, enabled: appModel.featureFlags.audioEnabled)
                         }
                     )
-
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
-                        ForEach(content.factChips, id: \.self) { fact in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(fact.title)
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(artStyle.ornamentColor)
-
-                                Text(fact.value)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(MatherTheme.ink)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        }
-                    }
-                    .accessibilityIdentifier("memory-learning-fact-chips")
                 }
                 .padding(20)
                 .frame(maxWidth: ResponsiveLayout.memoryLearningSheetMaxWidth(for: horizontalSizeClass), alignment: .leading)
@@ -737,7 +757,7 @@ struct MemoryView: View {
     private func dealRound() {
         descriptionTask?.cancel()
         let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
-        recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs)
+        recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs, deckCount: deck.count)
         cards = Self.buildCards(for: roundAnimals).shuffled()
         learningContent = nil
         askSession = nil

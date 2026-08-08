@@ -430,9 +430,10 @@ final class MemoryCardDescribeService {
     }
 
     private func fallbackFactChips(for animal: MemoryAnimal) -> [MemoryFactChip] {
-        animal.detailCards
+        let factLimit = animal.metadata.deck == .vehicles ? 6 : 4
+        return animal.detailCards
             .filter { $0.title != "Name" }
-            .prefix(4)
+            .prefix(factLimit)
             .map { MemoryFactChip(title: $0.title, value: $0.value) }
     }
 

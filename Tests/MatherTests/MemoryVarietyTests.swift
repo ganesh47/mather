@@ -75,4 +75,23 @@ struct MemoryVarietyTests {
         #expect(updated.count == 8)
         #expect(updated.suffix(4).elementsEqual(round.map(\.id)))
     }
+
+    @MainActor @Test func largerDeckHistoryKeepsEnoughCardsToDelayRepeatsUntilCoverage() {
+        let previous = (0..<18).map { "seen-\($0)" }
+        let round = Array(MemoryDeck.vehicles.prefix(6))
+
+        let updated = MemoryView.updatedRecentPairHistory(
+            previous: previous,
+            newRoundAnimals: round,
+            pairCount: 6,
+            deckCount: 30
+        )
+
+        #expect(updated.count == 24)
+        #expect(updated.suffix(6).elementsEqual(round.map(\.id)))
+    }
+
+    @MainActor @Test func vehicleDeckSummarySurfacesExpandedCatalogSize() {
+        #expect(MemoryView.deckSummaryText(for: .vehicles) == "\(MemoryDeck.vehicles.count) vehicle cards to explore")
+    }
 }

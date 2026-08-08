@@ -298,7 +298,33 @@ enum MemoryDeck {
         vehicle("helicopter", name: "Copter", emoji: "🚁", asset: "MemoryVehicleHelicopter", use: "flies high and can hover", movement: "lifts with spinning blades", colors: "red, blue, white", sound: "whup-whup"),
         vehicle("rocket", name: "Rocket", emoji: "🚀", asset: "MemoryVehicleRocket", use: "blasts toward space", movement: "launches straight up fast", colors: "silver, white, red", sound: "roaring blast"),
         vehicle("scooter", name: "Scooter", emoji: "🛵", asset: "MemoryVehicleScooter", use: "zips around short city trips", movement: "rolls on two small wheels", colors: "red, teal, yellow", sound: "buzzy motor"),
-        vehicle("taxi", name: "Taxi", emoji: "🚕", asset: "MemoryVehicleTaxi", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk")
+        vehicle("taxi", name: "Taxi", emoji: "🚕", asset: "MemoryVehicleTaxi", use: "gives people rides around town", movement: "drives on busy roads", colors: "yellow and black", sound: "honk honk"),
+
+        // Look inside a vehicle: one clear job and motion clue per mechanical part.
+        vehiclePart("vehicle-part-engine", name: "Engine", asset: "MemoryVehiclePartEngine", foundIn: "under the hood or behind the cab", job: "turns fuel or electricity into motion", howItWorks: "moving parts spin a shaft that helps turn the wheels", remember: "The engine makes the power"),
+        vehiclePart("vehicle-part-transmission", name: "Gears", asset: "MemoryVehiclePartTransmission", foundIn: "between the engine and the driven wheels", job: "chooses how strongly or quickly the wheels turn", howItWorks: "different-sized gears trade speed for turning force", remember: "Low gear gives more push; high gear helps with speed"),
+        vehiclePart("vehicle-part-brakes", name: "Brakes", asset: "MemoryVehiclePartBrakes", foundIn: "beside each wheel", job: "slows or stops the vehicle", howItWorks: "pads squeeze a spinning disc to make friction", remember: "Friction changes motion into heat"),
+        vehiclePart("vehicle-part-wheel-axle", name: "Wheel & Axle", asset: "MemoryVehiclePartWheelAxle", foundIn: "under the vehicle", job: "supports the vehicle and lets it roll", howItWorks: "the axle turns while round wheels travel over the ground", remember: "A wheel and axle is a simple machine"),
+        vehiclePart("vehicle-part-steering", name: "Steering", asset: "MemoryVehiclePartSteering", foundIn: "from the driver controls to the front wheels", job: "points the vehicle in a new direction", howItWorks: "turning the steering wheel angles the road wheels", remember: "Steering changes direction, not speed"),
+        vehiclePart("vehicle-part-suspension", name: "Suspension", asset: "MemoryVehiclePartSuspension", foundIn: "between each wheel and the vehicle body", job: "helps the tires stay on the ground over bumps", howItWorks: "springs flex and shock absorbers calm the bouncing", remember: "Suspension makes the ride steadier"),
+
+        // Worksite, hauling, mining, and rescue vehicles with distinctive mechanisms.
+        advancedVehicle("mobile-crane", name: "Mobile Crane", asset: "MemoryVehicleMobileCrane", group: "crane", job: "lifts heavy loads at changing worksites", keyPart: "telescoping boom and outriggers", howItWorks: "hydraulic cylinders extend the boom while outriggers make a wide, steady base", safetyFact: "The load must stay within the crane's lifting limit"),
+        advancedVehicle("crawler-crane", name: "Crawler Crane", asset: "MemoryVehicleCrawlerCrane", group: "crane", job: "lifts very heavy loads on rough ground", keyPart: "lattice boom and wide crawler tracks", howItWorks: "tracks spread the crane's weight and cables raise the hook", safetyFact: "A clear swing area keeps people away from the moving boom"),
+        advancedVehicle("wheel-loader", name: "Wheel Loader", asset: "MemoryVehicleWheelLoader", group: "loader", job: "scoops and carries loose rock, sand, or soil", keyPart: "large front bucket", howItWorks: "hydraulic arms lift the bucket and a hinged middle helps it steer", safetyFact: "The bucket stays low while travelling for better balance"),
+        advancedVehicle("skid-steer-loader", name: "Skid-Steer Loader", asset: "MemoryVehicleSkidSteerLoader", group: "loader", job: "works in small construction spaces", keyPart: "lift arms with changeable attachments", howItWorks: "wheels on opposite sides turn at different speeds so it can pivot", safetyFact: "The safety bar helps protect the operator"),
+        advancedVehicle("backhoe-loader", name: "Backhoe Loader", asset: "MemoryVehicleBackhoeLoader", group: "loader", job: "loads material and digs trenches", keyPart: "front bucket and rear backhoe", howItWorks: "hydraulics move both tools and stabilizer legs steady the machine", safetyFact: "Only one digging end works at a time"),
+        advancedVehicle("dump-truck", name: "Dump Truck", asset: "MemoryVehicleDumpTruck", group: "truck", job: "carries and unloads sand, gravel, or soil", keyPart: "tilting cargo bed", howItWorks: "a hydraulic ram lifts the front of the bed so material slides out", safetyFact: "It unloads only on firm, level ground"),
+        advancedVehicle("concrete-mixer-truck", name: "Mixer Truck", asset: "MemoryVehicleConcreteMixerTruck", group: "truck", job: "brings wet concrete to a building site", keyPart: "rotating mixing drum", howItWorks: "spiral blades mix while turning one way and unload while turning the other way", safetyFact: "Workers keep clear of the turning drum and chute"),
+        advancedVehicle("garbage-truck", name: "Garbage Truck", asset: "MemoryVehicleGarbageTruck", group: "truck", job: "collects rubbish and carries it away", keyPart: "lifting hopper and compactor", howItWorks: "the hopper lifts bins and the compactor presses rubbish into less space", safetyFact: "Flashing lights warn others when the truck stops often"),
+        advancedVehicle("tow-truck", name: "Tow Truck", asset: "MemoryVehicleTowTruck", group: "truck", job: "moves a vehicle that cannot drive", keyPart: "wheel lift or flatbed", howItWorks: "a winch pulls the vehicle and strong straps hold it securely", safetyFact: "Warning lights help drivers see the stopped tow truck"),
+        advancedVehicle("mining-haul-truck", name: "Mining Haul Truck", asset: "MemoryVehicleMiningHaulTruck", group: "mining vehicle", job: "carries huge loads of rock at a mine", keyPart: "giant tires and reinforced dump body", howItWorks: "a powerful drive system moves loads on steep mine roads", safetyFact: "Smaller vehicles stay where the driver can see them"),
+        advancedVehicle("excavator", name: "Excavator", asset: "MemoryVehicleExcavator", group: "earthmover", job: "digs deep holes and moves earth", keyPart: "boom, stick, bucket, and rotating cab", howItWorks: "hydraulic cylinders move the arm and the upper body turns on a platform", safetyFact: "People stay outside its wide swing area"),
+        advancedVehicle("bulldozer", name: "Bulldozer", asset: "MemoryVehicleBulldozer", group: "earthmover", job: "pushes soil and levels rough ground", keyPart: "wide front blade and crawler tracks", howItWorks: "tracks grip loose ground while the blade pushes material", safetyFact: "The driver checks the ground before working near an edge"),
+        advancedVehicle("fire-engine", name: "Fire Engine", asset: "MemoryVehicleFireEngine", group: "emergency vehicle", job: "brings firefighters, water, hoses, and tools", keyPart: "water pump and hose connections", howItWorks: "the pump adds pressure so water can travel through a hose", safetyFact: "Sirens and flashing lights ask traffic to make a safe path"),
+        advancedVehicle("ambulance", name: "Ambulance", asset: "MemoryVehicleAmbulance", group: "emergency vehicle", job: "brings medical helpers and carries patients safely", keyPart: "stretcher and medical equipment", howItWorks: "a secure treatment cabin lets helpers care for a patient while travelling", safetyFact: "Seat belts hold everyone safely during the ride"),
+        advancedVehicle("police-car", name: "Police Car", asset: "MemoryVehiclePoliceCar", group: "emergency vehicle", job: "helps officers reach emergencies and keep roads safe", keyPart: "radio, lights, and siren", howItWorks: "the radio shares information while lights and siren warn nearby traffic", safetyFact: "Drivers slow down and make space when it approaches"),
+        advancedVehicle("rescue-helicopter", name: "Rescue Helicopter", asset: "MemoryVehicleRescueHelicopter", group: "emergency aircraft", job: "reaches people where roads cannot", keyPart: "main rotor and rescue winch", howItWorks: "rotor blades make lift and the winch raises a rescuer or patient", safetyFact: "Loose objects must stay far from the powerful rotor wind")
     ]
 
     static let vehicleImageAssetPlan: [MemoryImageAssetPlan] = [
@@ -313,7 +339,29 @@ enum MemoryDeck {
         importedImagePlan("helicopter", asset: "MemoryVehicleHelicopter", prompt: "helicopter side view with rotor visible", notes: "rotor and tail boom must fit inside crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         importedImagePlan("rocket", asset: "MemoryVehicleRocket", prompt: "rocket launch or upright rocket, simple high-contrast composition", notes: "flame plume optional; avoid agency logos unless public-domain provenance is documented", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
         importedImagePlan("scooter", asset: "MemoryVehicleScooter", prompt: "small scooter or moped side view, clean background", notes: "keep distinct from bike using seat and motor body", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("taxi", asset: "MemoryVehicleTaxi", prompt: "yellow taxi side or three-quarter view, clean city context", notes: "taxi sign/checker cue useful; avoid visible plate numbers", sourceName: "Project-owned deterministic drawing", license: "Project-owned")
+        importedImagePlan("taxi", asset: "MemoryVehicleTaxi", prompt: "yellow taxi side or three-quarter view, clean city context", notes: "taxi sign/checker cue useful; avoid visible plate numbers", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
+        importedImagePlan("vehicle-part-engine", asset: "MemoryVehiclePartEngine", prompt: "kid-friendly cutaway engine showing pistons and crankshaft", notes: "focus on the engine; use simple color coding and no tiny labels", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("vehicle-part-transmission", asset: "MemoryVehiclePartTransmission", prompt: "large and small vehicle gears meshing inside a simple transmission cutaway", notes: "gear teeth and size difference must read at card size", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("vehicle-part-brakes", asset: "MemoryVehiclePartBrakes", prompt: "vehicle brake disc with caliper and pads in a clean cutaway", notes: "make the squeezing pads visually clear without arrows or labels", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("vehicle-part-wheel-axle", asset: "MemoryVehiclePartWheelAxle", prompt: "two vehicle wheels connected by one visible axle", notes: "simple-machine relationship should be unmistakable", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("vehicle-part-steering", asset: "MemoryVehiclePartSteering", prompt: "steering wheel and linkage visibly connected to angled front wheels", notes: "show cause and effect in one uncluttered cutaway", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("vehicle-part-suspension", asset: "MemoryVehiclePartSuspension", prompt: "vehicle coil spring and shock absorber beside a wheel", notes: "spring and shock absorber must both remain distinct", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("mobile-crane", asset: "MemoryVehicleMobileCrane", prompt: "mobile truck crane with telescoping boom, hook, and deployed outriggers", notes: "show all outriggers and keep boom inside the square crop", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("crawler-crane", asset: "MemoryVehicleCrawlerCrane", prompt: "crawler crane with lattice boom, hook cables, and wide tracks", notes: "lattice boom and tracks distinguish it from mobile crane", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("wheel-loader", asset: "MemoryVehicleWheelLoader", prompt: "articulated wheel loader carrying stones in a raised front bucket", notes: "hinged middle, four tires, and bucket should be visible", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("skid-steer-loader", asset: "MemoryVehicleSkidSteerLoader", prompt: "compact skid-steer loader with side lift arms and front bucket", notes: "compact proportions and side arms distinguish it from wheel loader", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("backhoe-loader", asset: "MemoryVehicleBackhoeLoader", prompt: "backhoe loader side view with front bucket and rear digging arm", notes: "both tools must fit fully and read clearly", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("dump-truck", asset: "MemoryVehicleDumpTruck", prompt: "construction dump truck tipping a raised cargo bed", notes: "raised bed is the main recognition cue", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("concrete-mixer-truck", asset: "MemoryVehicleConcreteMixerTruck", prompt: "concrete mixer truck with spiral drum and unloading chute", notes: "large drum silhouette and chute should be visible", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("garbage-truck", asset: "MemoryVehicleGarbageTruck", prompt: "garbage truck lifting a bin into its rear hopper", notes: "show the lifting mechanism without logos or text", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("tow-truck", asset: "MemoryVehicleTowTruck", prompt: "tow truck using a wheel lift and winch to carry a small car", notes: "connection between truck and car should be clear", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("mining-haul-truck", asset: "MemoryVehicleMiningHaulTruck", prompt: "giant mining haul truck beside a tiny pickup truck for scale", notes: "huge tires and deep dump body are key recognition cues", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("excavator", asset: "MemoryVehicleExcavator", prompt: "tracked excavator with boom, stick, bucket, and rotating cab", notes: "show all three arm sections and full tracks", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("bulldozer", asset: "MemoryVehicleBulldozer", prompt: "crawler bulldozer pushing soil with a broad front blade", notes: "wide blade and tracks should dominate the silhouette", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("fire-engine", asset: "MemoryVehicleFireEngine", prompt: "fire engine with visible pump panel, coiled hose, and ladder", notes: "avoid department marks; distinguish equipment from a plain red truck", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("ambulance", asset: "MemoryVehicleAmbulance", prompt: "ambulance with rear medical cabin and simple emergency light bar", notes: "no real service logos; keep medical cabin recognizable", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("police-car", asset: "MemoryVehiclePoliceCar", prompt: "friendly unbranded police patrol car with light bar and radio antenna", notes: "no real agency marks, badges, or readable text", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned"),
+        importedImagePlan("rescue-helicopter", asset: "MemoryVehicleRescueHelicopter", prompt: "rescue helicopter hovering with a visible side winch", notes: "show the full rotor and winch; no real agency logo", sourceName: "Codex project-owned vehicle learning artwork", license: "Project-owned")
     ]
 
     static let planetImageAssetPlan: [MemoryImageAssetPlan] = [
@@ -464,6 +512,28 @@ enum MemoryDeck {
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleRocket", cardId: "rocket", sha256: "329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea"),
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleScooter", cardId: "scooter", sha256: "a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492"),
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleTaxi", cardId: "taxi", sha256: "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartEngine", cardId: "vehicle-part-engine", originalSha256: "aea3a6b95aa59e24613d0bafeceee427d4eb42885c75c72671e451c35753a255", derivativeSha256: "446e501529749e22f569ccbddb630be1008f8214ceffe781f02b85f87e35eb8c"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartTransmission", cardId: "vehicle-part-transmission", originalSha256: "4410d2cf3c872367cc96fec009954410770cc12bc98455c4f0fd8a308ba3e5c2", derivativeSha256: "1ce3e87b484c8d554835b08f6fe22043b08706de7f578f3193fef4f2d9166d41"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartBrakes", cardId: "vehicle-part-brakes", originalSha256: "f9371fe70acce19728f300d7965d92528d97af51f9f0ec277be175cc13689ed2", derivativeSha256: "74d012b8ee7ecab1215445bf121c95014c2c9cf05e64d2707bfaf9062ab9b808"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartWheelAxle", cardId: "vehicle-part-wheel-axle", originalSha256: "00328af234f2a78cac6ab1118029502c8e9f32cd1e24a0ea666fa67f91cad9ca", derivativeSha256: "06239769382e31958ad0db423cb72288773f0eb65c4d860478a2619501f6b7eb"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartSteering", cardId: "vehicle-part-steering", originalSha256: "b129a4e41b7a4219ca9635c3a30d9077b211c2a388f06fbe2dd06b1447b627af", derivativeSha256: "4f46c4657dd37d75bf0374a2273a7c31d27c4406be42920dc67b20986e784aff"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePartSuspension", cardId: "vehicle-part-suspension", originalSha256: "97c714823000102b47ac7bcfad214787eb16cf6f8d0220f553ba712a4c09689a", derivativeSha256: "26f48b6c188946b49989c92942f2045e811b3e190d00c78bf3ed3ad40fc451cb"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleMobileCrane", cardId: "mobile-crane", originalSha256: "62eeb5f4d86c5c560bc48a80a152e0a57ffcb57d99e142198cc113263eefcfa9", derivativeSha256: "33d851bb675d2d167bae9143b41b95c774bc568a8960b712fee3dc366f57e3f9"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleCrawlerCrane", cardId: "crawler-crane", originalSha256: "81064adcc68bc8e11780ceaa777e4040c693a360e3a70f43b5407d856e781a52", derivativeSha256: "79bc879e37ccc08ac855cfdb00631eb81f9339dad90a254c45f85ed6398643be"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleWheelLoader", cardId: "wheel-loader", originalSha256: "3bcd9f62245ff65ca4a9db59ad8dafe6d967816c0483f3510f2d34f4cfd81c88", derivativeSha256: "b902cb50b6a1ced2477e866d3f1c9edd044949cae1c0c9368a3e711d86db0c49"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleSkidSteerLoader", cardId: "skid-steer-loader", originalSha256: "33eb127a647875257cf810d2960696108187b5586fbbcb357bc25163f053a75d", derivativeSha256: "72973215aadb7d832f1c619bf1a2e82e52adff1743e8b52aae7dc823a28f7298"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleBackhoeLoader", cardId: "backhoe-loader", originalSha256: "4116485eee3a3aa7335ea2d2d6014269809fcf61777e59a1bf712e04a8b57d9c", derivativeSha256: "39f001b529db95740f4465ff9331538e74db091438e7c0f15348f105af63166d"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleDumpTruck", cardId: "dump-truck", originalSha256: "7c678f353ca5fd881a9a9b9a55579c70480d7988aeb3184b7455d5858b25e918", derivativeSha256: "2cb53d0b4184f2b3a83a887575438b57b195c9a3a391ca32ce3b3479999c4f31"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleConcreteMixerTruck", cardId: "concrete-mixer-truck", originalSha256: "1766819aa137c61e7378fa9404cd6ad4cb329ad5f3d035eaa2cb0f9648da48c2", derivativeSha256: "ecb2c8b66ed4177491ac02c9911c32389f8d35d973b9426fbbe5db4386b88267"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleGarbageTruck", cardId: "garbage-truck", originalSha256: "e2998cf9cdeae8e0df5d96c897b5380f9b24d313b65e52fadd50415f567bf358", derivativeSha256: "0e72e170ca7ad4685a1a4714bff6e19a6c506f9e936ad033ad582de017da8d3b"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleTowTruck", cardId: "tow-truck", originalSha256: "2010a1ec742c45a1f6fbd4249b71d98c998d236b2a0a0bb78864e91daab4ebc4", derivativeSha256: "c91332da97f6d69e882585cb633b3678cb3acd77ecb1c91838cf17c6be3f15be"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleMiningHaulTruck", cardId: "mining-haul-truck", originalSha256: "31ba31e95878063756823a9fe40366fca8103f43a6f0193be435e0ead9de8b62", derivativeSha256: "b25592d1339eb1928d273b3a878b908b34c55869a3b8c6958f469d8e8acaf901"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleExcavator", cardId: "excavator", originalSha256: "26fe2dc8218d5fb12061ebc68ee3a8af9a197af852e0b2dbacfb223d25ad5482", derivativeSha256: "cb2b46f657542a23ea3563f7ba5a2d8165f2c4f2b3ff6d543e552fc8761b22e5"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleBulldozer", cardId: "bulldozer", originalSha256: "b5a7195437fb46f57d2ed4f6491d6a5558f747303f6117d2b81a2e2b4c2d43ca", derivativeSha256: "6e799650562d610aefb1542d69c30a1252af33a4b3db53759d5c95af1c1a2242"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleFireEngine", cardId: "fire-engine", originalSha256: "cdf900423899cd46586895870dee9d8e7e25340ba69fdedceea83f67b5aca630", derivativeSha256: "f05bb04e6fc832e401fb1a36b5ec003732edef5d04c40cbfbadc5341481b285d"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleAmbulance", cardId: "ambulance", originalSha256: "2a44a6e3e520e0e5247c2125616bc869804a74054039dc7ad31d1b9bbbd29dcf", derivativeSha256: "29d4cb0e23d53ddf12c28b0b267b9c3ff207bb0430698a28e17d07ea5fe98a1e"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehiclePoliceCar", cardId: "police-car", originalSha256: "efbfa5d6027ae379381de001448eafd3ee1e2e8ff1274cddf5cbf4c473e45636", derivativeSha256: "71b84bf0b62318ea6aea25c9601d2ffeee7b00d2c97268a201c9d16ae79cbc5b"),
+        generatedVehicleGalleryProvenance(assetName: "MemoryVehicleRescueHelicopter", cardId: "rescue-helicopter", originalSha256: "c66ebfd5e24af069ff6e2690b8a8ab4d5c5f4930d9c9f74bb4d2ded5ffc0dd79", derivativeSha256: "1dfc6991e391b4ac4daaf73bc2b7db44c1f23b557c1a266d2313be2c34cd84ce"),
         generatedImageProvenance(assetName: "MemoryFishClownfish", cardId: "fish-clownfish", sha256: "994003f9911cd64dae9b0b788918a64ca4bf0a9ca8c2889ecb9dfca6903d9c6b"),
         generatedImageProvenance(assetName: "MemoryFishGoldfish", cardId: "fish-goldfish", sha256: "03e5d0f461f714cff979eba3c154b3f1012f8880c88fca509cdabeb74ddc4dde"),
         generatedImageProvenance(assetName: "MemoryFishBetta", cardId: "fish-betta", sha256: "32da3532b489e9c7d20394cec5b99897c2011cc2a92809ced0b249d74e1aa200"),
@@ -549,6 +619,34 @@ enum MemoryDeck {
             derivativeFileName: "\(assetName).png",
             derivativeSha256: sha256,
             derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands; no third-party material used.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
+    private static func generatedVehicleGalleryProvenance(
+        assetName: String,
+        cardId: String,
+        originalSha256: String,
+        derivativeSha256: String
+    ) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "OpenAI built-in image generation",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for the Mather vehicle Memory Gallery",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-08-08",
+            originalFileName: "\(assetName)-chroma-source.png",
+            originalSha256: originalSha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: derivativeSha256,
+            derivativeChanges: "Generated with OpenAI built-in image generation using a child-friendly educational vehicle prompt; chroma-key background removed locally and resized to a 512x512 transparent PNG.",
             licenseAllowsReuse: true,
             noThirdPartyRestrictionFound: true,
             noLogoOrEndorsementRisk: true,
@@ -660,6 +758,52 @@ enum MemoryDeck {
                 use: use,
                 movement: movement,
                 sound: sound
+            )
+        )
+    }
+
+    private static func vehiclePart(_ id: String, name: String, asset: String, foundIn: String, job: String, howItWorks: String, remember: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .asset(asset),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "vehicle part",
+                kind: "vehicle part",
+                habitat: foundIn,
+                use: job,
+                movement: howItWorks,
+                factCards: [
+                    MemoryFactCard(title: "Part", value: name),
+                    MemoryFactCard(title: "Found In", value: foundIn),
+                    MemoryFactCard(title: "Job", value: job),
+                    MemoryFactCard(title: "How It Works", value: howItWorks),
+                    MemoryFactCard(title: "Remember", value: remember)
+                ]
+            )
+        )
+    }
+
+    private static func advancedVehicle(_ id: String, name: String, asset: String, group: String, job: String, keyPart: String, howItWorks: String, safetyFact: String) -> MemoryAnimal {
+        MemoryAnimal(
+            id: id,
+            name: name,
+            picture: .asset(asset),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: group,
+                kind: group,
+                use: job,
+                movement: howItWorks,
+                factCards: [
+                    MemoryFactCard(title: "Vehicle", value: name),
+                    MemoryFactCard(title: "Group", value: group),
+                    MemoryFactCard(title: "Job", value: job),
+                    MemoryFactCard(title: "Key Part", value: keyPart),
+                    MemoryFactCard(title: "How It Works", value: howItWorks),
+                    MemoryFactCard(title: "Safety Fact", value: safetyFact)
+                ]
             )
         )
     }

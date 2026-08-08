@@ -138,6 +138,10 @@ final class MemoryAskConversationPolicy {
     }
 
     private static func fallbackTurns(for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
+        if animal.metadata.deck == .vehicles {
+            return vehicleTurns(for: animal)
+        }
+
         var turns: [MemoryAskSuggestedTurn] = []
         let name = animal.canonicalName
         let metadata = animal.metadata
@@ -196,6 +200,54 @@ final class MemoryAskConversationPolicy {
                 turns.append(turn)
                 if turns.count == 3 { break }
             }
+        }
+
+        return Array(turns.prefix(3))
+    }
+
+    private static func vehicleTurns(for animal: MemoryAnimal) -> [MemoryAskSuggestedTurn] {
+        let name = animal.canonicalName
+        var turns: [MemoryAskSuggestedTurn] = []
+        let technicalWords = ["part", "engine", "motor", "gear", "brake", "control", "attachment", "tool", "power"]
+        let technicalFacts = animal.detailCards.filter { card in
+            let title = card.title.lowercased()
+            return technicalWords.contains { title.contains($0) }
+        }
+
+        if !technicalFacts.isEmpty {
+            let workingFacts = technicalFacts + animal.detailCards.filter { card in
+                card.title.localizedCaseInsensitiveContains("how it works")
+                    && !technicalFacts.contains(card)
+            }
+            let answer = workingFacts.prefix(2)
+                .map { "\($0.title): \($0.value)." }
+                .joined(separator: " ")
+            turns.append(MemoryAskSuggestedTurn(
+                id: "vehicle-parts",
+                question: "Which parts help \(name) work?",
+                answer: answer
+            ))
+        }
+
+        if let use = animal.metadata.use {
+            turns.append(MemoryAskSuggestedTurn(
+                id: "vehicle-job",
+                question: "What job does \(name) do?",
+                answer: "\(name) \(use.lowercased())."
+            ))
+        }
+
+        if let movement = animal.metadata.movement {
+            turns.append(MemoryAskSuggestedTurn(
+                id: "vehicle-movement",
+                question: "How does \(name) move?",
+                answer: "\(name) \(movement.lowercased())."
+            ))
+        }
+
+        for turn in detailCardTurns(for: animal) where !turns.contains(where: { $0.id == turn.id }) {
+            turns.append(turn)
+            if turns.count == 3 { break }
         }
 
         return Array(turns.prefix(3))

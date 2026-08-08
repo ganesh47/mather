@@ -25,6 +25,52 @@ struct MemoryGalleryTVRoundTests {
         #expect(MemoryGalleryTVRound.isCorrect(selectionID: round.promptCard.id, for: round))
     }
 
+    @Test func vehicleRoundsSampleAcrossTheCompleteExpandedDeck() {
+        let deck = MemoryGalleryTVCategory.vehicles.deck
+        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+            MemoryGalleryTVRound.make(category: .vehicles, index: $0)
+        }
+        let expectedStride = (deck.count + MemoryGalleryTVGame.roundsPerGame - 1)
+            / MemoryGalleryTVGame.roundsPerGame
+        let expectedIDs = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+            deck[($0 * expectedStride) % deck.count].id
+        }
+
+        #expect(rounds.map(\.promptCard.id) == expectedIDs)
+        #expect(Set(rounds.map(\.promptCard.id)).count == MemoryGalleryTVGame.roundsPerGame)
+    }
+
+    @Test func vehiclePartRoundsUseSpecificPromptsAndRevealRichFacts() {
+        let part = MemoryAnimal(
+            id: "test-engine",
+            name: "Engine",
+            picture: .text("Engine"),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "vehicle part",
+                kind: "vehicle part",
+                use: "turns fuel into power",
+                movement: "moves pistons up and down",
+                factCards: [
+                    MemoryFactCard(title: "Kind", value: "vehicle part"),
+                    MemoryFactCard(title: "Job", value: "Makes power"),
+                    MemoryFactCard(title: "Look For", value: "Pistons and cylinders")
+                ]
+            )
+        )
+        let round = MemoryGalleryTVRound(
+            category: .vehicles,
+            index: 0,
+            promptCard: part,
+            answerChoices: [part]
+        )
+
+        #expect(round.isVehiclePartPrompt)
+        #expect(round.promptTitle == "Vehicle part")
+        #expect(round.choicePrompt == "Which vehicle part is this?")
+        #expect(round.learningFacts.map(\.title) == ["Job", "Look For"])
+    }
+
     @Test func roundIndexWrapsAcrossDeckBounds() {
         let deckCount = MemoryGalleryTVCategory.planets.deck.count
         let wrapped = MemoryGalleryTVRound.make(category: .planets, index: deckCount + 1)

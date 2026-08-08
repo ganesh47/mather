@@ -135,7 +135,7 @@ struct MemoryGalleryTVView: View {
             promptPanel(round: round)
 
             VStack(alignment: .leading, spacing: 22) {
-                Text("Choose the matching name")
+                Text(round.choicePrompt)
                     .font(.system(size: 32, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
@@ -148,13 +148,13 @@ struct MemoryGalleryTVView: View {
     }
 
     private func promptPanel(round: MemoryGalleryTVRound) -> some View {
-        VStack(alignment: .leading, spacing: 26) {
-            Text("Picture")
+        VStack(alignment: .leading, spacing: 20) {
+            Text(round.promptTitle)
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1.0))
 
             MemoryGalleryPromptArtwork(animal: round.promptCard)
-                .frame(width: 520, height: 360)
+                .frame(width: 520, height: 310)
                 .accessibilityHidden(true)
 
             if game.hasAnsweredCurrentRound {
@@ -164,7 +164,7 @@ struct MemoryGalleryTVView: View {
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
-                    if let fact = learningFact(for: round.promptCard) {
+                    ForEach(Array(round.learningFacts.enumerated()), id: \.offset) { _, fact in
                         Text("\(fact.title): \(fact.value)")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.68))
@@ -375,10 +375,6 @@ struct MemoryGalleryTVView: View {
         game.correctCount == MemoryGalleryTVGame.roundsPerGame ? "star.circle.fill" : "sparkles"
     }
 
-    private func learningFact(for animal: MemoryAnimal) -> MemoryFactCard? {
-        animal.detailCards.first { $0.title != "Kind" } ?? animal.detailCards.first
-    }
-
     private func start(_ category: MemoryGalleryTVCategory) {
         game.start(category: category)
         focusFirstAnswer()
@@ -447,6 +443,8 @@ struct MemoryGalleryTVView: View {
         switch animal.metadata.deck {
         case .countryFlags:
             return "Flag picture. Match it to the country name."
+        case .vehicles where animal.metadata.kind.localizedCaseInsensitiveCompare("vehicle part") == .orderedSame:
+            return "Picture of the vehicle part called \(accessibilityName(for: animal))."
         default:
             return "Picture of \(accessibilityName(for: animal))."
         }

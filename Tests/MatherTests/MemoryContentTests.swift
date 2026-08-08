@@ -30,7 +30,7 @@ struct MemoryContentTests {
     @Test func sharedDeckCatalogMaintainsStableDeckIds() {
         #expect(MemoryDeck.domesticAnimals.map(\.id).prefix(3) == ["cow", "dog", "cat"])
         #expect(MemoryDeck.birds.map(\.id).prefix(2) == ["bird-a01", "bird-a02"])
-        #expect(MemoryDeck.vehicles.map(\.id).suffix(2) == ["scooter", "taxi"])
+        #expect(MemoryDeck.vehicles.map(\.id).prefix(2) == ["car", "bus"])
         #expect(MemoryDeck.planets.map(\.id) == [
             "planet-mercury",
             "planet-venus",
@@ -43,6 +43,50 @@ struct MemoryContentTests {
         ])
         #expect(MemoryDeck.numberBondsTo10.map(\.id).first == "bond-1-9")
         #expect(MemoryDeck.numberBondsTo10.map(\.id).last == "bond-10-0")
+    }
+
+    @Test func vehicleDeckIncludesPartsWorkVehiclesAndEmergencyVehicles() throws {
+        let vehiclesById = Dictionary(uniqueKeysWithValues: MemoryDeck.vehicles.map { ($0.id, $0) })
+
+        let requiredParts = [
+            "vehicle-part-engine",
+            "vehicle-part-transmission",
+            "vehicle-part-brakes",
+            "vehicle-part-wheel-axle",
+            "vehicle-part-steering",
+            "vehicle-part-suspension"
+        ]
+        let requiredAdvancedVehicles = [
+            "mobile-crane",
+            "crawler-crane",
+            "wheel-loader",
+            "skid-steer-loader",
+            "backhoe-loader",
+            "dump-truck",
+            "concrete-mixer-truck",
+            "garbage-truck",
+            "tow-truck",
+            "mining-haul-truck",
+            "excavator",
+            "bulldozer",
+            "fire-engine",
+            "ambulance",
+            "police-car",
+            "rescue-helicopter"
+        ]
+
+        for id in requiredParts {
+            let part = try #require(vehiclesById[id])
+            #expect(part.metadata.category == "vehicle part")
+            #expect(part.detailCards.map(\.title) == ["Part", "Found In", "Job", "How It Works", "Remember"])
+        }
+
+        for id in requiredAdvancedVehicles {
+            let vehicle = try #require(vehiclesById[id])
+            #expect(vehicle.metadata.deck == .vehicles)
+            #expect(vehicle.detailCards.map(\.title) == ["Vehicle", "Group", "Job", "Key Part", "How It Works", "Safety Fact"])
+            #expect(vehicle.detailCards.allSatisfy { !$0.value.isEmpty })
+        }
     }
 
     @Test func sharedDeckCatalogHasNoDuplicateIdsAcrossCategories() {

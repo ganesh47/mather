@@ -20,7 +20,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
     var subtitle: String {
         switch self {
         case .animals: return "Farm favorites"
-        case .vehicles: return "Things that move"
+        case .vehicles: return "Machines and how they work"
         case .planets: return "Solar system"
         case .flags: return "Countries"
         }
@@ -29,7 +29,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
     var prompt: String {
         switch self {
         case .animals: return "Match the picture to the animal name."
-        case .vehicles: return "Match the picture to the vehicle name."
+        case .vehicles: return "Match the picture to the vehicle or vehicle-part name."
         case .planets: return "Match the planet picture to its name."
         case .flags: return "Match the flag to the country name."
         }
@@ -66,6 +66,27 @@ struct MemoryGalleryTVRound: Equatable {
 
     var correctAnswerID: String { promptCard.id }
 
+    var isVehiclePartPrompt: Bool {
+        promptCard.metadata.deck == .vehicles
+            && promptCard.metadata.kind.localizedCaseInsensitiveCompare("vehicle part") == .orderedSame
+    }
+
+    var promptTitle: String {
+        isVehiclePartPrompt ? "Vehicle part" : "Picture"
+    }
+
+    var choicePrompt: String {
+        isVehiclePartPrompt ? "Which vehicle part is this?" : "Choose the matching name"
+    }
+
+    var learningFacts: [MemoryFactCard] {
+        let informativeFacts = promptCard.detailCards.filter {
+            $0.title.localizedCaseInsensitiveCompare("Kind") != .orderedSame
+                && $0.title.localizedCaseInsensitiveCompare("Name") != .orderedSame
+        }
+        return Array((informativeFacts.isEmpty ? promptCard.detailCards : informativeFacts).prefix(2))
+    }
+
     static let choiceCount = 4
 
     static func make(category: MemoryGalleryTVCategory, index: Int) -> MemoryGalleryTVRound {
@@ -73,11 +94,16 @@ struct MemoryGalleryTVRound: Equatable {
         precondition(deck.count >= choiceCount, "Memory Gallery TV categories need at least \(choiceCount) cards.")
 
         let normalizedIndex = positiveModulo(index, deck.count)
-        let prompt = deck[normalizedIndex]
+        let promptIndex = promptDeckIndex(
+            for: category,
+            roundIndex: normalizedIndex,
+            deckCount: deck.count
+        )
+        let prompt = deck[promptIndex]
         let forwardChoices = (0..<choiceCount).map { offset in
-            deck[positiveModulo(normalizedIndex + offset, deck.count)]
+            deck[positiveModulo(promptIndex + offset, deck.count)]
         }
-        let rotatedChoices = rotate(forwardChoices, by: normalizedIndex % choiceCount)
+        let rotatedChoices = rotate(forwardChoices, by: promptIndex % choiceCount)
 
         return MemoryGalleryTVRound(
             category: category,
@@ -94,6 +120,20 @@ struct MemoryGalleryTVRound: Equatable {
     private static func positiveModulo(_ value: Int, _ divisor: Int) -> Int {
         let remainder = value % divisor
         return remainder >= 0 ? remainder : remainder + divisor
+    }
+
+    private static func promptDeckIndex(
+        for category: MemoryGalleryTVCategory,
+        roundIndex: Int,
+        deckCount: Int
+    ) -> Int {
+        guard category == .vehicles else { return roundIndex }
+
+        // Vehicle decks are intentionally broad. Spread a six-round TV session
+        // across the complete deck so specialist machines and their parts are
+        // represented instead of always showing only the first six basics.
+        let stride = max(1, (deckCount + MemoryGalleryTVGame.roundsPerGame - 1) / MemoryGalleryTVGame.roundsPerGame)
+        return positiveModulo(roundIndex * stride, deckCount)
     }
 
     private static func rotate(_ values: [MemoryAnimal], by offset: Int) -> [MemoryAnimal] {

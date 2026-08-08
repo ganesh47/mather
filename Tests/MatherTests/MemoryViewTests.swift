@@ -81,8 +81,35 @@ struct MemoryViewTests {
             "MemoryVehicleHelicopter": "b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2",
             "MemoryVehicleRocket": "329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea",
             "MemoryVehicleScooter": "a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492",
-            "MemoryVehicleTaxi": "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628"
+            "MemoryVehicleTaxi": "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628",
+            "MemoryVehiclePartEngine": "446e501529749e22f569ccbddb630be1008f8214ceffe781f02b85f87e35eb8c",
+            "MemoryVehiclePartTransmission": "1ce3e87b484c8d554835b08f6fe22043b08706de7f578f3193fef4f2d9166d41",
+            "MemoryVehiclePartBrakes": "74d012b8ee7ecab1215445bf121c95014c2c9cf05e64d2707bfaf9062ab9b808",
+            "MemoryVehiclePartWheelAxle": "06239769382e31958ad0db423cb72288773f0eb65c4d860478a2619501f6b7eb",
+            "MemoryVehiclePartSteering": "4f46c4657dd37d75bf0374a2273a7c31d27c4406be42920dc67b20986e784aff",
+            "MemoryVehiclePartSuspension": "26f48b6c188946b49989c92942f2045e811b3e190d00c78bf3ed3ad40fc451cb",
+            "MemoryVehicleMobileCrane": "33d851bb675d2d167bae9143b41b95c774bc568a8960b712fee3dc366f57e3f9",
+            "MemoryVehicleCrawlerCrane": "79bc879e37ccc08ac855cfdb00631eb81f9339dad90a254c45f85ed6398643be",
+            "MemoryVehicleWheelLoader": "b902cb50b6a1ced2477e866d3f1c9edd044949cae1c0c9368a3e711d86db0c49",
+            "MemoryVehicleSkidSteerLoader": "72973215aadb7d832f1c619bf1a2e82e52adff1743e8b52aae7dc823a28f7298",
+            "MemoryVehicleBackhoeLoader": "39f001b529db95740f4465ff9331538e74db091438e7c0f15348f105af63166d",
+            "MemoryVehicleDumpTruck": "2cb53d0b4184f2b3a83a887575438b57b195c9a3a391ca32ce3b3479999c4f31",
+            "MemoryVehicleConcreteMixerTruck": "ecb2c8b66ed4177491ac02c9911c32389f8d35d973b9426fbbe5db4386b88267",
+            "MemoryVehicleGarbageTruck": "0e72e170ca7ad4685a1a4714bff6e19a6c506f9e936ad033ad582de017da8d3b",
+            "MemoryVehicleTowTruck": "c91332da97f6d69e882585cb633b3678cb3acd77ecb1c91838cf17c6be3f15be",
+            "MemoryVehicleMiningHaulTruck": "b25592d1339eb1928d273b3a878b908b34c55869a3b8c6958f469d8e8acaf901",
+            "MemoryVehicleExcavator": "cb2b46f657542a23ea3563f7ba5a2d8165f2c4f2b3ff6d543e552fc8761b22e5",
+            "MemoryVehicleBulldozer": "6e799650562d610aefb1542d69c30a1252af33a4b3db53759d5c95af1c1a2242",
+            "MemoryVehicleFireEngine": "f05bb04e6fc832e401fb1a36b5ec003732edef5d04c40cbfbadc5341481b285d",
+            "MemoryVehicleAmbulance": "29d4cb0e23d53ddf12c28b0b267b9c3ff207bb0430698a28e17d07ea5fe98a1e",
+            "MemoryVehiclePoliceCar": "71b84bf0b62318ea6aea25c9601d2ffeee7b00d2c97268a201c9d16ae79cbc5b",
+            "MemoryVehicleRescueHelicopter": "1dfc6991e391b4ac4daaf73bc2b7db44c1f23b557c1a266d2313be2c34cd84ce"
         ]
+        let generatedGalleryAssets = Set(expectedHashes.keys.filter {
+            $0.hasPrefix("MemoryVehiclePart")
+                || !["MemoryVehicleCar", "MemoryVehicleBus", "MemoryVehicleTrain", "MemoryVehiclePlane", "MemoryVehicleBoat", "MemoryVehicleBike", "MemoryVehicleTruck", "MemoryVehicleTractor", "MemoryVehicleHelicopter", "MemoryVehicleRocket", "MemoryVehicleScooter", "MemoryVehicleTaxi"].contains($0)
+                    && $0.hasPrefix("MemoryVehicle")
+        })
         let importedAssetNames = Set(
             (MemoryDeck.vehicles + MemoryDeck.planets)
                 .compactMap(\.imageAssetName)
@@ -100,9 +127,14 @@ struct MemoryViewTests {
             let image = imageset.appendingPathComponent("\(assetName).png")
             let contents = imageset.appendingPathComponent("Contents.json")
 
-            #expect(provenance?.sourceName == "Project-owned deterministic drawing")
+            if generatedGalleryAssets.contains(assetName) {
+                #expect(provenance?.sourceName == "OpenAI built-in image generation")
+                #expect(provenance?.creditLine == "Project-owned artwork created for the Mather vehicle Memory Gallery")
+            } else {
+                #expect(provenance?.sourceName == "Project-owned deterministic drawing")
+                #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #352")
+            }
             #expect(provenance?.creator.isEmpty == false)
-            #expect(provenance?.creditLine == "Project-owned artwork created for Mather issue #352")
             #expect(provenance?.licenseAllowsReuse == true)
             #expect(provenance?.noThirdPartyRestrictionFound == true)
             #expect(provenance?.noLogoOrEndorsementRisk == true)

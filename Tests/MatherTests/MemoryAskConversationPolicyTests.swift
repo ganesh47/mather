@@ -83,6 +83,61 @@ struct MemoryAskConversationPolicyTests {
     }
 
     @MainActor
+    @Test func vehicleFallbackPrioritizesPartsJobAndMovementQuestions() async {
+        let vehicle = MemoryAnimal(
+            id: "test-wheel-loader",
+            name: "Wheel Loader",
+            picture: .text("Wheel Loader"),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "construction vehicle",
+                kind: "loader",
+                use: "scoops and carries heavy material",
+                movement: "rolls on large tires",
+                factCards: [
+                    MemoryFactCard(title: "Main Parts", value: "engine, gears, brakes, and bucket"),
+                    MemoryFactCard(title: "Safety", value: "the brakes help it stop")
+                ]
+            )
+        )
+
+        let session = await MemoryAskConversationPolicy().startSession(for: vehicle)
+
+        #expect(session.suggestedTurns.map(\.id) == ["vehicle-parts", "vehicle-job", "vehicle-movement"])
+        #expect(session.suggestedTurns[0].question == "Which parts help Wheel Loader work?")
+        #expect(session.suggestedTurns[0].answer.localizedCaseInsensitiveContains("engine"))
+        #expect(session.suggestedTurns[0].answer.localizedCaseInsensitiveContains("brakes"))
+    }
+
+    @MainActor
+    @Test func vehicleLearningDescriptionKeepsFullAdvancedFactSet() {
+        let vehicle = MemoryAnimal(
+            id: "test-mobile-crane",
+            name: "Mobile Crane",
+            picture: .text("Mobile Crane"),
+            metadata: MemoryCardMetadata(
+                deck: .vehicles,
+                category: "crane",
+                kind: "crane",
+                factCards: [
+                    MemoryFactCard(title: "Vehicle", value: "Mobile Crane"),
+                    MemoryFactCard(title: "Group", value: "crane"),
+                    MemoryFactCard(title: "Job", value: "lifts heavy loads"),
+                    MemoryFactCard(title: "Key Part", value: "boom and outriggers"),
+                    MemoryFactCard(title: "How It Works", value: "hydraulics extend the boom"),
+                    MemoryFactCard(title: "Safety Fact", value: "stay within the lifting limit")
+                ]
+            )
+        )
+
+        let description = MemoryCardDescribeService(appleIntelligenceEnabled: { false })
+            .fallbackDescription(for: vehicle)
+
+        #expect(description.factChips.count == 6)
+        #expect(description.factChips.last?.title == "Safety Fact")
+    }
+
+    @MainActor
     @Test func availableProviderCanSupplyBoundedSuggestedTurnsOnly() async {
         let provider = StubTurnProvider(
             isAvailable: true,
