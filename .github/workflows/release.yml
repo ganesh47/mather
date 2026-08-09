@@ -1,10 +1,11 @@
 name: Release
 
 # Triggered when a tag like v1.2.3 is pushed.
-# This workflow creates the GitHub Release and drives the signed tvOS TestFlight
-# delivery. Xcode Cloud creates the App Store-signed IPA; the release job
-# retrieves that export and uploads it after Apple's unrelated Development and
-# Ad Hoc tvOS exports finish.
+# This workflow creates the GitHub Release and drives signed iOS and tvOS
+# TestFlight delivery. Xcode Cloud creates the App Store-signed IPAs; the
+# release job resolves the enabled archive workflow for each platform,
+# retrieves both exports, uploads any build Xcode Cloud has not already
+# distributed, and verifies both platforms reach internal testing.
 
 on:
   push:
@@ -61,10 +62,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  tvos-testflight:
-    name: Publish tvOS to TestFlight
+  apple-testflight:
+    name: Publish iOS and tvOS to TestFlight
     runs-on: macos-15
-    timeout-minutes: 55
+    timeout-minutes: 80
     environment: testflight-release
 
     steps:
@@ -78,7 +79,7 @@ jobs:
           python3 -m venv .venv-testflight
           .venv-testflight/bin/pip install -r ci_scripts/testflight-feedback-requirements.txt
 
-      - name: Build signed tvOS export and publish to TestFlight
+      - name: Build signed iOS and tvOS exports and publish to TestFlight
         env:
           APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -88,4 +89,5 @@ jobs:
           .venv-testflight/bin/python ci_scripts/xcode_cloud_testflight.py \
             --workflow-id "08111c64-7aa6-4651-b181-b86c25543bc5" \
             --repository-id "3d717c8d-4c65-4f36-821b-94e10b4f639a" \
-            --tag "${GITHUB_REF_NAME}"
+            --tag "${GITHUB_REF_NAME}" \
+            --platform all

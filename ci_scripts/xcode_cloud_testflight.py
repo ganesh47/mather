@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Recover and publish the signed tvOS export produced by Xcode Cloud.
+"""Recover and publish signed iOS and tvOS exports produced by Xcode Cloud.
 
-Xcode Cloud creates a valid App Store export for MatherTV, but Apple also
-attempts Development and Ad Hoc exports for the tvOS archive. Those additional
-exports require a registered Apple TV and cause the archive action to be marked
-failed even though the App Store IPA is usable.
+Xcode Cloud creates valid App Store exports for Mather and MatherTV. Apple can
+also attempt Development and Ad Hoc exports for an archive; those additional
+exports may fail even though the App Store IPA is usable.
 
-This helper starts the dedicated release workflow, waits for the tvOS App Store
-export, uploads it with altool, and verifies that the build reaches internal
-TestFlight testing.
+This helper resolves the enabled archive workflow for each platform, starts the
+minimum required Xcode Cloud builds, waits for every App Store export, uploads
+any build Xcode Cloud has not already distributed, and verifies that every
+build reaches internal TestFlight testing.
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,43 @@ ASC_BASE = "https://api.appstoreconnect.apple.com"
 DEFAULT_POLL_SECONDS = 20
 DEFAULT_CLOUD_TIMEOUT_SECONDS = 30 * 60
 DEFAULT_TESTFLIGHT_TIMEOUT_SECONDS = 20 * 60
+DEFAULT_AUTOMATIC_UPLOAD_GRACE_SECONDS = 2 * 60
+
+
+@dataclass(frozen=True)
+class Platform:
+    key: str
+    label: str
+    archive_action_name: str
+    supported_platform: str
+    app_store_platform: str
+    xcode_cloud_platform: str
+    altool_type: str
+    bundle_id_env: str
+
+
+PLATFORMS = {
+    "ios": Platform(
+        key="ios",
+        label="iOS",
+        archive_action_name="Archive - iOS",
+        supported_platform="iPhoneOS",
+        app_store_platform="IOS",
+        xcode_cloud_platform="IOS",
+        altool_type="ios",
+        bundle_id_env="IOS_BUNDLE_ID",
+    ),
+    "tvos": Platform(
+        key="tvos",
+        label="tvOS",
+        archive_action_name="Archive - tvOS",
+        supported_platform="AppleTVOS",
+        app_store_platform="TV_OS",
+        xcode_cloud_platform="TVOS",
+        altool_type="tvos",
+        bundle_id_env="TVOS_BUNDLE_ID",
+    ),
+}
 
 
 class ReleaseError(RuntimeError):
@@ -154,7 +192,96 @@ def start_build_run(
     return build_run["id"], number
 
 
-def choose_app_store_export(artifacts: list[dict[str, Any]]) -> dict[str, Any] | None:
+def workflow_supports_platform(
+    workflow: dict[str, Any], platform: Platform
+) -> bool:
+    actions = workflow.get("attributes", {}).get("actions") or []
+    return any(
+        action.get("actionType") == "ARCHIVE"
+        and action.get("platform") == platform.xcode_cloud_platform
+        for action in actions
+    )
+
+
+def choose_workflow_for_platform(
+    workflows: list[dict[str, Any]], platform: Platform
+) -> dict[str, Any]:
+    candidates = [
+        workflow
+        for workflow in workflows
+        if workflow.get("attributes", {}).get("isEnabled")
+        and workflow_supports_platform(workflow, platform)
+    ]
+    if not candidates:
+        raise ReleaseError(
+            f"No enabled Xcode Cloud workflow archives {platform.label}"
+        )
+
+    def score(workflow: dict[str, Any]) -> tuple[int, int]:
+        attributes = workflow.get("attributes", {})
+        return (
+            1 if attributes.get("manualTagStartCondition") else 0,
+            1 if "release" in attributes.get("name", "").lower() else 0,
+        )
+
+    best_score = max(score(workflow) for workflow in candidates)
+    best = [workflow for workflow in candidates if score(workflow) == best_score]
+    if len(best) != 1:
+        names = ", ".join(
+            f"{item.get('attributes', {}).get('name', 'Unnamed')} ({item['id']})"
+            for item in best
+        )
+        raise ReleaseError(
+            f"Multiple Xcode Cloud workflows can archive {platform.label}: {names}"
+        )
+    return best[0]
+
+
+def resolve_workflows(
+    client: AppStoreConnectClient,
+    *,
+    app_id: str,
+    preferred_workflow_id: str,
+    platforms: list[Platform],
+) -> dict[str, list[Platform]]:
+    preferred = client.request(
+        f"/v1/ciWorkflows/{preferred_workflow_id}"
+        "?fields[ciWorkflows]=name,actions,isEnabled,manualTagStartCondition"
+    )["data"]
+    unresolved = [
+        platform
+        for platform in platforms
+        if not workflow_supports_platform(preferred, platform)
+    ]
+    all_workflows: list[dict[str, Any]] = []
+    if unresolved:
+        product = client.request(f"/v1/apps/{app_id}/ciProduct")["data"]
+        all_workflows = client.pages(
+            f"/v1/ciProducts/{product['id']}/workflows"
+            "?fields[ciWorkflows]=name,actions,isEnabled,manualTagStartCondition"
+            "&limit=200"
+        )
+
+    resolved: dict[str, list[Platform]] = {}
+    for platform in platforms:
+        workflow = (
+            preferred
+            if workflow_supports_platform(preferred, platform)
+            else choose_workflow_for_platform(all_workflows, platform)
+        )
+        resolved.setdefault(workflow["id"], []).append(platform)
+        print(
+            f"Using Xcode Cloud workflow "
+            f"{workflow.get('attributes', {}).get('name', workflow['id'])!r} "
+            f"for {platform.label}",
+            flush=True,
+        )
+    return resolved
+
+
+def choose_app_store_export(
+    artifacts: list[dict[str, Any]], *, platform: Platform
+) -> dict[str, Any] | None:
     exports = [
         artifact
         for artifact in artifacts
@@ -163,14 +290,15 @@ def choose_app_store_export(artifacts: list[dict[str, Any]]) -> dict[str, Any] |
     ]
     if len(exports) > 1:
         names = ", ".join(item["attributes"]["fileName"] for item in exports)
-        raise ReleaseError(f"Multiple tvOS App Store exports found: {names}")
+        raise ReleaseError(f"Multiple {platform.label} App Store exports found: {names}")
     return exports[0] if exports else None
 
 
-def wait_for_tv_export(
+def wait_for_export(
     client: AppStoreConnectClient,
     *,
     build_run_id: str,
+    platform: Platform,
     timeout_seconds: int,
     poll_seconds: int,
 ) -> tuple[dict[str, Any], str]:
@@ -190,7 +318,8 @@ def wait_for_tv_export(
             (
                 action
                 for action in actions
-                if action.get("attributes", {}).get("name") == "Archive - tvOS"
+                if action.get("attributes", {}).get("name")
+                == platform.archive_action_name
             ),
             None,
         )
@@ -199,14 +328,18 @@ def wait_for_tv_export(
             attrs = archive["attributes"]
             state = f"{attrs.get('executionProgress')}/{attrs.get('completionStatus')}"
             if state != last_state:
-                print(f"Xcode Cloud build {build_number}: tvOS archive {state}", flush=True)
+                print(
+                    f"Xcode Cloud build {build_number}: "
+                    f"{platform.label} archive {state}",
+                    flush=True,
+                )
                 last_state = state
 
             if attrs.get("executionProgress") == "COMPLETE":
                 artifacts = client.pages(
                     f"/v1/ciBuildActions/{archive_action_id}/artifacts?limit=200"
                 )
-                export = choose_app_store_export(artifacts)
+                export = choose_app_store_export(artifacts, platform=platform)
                 if export:
                     return export, build_number
 
@@ -218,13 +351,23 @@ def wait_for_tv_export(
                     for issue in issues
                 )
                 raise ReleaseError(
-                    "tvOS archive completed without an App Store export"
+                    f"{platform.label} archive completed without an App Store export"
                     + (f": {messages}" if messages else "")
                 )
+        elif run.get("attributes", {}).get("executionProgress") == "COMPLETE":
+            names = ", ".join(
+                action.get("attributes", {}).get("name", "Unknown")
+                for action in actions
+            )
+            raise ReleaseError(
+                f"Xcode Cloud run has no {platform.archive_action_name!r} action"
+                + (f"; available actions: {names}" if names else "")
+            )
         time.sleep(poll_seconds)
 
     raise ReleaseError(
-        f"Timed out waiting for tvOS export from Xcode Cloud run {build_run_id}"
+        f"Timed out waiting for {platform.label} export from "
+        f"Xcode Cloud run {build_run_id}"
     )
 
 
@@ -260,6 +403,7 @@ def download_ipa(export: dict[str, Any], destination: Path) -> Path:
 def inspect_ipa(
     ipa_path: Path,
     *,
+    platform: Platform,
     expected_bundle_id: str,
     expected_version: str,
     expected_build_number: str,
@@ -291,8 +435,10 @@ def inspect_ipa(
             raise ReleaseError(
                 f"{ipa_path.name} has {key}={observed!r}; expected {expected!r}"
             )
-    if "AppleTVOS" not in info.get("CFBundleSupportedPlatforms", []):
-        raise ReleaseError(f"{ipa_path.name} is not a tvOS application")
+    if platform.supported_platform not in info.get("CFBundleSupportedPlatforms", []):
+        raise ReleaseError(
+            f"{ipa_path.name} is not a {platform.label} application"
+        )
     if info.get("ITSAppUsesNonExemptEncryption") is not False:
         raise ReleaseError(
             f"{ipa_path.name} does not declare exempt encryption usage"
@@ -311,6 +457,7 @@ def altool_auth_args(*, key_id: str, issuer_id: str) -> list[str]:
 def run_altool(
     command: str,
     *,
+    platform: Platform,
     ipa_path: Path,
     key_id: str,
     issuer_id: str,
@@ -318,6 +465,7 @@ def run_altool(
 ) -> None:
     args = altool_command_args(
         command,
+        platform=platform,
         ipa_path=ipa_path,
         key_id=key_id,
         issuer_id=issuer_id,
@@ -329,6 +477,7 @@ def run_altool(
 def altool_command_args(
     command: str,
     *,
+    platform: Platform,
     ipa_path: Path,
     key_id: str,
     issuer_id: str,
@@ -342,7 +491,7 @@ def altool_command_args(
         "-f",
         str(ipa_path),
         "-t",
-        "tvos",
+        platform.altool_type,
         *altool_auth_args(
             key_id=key_id,
             issuer_id=issuer_id,
@@ -353,7 +502,11 @@ def altool_command_args(
 
 
 def prerelease_version_id(
-    client: AppStoreConnectClient, *, app_id: str, version: str
+    client: AppStoreConnectClient,
+    *,
+    app_id: str,
+    version: str,
+    platform: Platform,
 ) -> str | None:
     params = urllib.parse.urlencode(
         {
@@ -368,7 +521,8 @@ def prerelease_version_id(
         (
             item
             for item in versions
-            if item.get("attributes", {}).get("platform") == "TV_OS"
+            if item.get("attributes", {}).get("platform")
+            == platform.app_store_platform
         ),
         None,
     )
@@ -394,13 +548,19 @@ def wait_for_internal_testflight(
     app_id: str,
     version: str,
     build_number: str,
+    platform: Platform,
     timeout_seconds: int,
     poll_seconds: int,
 ) -> str:
     deadline = time.monotonic() + timeout_seconds
     last_state = ""
     while time.monotonic() < deadline:
-        version_id = prerelease_version_id(client, app_id=app_id, version=version)
+        version_id = prerelease_version_id(
+            client,
+            app_id=app_id,
+            version=version,
+            platform=platform,
+        )
         if version_id:
             builds = client.pages(
                 f"/v1/preReleaseVersions/{version_id}/builds"
@@ -412,14 +572,14 @@ def wait_for_internal_testflight(
                 processing_state = build["attributes"]["processingState"]
                 if processing_state != last_state:
                     print(
-                        f"TestFlight tvOS {version} ({build_number}): "
+                        f"TestFlight {platform.label} {version} ({build_number}): "
                         f"{processing_state}",
                         flush=True,
                     )
                     last_state = processing_state
                 if processing_state in {"FAILED", "INVALID"}:
                     raise ReleaseError(
-                        f"TestFlight rejected tvOS build {build_number}: "
+                        f"TestFlight rejected {platform.label} build {build_number}: "
                         f"{processing_state}"
                     )
                 if processing_state == "VALID":
@@ -444,8 +604,57 @@ def wait_for_internal_testflight(
                     )
         time.sleep(poll_seconds)
     raise ReleaseError(
-        f"Timed out waiting for tvOS {version} ({build_number}) in TestFlight"
+        f"Timed out waiting for {platform.label} {version} "
+        f"({build_number}) in TestFlight"
     )
+
+
+def existing_testflight_build(
+    client: AppStoreConnectClient,
+    *,
+    app_id: str,
+    version: str,
+    build_number: str,
+    platform: Platform,
+) -> dict[str, Any] | None:
+    version_id = prerelease_version_id(
+        client,
+        app_id=app_id,
+        version=version,
+        platform=platform,
+    )
+    if not version_id:
+        return None
+    builds = client.pages(
+        f"/v1/preReleaseVersions/{version_id}/builds"
+        "?fields[builds]=version,processingState,uploadedDate,"
+        "usesNonExemptEncryption&limit=200"
+    )
+    return find_build(builds, build_number)
+
+
+def wait_for_existing_testflight_build(
+    client: AppStoreConnectClient,
+    *,
+    app_id: str,
+    version: str,
+    build_number: str,
+    platform: Platform,
+    timeout_seconds: int,
+    poll_seconds: int,
+) -> dict[str, Any] | None:
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        build = existing_testflight_build(
+            client,
+            app_id=app_id,
+            version=version,
+            build_number=build_number,
+            platform=platform,
+        )
+        if build or time.monotonic() >= deadline:
+            return build
+        time.sleep(poll_seconds)
 
 
 def parse_args() -> argparse.Namespace:
@@ -453,6 +662,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workflow-id", required=True)
     parser.add_argument("--repository-id", required=True)
     parser.add_argument("--tag", required=True)
+    parser.add_argument(
+        "--platform",
+        choices=["all", *PLATFORMS],
+        default="all",
+        help="Platform to publish. The release workflow publishes all platforms.",
+    )
     parser.add_argument("--build-run-id", default="")
     parser.add_argument(
         "--artifact-only",
@@ -474,6 +689,15 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=DEFAULT_TESTFLIGHT_TIMEOUT_SECONDS,
     )
+    parser.add_argument(
+        "--automatic-upload-grace-seconds",
+        type=int,
+        default=DEFAULT_AUTOMATIC_UPLOAD_GRACE_SECONDS,
+        help=(
+            "How long to let Xcode Cloud deliver iOS before falling back to "
+            "an altool upload. tvOS always uses the fallback immediately."
+        ),
+    )
     parser.add_argument("--poll-seconds", type=int, default=DEFAULT_POLL_SECONDS)
     return parser.parse_args()
 
@@ -485,9 +709,101 @@ def required_env(name: str) -> str:
     return value
 
 
+def publish_platform(
+    *,
+    args: argparse.Namespace,
+    client: AppStoreConnectClient,
+    platform: Platform,
+    app_id: str,
+    version: str,
+    build_number: str,
+    export: dict[str, Any],
+    workspace_path: Path,
+    key_id: str,
+    issuer_id: str,
+    private_key: str,
+) -> None:
+    platform_workspace = workspace_path / platform.key
+    platform_workspace.mkdir(parents=True, exist_ok=True)
+    ipa_path = download_ipa(export, platform_workspace)
+    bundle_id = os.environ.get(
+        platform.bundle_id_env, "com.ganesh47.Mather"
+    ).strip()
+    info = inspect_ipa(
+        ipa_path,
+        platform=platform,
+        expected_bundle_id=bundle_id,
+        expected_version=version,
+        expected_build_number=build_number,
+    )
+    print(f"{platform.label} App Store IPA ready: {ipa_path}", flush=True)
+    print(
+        f"Verified {info['CFBundleIdentifier']} {info['CFBundleShortVersionString']} "
+        f"({info['CFBundleVersion']}) for {platform.supported_platform}",
+        flush=True,
+    )
+    if args.artifact_only:
+        return
+
+    grace_seconds = (
+        args.automatic_upload_grace_seconds if platform.key == "ios" else 0
+    )
+    existing_build = wait_for_existing_testflight_build(
+        client,
+        app_id=app_id,
+        version=version,
+        build_number=build_number,
+        platform=platform,
+        timeout_seconds=grace_seconds,
+        poll_seconds=args.poll_seconds,
+    )
+    if existing_build:
+        print(
+            f"TestFlight already has {platform.label} {version} ({build_number}); "
+            "skipping duplicate upload",
+            flush=True,
+        )
+    else:
+        private_key_directory = platform_workspace / "private_keys"
+        private_key_directory.mkdir(mode=0o700)
+        private_key_path = private_key_directory / f"AuthKey_{key_id}.p8"
+        private_key_path.write_text(normalize_private_key(private_key))
+        private_key_path.chmod(0o600)
+        run_altool(
+            "--validate-app",
+            platform=platform,
+            ipa_path=ipa_path,
+            key_id=key_id,
+            issuer_id=issuer_id,
+            private_key_path=private_key_path,
+        )
+        run_altool(
+            "--upload-app",
+            platform=platform,
+            ipa_path=ipa_path,
+            key_id=key_id,
+            issuer_id=issuer_id,
+            private_key_path=private_key_path,
+        )
+
+    build_id = wait_for_internal_testflight(
+        client,
+        app_id=app_id,
+        version=version,
+        build_number=build_number,
+        platform=platform,
+        timeout_seconds=args.testflight_timeout_seconds,
+        poll_seconds=args.poll_seconds,
+    )
+    print(
+        f"{platform.label} {version} ({build_number}) is IN_BETA_TESTING "
+        f"(build {build_id})",
+        flush=True,
+    )
+
+
 def release(args: argparse.Namespace) -> None:
     app_id = required_env("APP_STORE_CONNECT_APP_ID")
-    bundle_id = os.environ.get("TVOS_BUNDLE_ID", "com.ganesh47.Mather").strip()
     issuer_id = os.environ.get("APP_STORE_CONNECT_ISSUER_ID", "").strip()
     key_id = required_env("APP_STORE_CONNECT_KEY_ID")
     private_key_path = os.environ.get("APP_STORE_CONNECT_PRIVATE_KEY_PATH", "").strip()
@@ -501,86 +817,75 @@ def release(args: argparse.Namespace) -> None:
         private_key=private_key,
     )
 
-    build_run_id = args.build_run_id
-    build_number = ""
-    if not build_run_id:
-        reference_id = find_git_reference(client, args.repository_id, args.tag)
-        build_run_id, build_number = start_build_run(
-            client,
-            workflow_id=args.workflow_id,
-            git_reference_id=reference_id,
-        )
-        print(
-            f"Started Xcode Cloud build {build_number} ({build_run_id}) "
-            f"for {args.tag}",
-            flush=True,
-        )
-
-    export, observed_build_number = wait_for_tv_export(
-        client,
-        build_run_id=build_run_id,
-        timeout_seconds=args.cloud_timeout_seconds,
-        poll_seconds=args.poll_seconds,
-    )
-    build_number = build_number or observed_build_number
-
     version = args.tag.removeprefix("v")
+    platforms = (
+        list(PLATFORMS.values())
+        if args.platform == "all"
+        else [PLATFORMS[args.platform]]
+    )
+    workflows = resolve_workflows(
+        client,
+        app_id=app_id,
+        preferred_workflow_id=args.workflow_id,
+        platforms=platforms,
+    )
+    if args.build_run_id and len(workflows) != 1:
+        raise ReleaseError(
+            "--build-run-id cannot cover platforms resolved to multiple workflows"
+        )
+
+    build_runs: dict[str, tuple[str, str]] = {}
+    if args.build_run_id:
+        workflow_id = next(iter(workflows))
+        build_runs[workflow_id] = (args.build_run_id, "")
+    else:
+        reference_id = find_git_reference(client, args.repository_id, args.tag)
+        for workflow_id, workflow_platforms in workflows.items():
+            build_run_id, build_number = start_build_run(
+                client,
+                workflow_id=workflow_id,
+                git_reference_id=reference_id,
+            )
+            build_runs[workflow_id] = (build_run_id, build_number)
+            labels = " and ".join(item.label for item in workflow_platforms)
+            print(
+                f"Started Xcode Cloud build {build_number} ({build_run_id}) "
+                f"for {args.tag}: {labels}",
+                flush=True,
+            )
+
     if args.output_dir:
         args.output_dir.mkdir(parents=True, exist_ok=True)
         workspace_context = _ExistingDirectory(args.output_dir)
     else:
-        workspace_context = tempfile.TemporaryDirectory(prefix="mather-tv-release-")
+        workspace_context = tempfile.TemporaryDirectory(prefix="mather-release-")
 
     with workspace_context as workspace:
         workspace_path = Path(workspace)
-        ipa_path = download_ipa(export, workspace_path)
-        info = inspect_ipa(
-            ipa_path,
-            expected_bundle_id=bundle_id,
-            expected_version=version,
-            expected_build_number=build_number,
-        )
-        print(f"tvOS App Store IPA ready: {ipa_path}", flush=True)
-        print(
-            f"Verified {info['CFBundleIdentifier']} {info['CFBundleShortVersionString']} "
-            f"({info['CFBundleVersion']}) for AppleTVOS",
-            flush=True,
-        )
-        if args.artifact_only:
-            return
-
-        private_key_directory = workspace_path / "private_keys"
-        private_key_directory.mkdir(mode=0o700)
-        private_key_path = private_key_directory / f"AuthKey_{key_id}.p8"
-        private_key_path.write_text(normalize_private_key(private_key))
-        private_key_path.chmod(0o600)
-        run_altool(
-            "--validate-app",
-            ipa_path=ipa_path,
-            key_id=key_id,
-            issuer_id=issuer_id,
-            private_key_path=private_key_path,
-        )
-        run_altool(
-            "--upload-app",
-            ipa_path=ipa_path,
-            key_id=key_id,
-            issuer_id=issuer_id,
-            private_key_path=private_key_path,
-        )
-        build_id = wait_for_internal_testflight(
-            client,
-            app_id=app_id,
-            version=version,
-            build_number=build_number,
-            timeout_seconds=args.testflight_timeout_seconds,
-            poll_seconds=args.poll_seconds,
-        )
-        print(
-            f"tvOS {version} ({build_number}) is IN_BETA_TESTING "
-            f"(build {build_id})",
-            flush=True,
-        )
+        for workflow_id, workflow_platforms in workflows.items():
+            build_run_id, started_build_number = build_runs[workflow_id]
+            for platform in workflow_platforms:
+                export, observed_build_number = wait_for_export(
+                    client,
+                    build_run_id=build_run_id,
+                    platform=platform,
+                    timeout_seconds=args.cloud_timeout_seconds,
+                    poll_seconds=args.poll_seconds,
+                )
+                build_number = started_build_number or observed_build_number
+                publish_platform(
+                    args=args,
+                    client=client,
+                    platform=platform,
+                    app_id=app_id,
+                    version=version,
+                    build_number=build_number,
+                    export=export,
+                    workspace_path=workspace_path,
+                    key_id=key_id,
+                    issuer_id=issuer_id,
+                    private_key=private_key,
+                )
 
 
 class _ExistingDirectory:
