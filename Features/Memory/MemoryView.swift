@@ -24,6 +24,44 @@ struct MemoryArtStyle {
     let ornamentColor: Color
 }
 
+enum CountryMemoryClueKind: String, CaseIterable, Equatable {
+    case flag
+    case currency
+    case monument
+    case capital
+    case language
+
+    var title: String {
+        switch self {
+        case .flag: return "Flags"
+        case .currency: return "Money"
+        case .monument: return "Landmarks"
+        case .capital: return "Capitals"
+        case .language: return "Languages"
+        }
+    }
+
+    var prompt: String {
+        switch self {
+        case .flag: return "Match each flag to its country"
+        case .currency: return "Match each money picture to its country"
+        case .monument: return "Match each landmark to its country"
+        case .capital: return "Match each capital to its country"
+        case .language: return "Match each official language to its country"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .flag: return "flag.fill"
+        case .currency: return "banknote.fill"
+        case .monument: return "building.2.fill"
+        case .capital: return "building.columns.fill"
+        case .language: return "text.bubble.fill"
+        }
+    }
+}
+
 // MARK: - Game difficulty
 
 enum MemoryDifficulty: CaseIterable {
@@ -88,6 +126,7 @@ struct MemoryView: View {
     @State private var askSession: MemoryAskConversationSession? = nil
     @State private var latestAskResponse: MemoryAskResponse? = nil
     @State private var descriptionTask: Task<Void, Never>? = nil
+    @State private var countryClueKind: CountryMemoryClueKind = .flag
 
     init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil) {
         self.appModel = appModel
@@ -308,6 +347,14 @@ struct MemoryView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .accessibilityIdentifier("memory-deck-card-count")
+
+            if deckSelection == .countryFlags {
+                Label(countryClueKind.prompt, systemImage: countryClueKind.symbolName)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(MatherTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("memory-country-clue-prompt")
+            }
         }
     }
 
@@ -482,6 +529,97 @@ struct MemoryView: View {
         }
     }
 
+    static func countryClueKind(forRound round: Int) -> CountryMemoryClueKind {
+        let kinds = CountryMemoryClueKind.allCases
+        return kinds[(round % kinds.count + kinds.count) % kinds.count]
+    }
+
+    static func buildCountryClueCards(for animals: [MemoryAnimal], clueKind: CountryMemoryClueKind) -> [MemoryCard] {
+        animals.flatMap { animal in
+            let clueAnimal = countryClueAnimal(for: animal, clueKind: clueKind)
+            let countryLabelAnimal = MemoryAnimal(
+                id: clueAnimal.id,
+                name: animal.canonicalName,
+                canonicalName: animal.canonicalName,
+                picture: animal.picture,
+                metadata: animal.metadata,
+                learningArtwork: animal.learningArtwork
+            )
+            return [
+                MemoryCard(pairId: clueAnimal.id, content: .picture(clueAnimal)),
+                MemoryCard(pairId: clueAnimal.id, content: .label(countryLabelAnimal))
+            ]
+        }
+    }
+
+    static func countryClueAnimal(for animal: MemoryAnimal, clueKind: CountryMemoryClueKind) -> MemoryAnimal {
+        let picture: MemoryPicture
+        switch clueKind {
+        case .flag:
+            picture = animal.picture
+        case .currency:
+            picture = animal.learningArtwork.first(where: { $0.assetName.hasPrefix("MemoryCurrency") })
+                .map { .asset($0.assetName) } ?? .text(countryFactValue("Currency Symbol", for: animal))
+        case .monument:
+            picture = animal.learningArtwork.first(where: { $0.assetName.hasPrefix("MemoryMonument") })
+                .map { .asset($0.assetName) } ?? .text(countryFactValue("Monument", for: animal))
+        case .capital:
+            picture = .text(countryFactValue("Capital", for: animal))
+        case .language:
+            picture = .text(countryFactValue("Language", for: animal))
+        }
+
+        return MemoryAnimal(
+            id: "\(animal.id)-clue-\(clueKind.rawValue)",
+            name: animal.canonicalName,
+            canonicalName: animal.canonicalName,
+            picture: picture,
+            metadata: animal.metadata,
+            learningArtwork: animal.learningArtwork
+        )
+    }
+
+    static func countryFactValue(_ title: String, for animal: MemoryAnimal) -> String {
+        animal.detailCards.first(where: { $0.title == title })?.value ?? animal.canonicalName
+    }
+
+    static func preferredCountryClueAnimals(
+        from deck: [MemoryAnimal],
+        pairCount: Int,
+        clueKind: CountryMemoryClueKind,
+        recentPairHistory: [String]
+    ) -> [MemoryAnimal] {
+        let recentIDs = Set(recentPairHistory)
+        let ordered = deck.filter { !recentIDs.contains($0.id) }.shuffled()
+            + deck.filter { recentIDs.contains($0.id) }.shuffled()
+        var seenClues: Set<String> = []
+        var chosen: [MemoryAnimal] = []
+
+        for animal in ordered {
+            let key = countryClueDistinctKey(for: animal, clueKind: clueKind)
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            guard seenClues.insert(key).inserted else { continue }
+            chosen.append(animal)
+            if chosen.count == pairCount { break }
+        }
+        return chosen
+    }
+
+    static func countryClueDistinctKey(for animal: MemoryAnimal, clueKind: CountryMemoryClueKind) -> String {
+        switch clueKind {
+        case .currency:
+            return countryFactValue("Currency", for: animal)
+        case .capital:
+            return countryFactValue("Capital", for: animal)
+        case .language:
+            return countryFactValue("Language", for: animal)
+        case .monument:
+            return countryFactValue("Monument", for: animal)
+        case .flag:
+            return animal.canonicalName
+        }
+    }
+
     private var emojiSize: CGFloat {
         switch difficulty {
         case .easy: return 56
@@ -619,7 +757,8 @@ struct MemoryView: View {
 
     private func handleDoubleTap(_ card: MemoryCard) {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
-        let selectedAnimal = animal(for: card)
+        let cardAnimal = animal(for: card)
+        let selectedAnimal = Self.originalCountryAnimal(for: cardAnimal)
         descriptionTask?.cancel()
         askSession = nil
         latestAskResponse = nil
@@ -800,9 +939,24 @@ struct MemoryView: View {
 
     private func dealRound() {
         descriptionTask?.cancel()
-        let roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
+        let roundAnimals: [MemoryAnimal]
+        if deckSelection == .countryFlags {
+            countryClueKind = Self.countryClueKind(forRound: roundsPlayed)
+            roundAnimals = Self.preferredCountryClueAnimals(
+                from: deck,
+                pairCount: totalPairs,
+                clueKind: countryClueKind,
+                recentPairHistory: recentPairHistory
+            )
+        } else {
+            roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
+        }
         recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs, deckCount: deck.count)
-        cards = Self.buildCards(for: roundAnimals).shuffled()
+        if deckSelection == .countryFlags {
+            cards = Self.buildCountryClueCards(for: roundAnimals, clueKind: countryClueKind).shuffled()
+        } else {
+            cards = Self.buildCards(for: roundAnimals).shuffled()
+        }
         learningContent = nil
         askSession = nil
         latestAskResponse = nil
@@ -898,6 +1052,15 @@ struct MemoryView: View {
     static func accessibilityLabel(for card: MemoryCard) -> String {
         switch card.content {
         case .picture(let animal):
+            if let clueKind = countryClueKind(for: animal) {
+                switch clueKind {
+                case .flag: return "Flag clue: \(countryFactValue("Colors", for: animal))"
+                case .currency: return "Money clue: \(countryFactValue("Currency", for: animal))"
+                case .monument: return "Landmark clue: \(countryFactValue("Monument", for: animal))"
+                case .capital: return "Capital clue: \(countryFactValue("Capital", for: animal))"
+                case .language: return "Official language clue: \(countryFactValue("Language", for: animal))"
+                }
+            }
             if animal.metadata.deck == .countryFlags {
                 return "Flag of \(animal.canonicalName)"
             }
@@ -905,6 +1068,16 @@ struct MemoryView: View {
         case .label(let animal):
             return animal.name
         }
+    }
+
+    static func countryClueKind(for animal: MemoryAnimal) -> CountryMemoryClueKind? {
+        guard let markerRange = animal.id.range(of: "-clue-") else { return nil }
+        return CountryMemoryClueKind(rawValue: String(animal.id[markerRange.upperBound...]))
+    }
+
+    static func originalCountryAnimal(for animal: MemoryAnimal) -> MemoryAnimal {
+        guard countryClueKind(for: animal) != nil else { return animal }
+        return MemoryDeck.countryFlags.first(where: { $0.canonicalName == animal.canonicalName }) ?? animal
     }
 
     static func accessibilityLabel(for card: MemoryCard, difficulty: MemoryDifficulty) -> String {

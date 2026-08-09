@@ -345,6 +345,72 @@ struct MemoryViewTests {
     }
 
     @MainActor
+    @Test func countryRoundsCycleThroughFiveMeaningfullyDifferentClues() {
+        #expect((0..<7).map(MemoryView.countryClueKind(forRound:)) == [
+            .flag, .currency, .monument, .capital, .language, .flag, .currency
+        ])
+
+        let india = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!
+        let expectedPictures: [(CountryMemoryClueKind, MemoryPicture, String)] = [
+            (.flag, india.picture, "Flag clue: saffron, white, green, navy blue"),
+            (.currency, .asset("MemoryCurrencyIndia"), "Money clue: Indian rupee (INR)"),
+            (.monument, .asset("MemoryMonumentIndia"), "Landmark clue: Taj Mahal"),
+            (.capital, .text("New Delhi"), "Capital clue: New Delhi"),
+            (.language, .text("Hindi and English for Union government"), "Official language clue: Hindi and English for Union government")
+        ]
+
+        for (kind, expectedPicture, expectedAccessibilityLabel) in expectedPictures {
+            let cards = MemoryView.buildCountryClueCards(for: [india], clueKind: kind)
+            #expect(cards.count == 2)
+            #expect(Set(cards.map(\.pairId)).count == 1)
+
+            let pictureCard = cards.first { if case .picture = $0.content { return true }; return false }!
+            let labelCard = cards.first { if case .label = $0.content { return true }; return false }!
+
+            if case let .picture(clueAnimal) = pictureCard.content {
+                #expect(clueAnimal.picture == expectedPicture)
+                #expect(MemoryView.countryClueKind(for: clueAnimal) == kind)
+                #expect(MemoryView.originalCountryAnimal(for: clueAnimal) == india)
+            } else {
+                Issue.record("Expected a picture clue card")
+            }
+            if case let .label(labelAnimal) = labelCard.content {
+                #expect(labelAnimal.name == "India")
+            } else {
+                Issue.record("Expected a country label card")
+            }
+            #expect(MemoryView.accessibilityLabel(for: pictureCard) == expectedAccessibilityLabel)
+            #expect(MemoryView.accessibilityLabel(for: labelCard) == "India")
+        }
+    }
+
+    @MainActor
+    @Test func countryCluePromptsExplainEachMatchingQuestion() {
+        #expect(CountryMemoryClueKind.flag.prompt == "Match each flag to its country")
+        #expect(CountryMemoryClueKind.currency.prompt.localizedCaseInsensitiveContains("money picture"))
+        #expect(CountryMemoryClueKind.monument.prompt.localizedCaseInsensitiveContains("landmark"))
+        #expect(CountryMemoryClueKind.capital.prompt.localizedCaseInsensitiveContains("capital"))
+        #expect(CountryMemoryClueKind.language.prompt.localizedCaseInsensitiveContains("official language"))
+        #expect(Set(CountryMemoryClueKind.allCases.map(\.symbolName)).count == CountryMemoryClueKind.allCases.count)
+    }
+
+    @MainActor
+    @Test func countryRoundsAvoidDuplicateVisibleCurrencyAndLanguageClues() {
+        for kind in CountryMemoryClueKind.allCases {
+            let selected = MemoryView.preferredCountryClueAnimals(
+                from: MemoryDeck.countryFlags,
+                pairCount: MemoryDifficulty.hard.pairCount,
+                clueKind: kind,
+                recentPairHistory: ["country-flag-india", "country-flag-japan"]
+            )
+            let visibleClues = selected.map { MemoryView.countryClueDistinctKey(for: $0, clueKind: kind) }
+
+            #expect(selected.count == MemoryDifficulty.hard.pairCount)
+            #expect(Set(visibleClues).count == visibleClues.count)
+        }
+    }
+
+    @MainActor
     @Test func memoryCardModelsKeepPictureAndNameFacesPure() {
         let cow = MemoryDeck.domesticAnimals[0]
         let flag = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!

@@ -187,7 +187,7 @@ struct MemoryGalleryTVView: View {
                 .stroke(.white.opacity(0.14), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Picture prompt. \(promptAccessibilityLabel(for: round.promptCard)).")
+        .accessibilityLabel("Picture prompt. \(promptAccessibilityLabel(for: round)).")
         .accessibilityHint("Move right to choose the matching name.")
         .accessibilityIdentifier("tv-memory-picture-prompt")
     }
@@ -216,7 +216,7 @@ struct MemoryGalleryTVView: View {
             }
             .transition(.opacity)
         } else {
-            MemoryGalleryPromptArtwork(animal: round.promptCard)
+            MemoryGalleryPromptArtwork(picture: round.promptPicture)
         }
     }
 
@@ -468,14 +468,22 @@ struct MemoryGalleryTVView: View {
         return "Not a match. The correct answer was \(accessibilityName(for: round.promptCard))."
     }
 
-    private func promptAccessibilityLabel(for animal: MemoryAnimal) -> String {
-        switch animal.metadata.deck {
-        case .countryFlags:
-            return "Country flag. Match it to the country name, then discover its capital, language, money, and landmark."
-        case .vehicles where animal.metadata.kind.localizedCaseInsensitiveCompare("vehicle part") == .orderedSame:
-            return "Picture of the vehicle part called \(accessibilityName(for: animal))."
+    private func promptAccessibilityLabel(for round: MemoryGalleryTVRound) -> String {
+        switch round.countryPromptKind {
+        case .flag:
+            return "Country flag. Choose the country that has this flag."
+        case .monument:
+            return "Famous place picture. Choose the country where this place is found."
+        case .currency:
+            return "Money picture. Choose the country that uses this money."
+        case .capital:
+            return "Capital city clue. Choose the country that has this capital."
+        case .officialLanguage:
+            return "Official language clue. Choose the country that uses this language."
+        case nil where round.isVehiclePartPrompt:
+            return "Picture of the vehicle part called \(accessibilityName(for: round.promptCard))."
         default:
-            return "Picture of \(accessibilityName(for: animal))."
+            return "Picture of \(accessibilityName(for: round.promptCard))."
         }
     }
 
@@ -543,7 +551,7 @@ private struct MemoryGalleryCategoryTile: View {
 }
 
 private struct MemoryGalleryPromptArtwork: View {
-    let animal: MemoryAnimal
+    let picture: MemoryPicture
 
     var body: some View {
         ZStack {
@@ -567,7 +575,7 @@ private struct MemoryGalleryPromptArtwork: View {
 
     @ViewBuilder
     private var pictureView: some View {
-        switch animal.picture {
+        switch picture {
         case .emoji(let emoji):
             Text(emoji)
                 .font(.system(size: 172))

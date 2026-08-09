@@ -102,6 +102,64 @@ struct MemoryGalleryTVRoundTests {
         #expect(round.answerChoices.allSatisfy { $0.metadata.deck == .countryFlags })
     }
 
+    @Test func countryGameRotatesThroughFiveRealChallengeTypes() {
+        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+            MemoryGalleryTVRound.make(category: .flags, index: $0)
+        }
+
+        #expect(rounds.map(\.countryPromptKind) == [
+            .flag, .monument, .currency, .capital, .officialLanguage, .flag
+        ])
+        #expect(rounds.map(\.promptTitle) == [
+            "Country flag", "Famous place", "Money clue", "Capital city", "Official language", "Country flag"
+        ])
+
+        guard case .asset(let monumentAsset) = rounds[1].promptPicture else {
+            Issue.record("Expected a monument image prompt")
+            return
+        }
+        guard case .asset(let currencyAsset) = rounds[2].promptPicture else {
+            Issue.record("Expected a currency image prompt")
+            return
+        }
+        guard case .text(let capital) = rounds[3].promptPicture else {
+            Issue.record("Expected a capital-name prompt")
+            return
+        }
+        guard case .text(let language) = rounds[4].promptPicture else {
+            Issue.record("Expected an official-language prompt")
+            return
+        }
+
+        #expect(monumentAsset.hasPrefix("MemoryMonument"))
+        #expect(currencyAsset.hasPrefix("MemoryCurrency"))
+        #expect(capital == rounds[3].promptCard.detailCards.first { $0.title == "Capital" }?.value)
+        #expect(language == rounds[4].promptCard.detailCards.first { $0.title == "Language" }?.value)
+    }
+
+    @Test func countryChallengeAnswersRemainCountryNamesAndAvoidDuplicateClues() {
+        for index in 0..<MemoryGalleryTVGame.roundsPerGame {
+            let round = MemoryGalleryTVRound.make(category: .flags, index: index)
+            #expect(round.answerChoices.count == MemoryGalleryTVRound.choiceCount)
+            #expect(round.answerChoices.contains { $0.id == round.correctAnswerID })
+            #expect(round.answerChoices.allSatisfy { $0.name == $0.canonicalName })
+
+            let clueTitle: String?
+            switch round.countryPromptKind {
+            case .currency: clueTitle = "Currency"
+            case .capital: clueTitle = "Capital"
+            case .officialLanguage: clueTitle = "Language"
+            case .flag, .monument, nil: clueTitle = nil
+            }
+            if let clueTitle {
+                let clues = round.answerChoices.compactMap { card in
+                    card.detailCards.first { $0.title == clueTitle }?.value
+                }
+                #expect(Set(clues).count == clues.count)
+            }
+        }
+    }
+
     @Test func countryRevealPrioritizesACompactPassportOfRichFacts() {
         let country = MemoryAnimal(
             id: "test-country",

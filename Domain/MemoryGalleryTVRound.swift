@@ -58,6 +58,20 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
+enum MemoryGalleryTVCountryPromptKind: String, CaseIterable, Equatable {
+    case flag
+    case monument
+    case currency
+    case capital
+    case officialLanguage
+
+    static func kind(forRoundIndex index: Int) -> Self {
+        let sequence: [Self] = [.flag, .monument, .currency, .capital, .officialLanguage]
+        let remainder = index % sequence.count
+        return sequence[remainder >= 0 ? remainder : remainder + sequence.count]
+    }
+}
+
 struct MemoryGalleryTVRound: Equatable {
     let category: MemoryGalleryTVCategory
     let index: Int
@@ -71,16 +85,58 @@ struct MemoryGalleryTVRound: Equatable {
             && promptCard.metadata.kind.localizedCaseInsensitiveCompare("vehicle part") == .orderedSame
     }
 
+    var countryPromptKind: MemoryGalleryTVCountryPromptKind? {
+        guard category == .flags else { return nil }
+        return .kind(forRoundIndex: index)
+    }
+
+    var promptPicture: MemoryPicture {
+        guard let countryPromptKind else { return promptCard.picture }
+
+        switch countryPromptKind {
+        case .flag:
+            return promptCard.picture
+        case .monument:
+            return artworkPicture(matching: [], excluding: ["money"])
+                ?? factPicture(titled: "Monument")
+                ?? promptCard.picture
+        case .currency:
+            return artworkPicture(matching: ["money", "currency"])
+                ?? factPicture(titled: "Currency")
+                ?? promptCard.picture
+        case .capital:
+            return factPicture(titled: "Capital") ?? promptCard.picture
+        case .officialLanguage:
+            return factPicture(titled: "Language") ?? promptCard.picture
+        }
+    }
+
     var promptTitle: String {
         switch category {
-        case .flags: return "Country flag"
+        case .flags:
+            switch countryPromptKind {
+            case .flag: return "Country flag"
+            case .monument: return "Famous place"
+            case .currency: return "Money clue"
+            case .capital: return "Capital city"
+            case .officialLanguage: return "Official language"
+            case nil: return "Country clue"
+            }
         default: return isVehiclePartPrompt ? "Vehicle part" : "Picture"
         }
     }
 
     var choicePrompt: String {
         switch category {
-        case .flags: return "Which country has this flag?"
+        case .flags:
+            switch countryPromptKind {
+            case .flag: return "Which country has this flag?"
+            case .monument: return "Which country is home to this place?"
+            case .currency: return "Which country uses this money?"
+            case .capital: return "Which country has this capital?"
+            case .officialLanguage: return "Which country uses this official language?"
+            case nil: return "Which country matches this clue?"
+            }
         default: return isVehiclePartPrompt ? "Which vehicle part is this?" : "Choose the matching name"
         }
     }
@@ -134,9 +190,11 @@ struct MemoryGalleryTVRound: Equatable {
             deckCount: deck.count
         )
         let prompt = deck[promptIndex]
-        let forwardChoices = (0..<choiceCount).map { offset in
-            deck[positiveModulo(promptIndex + offset, deck.count)]
-        }
+        let forwardChoices = answerChoices(
+            from: deck,
+            promptIndex: promptIndex,
+            countryPromptKind: category == .flags ? .kind(forRoundIndex: normalizedIndex) : nil
+        )
         let rotatedChoices = rotate(forwardChoices, by: promptIndex % choiceCount)
 
         return MemoryGalleryTVRound(
@@ -174,6 +232,69 @@ struct MemoryGalleryTVRound: Equatable {
         guard !values.isEmpty else { return values }
         let split = positiveModulo(offset, values.count)
         return Array(values[split...]) + Array(values[..<split])
+    }
+
+    private static func answerChoices(
+        from deck: [MemoryAnimal],
+        promptIndex: Int,
+        countryPromptKind: MemoryGalleryTVCountryPromptKind?
+    ) -> [MemoryAnimal] {
+        guard let countryPromptKind else {
+            return (0..<choiceCount).map { offset in
+                deck[positiveModulo(promptIndex + offset, deck.count)]
+            }
+        }
+
+        var choices = [deck[promptIndex]]
+        var usedClues = Set(choices.compactMap { countryClueKey(for: $0, kind: countryPromptKind) })
+
+        for offset in 1..<deck.count where choices.count < choiceCount {
+            let candidate = deck[positiveModulo(promptIndex + offset, deck.count)]
+            if let clue = countryClueKey(for: candidate, kind: countryPromptKind), usedClues.contains(clue) {
+                continue
+            }
+            choices.append(candidate)
+            if let clue = countryClueKey(for: candidate, kind: countryPromptKind) {
+                usedClues.insert(clue)
+            }
+        }
+
+        for offset in 1..<deck.count where choices.count < choiceCount {
+            let candidate = deck[positiveModulo(promptIndex + offset, deck.count)]
+            guard !choices.contains(where: { $0.id == candidate.id }) else { continue }
+            choices.append(candidate)
+        }
+        return choices
+    }
+
+    private static func countryClueKey(
+        for card: MemoryAnimal,
+        kind: MemoryGalleryTVCountryPromptKind
+    ) -> String? {
+        let factTitle: String?
+        switch kind {
+        case .currency: factTitle = "Currency"
+        case .capital: factTitle = "Capital"
+        case .officialLanguage: factTitle = "Language"
+        case .flag, .monument: factTitle = nil
+        }
+        guard let factTitle else { return nil }
+        return card.detailCards.first {
+            $0.title.localizedCaseInsensitiveCompare(factTitle) == .orderedSame
+        }?.value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+    }
+
+    private func factPicture(titled title: String) -> MemoryPicture? {
+        promptCard.detailCards.first {
+            $0.title.localizedCaseInsensitiveCompare(title) == .orderedSame
+        }.map { .text($0.value) }
+    }
+
+    private func artworkPicture(matching terms: [String], excluding excludedTerms: [String] = []) -> MemoryPicture? {
+        promptCard.learningArtwork.first { artwork in
+            (terms.isEmpty || terms.contains { artwork.title.localizedCaseInsensitiveContains($0) })
+                && !excludedTerms.contains { artwork.title.localizedCaseInsensitiveContains($0) }
+        }.map { .asset($0.assetName) }
     }
 }
 
