@@ -65,10 +65,19 @@ enum MemoryGalleryTVCountryPromptKind: String, CaseIterable, Equatable {
     case capital
     case officialLanguage
 
+    /// Ten-question chapter repeated three times in a country session.
+    /// Landmarks and money make up 18 of the 30 questions, with flags,
+    /// capitals, and languages providing varied retrieval practice.
+    static let countryQuestionChapter: [Self] = [
+        .monument, .currency, .flag, .monument, .currency,
+        .capital, .monument, .currency, .officialLanguage, .flag
+    ]
+
     static func kind(forRoundIndex index: Int) -> Self {
-        let sequence: [Self] = [.flag, .monument, .currency, .capital, .officialLanguage]
-        let remainder = index % sequence.count
-        return sequence[remainder >= 0 ? remainder : remainder + sequence.count]
+        let remainder = index % countryQuestionChapter.count
+        return countryQuestionChapter[
+            remainder >= 0 ? remainder : remainder + countryQuestionChapter.count
+        ]
     }
 }
 
@@ -183,7 +192,8 @@ struct MemoryGalleryTVRound: Equatable {
         let deck = category.deck
         precondition(deck.count >= choiceCount, "Memory Gallery TV categories need at least \(choiceCount) cards.")
 
-        let normalizedIndex = positiveModulo(index, deck.count)
+        let roundCycleLength = max(deck.count, MemoryGalleryTVGame.roundGoal(for: category))
+        let normalizedIndex = positiveModulo(index, roundCycleLength)
         let promptIndex = promptDeckIndex(
             for: category,
             roundIndex: normalizedIndex,
@@ -221,10 +231,14 @@ struct MemoryGalleryTVRound: Equatable {
     ) -> Int {
         guard category == .vehicles || category == .flags else { return roundIndex }
 
-        // Vehicle and country decks are intentionally broad. Spread a six-round
-        // TV session across the complete deck so every replay is not limited to
-        // the first six familiar cards.
-        let spreadIndex = roundIndex * deckCount / MemoryGalleryTVGame.roundsPerGame
+        if category == .flags {
+            // Thirty questions revisit countries with different clue types.
+            // Walk the full deck before repeating so every country appears.
+            return positiveModulo(roundIndex, deckCount)
+        }
+
+        // Spread the shorter vehicle session across its complete expanded deck.
+        let spreadIndex = roundIndex * deckCount / MemoryGalleryTVGame.roundGoal(for: category)
         return positiveModulo(spreadIndex, deckCount)
     }
 
@@ -276,7 +290,8 @@ struct MemoryGalleryTVRound: Equatable {
         case .currency: factTitle = "Currency"
         case .capital: factTitle = "Capital"
         case .officialLanguage: factTitle = "Language"
-        case .flag, .monument: factTitle = nil
+        case .monument: factTitle = "Monument"
+        case .flag: factTitle = nil
         }
         guard let factTitle else { return nil }
         return card.detailCards.first {
@@ -305,7 +320,12 @@ struct MemoryGalleryTVGame: Equatable {
         case completed
     }
 
-    static let roundsPerGame = 6
+    static let standardRoundGoal = 6
+    static let countryRoundGoal = 30
+
+    static func roundGoal(for category: MemoryGalleryTVCategory) -> Int {
+        category == .flags ? countryRoundGoal : standardRoundGoal
+    }
 
     private(set) var phase: Phase = .choosingCategory
     private(set) var category: MemoryGalleryTVCategory?
@@ -326,15 +346,23 @@ struct MemoryGalleryTVGame: Equatable {
         selectedAnswerID != nil
     }
 
+    var roundGoal: Int {
+        category.map(Self.roundGoal(for:)) ?? Self.standardRoundGoal
+    }
+
+    private var progressNoun: String {
+        category == .flags ? "Question" : "Picture"
+    }
+
     var progressText: String {
         switch phase {
         case .choosingCategory:
             return "Choose a gallery"
         case .playing:
             let visibleRound = hasAnsweredCurrentRound ? completedRoundCount : completedRoundCount + 1
-            return "Picture \(min(visibleRound, Self.roundsPerGame)) of \(Self.roundsPerGame)"
+            return "\(progressNoun) \(min(visibleRound, roundGoal)) of \(roundGoal)"
         case .completed:
-            return "\(Self.roundsPerGame) pictures complete"
+            return "\(roundGoal) \(progressNoun.lowercased())s complete"
         }
     }
 
@@ -379,7 +407,7 @@ struct MemoryGalleryTVGame: Equatable {
     mutating func advance() {
         guard phase == .playing, selectedAnswerID != nil else { return }
 
-        if completedRoundCount >= Self.roundsPerGame {
+        if completedRoundCount >= roundGoal {
             phase = .completed
             selectedAnswerID = nil
             lastAnswerWasCorrect = nil

@@ -36,13 +36,13 @@ struct MemoryGalleryTVView: View {
                     .foregroundStyle(.white)
                     .accessibilityIdentifier("tv-memory-gallery-title")
 
-                Text("Pick a gallery, then match six big pictures. No timer—just play.")
+                Text("Match big pictures with no timer. Countries has 30 questions packed with money and landmarks.")
                     .font(.system(size: 30, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.74))
                     .accessibilityIdentifier("tv-memory-gallery-prompt")
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Memory Gallery. Pick a gallery, then match six big pictures. There is no timer.")
+            .accessibilityLabel("Memory Gallery. Match big pictures with no timer. The Countries gallery has 30 questions with money and landmarks.")
 
             categoryShelf
 
@@ -70,7 +70,7 @@ struct MemoryGalleryTVView: View {
                 .buttonStyle(.plain)
                 .focused($focusedCategory, equals: category.id)
                 .accessibilityLabel("\(category.title), \(category.subtitle)")
-                .accessibilityHint("Starts a six-picture \(category.title) matching game.")
+                .accessibilityHint(categoryAccessibilityHint(category))
                 .accessibilityIdentifier("tv-memory-category-\(category.id)")
             }
         }
@@ -271,7 +271,7 @@ struct MemoryGalleryTVView: View {
                 Button {
                     nextRound()
                 } label: {
-                    Label(nextActionTitle, systemImage: game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "sparkles" : "forward.fill")
+                    Label(nextActionTitle, systemImage: game.completedRoundCount == game.roundGoal ? "sparkles" : "forward.fill")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .padding(.horizontal, 24)
                         .padding(.vertical, 18)
@@ -280,7 +280,7 @@ struct MemoryGalleryTVView: View {
                 .focused($nextButtonFocused)
                 .background(nextButtonFocused ? .white : Color(red: 0.55, green: 0.88, blue: 1.0).opacity(0.20), in: Capsule())
                 .foregroundStyle(nextButtonFocused ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
-                .accessibilityIdentifier(game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "tv-memory-see-results" : "tv-memory-next-picture")
+                .accessibilityIdentifier(game.completedRoundCount == game.roundGoal ? "tv-memory-see-results" : "tv-memory-next-picture")
             }
             .padding(24)
             .frame(width: 802)
@@ -318,13 +318,13 @@ struct MemoryGalleryTVView: View {
                     .font(.system(size: 66, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .accessibilityIdentifier("tv-memory-completion-title")
-                Text("You explored six \(game.category?.title.lowercased() ?? "gallery") pictures.")
+                Text(completionSummary)
                     .font(.system(size: 28, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.70))
             }
 
             HStack(spacing: 24) {
-                completionStat(value: "\(game.correctCount)/\(MemoryGalleryTVGame.roundsPerGame)", label: "matched", symbol: "checkmark.circle.fill")
+                completionStat(value: "\(game.correctCount)/\(game.roundGoal)", label: "matched", symbol: "checkmark.circle.fill")
                 completionStat(value: "\(game.bestStreak)", label: "best streak", symbol: "flame.fill")
             }
 
@@ -380,6 +380,20 @@ struct MemoryGalleryTVView: View {
         .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
+    private func categoryAccessibilityHint(_ category: MemoryGalleryTVCategory) -> String {
+        if category == .flags {
+            return "Starts a 30-question Countries game with landmarks, money, flags, capitals, and languages."
+        }
+        return "Starts a six-picture \(category.title) matching game."
+    }
+
+    private var completionSummary: String {
+        if game.category == .flags {
+            return "You explored 30 country questions with money, landmarks, flags, capitals, and languages."
+        }
+        return "You explored six \(game.category?.title.lowercased() ?? "gallery") pictures."
+    }
+
     private var celebrationCopy: String {
         switch game.streak {
         case 3...: return "\(game.streak) in a row!"
@@ -389,19 +403,18 @@ struct MemoryGalleryTVView: View {
     }
 
     private var nextActionTitle: String {
-        game.completedRoundCount == MemoryGalleryTVGame.roundsPerGame ? "See results" : "Next picture"
+        if game.completedRoundCount == game.roundGoal { return "See results" }
+        return game.category == .flags ? "Next question" : "Next picture"
     }
 
     private var completionTitle: String {
-        switch game.correctCount {
-        case MemoryGalleryTVGame.roundsPerGame: return "Perfect gallery!"
-        case 4...: return "Gallery star!"
-        default: return "Gallery explored!"
-        }
+        if game.correctCount == game.roundGoal { return "Perfect gallery!" }
+        if game.correctCount >= max(4, game.roundGoal * 2 / 3) { return "Gallery star!" }
+        return "Gallery explored!"
     }
 
     private var completionSymbol: String {
-        game.correctCount == MemoryGalleryTVGame.roundsPerGame ? "star.circle.fill" : "sparkles"
+        game.correctCount == game.roundGoal ? "star.circle.fill" : "sparkles"
     }
 
     private func start(_ category: MemoryGalleryTVCategory) {

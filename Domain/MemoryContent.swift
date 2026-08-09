@@ -157,6 +157,7 @@ struct MemoryImageAssetProvenance: Equatable {
     let assetName: String
     let cardId: String
     let sourceName: String
+    let sourceUrl: String
     let creator: String
     let creditLine: String
     let license: String
@@ -379,14 +380,14 @@ enum MemoryDeck {
     ]
 
     static let planetImageAssetPlan: [MemoryImageAssetPlan] = [
-        importedImagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "Mercury planet disk, gray cratered surface, black or transparent background", notes: "craters visible; avoid confusing with Moon unless labeled in provenance", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "Venus planet disk, pale yellow cloud-covered surface", notes: "soft yellow cloud bands; no surface lava imagery unless educationally intentional", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "Earth planet disk showing blue oceans, green/brown land, white clouds", notes: "full globe preferred; keep recognizable continents/clouds", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "Mars planet disk, rusty red surface with darker markings", notes: "red/orange treatment must be distinct from Venus", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "Jupiter planet disk with brown cream bands and Great Red Spot", notes: "Great Red Spot is the key recognition cue", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "Saturn with rings, tan/gold planet, transparent or dark background", notes: "rings must fit fully inside square card crop", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-uranus", asset: "MemoryPlanetUranus", prompt: "Uranus planet disk, pale cyan blue-green, minimal bands", notes: "tilted ring optional only if sourced and legible", sourceName: "Project-owned deterministic drawing", license: "Project-owned"),
-        importedImagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "Neptune planet disk, deep blue with subtle storm/cloud texture", notes: "deeper blue than Uranus; avoid over-saturated fantasy art", sourceName: "Project-owned deterministic drawing", license: "Project-owned")
+        importedImagePlan("planet-mercury", asset: "MemoryPlanetMercury", prompt: "NASA MESSENGER global Mercury mosaic", notes: "orthographic projection from spacecraft images; craters remain visible at card size", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-venus", asset: "MemoryPlanetVenus", prompt: "NASA Mariner 10 view of Venus's cloud-covered disk", notes: "show the real cloud deck, not the radar-mapped surface often used in illustrations", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-earth", asset: "MemoryPlanetEarth", prompt: "NASA VIIRS Blue Marble Earth composite", notes: "full globe with recognizable land, ocean, and clouds", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-mars", asset: "MemoryPlanetMars", prompt: "NASA Viking global color mosaic of Mars", notes: "near-natural color orthographic projection with polar cap and Valles Marineris visible", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-jupiter", asset: "MemoryPlanetJupiter", prompt: "NASA Cassini true-color Jupiter globe", notes: "spacecraft mosaic projected onto a globe; Great Red Spot remains visible", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-saturn", asset: "MemoryPlanetSaturn", prompt: "NASA Cassini natural-color Saturn panorama", notes: "full ring system must remain inside the square card", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-uranus", asset: "MemoryPlanetUranus", prompt: "NASA Voyager 2 full-disk view of Uranus", notes: "use the pale blue-green observed disk without invented surface detail", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines"),
+        importedImagePlan("planet-neptune", asset: "MemoryPlanetNeptune", prompt: "NASA Voyager 2 full-disk view of Neptune", notes: "retain the mission image's visible clouds and Great Dark Spot", sourceName: "NASA Science mission imagery", license: "NASA media usage guidelines")
     ]
 
     static let fishImageAssetPlan: [MemoryImageAssetPlan] = [
@@ -402,7 +403,7 @@ enum MemoryDeck {
 
     static let planets: [MemoryAnimal] = [
         planet("planet-mercury", prompt: "☿", asset: "MemoryPlanetMercury", name: "Mercury", order: "1st from the Sun", type: "rocky planet", size: "4,879 km wide", colors: "gray", funFact: "A year lasts 88 days"),
-        planet("planet-venus", prompt: "♀", asset: "MemoryPlanetVenus", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "pale yellow", funFact: "It spins very slowly"),
+        planet("planet-venus", prompt: "♀", asset: "MemoryPlanetVenus", name: "Venus", order: "2nd from the Sun", type: "rocky planet", size: "12,104 km wide", colors: "creamy white and pale tan", funFact: "It spins very slowly"),
         planet("planet-earth", prompt: "⊕", asset: "MemoryPlanetEarth", name: "Earth", order: "3rd from the Sun", type: "rocky planet", size: "12,742 km wide", colors: "blue, green, white", funFact: "It has one moon"),
         planet("planet-mars", prompt: "♂", asset: "MemoryPlanetMars", name: "Mars", order: "4th from the Sun", type: "rocky planet", size: "6,779 km wide", colors: "rusty red", funFact: "It has two small moons"),
         planet("planet-jupiter", prompt: "♃", asset: "MemoryPlanetJupiter", name: "Jupiter", order: "5th from the Sun", type: "gas giant", size: "139,820 km wide", colors: "brown, cream, orange", funFact: "It is the biggest planet"),
@@ -522,14 +523,14 @@ enum MemoryDeck {
     }()
 
     static let imageAssetProvenance: [MemoryImageAssetProvenance] = [
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetMercury", cardId: "planet-mercury", sha256: "9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetVenus", cardId: "planet-venus", sha256: "3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetEarth", cardId: "planet-earth", sha256: "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetMars", cardId: "planet-mars", sha256: "8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetJupiter", cardId: "planet-jupiter", sha256: "0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetSaturn", cardId: "planet-saturn", sha256: "798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetUranus", cardId: "planet-uranus", sha256: "88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd"),
-        generatedIssue352ImageProvenance(assetName: "MemoryPlanetNeptune", cardId: "planet-neptune", sha256: "ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03"),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetMercury", cardId: "planet-mercury", sourceID: "PIA15160", sourceTitle: "Mercury Globe: 0°N, 0°E", sourceUrl: "https://science.nasa.gov/photojournal/mercury-globe-0n-0e/", creator: "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington", originalFileName: "PIA15160.jpg", originalSha256: "f223680df8f972b9cf373d79c4b2d602e650e84c64f4d44e886d2638935f42ee", derivativeSha256: "808fde1384ddb7ee38aac5f544b068b3a08b6986d57d3fad59c84c980e4c8f67", processingNote: "MESSENGER images assembled as an orthographic global mosaic by the source team."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetVenus", cardId: "planet-venus", sourceID: "PIA23791", sourceTitle: "Venus from Mariner 10", sourceUrl: "https://science.nasa.gov/photojournal/venus-from-mariner-10/", creator: "NASA/JPL-Caltech; source processing by Kevin M. Gill", originalFileName: "PIA23791_fig2.jpg", originalSha256: "9deaf7392cd41dcd77f2e6fc61a12641af3a2dc1a52ecfd652388a65bd225dbc", derivativeSha256: "af60c16a58a1187955dc7df4bad594668add4a8819c5963e39fb98323f832e50", processingNote: "False-color composite of Mariner 10 orange- and ultraviolet-filter observations, processed by the source team to show the cloud deck."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetEarth", cardId: "planet-earth", sourceID: "PIA18033", sourceTitle: "Earth", sourceUrl: "https://science.nasa.gov/photojournal/earth/", creator: "NASA", originalFileName: "PIA18033.jpg", originalSha256: "54b1a898b080cd85418269075e50c44026fefda9d5163cbf808a61efdb1dc699", derivativeSha256: "66116c2b894b2298973f9714b961036aafd94a0e7bf85c04f04ed837f05cc0b1", processingNote: "Blue Marble montage made by the source team from Suomi NPP VIIRS observations."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetMars", cardId: "planet-mars", sourceID: "PIA00407", sourceTitle: "Global Color Views of Mars", sourceUrl: "https://science.nasa.gov/photojournal/global-color-views-of-mars/", creator: "NASA/JPL/USGS", originalFileName: "PIA00407.jpg", originalSha256: "9c047fa4e7b5c54cec28cd50993e88d15926f881060110bf79fd8aba75bb30e7", derivativeSha256: "4beea0b1044f7b7cefbf4d08b25c846d2d0c18e1b16b1842e0243a45a2fe0e55", processingNote: "Near-natural-color orthographic mosaic assembled by the source team from Viking Orbiter observations."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetJupiter", cardId: "planet-jupiter", sourceID: "PIA02873", sourceTitle: "High Resolution Globe of Jupiter", sourceUrl: "https://science.nasa.gov/photojournal/pj-high-resolution-globe-of-jupiter/", creator: "NASA/JPL/University of Arizona", originalFileName: "PIA02873.jpg", originalSha256: "6cb0665dd83b64eeccafc7586913d467f725189bfd25f27deed1a3ffd920ac29", derivativeSha256: "416111a08228577c49bee0635aea896f21e64de6e94c6d2a73aa676b058abc9e", processingNote: "True-color simulated globe projected by the source team from four Cassini spacecraft images."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetSaturn", cardId: "planet-saturn", sourceID: "PIA11141", sourceTitle: "Saturn … Four Years On", sourceUrl: "https://science.nasa.gov/photojournal/saturn-four-years-on", creator: "NASA/JPL/Space Science Institute", originalFileName: "PIA11141.jpg", originalSha256: "ad45e75b0d86b3bc664a438b3429eeae4f56fed079d14fbb5a2ad0bca0bd29e7", derivativeSha256: "43f63737ec0198609a2fba339d1dc4798046bbbb90bb02cca8c32cf53427bbb5", processingNote: "Natural-color panorama assembled by the source team from 30 Cassini images."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetUranus", cardId: "planet-uranus", sourceID: "PIA18182", sourceTitle: "Uranus as seen by NASA's Voyager 2", sourceUrl: "https://science.nasa.gov/resource/uranus-as-seen-by-nasas-voyager-2/", creator: "NASA/JPL", originalFileName: "PIA18182.jpg", originalSha256: "4e2200e4f2167be5e02f1f1c9f1fef6278e93b42431b51f0b914e7ee7b8f961a", derivativeSha256: "6ef015fba22d014bafc7bf07e59ee3e67aeab91d86f0b04c9c32d3e8a62fbca3", processingNote: "Full-disk Voyager 2 spacecraft observation."),
+        nasaPlanetImageProvenance(assetName: "MemoryPlanetNeptune", cardId: "planet-neptune", sourceID: "PIA01492", sourceTitle: "Neptune Full Disk View", sourceUrl: "https://science.nasa.gov/resource/neptune-full-disk-view/", creator: "NASA/JPL", originalFileName: "PIA01492.jpg", originalSha256: "651145ae8387c51e9f55f99d900b6a8a011d52b979075e2010d81e4b55e687db", derivativeSha256: "e4c4f48c171cb66d2507b174202a31f927f83a364495366f433fb6f1705e650a", processingNote: "Full-disk view produced by the source team from Voyager 2 green- and orange-filter observations."),
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleCar", cardId: "car", sha256: "322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5"),
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleBus", cardId: "bus", sha256: "850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639"),
         generatedIssue352ImageProvenance(assetName: "MemoryVehicleTrain", cardId: "train", sha256: "3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60"),
@@ -646,11 +647,47 @@ enum MemoryDeck {
         )
     }
 
+    private static func nasaPlanetImageProvenance(
+        assetName: String,
+        cardId: String,
+        sourceID: String,
+        sourceTitle: String,
+        sourceUrl: String,
+        creator: String,
+        originalFileName: String,
+        originalSha256: String,
+        derivativeSha256: String,
+        processingNote: String
+    ) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "NASA Science — \(sourceID)",
+            sourceUrl: sourceUrl,
+            creator: creator,
+            creditLine: "\(sourceTitle) (\(sourceID)). Credit: \(creator)",
+            license: "NASA content used for educational and informational purposes under the NASA Media Usage Guidelines",
+            licenseUrl: "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+            retrievedAt: "2026-08-09",
+            originalFileName: originalFileName,
+            originalSha256: originalSha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: derivativeSha256,
+            derivativeChanges: "\(processingNote) Mather preserved aspect ratio, trimmed only empty black margin where needed, downscaled the NASA-hosted source, converted it to PNG, and padded the square canvas with black; no planetary content was added or removed.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
     private static func generatedIssue352ImageProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
         MemoryImageAssetProvenance(
             assetName: assetName,
             cardId: cardId,
             sourceName: "Project-owned deterministic drawing",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for Mather issue #352",
             license: "Project-owned; no third-party source material",
@@ -674,6 +711,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "Project-owned deterministic drawing",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for Mather issue #379",
             license: "Project-owned; no third-party source material",
@@ -702,6 +740,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "OpenAI built-in image generation",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for the Mather vehicle Memory Gallery",
             license: "Project-owned; no third-party source material",
@@ -725,6 +764,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "Project-owned deterministic educational flag drawing",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for Mather issue #744",
             license: "Project-owned; no third-party source files or copied artwork",
@@ -748,6 +788,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "Project-owned deterministic educational currency drawing",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for the Mather country Memory Gallery",
             license: "Project-owned; no third-party source files or copied banknote artwork",
@@ -776,6 +817,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "OpenAI built-in image generation",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for the Mather country Memory Gallery",
             license: "Project-owned; no third-party source material",
@@ -799,6 +841,7 @@ enum MemoryDeck {
             assetName: assetName,
             cardId: cardId,
             sourceName: "Codex CLI image generation water cycle prompt family",
+            sourceUrl: "",
             creator: "OpenAI Codex for ganesh47/mather",
             creditLine: "Project-owned artwork created for Mather issue #771",
             license: "Project-owned; no third-party source material",

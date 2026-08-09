@@ -31,6 +31,11 @@ enum CountryMemoryClueKind: String, CaseIterable, Equatable {
     case capital
     case language
 
+    static let questionChapter: [Self] = [
+        .monument, .currency, .flag, .monument, .currency,
+        .capital, .monument, .currency, .language, .flag
+    ]
+
     var title: String {
         switch self {
         case .flag: return "Flags"
@@ -530,7 +535,7 @@ struct MemoryView: View {
     }
 
     static func countryClueKind(forRound round: Int) -> CountryMemoryClueKind {
-        let kinds = CountryMemoryClueKind.allCases
+        let kinds = CountryMemoryClueKind.questionChapter
         return kinds[(round % kinds.count + kinds.count) % kinds.count]
     }
 
@@ -1148,7 +1153,7 @@ struct MemoryView: View {
         case .vehicles:
             deckLabel = "Vehicle Guide"
         case .planets:
-            deckLabel = "Planet Guide"
+            deckLabel = "NASA Planetary Photojournal"
         case .fishes:
             deckLabel = "Fish Guide"
         case .countries:

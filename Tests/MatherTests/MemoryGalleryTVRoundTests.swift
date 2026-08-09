@@ -27,28 +27,31 @@ struct MemoryGalleryTVRoundTests {
 
     @Test func vehicleRoundsSampleAcrossTheCompleteExpandedDeck() {
         let deck = MemoryGalleryTVCategory.vehicles.deck
-        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+        let roundGoal = MemoryGalleryTVGame.roundGoal(for: .vehicles)
+        let rounds = (0..<roundGoal).map {
             MemoryGalleryTVRound.make(category: .vehicles, index: $0)
         }
-        let expectedIDs = (0..<MemoryGalleryTVGame.roundsPerGame).map {
-            deck[$0 * deck.count / MemoryGalleryTVGame.roundsPerGame].id
+        let expectedIDs = (0..<roundGoal).map {
+            deck[$0 * deck.count / roundGoal].id
         }
 
         #expect(rounds.map(\.promptCard.id) == expectedIDs)
-        #expect(Set(rounds.map(\.promptCard.id)).count == MemoryGalleryTVGame.roundsPerGame)
+        #expect(Set(rounds.map(\.promptCard.id)).count == roundGoal)
     }
 
-    @Test func countryRoundsSampleAcrossTheCompleteExpandedDeck() {
+    @Test func thirtyCountryRoundsCoverTheDeckBeforeRepeating() {
         let deck = MemoryGalleryTVCategory.flags.deck
-        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+        let roundGoal = MemoryGalleryTVGame.roundGoal(for: .flags)
+        let rounds = (0..<roundGoal).map {
             MemoryGalleryTVRound.make(category: .flags, index: $0)
         }
-        let expectedIDs = (0..<MemoryGalleryTVGame.roundsPerGame).map {
-            deck[$0 * deck.count / MemoryGalleryTVGame.roundsPerGame].id
+        let expectedIDs = (0..<roundGoal).map {
+            deck[$0 % deck.count].id
         }
 
         #expect(rounds.map(\.promptCard.id) == expectedIDs)
-        #expect(Set(rounds.map(\.promptCard.id)).count == MemoryGalleryTVGame.roundsPerGame)
+        #expect(Set(rounds.prefix(deck.count).map(\.promptCard.id)).count == deck.count)
+        #expect(rounds.count == 30)
     }
 
     @Test func vehiclePartRoundsUseSpecificPromptsAndRevealRichFacts() {
@@ -91,7 +94,7 @@ struct MemoryGalleryTVRoundTests {
     }
 
     @Test func flagRoundsUseCountryNamesForAnswers() {
-        let round = MemoryGalleryTVRound.make(category: .flags, index: 0)
+        let round = MemoryGalleryTVRound.make(category: .flags, index: 2)
 
         #expect(round.category.title == "Countries")
         #expect(round.category.subtitle == "Flags, money & landmarks")
@@ -102,43 +105,46 @@ struct MemoryGalleryTVRoundTests {
         #expect(round.answerChoices.allSatisfy { $0.metadata.deck == .countryFlags })
     }
 
-    @Test func countryGameRotatesThroughFiveRealChallengeTypes() {
-        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+    @Test func countryGameWeightsThirtyQuestionsTowardLandmarksAndMoney() {
+        let rounds = (0..<MemoryGalleryTVGame.countryRoundGoal).map {
             MemoryGalleryTVRound.make(category: .flags, index: $0)
         }
 
-        #expect(rounds.map(\.countryPromptKind) == [
-            .flag, .monument, .currency, .capital, .officialLanguage, .flag
+        #expect(Array(rounds.prefix(10).map(\.countryPromptKind)) == [
+            .monument, .currency, .flag, .monument, .currency,
+            .capital, .monument, .currency, .officialLanguage, .flag
         ])
-        #expect(rounds.map(\.promptTitle) == [
-            "Country flag", "Famous place", "Money clue", "Capital city", "Official language", "Country flag"
-        ])
+        #expect(rounds.filter { $0.countryPromptKind == .monument }.count == 9)
+        #expect(rounds.filter { $0.countryPromptKind == .currency }.count == 9)
+        #expect(rounds.filter { $0.countryPromptKind == .flag }.count == 6)
+        #expect(rounds.filter { $0.countryPromptKind == .capital }.count == 3)
+        #expect(rounds.filter { $0.countryPromptKind == .officialLanguage }.count == 3)
 
-        guard case .asset(let monumentAsset) = rounds[1].promptPicture else {
+        guard case .asset(let monumentAsset) = rounds[0].promptPicture else {
             Issue.record("Expected a monument image prompt")
             return
         }
-        guard case .asset(let currencyAsset) = rounds[2].promptPicture else {
+        guard case .asset(let currencyAsset) = rounds[1].promptPicture else {
             Issue.record("Expected a currency image prompt")
             return
         }
-        guard case .text(let capital) = rounds[3].promptPicture else {
+        guard case .text(let capital) = rounds[5].promptPicture else {
             Issue.record("Expected a capital-name prompt")
             return
         }
-        guard case .text(let language) = rounds[4].promptPicture else {
+        guard case .text(let language) = rounds[8].promptPicture else {
             Issue.record("Expected an official-language prompt")
             return
         }
 
         #expect(monumentAsset.hasPrefix("MemoryMonument"))
         #expect(currencyAsset.hasPrefix("MemoryCurrency"))
-        #expect(capital == rounds[3].promptCard.detailCards.first { $0.title == "Capital" }?.value)
-        #expect(language == rounds[4].promptCard.detailCards.first { $0.title == "Language" }?.value)
+        #expect(capital == rounds[5].promptCard.detailCards.first { $0.title == "Capital" }?.value)
+        #expect(language == rounds[8].promptCard.detailCards.first { $0.title == "Language" }?.value)
     }
 
     @Test func countryChallengeAnswersRemainCountryNamesAndAvoidDuplicateClues() {
-        for index in 0..<MemoryGalleryTVGame.roundsPerGame {
+        for index in 0..<MemoryGalleryTVGame.countryRoundGoal {
             let round = MemoryGalleryTVRound.make(category: .flags, index: index)
             #expect(round.answerChoices.count == MemoryGalleryTVRound.choiceCount)
             #expect(round.answerChoices.contains { $0.id == round.correctAnswerID })
@@ -149,7 +155,8 @@ struct MemoryGalleryTVRoundTests {
             case .currency: clueTitle = "Currency"
             case .capital: clueTitle = "Capital"
             case .officialLanguage: clueTitle = "Language"
-            case .flag, .monument, nil: clueTitle = nil
+            case .monument: clueTitle = "Monument"
+            case .flag, nil: clueTitle = nil
             }
             if let clueTitle {
                 let clues = round.answerChoices.compactMap { card in
@@ -194,7 +201,7 @@ struct MemoryGalleryTVRoundTests {
 
 @Suite("MemoryGalleryTVGame")
 struct MemoryGalleryTVGameTests {
-    @Test func gameStartsWithFreshSixRoundSession() throws {
+    @Test func standardGalleryStartsWithFreshSixRoundSession() throws {
         var game = MemoryGalleryTVGame()
 
         game.start(category: .animals)
@@ -237,7 +244,7 @@ struct MemoryGalleryTVGameTests {
         var game = MemoryGalleryTVGame()
         game.start(category: .planets)
 
-        for index in 0..<MemoryGalleryTVGame.roundsPerGame {
+        for index in 0..<MemoryGalleryTVGame.standardRoundGoal {
             let round = try #require(game.round)
             let wasCorrect = game.select(answerID: round.correctAnswerID)
             #expect(wasCorrect)
@@ -246,9 +253,30 @@ struct MemoryGalleryTVGameTests {
         }
 
         #expect(game.phase == .completed)
-        #expect(game.correctCount == MemoryGalleryTVGame.roundsPerGame)
-        #expect(game.bestStreak == MemoryGalleryTVGame.roundsPerGame)
+        #expect(game.correctCount == MemoryGalleryTVGame.standardRoundGoal)
+        #expect(game.bestStreak == MemoryGalleryTVGame.standardRoundGoal)
         #expect(game.progressText == "6 pictures complete")
+        #expect(game.round == nil)
+    }
+
+    @Test func countryGalleryCompletesAfterThirtyQuestions() throws {
+        var game = MemoryGalleryTVGame()
+        game.start(category: .flags)
+
+        #expect(game.roundGoal == 30)
+        #expect(game.progressText == "Question 1 of 30")
+
+        for index in 0..<MemoryGalleryTVGame.countryRoundGoal {
+            let round = try #require(game.round)
+            let wasCorrect = game.select(answerID: round.correctAnswerID)
+            #expect(wasCorrect)
+            #expect(game.completedRoundCount == index + 1)
+            game.advance()
+        }
+
+        #expect(game.phase == .completed)
+        #expect(game.correctCount == 30)
+        #expect(game.progressText == "30 questions complete")
         #expect(game.round == nil)
     }
 

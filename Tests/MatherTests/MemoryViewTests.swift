@@ -62,14 +62,14 @@ struct MemoryViewTests {
 
     @Test func issue352ImportedAssetsHaveReuseSafeProvenanceAndCatalogs() {
         let expectedHashes = [
-            "MemoryPlanetMercury": "9308f539c70807709f96c98d6d70f6e931cb7095f2dd9049fa1f47be83032081",
-            "MemoryPlanetVenus": "3f94177e135f7dff55b73f6091141bc6aba555e5717ceadb6b012667cf6cb6e4",
-            "MemoryPlanetEarth": "77c3e4b4d267e283d2bb5efbaf2a45d8412ebee55bc15957ef1ad2514a635466",
-            "MemoryPlanetMars": "8975ed07bbbe2fc471c9373d63fab8f85a0e8d3e115ea160ee73bc00724d0d6e",
-            "MemoryPlanetJupiter": "0197f506bd7e414c337e9ba3543a4cf4cad5f99855e353cba8a7aca9c799da40",
-            "MemoryPlanetSaturn": "798d945d730902e9d8cd438a121bc10f09a96f341fdabeec183ff64b493f3439",
-            "MemoryPlanetUranus": "88e2d9c7cf3859fe88ab02a41aeb642f048760940164f84f37ed888f46d748fd",
-            "MemoryPlanetNeptune": "ffc0a56865f63c42190a01825e29711596415e4aeecdf4c0d236a0d38ec12a03",
+            "MemoryPlanetMercury": "808fde1384ddb7ee38aac5f544b068b3a08b6986d57d3fad59c84c980e4c8f67",
+            "MemoryPlanetVenus": "af60c16a58a1187955dc7df4bad594668add4a8819c5963e39fb98323f832e50",
+            "MemoryPlanetEarth": "66116c2b894b2298973f9714b961036aafd94a0e7bf85c04f04ed837f05cc0b1",
+            "MemoryPlanetMars": "4beea0b1044f7b7cefbf4d08b25c846d2d0c18e1b16b1842e0243a45a2fe0e55",
+            "MemoryPlanetJupiter": "416111a08228577c49bee0635aea896f21e64de6e94c6d2a73aa676b058abc9e",
+            "MemoryPlanetSaturn": "43f63737ec0198609a2fba339d1dc4798046bbbb90bb02cca8c32cf53427bbb5",
+            "MemoryPlanetUranus": "6ef015fba22d014bafc7bf07e59ee3e67aeab91d86f0b04c9c32d3e8a62fbca3",
+            "MemoryPlanetNeptune": "e4c4f48c171cb66d2507b174202a31f927f83a364495366f433fb6f1705e650a",
             "MemoryVehicleCar": "322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5",
             "MemoryVehicleBus": "850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639",
             "MemoryVehicleTrain": "3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60",
@@ -110,6 +110,7 @@ struct MemoryViewTests {
                 || !["MemoryVehicleCar", "MemoryVehicleBus", "MemoryVehicleTrain", "MemoryVehiclePlane", "MemoryVehicleBoat", "MemoryVehicleBike", "MemoryVehicleTruck", "MemoryVehicleTractor", "MemoryVehicleHelicopter", "MemoryVehicleRocket", "MemoryVehicleScooter", "MemoryVehicleTaxi"].contains($0)
                     && $0.hasPrefix("MemoryVehicle")
         })
+        let nasaPlanetAssets = Set(expectedHashes.keys.filter { $0.hasPrefix("MemoryPlanet") })
         let importedAssetNames = Set(
             (MemoryDeck.vehicles + MemoryDeck.planets)
                 .compactMap(\.imageAssetName)
@@ -127,7 +128,12 @@ struct MemoryViewTests {
             let image = imageset.appendingPathComponent("\(assetName).png")
             let contents = imageset.appendingPathComponent("Contents.json")
 
-            if generatedGalleryAssets.contains(assetName) {
+            if nasaPlanetAssets.contains(assetName) {
+                #expect(provenance?.sourceName.hasPrefix("NASA Science — PIA") == true)
+                #expect(provenance?.sourceUrl.hasPrefix("https://science.nasa.gov/") == true)
+                #expect(provenance?.creditLine.contains("Credit:") == true)
+                #expect(provenance?.licenseUrl == "https://www.nasa.gov/nasa-brand-center/images-and-media/")
+            } else if generatedGalleryAssets.contains(assetName) {
                 #expect(provenance?.sourceName == "OpenAI built-in image generation")
                 #expect(provenance?.creditLine == "Project-owned artwork created for the Mather vehicle Memory Gallery")
             } else {
@@ -345,10 +351,17 @@ struct MemoryViewTests {
     }
 
     @MainActor
-    @Test func countryRoundsCycleThroughFiveMeaningfullyDifferentClues() {
-        #expect((0..<7).map(MemoryView.countryClueKind(forRound:)) == [
-            .flag, .currency, .monument, .capital, .language, .flag, .currency
+    @Test func countryRoundsWeightThirtyQuestionsTowardLandmarksAndMoney() {
+        #expect((0..<10).map(MemoryView.countryClueKind(forRound:)) == [
+            .monument, .currency, .flag, .monument, .currency,
+            .capital, .monument, .currency, .language, .flag
         ])
+        let itinerary = (0..<30).map(MemoryView.countryClueKind(forRound:))
+        #expect(itinerary.filter { $0 == .monument }.count == 9)
+        #expect(itinerary.filter { $0 == .currency }.count == 9)
+        #expect(itinerary.filter { $0 == .flag }.count == 6)
+        #expect(itinerary.filter { $0 == .capital }.count == 3)
+        #expect(itinerary.filter { $0 == .language }.count == 3)
 
         let india = MemoryDeck.countryFlags.first { $0.canonicalName == "India" }!
         let expectedPictures: [(CountryMemoryClueKind, MemoryPicture, String)] = [
@@ -652,8 +665,8 @@ struct MemoryViewTests {
             source: .curatedFallback
         )
         let planetContent = MemoryView.learningContent(for: planet, deckSelection: .planets, description: planetDescription)
-        #expect(planetContent.sourceBadge == "Planet Guide")
-        #expect(planetContent.readAloudText.contains("Source: Planet Guide."))
+        #expect(planetContent.sourceBadge == "NASA Planetary Photojournal")
+        #expect(planetContent.readAloudText.contains("Source: NASA Planetary Photojournal."))
 
         let flagDescription = MemoryCardDescription(
             title: "India",
