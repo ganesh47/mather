@@ -14,6 +14,7 @@ from ci_scripts.xcode_cloud_testflight import (
     altool_auth_args,
     choose_app_store_export,
     choose_workflow_for_platform,
+    ensure_internal_beta_group_access,
     find_build,
     inspect_ipa,
     normalize_private_key,
@@ -179,6 +180,117 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             ),
             "tvos",
         )
+
+    def test_adds_valid_build_to_only_missing_internal_beta_groups(self) -> None:
+        client = MagicMock()
+        client.pages.side_effect = [
+            [
+                {
+                    "type": "betaGroups",
+                    "id": "internal-current",
+                    "attributes": {
+                        "name": "Family",
+                        "isInternalGroup": True,
+                        "hasAccessToAllBuilds": False,
+                    },
+                },
+                {
+                    "type": "betaGroups",
+                    "id": "internal-missing",
+                    "attributes": {
+                        "name": "Developers",
+                        "isInternalGroup": True,
+                        "hasAccessToAllBuilds": False,
+                    },
+                },
+                {
+                    "type": "betaGroups",
+                    "id": "external",
+                    "attributes": {
+                        "name": "Public Beta",
+                        "isInternalGroup": False,
+                        "hasAccessToAllBuilds": False,
+                    },
+                },
+            ],
+            [{"type": "builds", "id": "build-160"}],
+            [{"type": "builds", "id": "older-build"}],
+        ]
+        build = {
+            "type": "builds",
+            "id": "build-160",
+            "attributes": {"version": "160", "processingState": "VALID"},
+        }
+
+        added = ensure_internal_beta_group_access(
+            client,
+            app_id="app-1",
+            build=build,
+        )
+
+        self.assertEqual([group["id"] for group in added], ["internal-missing"])
+        self.assertEqual(client.pages.call_count, 3)
+        self.assertEqual(
+            client.pages.call_args_list[0].args[0],
+            "/v1/apps/app-1/betaGroups"
+            "?fields[betaGroups]=name,isInternalGroup,hasAccessToAllBuilds&limit=200",
+        )
+        client.request.assert_called_once_with(
+            "/v1/builds/build-160/relationships/betaGroups",
+            method="POST",
+            payload={
+                "data": [
+                    {"type": "betaGroups", "id": "internal-missing"}
+                ]
+            },
+        )
+
+    def test_skips_beta_group_post_when_valid_build_is_already_internal(self) -> None:
+        client = MagicMock()
+        client.pages.side_effect = [
+            [
+                {
+                    "type": "betaGroups",
+                    "id": "internal",
+                    "attributes": {
+                        "name": "Family",
+                        "isInternalGroup": True,
+                        "hasAccessToAllBuilds": True,
+                    },
+                }
+            ],
+            [{"type": "builds", "id": "build-160"}],
+        ]
+
+        added = ensure_internal_beta_group_access(
+            client,
+            app_id="app-1",
+            build={
+                "type": "builds",
+                "id": "build-160",
+                "attributes": {"processingState": "VALID"},
+            },
+        )
+
+        self.assertEqual(added, [])
+        client.request.assert_not_called()
+
+    def test_rejects_beta_group_assignment_before_build_is_valid(self) -> None:
+        client = MagicMock()
+
+        with self.assertRaisesRegex(ReleaseError, "not VALID"):
+            ensure_internal_beta_group_access(
+                client,
+                app_id="app-1",
+                build={
+                    "type": "builds",
+                    "id": "build-160",
+                    "attributes": {"processingState": "PROCESSING"},
+                },
+            )
+
+        client.pages.assert_not_called()
+        client.request.assert_not_called()
 
     def test_rejects_individual_key_for_altool(self) -> None:
         with self.assertRaises(ReleaseError):

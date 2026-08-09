@@ -559,6 +559,60 @@ def find_build(
     )
 
 
+def ensure_internal_beta_group_access(
+    client: AppStoreConnectClient,
+    *,
+    app_id: str,
+    build: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Associate a valid build with every internal TestFlight group missing it."""
+    processing_state = build.get("attributes", {}).get("processingState")
+    if processing_state != "VALID":
+        raise ReleaseError(
+            f"Cannot distribute build {build.get('id', '<unknown>')}: "
+            f"processing state is {processing_state or 'unknown'}, not VALID"
+        )
+
+    groups = client.pages(
+        f"/v1/apps/{app_id}/betaGroups"
+        "?fields[betaGroups]=name,isInternalGroup,hasAccessToAllBuilds&limit=200"
+    )
+    internal_groups = [
+        group
+        for group in groups
+        if group.get("attributes", {}).get("isInternalGroup") is True
+    ]
+    if not internal_groups:
+        raise ReleaseError(f"App {app_id} has no internal TestFlight beta groups")
+
+    missing_groups: list[dict[str, Any]] = []
+    for group in internal_groups:
+        group_builds = client.pages(
+            f"/v1/betaGroups/{group['id']}/builds"
+            "?fields[builds]=version,processingState&limit=200"
+        )
+        if not any(item.get("id") == build["id"] for item in group_builds):
+            missing_groups.append(group)
+
+    if not missing_groups:
+        return []
+
+    # Apple documents this JSON:API relationship endpoint as “Add access for
+    # beta groups to a build”. A single request can add every missing group.
+    payload = {
+        "data": [
+            {"type": "betaGroups", "id": group["id"]}
+            for group in missing_groups
+        ]
+    }
+    client.request(
+        f"/v1/builds/{build['id']}/relationships/betaGroups",
+        method="POST",
+        payload=payload,
+    )
+    return missing_groups
+
+
 def wait_for_internal_testflight(
     client: AppStoreConnectClient,
     *,
@@ -571,6 +625,7 @@ def wait_for_internal_testflight(
 ) -> str:
     deadline = time.monotonic() + timeout_seconds
     last_state = ""
+    beta_groups_checked = False
     while time.monotonic() < deadline:
         version_id = prerelease_version_id(
             client,
@@ -600,6 +655,23 @@ def wait_for_internal_testflight(
                         f"{processing_state}"
                     )
                 if processing_state == "VALID":
+                    if not beta_groups_checked:
+                        added_groups = ensure_internal_beta_group_access(
+                            client,
+                            app_id=app_id,
+                            build=build,
+                        )
+                        if added_groups:
+                            names = ", ".join(
+                                group.get("attributes", {}).get("name", group["id"])
+                                for group in added_groups
+                            )
+                            print(
+                                f"Added {platform.label} build {build_number} to "
+                                f"internal TestFlight groups: {names}",
+                                flush=True,
+                            )
+                        beta_groups_checked = True
                     try:
                         detail = client.request(
                             f"/v1/builds/{build['id']}/buildBetaDetail"
