@@ -104,7 +104,10 @@ struct MemoryContentTests {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
         let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
-        let assetNames = Set(MemoryDeck.allDeckAnimals.compactMap(\.imageAssetName))
+        let assetNames = Set(
+            MemoryDeck.allDeckAnimals.compactMap(\.imageAssetName)
+                + MemoryDeck.allDeckAnimals.flatMap(\.learningArtwork).map(\.assetName)
+        )
 
         #expect(!assetNames.isEmpty)
         for assetName in assetNames {
@@ -118,7 +121,10 @@ struct MemoryContentTests {
 
     @Test func assetPlansAndProvenancePointAtKnownCardsAndAssets() {
         let knownIds = Set(MemoryDeck.allDeckAnimals.map(\.id))
-        let knownAssets = Set(MemoryDeck.allDeckAnimals.compactMap(\.imageAssetName))
+        let knownAssets = Set(
+            MemoryDeck.allDeckAnimals.compactMap(\.imageAssetName)
+                + MemoryDeck.allDeckAnimals.flatMap(\.learningArtwork).map(\.assetName)
+        )
         let plans = MemoryDeck.vehicleImageAssetPlan
             + MemoryDeck.planetImageAssetPlan
             + MemoryDeck.fishImageAssetPlan

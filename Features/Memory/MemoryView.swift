@@ -687,25 +687,69 @@ struct MemoryView: View {
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
 
-                    Text("What to remember")
+                    if !animal.learningArtwork.isEmpty {
+                        Label("Picture clues", systemImage: "photo.on.rectangle.angled")
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(MatherTheme.ink)
+
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+                            ForEach(animal.learningArtwork, id: \.self) { artwork in
+                                VStack(spacing: 8) {
+                                    Image(artwork.assetName)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxWidth: .infinity)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                                    Text(artwork.title)
+                                        .font(.subheadline.weight(.bold))
+                                        .foregroundStyle(MatherTheme.ink)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.8)
+                                }
+                                .padding(10)
+                                .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Picture clue: \(artwork.title)")
+                            }
+                        }
+                        .accessibilityIdentifier("memory-learning-picture-clues")
+                    }
+
+                    Label(
+                        Self.learningFactsSectionTitle(for: animal),
+                        systemImage: Self.learningFactsSectionSymbol(for: animal)
+                    )
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
 
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: ResponsiveLayout.memoryLearningFactMinimumWidth(for: horizontalSizeClass)), spacing: 10)], spacing: 10) {
                         ForEach(content.factChips, id: \.self) { fact in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(fact.title)
-                                    .font(.caption.weight(.bold))
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: Self.learningFactSymbol(for: fact))
+                                    .font(.body.weight(.bold))
                                     .foregroundStyle(artStyle.ornamentColor)
+                                    .frame(width: 24, height: 24)
+                                    .background(artStyle.ornamentColor.opacity(0.13), in: Circle())
+                                    .accessibilityHidden(true)
 
-                                Text(fact.value)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(MatherTheme.ink)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(fact.title)
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(artStyle.ornamentColor)
+
+                                    Text(fact.value)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(MatherTheme.ink)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(12)
                             .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.45 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .accessibilityElement(children: .combine)
                         }
                     }
                     .accessibilityIdentifier("memory-learning-fact-chips")
@@ -953,6 +997,49 @@ struct MemoryView: View {
             return "Apple Intelligence + \(deckLabel)"
         case .curatedFallback:
             return deckLabel
+        }
+    }
+
+    static func learningFactsSectionTitle(for animal: MemoryAnimal) -> String {
+        switch animal.metadata.deck {
+        case .countries, .countryFlags:
+            return "Passport facts"
+        default:
+            return "What to remember"
+        }
+    }
+
+    static func learningFactsSectionSymbol(for animal: MemoryAnimal) -> String {
+        switch animal.metadata.deck {
+        case .countries, .countryFlags:
+            return "globe.asia.australia.fill"
+        default:
+            return "brain.head.profile.fill"
+        }
+    }
+
+    static func learningFactSymbol(for fact: MemoryFactCard) -> String {
+        switch fact.title.lowercased() {
+        case "country", "continent", "home", "region", "bucket":
+            return "globe.americas.fill"
+        case "capital":
+            return "building.columns.fill"
+        case "language", "official language":
+            return "text.bubble.fill"
+        case "currency", "money", "banknote":
+            return "banknote.fill"
+        case "currency symbol", "symbol":
+            return "dollarsign.circle.fill"
+        case "flag", "colors":
+            return "flag.fill"
+        case "monument", "landmark", "known for":
+            return "building.2.fill"
+        case "iso code":
+            return "number.square.fill"
+        case "map shape":
+            return "map.fill"
+        default:
+            return "sparkles"
         }
     }
 

@@ -30,10 +30,21 @@ struct MemoryGalleryTVRoundTests {
         let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
             MemoryGalleryTVRound.make(category: .vehicles, index: $0)
         }
-        let expectedStride = (deck.count + MemoryGalleryTVGame.roundsPerGame - 1)
-            / MemoryGalleryTVGame.roundsPerGame
         let expectedIDs = (0..<MemoryGalleryTVGame.roundsPerGame).map {
-            deck[($0 * expectedStride) % deck.count].id
+            deck[$0 * deck.count / MemoryGalleryTVGame.roundsPerGame].id
+        }
+
+        #expect(rounds.map(\.promptCard.id) == expectedIDs)
+        #expect(Set(rounds.map(\.promptCard.id)).count == MemoryGalleryTVGame.roundsPerGame)
+    }
+
+    @Test func countryRoundsSampleAcrossTheCompleteExpandedDeck() {
+        let deck = MemoryGalleryTVCategory.flags.deck
+        let rounds = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+            MemoryGalleryTVRound.make(category: .flags, index: $0)
+        }
+        let expectedIDs = (0..<MemoryGalleryTVGame.roundsPerGame).map {
+            deck[$0 * deck.count / MemoryGalleryTVGame.roundsPerGame].id
         }
 
         #expect(rounds.map(\.promptCard.id) == expectedIDs)
@@ -82,9 +93,44 @@ struct MemoryGalleryTVRoundTests {
     @Test func flagRoundsUseCountryNamesForAnswers() {
         let round = MemoryGalleryTVRound.make(category: .flags, index: 0)
 
+        #expect(round.category.title == "Countries")
+        #expect(round.category.subtitle == "Flags, money & landmarks")
+        #expect(round.promptTitle == "Country flag")
+        #expect(round.choicePrompt == "Which country has this flag?")
         #expect(round.promptCard.metadata.deck == .countryFlags)
         #expect(round.promptCard.canonicalName == round.promptCard.name)
         #expect(round.answerChoices.allSatisfy { $0.metadata.deck == .countryFlags })
+    }
+
+    @Test func countryRevealPrioritizesACompactPassportOfRichFacts() {
+        let country = MemoryAnimal(
+            id: "test-country",
+            name: "Testland",
+            picture: .text("Flag"),
+            metadata: MemoryCardMetadata(
+                deck: .countryFlags,
+                category: "country flag",
+                kind: "country flag",
+                factCards: [
+                    MemoryFactCard(title: "Country", value: "Testland"),
+                    MemoryFactCard(title: "Colors", value: "blue and gold"),
+                    MemoryFactCard(title: "Monument", value: "Sky Tower"),
+                    MemoryFactCard(title: "Currency", value: "Star coin ★"),
+                    MemoryFactCard(title: "Official Language", value: "Testish"),
+                    MemoryFactCard(title: "Capital", value: "Test City")
+                ]
+            )
+        )
+        let round = MemoryGalleryTVRound(
+            category: .flags,
+            index: 0,
+            promptCard: country,
+            answerChoices: [country]
+        )
+
+        #expect(round.learningFacts.map(\.title) == [
+            "Capital", "Official Language", "Currency", "Monument"
+        ])
     }
 }
 

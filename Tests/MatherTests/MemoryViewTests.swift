@@ -267,7 +267,11 @@ struct MemoryViewTests {
     }
 
     @Test func countryFlagsDeckIsSeparateFlagToCountryMatchDeck() {
-        let expectedCountries = ["India", "Japan", "France", "Egypt", "Brazil", "Australia", "Canada", "Kenya"]
+        let expectedCountries = [
+            "India", "Japan", "France", "Egypt", "Brazil", "Australia", "Canada", "Kenya",
+            "United States", "United Kingdom", "China", "Germany", "Mexico", "South Africa",
+            "Italy", "Saudi Arabia"
+        ]
         let ids = MemoryDeck.countryFlags.map(\.id)
         let assets = MemoryDeck.countryFlags.compactMap(\.imageAssetName)
 
@@ -277,8 +281,9 @@ struct MemoryViewTests {
         #expect(MemoryDeck.countryFlags.map(\.name) == expectedCountries)
         #expect(Set(ids).count == ids.count)
         #expect(ids.allSatisfy { $0.hasPrefix("country-flag-") })
-        #expect(Set(assets).count == MemoryDeck.countryFlags.count)
+        #expect(Set(assets).count == 8)
         #expect(assets.allSatisfy { $0.hasPrefix("MemoryFlag") })
+        #expect(MemoryDeck.countryFlags.allSatisfy { $0.imageAssetName != nil || $0.emoji != nil })
         #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.deck == .countryFlags })
         #expect(MemoryDeck.countryFlags.allSatisfy { $0.metadata.category == "country flag" })
         #expect(MemoryDeck.countryFlags.allSatisfy { animal in
@@ -291,6 +296,23 @@ struct MemoryViewTests {
         #expect(indiaCapital?.name == "New Delhi")
         #expect(indiaFlag?.id == "country-flag-india")
         #expect(indiaFlag?.name == "India")
+    }
+
+    @Test func expandedCountriesExposePassportFactsAndPictureClues() {
+        #expect(MemoryDeck.countries.count == 16)
+        #expect(MemoryDeck.countryFlags.count == 16)
+
+        for country in MemoryDeck.countryFlags {
+            let titles = Set(country.detailCards.map(\.title))
+            #expect(titles.isSuperset(of: ["Capital", "Language", "Currency", "Currency Symbol", "Monument"]))
+            #expect(country.learningArtwork.map(\.title).count == 2)
+            #expect(country.learningArtwork[0].assetName.hasPrefix("MemoryCurrency"))
+            #expect(country.learningArtwork[1].assetName.hasPrefix("MemoryMonument"))
+        }
+
+        let southAfrica = MemoryDeck.countryFlags.first { $0.canonicalName == "South Africa" }
+        #expect(southAfrica?.detailCards.first { $0.title == "Capital" }?.value == "Pretoria (administrative)")
+        #expect(southAfrica?.detailCards.first { $0.title == "Language" }?.value.contains("12 official languages") == true)
     }
 
     @MainActor
@@ -403,6 +425,28 @@ struct MemoryViewTests {
             #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
             #expect(FileManager.default.fileExists(atPath: image.path))
             #expect(FileManager.default.fileExists(atPath: contents.path))
+        }
+    }
+
+    @Test func countryLearningArtworkHasProvenanceAndCatalogs() {
+        let artwork = Set(MemoryDeck.countryFlags.flatMap(\.learningArtwork).map(\.assetName))
+        let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
+
+        #expect(artwork.count == 32)
+        for assetName in artwork {
+            let provenance = provenanceByAsset[assetName]
+            let image = assetsRoot
+                .appendingPathComponent("\(assetName).imageset")
+                .appendingPathComponent("\(assetName).png")
+            #expect(provenance != nil)
+            #expect(provenance?.licenseAllowsReuse == true)
+            #expect(provenance?.noThirdPartyRestrictionFound == true)
+            #expect(provenance?.childCardLegibilityChecked == true)
+            #expect(provenance?.derivativeSha256.count == 64)
+            #expect(FileManager.default.fileExists(atPath: image.path))
         }
     }
 

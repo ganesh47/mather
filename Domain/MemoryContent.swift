@@ -13,6 +13,11 @@ struct MemoryFactCard: Equatable, Hashable {
     let value: String
 }
 
+struct MemoryLearningArtwork: Equatable, Hashable {
+    let title: String
+    let assetName: String
+}
+
 enum MemoryDeckKind: String, CaseIterable, Equatable, Hashable {
     case domesticAnimals
     case birds
@@ -175,13 +180,22 @@ struct MemoryAnimal: Identifiable, Equatable {
     let canonicalName: String
     let picture: MemoryPicture
     let metadata: MemoryCardMetadata
+    let learningArtwork: [MemoryLearningArtwork]
 
-    init(id: String, name: String, canonicalName: String? = nil, picture: MemoryPicture, metadata: MemoryCardMetadata) {
+    init(
+        id: String,
+        name: String,
+        canonicalName: String? = nil,
+        picture: MemoryPicture,
+        metadata: MemoryCardMetadata,
+        learningArtwork: [MemoryLearningArtwork] = []
+    ) {
         self.id = id
         self.name = name
         self.canonicalName = canonicalName ?? name
         self.picture = picture
         self.metadata = metadata
+        self.learningArtwork = learningArtwork
     }
 
     var selectionKey: String {
@@ -409,25 +423,41 @@ enum MemoryDeck {
     ]
 
     static let countries: [MemoryAnimal] = [
-        countryCapital("country-india", country: "India", capital: "New Delhi", continent: "Asia", language: "Hindi and English", currency: "Indian rupee", mapShape: "wide triangle-like peninsula", clue: "home of the Taj Mahal"),
-        countryCapital("country-japan", country: "Japan", capital: "Tokyo", continent: "Asia", language: "Japanese", currency: "yen", mapShape: "long island chain", clue: "known for cherry blossoms and bullet trains"),
-        countryCapital("country-france", country: "France", capital: "Paris", continent: "Europe", language: "French", currency: "euro", mapShape: "hexagon-like outline", clue: "home of the Eiffel Tower"),
-        countryCapital("country-egypt", country: "Egypt", capital: "Cairo", continent: "Africa", language: "Arabic", currency: "Egyptian pound", mapShape: "square-like shape with Sinai corner", clue: "home of the Great Pyramids"),
-        countryCapital("country-brazil", country: "Brazil", capital: "Brasília", continent: "South America", language: "Portuguese", currency: "Brazilian real", mapShape: "large east-bulging outline", clue: "home of the Amazon rainforest"),
-        countryCapital("country-australia", country: "Australia", capital: "Canberra", continent: "Australia", language: "English", currency: "Australian dollar", mapShape: "big island continent", clue: "home of kangaroos and koalas"),
-        countryCapital("country-canada", country: "Canada", capital: "Ottawa", continent: "North America", language: "English and French", currency: "Canadian dollar", mapShape: "very wide northern outline", clue: "known for maple leaves and snowy winters"),
-        countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", language: "Swahili and English", currency: "Kenyan shilling", mapShape: "east Africa shape by the Indian Ocean", clue: "known for savannas and wildlife parks")
+        countryCapital("country-india", country: "India", capital: "New Delhi", continent: "Asia", language: "Hindi and English for Union government", currency: "Indian rupee (INR)", currencySymbol: "₹", mapShape: "wide triangle-like peninsula", monument: "Taj Mahal", assetSuffix: "India"),
+        countryCapital("country-japan", country: "Japan", capital: "Tokyo", continent: "Asia", language: "Japanese", currency: "Japanese yen (JPY)", currencySymbol: "¥", mapShape: "long island chain", monument: "Himeji Castle", assetSuffix: "Japan"),
+        countryCapital("country-france", country: "France", capital: "Paris", continent: "Europe", language: "French", currency: "Euro (EUR)", currencySymbol: "€", mapShape: "hexagon-like outline", monument: "Eiffel Tower", assetSuffix: "France"),
+        countryCapital("country-egypt", country: "Egypt", capital: "Cairo", continent: "Africa", language: "Arabic", currency: "Egyptian pound (EGP)", currencySymbol: "E£", mapShape: "square-like shape with Sinai corner", monument: "Great Pyramid of Giza", assetSuffix: "Egypt"),
+        countryCapital("country-brazil", country: "Brazil", capital: "Brasília", continent: "South America", language: "Portuguese", currency: "Brazilian real (BRL)", currencySymbol: "R$", mapShape: "large east-bulging outline", monument: "Christ the Redeemer", assetSuffix: "Brazil"),
+        countryCapital("country-australia", country: "Australia", capital: "Canberra", continent: "Australia", language: "English (national language)", currency: "Australian dollar (AUD)", currencySymbol: "A$", mapShape: "big island continent", monument: "Sydney Opera House", assetSuffix: "Australia"),
+        countryCapital("country-canada", country: "Canada", capital: "Ottawa", continent: "North America", language: "English and French", currency: "Canadian dollar (CAD)", currencySymbol: "C$", mapShape: "very wide northern outline", monument: "CN Tower", assetSuffix: "Canada"),
+        countryCapital("country-kenya", country: "Kenya", capital: "Nairobi", continent: "Africa", language: "Kiswahili and English", currency: "Kenyan shilling (KES)", currencySymbol: "KSh", mapShape: "east Africa shape by the Indian Ocean", monument: "Kenyatta International Convention Centre", assetSuffix: "Kenya"),
+        countryCapital("country-united-states", country: "United States", capital: "Washington, D.C.", continent: "North America", language: "English", currency: "United States dollar (USD)", currencySymbol: "$", mapShape: "wide country between the Atlantic and Pacific Oceans", monument: "Statue of Liberty", assetSuffix: "UnitedStates"),
+        countryCapital("country-united-kingdom", country: "United Kingdom", capital: "London", continent: "Europe", language: "English; Welsh in Wales", currency: "Pound sterling (GBP)", currencySymbol: "£", mapShape: "island group in northwest Europe", monument: "Elizabeth Tower (Big Ben)", assetSuffix: "UnitedKingdom"),
+        countryCapital("country-china", country: "China", capital: "Beijing", continent: "Asia", language: "Standard Chinese (Putonghua)", currency: "Chinese yuan (CNY)", currencySymbol: "¥", mapShape: "large east Asia outline", monument: "Great Wall of China", assetSuffix: "China"),
+        countryCapital("country-germany", country: "Germany", capital: "Berlin", continent: "Europe", language: "German", currency: "Euro (EUR)", currencySymbol: "€", mapShape: "central Europe outline", monument: "Brandenburg Gate", assetSuffix: "Germany"),
+        countryCapital("country-mexico", country: "Mexico", capital: "Mexico City", continent: "North America", language: "Spanish and 68 Indigenous national languages", currency: "Mexican peso (MXN)", currencySymbol: "Mex$", mapShape: "long country south of the United States", monument: "Chichén Itzá", assetSuffix: "Mexico"),
+        countryCapital("country-south-africa", country: "South Africa", capital: "Pretoria", capitalDetail: "Pretoria (administrative)", continent: "Africa", language: "12 official languages, including isiZulu and isiXhosa", currency: "South African rand (ZAR)", currencySymbol: "R", mapShape: "southern tip of Africa", monument: "Union Buildings", assetSuffix: "SouthAfrica"),
+        countryCapital("country-italy", country: "Italy", capital: "Rome", continent: "Europe", language: "Italian", currency: "Euro (EUR)", currencySymbol: "€", mapShape: "boot-shaped peninsula", monument: "Colosseum", assetSuffix: "Italy"),
+        countryCapital("country-saudi-arabia", country: "Saudi Arabia", capital: "Riyadh", continent: "Asia", language: "Arabic", currency: "Saudi riyal (SAR)", currencySymbol: "SAR", mapShape: "large Arabian Peninsula outline", monument: "Masmak Fort", assetSuffix: "SaudiArabia")
     ]
 
     static let countryFlags: [MemoryAnimal] = [
-        flagCountry("country-flag-india", country: "India", asset: "MemoryFlagIndia", isoAlpha2: "IN", continent: "Asia", capital: "New Delhi", colors: "saffron, white, green, navy blue", clue: "home of the Taj Mahal"),
-        flagCountry("country-flag-japan", country: "Japan", asset: "MemoryFlagJapan", isoAlpha2: "JP", continent: "Asia", capital: "Tokyo", colors: "white and red", clue: "known for cherry blossoms and bullet trains"),
-        flagCountry("country-flag-france", country: "France", asset: "MemoryFlagFrance", isoAlpha2: "FR", continent: "Europe", capital: "Paris", colors: "blue, white, red", clue: "home of the Eiffel Tower"),
-        flagCountry("country-flag-egypt", country: "Egypt", asset: "MemoryFlagEgypt", isoAlpha2: "EG", continent: "Africa", capital: "Cairo", colors: "red, white, black, gold", clue: "home of the Great Pyramids"),
-        flagCountry("country-flag-brazil", country: "Brazil", asset: "MemoryFlagBrazil", isoAlpha2: "BR", continent: "South America", capital: "Brasília", colors: "green, yellow, blue, white", clue: "home of the Amazon rainforest"),
-        flagCountry("country-flag-australia", country: "Australia", asset: "MemoryFlagAustralia", isoAlpha2: "AU", continent: "Australia", capital: "Canberra", colors: "blue, red, white", clue: "home of kangaroos and koalas"),
-        flagCountry("country-flag-canada", country: "Canada", asset: "MemoryFlagCanada", isoAlpha2: "CA", continent: "North America", capital: "Ottawa", colors: "red and white", clue: "known for maple leaves and snowy winters"),
-        flagCountry("country-flag-kenya", country: "Kenya", asset: "MemoryFlagKenya", isoAlpha2: "KE", continent: "Africa", capital: "Nairobi", colors: "black, red, green, white", clue: "known for savannas and wildlife parks")
+        flagCountry("country-flag-india", country: "India", picture: .asset("MemoryFlagIndia"), isoAlpha2: "IN", continent: "Asia", capital: "New Delhi", language: "Hindi and English for Union government", currency: "Indian rupee (INR)", currencySymbol: "₹", colors: "saffron, white, green, navy blue", monument: "Taj Mahal", assetSuffix: "India"),
+        flagCountry("country-flag-japan", country: "Japan", picture: .asset("MemoryFlagJapan"), isoAlpha2: "JP", continent: "Asia", capital: "Tokyo", language: "Japanese", currency: "Japanese yen (JPY)", currencySymbol: "¥", colors: "white and red", monument: "Himeji Castle", assetSuffix: "Japan"),
+        flagCountry("country-flag-france", country: "France", picture: .asset("MemoryFlagFrance"), isoAlpha2: "FR", continent: "Europe", capital: "Paris", language: "French", currency: "Euro (EUR)", currencySymbol: "€", colors: "blue, white, red", monument: "Eiffel Tower", assetSuffix: "France"),
+        flagCountry("country-flag-egypt", country: "Egypt", picture: .asset("MemoryFlagEgypt"), isoAlpha2: "EG", continent: "Africa", capital: "Cairo", language: "Arabic", currency: "Egyptian pound (EGP)", currencySymbol: "E£", colors: "red, white, black, gold", monument: "Great Pyramid of Giza", assetSuffix: "Egypt"),
+        flagCountry("country-flag-brazil", country: "Brazil", picture: .asset("MemoryFlagBrazil"), isoAlpha2: "BR", continent: "South America", capital: "Brasília", language: "Portuguese", currency: "Brazilian real (BRL)", currencySymbol: "R$", colors: "green, yellow, blue, white", monument: "Christ the Redeemer", assetSuffix: "Brazil"),
+        flagCountry("country-flag-australia", country: "Australia", picture: .asset("MemoryFlagAustralia"), isoAlpha2: "AU", continent: "Australia", capital: "Canberra", language: "English (national language)", currency: "Australian dollar (AUD)", currencySymbol: "A$", colors: "blue, red, white", monument: "Sydney Opera House", assetSuffix: "Australia"),
+        flagCountry("country-flag-canada", country: "Canada", picture: .asset("MemoryFlagCanada"), isoAlpha2: "CA", continent: "North America", capital: "Ottawa", language: "English and French", currency: "Canadian dollar (CAD)", currencySymbol: "C$", colors: "red and white", monument: "CN Tower", assetSuffix: "Canada"),
+        flagCountry("country-flag-kenya", country: "Kenya", picture: .asset("MemoryFlagKenya"), isoAlpha2: "KE", continent: "Africa", capital: "Nairobi", language: "Kiswahili and English", currency: "Kenyan shilling (KES)", currencySymbol: "KSh", colors: "black, red, green, white", monument: "Kenyatta International Convention Centre", assetSuffix: "Kenya"),
+        flagCountry("country-flag-united-states", country: "United States", picture: .emoji("🇺🇸"), isoAlpha2: "US", continent: "North America", capital: "Washington, D.C.", language: "English", currency: "United States dollar (USD)", currencySymbol: "$", colors: "red, white, blue", monument: "Statue of Liberty", assetSuffix: "UnitedStates"),
+        flagCountry("country-flag-united-kingdom", country: "United Kingdom", picture: .emoji("🇬🇧"), isoAlpha2: "GB", continent: "Europe", capital: "London", language: "English; Welsh in Wales", currency: "Pound sterling (GBP)", currencySymbol: "£", colors: "red, white, blue", monument: "Elizabeth Tower (Big Ben)", assetSuffix: "UnitedKingdom"),
+        flagCountry("country-flag-china", country: "China", picture: .emoji("🇨🇳"), isoAlpha2: "CN", continent: "Asia", capital: "Beijing", language: "Standard Chinese (Putonghua)", currency: "Chinese yuan (CNY)", currencySymbol: "¥", colors: "red and yellow", monument: "Great Wall of China", assetSuffix: "China"),
+        flagCountry("country-flag-germany", country: "Germany", picture: .emoji("🇩🇪"), isoAlpha2: "DE", continent: "Europe", capital: "Berlin", language: "German", currency: "Euro (EUR)", currencySymbol: "€", colors: "black, red, gold", monument: "Brandenburg Gate", assetSuffix: "Germany"),
+        flagCountry("country-flag-mexico", country: "Mexico", picture: .emoji("🇲🇽"), isoAlpha2: "MX", continent: "North America", capital: "Mexico City", language: "Spanish and 68 Indigenous national languages", currency: "Mexican peso (MXN)", currencySymbol: "Mex$", colors: "green, white, red", monument: "Chichén Itzá", assetSuffix: "Mexico"),
+        flagCountry("country-flag-south-africa", country: "South Africa", picture: .emoji("🇿🇦"), isoAlpha2: "ZA", continent: "Africa", capital: "Pretoria (administrative)", language: "12 official languages, including isiZulu and isiXhosa", currency: "South African rand (ZAR)", currencySymbol: "R", colors: "red, blue, green, black, white, yellow", monument: "Union Buildings", assetSuffix: "SouthAfrica"),
+        flagCountry("country-flag-italy", country: "Italy", picture: .emoji("🇮🇹"), isoAlpha2: "IT", continent: "Europe", capital: "Rome", language: "Italian", currency: "Euro (EUR)", currencySymbol: "€", colors: "green, white, red", monument: "Colosseum", assetSuffix: "Italy"),
+        flagCountry("country-flag-saudi-arabia", country: "Saudi Arabia", picture: .emoji("🇸🇦"), isoAlpha2: "SA", continent: "Asia", capital: "Riyadh", language: "Arabic", currency: "Saudi riyal (SAR)", currencySymbol: "SAR", colors: "green and white", monument: "Masmak Fort", assetSuffix: "SaudiArabia")
     ]
 
     static let indiaStates: [MemoryAnimal] = [
@@ -558,6 +588,41 @@ enum MemoryDeck {
         generatedWaterCycleProvenance(assetName: "MemoryWaterCycleVapor", cardId: "water-cycle-vapor", sha256: "b18c6b62a49da2c32206fe750468626675067ee7aac36fbbb1a8186ef04e6a2b"),
         generatedWaterCycleProvenance(assetName: "MemoryWaterCycleCloud", cardId: "water-cycle-cloud", sha256: "9b4ec5f6b72b03b0e0ec9e730164de97b9e532043c07b16f62937a71499518c9"),
         generatedWaterCycleProvenance(assetName: "MemoryWaterCyclePond", cardId: "water-cycle-pond", sha256: "97829a63dda1473845eadb5c54b3701d5eca265f73044920de36f00bc941acce")
+    ] + countryLearningAssetProvenance
+
+    private static let countryLearningAssetProvenance: [MemoryImageAssetProvenance] = [
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyIndia", cardId: "country-flag-india", sha256: "57647dd883dd954e92bc8f8bd913785ea70b876a32cab96f32416c6866fd4106"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyJapan", cardId: "country-flag-japan", sha256: "b2c455845aed399efb094d680c8aa1677b0bfb40cb111708dff197fe69385d38"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyFrance", cardId: "country-flag-france", sha256: "5b4ed712647515a8fc16a999050627f75eff3dcc0913f8770a11c03adb2b17b6"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyEgypt", cardId: "country-flag-egypt", sha256: "d1f63820ad4b3ebbc26733c9e9bbbf33a610e9b61b14bfe40020ccb83a49795e"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyBrazil", cardId: "country-flag-brazil", sha256: "dd17cdf8f84d1d5857c8b02298060ae3f7bd0654349ce7267af81dc040ec2b99"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyAustralia", cardId: "country-flag-australia", sha256: "664db5d2afe22bf56036838c228bb26a128fba2d34ee7fe5fe02188638b4d810"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyCanada", cardId: "country-flag-canada", sha256: "641a1f7fdea182a62c280d70ebfa3e65dcec4f9ce6c9a1579211047e10e0653f"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyKenya", cardId: "country-flag-kenya", sha256: "d6ec919da4033391ef2423810c4d45820ea35a17a016ca8c4be862f02789607f"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyUnitedStates", cardId: "country-flag-united-states", sha256: "99637fe4464553aa4d7d4e73ae96734be316c94681e36d97eff52944d2c1dd34"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyUnitedKingdom", cardId: "country-flag-united-kingdom", sha256: "3488c917fe0b902d4a464ba760cbc2db2e58ffbe5bd833bc952e82a98a547fb2"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyChina", cardId: "country-flag-china", sha256: "c5b6fb3a93271fad61aba30c472445c36f2ee4f213b0376b257763a18c8e1bb3"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyGermany", cardId: "country-flag-germany", sha256: "ba9d05aeec0a28e9537308a3bdb800e52aafd89f2f3c7a89c513d21e28894a4f"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyMexico", cardId: "country-flag-mexico", sha256: "1c727db0bd233355a1a7693a17ab7115a49e1f0c9afbd3f015a8790b334e5c79"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencySouthAfrica", cardId: "country-flag-south-africa", sha256: "7986f932277b2c95400dc864af8b6a621b9c9d7f25e7e433e6e2060e03a96f08"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencyItaly", cardId: "country-flag-italy", sha256: "caf9762b23b03abb60fbdb7a9157051a7b21a0b823dd853b287459309740de50"),
+        generatedCountryCurrencyProvenance(assetName: "MemoryCurrencySaudiArabia", cardId: "country-flag-saudi-arabia", sha256: "ec96fb8a6ed8bc9dd4831bd76b6540d849aa96eedd214fde10cca1164b86f230"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentIndia", cardId: "country-flag-india", originalSha256: "0a9c65cf9c2a09647151062e22b14557829dfa68c0dbb585ffb9600cd6a05efd", derivativeSha256: "f24674b66b8662c6d19969ea497fa79565b17e99e8bd42d6615309d479a2fa4f"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentJapan", cardId: "country-flag-japan", originalSha256: "4daef6779074dd1b7abec08ca03028458d4f34188f22138aa8d20e96ccbf69aa", derivativeSha256: "8a202c8356a98e66a0bc8d683d68d2cf1eed14d4c37487185f8034e7530d98a6"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentFrance", cardId: "country-flag-france", originalSha256: "e0ca89da31b9e289ed286b73fe2284ca55ace30a450c2d45e432586b79a3e113", derivativeSha256: "a5456fe7bb361a373f24ca821b996214b05a330ab0cdec4c1b349c2383c4e4d0"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentEgypt", cardId: "country-flag-egypt", originalSha256: "b3d1cab88b912b5c74790cc1db2f6fed728ae77458e10736558b76ded8712f8e", derivativeSha256: "ef8a5845a7db747a38aa97c0649e2866b67c51bc29c5a6f289823023851023dc"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentBrazil", cardId: "country-flag-brazil", originalSha256: "845a857bdce9e0779be878016a35645deb69ce9a020b6ea9a9174e0f2aa56285", derivativeSha256: "244724a36a95c1e72fb18686ccb5671da4c80cc141c2f5951257682c0084e7ce"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentAustralia", cardId: "country-flag-australia", originalSha256: "77a21cc26c16ef9eec9dfe34ac91bbeb624b76b660393fc2ca91f1923443915a", derivativeSha256: "7e83aa825f2216b0d9eec764b241a5c3e4b3146477b5a16796cf63399086d18e"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentCanada", cardId: "country-flag-canada", originalSha256: "c6f00b579393de91cca8984337285bd4c7b71738e54cf3702cef01351f175059", derivativeSha256: "d6b0f78ed0667aaae2eb8e7c79665f71caa3474a6d0e8abee16b607bba8c0715"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentKenya", cardId: "country-flag-kenya", originalSha256: "b3e5ec104ca93d2132fd3bcc759ab5128a1c97de6d0495d6f82ee6d71102660f", derivativeSha256: "a2b91ab657332d683e60bf1d1633f7e09f902c4cc43e1f067de2c7578f21e09d"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentUnitedStates", cardId: "country-flag-united-states", originalSha256: "ff59f032ccda9ac0a1cfc834ac693e24d85e3f438277821cbef8ebbd13e4b69b", derivativeSha256: "8772aaf09f90152be465e7e4ce92f6c18ef24ffea7d64ea38b3b141b7a92ca66"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentUnitedKingdom", cardId: "country-flag-united-kingdom", originalSha256: "e1c2446c9bd26e5f2962c8950b5b11eea2342768cdd6fb3f02f158097bfea813", derivativeSha256: "c72e977354a4d649fe4b207879b9556d672c07a43e2860674940a54c4ecc2996"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentChina", cardId: "country-flag-china", originalSha256: "6189da1ffda315b824052cadce0e0798454a7d809b097fddb7c69f17bc60d518", derivativeSha256: "1f9d69cd024b6b468b73844412a3f8ffdd94a934e893f08a1c3d6e7df415741c"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentGermany", cardId: "country-flag-germany", originalSha256: "1a58b18d1cfd7a5708d3f90e5312aee9a0e668ee3707c3ded2700577fda99e40", derivativeSha256: "878c4e626b13e61aa302324cdb654cd8e2d6c894276581889982eb2b7c25f7ec"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentMexico", cardId: "country-flag-mexico", originalSha256: "7ce0cf3765db78147d313e1a0c7b994b6ba2000e0bbe09321d2beb1ac160f7b7", derivativeSha256: "cbf55ef021bd71987a4f3de5c4666613fcad055b1005197875aaae1e08c3c072"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentSouthAfrica", cardId: "country-flag-south-africa", originalSha256: "1ef5fabd10905080388a3996cad8f739c24cce6d61b9d51122ea4a5b473f879b", derivativeSha256: "a15ccd95081e50bd210a68f4dc070387ec279e533b0e803d606db2b66451c669"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentItaly", cardId: "country-flag-italy", originalSha256: "b7668db9d0a760f310b137f2daf5d630d9595bd3a637b1f47d801e14d7c10a03", derivativeSha256: "5a3c049b35a6db22bc7264103c7e710fe65568f51029010e1279fc42d7560ade"),
+        generatedCountryMonumentProvenance(assetName: "MemoryMonumentSaudiArabia", cardId: "country-flag-saudi-arabia", originalSha256: "4b7a51bc36b7298ac80ea664235e1f578cc38d6ded817921dda89c3c2646be7f", derivativeSha256: "49b7fe697baffb87a4ab6f62cc7a8449273e6b57087347de49a3404847e7cb29")
     ]
 
 
@@ -670,6 +735,57 @@ enum MemoryDeck {
             derivativeFileName: "\(assetName).png",
             derivativeSha256: sha256,
             derivativeChanges: "Generated directly as a 512x512 transparent PNG with Pillow vector drawing commands from basic flag geometry and colors; no third-party image file was imported.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
+    private static func generatedCountryCurrencyProvenance(assetName: String, cardId: String, sha256: String) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "Project-owned deterministic educational currency drawing",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for the Mather country Memory Gallery",
+            license: "Project-owned; no third-party source files or copied banknote artwork",
+            licenseUrl: "",
+            retrievedAt: "2026-08-09",
+            originalFileName: "\(assetName).png",
+            originalSha256: sha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: sha256,
+            derivativeChanges: "Generated directly as a playful 512x512 transparent learning card with scripts/generate_country_currency_assets.py. It contains no denomination, portrait, serial number, seal, or security feature and is not a banknote reproduction.",
+            licenseAllowsReuse: true,
+            noThirdPartyRestrictionFound: true,
+            noLogoOrEndorsementRisk: true,
+            noPeopleOrPrivacyRisk: true,
+            childCardLegibilityChecked: true
+        )
+    }
+
+    private static func generatedCountryMonumentProvenance(
+        assetName: String,
+        cardId: String,
+        originalSha256: String,
+        derivativeSha256: String
+    ) -> MemoryImageAssetProvenance {
+        MemoryImageAssetProvenance(
+            assetName: assetName,
+            cardId: cardId,
+            sourceName: "OpenAI built-in image generation",
+            creator: "OpenAI Codex for ganesh47/mather",
+            creditLine: "Project-owned artwork created for the Mather country Memory Gallery",
+            license: "Project-owned; no third-party source material",
+            licenseUrl: "",
+            retrievedAt: "2026-08-09",
+            originalFileName: "\(assetName)-generated-original.png",
+            originalSha256: originalSha256,
+            derivativeFileName: "\(assetName).png",
+            derivativeSha256: derivativeSha256,
+            derivativeChanges: "Generated with OpenAI built-in image generation using the shared child-friendly country-monument prompt family, then resized from 1254x1254 to a 512x512 PNG for the app asset catalog.",
             licenseAllowsReuse: true,
             noThirdPartyRestrictionFound: true,
             noLogoOrEndorsementRisk: true,
@@ -882,7 +998,19 @@ enum MemoryDeck {
         )
     }
 
-    private static func countryCapital(_ id: String, country: String, capital: String, continent: String, language: String, currency: String, mapShape: String, clue: String) -> MemoryAnimal {
+    private static func countryCapital(
+        _ id: String,
+        country: String,
+        capital: String,
+        capitalDetail: String? = nil,
+        continent: String,
+        language: String,
+        currency: String,
+        currencySymbol: String,
+        mapShape: String,
+        monument: String,
+        assetSuffix: String
+    ) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: capital,
@@ -895,24 +1023,38 @@ enum MemoryDeck {
                 habitat: continent,
                 factCards: [
                     MemoryFactCard(title: "Country", value: country),
-                    MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Capital", value: capitalDetail ?? capital),
                     MemoryFactCard(title: "Language", value: language),
                     MemoryFactCard(title: "Currency", value: currency),
+                    MemoryFactCard(title: "Currency Symbol", value: currencySymbol),
                     MemoryFactCard(title: "Continent", value: continent),
                     MemoryFactCard(title: "Map Shape", value: mapShape),
-                    MemoryFactCard(title: "Bucket", value: "Place in \(continent)"),
-                    MemoryFactCard(title: "Known For", value: clue)
+                    MemoryFactCard(title: "Monument", value: monument)
                 ]
-            )
+            ),
+            learningArtwork: countryLearningArtwork(assetSuffix: assetSuffix, monument: monument)
         )
     }
 
-    private static func flagCountry(_ id: String, country: String, asset: String, isoAlpha2: String, continent: String, capital: String, colors: String, clue: String) -> MemoryAnimal {
+    private static func flagCountry(
+        _ id: String,
+        country: String,
+        picture: MemoryPicture,
+        isoAlpha2: String,
+        continent: String,
+        capital: String,
+        language: String,
+        currency: String,
+        currencySymbol: String,
+        colors: String,
+        monument: String,
+        assetSuffix: String
+    ) -> MemoryAnimal {
         MemoryAnimal(
             id: id,
             name: country,
             canonicalName: country,
-            picture: .asset(asset),
+            picture: picture,
             metadata: MemoryCardMetadata(
                 deck: .countryFlags,
                 category: "country flag",
@@ -924,12 +1066,23 @@ enum MemoryDeck {
                     MemoryFactCard(title: "Flag", value: "Flag of \(country)"),
                     MemoryFactCard(title: "ISO Code", value: isoAlpha2),
                     MemoryFactCard(title: "Capital", value: capital),
+                    MemoryFactCard(title: "Language", value: language),
+                    MemoryFactCard(title: "Currency", value: currency),
+                    MemoryFactCard(title: "Currency Symbol", value: currencySymbol),
                     MemoryFactCard(title: "Continent", value: continent),
                     MemoryFactCard(title: "Colors", value: colors),
-                    MemoryFactCard(title: "Known For", value: clue)
+                    MemoryFactCard(title: "Monument", value: monument)
                 ]
-            )
+            ),
+            learningArtwork: countryLearningArtwork(assetSuffix: assetSuffix, monument: monument)
         )
+    }
+
+    private static func countryLearningArtwork(assetSuffix: String, monument: String) -> [MemoryLearningArtwork] {
+        [
+            MemoryLearningArtwork(title: "Money clue", assetName: "MemoryCurrency\(assetSuffix)"),
+            MemoryLearningArtwork(title: monument, assetName: "MemoryMonument\(assetSuffix)")
+        ]
     }
 
     private static func indiaStateCapital(_ id: String, state: String, capital: String, region: String, clue: String) -> MemoryAnimal {

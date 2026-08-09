@@ -153,7 +153,7 @@ struct MemoryGalleryTVView: View {
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1.0))
 
-            MemoryGalleryPromptArtwork(animal: round.promptCard)
+            promptArtwork(round: round)
                 .frame(width: 520, height: 310)
                 .accessibilityHidden(true)
 
@@ -166,9 +166,10 @@ struct MemoryGalleryTVView: View {
 
                     ForEach(Array(round.learningFacts.enumerated()), id: \.offset) { _, fact in
                         Text("\(fact.title): \(fact.value)")
-                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .font(.system(size: round.category == .flags ? 18 : 20, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.68))
-                            .lineLimit(2)
+                            .lineLimit(round.category == .flags ? 1 : 2)
+                            .minimumScaleFactor(0.82)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -189,6 +190,34 @@ struct MemoryGalleryTVView: View {
         .accessibilityLabel("Picture prompt. \(promptAccessibilityLabel(for: round.promptCard)).")
         .accessibilityHint("Move right to choose the matching name.")
         .accessibilityIdentifier("tv-memory-picture-prompt")
+    }
+
+    @ViewBuilder
+    private func promptArtwork(round: MemoryGalleryTVRound) -> some View {
+        if game.hasAnsweredCurrentRound,
+           round.category == .flags,
+           !round.promptCard.learningArtwork.isEmpty {
+            HStack(spacing: 16) {
+                ForEach(Array(round.promptCard.learningArtwork.prefix(2)), id: \.self) { artwork in
+                    VStack(spacing: 8) {
+                        Image(artwork.assetName)
+                            .resizable()
+                            .scaledToFit()
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                        Text(artwork.title)
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.78))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .transition(.opacity)
+        } else {
+            MemoryGalleryPromptArtwork(animal: round.promptCard)
+        }
     }
 
     private func answerGrid(round: MemoryGalleryTVRound) -> some View {
@@ -442,7 +471,7 @@ struct MemoryGalleryTVView: View {
     private func promptAccessibilityLabel(for animal: MemoryAnimal) -> String {
         switch animal.metadata.deck {
         case .countryFlags:
-            return "Flag picture. Match it to the country name."
+            return "Country flag. Match it to the country name, then discover its capital, language, money, and landmark."
         case .vehicles where animal.metadata.kind.localizedCaseInsensitiveCompare("vehicle part") == .orderedSame:
             return "Picture of the vehicle part called \(accessibilityName(for: animal))."
         default:

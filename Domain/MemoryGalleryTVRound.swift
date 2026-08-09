@@ -13,7 +13,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
         case .animals: return "Animals"
         case .vehicles: return "Vehicles"
         case .planets: return "Planets"
-        case .flags: return "Flags"
+        case .flags: return "Countries"
         }
     }
 
@@ -22,7 +22,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
         case .animals: return "Farm favorites"
         case .vehicles: return "Machines and how they work"
         case .planets: return "Solar system"
-        case .flags: return "Countries"
+        case .flags: return "Flags, money & landmarks"
         }
     }
 
@@ -31,7 +31,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
         case .animals: return "Match the picture to the animal name."
         case .vehicles: return "Match the picture to the vehicle or vehicle-part name."
         case .planets: return "Match the planet picture to its name."
-        case .flags: return "Match the flag to the country name."
+        case .flags: return "Match the flag, then discover the country."
         }
     }
 
@@ -72,11 +72,17 @@ struct MemoryGalleryTVRound: Equatable {
     }
 
     var promptTitle: String {
-        isVehiclePartPrompt ? "Vehicle part" : "Picture"
+        switch category {
+        case .flags: return "Country flag"
+        default: return isVehiclePartPrompt ? "Vehicle part" : "Picture"
+        }
     }
 
     var choicePrompt: String {
-        isVehiclePartPrompt ? "Which vehicle part is this?" : "Choose the matching name"
+        switch category {
+        case .flags: return "Which country has this flag?"
+        default: return isVehiclePartPrompt ? "Which vehicle part is this?" : "Choose the matching name"
+        }
     }
 
     var learningFacts: [MemoryFactCard] {
@@ -84,7 +90,35 @@ struct MemoryGalleryTVRound: Equatable {
             $0.title.localizedCaseInsensitiveCompare("Kind") != .orderedSame
                 && $0.title.localizedCaseInsensitiveCompare("Name") != .orderedSame
         }
-        return Array((informativeFacts.isEmpty ? promptCard.detailCards : informativeFacts).prefix(2))
+        let availableFacts = informativeFacts.isEmpty ? promptCard.detailCards : informativeFacts
+        guard category == .flags else { return Array(availableFacts.prefix(2)) }
+
+        // The country reveal is a tiny post-answer passport. Keep one fact from
+        // each child-friendly theme so the expanded deck teaches more than a flag.
+        let themes = [
+            ["capital"],
+            ["language"],
+            ["currency", "money"],
+            ["monument", "landmark", "known for"]
+        ]
+        var selectedFacts: [MemoryFactCard] = []
+        var selectedIndexes = Set<Int>()
+
+        for themeTerms in themes {
+            guard selectedFacts.count < 4 else { break }
+            guard let match = availableFacts.enumerated().first(where: { index, fact in
+                !selectedIndexes.contains(index)
+                    && themeTerms.contains { fact.title.localizedCaseInsensitiveContains($0) }
+            }) else { continue }
+            selectedFacts.append(match.element)
+            selectedIndexes.insert(match.offset)
+        }
+
+        for (index, fact) in availableFacts.enumerated() where selectedFacts.count < 4 {
+            guard !selectedIndexes.contains(index) else { continue }
+            selectedFacts.append(fact)
+        }
+        return selectedFacts
     }
 
     static let choiceCount = 4
@@ -127,13 +161,13 @@ struct MemoryGalleryTVRound: Equatable {
         roundIndex: Int,
         deckCount: Int
     ) -> Int {
-        guard category == .vehicles else { return roundIndex }
+        guard category == .vehicles || category == .flags else { return roundIndex }
 
-        // Vehicle decks are intentionally broad. Spread a six-round TV session
-        // across the complete deck so specialist machines and their parts are
-        // represented instead of always showing only the first six basics.
-        let stride = max(1, (deckCount + MemoryGalleryTVGame.roundsPerGame - 1) / MemoryGalleryTVGame.roundsPerGame)
-        return positiveModulo(roundIndex * stride, deckCount)
+        // Vehicle and country decks are intentionally broad. Spread a six-round
+        // TV session across the complete deck so every replay is not limited to
+        // the first six familiar cards.
+        let spreadIndex = roundIndex * deckCount / MemoryGalleryTVGame.roundsPerGame
+        return positiveModulo(spreadIndex, deckCount)
     }
 
     private static func rotate(_ values: [MemoryAnimal], by offset: Int) -> [MemoryAnimal] {
