@@ -126,12 +126,29 @@ class AppStoreConnectClient:
         if body is not None:
             headers["Content-Type"] = "application/json"
         request = urllib.request.Request(url, data=body, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                content = response.read()
-        except urllib.error.HTTPError as exc:
-            details = exc.read().decode(errors="replace")
-            raise ReleaseError(f"{method} {url} failed ({exc.code}): {details}") from exc
+        attempts = 3 if method == "GET" else 1
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    content = response.read()
+                break
+            except urllib.error.HTTPError as exc:
+                details = exc.read().decode(errors="replace")
+                raise ReleaseError(
+                    f"{method} {url} failed ({exc.code}): {details}"
+                ) from exc
+            except (urllib.error.URLError, TimeoutError) as exc:
+                if attempt == attempts:
+                    raise ReleaseError(
+                        f"{method} {url} failed after {attempts} attempts: {exc}"
+                    ) from exc
+                delay = attempt * 2
+                print(
+                    f"Transient App Store Connect error; retrying in {delay}s "
+                    f"({attempt}/{attempts})",
+                    flush=True,
+                )
+                time.sleep(delay)
         if not content:
             return {}
         return json.loads(content)

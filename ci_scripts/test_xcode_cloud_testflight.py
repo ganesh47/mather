@@ -1,9 +1,10 @@
 import unittest
 import plistlib
 import tempfile
+import urllib.error
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from ci_scripts.xcode_cloud_testflight import (
     AppStoreConnectClient,
@@ -36,6 +37,28 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             private_key="not used in this test",
         )
         self.assertEqual(client.issuer_id, "issuer")
+
+    def test_get_retries_transient_app_store_connect_timeout(self) -> None:
+        client = AppStoreConnectClient(
+            key_id="key",
+            issuer_id="issuer",
+            private_key="not used in this test",
+        )
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"data": []}'
+        with (
+            patch.object(client, "token", return_value="token"),
+            patch(
+                "ci_scripts.xcode_cloud_testflight.urllib.request.urlopen",
+                side_effect=[urllib.error.URLError("timed out"), response],
+            ) as urlopen,
+            patch("ci_scripts.xcode_cloud_testflight.time.sleep") as sleep,
+        ):
+            result = client.request("/v1/builds")
+
+        self.assertEqual(result, {"data": []})
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once_with(2)
 
     def test_selects_only_app_store_export(self) -> None:
         artifacts = [

@@ -11,9 +11,19 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to resume
+        required: true
+        type: string
+      build_run_id:
+        description: Existing Xcode Cloud build run ID to reuse
+        required: true
+        type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -33,8 +43,10 @@ jobs:
 
       - name: Parse version from tag
         id: version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          TAG="${GITHUB_REF_NAME}"   # e.g. v1.0.0
+          TAG="${RELEASE_TAG}"       # e.g. v1.0.0
           VERSION="${TAG#v}"         # e.g. 1.0.0
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
@@ -85,9 +97,16 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          RESUME_BUILD_RUN_ID: ${{ inputs.build_run_id || '' }}
         run: |
-          .venv-testflight/bin/python ci_scripts/xcode_cloud_testflight.py \
-            --workflow-id "08111c64-7aa6-4651-b181-b86c25543bc5" \
-            --repository-id "3d717c8d-4c65-4f36-821b-94e10b4f639a" \
-            --tag "${GITHUB_REF_NAME}" \
+          args=(
+            --workflow-id "08111c64-7aa6-4651-b181-b86c25543bc5"
+            --repository-id "3d717c8d-4c65-4f36-821b-94e10b4f639a"
+            --tag "${RELEASE_TAG}"
             --platform all
+          )
+          if [[ -n "${RESUME_BUILD_RUN_ID}" ]]; then
+            args+=(--build-run-id "${RESUME_BUILD_RUN_ID}")
+          fi
+          .venv-testflight/bin/python ci_scripts/xcode_cloud_testflight.py "${args[@]}"
