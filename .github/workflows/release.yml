@@ -18,9 +18,14 @@ on:
         required: true
         type: string
       build_run_id:
-        description: Existing Xcode Cloud build run ID to reuse
-        required: true
+        description: Existing Xcode Cloud build run ID to reuse (optional)
+        required: false
         type: string
+
+      diagnostics_only:
+        description: Inspect Xcode Cloud repository references without starting a build
+        type: boolean
+        default: false
 
 concurrency:
   group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
@@ -32,6 +37,7 @@ permissions:
 jobs:
   github-release:
     name: Create GitHub Release
+    if: ${{ !inputs.diagnostics_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: testflight-release
@@ -99,7 +105,12 @@ jobs:
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           RESUME_BUILD_RUN_ID: ${{ inputs.build_run_id || '' }}
+          DIAGNOSTICS_ONLY: ${{ inputs.diagnostics_only || false }}
         run: |
+          if [[ "${DIAGNOSTICS_ONLY}" == "true" ]]; then
+            .venv-testflight/bin/python ci_scripts/xcode_cloud_diagnostics.py
+            exit 0
+          fi
           args=(
             --workflow-id "08111c64-7aa6-4651-b181-b86c25543bc5"
             --repository-id "3d717c8d-4c65-4f36-821b-94e10b4f639a"
