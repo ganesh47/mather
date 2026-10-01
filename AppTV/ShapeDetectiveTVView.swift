@@ -1,6 +1,8 @@
 import SwiftUI
 
+@MainActor
 struct ShapeDetectiveTVView: View {
+    @State private var narration = TVNarrationController()
     @FocusState private var focusedShape: ShapeKind?
     @FocusState private var nextFocused: Bool
 
@@ -25,7 +27,15 @@ struct ShapeDetectiveTVView: View {
             .padding(.horizontal, 90)
             .padding(.vertical, 62)
         }
-        .onAppear { focusedShape = clue.choices.first }
+        .onAppear {
+            focusedShape = clue.choices.first
+            narration.presentPrompt(cluePrompt)
+        }
+        .onChange(of: focusedNarrationText) { _, text in
+            narration.focus(text)
+        }
+        .onPlayPauseCommand { narration.repeatPrompt() }
+        .onDisappear { narration.stop() }
     }
 
     private var header: some View {
@@ -146,10 +156,22 @@ struct ShapeDetectiveTVView: View {
         }
     }
 
+    private var focusedNarrationText: String? {
+        if nextFocused { return "Next clue. Press select to investigate another shape." }
+        guard selectedShape == nil else { return nil }
+        return focusedShape?.title
+    }
+
+    private var cluePrompt: String {
+        "Listen to the clue, then find the mystery shape. \(clue.text) Swipe across the shapes and press select to answer. Press Play Pause to hear the clue again."
+    }
+
     private func choose(_ shape: ShapeKind) {
+        guard selectedShape == nil else { return }
         selectedShape = shape
         if shape == clue.answer { solved += 1 }
         nextFocused = true
+        narration.announce("\(isCorrect ? "Mystery solved!" : "Good investigation.") The answer is \(clue.answer.title.lowercased()). \(clue.fact) Press select for the next clue.")
     }
 
     private func nextClue() {
@@ -157,6 +179,7 @@ struct ShapeDetectiveTVView: View {
         selectedShape = nil
         nextFocused = false
         focusedShape = clue.choices.first
+        narration.presentPrompt(cluePrompt)
     }
 
     private func shapeTextColor(_ shape: ShapeKind) -> Color {

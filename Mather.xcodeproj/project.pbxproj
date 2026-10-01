@@ -42,6 +42,7 @@
 		260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */; };
 		26BFA6B9296DBF35F4F64F52 /* NumberStoryGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1509AE201C856C72003B229E /* NumberStoryGeneratorTests.swift */; };
 		27A9C7A5A1C6C36674F9F8E4 /* SliceTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */; };
+		2A20A209CFEF1017A574D767 /* TVNarrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */; };
 		2ACEAC63102CABF01EA7C390 /* GameplayStageSharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC459824FDDA52F8297317C /* GameplayStageSharedViews.swift */; };
 		2B28883F82DF054BC27B5566 /* RoomSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A74CE23F3D2B93F449906B1 /* RoomSessionView.swift */; };
 		2E80D1B4BA2B8B8C1BADADE6 /* LearningLoopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AEF903C0449A30A678CFAE0 /* LearningLoopTests.swift */; };
@@ -60,7 +61,9 @@
 		3D43E7A118690E1610686ED2 /* RoomQuestStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3FA86EA00E9865ECE7DC64 /* RoomQuestStationStore.swift */; };
 		3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */; };
 		3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */; };
+		3F1F930EEB3E3FE3AD8C3EBB /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */; };
 		3F7CA345284169CF6C6F9796 /* ElectronicsCircuitArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */; };
+		3F84DA28B40137198D36DD00 /* TVNarrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */; };
 		406C3FEA95214CE100610901 /* GravityArtistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B095D79E7B14DFBAAEDC223 /* GravityArtistTests.swift */; };
 		41FD5B9D4053A753EE382469 /* FlipMemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */; };
 		4253E6E9E560AF591454D385 /* MotionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A166DB67AC6450C763D8DC1 /* MotionService.swift */; };
@@ -200,6 +203,7 @@
 		E921D7C5007EF8C7E44CAB98 /* RouteQuestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */; };
 		E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */; };
 		EA514902B3549363146AF031 /* SessionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */; };
+		ECB54B0B0D69875B207B7B2D /* TVNarrationControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */; };
 		ECD8D5A562596BB07C9DDD9E /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */; };
 		ED8BB99A44A3C701068F03D6 /* AngleArcadeTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11274D795B3AD4EF9BCDCFC2 /* AngleArcadeTVView.swift */; };
 		EF44551359C1EF6A68E0542C /* GroupedNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3E611E8AE4A6487A373E5C /* GroupedNumberView.swift */; };
@@ -232,6 +236,7 @@
 
 /* Begin PBXFileReference section */
 		000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemGeneratorTests.swift; sourceTree = "<group>"; };
+		0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVNarrationControllerTests.swift; sourceTree = "<group>"; };
 		01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataStoreRecoveryTests.swift; sourceTree = "<group>"; };
 		03EDAEC986A0BA1487A577C5 /* ProfilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePickerView.swift; sourceTree = "<group>"; };
 		067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayProgressStoreTests.swift; sourceTree = "<group>"; };
@@ -416,6 +421,7 @@
 		E363A70879171C60CF6B0BCA /* SmartPlayProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartPlayProviderTests.swift; sourceTree = "<group>"; };
 		E4D6E69F5C9EE94CF34F415F /* CounterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterView.swift; sourceTree = "<group>"; };
 		E63765A2998A3C2FD04B62AC /* ArrayPreludeModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayPreludeModelsTests.swift; sourceTree = "<group>"; };
+		E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVNarrationController.swift; sourceTree = "<group>"; };
 		E78C3729BD6D6038D63EA71D /* SumSprintDifficultyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintDifficultyView.swift; sourceTree = "<group>"; };
 		E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonPlayThread.swift; sourceTree = "<group>"; };
 		E8DA96C428EF71E628E7BF19 /* Mather.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Mather.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -447,6 +453,7 @@
 				86F359E021403BCD8321EE41 /* LabDetailFlowLayout.swift */,
 				BD8A34215EE8D8788E7185EB /* MatherTheme.swift */,
 				3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */,
+				E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -607,6 +614,7 @@
 				4973F8B722B80D7E9BBCB455 /* TimerChallengePolicyTests.swift */,
 				C967C3358A30DF062153D794 /* TransferExactRebuildTests.swift */,
 				CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */,
+				0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */,
 				E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */,
 				A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */,
 				6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */,
@@ -1032,8 +1040,10 @@
 				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
 				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
 				6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */,
+				3F1F930EEB3E3FE3AD8C3EBB /* SpeechService.swift in Sources */,
 				521C2782BA0163B3216ACD9B /* SumSprintPartyTVRound.swift in Sources */,
 				3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */,
+				2A20A209CFEF1017A574D767 /* TVNarrationController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1098,6 +1108,7 @@
 				3317FEF0838DE009DAEF51B7 /* SumSprintPartyTVRoundTests.swift in Sources */,
 				5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */,
 				E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */,
+				ECB54B0B0D69875B207B7B2D /* TVNarrationControllerTests.swift in Sources */,
 				0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */,
 				22FA06C6687F65CE007D969B /* TimerChallengePolicyTests.swift in Sources */,
 				8C20682FB2104E672688200F /* TransferExactRebuildTests.swift in Sources */,
@@ -1236,6 +1247,7 @@
 				4ABC4A6418596E71AD701541 /* SumSprintSummaryView.swift in Sources */,
 				DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */,
 				477EEF0E16F958D51EA536E8 /* SymmetryFoldView.swift in Sources */,
+				3F84DA28B40137198D36DD00 /* TVNarrationController.swift in Sources */,
 				1CAB4FE9FAA2F4CD4CF15811 /* TelemetryWriter.swift in Sources */,
 				A69CA8555CD17709DDFD6D01 /* TimerChallengePolicy.swift in Sources */,
 				49CEF0D52521692DEC2038F5 /* TransferCheckView.swift in Sources */,

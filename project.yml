@@ -55,6 +55,8 @@ targets:
       - path: Domain/MemoryGalleryTVRound.swift
       - path: Domain/SumSprintPartyTVRound.swift
       - path: Domain/AngleArcadeModel.swift
+      - path: Services/SpeechService.swift
+      - path: Shared/TVNarrationController.swift
       - path: App/Assets.xcassets
     settings:
       base:

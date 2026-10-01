@@ -1,6 +1,8 @@
 import SwiftUI
 
+@MainActor
 struct CompareCampTVView: View {
+    @State private var narration = TVNarrationController()
     @FocusState private var focusedAnswer: CompareAnswer?
     @FocusState private var nextFocused: Bool
 
@@ -27,7 +29,15 @@ struct CompareCampTVView: View {
             .padding(.horizontal, 90)
             .padding(.vertical, 66)
         }
-        .onAppear { focusedAnswer = .left }
+        .onAppear {
+            focusedAnswer = .left
+            narration.presentPrompt(roundPrompt)
+        }
+        .onChange(of: focusedNarrationText) { _, text in
+            narration.focus(text)
+        }
+        .onPlayPauseCommand { narration.repeatPrompt() }
+        .onDisappear { narration.stop() }
     }
 
     private var header: some View {
@@ -146,7 +156,7 @@ struct CompareCampTVView: View {
                     .font(.system(size: 36, weight: .black))
                     .foregroundStyle(isCorrect ? Color(red: 0.78, green: 0.94, blue: 0.66) : Color(red: 1.0, green: 0.72, blue: 0.38))
 
-                Text(isCorrect ? "You found the bigger camp!" : "Nice counting—let’s compare them.")
+                Text(isCorrect ? correctFeedback : "Nice counting—let’s compare them.")
                     .font(.system(size: 23, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
@@ -173,10 +183,29 @@ struct CompareCampTVView: View {
         }
     }
 
+    private var focusedNarrationText: String? {
+        if nextFocused { return "Next. Press select for another comparison." }
+        guard selectedAnswer == nil else { return nil }
+        return focusedAnswer?.title
+    }
+
+    private var roundPrompt: String {
+        "Which campsite has more lanterns? Count the lights on the left and right. Choose left, right, or they are the same. Press select to answer. Press Play Pause to hear the question again."
+    }
+
+    private var correctFeedback: String {
+        round.answer == .same ? "Both camps have the same number!" : "You found the bigger camp!"
+    }
+
     private func choose(_ answer: CompareAnswer) {
+        guard selectedAnswer == nil else { return }
         selectedAnswer = answer
         streak = answer == round.answer ? streak + 1 : 0
         nextFocused = true
+        let explanation = round.answer == .same
+            ? "Both camps have \(round.left) lanterns. They are the same."
+            : "Left has \(round.left) lanterns. Right has \(round.right). \(round.answer.title)."
+        narration.announce("\(isCorrect ? correctFeedback : "Let's count together.") \(explanation) Press select for the next comparison.")
     }
 
     private func nextRound() {
@@ -184,6 +213,7 @@ struct CompareCampTVView: View {
         selectedAnswer = nil
         nextFocused = false
         focusedAnswer = .left
+        narration.presentPrompt(roundPrompt)
     }
 
     private func answerForeground(_ answer: CompareAnswer) -> Color {
