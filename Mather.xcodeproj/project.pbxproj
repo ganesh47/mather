@@ -17,6 +17,7 @@
 		0BAF4BD055D053021F23B5DA /* SumSprintDifficultyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78C3729BD6D6038D63EA71D /* SumSprintDifficultyView.swift */; };
 		0D0A34DB7759B11FEB4B6D94 /* LearningCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFA05754CC31E013A31DED6 /* LearningCard.swift */; };
 		0D7D0578848D8B3EFCE786DF /* FeedbackBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192FA715F1CF0C4BCFA0DA53 /* FeedbackBannerView.swift */; };
+		0E6E768F57FD0C978BB0040D /* AngleArcadeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D889AFE67A562678257A0491 /* AngleArcadeUITests.swift */; };
 		0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288594261DFE5DC67971E64C /* ThemeTests.swift */; };
 		0F799699251E181629E1C3F8 /* GameActivityCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */; };
 		10EB0242F0C3D40604D246E8 /* SumSprintModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576411C3ACD2B1B55F53CC89 /* SumSprintModels.swift */; };
@@ -427,6 +428,7 @@
 		D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVView.swift; sourceTree = "<group>"; };
 		D69ADFE340625CE2247C439C /* AngleCannonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleCannonTests.swift; sourceTree = "<group>"; };
 		D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryVarietyTests.swift; sourceTree = "<group>"; };
+		D889AFE67A562678257A0491 /* AngleArcadeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeUITests.swift; sourceTree = "<group>"; };
 		D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryStageVocabulary.swift; sourceTree = "<group>"; };
 		D9E6A4D2C61679954D59F25A /* MemoryContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryContentTests.swift; sourceTree = "<group>"; };
 		DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLayoutTests.swift; sourceTree = "<group>"; };
@@ -759,6 +761,7 @@
 		6429B1B0A10DE9EEB86245AF /* MatherTVUITests */ = {
 			isa = PBXGroup;
 			children = (
+				D889AFE67A562678257A0491 /* AngleArcadeUITests.swift */,
 				028559322E9A969FEDF61096 /* MemoryGalleryContentUITests.swift */,
 			);
 			name = MatherTVUITests;
@@ -1194,6 +1197,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0E6E768F57FD0C978BB0040D /* AngleArcadeUITests.swift in Sources */,
 				709D0F92DC98441A419DC068 /* MemoryGalleryContentUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
