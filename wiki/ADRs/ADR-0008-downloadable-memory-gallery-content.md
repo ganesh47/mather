@@ -14,7 +14,7 @@ Implement an app-side prototype of a versioned JSON content pack delivered from 
 - Keep bundled decks as the first-launch and failure fallback.
 - Use explicit `schemaVersion` and monotonically increasing `contentVersion` fields. Reject unsupported schemas and invalid cards or asset references.
 - Download into a staging directory, verify all artwork, then atomically replace the active-pack pointer. A failed update leaves the last complete pack available.
-- Keep a snapshot of cards for each play session. Refresh only at the category chooser; never replace session content during play.
+- Keep a snapshot of cards for each play session. Start refresh when the gallery opens and download at most six images concurrently. Continue downloads if a child starts playing; persist a complete pending pack and activate it at the next category chooser or app launch. Never replace cards or artwork during play.
 - Use Application Support for downloaded content. tvOS storage can be purged; always retain bundled fallback.
 - Keep executable logic, scoring, and supported categories in the app. JSON contains declarative content only.
 - Configure the feed with `MemoryGalleryContentURL` in the TV app's Info.plist. The default feed is `https://raw.githubusercontent.com/ganesh47/mather-content/main/memory-gallery/pack.json`, hosted in the separate public `ganesh47/mather-content` repository at the user's request. Git tags preserve content releases; the main-branch URL delivers updates.

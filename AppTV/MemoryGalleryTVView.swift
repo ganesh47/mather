@@ -26,11 +26,13 @@ struct MemoryGalleryTVView: View {
             }
         }
         .environment(contentStore)
-        .task(id: game.phase) {
-            guard game.phase == .choosingCategory,
-                  let value = Bundle.main.object(forInfoDictionaryKey: "MemoryGalleryContentURL") as? String,
+        .task {
+            guard let value = Bundle.main.object(forInfoDictionaryKey: "MemoryGalleryContentURL") as? String,
                   let url = URL(string: value) else { return }
             await contentStore.refresh(from: url) { game.phase == .choosingCategory }
+        }
+        .onChange(of: game.phase) { _, phase in
+            if phase == .choosingCategory { contentStore.activatePending() }
         }
         .onAppear {
             presentCategoryPrompt()

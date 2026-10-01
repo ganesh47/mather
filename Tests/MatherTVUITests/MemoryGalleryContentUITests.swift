@@ -7,8 +7,8 @@ final class MemoryGalleryContentUITests: XCTestCase {
         let manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: feed)) as? [String: Any])
         let version = try XCTUnwrap(manifest["contentVersion"] as? Int)
         let decks = try XCTUnwrap(manifest["decks"] as? [[String: Any]])
-        let animalDeck = try XCTUnwrap(decks.first { $0["kind"] as? String == "domesticAnimals" })
-        let cards = try XCTUnwrap(animalDeck["cards"] as? [[String: Any]])
+        let vehicleDeck = try XCTUnwrap(decks.first { $0["kind"] as? String == "vehicles" })
+        let cards = try XCTUnwrap(vehicleDeck["cards"] as? [[String: Any]])
         let firstCardID = try XCTUnwrap(cards.first?["id"] as? String)
         let app = XCUIApplication()
         app.launch()
@@ -17,8 +17,9 @@ final class MemoryGalleryContentUITests: XCTestCase {
         XCTAssertTrue(downloadedShelf.waitForExistence(timeout: 240), "Published content must finish downloading")
         attachScreenshot("Downloaded gallery")
 
-        let animals = app.buttons["tv-memory-category-animals"]
-        waitForFocus(animals)
+        waitForFocus(app.buttons["tv-memory-category-animals"])
+        XCUIRemote.shared.press(.right)
+        waitForFocus(app.buttons["tv-memory-category-vehicles"])
         XCUIRemote.shared.press(.select)
         let answer = app.buttons["tv-memory-answer-\(firstCardID)"]
         XCTAssertTrue(answer.waitForExistence(timeout: 10))

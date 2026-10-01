@@ -105,6 +105,21 @@ struct MemoryGalleryContentPackTests {
         await store.refresh(from: url, canActivate: { false })
         #expect(store.pack == baseline)
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("active").path))
+        #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("pending").path))
+        store.activatePending()
+        #expect(store.pack.contentVersion == 2)
+        #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("pending").path))
+    }
+
+    @Test @MainActor func stagedUpdateSurvivesRelaunchWithoutReplacingAnActiveSession() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: MemoryGalleryContentPack.bundled.decks, assets: [])
+        let data = try JSONEncoder().encode(replacement)
+        let store = MemoryGalleryContentStore(root: root, fetch: { _, _ in data })
+        await store.refresh(from: URL(string: "https://example.com/pack.json")!, canActivate: { false })
+        #expect(store.pack == .bundled)
+        #expect(MemoryGalleryContentStore(root: root).pack == replacement)
     }
 
     @Test @MainActor func artworkIsVerifiedCachedAndCorruptionFallsBack() async throws {

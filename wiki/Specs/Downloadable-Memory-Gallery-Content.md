@@ -45,7 +45,7 @@ The separate public repository [ganesh47/mather-content](https://github.com/gane
 
 Content releases use Git tags such as `memory-gallery-v2`; installed apps keep the stable main-branch URL. The content repository includes its own Python validator and CI so publishing new content does not require building Mather. Preserve attribution records for supplied artwork. No GitHub API token is needed by the app for this public raw-file feed.
 
-The gallery checks when entering its category chooser. Updates are staged, validated, and committed only while the chooser is active. A session snapshots its cards; failed, cancelled, outdated, oversized, or incompatible updates preserve the previous complete pack. On first launch or cache loss, bundled content remains available. The iPad Memory flow has not yet adopted remote packs.
+The gallery checks when opened and downloads at most six images concurrently. Downloads continue during play; a complete pack waits on disk if a session is active, then activates at the next category chooser or app launch. A session snapshots its cards, and its artwork remains available until the session ends. Failed, cancelled, outdated, oversized, or incompatible updates preserve the previous complete pack. On first launch or cache loss, bundled content remains available. The iPad Memory flow has not yet adopted remote packs.
 
 ## Versioning and recovery
 

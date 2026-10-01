@@ -7,7 +7,7 @@ struct MemoryGalleryContentPack: Codable, Equatable {
         let cards: [MemoryAnimal]
     }
 
-    struct Asset: Codable, Equatable {
+    struct Asset: Codable, Equatable, Sendable {
         let id: String
         let file: String
         let byteCount: Int
