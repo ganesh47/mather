@@ -7,6 +7,7 @@ struct MemoryGalleryTVView: View {
     @FocusState private var focusedCompletionAction: CompletionAction?
 
     @State private var game = MemoryGalleryTVGame()
+    @State private var narration = TVNarrationController()
 
     var body: some View {
         ZStack {
@@ -24,7 +25,35 @@ struct MemoryGalleryTVView: View {
             }
         }
         .onAppear {
+            presentCategoryPrompt()
             focusFirstCategory()
+        }
+        .onDisappear { narration.stop() }
+        .onPlayPauseCommand { narration.repeatPrompt() }
+        .onChange(of: focusedNarration) { _, text in
+            narration.focus(text)
+        }
+    }
+
+    private var focusedNarration: String? {
+        switch game.phase {
+        case .choosingCategory:
+            return MemoryGalleryTVCategory.allCases.first { $0.id == focusedCategory }.map {
+                "\($0.title). \($0.subtitle). Press select to play."
+            }
+        case .playing:
+            if game.hasAnsweredCurrentRound {
+                return nextButtonFocused ? "\(nextActionTitle). Press select to continue." : nil
+            }
+            return game.round?.answerChoices.first { $0.id == focusedAnswerID }.map {
+                accessibilityName(for: $0)
+            }
+        case .completed:
+            switch focusedCompletionAction {
+            case .replay: return "Play this gallery again."
+            case .chooseGallery: return "Choose another gallery."
+            case nil: return nil
+            }
         }
     }
 
@@ -419,12 +448,19 @@ struct MemoryGalleryTVView: View {
 
     private func start(_ category: MemoryGalleryTVCategory) {
         game.start(category: category)
+        presentRoundPrompt()
         focusFirstAnswer()
     }
 
     private func choose(_ answer: MemoryAnimal) {
         guard !game.hasAnsweredCurrentRound else { return }
         game.select(answerID: answer.id)
+        if let round = game.round {
+            let name = accessibilityName(for: round.promptCard)
+            let feedback = game.lastAnswerWasCorrect == true ? "Matched! You found \(name)." : "Good try. This is \(name)."
+            let fact = round.learningFacts.first.map { "\($0.title): \($0.value)." } ?? ""
+            narration.announce("\(feedback) \(fact) Press select for \(nextActionTitle.lowercased()).")
+        }
         focusedAnswerID = nil
         Task { @MainActor in
             nextButtonFocused = true
@@ -435,24 +471,56 @@ struct MemoryGalleryTVView: View {
         game.advance()
         nextButtonFocused = false
         if game.phase == .completed {
+            narration.presentPrompt("\(completionTitle) You matched \(game.correctCount) out of \(game.roundGoal). Your best streak was \(game.bestStreak). Play this gallery again, or choose another gallery. Press Play Pause to hear this again.")
             Task { @MainActor in
                 focusedCompletionAction = .replay
             }
         } else {
+            presentRoundPrompt()
             focusFirstAnswer()
         }
     }
 
     private func replay() {
         game.replay()
+        presentRoundPrompt()
         focusedCompletionAction = nil
         focusFirstAnswer()
     }
 
     private func chooseAnotherGallery() {
         game.chooseAnotherCategory()
+        presentCategoryPrompt()
         focusedCompletionAction = nil
         focusFirstCategory()
+    }
+
+    private func presentCategoryPrompt() {
+        narration.presentPrompt("Welcome to Memory Gallery. Swipe to choose a gallery, then press select. Take your time. Press Play Pause to hear the instructions again.")
+    }
+
+    private func presentRoundPrompt() {
+        guard let round = game.round else { return }
+        narration.presentPrompt("\(game.progressText). \(spokenRoundPrompt(round)) Swipe to hear the choices, then press select. Press Play Pause to hear the question again.")
+    }
+
+    private func spokenRoundPrompt(_ round: MemoryGalleryTVRound) -> String {
+        switch round.countryPromptKind {
+        case .capital, .officialLanguage:
+            if case .text(let clue) = round.promptPicture {
+                return "\(round.promptTitle): \(clue). \(round.choicePrompt)"
+            }
+            return round.choicePrompt
+        case .flag, .monument, .currency:
+            return round.choicePrompt
+        case nil:
+            switch round.category {
+            case .animals: return "Which animal is in the picture?"
+            case .vehicles: return round.isVehiclePartPrompt ? "Which vehicle part is in the picture?" : "Which vehicle is in the picture?"
+            case .planets: return "Which planet is in the picture?"
+            case .flags: return round.choicePrompt
+            }
+        }
     }
 
     private func focusFirstCategory() {
@@ -482,6 +550,9 @@ struct MemoryGalleryTVView: View {
     }
 
     private func promptAccessibilityLabel(for round: MemoryGalleryTVRound) -> String {
+        if game.hasAnsweredCurrentRound {
+            return "\(accessibilityName(for: round.promptCard))."
+        }
         switch round.countryPromptKind {
         case .flag:
             return "Country flag. Choose the country that has this flag."
@@ -490,13 +561,13 @@ struct MemoryGalleryTVView: View {
         case .currency:
             return "Money picture. Choose the country that uses this money."
         case .capital:
-            return "Capital city clue. Choose the country that has this capital."
+            return spokenRoundPrompt(round)
         case .officialLanguage:
-            return "Official language clue. Choose the country that uses this language."
+            return spokenRoundPrompt(round)
         case nil where round.isVehiclePartPrompt:
-            return "Picture of the vehicle part called \(accessibilityName(for: round.promptCard))."
+            return "Vehicle part picture. Choose the matching name."
         default:
-            return "Picture of \(accessibilityName(for: round.promptCard))."
+            return "\(round.category.title) picture. Choose the matching name."
         }
     }
 

@@ -72,6 +72,7 @@ final class SpeechService {
         speak(text, enabled: enabled)
     }
 
+    #if !os(tvOS)
     func playSoundExample(_ example: SoundExampleKind, enabled: Bool) {
         guard enabled else {
             let msg = "Sound example skipped because audio prompts are disabled."
@@ -103,6 +104,15 @@ final class SpeechService {
     }
 
 
+    #endif
+
+    var isSpeaking: Bool { synthesizer?.isSpeaking ?? false }
+
+    func stop() {
+        synthesizer?.stopSpeaking(at: .immediate)
+        soundExamplePlayer?.stop()
+    }
+
     private static var isRunningUnitTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
@@ -116,6 +126,7 @@ final class SpeechService {
         try AVAudioSession.sharedInstance().setActive(true)
     }
 
+    #if !os(tvOS)
     static func hearingSafeWAVData(for example: SoundExampleKind) -> Data {
         let profile = example.profile
         let sampleRate = 22_050
@@ -192,11 +203,14 @@ final class SpeechService {
         return (Double(value & 0xFFFF) / 32_767.5) - 1.0
     }
 
+    #endif
+
     func resetSession() {
         hasSpokenSessionIntro = false
     }
 }
 
+#if !os(tvOS)
 enum MemoryCardDescriptionSource: String, Equatable {
     case appleIntelligence
     case curatedFallback
@@ -536,3 +550,5 @@ private extension Data {
         }
     }
 }
+
+#endif

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MatherTVRootView: View {
+    @State private var narration = TVNarrationController()
     @FocusState private var focusedAction: MatherTVAction.ID?
     @State private var activeGame: MatherTVAction?
     @State private var lastFocusedAction = MatherTVAction.memory
@@ -74,6 +75,15 @@ struct MatherTVRootView: View {
             .padding(.horizontal, 90)
             .padding(.vertical, 54)
         }
+        .onAppear {
+            narration.presentPrompt("Welcome to Mather Game Night. Swipe to choose a game, then press select to play. Press Play Pause to hear these instructions again.")
+        }
+        .onChange(of: focusedAction) { _, actionID in
+            let action = actions.first { $0.id == actionID }
+            narration.focus(action.map { "\($0.title). \($0.subtitle). Press select to play." })
+        }
+        .onPlayPauseCommand { narration.repeatPrompt() }
+        .onDisappear { narration.stop() }
     }
 
     private var header: some View {
@@ -117,6 +127,7 @@ struct MatherTVRootView: View {
     }
 
     private func openGame(_ action: MatherTVAction) {
+        narration.stop()
         lastFocusedAction = action
         focusedAction = nil
         activeGame = action

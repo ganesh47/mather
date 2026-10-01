@@ -9,6 +9,7 @@ struct SumSprintPartyTVView: View {
     @State private var roundIndex = 0
     @State private var selectedAnswer: Int?
     @State private var streak = 0
+    @State private var narration = TVNarrationController()
 
     private var round: SumSprintPartyTVRound {
         SumSprintPartyTVRound.make(index: roundIndex)
@@ -31,8 +32,21 @@ struct SumSprintPartyTVView: View {
             .padding(.vertical, 66)
         }
         .onAppear {
+            presentRoundPrompt(introduction: "Welcome to Sum Sprint Party. Take your time and count the two groups.")
             focusedAnswer = round.answerChoices.first
         }
+        .onDisappear { narration.stop() }
+        .onPlayPauseCommand { narration.repeatPrompt() }
+        .onChange(of: focusedNarration) { _, text in
+            narration.focus(text)
+        }
+    }
+
+    private var focusedNarration: String? {
+        if selectedAnswer != nil {
+            return nextButtonFocused ? "Next fact. Press select to continue." : nil
+        }
+        return focusedAnswer.map { "\($0)" }
     }
 
     private var header: some View {
@@ -211,6 +225,7 @@ struct SumSprintPartyTVView: View {
     }
 
     private func choose(_ answer: Int) {
+        guard selectedAnswer == nil else { return }
         selectedAnswer = answer
         if answer == round.correctAnswer {
             streak += 1
@@ -218,7 +233,13 @@ struct SumSprintPartyTVView: View {
         } else {
             streak = 0
         }
+        let feedback = answeredCorrectly ? "Nice total!" : "Good try. Let's count together."
+        narration.announce("\(feedback) \(round.fact.addendA) plus \(round.fact.addendB) equals \(round.correctAnswer). Press select for the next fact.")
         nextButtonFocused = true
+    }
+
+    private func presentRoundPrompt(introduction: String = "") {
+        narration.presentPrompt("\(introduction) \(round.fact.spokenPrompt) Swipe to hear the answers, then press select to choose the total. Press Play Pause to hear the question again.")
     }
 
     private func nextRound() {
@@ -226,6 +247,7 @@ struct SumSprintPartyTVView: View {
         let nextRound = SumSprintPartyTVRound.make(index: nextIndex)
         roundIndex = nextIndex
         selectedAnswer = nil
+        presentRoundPrompt()
         focusedAnswer = nextRound.answerChoices.first
         nextButtonFocused = false
     }

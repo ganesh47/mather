@@ -1,6 +1,8 @@
 import SwiftUI
 
+@MainActor
 struct AngleArcadeTVView: View {
+    @State private var narration = TVNarrationController()
     @FocusState private var focusedAction: AngleArcadeAction?
     @State private var angle: Double = AngleArcadeTarget.defaultTargets[0].recommendedAngle
     @State private var power: Double = AngleArcadeTarget.defaultTargets[0].recommendedPower
@@ -46,12 +48,19 @@ struct AngleArcadeTVView: View {
         }
         .onAppear {
             focusedAction = .fire
+            narration.presentPrompt(targetPrompt)
         }
         .onMoveCommand(perform: handleMoveCommand)
-        .onPlayPauseCommand(perform: primaryAction)
+        .onChange(of: focusedAction) { _, action in
+            narration.focus(action == nil ? nil : actionGuidance)
+        }
+        .onPlayPauseCommand {
+            narration.presentPrompt(firedShot == nil ? targetPrompt : "Aim for the \(target.title). \(actionGuidance)")
+        }
+        .onDisappear { narration.stop() }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Angle Arcade")
-        .accessibilityHint("Use left and right for angle, up and down for power, then press select to fire or replay.")
+        .accessibilityHint("Use left and right for angle, up and down for power, then press select to fire. Press Play Pause to repeat the instructions.")
     }
 
     private var header: some View {
@@ -98,6 +107,8 @@ struct AngleArcadeTVView: View {
             .buttonStyle(.borderedProminent)
             .focused($focusedAction, equals: .fire)
             .accessibilityIdentifier("angle-arcade-fire-replay-button")
+            .accessibilityLabel(firedShot == nil ? "Fire" : firedShot?.hit == true ? "Next target" : "Try again")
+            .accessibilityHint(actionGuidance)
         }
     }
 
@@ -138,6 +149,21 @@ struct AngleArcadeTVView: View {
         .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
+    private var aimDescription: String {
+        "Angle \(Int(angle)) degrees. Power \(Int(power))."
+    }
+
+    private var targetPrompt: String {
+        "Aim for the \(target.title). Use left and right to change the angle. Use up and down to change the power. \(aimDescription) Press select to fire. Press Play Pause to hear these instructions again."
+    }
+
+    private var actionGuidance: String {
+        guard let shot = firedShot else { return "Fire. Press select to launch." }
+        return shot.hit
+            ? "Replay. Press select to start the next target."
+            : "Replay. Press select to try this target again."
+    }
+
     private func primaryAction() {
         if let shot = firedShot {
             if shot.hit {
@@ -147,6 +173,7 @@ struct AngleArcadeTVView: View {
                 power = nextTarget.recommendedPower
             }
             firedShot = nil
+            narration.presentPrompt(targetPrompt)
             return
         }
 
@@ -154,6 +181,10 @@ struct AngleArcadeTVView: View {
         firedShot = shot
         if shot.hit {
             hitCount += 1
+            narration.announce("You hit the \(target.title)! \(actionGuidance)")
+        } else {
+            let direction = shot.verticalDelta > 0 ? "above" : "below"
+            narration.announce("The shot went \(direction) the target. \(actionGuidance) Then change your angle or power.")
         }
     }
 
@@ -169,8 +200,9 @@ struct AngleArcadeTVView: View {
         case .down:
             power = AngleArcadeModel.adjustedPower(power, direction: -1)
         @unknown default:
-            break
+            return
         }
+        narration.focus(aimDescription)
     }
 }
 
