@@ -188,8 +188,8 @@ struct MemoryGalleryTVRound: Equatable {
 
     static let choiceCount = 4
 
-    static func make(category: MemoryGalleryTVCategory, index: Int) -> MemoryGalleryTVRound {
-        let deck = category.deck
+    static func make(category: MemoryGalleryTVCategory, index: Int, deck suppliedDeck: [MemoryAnimal]? = nil) -> MemoryGalleryTVRound {
+        let deck = suppliedDeck ?? category.deck
         precondition(deck.count >= choiceCount, "Memory Gallery TV categories need at least \(choiceCount) cards.")
 
         let roundCycleLength = max(deck.count, MemoryGalleryTVGame.roundGoal(for: category))
@@ -229,7 +229,7 @@ struct MemoryGalleryTVRound: Equatable {
         roundIndex: Int,
         deckCount: Int
     ) -> Int {
-        guard category == .vehicles || category == .flags else { return roundIndex }
+        guard category == .vehicles || category == .flags else { return positiveModulo(roundIndex, deckCount) }
 
         if category == .flags {
             // Thirty questions revisit countries with different clue types.
@@ -336,10 +336,11 @@ struct MemoryGalleryTVGame: Equatable {
     private(set) var bestStreak = 0
     private(set) var selectedAnswerID: String?
     private(set) var lastAnswerWasCorrect: Bool?
+    private(set) var sessionDeck: [MemoryAnimal]?
 
     var round: MemoryGalleryTVRound? {
         guard let category, phase == .playing else { return nil }
-        return MemoryGalleryTVRound.make(category: category, index: roundIndex)
+        return MemoryGalleryTVRound.make(category: category, index: roundIndex, deck: sessionDeck)
     }
 
     var hasAnsweredCurrentRound: Bool {
@@ -366,7 +367,8 @@ struct MemoryGalleryTVGame: Equatable {
         }
     }
 
-    mutating func start(category: MemoryGalleryTVCategory) {
+    mutating func start(category: MemoryGalleryTVCategory, deck: [MemoryAnimal]? = nil) {
+        sessionDeck = deck
         self.category = category
         phase = .playing
         roundIndex = 0
@@ -424,7 +426,7 @@ struct MemoryGalleryTVGame: Equatable {
             chooseAnotherCategory()
             return
         }
-        start(category: category)
+        start(category: category, deck: sessionDeck)
     }
 
     mutating func chooseAnotherCategory() {

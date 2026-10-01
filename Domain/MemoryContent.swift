@@ -2,23 +2,49 @@ import Foundation
 
 // MARK: - Data model
 
-enum MemoryPicture: Equatable {
+enum MemoryPicture: Equatable, Codable {
     case emoji(String)
     case asset(String)
     case text(String)
+
+    private enum CodingKeys: String, CodingKey { case kind, value }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let value = try values.decode(String.self, forKey: .value)
+        switch try values.decode(String.self, forKey: .kind) {
+        case "emoji": self = .emoji(value)
+        case "asset": self = .asset(value)
+        case "text": self = .text(value)
+        default: throw DecodingError.dataCorruptedError(forKey: .kind, in: values, debugDescription: "Unsupported picture kind")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        let kind: String
+        let value: String
+        switch self {
+        case .emoji(let text): kind = "emoji"; value = text
+        case .asset(let name): kind = "asset"; value = name
+        case .text(let text): kind = "text"; value = text
+        }
+        try values.encode(kind, forKey: .kind)
+        try values.encode(value, forKey: .value)
+    }
 }
 
-struct MemoryFactCard: Equatable, Hashable {
+struct MemoryFactCard: Equatable, Hashable, Codable {
     let title: String
     let value: String
 }
 
-struct MemoryLearningArtwork: Equatable, Hashable {
+struct MemoryLearningArtwork: Equatable, Hashable, Codable {
     let title: String
     let assetName: String
 }
 
-enum MemoryDeckKind: String, CaseIterable, Equatable, Hashable {
+enum MemoryDeckKind: String, CaseIterable, Equatable, Hashable, Codable {
     case domesticAnimals
     case birds
     case vehicles
@@ -48,7 +74,7 @@ enum MemoryDeckKind: String, CaseIterable, Equatable, Hashable {
     }
 }
 
-struct MemoryCardMetadata: Equatable {
+struct MemoryCardMetadata: Equatable, Codable {
     let deck: MemoryDeckKind
     let category: String
     let kind: String
@@ -153,7 +179,7 @@ struct MemoryImageAssetPlan: Equatable {
     let status: Status
 }
 
-struct MemoryImageAssetProvenance: Equatable {
+struct MemoryImageAssetProvenance: Equatable, Codable {
     let assetName: String
     let cardId: String
     let sourceName: String
@@ -175,7 +201,7 @@ struct MemoryImageAssetProvenance: Equatable {
     let childCardLegibilityChecked: Bool
 }
 
-struct MemoryAnimal: Identifiable, Equatable {
+struct MemoryAnimal: Identifiable, Equatable, Codable {
     let id: String
     let name: String
     let canonicalName: String

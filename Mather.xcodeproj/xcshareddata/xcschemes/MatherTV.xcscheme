@@ -39,6 +39,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "96B1363623F1AC63BEE0C0CF"
+               BuildableName = "MatherTVUITests.xctest"
+               BlueprintName = "MatherTVUITests"
+               ReferencedContainer = "container:Mather.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>
