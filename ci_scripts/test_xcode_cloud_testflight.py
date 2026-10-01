@@ -16,6 +16,7 @@ from ci_scripts.xcode_cloud_testflight import (
     choose_workflow_for_platform,
     ensure_internal_beta_group_access,
     find_build,
+    find_git_reference,
     inspect_ipa,
     normalize_private_key,
     prerelease_version_id,
@@ -25,6 +26,35 @@ from ci_scripts.xcode_cloud_testflight import (
 
 
 class XcodeCloudTestFlightTests(unittest.TestCase):
+    def test_git_tag_waits_for_reference_sync(self) -> None:
+        client = MagicMock()
+        client.pages.side_effect = [[], [{"id": "tag-id", "attributes": {
+            "name": "v2.7.0", "kind": "TAG", "isDeleted": False,
+        }}]]
+        with patch("ci_scripts.xcode_cloud_testflight.time.sleep") as sleep:
+            self.assertEqual(find_git_reference(client, "repo", "v2.7.0"), "tag-id")
+        self.assertEqual(client.pages.call_count, 2)
+        sleep.assert_called_once()
+
+    def test_git_tag_never_falls_back_to_branch_or_deleted_tag(self) -> None:
+        client = MagicMock()
+        client.pages.return_value = [{"id": "wrong", "attributes": {
+            "name": "v2.7.0", "kind": kind, "isDeleted": deleted,
+        }} for kind, deleted in [("BRANCH", False), ("TAG", True)]]
+        with self.assertRaisesRegex(ReleaseError, "cannot see Git tag"):
+            find_git_reference(client, "repo", "v2.7.0", timeout_seconds=0)
+
+    def test_missing_git_tag_times_out(self) -> None:
+        client = MagicMock()
+        client.pages.return_value = []
+        with (
+            patch("ci_scripts.xcode_cloud_testflight.time.monotonic", side_effect=[0, 0, 181]),
+            patch("ci_scripts.xcode_cloud_testflight.time.sleep") as sleep,
+            self.assertRaisesRegex(ReleaseError, "after 180s"),
+        ):
+            find_git_reference(client, "repo", "v2.7.0")
+        sleep.assert_called_once_with(15)
+
     def test_normalizes_escaped_private_key(self) -> None:
         self.assertEqual(
             normalize_private_key("BEGIN\\nsecret\\nEND"),
