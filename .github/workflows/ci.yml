@@ -76,6 +76,20 @@ jobs:
           xcrun simctl list devices available
           exit 1
 
+      - name: Test published Memory Gallery content
+        timeout-minutes: 10
+        run: bash scripts/test_memory_gallery_content.sh
+
+      - name: Test Memory Gallery on Apple TV
+        timeout-minutes: 10
+        run: |
+          TV_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for runtime,rows in devices.items() if ".tvOS-" in runtime for d in rows if d["isAvailable"]))')
+          xcodebuild test \
+            -project Mather.xcodeproj -scheme MatherTV \
+            -destination "platform=tvOS Simulator,id=$TV_ID" \
+            -resultBundlePath TVContentResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Resolve dependencies
         run: xcodebuild -project Mather.xcodeproj -resolvePackageDependencies -scheme Mather
 
@@ -130,5 +144,14 @@ jobs:
         with:
           name: unit-test-results-${{ github.run_number }}
           path: TestResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload TV content result bundle
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tv-content-results-${{ github.run_number }}
+          path: TVContentResults.xcresult
           if-no-files-found: ignore
           retention-days: 30

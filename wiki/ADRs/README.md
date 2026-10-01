@@ -13,6 +13,7 @@ Lightweight records of significant technical decisions made for Mather.
 | [ADR-0005](ADR-0005-adaptive-color-system.md) | Adaptive color system | Accepted | 2026-04-03 |
 | [ADR-0006](ADR-0006-sensor-finale-stage.md) | Sensor-powered finale stage | Accepted | 2026-04-10 |
 | [ADR-0007](ADR-0007-on-device-memory-card-rewriting.md) | On-device Memory card rewriting | Accepted | 2026-08-08 |
+| [ADR-0008](ADR-0008-downloadable-memory-gallery-content.md) | Downloadable Memory Gallery content | Proposed | 2026-10-01 |
 
 ---
 

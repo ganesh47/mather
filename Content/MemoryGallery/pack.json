@@ -1,0 +1,4209 @@
+{
+  "assets" : [
+    {
+      "byteCount" : 13667,
+      "file" : "MemoryCurrencyAustralia.png",
+      "id" : "MemoryCurrencyAustralia",
+      "sha256" : "664db5d2afe22bf56036838c228bb26a128fba2d34ee7fe5fe02188638b4d810"
+    },
+    {
+      "byteCount" : 12833,
+      "file" : "MemoryCurrencyBrazil.png",
+      "id" : "MemoryCurrencyBrazil",
+      "sha256" : "dd17cdf8f84d1d5857c8b02298060ae3f7bd0654349ce7267af81dc040ec2b99"
+    },
+    {
+      "byteCount" : 14006,
+      "file" : "MemoryCurrencyCanada.png",
+      "id" : "MemoryCurrencyCanada",
+      "sha256" : "641a1f7fdea182a62c280d70ebfa3e65dcec4f9ce6c9a1579211047e10e0653f"
+    },
+    {
+      "byteCount" : 11966,
+      "file" : "MemoryCurrencyChina.png",
+      "id" : "MemoryCurrencyChina",
+      "sha256" : "c5b6fb3a93271fad61aba30c472445c36f2ee4f213b0376b257763a18c8e1bb3"
+    },
+    {
+      "byteCount" : 12489,
+      "file" : "MemoryCurrencyEgypt.png",
+      "id" : "MemoryCurrencyEgypt",
+      "sha256" : "d1f63820ad4b3ebbc26733c9e9bbbf33a610e9b61b14bfe40020ccb83a49795e"
+    },
+    {
+      "byteCount" : 10431,
+      "file" : "MemoryCurrencyFrance.png",
+      "id" : "MemoryCurrencyFrance",
+      "sha256" : "5b4ed712647515a8fc16a999050627f75eff3dcc0913f8770a11c03adb2b17b6"
+    },
+    {
+      "byteCount" : 10380,
+      "file" : "MemoryCurrencyGermany.png",
+      "id" : "MemoryCurrencyGermany",
+      "sha256" : "ba9d05aeec0a28e9537308a3bdb800e52aafd89f2f3c7a89c513d21e28894a4f"
+    },
+    {
+      "byteCount" : 10177,
+      "file" : "MemoryCurrencyIndia.png",
+      "id" : "MemoryCurrencyIndia",
+      "sha256" : "57647dd883dd954e92bc8f8bd913785ea70b876a32cab96f32416c6866fd4106"
+    },
+    {
+      "byteCount" : 10640,
+      "file" : "MemoryCurrencyItaly.png",
+      "id" : "MemoryCurrencyItaly",
+      "sha256" : "caf9762b23b03abb60fbdb7a9157051a7b21a0b823dd853b287459309740de50"
+    },
+    {
+      "byteCount" : 11015,
+      "file" : "MemoryCurrencyJapan.png",
+      "id" : "MemoryCurrencyJapan",
+      "sha256" : "b2c455845aed399efb094d680c8aa1677b0bfb40cb111708dff197fe69385d38"
+    },
+    {
+      "byteCount" : 14215,
+      "file" : "MemoryCurrencyKenya.png",
+      "id" : "MemoryCurrencyKenya",
+      "sha256" : "d6ec919da4033391ef2423810c4d45820ea35a17a016ca8c4be862f02789607f"
+    },
+    {
+      "byteCount" : 16041,
+      "file" : "MemoryCurrencyMexico.png",
+      "id" : "MemoryCurrencyMexico",
+      "sha256" : "1c727db0bd233355a1a7693a17ab7115a49e1f0c9afbd3f015a8790b334e5c79"
+    },
+    {
+      "byteCount" : 14634,
+      "file" : "MemoryCurrencySaudiArabia.png",
+      "id" : "MemoryCurrencySaudiArabia",
+      "sha256" : "ec96fb8a6ed8bc9dd4831bd76b6540d849aa96eedd214fde10cca1164b86f230"
+    },
+    {
+      "byteCount" : 12982,
+      "file" : "MemoryCurrencySouthAfrica.png",
+      "id" : "MemoryCurrencySouthAfrica",
+      "sha256" : "7986f932277b2c95400dc864af8b6a621b9c9d7f25e7e433e6e2060e03a96f08"
+    },
+    {
+      "byteCount" : 13081,
+      "file" : "MemoryCurrencyUnitedKingdom.png",
+      "id" : "MemoryCurrencyUnitedKingdom",
+      "sha256" : "3488c917fe0b902d4a464ba760cbc2db2e58ffbe5bd833bc952e82a98a547fb2"
+    },
+    {
+      "byteCount" : 12670,
+      "file" : "MemoryCurrencyUnitedStates.png",
+      "id" : "MemoryCurrencyUnitedStates",
+      "sha256" : "99637fe4464553aa4d7d4e73ae96734be316c94681e36d97eff52944d2c1dd34"
+    },
+    {
+      "byteCount" : 4917,
+      "file" : "MemoryFlagAustralia.png",
+      "id" : "MemoryFlagAustralia",
+      "sha256" : "07e169c5a54af9027fbafe0348e4505b09112cd077d1e3fbcf37a206be37c119"
+    },
+    {
+      "byteCount" : 4647,
+      "file" : "MemoryFlagBrazil.png",
+      "id" : "MemoryFlagBrazil",
+      "sha256" : "ac1235d39036fd5ed000a10dd0e49d939eda8db1632c831d8453be301aa6c272"
+    },
+    {
+      "byteCount" : 2824,
+      "file" : "MemoryFlagCanada.png",
+      "id" : "MemoryFlagCanada",
+      "sha256" : "b3712b0ba8bb6c0bb9d40878b9ba8af8dfcd42f5fc35823472d4324ef580132c"
+    },
+    {
+      "byteCount" : 2384,
+      "file" : "MemoryFlagEgypt.png",
+      "id" : "MemoryFlagEgypt",
+      "sha256" : "f307582ff40e2c27ebf25e244fa34330b671f30cf44df07e75fc122f3402ddd8"
+    },
+    {
+      "byteCount" : 2189,
+      "file" : "MemoryFlagFrance.png",
+      "id" : "MemoryFlagFrance",
+      "sha256" : "c9912731f78d48a59bcad43a2e0014ac83ef7887277b8a4ad8728803a3c74ff4"
+    },
+    {
+      "byteCount" : 3368,
+      "file" : "MemoryFlagIndia.png",
+      "id" : "MemoryFlagIndia",
+      "sha256" : "532012f66641b8e0ddd64628305810178bd97bb35e13086c00ee2ba597ae45f2"
+    },
+    {
+      "byteCount" : 2689,
+      "file" : "MemoryFlagJapan.png",
+      "id" : "MemoryFlagJapan",
+      "sha256" : "b2d751e8a2b4a7987c5268b5edb12b45a5cdda7dd9977d027311aba9401b39ef"
+    },
+    {
+      "byteCount" : 3409,
+      "file" : "MemoryFlagKenya.png",
+      "id" : "MemoryFlagKenya",
+      "sha256" : "174a01c7a8f65e7b4e7fc976edb1f239617042113a82335fa7ff7455ea1657e9"
+    },
+    {
+      "byteCount" : 415487,
+      "file" : "MemoryMonumentAustralia.png",
+      "id" : "MemoryMonumentAustralia",
+      "sha256" : "7e83aa825f2216b0d9eec764b241a5c3e4b3146477b5a16796cf63399086d18e"
+    },
+    {
+      "byteCount" : 382977,
+      "file" : "MemoryMonumentBrazil.png",
+      "id" : "MemoryMonumentBrazil",
+      "sha256" : "244724a36a95c1e72fb18686ccb5671da4c80cc141c2f5951257682c0084e7ce"
+    },
+    {
+      "byteCount" : 364530,
+      "file" : "MemoryMonumentCanada.png",
+      "id" : "MemoryMonumentCanada",
+      "sha256" : "d6b0f78ed0667aaae2eb8e7c79665f71caa3474a6d0e8abee16b607bba8c0715"
+    },
+    {
+      "byteCount" : 518312,
+      "file" : "MemoryMonumentChina.png",
+      "id" : "MemoryMonumentChina",
+      "sha256" : "1f9d69cd024b6b468b73844412a3f8ffdd94a934e893f08a1c3d6e7df415741c"
+    },
+    {
+      "byteCount" : 468060,
+      "file" : "MemoryMonumentEgypt.png",
+      "id" : "MemoryMonumentEgypt",
+      "sha256" : "ef8a5845a7db747a38aa97c0649e2866b67c51bc29c5a6f289823023851023dc"
+    },
+    {
+      "byteCount" : 431899,
+      "file" : "MemoryMonumentFrance.png",
+      "id" : "MemoryMonumentFrance",
+      "sha256" : "a5456fe7bb361a373f24ca821b996214b05a330ab0cdec4c1b349c2383c4e4d0"
+    },
+    {
+      "byteCount" : 409204,
+      "file" : "MemoryMonumentGermany.png",
+      "id" : "MemoryMonumentGermany",
+      "sha256" : "878c4e626b13e61aa302324cdb654cd8e2d6c894276581889982eb2b7c25f7ec"
+    },
+    {
+      "byteCount" : 462849,
+      "file" : "MemoryMonumentIndia.png",
+      "id" : "MemoryMonumentIndia",
+      "sha256" : "f24674b66b8662c6d19969ea497fa79565b17e99e8bd42d6615309d479a2fa4f"
+    },
+    {
+      "byteCount" : 451231,
+      "file" : "MemoryMonumentItaly.png",
+      "id" : "MemoryMonumentItaly",
+      "sha256" : "5a3c049b35a6db22bc7264103c7e710fe65568f51029010e1279fc42d7560ade"
+    },
+    {
+      "byteCount" : 492398,
+      "file" : "MemoryMonumentJapan.png",
+      "id" : "MemoryMonumentJapan",
+      "sha256" : "8a202c8356a98e66a0bc8d683d68d2cf1eed14d4c37487185f8034e7530d98a6"
+    },
+    {
+      "byteCount" : 444441,
+      "file" : "MemoryMonumentKenya.png",
+      "id" : "MemoryMonumentKenya",
+      "sha256" : "a2b91ab657332d683e60bf1d1633f7e09f902c4cc43e1f067de2c7578f21e09d"
+    },
+    {
+      "byteCount" : 448658,
+      "file" : "MemoryMonumentMexico.png",
+      "id" : "MemoryMonumentMexico",
+      "sha256" : "cbf55ef021bd71987a4f3de5c4666613fcad055b1005197875aaae1e08c3c072"
+    },
+    {
+      "byteCount" : 446384,
+      "file" : "MemoryMonumentSaudiArabia.png",
+      "id" : "MemoryMonumentSaudiArabia",
+      "sha256" : "49b7fe697baffb87a4ab6f62cc7a8449273e6b57087347de49a3404847e7cb29"
+    },
+    {
+      "byteCount" : 483271,
+      "file" : "MemoryMonumentSouthAfrica.png",
+      "id" : "MemoryMonumentSouthAfrica",
+      "sha256" : "a15ccd95081e50bd210a68f4dc070387ec279e533b0e803d606db2b66451c669"
+    },
+    {
+      "byteCount" : 416262,
+      "file" : "MemoryMonumentUnitedKingdom.png",
+      "id" : "MemoryMonumentUnitedKingdom",
+      "sha256" : "c72e977354a4d649fe4b207879b9556d672c07a43e2860674940a54c4ecc2996"
+    },
+    {
+      "byteCount" : 396310,
+      "file" : "MemoryMonumentUnitedStates.png",
+      "id" : "MemoryMonumentUnitedStates",
+      "sha256" : "8772aaf09f90152be465e7e4ce92f6c18ef24ffea7d64ea38b3b141b7a92ca66"
+    },
+    {
+      "byteCount" : 335216,
+      "file" : "MemoryPlanetEarth.png",
+      "id" : "MemoryPlanetEarth",
+      "sha256" : "66116c2b894b2298973f9714b961036aafd94a0e7bf85c04f04ed837f05cc0b1"
+    },
+    {
+      "byteCount" : 262464,
+      "file" : "MemoryPlanetJupiter.png",
+      "id" : "MemoryPlanetJupiter",
+      "sha256" : "416111a08228577c49bee0635aea896f21e64de6e94c6d2a73aa676b058abc9e"
+    },
+    {
+      "byteCount" : 375882,
+      "file" : "MemoryPlanetMars.png",
+      "id" : "MemoryPlanetMars",
+      "sha256" : "4beea0b1044f7b7cefbf4d08b25c846d2d0c18e1b16b1842e0243a45a2fe0e55"
+    },
+    {
+      "byteCount" : 224341,
+      "file" : "MemoryPlanetMercury.png",
+      "id" : "MemoryPlanetMercury",
+      "sha256" : "808fde1384ddb7ee38aac5f544b068b3a08b6986d57d3fad59c84c980e4c8f67"
+    },
+    {
+      "byteCount" : 253722,
+      "file" : "MemoryPlanetNeptune.png",
+      "id" : "MemoryPlanetNeptune",
+      "sha256" : "e4c4f48c171cb66d2507b174202a31f927f83a364495366f433fb6f1705e650a"
+    },
+    {
+      "byteCount" : 55457,
+      "file" : "MemoryPlanetSaturn.png",
+      "id" : "MemoryPlanetSaturn",
+      "sha256" : "43f63737ec0198609a2fba339d1dc4798046bbbb90bb02cca8c32cf53427bbb5"
+    },
+    {
+      "byteCount" : 118798,
+      "file" : "MemoryPlanetUranus.png",
+      "id" : "MemoryPlanetUranus",
+      "sha256" : "6ef015fba22d014bafc7bf07e59ee3e67aeab91d86f0b04c9c32d3e8a62fbca3"
+    },
+    {
+      "byteCount" : 196396,
+      "file" : "MemoryPlanetVenus.png",
+      "id" : "MemoryPlanetVenus",
+      "sha256" : "af60c16a58a1187955dc7df4bad594668add4a8819c5963e39fb98323f832e50"
+    },
+    {
+      "byteCount" : 215365,
+      "file" : "MemoryVehicleAmbulance.png",
+      "id" : "MemoryVehicleAmbulance",
+      "sha256" : "29d4cb0e23d53ddf12c28b0b267b9c3ff207bb0430698a28e17d07ea5fe98a1e"
+    },
+    {
+      "byteCount" : 213533,
+      "file" : "MemoryVehicleBackhoeLoader.png",
+      "id" : "MemoryVehicleBackhoeLoader",
+      "sha256" : "39f001b529db95740f4465ff9331538e74db091438e7c0f15348f105af63166d"
+    },
+    {
+      "byteCount" : 10584,
+      "file" : "MemoryVehicleBike.png",
+      "id" : "MemoryVehicleBike",
+      "sha256" : "e4bdd509af598bdc0b9407c85ee27987460808846b01dd28972a8c6ecbc4e276"
+    },
+    {
+      "byteCount" : 3096,
+      "file" : "MemoryVehicleBoat.png",
+      "id" : "MemoryVehicleBoat",
+      "sha256" : "6249a276351fd91a2f81b78371c78349a5802c6de242721a8391f290ef9b5924"
+    },
+    {
+      "byteCount" : 219681,
+      "file" : "MemoryVehicleBulldozer.png",
+      "id" : "MemoryVehicleBulldozer",
+      "sha256" : "6e799650562d610aefb1542d69c30a1252af33a4b3db53759d5c95af1c1a2242"
+    },
+    {
+      "byteCount" : 3201,
+      "file" : "MemoryVehicleBus.png",
+      "id" : "MemoryVehicleBus",
+      "sha256" : "850e2541f2eee679c5f02c4037588125b69ed049ace670fd1790498e934cb639"
+    },
+    {
+      "byteCount" : 3477,
+      "file" : "MemoryVehicleCar.png",
+      "id" : "MemoryVehicleCar",
+      "sha256" : "322156d48b0625d864b17fcd5c85d480b3938cb350ece977692ae5c34910a2a5"
+    },
+    {
+      "byteCount" : 239483,
+      "file" : "MemoryVehicleConcreteMixerTruck.png",
+      "id" : "MemoryVehicleConcreteMixerTruck",
+      "sha256" : "ecb2c8b66ed4177491ac02c9911c32389f8d35d973b9426fbbe5db4386b88267"
+    },
+    {
+      "byteCount" : 187196,
+      "file" : "MemoryVehicleCrawlerCrane.png",
+      "id" : "MemoryVehicleCrawlerCrane",
+      "sha256" : "79bc879e37ccc08ac855cfdb00631eb81f9339dad90a254c45f85ed6398643be"
+    },
+    {
+      "byteCount" : 254152,
+      "file" : "MemoryVehicleDumpTruck.png",
+      "id" : "MemoryVehicleDumpTruck",
+      "sha256" : "2cb53d0b4184f2b3a83a887575438b57b195c9a3a391ca32ce3b3479999c4f31"
+    },
+    {
+      "byteCount" : 240541,
+      "file" : "MemoryVehicleExcavator.png",
+      "id" : "MemoryVehicleExcavator",
+      "sha256" : "cb2b46f657542a23ea3563f7ba5a2d8165f2c4f2b3ff6d543e552fc8761b22e5"
+    },
+    {
+      "byteCount" : 261090,
+      "file" : "MemoryVehicleFireEngine.png",
+      "id" : "MemoryVehicleFireEngine",
+      "sha256" : "f05bb04e6fc832e401fb1a36b5ec003732edef5d04c40cbfbadc5341481b285d"
+    },
+    {
+      "byteCount" : 255072,
+      "file" : "MemoryVehicleGarbageTruck.png",
+      "id" : "MemoryVehicleGarbageTruck",
+      "sha256" : "0e72e170ca7ad4685a1a4714bff6e19a6c506f9e936ad033ad582de017da8d3b"
+    },
+    {
+      "byteCount" : 2997,
+      "file" : "MemoryVehicleHelicopter.png",
+      "id" : "MemoryVehicleHelicopter",
+      "sha256" : "b968b491b968e0aeb371c405f303adf3f301ffc71059f904e8630ecb7f4aced2"
+    },
+    {
+      "byteCount" : 288997,
+      "file" : "MemoryVehicleMiningHaulTruck.png",
+      "id" : "MemoryVehicleMiningHaulTruck",
+      "sha256" : "b25592d1339eb1928d273b3a878b908b34c55869a3b8c6958f469d8e8acaf901"
+    },
+    {
+      "byteCount" : 210301,
+      "file" : "MemoryVehicleMobileCrane.png",
+      "id" : "MemoryVehicleMobileCrane",
+      "sha256" : "33d851bb675d2d167bae9143b41b95c774bc568a8960b712fee3dc366f57e3f9"
+    },
+    {
+      "byteCount" : 312432,
+      "file" : "MemoryVehiclePartBrakes.png",
+      "id" : "MemoryVehiclePartBrakes",
+      "sha256" : "74d012b8ee7ecab1215445bf121c95014c2c9cf05e64d2707bfaf9062ab9b808"
+    },
+    {
+      "byteCount" : 378409,
+      "file" : "MemoryVehiclePartEngine.png",
+      "id" : "MemoryVehiclePartEngine",
+      "sha256" : "446e501529749e22f569ccbddb630be1008f8214ceffe781f02b85f87e35eb8c"
+    },
+    {
+      "byteCount" : 101464,
+      "file" : "MemoryVehiclePartSteering.png",
+      "id" : "MemoryVehiclePartSteering",
+      "sha256" : "4f46c4657dd37d75bf0374a2273a7c31d27c4406be42920dc67b20986e784aff"
+    },
+    {
+      "byteCount" : 174624,
+      "file" : "MemoryVehiclePartSuspension.png",
+      "id" : "MemoryVehiclePartSuspension",
+      "sha256" : "26f48b6c188946b49989c92942f2045e811b3e190d00c78bf3ed3ad40fc451cb"
+    },
+    {
+      "byteCount" : 300938,
+      "file" : "MemoryVehiclePartTransmission.png",
+      "id" : "MemoryVehiclePartTransmission",
+      "sha256" : "1ce3e87b484c8d554835b08f6fe22043b08706de7f578f3193fef4f2d9166d41"
+    },
+    {
+      "byteCount" : 183974,
+      "file" : "MemoryVehiclePartWheelAxle.png",
+      "id" : "MemoryVehiclePartWheelAxle",
+      "sha256" : "06239769382e31958ad0db423cb72288773f0eb65c4d860478a2619501f6b7eb"
+    },
+    {
+      "byteCount" : 3445,
+      "file" : "MemoryVehiclePlane.png",
+      "id" : "MemoryVehiclePlane",
+      "sha256" : "64109fdb182213310e6951783540fb419969b250185ac47f12085270ee07dd2f"
+    },
+    {
+      "byteCount" : 204892,
+      "file" : "MemoryVehiclePoliceCar.png",
+      "id" : "MemoryVehiclePoliceCar",
+      "sha256" : "71b84bf0b62318ea6aea25c9601d2ffeee7b00d2c97268a201c9d16ae79cbc5b"
+    },
+    {
+      "byteCount" : 214992,
+      "file" : "MemoryVehicleRescueHelicopter.png",
+      "id" : "MemoryVehicleRescueHelicopter",
+      "sha256" : "1dfc6991e391b4ac4daaf73bc2b7db44c1f23b557c1a266d2313be2c34cd84ce"
+    },
+    {
+      "byteCount" : 4289,
+      "file" : "MemoryVehicleRocket.png",
+      "id" : "MemoryVehicleRocket",
+      "sha256" : "329909c4b26c533933e422a2062bf5f563b32fd687c34ee19d8c842495b23dea"
+    },
+    {
+      "byteCount" : 3599,
+      "file" : "MemoryVehicleScooter.png",
+      "id" : "MemoryVehicleScooter",
+      "sha256" : "a73d39d0d34154e2040d6fe9a5d7884901696a0385a8d94b949bf6c9b0bb4492"
+    },
+    {
+      "byteCount" : 271390,
+      "file" : "MemoryVehicleSkidSteerLoader.png",
+      "id" : "MemoryVehicleSkidSteerLoader",
+      "sha256" : "72973215aadb7d832f1c619bf1a2e82e52adff1743e8b52aae7dc823a28f7298"
+    },
+    {
+      "byteCount" : 3622,
+      "file" : "MemoryVehicleTaxi.png",
+      "id" : "MemoryVehicleTaxi",
+      "sha256" : "3da398ace4c4d435b5ce3833d1407e296947e598c1ec88653d7848e8f63ea628"
+    },
+    {
+      "byteCount" : 225206,
+      "file" : "MemoryVehicleTowTruck.png",
+      "id" : "MemoryVehicleTowTruck",
+      "sha256" : "c91332da97f6d69e882585cb633b3678cb3acd77ecb1c91838cf17c6be3f15be"
+    },
+    {
+      "byteCount" : 3663,
+      "file" : "MemoryVehicleTractor.png",
+      "id" : "MemoryVehicleTractor",
+      "sha256" : "fa46188e68866c975e751d30d4dcfbef7f5946f2fb5f7a535008f594283394fe"
+    },
+    {
+      "byteCount" : 3502,
+      "file" : "MemoryVehicleTrain.png",
+      "id" : "MemoryVehicleTrain",
+      "sha256" : "3eb0d1f9ec3327ea786822796d0a4cd05721512fac86a6e6e8cf443bf5ca4d60"
+    },
+    {
+      "byteCount" : 3315,
+      "file" : "MemoryVehicleTruck.png",
+      "id" : "MemoryVehicleTruck",
+      "sha256" : "daca358c96d2a4e5ecfd6a502631213a83f6628ee790e1330ce80d794af7af51"
+    },
+    {
+      "byteCount" : 200274,
+      "file" : "MemoryVehicleWheelLoader.png",
+      "id" : "MemoryVehicleWheelLoader",
+      "sha256" : "b902cb50b6a1ced2477e866d3f1c9edd044949cae1c0c9368a3e711d86db0c49"
+    }
+  ],
+  "contentVersion" : 2,
+  "decks" : [
+    {
+      "cards" : [
+        {
+          "canonicalName" : "Cow",
+          "id" : "cow",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "black and white",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and grassy fields"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks on four sturdy legs"
+              },
+              {
+                "title" : "Sound",
+                "value" : "gentle moo"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black and white"
+              }
+            ],
+            "habitat" : "farms and grassy fields",
+            "kind" : "domestic animal",
+            "movement" : "walks on four sturdy legs",
+            "sound" : "gentle moo"
+          },
+          "name" : "Cow",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐄"
+          }
+        },
+        {
+          "canonicalName" : "Dog",
+          "id" : "dog",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "many coat colors",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "homes, parks, and farms"
+              },
+              {
+                "title" : "Moves",
+                "value" : "runs and plays quickly"
+              },
+              {
+                "title" : "Sound",
+                "value" : "happy bark"
+              },
+              {
+                "title" : "Colors",
+                "value" : "many coat colors"
+              }
+            ],
+            "habitat" : "homes, parks, and farms",
+            "kind" : "domestic animal",
+            "movement" : "runs and plays quickly",
+            "sound" : "happy bark"
+          },
+          "name" : "Dog",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐕"
+          }
+        },
+        {
+          "canonicalName" : "Cat",
+          "id" : "cat",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "many fur colors",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "homes and gardens"
+              },
+              {
+                "title" : "Moves",
+                "value" : "tiptoes and pounces"
+              },
+              {
+                "title" : "Sound",
+                "value" : "soft meow"
+              },
+              {
+                "title" : "Colors",
+                "value" : "many fur colors"
+              }
+            ],
+            "habitat" : "homes and gardens",
+            "kind" : "domestic animal",
+            "movement" : "tiptoes and pounces",
+            "sound" : "soft meow"
+          },
+          "name" : "Cat",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐈"
+          }
+        },
+        {
+          "canonicalName" : "Sheep",
+          "id" : "sheep",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "white and cream",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and open pastures"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks together in flocks"
+              },
+              {
+                "title" : "Sound",
+                "value" : "gentle baa"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white and cream"
+              }
+            ],
+            "habitat" : "farms and open pastures",
+            "kind" : "domestic animal",
+            "movement" : "walks together in flocks",
+            "sound" : "gentle baa"
+          },
+          "name" : "Sheep",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐑"
+          }
+        },
+        {
+          "canonicalName" : "Pig",
+          "id" : "pig",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "pink, brown, or black",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "barnyards and farms"
+              },
+              {
+                "title" : "Moves",
+                "value" : "trots and roots around"
+              },
+              {
+                "title" : "Sound",
+                "value" : "snort and oink"
+              },
+              {
+                "title" : "Colors",
+                "value" : "pink, brown, or black"
+              }
+            ],
+            "habitat" : "barnyards and farms",
+            "kind" : "domestic animal",
+            "movement" : "trots and roots around",
+            "sound" : "snort and oink"
+          },
+          "name" : "Pig",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐖"
+          }
+        },
+        {
+          "canonicalName" : "Horse",
+          "id" : "horse",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "brown, black, white, or chestnut",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "stables, ranches, and fields"
+              },
+              {
+                "title" : "Moves",
+                "value" : "gallops fast"
+              },
+              {
+                "title" : "Sound",
+                "value" : "neigh"
+              },
+              {
+                "title" : "Colors",
+                "value" : "brown, black, white, or chestnut"
+              }
+            ],
+            "habitat" : "stables, ranches, and fields",
+            "kind" : "domestic animal",
+            "movement" : "gallops fast",
+            "sound" : "neigh"
+          },
+          "name" : "Horse",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐎"
+          }
+        },
+        {
+          "canonicalName" : "Rabbit",
+          "id" : "rabbit",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "white, brown, gray",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "gardens, meadows, and homes"
+              },
+              {
+                "title" : "Moves",
+                "value" : "hops with long back legs"
+              },
+              {
+                "title" : "Sound",
+                "value" : "quiet squeaks"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, brown, gray"
+              }
+            ],
+            "habitat" : "gardens, meadows, and homes",
+            "kind" : "domestic animal",
+            "movement" : "hops with long back legs",
+            "sound" : "quiet squeaks"
+          },
+          "name" : "Rabbit",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐇"
+          }
+        },
+        {
+          "canonicalName" : "Duck",
+          "id" : "duck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "white, brown, or green",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "ponds, lakes, and farms"
+              },
+              {
+                "title" : "Moves",
+                "value" : "waddles, swims, and flies short distances"
+              },
+              {
+                "title" : "Sound",
+                "value" : "quack"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, brown, or green"
+              }
+            ],
+            "habitat" : "ponds, lakes, and farms",
+            "kind" : "domestic animal",
+            "movement" : "waddles, swims, and flies short distances",
+            "sound" : "quack"
+          },
+          "name" : "Duck",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🦆"
+          }
+        },
+        {
+          "canonicalName" : "Rooster",
+          "id" : "rooster",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "red, gold, green",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farmyards"
+              },
+              {
+                "title" : "Moves",
+                "value" : "struts and flaps"
+              },
+              {
+                "title" : "Sound",
+                "value" : "cock-a-doodle-doo"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, gold, green"
+              }
+            ],
+            "habitat" : "farmyards",
+            "kind" : "domestic animal",
+            "movement" : "struts and flaps",
+            "sound" : "cock-a-doodle-doo"
+          },
+          "name" : "Rooster",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐓"
+          }
+        },
+        {
+          "canonicalName" : "Goat",
+          "id" : "goat",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "white, brown, black",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and rocky hills"
+              },
+              {
+                "title" : "Moves",
+                "value" : "climbs and balances well"
+              },
+              {
+                "title" : "Sound",
+                "value" : "maa"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, brown, black"
+              }
+            ],
+            "habitat" : "farms and rocky hills",
+            "kind" : "domestic animal",
+            "movement" : "climbs and balances well",
+            "sound" : "maa"
+          },
+          "name" : "Goat",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐐"
+          }
+        },
+        {
+          "canonicalName" : "Turkey",
+          "id" : "turkey",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "brown, bronze, black",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and woodlands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks with strong legs"
+              },
+              {
+                "title" : "Sound",
+                "value" : "gobble"
+              },
+              {
+                "title" : "Colors",
+                "value" : "brown, bronze, black"
+              }
+            ],
+            "habitat" : "farms and woodlands",
+            "kind" : "domestic animal",
+            "movement" : "walks with strong legs",
+            "sound" : "gobble"
+          },
+          "name" : "Turkey",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🦃"
+          }
+        },
+        {
+          "canonicalName" : "Goldfish",
+          "id" : "goldfish",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "orange and gold",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "ponds and aquariums"
+              },
+              {
+                "title" : "Moves",
+                "value" : "swims with a swishy tail"
+              },
+              {
+                "title" : "Colors",
+                "value" : "orange and gold"
+              }
+            ],
+            "habitat" : "ponds and aquariums",
+            "kind" : "domestic animal",
+            "movement" : "swims with a swishy tail"
+          },
+          "name" : "Goldfish",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐟"
+          }
+        },
+        {
+          "canonicalName" : "Mouse",
+          "id" : "mouse",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "gray, brown, white",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "fields, barns, and homes"
+              },
+              {
+                "title" : "Moves",
+                "value" : "scurries fast"
+              },
+              {
+                "title" : "Sound",
+                "value" : "tiny squeak"
+              },
+              {
+                "title" : "Colors",
+                "value" : "gray, brown, white"
+              }
+            ],
+            "habitat" : "fields, barns, and homes",
+            "kind" : "domestic animal",
+            "movement" : "scurries fast",
+            "sound" : "tiny squeak"
+          },
+          "name" : "Mouse",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐁"
+          }
+        },
+        {
+          "canonicalName" : "Frog",
+          "id" : "frog",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "green and brown",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "ponds, streams, and wet grass"
+              },
+              {
+                "title" : "Moves",
+                "value" : "jumps and swims"
+              },
+              {
+                "title" : "Sound",
+                "value" : "ribbit"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green and brown"
+              }
+            ],
+            "habitat" : "ponds, streams, and wet grass",
+            "kind" : "domestic animal",
+            "movement" : "jumps and swims",
+            "sound" : "ribbit"
+          },
+          "name" : "Frog",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐸"
+          }
+        },
+        {
+          "canonicalName" : "Camel",
+          "id" : "camel",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "sand and tan",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "deserts and dry plains"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks far on long legs"
+              },
+              {
+                "title" : "Sound",
+                "value" : "grumbly groan"
+              },
+              {
+                "title" : "Colors",
+                "value" : "sand and tan"
+              }
+            ],
+            "habitat" : "deserts and dry plains",
+            "kind" : "domestic animal",
+            "movement" : "walks far on long legs",
+            "sound" : "grumbly groan"
+          },
+          "name" : "Camel",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐪"
+          }
+        },
+        {
+          "canonicalName" : "Llama",
+          "id" : "llama",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "white, brown, black",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "mountain farms and grasslands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks sure-footedly"
+              },
+              {
+                "title" : "Sound",
+                "value" : "soft hum"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, brown, black"
+              }
+            ],
+            "habitat" : "mountain farms and grasslands",
+            "kind" : "domestic animal",
+            "movement" : "walks sure-footedly",
+            "sound" : "soft hum"
+          },
+          "name" : "Llama",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🦙"
+          }
+        },
+        {
+          "canonicalName" : "Donkey",
+          "id" : "donkey",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "gray or brown",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and dry grasslands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks steadily and carries loads"
+              },
+              {
+                "title" : "Sound",
+                "value" : "hee-haw"
+              },
+              {
+                "title" : "Colors",
+                "value" : "gray or brown"
+              }
+            ],
+            "habitat" : "farms and dry grasslands",
+            "kind" : "domestic animal",
+            "movement" : "walks steadily and carries loads",
+            "sound" : "hee-haw"
+          },
+          "name" : "Donkey",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🫏"
+          }
+        },
+        {
+          "canonicalName" : "Ox",
+          "id" : "ox",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "brown, black, white",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "domestic animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "farms and fields"
+              },
+              {
+                "title" : "Moves",
+                "value" : "pulls and plods with strength"
+              },
+              {
+                "title" : "Sound",
+                "value" : "deep moo"
+              },
+              {
+                "title" : "Colors",
+                "value" : "brown, black, white"
+              }
+            ],
+            "habitat" : "farms and fields",
+            "kind" : "domestic animal",
+            "movement" : "pulls and plods with strength",
+            "sound" : "deep moo"
+          },
+          "name" : "Ox",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🐂"
+          }
+        }
+      ],
+      "kind" : "domesticAnimals"
+    },
+    {
+      "cards" : [
+        {
+          "canonicalName" : "Car",
+          "id" : "car",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "many bright paint colors",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "takes people on road trips"
+              },
+              {
+                "title" : "Moves",
+                "value" : "rolls on four wheels"
+              },
+              {
+                "title" : "Sound",
+                "value" : "vroom"
+              },
+              {
+                "title" : "Colors",
+                "value" : "many bright paint colors"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "rolls on four wheels",
+            "sound" : "vroom",
+            "use" : "takes people on road trips"
+          },
+          "name" : "Car",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleCar"
+          }
+        },
+        {
+          "canonicalName" : "Bus",
+          "id" : "bus",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "yellow, red, blue, green",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "carries lots of people together"
+              },
+              {
+                "title" : "Moves",
+                "value" : "drives on roads with many seats"
+              },
+              {
+                "title" : "Sound",
+                "value" : "rumbling engine"
+              },
+              {
+                "title" : "Colors",
+                "value" : "yellow, red, blue, green"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "drives on roads with many seats",
+            "sound" : "rumbling engine",
+            "use" : "carries lots of people together"
+          },
+          "name" : "Bus",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleBus"
+          }
+        },
+        {
+          "canonicalName" : "Train",
+          "id" : "train",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "black, silver, red, blue",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "pulls people or cargo on tracks"
+              },
+              {
+                "title" : "Moves",
+                "value" : "rolls on rails"
+              },
+              {
+                "title" : "Sound",
+                "value" : "choo-choo"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black, silver, red, blue"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "rolls on rails",
+            "sound" : "choo-choo",
+            "use" : "pulls people or cargo on tracks"
+          },
+          "name" : "Train",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleTrain"
+          }
+        },
+        {
+          "canonicalName" : "Plane",
+          "id" : "plane",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "white, blue, silver",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "flies people across the sky"
+              },
+              {
+                "title" : "Moves",
+                "value" : "zooms with wings"
+              },
+              {
+                "title" : "Sound",
+                "value" : "whooshing jet sound"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, blue, silver"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "zooms with wings",
+            "sound" : "whooshing jet sound",
+            "use" : "flies people across the sky"
+          },
+          "name" : "Plane",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePlane"
+          }
+        },
+        {
+          "canonicalName" : "Boat",
+          "id" : "boat",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "white, blue, red",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "travels across water"
+              },
+              {
+                "title" : "Moves",
+                "value" : "floats and glides"
+              },
+              {
+                "title" : "Sound",
+                "value" : "splashing water"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, blue, red"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "floats and glides",
+            "sound" : "splashing water",
+            "use" : "travels across water"
+          },
+          "name" : "Boat",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleBoat"
+          }
+        },
+        {
+          "canonicalName" : "Bike",
+          "id" : "bike",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "red, blue, green, black",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "helps riders pedal from place to place"
+              },
+              {
+                "title" : "Moves",
+                "value" : "rolls on two wheels"
+              },
+              {
+                "title" : "Sound",
+                "value" : "spinning wheels"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, blue, green, black"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "rolls on two wheels",
+            "sound" : "spinning wheels",
+            "use" : "helps riders pedal from place to place"
+          },
+          "name" : "Bike",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleBike"
+          }
+        },
+        {
+          "canonicalName" : "Truck",
+          "id" : "truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "white, blue, red",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "hauls heavy things"
+              },
+              {
+                "title" : "Moves",
+                "value" : "drives with a strong engine"
+              },
+              {
+                "title" : "Sound",
+                "value" : "deep engine rumble"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white, blue, red"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "drives with a strong engine",
+            "sound" : "deep engine rumble",
+            "use" : "hauls heavy things"
+          },
+          "name" : "Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleTruck"
+          }
+        },
+        {
+          "canonicalName" : "Tractor",
+          "id" : "tractor",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "green, red, yellow",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "helps farmers work in fields"
+              },
+              {
+                "title" : "Moves",
+                "value" : "rumbles over dirt with big tires"
+              },
+              {
+                "title" : "Sound",
+                "value" : "put-put engine"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green, red, yellow"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "rumbles over dirt with big tires",
+            "sound" : "put-put engine",
+            "use" : "helps farmers work in fields"
+          },
+          "name" : "Tractor",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleTractor"
+          }
+        },
+        {
+          "canonicalName" : "Copter",
+          "id" : "helicopter",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "red, blue, white",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "flies high and can hover"
+              },
+              {
+                "title" : "Moves",
+                "value" : "lifts with spinning blades"
+              },
+              {
+                "title" : "Sound",
+                "value" : "whup-whup"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, blue, white"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "lifts with spinning blades",
+            "sound" : "whup-whup",
+            "use" : "flies high and can hover"
+          },
+          "name" : "Copter",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleHelicopter"
+          }
+        },
+        {
+          "canonicalName" : "Rocket",
+          "id" : "rocket",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "silver, white, red",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "blasts toward space"
+              },
+              {
+                "title" : "Moves",
+                "value" : "launches straight up fast"
+              },
+              {
+                "title" : "Sound",
+                "value" : "roaring blast"
+              },
+              {
+                "title" : "Colors",
+                "value" : "silver, white, red"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "launches straight up fast",
+            "sound" : "roaring blast",
+            "use" : "blasts toward space"
+          },
+          "name" : "Rocket",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleRocket"
+          }
+        },
+        {
+          "canonicalName" : "Scooter",
+          "id" : "scooter",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "red, teal, yellow",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "zips around short city trips"
+              },
+              {
+                "title" : "Moves",
+                "value" : "rolls on two small wheels"
+              },
+              {
+                "title" : "Sound",
+                "value" : "buzzy motor"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, teal, yellow"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "rolls on two small wheels",
+            "sound" : "buzzy motor",
+            "use" : "zips around short city trips"
+          },
+          "name" : "Scooter",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleScooter"
+          }
+        },
+        {
+          "canonicalName" : "Taxi",
+          "id" : "taxi",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle",
+            "colors" : "yellow and black",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "vehicle"
+              },
+              {
+                "title" : "Use",
+                "value" : "gives people rides around town"
+              },
+              {
+                "title" : "Moves",
+                "value" : "drives on busy roads"
+              },
+              {
+                "title" : "Sound",
+                "value" : "honk honk"
+              },
+              {
+                "title" : "Colors",
+                "value" : "yellow and black"
+              }
+            ],
+            "kind" : "vehicle",
+            "movement" : "drives on busy roads",
+            "sound" : "honk honk",
+            "use" : "gives people rides around town"
+          },
+          "name" : "Taxi",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleTaxi"
+          }
+        },
+        {
+          "canonicalName" : "Engine",
+          "id" : "vehicle-part-engine",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Engine"
+              },
+              {
+                "title" : "Found In",
+                "value" : "under the hood or behind the cab"
+              },
+              {
+                "title" : "Job",
+                "value" : "turns fuel or electricity into motion"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "moving parts spin a shaft that helps turn the wheels"
+              },
+              {
+                "title" : "Remember",
+                "value" : "The engine makes the power"
+              }
+            ],
+            "habitat" : "under the hood or behind the cab",
+            "kind" : "vehicle part",
+            "movement" : "moving parts spin a shaft that helps turn the wheels",
+            "use" : "turns fuel or electricity into motion"
+          },
+          "name" : "Engine",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartEngine"
+          }
+        },
+        {
+          "canonicalName" : "Gears",
+          "id" : "vehicle-part-transmission",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Gears"
+              },
+              {
+                "title" : "Found In",
+                "value" : "between the engine and the driven wheels"
+              },
+              {
+                "title" : "Job",
+                "value" : "chooses how strongly or quickly the wheels turn"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "different-sized gears trade speed for turning force"
+              },
+              {
+                "title" : "Remember",
+                "value" : "Low gear gives more push; high gear helps with speed"
+              }
+            ],
+            "habitat" : "between the engine and the driven wheels",
+            "kind" : "vehicle part",
+            "movement" : "different-sized gears trade speed for turning force",
+            "use" : "chooses how strongly or quickly the wheels turn"
+          },
+          "name" : "Gears",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartTransmission"
+          }
+        },
+        {
+          "canonicalName" : "Brakes",
+          "id" : "vehicle-part-brakes",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Brakes"
+              },
+              {
+                "title" : "Found In",
+                "value" : "beside each wheel"
+              },
+              {
+                "title" : "Job",
+                "value" : "slows or stops the vehicle"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "pads squeeze a spinning disc to make friction"
+              },
+              {
+                "title" : "Remember",
+                "value" : "Friction changes motion into heat"
+              }
+            ],
+            "habitat" : "beside each wheel",
+            "kind" : "vehicle part",
+            "movement" : "pads squeeze a spinning disc to make friction",
+            "use" : "slows or stops the vehicle"
+          },
+          "name" : "Brakes",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartBrakes"
+          }
+        },
+        {
+          "canonicalName" : "Wheel & Axle",
+          "id" : "vehicle-part-wheel-axle",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Wheel & Axle"
+              },
+              {
+                "title" : "Found In",
+                "value" : "under the vehicle"
+              },
+              {
+                "title" : "Job",
+                "value" : "supports the vehicle and lets it roll"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "the axle turns while round wheels travel over the ground"
+              },
+              {
+                "title" : "Remember",
+                "value" : "A wheel and axle is a simple machine"
+              }
+            ],
+            "habitat" : "under the vehicle",
+            "kind" : "vehicle part",
+            "movement" : "the axle turns while round wheels travel over the ground",
+            "use" : "supports the vehicle and lets it roll"
+          },
+          "name" : "Wheel & Axle",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartWheelAxle"
+          }
+        },
+        {
+          "canonicalName" : "Steering",
+          "id" : "vehicle-part-steering",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Steering"
+              },
+              {
+                "title" : "Found In",
+                "value" : "from the driver controls to the front wheels"
+              },
+              {
+                "title" : "Job",
+                "value" : "points the vehicle in a new direction"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "turning the steering wheel angles the road wheels"
+              },
+              {
+                "title" : "Remember",
+                "value" : "Steering changes direction, not speed"
+              }
+            ],
+            "habitat" : "from the driver controls to the front wheels",
+            "kind" : "vehicle part",
+            "movement" : "turning the steering wheel angles the road wheels",
+            "use" : "points the vehicle in a new direction"
+          },
+          "name" : "Steering",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartSteering"
+          }
+        },
+        {
+          "canonicalName" : "Suspension",
+          "id" : "vehicle-part-suspension",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "vehicle part",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Part",
+                "value" : "Suspension"
+              },
+              {
+                "title" : "Found In",
+                "value" : "between each wheel and the vehicle body"
+              },
+              {
+                "title" : "Job",
+                "value" : "helps the tires stay on the ground over bumps"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "springs flex and shock absorbers calm the bouncing"
+              },
+              {
+                "title" : "Remember",
+                "value" : "Suspension makes the ride steadier"
+              }
+            ],
+            "habitat" : "between each wheel and the vehicle body",
+            "kind" : "vehicle part",
+            "movement" : "springs flex and shock absorbers calm the bouncing",
+            "use" : "helps the tires stay on the ground over bumps"
+          },
+          "name" : "Suspension",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePartSuspension"
+          }
+        },
+        {
+          "canonicalName" : "Mobile Crane",
+          "id" : "mobile-crane",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "crane",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Mobile Crane"
+              },
+              {
+                "title" : "Group",
+                "value" : "crane"
+              },
+              {
+                "title" : "Job",
+                "value" : "lifts heavy loads at changing worksites"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "telescoping boom and outriggers"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "hydraulic cylinders extend the boom while outriggers make a wide, steady base"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "The load must stay within the crane's lifting limit"
+              }
+            ],
+            "kind" : "crane",
+            "movement" : "hydraulic cylinders extend the boom while outriggers make a wide, steady base",
+            "use" : "lifts heavy loads at changing worksites"
+          },
+          "name" : "Mobile Crane",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleMobileCrane"
+          }
+        },
+        {
+          "canonicalName" : "Crawler Crane",
+          "id" : "crawler-crane",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "crane",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Crawler Crane"
+              },
+              {
+                "title" : "Group",
+                "value" : "crane"
+              },
+              {
+                "title" : "Job",
+                "value" : "lifts very heavy loads on rough ground"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "lattice boom and wide crawler tracks"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "tracks spread the crane's weight and cables raise the hook"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "A clear swing area keeps people away from the moving boom"
+              }
+            ],
+            "kind" : "crane",
+            "movement" : "tracks spread the crane's weight and cables raise the hook",
+            "use" : "lifts very heavy loads on rough ground"
+          },
+          "name" : "Crawler Crane",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleCrawlerCrane"
+          }
+        },
+        {
+          "canonicalName" : "Wheel Loader",
+          "id" : "wheel-loader",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "loader",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Wheel Loader"
+              },
+              {
+                "title" : "Group",
+                "value" : "loader"
+              },
+              {
+                "title" : "Job",
+                "value" : "scoops and carries loose rock, sand, or soil"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "large front bucket"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "hydraulic arms lift the bucket and a hinged middle helps it steer"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "The bucket stays low while travelling for better balance"
+              }
+            ],
+            "kind" : "loader",
+            "movement" : "hydraulic arms lift the bucket and a hinged middle helps it steer",
+            "use" : "scoops and carries loose rock, sand, or soil"
+          },
+          "name" : "Wheel Loader",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleWheelLoader"
+          }
+        },
+        {
+          "canonicalName" : "Skid-Steer Loader",
+          "id" : "skid-steer-loader",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "loader",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Skid-Steer Loader"
+              },
+              {
+                "title" : "Group",
+                "value" : "loader"
+              },
+              {
+                "title" : "Job",
+                "value" : "works in small construction spaces"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "lift arms with changeable attachments"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "wheels on opposite sides turn at different speeds so it can pivot"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "The safety bar helps protect the operator"
+              }
+            ],
+            "kind" : "loader",
+            "movement" : "wheels on opposite sides turn at different speeds so it can pivot",
+            "use" : "works in small construction spaces"
+          },
+          "name" : "Skid-Steer Loader",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleSkidSteerLoader"
+          }
+        },
+        {
+          "canonicalName" : "Backhoe Loader",
+          "id" : "backhoe-loader",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "loader",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Backhoe Loader"
+              },
+              {
+                "title" : "Group",
+                "value" : "loader"
+              },
+              {
+                "title" : "Job",
+                "value" : "loads material and digs trenches"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "front bucket and rear backhoe"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "hydraulics move both tools and stabilizer legs steady the machine"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Only one digging end works at a time"
+              }
+            ],
+            "kind" : "loader",
+            "movement" : "hydraulics move both tools and stabilizer legs steady the machine",
+            "use" : "loads material and digs trenches"
+          },
+          "name" : "Backhoe Loader",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleBackhoeLoader"
+          }
+        },
+        {
+          "canonicalName" : "Dump Truck",
+          "id" : "dump-truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "truck",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Dump Truck"
+              },
+              {
+                "title" : "Group",
+                "value" : "truck"
+              },
+              {
+                "title" : "Job",
+                "value" : "carries and unloads sand, gravel, or soil"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "tilting cargo bed"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "a hydraulic ram lifts the front of the bed so material slides out"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "It unloads only on firm, level ground"
+              }
+            ],
+            "kind" : "truck",
+            "movement" : "a hydraulic ram lifts the front of the bed so material slides out",
+            "use" : "carries and unloads sand, gravel, or soil"
+          },
+          "name" : "Dump Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleDumpTruck"
+          }
+        },
+        {
+          "canonicalName" : "Mixer Truck",
+          "id" : "concrete-mixer-truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "truck",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Mixer Truck"
+              },
+              {
+                "title" : "Group",
+                "value" : "truck"
+              },
+              {
+                "title" : "Job",
+                "value" : "brings wet concrete to a building site"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "rotating mixing drum"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "spiral blades mix while turning one way and unload while turning the other way"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Workers keep clear of the turning drum and chute"
+              }
+            ],
+            "kind" : "truck",
+            "movement" : "spiral blades mix while turning one way and unload while turning the other way",
+            "use" : "brings wet concrete to a building site"
+          },
+          "name" : "Mixer Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleConcreteMixerTruck"
+          }
+        },
+        {
+          "canonicalName" : "Garbage Truck",
+          "id" : "garbage-truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "truck",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Garbage Truck"
+              },
+              {
+                "title" : "Group",
+                "value" : "truck"
+              },
+              {
+                "title" : "Job",
+                "value" : "collects rubbish and carries it away"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "lifting hopper and compactor"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "the hopper lifts bins and the compactor presses rubbish into less space"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Flashing lights warn others when the truck stops often"
+              }
+            ],
+            "kind" : "truck",
+            "movement" : "the hopper lifts bins and the compactor presses rubbish into less space",
+            "use" : "collects rubbish and carries it away"
+          },
+          "name" : "Garbage Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleGarbageTruck"
+          }
+        },
+        {
+          "canonicalName" : "Tow Truck",
+          "id" : "tow-truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "truck",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Tow Truck"
+              },
+              {
+                "title" : "Group",
+                "value" : "truck"
+              },
+              {
+                "title" : "Job",
+                "value" : "moves a vehicle that cannot drive"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "wheel lift or flatbed"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "a winch pulls the vehicle and strong straps hold it securely"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Warning lights help drivers see the stopped tow truck"
+              }
+            ],
+            "kind" : "truck",
+            "movement" : "a winch pulls the vehicle and strong straps hold it securely",
+            "use" : "moves a vehicle that cannot drive"
+          },
+          "name" : "Tow Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleTowTruck"
+          }
+        },
+        {
+          "canonicalName" : "Mining Haul Truck",
+          "id" : "mining-haul-truck",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "mining vehicle",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Mining Haul Truck"
+              },
+              {
+                "title" : "Group",
+                "value" : "mining vehicle"
+              },
+              {
+                "title" : "Job",
+                "value" : "carries huge loads of rock at a mine"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "giant tires and reinforced dump body"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "a powerful drive system moves loads on steep mine roads"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Smaller vehicles stay where the driver can see them"
+              }
+            ],
+            "kind" : "mining vehicle",
+            "movement" : "a powerful drive system moves loads on steep mine roads",
+            "use" : "carries huge loads of rock at a mine"
+          },
+          "name" : "Mining Haul Truck",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleMiningHaulTruck"
+          }
+        },
+        {
+          "canonicalName" : "Excavator",
+          "id" : "excavator",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "earthmover",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Excavator"
+              },
+              {
+                "title" : "Group",
+                "value" : "earthmover"
+              },
+              {
+                "title" : "Job",
+                "value" : "digs deep holes and moves earth"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "boom, stick, bucket, and rotating cab"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "hydraulic cylinders move the arm and the upper body turns on a platform"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "People stay outside its wide swing area"
+              }
+            ],
+            "kind" : "earthmover",
+            "movement" : "hydraulic cylinders move the arm and the upper body turns on a platform",
+            "use" : "digs deep holes and moves earth"
+          },
+          "name" : "Excavator",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleExcavator"
+          }
+        },
+        {
+          "canonicalName" : "Bulldozer",
+          "id" : "bulldozer",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "earthmover",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Bulldozer"
+              },
+              {
+                "title" : "Group",
+                "value" : "earthmover"
+              },
+              {
+                "title" : "Job",
+                "value" : "pushes soil and levels rough ground"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "wide front blade and crawler tracks"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "tracks grip loose ground while the blade pushes material"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "The driver checks the ground before working near an edge"
+              }
+            ],
+            "kind" : "earthmover",
+            "movement" : "tracks grip loose ground while the blade pushes material",
+            "use" : "pushes soil and levels rough ground"
+          },
+          "name" : "Bulldozer",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleBulldozer"
+          }
+        },
+        {
+          "canonicalName" : "Fire Engine",
+          "id" : "fire-engine",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "emergency vehicle",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Fire Engine"
+              },
+              {
+                "title" : "Group",
+                "value" : "emergency vehicle"
+              },
+              {
+                "title" : "Job",
+                "value" : "brings firefighters, water, hoses, and tools"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "water pump and hose connections"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "the pump adds pressure so water can travel through a hose"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Sirens and flashing lights ask traffic to make a safe path"
+              }
+            ],
+            "kind" : "emergency vehicle",
+            "movement" : "the pump adds pressure so water can travel through a hose",
+            "use" : "brings firefighters, water, hoses, and tools"
+          },
+          "name" : "Fire Engine",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleFireEngine"
+          }
+        },
+        {
+          "canonicalName" : "Ambulance",
+          "id" : "ambulance",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "emergency vehicle",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Ambulance"
+              },
+              {
+                "title" : "Group",
+                "value" : "emergency vehicle"
+              },
+              {
+                "title" : "Job",
+                "value" : "brings medical helpers and carries patients safely"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "stretcher and medical equipment"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "a secure treatment cabin lets helpers care for a patient while travelling"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Seat belts hold everyone safely during the ride"
+              }
+            ],
+            "kind" : "emergency vehicle",
+            "movement" : "a secure treatment cabin lets helpers care for a patient while travelling",
+            "use" : "brings medical helpers and carries patients safely"
+          },
+          "name" : "Ambulance",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleAmbulance"
+          }
+        },
+        {
+          "canonicalName" : "Police Car",
+          "id" : "police-car",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "emergency vehicle",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Police Car"
+              },
+              {
+                "title" : "Group",
+                "value" : "emergency vehicle"
+              },
+              {
+                "title" : "Job",
+                "value" : "helps officers reach emergencies and keep roads safe"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "radio, lights, and siren"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "the radio shares information while lights and siren warn nearby traffic"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Drivers slow down and make space when it approaches"
+              }
+            ],
+            "kind" : "emergency vehicle",
+            "movement" : "the radio shares information while lights and siren warn nearby traffic",
+            "use" : "helps officers reach emergencies and keep roads safe"
+          },
+          "name" : "Police Car",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehiclePoliceCar"
+          }
+        },
+        {
+          "canonicalName" : "Rescue Helicopter",
+          "id" : "rescue-helicopter",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "emergency aircraft",
+            "deck" : "vehicles",
+            "factCards" : [
+              {
+                "title" : "Vehicle",
+                "value" : "Rescue Helicopter"
+              },
+              {
+                "title" : "Group",
+                "value" : "emergency aircraft"
+              },
+              {
+                "title" : "Job",
+                "value" : "reaches people where roads cannot"
+              },
+              {
+                "title" : "Key Part",
+                "value" : "main rotor and rescue winch"
+              },
+              {
+                "title" : "How It Works",
+                "value" : "rotor blades make lift and the winch raises a rescuer or patient"
+              },
+              {
+                "title" : "Safety Fact",
+                "value" : "Loose objects must stay far from the powerful rotor wind"
+              }
+            ],
+            "kind" : "emergency aircraft",
+            "movement" : "rotor blades make lift and the winch raises a rescuer or patient",
+            "use" : "reaches people where roads cannot"
+          },
+          "name" : "Rescue Helicopter",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryVehicleRescueHelicopter"
+          }
+        }
+      ],
+      "kind" : "vehicles"
+    },
+    {
+      "cards" : [
+        {
+          "canonicalName" : "Mercury",
+          "id" : "planet-mercury",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "gray",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Mercury"
+              },
+              {
+                "title" : "Order",
+                "value" : "1st from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "rocky planet"
+              },
+              {
+                "title" : "Size",
+                "value" : "4,879 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "A year lasts 88 days"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "rocky planet",
+            "movement" : "orbits the Sun",
+            "size" : "4,879 km wide"
+          },
+          "name" : "Mercury",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetMercury"
+          }
+        },
+        {
+          "canonicalName" : "Venus",
+          "id" : "planet-venus",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "creamy white and pale tan",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Venus"
+              },
+              {
+                "title" : "Order",
+                "value" : "2nd from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "rocky planet"
+              },
+              {
+                "title" : "Size",
+                "value" : "12,104 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It spins very slowly"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "rocky planet",
+            "movement" : "orbits the Sun",
+            "size" : "12,104 km wide"
+          },
+          "name" : "Venus",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetVenus"
+          }
+        },
+        {
+          "canonicalName" : "Earth",
+          "id" : "planet-earth",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "blue, green, white",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Earth"
+              },
+              {
+                "title" : "Order",
+                "value" : "3rd from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "rocky planet"
+              },
+              {
+                "title" : "Size",
+                "value" : "12,742 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It has one moon"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "rocky planet",
+            "movement" : "orbits the Sun",
+            "size" : "12,742 km wide"
+          },
+          "name" : "Earth",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetEarth"
+          }
+        },
+        {
+          "canonicalName" : "Mars",
+          "id" : "planet-mars",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "rusty red",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Mars"
+              },
+              {
+                "title" : "Order",
+                "value" : "4th from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "rocky planet"
+              },
+              {
+                "title" : "Size",
+                "value" : "6,779 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It has two small moons"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "rocky planet",
+            "movement" : "orbits the Sun",
+            "size" : "6,779 km wide"
+          },
+          "name" : "Mars",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetMars"
+          }
+        },
+        {
+          "canonicalName" : "Jupiter",
+          "id" : "planet-jupiter",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "brown, cream, orange",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Jupiter"
+              },
+              {
+                "title" : "Order",
+                "value" : "5th from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "gas giant"
+              },
+              {
+                "title" : "Size",
+                "value" : "139,820 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It is the biggest planet"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "gas giant",
+            "movement" : "orbits the Sun",
+            "size" : "139,820 km wide"
+          },
+          "name" : "Jupiter",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetJupiter"
+          }
+        },
+        {
+          "canonicalName" : "Saturn",
+          "id" : "planet-saturn",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "gold and tan",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Saturn"
+              },
+              {
+                "title" : "Order",
+                "value" : "6th from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "gas giant"
+              },
+              {
+                "title" : "Size",
+                "value" : "116,460 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It is famous for bright rings"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "gas giant",
+            "movement" : "orbits the Sun",
+            "size" : "116,460 km wide"
+          },
+          "name" : "Saturn",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetSaturn"
+          }
+        },
+        {
+          "canonicalName" : "Uranus",
+          "id" : "planet-uranus",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "icy blue",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Uranus"
+              },
+              {
+                "title" : "Order",
+                "value" : "7th from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "ice giant"
+              },
+              {
+                "title" : "Size",
+                "value" : "50,724 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It rotates on its side"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "ice giant",
+            "movement" : "orbits the Sun",
+            "size" : "50,724 km wide"
+          },
+          "name" : "Uranus",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetUranus"
+          }
+        },
+        {
+          "canonicalName" : "Neptune",
+          "id" : "planet-neptune",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "planet",
+            "colors" : "deep blue",
+            "deck" : "planets",
+            "factCards" : [
+              {
+                "title" : "Name",
+                "value" : "Neptune"
+              },
+              {
+                "title" : "Order",
+                "value" : "8th from the Sun"
+              },
+              {
+                "title" : "Type",
+                "value" : "ice giant"
+              },
+              {
+                "title" : "Size",
+                "value" : "49,244 km wide"
+              },
+              {
+                "title" : "Fun Fact",
+                "value" : "It has very fast winds"
+              }
+            ],
+            "habitat" : "our solar system",
+            "kind" : "ice giant",
+            "movement" : "orbits the Sun",
+            "size" : "49,244 km wide"
+          },
+          "name" : "Neptune",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryPlanetNeptune"
+          }
+        }
+      ],
+      "kind" : "planets"
+    },
+    {
+      "cards" : [
+        {
+          "canonicalName" : "India",
+          "id" : "country-flag-india",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyIndia",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentIndia",
+              "title" : "Taj Mahal"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "saffron, white, green, navy blue",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "India"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of India"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "IN"
+              },
+              {
+                "title" : "Capital",
+                "value" : "New Delhi"
+              },
+              {
+                "title" : "Language",
+                "value" : "Hindi and English for Union government"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Indian rupee (INR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "₹"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Asia"
+              },
+              {
+                "title" : "Colors",
+                "value" : "saffron, white, green, navy blue"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Taj Mahal"
+              }
+            ],
+            "habitat" : "Asia",
+            "kind" : "country flag"
+          },
+          "name" : "India",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagIndia"
+          }
+        },
+        {
+          "canonicalName" : "Japan",
+          "id" : "country-flag-japan",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyJapan",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentJapan",
+              "title" : "Himeji Castle"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "white and red",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Japan"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Japan"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "JP"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Tokyo"
+              },
+              {
+                "title" : "Language",
+                "value" : "Japanese"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Japanese yen (JPY)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "¥"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Asia"
+              },
+              {
+                "title" : "Colors",
+                "value" : "white and red"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Himeji Castle"
+              }
+            ],
+            "habitat" : "Asia",
+            "kind" : "country flag"
+          },
+          "name" : "Japan",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagJapan"
+          }
+        },
+        {
+          "canonicalName" : "France",
+          "id" : "country-flag-france",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyFrance",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentFrance",
+              "title" : "Eiffel Tower"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "blue, white, red",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "France"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of France"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "FR"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Paris"
+              },
+              {
+                "title" : "Language",
+                "value" : "French"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Euro (EUR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "€"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Europe"
+              },
+              {
+                "title" : "Colors",
+                "value" : "blue, white, red"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Eiffel Tower"
+              }
+            ],
+            "habitat" : "Europe",
+            "kind" : "country flag"
+          },
+          "name" : "France",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagFrance"
+          }
+        },
+        {
+          "canonicalName" : "Egypt",
+          "id" : "country-flag-egypt",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyEgypt",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentEgypt",
+              "title" : "Great Pyramid of Giza"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red, white, black, gold",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Egypt"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Egypt"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "EG"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Cairo"
+              },
+              {
+                "title" : "Language",
+                "value" : "Arabic"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Egyptian pound (EGP)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "E£"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Africa"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, white, black, gold"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Great Pyramid of Giza"
+              }
+            ],
+            "habitat" : "Africa",
+            "kind" : "country flag"
+          },
+          "name" : "Egypt",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagEgypt"
+          }
+        },
+        {
+          "canonicalName" : "Brazil",
+          "id" : "country-flag-brazil",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyBrazil",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentBrazil",
+              "title" : "Christ the Redeemer"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "green, yellow, blue, white",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Brazil"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Brazil"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "BR"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Brasília"
+              },
+              {
+                "title" : "Language",
+                "value" : "Portuguese"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Brazilian real (BRL)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "R$"
+              },
+              {
+                "title" : "Continent",
+                "value" : "South America"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green, yellow, blue, white"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Christ the Redeemer"
+              }
+            ],
+            "habitat" : "South America",
+            "kind" : "country flag"
+          },
+          "name" : "Brazil",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagBrazil"
+          }
+        },
+        {
+          "canonicalName" : "Australia",
+          "id" : "country-flag-australia",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyAustralia",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentAustralia",
+              "title" : "Sydney Opera House"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "blue, red, white",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Australia"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Australia"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "AU"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Canberra"
+              },
+              {
+                "title" : "Language",
+                "value" : "English (national language)"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Australian dollar (AUD)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "A$"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Australia"
+              },
+              {
+                "title" : "Colors",
+                "value" : "blue, red, white"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Sydney Opera House"
+              }
+            ],
+            "habitat" : "Australia",
+            "kind" : "country flag"
+          },
+          "name" : "Australia",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagAustralia"
+          }
+        },
+        {
+          "canonicalName" : "Canada",
+          "id" : "country-flag-canada",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyCanada",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentCanada",
+              "title" : "CN Tower"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red and white",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Canada"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Canada"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "CA"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Ottawa"
+              },
+              {
+                "title" : "Language",
+                "value" : "English and French"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Canadian dollar (CAD)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "C$"
+              },
+              {
+                "title" : "Continent",
+                "value" : "North America"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red and white"
+              },
+              {
+                "title" : "Monument",
+                "value" : "CN Tower"
+              }
+            ],
+            "habitat" : "North America",
+            "kind" : "country flag"
+          },
+          "name" : "Canada",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagCanada"
+          }
+        },
+        {
+          "canonicalName" : "Kenya",
+          "id" : "country-flag-kenya",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyKenya",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentKenya",
+              "title" : "Kenyatta International Convention Centre"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "black, red, green, white",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Kenya"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Kenya"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "KE"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Nairobi"
+              },
+              {
+                "title" : "Language",
+                "value" : "Kiswahili and English"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Kenyan shilling (KES)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "KSh"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Africa"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black, red, green, white"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Kenyatta International Convention Centre"
+              }
+            ],
+            "habitat" : "Africa",
+            "kind" : "country flag"
+          },
+          "name" : "Kenya",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryFlagKenya"
+          }
+        },
+        {
+          "canonicalName" : "United States",
+          "id" : "country-flag-united-states",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyUnitedStates",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentUnitedStates",
+              "title" : "Statue of Liberty"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red, white, blue",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "United States"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of United States"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "US"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Washington, D.C."
+              },
+              {
+                "title" : "Language",
+                "value" : "English"
+              },
+              {
+                "title" : "Currency",
+                "value" : "United States dollar (USD)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "$"
+              },
+              {
+                "title" : "Continent",
+                "value" : "North America"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, white, blue"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Statue of Liberty"
+              }
+            ],
+            "habitat" : "North America",
+            "kind" : "country flag"
+          },
+          "name" : "United States",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇺🇸"
+          }
+        },
+        {
+          "canonicalName" : "United Kingdom",
+          "id" : "country-flag-united-kingdom",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyUnitedKingdom",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentUnitedKingdom",
+              "title" : "Elizabeth Tower (Big Ben)"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red, white, blue",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "United Kingdom"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of United Kingdom"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "GB"
+              },
+              {
+                "title" : "Capital",
+                "value" : "London"
+              },
+              {
+                "title" : "Language",
+                "value" : "English; Welsh in Wales"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Pound sterling (GBP)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "£"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Europe"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, white, blue"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Elizabeth Tower (Big Ben)"
+              }
+            ],
+            "habitat" : "Europe",
+            "kind" : "country flag"
+          },
+          "name" : "United Kingdom",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇬🇧"
+          }
+        },
+        {
+          "canonicalName" : "China",
+          "id" : "country-flag-china",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyChina",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentChina",
+              "title" : "Great Wall of China"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red and yellow",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "China"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of China"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "CN"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Beijing"
+              },
+              {
+                "title" : "Language",
+                "value" : "Standard Chinese (Putonghua)"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Chinese yuan (CNY)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "¥"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Asia"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red and yellow"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Great Wall of China"
+              }
+            ],
+            "habitat" : "Asia",
+            "kind" : "country flag"
+          },
+          "name" : "China",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇨🇳"
+          }
+        },
+        {
+          "canonicalName" : "Germany",
+          "id" : "country-flag-germany",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyGermany",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentGermany",
+              "title" : "Brandenburg Gate"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "black, red, gold",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Germany"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Germany"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "DE"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Berlin"
+              },
+              {
+                "title" : "Language",
+                "value" : "German"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Euro (EUR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "€"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Europe"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black, red, gold"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Brandenburg Gate"
+              }
+            ],
+            "habitat" : "Europe",
+            "kind" : "country flag"
+          },
+          "name" : "Germany",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇩🇪"
+          }
+        },
+        {
+          "canonicalName" : "Mexico",
+          "id" : "country-flag-mexico",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyMexico",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentMexico",
+              "title" : "Chichén Itzá"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "green, white, red",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Mexico"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Mexico"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "MX"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Mexico City"
+              },
+              {
+                "title" : "Language",
+                "value" : "Spanish and 68 Indigenous national languages"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Mexican peso (MXN)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "Mex$"
+              },
+              {
+                "title" : "Continent",
+                "value" : "North America"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green, white, red"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Chichén Itzá"
+              }
+            ],
+            "habitat" : "North America",
+            "kind" : "country flag"
+          },
+          "name" : "Mexico",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇲🇽"
+          }
+        },
+        {
+          "canonicalName" : "South Africa",
+          "id" : "country-flag-south-africa",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencySouthAfrica",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentSouthAfrica",
+              "title" : "Union Buildings"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "red, blue, green, black, white, yellow",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "South Africa"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of South Africa"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "ZA"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Pretoria (administrative)"
+              },
+              {
+                "title" : "Language",
+                "value" : "12 official languages, including isiZulu and isiXhosa"
+              },
+              {
+                "title" : "Currency",
+                "value" : "South African rand (ZAR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "R"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Africa"
+              },
+              {
+                "title" : "Colors",
+                "value" : "red, blue, green, black, white, yellow"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Union Buildings"
+              }
+            ],
+            "habitat" : "Africa",
+            "kind" : "country flag"
+          },
+          "name" : "South Africa",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇿🇦"
+          }
+        },
+        {
+          "canonicalName" : "Italy",
+          "id" : "country-flag-italy",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencyItaly",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentItaly",
+              "title" : "Colosseum"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "green, white, red",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Italy"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Italy"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "IT"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Rome"
+              },
+              {
+                "title" : "Language",
+                "value" : "Italian"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Euro (EUR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "€"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Europe"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green, white, red"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Colosseum"
+              }
+            ],
+            "habitat" : "Europe",
+            "kind" : "country flag"
+          },
+          "name" : "Italy",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇮🇹"
+          }
+        },
+        {
+          "canonicalName" : "Saudi Arabia",
+          "id" : "country-flag-saudi-arabia",
+          "learningArtwork" : [
+            {
+              "assetName" : "MemoryCurrencySaudiArabia",
+              "title" : "Money clue"
+            },
+            {
+              "assetName" : "MemoryMonumentSaudiArabia",
+              "title" : "Masmak Fort"
+            }
+          ],
+          "metadata" : {
+            "category" : "country flag",
+            "colors" : "green and white",
+            "deck" : "countryFlags",
+            "factCards" : [
+              {
+                "title" : "Country",
+                "value" : "Saudi Arabia"
+              },
+              {
+                "title" : "Flag",
+                "value" : "Flag of Saudi Arabia"
+              },
+              {
+                "title" : "ISO Code",
+                "value" : "SA"
+              },
+              {
+                "title" : "Capital",
+                "value" : "Riyadh"
+              },
+              {
+                "title" : "Language",
+                "value" : "Arabic"
+              },
+              {
+                "title" : "Currency",
+                "value" : "Saudi riyal (SAR)"
+              },
+              {
+                "title" : "Currency Symbol",
+                "value" : "SAR"
+              },
+              {
+                "title" : "Continent",
+                "value" : "Asia"
+              },
+              {
+                "title" : "Colors",
+                "value" : "green and white"
+              },
+              {
+                "title" : "Monument",
+                "value" : "Masmak Fort"
+              }
+            ],
+            "habitat" : "Asia",
+            "kind" : "country flag"
+          },
+          "name" : "Saudi Arabia",
+          "picture" : {
+            "kind" : "emoji",
+            "value" : "🇸🇦"
+          }
+        }
+      ],
+      "kind" : "countryFlags"
+    }
+  ],
+  "schemaVersion" : 1
+}
