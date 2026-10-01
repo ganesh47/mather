@@ -10,6 +10,10 @@ struct AngleArcadeTarget: Equatable, Identifiable {
     let recommendedAngle: Double
     let recommendedPower: Double
 
+    var startingPower: Double {
+        max(AngleArcadeModel.powerRange.lowerBound, recommendedPower - 10)
+    }
+
     static let defaultTargets: [AngleArcadeTarget] = [
         .init(
             id: "garden-ledger",
@@ -41,6 +45,13 @@ struct AngleArcadeTarget: Equatable, Identifiable {
     ]
 }
 
+enum AngleArcadeShotOutcome: Equatable {
+    case hit
+    case short
+    case above
+    case below
+}
+
 struct AngleArcadeShot: Equatable {
     let angle: Double
     let power: Double
@@ -49,7 +60,10 @@ struct AngleArcadeShot: Equatable {
     let landingX: Double
     let heightAtTarget: Double
     let verticalDelta: Double
-    let hit: Bool
+    let outcome: AngleArcadeShotOutcome
+    let flightDuration: Double
+
+    var hit: Bool { outcome == .hit }
 }
 
 enum AngleArcadeModel {
@@ -83,14 +97,25 @@ enum AngleArcadeModel {
         let landingTime = max(0, (2 * vy) / gravity)
         let landingX = vx * landingTime
         let targetTime = target.distance / vx
-        let heightAtTarget = height(at: targetTime, verticalVelocity: vy)
+        // Once the ball reaches the ground, its flight is over. Extrapolating
+        // past landing would report an impossible height below the playfield.
+        let reachesTarget = targetTime <= landingTime
+        let heightAtTarget = max(0, height(at: min(targetTime, landingTime), verticalVelocity: vy))
         let verticalDelta = heightAtTarget - target.height
-        let hit = abs(verticalDelta) <= target.radius
+        let outcome: AngleArcadeShotOutcome
+        if !reachesTarget {
+            outcome = .short
+        } else if abs(verticalDelta) <= target.radius {
+            outcome = .hit
+        } else {
+            outcome = verticalDelta > 0 ? .above : .below
+        }
+        let flightDuration = outcome == .hit ? targetTime : landingTime
         let count = max(2, sampleCount)
         let path = (0..<count).map { index in
             let progress = Double(index) / Double(count - 1)
-            let t = landingTime * progress
-            return CGPoint(x: vx * t, y: height(at: t, verticalVelocity: vy))
+            let t = flightDuration * progress
+            return CGPoint(x: vx * t, y: max(0, height(at: t, verticalVelocity: vy)))
         }
 
         return AngleArcadeShot(
@@ -101,7 +126,8 @@ enum AngleArcadeModel {
             landingX: landingX,
             heightAtTarget: heightAtTarget,
             verticalDelta: verticalDelta,
-            hit: hit
+            outcome: outcome,
+            flightDuration: flightDuration
         )
     }
 
