@@ -164,21 +164,33 @@ class AppStoreConnectClient:
 
 
 def find_git_reference(
-    client: AppStoreConnectClient, repository_id: str, tag: str
+    client: AppStoreConnectClient, repository_id: str, tag: str,
+    *, timeout_seconds: int = 180, poll_seconds: int = 15,
 ) -> str:
+    # SCM references can lag a successful Git push. Never substitute a branch
+    # or a different tag: the release must build the requested immutable source.
     path = (
         f"/v1/scmRepositories/{repository_id}/gitReferences"
         "?fields[scmGitReferences]=name,canonicalName,isDeleted,kind&limit=200"
     )
-    for reference in client.pages(path):
-        attributes = reference["attributes"]
-        if (
-            attributes.get("name") == tag
-            and attributes.get("kind") == "TAG"
-            and not attributes.get("isDeleted")
-        ):
-            return reference["id"]
-    raise ReleaseError(f"Xcode Cloud cannot see Git tag {tag!r}")
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        for reference in client.pages(path):
+            attributes = reference["attributes"]
+            if (
+                attributes.get("name") == tag
+                and attributes.get("kind") == "TAG"
+                and not attributes.get("isDeleted")
+            ):
+                return reference["id"]
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ReleaseError(
+                f"Xcode Cloud cannot see Git tag {tag!r} after {timeout_seconds}s. "
+                "Check the workflow repository connection and tag visibility."
+            )
+        print(f"Waiting for Xcode Cloud to discover Git tag {tag!r}", flush=True)
+        time.sleep(min(poll_seconds, remaining))
 
 
 def start_build_run(
