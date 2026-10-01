@@ -8,6 +8,7 @@ struct MemoryGalleryTVView: View {
 
     @State private var game = MemoryGalleryTVGame()
     @State private var narration = TVNarrationController()
+    @State private var contentStore = MemoryGalleryContentStore()
 
     var body: some View {
         ZStack {
@@ -23,6 +24,15 @@ struct MemoryGalleryTVView: View {
             case .completed:
                 completionScreen
             }
+        }
+        .environment(contentStore)
+        .task {
+            guard let value = Bundle.main.object(forInfoDictionaryKey: "MemoryGalleryContentURL") as? String,
+                  let url = URL(string: value) else { return }
+            await contentStore.refresh(from: url) { game.phase == .choosingCategory }
+        }
+        .onChange(of: game.phase) { _, phase in
+            if phase == .choosingCategory { contentStore.activatePending() }
         }
         .onAppear {
             presentCategoryPrompt()
@@ -105,6 +115,7 @@ struct MemoryGalleryTVView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Category shelf")
+        .accessibilityIdentifier("tv-memory-content-v\(contentStore.pack.contentVersion)")
     }
 
     private func playScreen(round: MemoryGalleryTVRound) -> some View {
@@ -229,7 +240,7 @@ struct MemoryGalleryTVView: View {
             HStack(spacing: 16) {
                 ForEach(Array(round.promptCard.learningArtwork.prefix(2)), id: \.self) { artwork in
                     VStack(spacing: 8) {
-                        Image(artwork.assetName)
+                        galleryImage(named: artwork.assetName)
                             .resizable()
                             .scaledToFit()
                             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -447,7 +458,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private func start(_ category: MemoryGalleryTVCategory) {
-        game.start(category: category)
+        game.start(category: category, deck: contentStore.cards(for: category))
         presentRoundPrompt()
         focusFirstAnswer()
     }
@@ -465,6 +476,13 @@ struct MemoryGalleryTVView: View {
         Task { @MainActor in
             nextButtonFocused = true
         }
+    }
+
+    private func galleryImage(named name: String) -> Image {
+        if let url = contentStore.assetURL(named: name), let image = UIImage(contentsOfFile: url.path) {
+            return Image(uiImage: image)
+        }
+        return Image(name)
     }
 
     private func nextRound() {
@@ -636,6 +654,7 @@ private struct MemoryGalleryCategoryTile: View {
 
 private struct MemoryGalleryPromptArtwork: View {
     let picture: MemoryPicture
+    @Environment(MemoryGalleryContentStore.self) private var contentStore
 
     var body: some View {
         ZStack {
@@ -665,7 +684,7 @@ private struct MemoryGalleryPromptArtwork: View {
                 .font(.system(size: 172))
                 .shadow(color: .black.opacity(0.18), radius: 8, y: 6)
         case .asset(let assetName):
-            Image(assetName)
+            galleryImage(named: assetName)
                 .resizable()
                 .scaledToFit()
                 .shadow(color: .black.opacity(0.18), radius: 8, y: 6)
@@ -677,6 +696,13 @@ private struct MemoryGalleryPromptArtwork: View {
                 .lineLimit(3)
                 .minimumScaleFactor(0.5)
         }
+    }
+
+    private func galleryImage(named name: String) -> Image {
+        if let url = contentStore.assetURL(named: name), let image = UIImage(contentsOfFile: url.path) {
+            return Image(uiImage: image)
+        }
+        return Image(name)
     }
 }
 
