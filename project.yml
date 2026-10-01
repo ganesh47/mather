@@ -47,6 +47,14 @@ targets:
   MatherTV:
     type: application
     platform: tvOS
+    info:
+      path: AppTV/Info.plist
+      properties:
+        CFBundleDisplayName: Mather TV
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        ITSAppUsesNonExemptEncryption: false
+        MemoryGalleryContentURL: "$(MEMORY_GALLERY_CONTENT_URL)"
     sources:
       - path: AppTV
         includes:
@@ -64,12 +72,8 @@ targets:
       base:
         PRODUCT_NAME: MatherTV
         PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.Mather
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Mather TV
-        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        # Set to an HTTPS pack.json URL to enable independent gallery updates.
-        INFOPLIST_KEY_MemoryGalleryContentURL: "$(MEMORY_GALLERY_CONTENT_URL)"
+        GENERATE_INFOPLIST_FILE: NO
+        # The explicit plist includes this custom key in signed releases as well.
         MEMORY_GALLERY_CONTENT_URL: "https://raw.githubusercontent.com/ganesh47/mather-content/main/memory-gallery/pack.json"
         TVOS_DEPLOYMENT_TARGET: "18.0"
         TARGETED_DEVICE_FAMILY: "3"
