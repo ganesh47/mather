@@ -333,11 +333,9 @@ final class CompactLayoutTests: XCTestCase {
     }
 
     func testWaterCycleCompactCompletionKeepsControlsReachable() {
-        let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-
-        openExplorerLab(app)
-        app.buttons["Water Cycle Lab"].tap()
+        // The child catalog now opens the guided Water quest. Keep the legacy
+        // sequence's compact-control regression on its explicit test route.
+        let app = launch(startRoute: "waterCycleLab")
         XCTAssertTrue(app.staticTexts["Water Cycle Lab"].waitForExistence(timeout: 10))
 
         let primaryAction = app.buttons["water-cycle-primary-action"]
@@ -432,7 +430,7 @@ final class CompactLayoutTests: XCTestCase {
         _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
     }
 
-    private func launch() -> XCUIApplication {
+    private func launch(startRoute: String? = nil) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -441,6 +439,9 @@ final class CompactLayoutTests: XCTestCase {
             "-feature.testModeEnabled", "YES",
             "-feature.roomQuestSafetyAcknowledged", "YES"
         ]
+        if let startRoute {
+            app.launchArguments += ["-uiTest.startRoute", startRoute]
+        }
         app.launch()
         return app
     }
