@@ -3,8 +3,15 @@ import SwiftUI
 struct TVFamilyLearningView: View {
     @Bindable var store: TVLearningStore
     let onExit: () -> Void
+    let onClearSelected: (TVLearningContext) -> String?
+    let onClearAll: () -> Void
+    let onStartJourney: (MatherTVAction) -> Void
     @State private var newName = ""
     @State private var narration = TVNarrationController()
+    @State private var companionContext: TVLearningContext?
+    @State private var deletionContext: TVLearningContext?
+    @State private var showsAllDeletion = false
+    @State private var resetMessage: String?
 
     var body: some View {
         ZStack {
@@ -30,6 +37,24 @@ struct TVFamilyLearningView: View {
         .onAppear { narration.presentPrompt("Family learning guide. Choose family play or a learner before starting a game. Learning here is saved only on this TV. Menu returns to all games.") }
         .onPlayPauseCommand { narration.repeatPrompt() }
         .onDisappear { narration.stop() }
+        .sheet(item: $companionContext) { context in
+            LearningCompanionView(profileID: context.profileID, displayName: context.name, onClose: { companionContext = nil })
+        }
+        .alert("Clear this learner's TV learning?", isPresented: Binding(get: { deletionContext != nil }, set: { if !$0 { deletionContext = nil } })) {
+            Button("Cancel", role: .cancel) { deletionContext = nil }
+            Button("Clear learning", role: .destructive) {
+                if let context = deletionContext { resetMessage = onClearSelected(context) }
+                deletionContext = nil
+            }
+        } message: {
+            Text("This removes \(deletionContext?.name ?? "this learner")'s new learning attempts, saved Sum Sprint and Shape Detective journeys, and companion assignment and parent reports on this TV. Other learners keep their data. Anonymous consumed mission receipts remain.")
+        }
+        .alert("Delete all TV learning?", isPresented: $showsAllDeletion) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete all TV learning", role: .destructive) { onClearAll(); resetMessage = nil }
+        } message: {
+            Text("This deletes all TV learner profiles, the new learning ledger, Sum Sprint and Shape Detective checkpoints and probe history, and companion missions, reports and consumed receipts. Earlier device scores remain. This cannot be undone.")
+        }
     }
 
     private var profileControls: some View {
@@ -54,6 +79,13 @@ struct TVFamilyLearningView: View {
             if let message = store.storageMessage {
                 Text(message).font(.system(size: 23)).foregroundStyle(.yellow)
             }
+            Button("Parent: continue an idea") { companionContext = store.context }
+                .accessibilityIdentifier("tv-family-companion")
+            Button("Parent: clear \(store.context.name)'s learning") { deletionContext = store.context }
+                .accessibilityIdentifier("tv-family-clear-selected")
+            Button("Parent: delete all TV learning") { showsAllDeletion = true }
+                .accessibilityIdentifier("tv-family-clear-all")
+            if let resetMessage { Text(resetMessage).font(.system(size: 23)).foregroundStyle(.yellow) }
         }.padding(24).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 24))
     }
 
@@ -76,6 +108,10 @@ struct TVFamilyLearningView: View {
                 Text(nextAction(attempts)).font(.system(size: 26, weight: .semibold))
                     .accessibilityIdentifier("tv-family-next")
             }
+            Button(attempts.last?.activityID.lowercased().contains("shape") == true ? "Next: explore a new shape" : "Next: build number parts") {
+                onStartJourney(attempts.last?.activityID.lowercased().contains("shape") == true ? .shapes : .sprint)
+            }.disabled(store.storageMessage != nil)
+                .accessibilityIdentifier("tv-family-next-journey")
             ForEach(store.results(for: store.context.profileID).prefix(4)) { result in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(result.title).font(.system(size: 26, weight: .bold))

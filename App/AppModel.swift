@@ -35,6 +35,7 @@ final class AppModel {
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
     var showingProfilePicker = false
+    var learningDataResetIssue: String?
     private var pendingGameAction: (() -> Void)?
     private var pendingLabGameplayCompletionContext: LabGameplayCompletionContext?
 
@@ -159,6 +160,14 @@ final class AppModel {
     }
 
     func clearActiveProfileLearningData() {
+        learningDataResetIssue = nil
+        let profileID = profileStore.activeProfileId
+        let reports = ParentOffscreenObservationStore()
+        if !reports.clearSelectedProfile(profileID: profileID) {
+            learningDataResetIssue = reports.storageIssue?.message
+        }
+        do { try LearningHandoffStore().reset(profileID: profileID) }
+        catch { learningDataResetIssue = "The companion data could not be read and was preserved. Open Continue an idea in Parent Summary to review its recovery options." }
         historyStore.clearActiveProfile(); gameSessionStore.clearActiveProfile(); telemetryWriter.clearEventsForActiveProfile()
         gameplayProgressStore.clearActiveProfile(); questCheckpointStore.reset(); labConceptSessionProgressStore.reset()
         explorerLabMasteryStore.reset(); explorerLabMasteryProfile = explorerLabMasteryStore.load()

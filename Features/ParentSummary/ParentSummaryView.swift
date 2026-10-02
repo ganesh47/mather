@@ -7,6 +7,12 @@ private struct ParentObservationPresentation: Identifiable {
     var id: String { profileID }
 }
 
+private struct ParentCompanionPresentation: Identifiable {
+    let profileID: String
+    let name: String
+    var id: String { profileID }
+}
+
 struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
@@ -19,6 +25,7 @@ struct ParentSummaryView: View {
     @State private var observationQuest = LearningQuestID.numbers
     @State private var observationOutcome = ParentOffscreenOutcome.notYet
     @State private var observationError: String?
+    @State private var companionPresentation: ParentCompanionPresentation?
 
     var body: some View {
         let overview = ParentSummaryOverview.make(summaries: summaries, gameSessions: gameSessions)
@@ -112,6 +119,10 @@ struct ParentSummaryView: View {
             }
         }
         .sheet(item: $observationPresentation) { context in observationSheet(profileID: context.profileID) }
+        .sheet(item: $companionPresentation) { context in
+            LearningCompanionView(profileID: context.profileID, displayName: context.name,
+                audioEnabled: appModel.featureFlags.audioEnabled, onClose: { companionPresentation = nil })
+        }
     }
 
     private var selectedLearningSessions: [StoredGameplayThreadSession] {
@@ -351,6 +362,13 @@ struct ParentSummaryView: View {
             columns: ResponsiveLayout.parentActionColumns(for: horizontalSizeClass),
             spacing: 16
         ) {
+            Button("Continue an idea on another device") {
+                let id = appModel.profileStore.activeProfileId
+                companionPresentation = ParentCompanionPresentation(profileID: id,
+                    name: appModel.profileStore.profiles.first(where: { $0.id == id })?.name ?? "Child")
+            }
+            .buttonStyle(SecondaryTileButtonStyle(fill: MatherTheme.softBlue.opacity(0.7)))
+            .accessibilityIdentifier("parent-summary-companion")
             Button("Settings") {
                 appModel.engine.showSettings()
             }

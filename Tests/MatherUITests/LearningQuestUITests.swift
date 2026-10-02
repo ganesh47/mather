@@ -150,6 +150,19 @@ final class LearningQuestUITests: XCTestCase {
         XCTAssertTrue(report.waitForExistence(timeout: 5), app.debugDescription)
     }
 
+    func testParentSummaryCompanionRouteAndDone() {
+        let app = XCUIApplication()
+        app.launchArguments = arguments("home", clear: true)
+        app.launch()
+        tap("Parent Summary", in: app)
+        tap("parent-summary-companion", in: app)
+        XCTAssertTrue(app.staticTexts["companion-recipient"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["companion-recipient"].label.hasPrefix("Local recipient: "))
+        snapshot(app, "Parent-Companion-Entry")
+        tap("companion-close", in: app)
+        XCTAssertTrue(app.buttons["parent-summary-companion"].waitForExistence(timeout: 5))
+    }
+
     private func launch(_ route: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = arguments(route, clear: true)

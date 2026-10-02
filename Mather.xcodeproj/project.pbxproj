@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		015E9211F8AACA52D2E560DF /* LearningHandoffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C861DA75B25B50743409CF /* LearningHandoffStore.swift */; };
 		01BA7E85C10B874F9C3BE7F3 /* RoomQuestEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B9AA9EA4CE0C8465C1D7E4 /* RoomQuestEngine.swift */; };
 		0226754603BAAA93415D4111 /* RectangleFactoryOnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD37E9E79CB13908866EFD5 /* RectangleFactoryOnboardingTests.swift */; };
 		0273449B7D7D14C7F3BBA46E /* CounterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D6E69F5C9EE94CF34F415F /* CounterView.swift */; };
@@ -26,6 +27,7 @@
 		112A284BDF426C840BE1B8CB /* LabLaneDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C13E59DB0E8C3C0F5D863FF /* LabLaneDetailView.swift */; };
 		12978B14FA3C86099A34FC4F /* AngleArcadeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */; };
 		138E4B58418EE08549CF1407 /* LabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B42394C64D2D5C8DC32CE604 /* LabView.swift */; };
+		14713EFF376FE489A79773BE /* ParentOffscreenObservationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897421EDA9E608319D73BD0F /* ParentOffscreenObservationStore.swift */; };
 		14D458B1148DC15E9444204F /* CompassAnglesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F89B7EA97FE105036E4EB5F /* CompassAnglesView.swift */; };
 		14DE12583C593EE688E0C1E6 /* MemoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56FCB9103BAE6E2941CA3 /* MemoryView.swift */; };
 		15787BD39C82C1965DA839A0 /* SumSprintSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3146FD76B9EAED7C391AA0 /* SumSprintSessionView.swift */; };
@@ -34,6 +36,7 @@
 		17BE88060C10E1B1E35E439F /* CompactLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */; };
 		1880E12717CE04AA936CCDA9 /* GameplayStageViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6840F2651B5C50EE285F52B /* GameplayStageViewModels.swift */; };
 		19F4E103CE0765211AAF66E7 /* GroupedNumberRepresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A181025AE1DD3CABF30F968 /* GroupedNumberRepresentationTests.swift */; };
+		1A775D933EE5ABBC8AA75340 /* LearningHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */; };
 		1A7B774DEC63CE5479722F6D /* AngleArcadeModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */; };
 		1AAC31299B73107856FF555C /* TransferIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */; };
 		1BEF803DB2C8FF13CD6E35EC /* MemoryGalleryContentPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 844F100CEAAE2CCA4E9BF7E8 /* MemoryGalleryContentPackTests.swift */; };
@@ -106,6 +109,7 @@
 		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		573F44DA8976FD3F1862F7EB /* IOSLearningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */; };
 		5740442F29746383B2ADB113 /* CompareCampProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C672ED06F9F40FCA2BC5EC /* CompareCampProgressTests.swift */; };
+		5A545D0F35C92DAEFBCFB14D /* ParentOffscreenObservationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */; };
 		5A9B729A6A30CB897709C192 /* IOSLearningContentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */; };
 		5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */; };
 		5C18E2451463D33137B62B47 /* SumSprintPartyTVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C85EF6A532AA92F5B697AA3 /* SumSprintPartyTVSession.swift */; };
@@ -146,6 +150,7 @@
 		7B95DE9FB34D4A152F5553FB /* VerticalSliceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */; };
 		7D0CBF090E04696122DC9AC6 /* GravitySplitStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1846B5A411083D259E3D510B /* GravitySplitStateTests.swift */; };
 		7E0E98FBA46C7A3525FA661F /* MatherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461DA0E92F5D70F6B81654B2 /* MatherApp.swift */; };
+		7FADE96576249148AC8B2014 /* LearningHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */; };
 		7FB62143D1E1F6D0C83A28F2 /* SumSprintPartyTVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C85EF6A532AA92F5B697AA3 /* SumSprintPartyTVSession.swift */; };
 		7FF15E412D15FE589C861574 /* SpacedRepetitionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 616C29585296A089FD218C08 /* SpacedRepetitionModels.swift */; };
 		80423EC1E84FD0FCA5F95CE3 /* ExplorerLabMasteryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 083027676123401E2610A43E /* ExplorerLabMasteryStore.swift */; };
@@ -216,6 +221,7 @@
 		BA1D65AE55009DFB2A797ED6 /* LearningQuestEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */; };
 		BB913D05F7D884574BC05A04 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893845D3340A27F687CF2A30 /* SessionConfigView.swift */; };
 		BC4310F44E31D4A1B5BE57CC /* AngleArcadeProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */; };
+		BCC8257BD76D72D3B9887AC3 /* LearningCompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3B62612E4453F4318BE31C /* LearningCompanionView.swift */; };
 		BD615CEA7E05371830F03ECD /* SliceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B557BC960B2E1946C97F0B6A /* SliceModels.swift */; };
 		BD78239A7CA9E440E411C6D6 /* CapabilityLaneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3A14DB8CB30729E7702637 /* CapabilityLaneTests.swift */; };
 		C2CEAC5CF56F76DFB66704ED /* CompareCampRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B533279CD95BE6BC42D1F867 /* CompareCampRound.swift */; };
@@ -261,6 +267,7 @@
 		E921D7C5007EF8C7E44CAB98 /* RouteQuestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */; };
 		E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */; };
 		EA514902B3549363146AF031 /* SessionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */; };
+		EA9F6126D6C7D3EEABADF800 /* LearningCompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3B62612E4453F4318BE31C /* LearningCompanionView.swift */; };
 		EC6BF303C1C4C208BC9C95C9 /* ActivityLearningEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */; };
 		ECB54B0B0D69875B207B7B2D /* TVNarrationControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */; };
 		ECD8D5A562596BB07C9DDD9E /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */; };
@@ -271,6 +278,7 @@
 		F132D0108E586BDB792A9446 /* SmartPlayProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */; };
 		F21340E80E2E9E684539BD11 /* KidProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137A702B4E75B98ED9ABA05 /* KidProfileStore.swift */; };
 		F26656D088FBDE870C083797 /* LabDetailFlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F359E021403BCD8321EE41 /* LabDetailFlowLayout.swift */; };
+		F2FE6235B5172729686213C7 /* LearningHandoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DF71CDD3207C95FF8C8800 /* LearningHandoffTests.swift */; };
 		F39D59589F91F6F6153E9B9B /* ShapeDetectiveTVSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD5F675BC6397940EC69C25 /* ShapeDetectiveTVSessionStore.swift */; };
 		F55EB25F2419D85355F9EC22 /* WaterCycleGameplayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */; };
 		F923DB4F4C743145651425E1 /* ShapeDetectiveTVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCA407405915133AEE9E7FA /* ShapeDetectiveTVSession.swift */; };
@@ -278,6 +286,7 @@
 		FAE49D35BAA07CE0B5573806 /* SessionHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBF689FCFE4D506002AB78E /* SessionHistoryStore.swift */; };
 		FB03D4E4B84B939D496FCD14 /* RoomSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 276931E73074353F80122384 /* RoomSetupView.swift */; };
 		FCCD21AF414D3FAFDA10A9A4 /* AngleCannonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69ADFE340625CE2247C439C /* AngleCannonTests.swift */; };
+		FD41BDBB7EB6A82168932B48 /* LearningHandoffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C861DA75B25B50743409CF /* LearningHandoffStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -379,6 +388,7 @@
 		4185B3C653FFC32C022CF655 /* BondMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BondMatchView.swift; sourceTree = "<group>"; };
 		421C6A556A4AA81BB35602FB /* MotionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionServiceTests.swift; sourceTree = "<group>"; };
 		42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerLabMasteryStoreTests.swift; sourceTree = "<group>"; };
+		43DF71CDD3207C95FF8C8800 /* LearningHandoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHandoffTests.swift; sourceTree = "<group>"; };
 		448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryTests.swift; sourceTree = "<group>"; };
 		45002CF11E285E8168354DEF /* VS1SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VS1SharedUI.swift; sourceTree = "<group>"; };
 		461DA0E92F5D70F6B81654B2 /* MatherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherApp.swift; sourceTree = "<group>"; };
@@ -424,6 +434,7 @@
 		6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldAnimals.swift"; sourceTree = "<group>"; };
 		6E01EEE9604B8700E4F60EE2 /* MemoryAskConversationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicy.swift; sourceTree = "<group>"; };
 		704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestLiveScanner.swift; sourceTree = "<group>"; };
+		70C861DA75B25B50743409CF /* LearningHandoffStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHandoffStore.swift; sourceTree = "<group>"; };
 		7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeCampaign.swift; sourceTree = "<group>"; };
 		718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElectronicsCircuitArtwork.swift; sourceTree = "<group>"; };
 		71E7E1C15EE20D21F179D1E2 /* LearningLoopViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningLoopViews.swift; sourceTree = "<group>"; };
@@ -448,6 +459,7 @@
 		86F359E021403BCD8321EE41 /* LabDetailFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabDetailFlowLayout.swift; sourceTree = "<group>"; };
 		892C73ABB87A9BFDC46D9896 /* GravitySplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GravitySplitView.swift; sourceTree = "<group>"; };
 		893845D3340A27F687CF2A30 /* SessionConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigView.swift; sourceTree = "<group>"; };
+		897421EDA9E608319D73BD0F /* ParentOffscreenObservationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentOffscreenObservationStore.swift; sourceTree = "<group>"; };
 		8A166DB67AC6450C763D8DC1 /* MotionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionService.swift; sourceTree = "<group>"; };
 		8AD35E38E6ACEE1DF4AB812F /* RectangleFactoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleFactoryTests.swift; sourceTree = "<group>"; };
 		8B53717367D538E7DE828161 /* LearningCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCardTests.swift; sourceTree = "<group>"; };
@@ -474,6 +486,7 @@
 		A3A273DB769B7A8C65772013 /* TVLearningStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVLearningStoreTests.swift; sourceTree = "<group>"; };
 		A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachineTests.swift; sourceTree = "<group>"; };
 		A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameActivityCard.swift; sourceTree = "<group>"; };
+		AC3B62612E4453F4318BE31C /* LearningCompanionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCompanionView.swift; sourceTree = "<group>"; };
 		AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestEngine.swift; sourceTree = "<group>"; };
 		AE8046907309327BB23FE1CA /* GameplayEnrichmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayEnrichmentTests.swift; sourceTree = "<group>"; };
 		AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpec.swift; sourceTree = "<group>"; };
@@ -511,6 +524,7 @@
 		D178918B74AE2850A3F8EB4A /* AngleCannonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleCannonView.swift; sourceTree = "<group>"; };
 		D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintGenerator.swift; sourceTree = "<group>"; };
 		D3CED0505611B19CEE635DE7 /* WaterCycleLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleLabView.swift; sourceTree = "<group>"; };
+		D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHandoff.swift; sourceTree = "<group>"; };
 		D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		D4C3639AE166C4F815BCA5C7 /* MatherUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MatherUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D534592E2580F9BC9AF7AC2D /* TelemetryWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryWriter.swift; sourceTree = "<group>"; };
@@ -544,6 +558,7 @@
 		EB3E740DD832B432B8867661 /* SoundDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundDetectionService.swift; sourceTree = "<group>"; };
 		ECFA05754CC31E013A31DED6 /* LearningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCard.swift; sourceTree = "<group>"; };
 		ECFF09E7C4882057E1DFE232 /* GameplayThreadContent+Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+Shapes.swift"; sourceTree = "<group>"; };
+		EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentOffscreenObservationTests.swift; sourceTree = "<group>"; };
 		EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipMemoryStageView.swift; sourceTree = "<group>"; };
 		F1A4D019E0AB8DA7749332EA /* SumSprintPartyTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRoundTests.swift; sourceTree = "<group>"; };
 		F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsViewTests.swift; sourceTree = "<group>"; };
@@ -614,9 +629,11 @@
 				F7B5305570771ED55816AC6B /* GameplayProgressStore.swift */,
 				3B3F29980CE5E67E05A4F30F /* HapticsService.swift */,
 				5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */,
+				70C861DA75B25B50743409CF /* LearningHandoffStore.swift */,
 				2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */,
 				2F4016B80628D3A384DD33D8 /* MemoryGalleryContentStore.swift */,
 				8A166DB67AC6450C763D8DC1 /* MotionService.swift */,
+				897421EDA9E608319D73BD0F /* ParentOffscreenObservationStore.swift */,
 				6A29E7A58DAED343241CCEA8 /* PlaceMatchService.swift */,
 				3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */,
 				704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */,
@@ -715,6 +732,7 @@
 				934BEC63B805B504B59413AB /* LaneMasteryStateTests.swift */,
 				BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */,
 				8B53717367D538E7DE828161 /* LearningCardTests.swift */,
+				43DF71CDD3207C95FF8C8800 /* LearningHandoffTests.swift */,
 				6AEF903C0449A30A678CFAE0 /* LearningLoopTests.swift */,
 				05A077338DEFE216483C0A99 /* LearningQuestTests.swift */,
 				4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */,
@@ -731,6 +749,7 @@
 				1509AE201C856C72003B229E /* NumberStoryGeneratorTests.swift */,
 				5CDAD3065F9042019DC1AA5A /* NumberStoryStageVocabularyTests.swift */,
 				2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */,
+				EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */,
 				33D6998F27C6B1C6EFDA26B6 /* PlaceMatchServiceTests.swift */,
 				000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */,
 				AFD37E9E79CB13908866EFD5 /* RectangleFactoryOnboardingTests.swift */,
@@ -831,6 +850,7 @@
 				C8DEAF1A6BC799FB9E48158E /* IOSLearningCatalog.swift */,
 				3532C8409F42C5B9DB67FE2B /* LaneMasteryState.swift */,
 				ECFA05754CC31E013A31DED6 /* LearningCard.swift */,
+				D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */,
 				C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */,
 				AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */,
 				81907A58A02016D7B031B93B /* LearningQuestModels.swift */,
@@ -893,6 +913,14 @@
 			path = Tests/MatherUITests;
 			sourceTree = "<group>";
 		};
+		52ADF07D4550112A80A2DD29 /* LearningCompanion */ = {
+			isa = PBXGroup;
+			children = (
+				AC3B62612E4453F4318BE31C /* LearningCompanionView.swift */,
+			);
+			path = LearningCompanion;
+			sourceTree = "<group>";
+		};
 		6429B1B0A10DE9EEB86245AF /* MatherTVUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -953,6 +981,7 @@
 				24ED5ACDD1F62C27D47105A0 /* GameplayStages */,
 				AF48F93C44FB9BB58BAE05EB /* GravityArtist */,
 				3E323FA1891D652911EFE43F /* Lab */,
+				52ADF07D4550112A80A2DD29 /* LearningCompanion */,
 				1519BB067A4599C6802A939B /* LearningLoop */,
 				72E6F69FC894035CB3FEA665 /* LearningQuests */,
 				D5894AD240541084BE919F39 /* Memory */,
@@ -1252,6 +1281,9 @@
 				9B3D1F7974A34ED80D3CD9F2 /* CompareCampRound.swift in Sources */,
 				CD05FABD338E226A25C95AA9 /* CompareCampTVComponents.swift in Sources */,
 				B984FCE5483DCCB107FE5E07 /* CompareCampTVView.swift in Sources */,
+				BCC8257BD76D72D3B9887AC3 /* LearningCompanionView.swift in Sources */,
+				7FADE96576249148AC8B2014 /* LearningHandoff.swift in Sources */,
+				FD41BDBB7EB6A82168932B48 /* LearningHandoffStore.swift in Sources */,
 				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
 				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
@@ -1310,6 +1342,7 @@
 				770A683D79CF3AD5930B96D5 /* LaneMasteryStateTests.swift in Sources */,
 				2A15E2F3F8A237089C550986 /* LaneRecallReviewEngineTests.swift in Sources */,
 				AD25DE80FB639941F8FED967 /* LearningCardTests.swift in Sources */,
+				F2FE6235B5172729686213C7 /* LearningHandoffTests.swift in Sources */,
 				2E80D1B4BA2B8B8C1BADADE6 /* LearningLoopTests.swift in Sources */,
 				E31F85269F83609EBCA828F8 /* LearningQuestTests.swift in Sources */,
 				260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */,
@@ -1326,6 +1359,7 @@
 				26BFA6B9296DBF35F4F64F52 /* NumberStoryGeneratorTests.swift in Sources */,
 				CAFA8E6A2422FC42901D6C23 /* NumberStoryStageVocabularyTests.swift in Sources */,
 				555A0D80EB93DAF706D08DCB /* PairingChallengeTests.swift in Sources */,
+				5A545D0F35C92DAEFBCFB14D /* ParentOffscreenObservationTests.swift in Sources */,
 				468988AB46B048C0A7DC0414 /* PlaceMatchServiceTests.swift in Sources */,
 				D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */,
 				0226754603BAAA93415D4111 /* RectangleFactoryOnboardingTests.swift in Sources */,
@@ -1453,7 +1487,10 @@
 				AD23681094CEC90B58309E61 /* LaneMasteryState.swift in Sources */,
 				ACFCA4BFA985FE6B075F78CD /* LaneRecallReviewEngine.swift in Sources */,
 				0D0A34DB7759B11FEB4B6D94 /* LearningCard.swift in Sources */,
+				EA9F6126D6C7D3EEABADF800 /* LearningCompanionView.swift in Sources */,
 				73C54F70D1AC605023AE0F04 /* LearningContentImage.swift in Sources */,
+				1A775D933EE5ABBC8AA75340 /* LearningHandoff.swift in Sources */,
+				015E9211F8AACA52D2E560DF /* LearningHandoffStore.swift in Sources */,
 				5032EE3DF5732E53D7FE3B3A /* LearningLoopModels.swift in Sources */,
 				999475484BEF4CCF53D9BA27 /* LearningLoopViews.swift in Sources */,
 				BA1D65AE55009DFB2A797ED6 /* LearningQuestEngine.swift in Sources */,
@@ -1477,6 +1514,7 @@
 				491AF46616C0ED52117B0F84 /* NumberStoryModels.swift in Sources */,
 				6017B571AB347F8A34DE751D /* NumberStoryStageVocabulary.swift in Sources */,
 				97BD7600CFB32D47B34275CD /* PairingChallenge.swift in Sources */,
+				14713EFF376FE489A79773BE /* ParentOffscreenObservationStore.swift in Sources */,
 				16A4014499E77CB96AA50DA8 /* ParentSummaryView.swift in Sources */,
 				9308B9369B782D66D75DECAC /* PlaceMatchService.swift in Sources */,
 				C7EEA58201720EC27B0B0B22 /* ProblemGenerator.swift in Sources */,

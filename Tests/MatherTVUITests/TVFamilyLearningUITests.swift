@@ -32,6 +32,30 @@ final class TVFamilyLearningUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 with help"))
     }
 
+    func testCompanionRecipientAndConfirmedScopedReset() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-tv-family-ui-test", "-tv-family-reset"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["tv-family-title"].waitForExistence(timeout: 20))
+        choose(app, app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Alex")).firstMatch)
+        choose(app, app.buttons["tv-family-companion"])
+        XCTAssertTrue(app.staticTexts["companion-recipient"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["companion-recipient"].label, "Local recipient: Alex")
+        attach("TV parent companion recipient")
+        choose(app, app.buttons["companion-close"])
+        XCTAssertTrue(app.staticTexts["tv-family-title"].waitForExistence(timeout: 10))
+        choose(app, app.buttons["tv-family-clear-selected"])
+        XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
+        choose(app, app.alerts.buttons["Cancel"])
+        XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 with help"))
+        choose(app, app.buttons["tv-family-clear-selected"])
+        choose(app, app.alerts.buttons["Clear learning"])
+        XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("0 with help"))
+        XCTAssertEqual(app.staticTexts["tv-family-selected"].label, "Playing: Alex")
+        attach("TV confirmed learner reset")
+    }
+
     private func choose(_ app: XCUIApplication, _ target: XCUIElement) {
         XCTAssertTrue(target.waitForExistence(timeout: 5))
         var previous: String?

@@ -89,6 +89,66 @@ struct TVLearningStoreTests {
         #expect(event.withOutcome(.supportedCorrect).itemVariantID == event.itemVariantID)
     }
 
+    @Test func nonDataFutureFieldsAndExternalChangesArePreserved() throws {
+        let storage = defaults()
+        let key = "tv.learningLedger.v1"
+        storage.set("unreadable", forKey: key)
+        let wrongType = TVLearningStore(defaults: storage)
+        #expect(!wrongType.addLearner(name: "A"))
+        #expect(storage.string(forKey: key) == "unreadable")
+        wrongType.resetAll()
+        #expect(wrongType.addLearner(name: "A"))
+        var json = try #require(JSONSerialization.jsonObject(with: #require(storage.data(forKey: key))) as? [String: Any])
+        json["futureField"] = ["preserve": true]
+        let future = try JSONSerialization.data(withJSONObject: json)
+        storage.set(future, forKey: key)
+        #expect(!wrongType.addLearner(name: "B"))
+        #expect(storage.data(forKey: key) == future)
+        #expect(TVLearningStore(defaults: storage).storageMessage != nil)
+    }
+
+    @Test func coordinatedSelectedResetClearsReplaySourcesAndKeepsOtherProfiles() throws {
+        let storage = defaults()
+        let ledger = TVLearningStore(defaults: storage)
+        #expect(ledger.addLearner(name: "A"))
+        let first = ledger.context
+        #expect(ledger.record(attempt(profileID: first.profileID)))
+        #expect(ledger.addLearner(name: "B"))
+        let second = ledger.context
+        #expect(ledger.record(attempt(profileID: second.profileID)))
+        let ownSum = "tv.sumSprintParty.learning.v1.child.\(first.profileID)"
+        let otherSum = "tv.sumSprintParty.learning.v1.child.\(second.profileID)"
+        let ownShape = "mather.shape-detective.v1.\(first.profileID)"
+        for key in [ownSum, ownSum + ".history", ownShape, ownShape + ".used-probes", otherSum] { storage.set(Data("preserved".utf8), forKey: key) }
+        let companion = LearningHandoffStore(defaults: storage)
+        let mission = try companion.createMission(profileID: first.profileID, target: 5, parentApproved: true)
+        #expect(TVLearningDataReset.clearSelected(first, ledger: ledger, defaults: storage) == nil)
+        #expect(ledger.attempts(for: first.profileID).isEmpty)
+        #expect(ledger.attempts(for: second.profileID).count == 1)
+        #expect(storage.data(forKey: ownSum) == nil && storage.data(forKey: ownShape) == nil)
+        #expect(storage.data(forKey: ownSum + ".history") == nil && storage.data(forKey: ownShape + ".used-probes") == nil)
+        #expect(storage.data(forKey: otherSum) != nil)
+        let reopened = LearningHandoffStore(defaults: storage)
+        #expect(reopened.assignment(profileID: first.profileID) == nil)
+        #expect(throws: LearningHandoffError.alreadyReceived) { try reopened.preview(code: LearningHandoffCode.encode(mission.payload)) }
+    }
+
+    @Test func explicitAllResetPreservesEarlierDeviceScoresAndSelectedUnknownData() {
+        let storage = defaults()
+        let ledger = TVLearningStore(defaults: storage)
+        storage.set("future", forKey: LearningHandoffStore.storageKey)
+        #expect(TVLearningDataReset.clearSelected(ledger.context, ledger: ledger, defaults: storage) != nil)
+        #expect(storage.string(forKey: LearningHandoffStore.storageKey) == "future")
+        storage.set(42, forKey: "tv.sumSprintParty.personalBest")
+        storage.set(Data("future".utf8), forKey: "tv.sumSprintParty.learning.v1.child.unknown")
+        storage.set(Data("future".utf8), forKey: "mather.shape-detective.v1.unknown")
+        TVLearningDataReset.clearAll(ledger: ledger, defaults: storage)
+        #expect(storage.integer(forKey: "tv.sumSprintParty.personalBest") == 42)
+        #expect(storage.object(forKey: LearningHandoffStore.storageKey) == nil)
+        #expect(storage.data(forKey: "tv.sumSprintParty.learning.v1.child.unknown") == nil)
+        #expect(storage.data(forKey: "mather.shape-detective.v1.unknown") == nil)
+    }
+
     @Test func differentFrozenProbeDoesNotInheritPracticeHelpButLegacySupportSurvives() {
         let help = ItemAttempt(activityID: "shapes", conceptID: "corners", entityID: "rectangle", stageID: "check", outcome: .help,
             profileID: "learner", sessionID: "session", contentVersion: 1, itemVariantID: "practice")

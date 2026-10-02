@@ -14,10 +14,14 @@ struct MatherTVRootView: View {
     var body: some View {
         Group {
             if showsFamilyGuide {
-                TVFamilyLearningView(store: learningStore) {
+                TVFamilyLearningView(store: learningStore, onExit: {
                     showsFamilyGuide = false
                     focusLauncher()
-                }
+                }, onClearSelected: { TVLearningDataReset.clearSelected($0, ledger: learningStore) },
+                    onClearAll: { TVLearningDataReset.clearAll(ledger: learningStore) }, onStartJourney: { action in
+                        showsFamilyGuide = false
+                        openGame(action)
+                    })
             } else if let activeGame {
                 gameView(for: activeGame)
                     .id(activeGame.id + "-" + learningStore.context.profileID)
@@ -150,6 +154,10 @@ struct MatherTVRootView: View {
     }
 
     private func openGame(_ action: MatherTVAction) {
+        if (action == .sprint || action == .shapes), learningStore.storageMessage != nil {
+            showsFamilyGuide = true
+            return
+        }
         narration.stop()
         lastFocusedAction = action
         focusedAction = nil
@@ -259,7 +267,7 @@ struct MatherTVBackdrop: View {
     }
 }
 
-private enum MatherTVAction: String, CaseIterable, Identifiable {
+enum MatherTVAction: String, CaseIterable, Identifiable {
     case memory
     case angle
     case sprint
