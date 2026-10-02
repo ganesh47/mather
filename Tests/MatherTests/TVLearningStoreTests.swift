@@ -61,6 +61,23 @@ struct TVLearningStoreTests {
         #expect(storage.data(forKey: "tv.learningLedger.v1") == data)
     }
 
+    @Test func selectedResetKeepsOtherLearnersAndFamily() {
+        let storage = defaults()
+        let store = TVLearningStore(defaults: storage)
+        #expect(store.record(attempt(profileID: TVLearningContext.familyID)))
+        #expect(store.addLearner(name: "A"))
+        let selected = store.context.profileID
+        #expect(store.record(attempt(profileID: selected)))
+        #expect(store.clearLearning(profileID: selected))
+        #expect(store.attempts(for: selected).isEmpty)
+        #expect(store.learners.count == 1)
+        #expect(store.attempts(for: TVLearningContext.familyID).count == 1)
+        store.resetAll()
+        #expect(store.learners.isEmpty)
+        #expect(store.attempts(for: TVLearningContext.familyID).isEmpty)
+        #expect(storage.data(forKey: "tv.learningLedger.v1") == nil)
+    }
+
     @Test func oldEvidenceDecodesAndContextSurvives() throws {
         let event = attempt(profileID: TVLearningContext.familyID)
         let data = try JSONEncoder().encode(event)

@@ -85,6 +85,24 @@ final class TVLearningStore {
         archive.results.filter { $0.profileID == profileID }.sorted { $0.endedAt > $1.endedAt }
     }
 
+    /// Root also clears activity checkpoints before permitting a new session.
+    @discardableResult
+    func clearLearning(profileID: String) -> Bool {
+        guard profileID == TVLearningContext.familyID || archive.learners.contains(where: { $0.id == profileID }) else { return false }
+        var value = archive
+        value.attempts.removeAll { $0.profileID == profileID }
+        value.results.removeAll { $0.profileID == profileID }
+        return persist(value)
+    }
+
+    /// Only exposed behind an explicit parent confirmation in the family guide.
+    func resetAll() {
+        defaults.removeObject(forKey: key)
+        archive = TVLearningArchive()
+        storageMessage = nil
+        revision += 1
+    }
+
     @discardableResult
     func record(_ attempt: ItemAttempt) -> Bool {
         guard storageMessage == nil, attempt.profileID == context.profileID,
