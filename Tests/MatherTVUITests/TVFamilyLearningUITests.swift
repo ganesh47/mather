@@ -112,7 +112,13 @@ final class TVFamilyLearningUITests: XCTestCase {
         for _ in 0..<30 {
             if target.hasFocus { XCUIRemote.shared.press(.select); return }
             let current = app.descendants(matching: .any).matching(NSPredicate(format: "hasFocus == true")).firstMatch
-            XCTAssertTrue(current.waitForExistence(timeout: 5))
+            // Older tvOS can briefly expose no focused element after a selected
+            // learner's label changes. A real directional press restores focus;
+            // keep the same bounded search and select only the exact target.
+            guard current.waitForExistence(timeout: 1) else {
+                XCUIRemote.shared.press(.down)
+                continue
+            }
             let dx = target.frame.midX - current.frame.midX
             let dy = target.frame.midY - current.frame.midY
             var direction: XCUIRemote.Button = abs(dy) > 40 ? (dy > 0 ? .down : .up) : (dx > 0 ? .right : .left)

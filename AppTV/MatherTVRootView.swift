@@ -178,8 +178,14 @@ struct MatherTVRootView: View {
     }
 
     private static func makeLearningStore() -> TVLearningStore {
+        guard ProcessInfo.processInfo.arguments.contains("-tv-family-ui-test") else { return TVLearningStore() }
+        return familyUITestStore
+    }
+
+    // State initial values can be evaluated again when SwiftUI recreates a view.
+    // Reset and seed the synthetic suite once per process, never during reentry.
+    private static let familyUITestStore: TVLearningStore = {
         let arguments = ProcessInfo.processInfo.arguments
-        guard arguments.contains("-tv-family-ui-test") else { return TVLearningStore() }
         let suite = "mather.tvFamily.uiTests"
         let defaults = UserDefaults(suiteName: suite)!
         if arguments.contains("-tv-family-reset") { defaults.removePersistentDomain(forName: suite) }
@@ -195,7 +201,7 @@ struct MatherTVRootView: View {
             store.selectLearner(nil)
         }
         return store
-    }
+    }()
 }
 
 private struct MatherTVGameCard: View {
