@@ -1576,6 +1576,8 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.ganesh47.MatherTVUITests;
+				PRODUCT_MODULE_NAME = MatherTVUITests;
+				PRODUCT_NAME = MatherTVUITests;
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
 				TEST_TARGET_NAME = MatherTV;
@@ -1630,6 +1632,8 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.ganesh47.MatherTVUITests;
+				PRODUCT_MODULE_NAME = MatherTVUITests;
+				PRODUCT_NAME = MatherTVUITests;
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
 				TEST_TARGET_NAME = MatherTV;
