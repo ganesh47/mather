@@ -5,6 +5,8 @@ import UIKit
 struct AngleArcadeTVView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.resetFocus) private var resetFocus
+    @Namespace private var primaryFocusScope
     @State private var flightTask: Task<Void, Never>?
     @State private var flightProgress = 0.0
     @State private var isFlying = false
@@ -69,7 +71,15 @@ struct AngleArcadeTVView: View {
             narration.presentPrompt(isFlying ? actionGuidance : firedShot.map(feedbackMessage) ?? targetPrompt)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { cancelFlight(); narration.stop() }
+            if phase == .active {
+                focusedAction = .fire
+                resetFocus(in: primaryFocusScope)
+            } else {
+                // tvOS can discard actual focus while the binding still says Fire.
+                focusedAction = nil
+                cancelFlight()
+                narration.stop()
+            }
         }
         .onDisappear { cancelFlight(); narration.stop() }
         .accessibilityElement(children: .contain)
@@ -121,6 +131,7 @@ struct AngleArcadeTVView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .focused($focusedAction, equals: .fire)
+                .prefersDefaultFocus(true, in: primaryFocusScope)
                 .accessibilityIdentifier("angle-arcade-fire-replay-button")
                 .accessibilityLabel(primaryLabel)
                 .accessibilityHint(actionGuidance)
@@ -129,6 +140,7 @@ struct AngleArcadeTVView: View {
                 .font(.system(size: 23, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.82))
         }
+        .focusScope(primaryFocusScope)
     }
 
     private var primaryLabel: String {

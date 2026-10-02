@@ -156,6 +156,16 @@ final class AngleArcadeUITests: XCTestCase {
         fire(app, expecting: "Next target")
         XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
         attachScreenshot("New shot works after foregrounding")
+
+        // Foreground focus must also return without erasing a completed result.
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        waitForPrimary(app, label: "Next target")
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
+        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Great aim!")
+        XCUIRemote.shared.press(.select)
+        waitForPrimary(app, label: "Fire")
+        XCTAssertEqual(app.staticTexts["angle-arcade-target-progress"].label, "Target 2 of 3")
     }
 
     private func launchArcade() -> XCUIApplication {
