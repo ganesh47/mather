@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Mather
 
@@ -153,5 +154,80 @@ struct AngleArcadeModelTests {
         #expect(AngleArcadeModel.nextTargetIndex(after: 0, targetCount: count) == 1)
         #expect(AngleArcadeModel.nextTargetIndex(after: count - 1, targetCount: count) == 0)
         #expect(AngleArcadeModel.nextTargetIndex(after: 4, targetCount: 0) == 0)
+    }
+
+    @Test func thinObstacleCollisionDoesNotDependOnRenderingSamples() {
+        let target = AngleArcadeTarget.defaultTargets[0]
+        let fence = AngleArcadeObstacle(id: "thin", title: "Fence", rect: .init(x: 100, y: 0, width: 1, height: 200))
+        let sparse = AngleArcadeModel.shot(angle: 35, power: 77, target: target, sampleCount: 2, obstacles: [fence])
+        let detailed = AngleArcadeModel.shot(angle: 35, power: 77, target: target, sampleCount: 120, obstacles: [fence])
+        #expect(sparse.outcome == .blocked)
+        #expect(sparse.obstacleID == "thin")
+        #expect(abs(Double(sparse.path.last!.x) - 100) < 0.000001)
+        #expect(sparse.flightDuration == detailed.flightDuration)
+        #expect(sparse.path.last == detailed.path.last)
+    }
+
+    @Test func earliestObstacleWinsAndRadiusExtendsSweptContact() {
+        let target = AngleArcadeTarget.defaultTargets[0]
+        let first = AngleArcadeObstacle(id: "first", title: "First", rect: .init(x: 100, y: 0, width: 10, height: 200))
+        let later = AngleArcadeObstacle(id: "later", title: "Later", rect: .init(x: 200, y: 0, width: 10, height: 200))
+        let shot = AngleArcadeModel.shot(angle: 35, power: 77, target: target, obstacles: [later, first], projectileRadius: 8)
+        #expect(shot.obstacleID == "first")
+        #expect(abs(Double(shot.path.last!.x) - 92) < 0.000001)
+        #expect(shot.path.allSatisfy { $0.x <= 92.000001 })
+    }
+
+    @Test func targetHitPrecedesObstaclesBeyondImpactAndInvalidGravityFallsBack() {
+        let target = AngleArcadeTarget.defaultTargets[0]
+        let beyond = AngleArcadeObstacle(id: "beyond", title: "Beyond", rect: .init(x: 500, y: 0, width: 10, height: 400))
+        let shot = AngleArcadeModel.shot(angle: 35, power: 77, target: target, gravity: 0, obstacles: [beyond])
+        #expect(shot.hit)
+        #expect(shot.obstacleID == nil)
+        #expect(shot.gravity == AngleArcadeModel.gravity)
+        #expect(abs(Double(shot.path.last!.x) - target.distance) < 0.000001)
+    }
+
+    @Test func sweptCircleStopsAtFirstContactBeforeCenterPlaneAndLaterObstacle() {
+        let target = AngleArcadeTarget.defaultTargets[0]
+        let later = AngleArcadeObstacle(id: "later", title: "Later", rect: .init(x: 380, y: 0, width: 1, height: 400))
+        let sparse = AngleArcadeModel.shot(
+            angle: 35, power: 77, target: target, sampleCount: 2,
+            obstacles: [later], projectileRadius: 8, sweptTargetCollision: true
+        )
+        let detailed = AngleArcadeModel.shot(
+            angle: 35, power: 77, target: target, sampleCount: 120,
+            obstacles: [later], projectileRadius: 8, sweptTargetCollision: true
+        )
+        #expect(sparse.hit)
+        #expect(sparse.obstacleID == nil)
+        let endpoint = sparse.path.last!
+        #expect(endpoint.x < target.distance)
+        #expect(abs(hypot(Double(endpoint.x) - target.distance, Double(endpoint.y) - target.height) - 38) < 0.000001)
+        #expect(sparse.flightDuration == detailed.flightDuration)
+        #expect(sparse.path.last == detailed.path.last)
+    }
+
+    @Test func sweptCircleDetectsGrazingContactAndRejectsNearbyOutsidePath() {
+        let vx = 85.0 * 3 / sqrt(2)
+        let vy = vx
+        let time = 1.0
+        let pointX = vx * time
+        let pointY = vy * time - 49 * time * time
+        let tangentY = vy - 98 * time
+        let norm = hypot(vx, tangentY)
+        let radius = 15.0
+        func target(offset: Double) -> AngleArcadeTarget {
+            .init(id: "graze", title: "Graze", distance: pointX - radius * tangentY / norm,
+                  height: pointY + radius * vx / norm + offset, radius: radius,
+                  recommendedAngle: 45, recommendedPower: 85)
+        }
+        let tangent = AngleArcadeModel.shot(angle: 45, power: 85, target: target(offset: 0), sampleCount: 2, sweptTargetCollision: true)
+        let inside = AngleArcadeModel.shot(angle: 45, power: 85, target: target(offset: -0.1), sampleCount: 2, sweptTargetCollision: true)
+        let outside = AngleArcadeModel.shot(angle: 45, power: 85, target: target(offset: 0.1), sampleCount: 120, sweptTargetCollision: true)
+        #expect(tangent.hit)
+        #expect(abs(tangent.flightDuration - time) < 0.000001)
+        #expect(inside.hit)
+        #expect(!outside.hit)
     }
 }

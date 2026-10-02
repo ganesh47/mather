@@ -761,7 +761,7 @@ extension LabModelsTests {
     func testActivitySensorNeedsMapToHonestLaneAffordances() {
         XCTAssertEqual(LabActivityID.sumSprint.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.shapeGeometry.sensorNeeds, [.noSpecialSensor])
-        XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.motion])
+        XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.noSpecialSensor])
         XCTAssertEqual(LabActivityID.gravityArtist.sensorNeeds, [.motion])
         XCTAssertEqual(LabActivityID.compassAngles.sensorNeeds, [.compass, .stepCounting])
         XCTAssertEqual(LabActivityID.roomQuest.sensorNeeds, [.cameraMarkerMode, .haptics])
@@ -799,7 +799,7 @@ extension LabModelsTests {
 
         XCTAssertEqual(
             LabActivityID.angleCannon.sensorAffordances(with: capabilities).map(\.displayLabel),
-            ["Tilt ready"]
+            ["Touch ready"]
         )
         XCTAssertEqual(
             LabActivityID.compassAngles.sensorAffordances(with: capabilities).map(\.displayLabel),
@@ -818,7 +818,7 @@ extension LabModelsTests {
     func testSensorLaunchPolicyKeepsFallbackGamesPlayableButDisablesSensorOnlyRoutes() {
         XCTAssertTrue(LabActivityID.sumSprint.canDirectLaunch(with: .unavailable))
         XCTAssertTrue(LabActivityID.roomQuest.canDirectLaunch(with: .unavailable))
-        XCTAssertFalse(LabActivityID.angleCannon.canDirectLaunch(with: .unavailable))
+        XCTAssertTrue(LabActivityID.angleCannon.canDirectLaunch(with: .unavailable))
         XCTAssertFalse(LabActivityID.gravityArtist.canDirectLaunch(with: .unavailable))
         XCTAssertFalse(LabActivityID.compassAngles.canDirectLaunch(with: .unavailable))
 
@@ -829,7 +829,7 @@ extension LabModelsTests {
 
     func testSensorAffordancesExposePermissionAwareChildSafeCopy() {
         let unavailableTilt = LabActivityID.angleCannon.sensorAffordances(with: .unavailable)
-        XCTAssertEqual(unavailableTilt.first?.accessibilityHint, "This game needs this sensor on the device. Try another game for now.")
+        XCTAssertTrue(unavailableTilt.allSatisfy(\.permitsLaunch))
 
         let stepFallback = LabSensorNeed.stepCounting.copy(with: .unavailable)
         XCTAssertEqual(stepFallback.displayLabel, "Step sensing unavailable: Tap each small step instead")

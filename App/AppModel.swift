@@ -24,6 +24,8 @@ final class AppModel {
     let gameSessionStore: GameSessionStore
     let gameplayProgressStore: GameplayProgressStore
     let labConceptSessionProgressStore: LabConceptSessionProgressStore
+    var angleArcadeEngine: AngleArcadeEngine
+    private var angleArcadeProfileScope: String
     let explorerLabMasteryStore: ExplorerLabMasteryStore
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
@@ -114,8 +116,33 @@ final class AppModel {
         _ = labConceptSessionProgressStore.markLabLaunchedGameplayCompleted(context, summary: stageSummary)
     }
 
+    func prepareAngleArcadeProfile() {
+        let scope = Self.angleArcadeScope(profileID: profileStore.activeProfileId)
+        guard scope != angleArcadeProfileScope else { return }
+        angleArcadeEngine.cancelFlight()
+        angleArcadeProfileScope = scope
+        angleArcadeEngine = AngleArcadeEngine(store: Self.angleArcadeStore(scope: scope))
+    }
+
+    private static func angleArcadeScope(profileID: String) -> String {
+        ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") ? "ipad-ui-test" : "ipad-\(profileID)"
+    }
+
+    private static func angleArcadeStore(scope: String) -> AngleArcadeProgressStore {
+        let arguments = ProcessInfo.processInfo.arguments
+        let defaults = arguments.contains("-angle-arcade-ui-test")
+            ? UserDefaults(suiteName: "mather.angleArcade.uiTests")! : .standard
+        if arguments.contains("-angle-arcade-ui-test") && arguments.contains("-angle-arcade-reset-progress") {
+            defaults.removePersistentDomain(forName: "mather.angleArcade.uiTests")
+        }
+        return AngleArcadeProgressStore(defaults: defaults, scope: scope)
+    }
+
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
+        let scope = Self.angleArcadeScope(profileID: profileStore.activeProfileId)
+        angleArcadeProfileScope = scope
+        angleArcadeEngine = AngleArcadeEngine(store: Self.angleArcadeStore(scope: scope))
         let featureFlags = FeatureFlagService()
         let speechService = SpeechService()
         let memoryCardDescribeService = MemoryCardDescribeService(appleIntelligenceEnabled: { featureFlags.memoryCardAppleIntelligenceEnabled })

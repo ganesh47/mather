@@ -3,7 +3,7 @@ import SwiftUI
 struct MatherTVRootView: View {
     @State private var narration = TVNarrationController()
     @FocusState private var focusedAction: MatherTVAction.ID?
-    @State private var activeGame: MatherTVAction?
+    @State private var activeGame: MatherTVAction? = ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") ? .angle : nil
     @State private var lastFocusedAction = MatherTVAction.memory
 
     private let actions = MatherTVAction.allCases
@@ -15,6 +15,7 @@ struct MatherTVRootView: View {
                 gameView(for: activeGame)
                     .id(activeGame.id)
                     .overlay(alignment: .top) {
+                        if activeGame != .angle {
                         Label("Menu  ·  All games", systemImage: "chevron.backward")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.72))
@@ -23,9 +24,10 @@ struct MatherTVRootView: View {
                             .background(.black.opacity(0.30), in: Capsule())
                             .padding(.top, 28)
                             .accessibilityHidden(true)
+                        }
                     }
                     .onExitCommand {
-                        exitGame(activeGame)
+                        if activeGame != .angle { exitGame(activeGame) }
                     }
             } else {
                 launcher
@@ -116,7 +118,7 @@ struct MatherTVRootView: View {
         case .memory:
             MemoryGalleryTVView()
         case .angle:
-            AngleArcadeTVView()
+            AngleArcadeTVView(onExit: { exitGame(.angle) })
         case .sprint:
             SumSprintPartyTVView()
         case .compare:

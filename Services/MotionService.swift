@@ -12,6 +12,8 @@ import Observation
 @Observable
 final class MotionService {
 
+    var isDeviceMotionAvailable: Bool { manager.isDeviceMotionAvailable }
+
     // MARK: - Observable state
 
     /// Pitch (forward/backward tilt) in radians. Positive = top tilts away.

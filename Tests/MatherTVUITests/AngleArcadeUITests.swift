@@ -1,223 +1,179 @@
 import XCTest
 
+/// Authored mission solutions are also checked against the shared catalog in AngleCannonTests.
 @MainActor
 final class AngleArcadeUITests: XCTestCase {
-    override func setUpWithError() throws {
-        continueAfterFailure = false
+    private struct Mission {
+        let id: String
+        let angleMoves: Int
+        let powerMoves: Int
+    }
+    private let worlds: [(id: String, missions: [Mission])] = [
+        ("garden", [.init(id: "garden-guided", angleMoves: 0, powerMoves: 0), .init(id: "garden-raised", angleMoves: 2, powerMoves: 0), .init(id: "garden-fence", angleMoves: 2, powerMoves: 2)]),
+        ("builder", [.init(id: "builder-corner", angleMoves: 2, powerMoves: 0), .init(id: "builder-quarter-turn", angleMoves: 6, powerMoves: 0), .init(id: "builder-transfer", angleMoves: -4, powerMoves: 0)]),
+        ("moon", [.init(id: "moon-earth", angleMoves: 0, powerMoves: 2), .init(id: "moon-compare", angleMoves: 0, powerMoves: -2), .init(id: "moon-transfer", angleMoves: 2, powerMoves: 2)])
+    ]
+
+    override func setUpWithError() throws { continueAfterFailure = false }
+
+    func testAllNineMissionsCompleteAndEachWorldCanReplay() {
+        let app = launch(reset: true)
+        for world in worlds {
+            openWorld(world.id, app: app)
+            for (index, mission) in world.missions.enumerated() {
+                assertMission(mission.id, app: app)
+                move(angle: mission.angleMoves, power: mission.powerMoves)
+                XCUIRemote.shared.press(.select)
+                waitPrimary(app, label: "Next mission")
+                screenshot("\(mission.id) succeeds")
+                XCUIRemote.shared.press(.select)
+                waitPhase(app, index == 2 ? "worldComplete" : "aiming")
+            }
+            screenshot("\(world.id) complete")
+            XCUIRemote.shared.press(.menu)
+            waitPhase(app, "worldSelection")
+            openWorld(world.id, app: app)
+            assertMission(world.missions[0].id, app: app)
+            screenshot("\(world.id) replay")
+            XCUIRemote.shared.press(.menu)
+            waitPhase(app, "worldSelection")
+        }
     }
 
-    func testGuidedHitThenCorrectShortShotWithoutExtraRetry() {
-        let app = launchArcade()
-        assertMetric(app, identifier: "angle-arcade-angle", contains: "35")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "77")
-        attachScreenshot("Guided first aim")
-
-        fire(app, expecting: "Next target")
-        XCTAssertTrue(app.staticTexts["Great aim!"].exists)
-        attachScreenshot("Guided hit at the target")
+    func testWorldProgressSurvivesRelaunchAndResumesNextMission() {
+        var app = launch(reset: true)
+        openWorld("builder", app: app)
+        move(angle: 2, power: 0)
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-        assertMetric(app, identifier: "angle-arcade-angle", contains: "45")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "75")
-        XCTAssertTrue(app.staticTexts["Target 2 of 3"].exists)
-        attachScreenshot("Next target needs an adjustment")
-
-        // At the minimum power, the ball lands before reaching the target.
-        for _ in 0..<7 {
-            XCUIRemote.shared.press(.down)
-        }
-        assertMetric(app, identifier: "angle-arcade-power", contains: "40")
-        fire(app, expecting: "Try again")
-        XCTAssertTrue(app.staticTexts["Too short"].exists)
-        attachScreenshot("Short shot offers useful feedback")
-
-        // A direction press immediately opens aiming again; no Select retry is needed.
-        XCUIRemote.shared.press(.up)
-        waitForPrimary(app, label: "Fire")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "45")
-        XCTAssertFalse(app.staticTexts["Too short"].exists)
-        for _ in 0..<8 {
-            XCUIRemote.shared.press(.up)
-        }
-        assertMetric(app, identifier: "angle-arcade-power", contains: "85")
-        attachScreenshot("Corrected aim after a miss")
-        fire(app, expecting: "Next target")
-        attachScreenshot("Corrected shot hits Moon dock")
+        waitPrimary(app, label: "Next mission")
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-        XCTAssertTrue(app.staticTexts["Target 3 of 3"].exists)
+        waitPhase(app, "aiming")
+        assertMission("builder-quarter-turn", app: app)
+        app.terminate()
+        app = launch(reset: false)
+        openWorld("builder", app: app)
+        assertMission("builder-quarter-turn", app: app)
+        screenshot("Saved Builder progress after relaunch")
     }
 
-    func testEveryTargetAndWrapRequireAimingAfterGuidedShot() {
-        let app = launchArcade()
-        fire(app, expecting: "Next target")
+    func testFlightIgnoresRepeatedInputThenBackgroundCancelsAnotherFlight() {
+        let app = launch(reset: true)
+        openWorld("garden", app: app)
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-
-        for (progress, startingPower, winningPower) in [
-            ("Target 2 of 3", "75", "85"),
-            ("Target 3 of 3", "84", "94"),
-            ("Target 1 of 3", "67", "77")
-        ] {
-            XCTAssertTrue(app.staticTexts[progress].exists)
-            assertMetric(app, identifier: "angle-arcade-power", contains: startingPower)
-            fire(app, expecting: "Try again")
-            attachScreenshot("\(progress) starts with a correctable miss")
-            XCUIRemote.shared.press(.up)
-            waitForPrimary(app, label: "Fire")
-            XCUIRemote.shared.press(.up)
-            assertMetric(app, identifier: "angle-arcade-power", contains: winningPower)
-            fire(app, expecting: "Next target")
-            XCUIRemote.shared.press(.select)
-            waitForPrimary(app, label: "Fire")
-        }
-        XCTAssertTrue(app.staticTexts["Target 2 of 3"].exists)
-        assertMetric(app, identifier: "angle-arcade-power", contains: "75")
-    }
-
-    func testRepeatPromptAndMenuDuringFlightAllowFreshReentry() {
-        let app = launchArcade()
-        XCUIRemote.shared.press(.playPause)
-        waitForPrimary(app, label: "Fire")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "77")
-
-        // Leaving during flight must cancel the pending result and narration.
-        XCUIRemote.shared.press(.select)
-        XCUIRemote.shared.press(.menu)
-        let arcade = app.buttons["tv-mode-angle"]
-        XCTAssertTrue(arcade.waitForExistence(timeout: 10))
-        waitForFocus(arcade)
-        attachScreenshot("Menu returns focus to Angle Arcade")
-        XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "77")
-        XCTAssertTrue(app.staticTexts["Target 1 of 3"].exists)
-        fire(app, expecting: "Next target")
-        attachScreenshot("Fresh guided shot after reentry")
-    }
-
-    func testAngleControlsAndPowerLimitOfferUsefulCorrectionHints() {
-        let app = launchArcade()
-        fire(app, expecting: "Next target")
-        XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-
-        for _ in 0..<5 {
-            XCUIRemote.shared.press(.left)
-            XCUIRemote.shared.press(.up)
-        }
-        assertMetric(app, identifier: "angle-arcade-angle", contains: "20")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "100")
-        fire(app, expecting: "Try again")
-        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Too low")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Try a higher angle →")).firstMatch.exists)
-        attachScreenshot("At maximum power the hint suggests a higher angle")
-
-        XCUIRemote.shared.press(.right)
-        waitForPrimary(app, label: "Fire")
-        assertMetric(app, identifier: "angle-arcade-angle", contains: "25")
-        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Ready")
-        for _ in 0..<8 {
-            XCUIRemote.shared.press(.right)
-        }
-        assertMetric(app, identifier: "angle-arcade-angle", contains: "65")
-        fire(app, expecting: "Try again")
-        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Too high")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Try less power ↓")).firstMatch.exists)
-        attachScreenshot("High angle miss suggests less power")
-    }
-
-    func testRepeatedSelectAndAdjustmentDuringFlightDoNotSkipOrCountTwice() {
-        let app = launchArcade()
-        XCUIRemote.shared.press(.select)
-        // Send these inputs back to back, before querying UI or waiting for a result.
         XCUIRemote.shared.press(.select)
         XCUIRemote.shared.press(.up)
-        let primary = app.buttons["angle-arcade-fire-replay-button"]
-        if primary.label == "Flying…" {
-            attachScreenshot("Repeated input while the ball is flying")
-        }
-        waitForPrimary(app, label: "Next target")
-        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
-        XCTAssertEqual(app.staticTexts["angle-arcade-target-progress"].label, "Target 1 of 3")
-        assertMetric(app, identifier: "angle-arcade-power", contains: "77")
-        attachScreenshot("One hit after repeated flight inputs")
-    }
-
-    func testBackgroundDuringFlightCancelsResultAndAllowsAnotherShot() {
-        let app = launchArcade()
+        waitPrimary(app, label: "Next mission")
+        assertMission("garden-guided", app: app)
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 of 3 complete")
+        XCUIRemote.shared.press(.select)
+        waitPhase(app, "aiming")
+        move(angle: 2, power: 0)
         XCUIRemote.shared.press(.select)
         backgroundAndActivate(app)
-        waitForPrimary(app, label: "Fire")
-        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "0 hits")
-        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Ready")
-        attachScreenshot("Cancelled flight after foregrounding")
-        fire(app, expecting: "Next target")
-        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
-        attachScreenshot("New shot works after foregrounding")
-
-        // Foreground focus must also return without erasing a completed result.
-        backgroundAndActivate(app)
-        waitForPrimary(app, label: "Next target")
-        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
-        XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Great aim!")
+        waitPhase(app, "aiming")
+        waitPrimary(app, label: "Launch")
+        assertMission("garden-raised", app: app)
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 of 3 complete")
+        screenshot("Foreground restores cancelled flight with no extra completion")
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
-        XCTAssertEqual(app.staticTexts["angle-arcade-target-progress"].label, "Target 2 of 3")
+        waitPrimary(app, label: "Next mission")
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "2 of 3 complete")
+
+        // Foreground focus must return without erasing a completed result.
+        backgroundAndActivate(app)
+        waitPhase(app, "result")
+        waitPrimary(app, label: "Next mission")
+        assertMission("garden-raised", app: app)
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "2 of 3 complete")
+        XCUIRemote.shared.press(.select)
+        waitPhase(app, "aiming")
+        assertMission("garden-fence", app: app)
     }
 
     private func backgroundAndActivate(_ app: XCUIApplication) {
         XCUIDevice.shared.press(.home)
-        // Wait for Home to finish backgrounding the app before requesting activation.
-        // Otherwise the pending Home transition can cover the newly activated game.
-        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10), "Home must background MatherTV")
+        // Wait for Home to finish backgrounding before requesting activation.
+        // Otherwise the pending Home transition can cover the activated game.
+        let departed = expectation(
+            for: NSPredicate { _, _ in
+                app.state == .runningBackground || app.state == .runningBackgroundSuspended
+            },
+            evaluatedWith: nil
+        )
+        wait(for: [departed], timeout: 10)
         app.activate()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10), "MatherTV must return to the foreground")
     }
 
-    private func launchArcade() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launch()
-        let memory = app.buttons["tv-mode-memory"]
-        XCTAssertTrue(memory.waitForExistence(timeout: 20))
-        waitForFocus(memory)
-        XCUIRemote.shared.press(.right)
-        let arcade = app.buttons["tv-mode-angle"]
-        waitForFocus(arcade)
+    func testHelpAndMissAllowImmediateRemoteCorrection() {
+        let app = launch(reset: true)
+        openWorld("moon", app: app)
+        XCUIRemote.shared.press(.playPause)
+        waitPhase(app, "aiming")
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: "Fire")
+        waitPrimary(app, label: "Try again")
+        screenshot("Moon miss with teaching feedback")
+        XCUIRemote.shared.press(.up)
+        waitPhase(app, "aiming")
+        XCUIRemote.shared.press(.up)
+        XCUIRemote.shared.press(.select)
+        waitPrimary(app, label: "Next mission")
+        screenshot("Moon correction after help")
+    }
+
+    private func launch(reset: Bool) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["-angle-arcade-ui-test"] + (reset ? ["-angle-arcade-reset-progress"] : [])
+        app.launch()
+        waitPhase(app, "worldSelection")
         return app
     }
 
-    private func fire(_ app: XCUIApplication, expecting label: String) {
-        waitForPrimary(app, label: "Fire")
+    private func openWorld(_ id: String, app: XCUIApplication) {
+        let cards = ["garden", "builder", "moon"]
+        let garden = app.buttons["angle-world-garden"]
+        XCTAssertTrue(garden.waitForExistence(timeout: 10))
+        // Returning from a mission focuses its world; navigate by observed focus.
+        guard let current = cards.firstIndex(where: { app.buttons["angle-world-\($0)"].hasFocus }), let desired = cards.firstIndex(of: id) else {
+            XCTFail("World selector must have a focused card")
+            return
+        }
+        for _ in 0..<abs(desired - current) { XCUIRemote.shared.press(desired > current ? .right : .left) }
+        let card = app.buttons["angle-world-\(id)"]
+        let focus = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: card)
+        wait(for: [focus], timeout: 10)
         XCUIRemote.shared.press(.select)
-        waitForPrimary(app, label: label)
+        waitPhase(app, "aiming")
     }
 
-    private func waitForPrimary(_ app: XCUIApplication, label: String) {
-        let primary = app.buttons["angle-arcade-fire-replay-button"]
+    private func move(angle: Int, power: Int) {
+        for _ in 0..<abs(angle) { XCUIRemote.shared.press(angle > 0 ? .right : .left) }
+        for _ in 0..<abs(power) { XCUIRemote.shared.press(power > 0 ? .up : .down) }
+    }
+
+    private func assertMission(_ id: String, app: XCUIApplication) {
+        XCTAssertTrue(app.staticTexts["angle-mission-\(id)"].exists)
+    }
+
+    private func waitPhase(_ app: XCUIApplication, _ phase: String) {
+        let element = app.descendants(matching: .any)["angle-arcade-phase"].firstMatch
+        XCTAssertTrue(element.waitForExistence(timeout: 10))
+        let state = expectation(for: NSPredicate(format: "value == %@", phaseValue(phase)), evaluatedWith: element)
+        wait(for: [state], timeout: 10)
+    }
+
+    private func phaseValue(_ phase: String) -> String {
+        ["worldSelection": "Choose a world", "aiming": "Aiming", "flying": "Flying", "result": "Result", "worldComplete": "World complete"][phase] ?? phase
+    }
+
+    private func waitPrimary(_ app: XCUIApplication, label: String) {
+        let primary = app.buttons["angle-arcade-primary"]
         XCTAssertTrue(primary.waitForExistence(timeout: 10))
-        let ready = expectation(
-            for: NSPredicate(format: "label == %@ AND enabled == true AND hasFocus == true", label),
-            evaluatedWith: primary
-        )
+        let ready = expectation(for: NSPredicate(format: "label == %@ AND hasFocus == true", label), evaluatedWith: primary)
         wait(for: [ready], timeout: 10)
     }
 
-    private func assertMetric(_ app: XCUIApplication, identifier: String, contains value: String) {
-        let metric = app.descendants(matching: .any)[identifier].firstMatch
-        XCTAssertTrue(metric.waitForExistence(timeout: 5))
-        let updated = expectation(for: NSPredicate(format: "value CONTAINS %@", value), evaluatedWith: metric)
-        wait(for: [updated], timeout: 5)
-    }
-
-    private func waitForFocus(_ element: XCUIElement) {
-        let focused = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: element)
-        wait(for: [focused], timeout: 10)
-    }
-
-    private func attachScreenshot(_ name: String) {
+    private func screenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
