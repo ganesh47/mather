@@ -20,7 +20,7 @@ struct MatherTVRootView: View {
                 }
             } else if let activeGame {
                 gameView(for: activeGame)
-                    .id(activeGame.id)
+                    .id(activeGame.id + "-" + learningStore.context.profileID)
                     .overlay(alignment: .top) {
                         if activeGame != .angle {
                         Label("Menu  ·  All games", systemImage: "chevron.backward")
@@ -139,7 +139,8 @@ struct MatherTVRootView: View {
         case .angle:
             AngleArcadeTVView(onExit: { exitGame(.angle) })
         case .sprint:
-            SumSprintPartyTVView()
+            SumSprintPartyTVView(profileID: learningStore.context.profileID, familyMode: learningStore.context.familyMode,
+                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) })
         case .compare:
             CompareCampTVView()
         case .shapes:
@@ -280,9 +281,9 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
         switch self {
         case .memory: "Match pictures and names"
         case .angle: "Predict, aim, launch"
-        case .sprint: "Build addition streaks"
+        case .sprint: "Build parts, try a new puzzle"
         case .compare: "Explore 24 learning camps"
-        case .shapes: "Solve shape clues"
+        case .shapes: "Trace properties, explore shapes"
         }
     }
 

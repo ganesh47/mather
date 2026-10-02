@@ -65,6 +65,7 @@ targets:
       - path: Domain/MemoryGalleryContentPack.swift
       - path: Services/MemoryGalleryContentStore.swift
       - path: Domain/SumSprintPartyTVRound.swift
+      - path: Domain/SumSprintPartyTVSession.swift
       - path: Domain/ActivityLearningEvidence.swift
       - path: Services/TVLearningStore.swift
       - path: Domain/AngleArcadeModel.swift
