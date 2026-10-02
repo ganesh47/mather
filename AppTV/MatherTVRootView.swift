@@ -240,7 +240,7 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
         case .memory: "Match pictures and names"
         case .angle: "Predict, aim, launch"
         case .sprint: "Build addition streaks"
-        case .compare: "Spot the bigger group"
+        case .compare: "Explore 24 learning camps"
         case .shapes: "Solve shape clues"
         }
     }
@@ -250,7 +250,7 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
         case .memory: "Recall"
         case .angle: "Angles"
         case .sprint: "Addition"
-        case .compare: "Number sense"
+        case .compare: "Build, compare & discover"
         case .shapes: "Geometry"
         }
     }
@@ -280,7 +280,7 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
         case .memory: "Opens the Memory Gallery picture matching game."
         case .angle: "Opens the Angle Arcade aiming game."
         case .sprint: "Opens the Sum Sprint Party addition game."
-        case .compare: "Opens the Compare Camp number sense game."
+        case .compare: "Opens 24 Compare Camp adventures with counting, matching, and number signs."
         case .shapes: "Opens the Shape Detective geometry game."
         }
     }

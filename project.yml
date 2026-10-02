@@ -65,6 +65,11 @@ targets:
       - path: Services/MemoryGalleryContentStore.swift
       - path: Domain/SumSprintPartyTVRound.swift
       - path: Domain/AngleArcadeModel.swift
+      - path: Domain/CompareCampContent.swift
+      - path: Domain/CompareCampRound.swift
+      - path: Domain/CompareCampEngine.swift
+      - path: Domain/CompareCampProgress.swift
+      - path: Services/CompareCampPassportStore.swift
       - path: Services/SpeechService.swift
       - path: Shared/TVNarrationController.swift
       - path: App/Assets.xcassets
