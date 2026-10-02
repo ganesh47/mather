@@ -147,7 +147,7 @@ final class ScreenshotTests: XCTestCase {
         let app = launch()
         requireExists(app.staticTexts["Mather"], timeout: 5)
         app.buttons["Parent Summary"].tap()
-        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
+        requireExists(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Parent Summary")).firstMatch, timeout: 10)
         snapshot(app, "ParentSummary-Empty")
 
         // Navigate to Settings from Parent Summary
@@ -174,7 +174,7 @@ final class ScreenshotTests: XCTestCase {
         requireExists(app.staticTexts["Mather"], timeout: 5)
 
         app.buttons["Parent Summary"].tap()
-        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
+        requireExists(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Parent Summary")).firstMatch, timeout: 10)
         XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
 
         XCTAssertTrue(waitForHistoryRow(app, identifier: "parent-summary-session-1", fallbackLabel: "Session 2", timeout: 5))
@@ -192,7 +192,7 @@ final class ScreenshotTests: XCTestCase {
         requireExists(app.staticTexts["Mather"], timeout: 5)
 
         app.buttons["Parent Summary"].tap()
-        requireExists(app.staticTexts["Parent Summary"], timeout: 10)
+        requireExists(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Parent Summary")).firstMatch, timeout: 10)
 
         XCTAssertTrue(app.staticTexts["No completed Make & Break practice yet"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Game scores"].waitForExistence(timeout: 5))
@@ -376,7 +376,7 @@ final class ScreenshotTests: XCTestCase {
         requireExists(shell.staticTexts["Mather"], timeout: 10)
 
         shell.buttons["Parent Summary"].tap()
-        requireExists(shell.staticTexts["Parent Summary"], timeout: 10)
+        requireExists(shell.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Parent Summary")).firstMatch, timeout: 10)
         assertAlive(shell, "parent summary")
 
         let makeBreak = launchForCrashSweep()
