@@ -37,7 +37,7 @@ Planet objects are explicitly called models, avoiding an implication that there 
 
 The device-local passport records completed sessions once by UUID. It stores the camp, trail, quantity range, generator seed, completion date and support/first-attempt counts. The child sees exploration stickers rather than a mastery claim. An interrupted trail is not recorded. Passport data is versioned and checked when decoded.
 
-Architecture: [ADR-0009](../ADRs/ADR-0009-compare-camp-adventures.md).
+Architecture: [ADR-0009](https://github.com/ganesh47/mather/wiki/ADRs-ADR-0009-compare-camp-adventures).
 
 ## Generated deliverables
 
@@ -51,6 +51,6 @@ Architecture: [ADR-0009](../ADRs/ADR-0009-compare-camp-adventures.md).
 
 Domain checks cover content uniqueness, asset availability, quantity bounds, answer correctness, relation coverage, distractors, deterministic replay, retry/guarded progression, counting/build limits, finite completion and progress integrity. Persistence checks cover reload, duplicate recording and corrupt data recovery. tvOS UI checks cover directional focus, all region shelves, trail selection, build/count/help interactions, symbol/transfer stages, finish/replay/passport and Menu/PlayPause.
 
-Native verification on 2026-10-02 passed 20 focused unit tests in four suites and all three Compare Camp remote UI tests. The challenge sweep checks 10,368 generated rounds across every camp, activity and range. Result bundles are saved locally in `.artifacts/CompareCampUnitAssetsFinal.xcresult` and `.artifacts/CompareCampVerified.xcresult`. A focused adventure rerun also passed after the final celebration inset and passport grammar fixes (`.artifacts/CompareCampFinalCelebration.xcresult`). The checked-in [audit](../Research/Compare-Camp-Overhaul-Audit.md) contains accepted before/after screenshots and their findings. The six-page printable was rendered and inspected page by page.
+Native verification on 2026-10-02 passed 20 focused unit tests in four suites and all three Compare Camp remote UI tests. The challenge sweep checks 10,368 generated rounds across every camp, activity and range. Result bundles are saved locally in `.artifacts/CompareCampUnitAssetsFinal.xcresult` and `.artifacts/CompareCampVerified.xcresult`. A focused adventure rerun also passed after the final celebration inset and passport grammar fixes (`.artifacts/CompareCampFinalCelebration.xcresult`). The checked-in [audit](https://github.com/ganesh47/mather/wiki/Research-Compare-Camp-Overhaul-Audit) contains accepted before/after screenshots and their findings. The six-page printable was rendered and inspected page by page.
 
 Simulator screenshots support layout and remote-flow verification. Couch-distance readability, Siri Remote hardware feel, narration intelligibility and VoiceOver behavior still merit a family device check; simulator evidence does not establish full accessibility compliance.
