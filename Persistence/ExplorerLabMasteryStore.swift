@@ -17,38 +17,44 @@ extension UserDefaults: ExplorerLabMasteryKeyValueStore {
 }
 
 final class ExplorerLabMasteryStore {
-    static let defaultStorageKey = "explorerLabMasteryProfile.v1"
+    static let defaultStorageKey = "explorerLabMasteryProfiles.v2"
+    static let legacyDeviceStorageKey = "explorerLabMasteryProfile.v1"
 
     private let storage: ExplorerLabMasteryKeyValueStore
     private let storageKey: String
+    private let activeProfileIdProvider: () -> String
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
     init(
         storage: ExplorerLabMasteryKeyValueStore = UserDefaults.standard,
         storageKey: String = ExplorerLabMasteryStore.defaultStorageKey,
+        activeProfileIdProvider: @escaping () -> String = { KidProfilePersistence.defaultProfileId },
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
         self.storage = storage
         self.storageKey = storageKey
+        self.activeProfileIdProvider = activeProfileIdProvider
         self.encoder = encoder
         self.decoder = decoder
     }
 
-    func load() -> ExplorerLabMasteryProfile {
-        guard let data = storage.data(forKey: storageKey),
-              let profile = try? decoder.decode(ExplorerLabMasteryProfile.self, from: data)
-        else {
-            return .emptyExplorerProfile()
-        }
-
-        return profile.withSeededExplorerLanes()
+    /// Legacy device activity remains readable, but cannot become a child's confidence.
+    var legacyDeviceHistory: ExplorerLabMasteryProfile? {
+        guard let data = storage.data(forKey: Self.legacyDeviceStorageKey) else { return nil }
+        return try? decoder.decode(ExplorerLabMasteryProfile.self, from: data)
     }
-
+    func load() -> ExplorerLabMasteryProfile {
+        (loadAll()[activeProfileIdProvider()] ?? .emptyExplorerProfile()).withSeededExplorerLanes()
+    }
     func save(_ profile: ExplorerLabMasteryProfile) throws {
-        let data = try encoder.encode(profile.withSeededExplorerLanes())
-        storage.set(data, forKey: storageKey)
+        var profiles = loadAll(); profiles[activeProfileIdProvider()] = profile.withSeededExplorerLanes()
+        storage.set(try encoder.encode(profiles), forKey: storageKey)
+    }
+    private func loadAll() -> [String: ExplorerLabMasteryProfile] {
+        guard let data = storage.data(forKey: storageKey), let profiles = try? decoder.decode([String: ExplorerLabMasteryProfile].self, from: data) else { return [:] }
+        return profiles
     }
 
     @discardableResult
@@ -92,8 +98,12 @@ final class ExplorerLabMasteryStore {
     }
 
     func reset() {
-        storage.removeObject(forKey: storageKey)
+        var profiles = loadAll(); profiles.removeValue(forKey: activeProfileIdProvider())
+        if profiles.isEmpty { storage.removeObject(forKey: storageKey) }
+        else if let data = try? encoder.encode(profiles) { storage.set(data, forKey: storageKey) }
     }
+    func resetAll() { storage.removeObject(forKey: storageKey) }
+
 }
 
 extension ExplorerLabMasteryProfile {

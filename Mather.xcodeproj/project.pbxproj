@@ -13,6 +13,7 @@
 		03D2BE3A375619D38D88E960 /* FlashCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939B3CD3D8C181596A3EFEA6 /* FlashCardView.swift */; };
 		067AD3849B44423F0AB55906 /* ArrayPreludeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */; };
 		08341A75D0D385BC7222C172 /* ArrayPreludeModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E63765A2998A3C2FD04B62AC /* ArrayPreludeModelsTests.swift */; };
+		09C8F8414F94346FCCC232F0 /* LearningQuestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81907A58A02016D7B031B93B /* LearningQuestModels.swift */; };
 		0A87802FC06B98D73B797D40 /* AngleCannonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D178918B74AE2850A3F8EB4A /* AngleCannonView.swift */; };
 		0BAF4BD055D053021F23B5DA /* SumSprintDifficultyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78C3729BD6D6038D63EA71D /* SumSprintDifficultyView.swift */; };
 		0D0A34DB7759B11FEB4B6D94 /* LearningCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFA05754CC31E013A31DED6 /* LearningCard.swift */; };
@@ -45,6 +46,7 @@
 		260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */; };
 		26BFA6B9296DBF35F4F64F52 /* NumberStoryGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1509AE201C856C72003B229E /* NumberStoryGeneratorTests.swift */; };
 		27A9C7A5A1C6C36674F9F8E4 /* SliceTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */; };
+		2A15E2F3F8A237089C550986 /* LaneRecallReviewEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */; };
 		2A20A209CFEF1017A574D767 /* TVNarrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */; };
 		2ACEAC63102CABF01EA7C390 /* GameplayStageSharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC459824FDDA52F8297317C /* GameplayStageSharedViews.swift */; };
 		2B28883F82DF054BC27B5566 /* RoomSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A74CE23F3D2B93F449906B1 /* RoomSessionView.swift */; };
@@ -73,6 +75,7 @@
 		406C3FEA95214CE100610901 /* GravityArtistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B095D79E7B14DFBAAEDC223 /* GravityArtistTests.swift */; };
 		41FD5B9D4053A753EE382469 /* FlipMemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */; };
 		4253E6E9E560AF591454D385 /* MotionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A166DB67AC6450C763D8DC1 /* MotionService.swift */; };
+		4290CA784B52558F26FB9DF5 /* IOSLearningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8DEAF1A6BC799FB9E48158E /* IOSLearningCatalog.swift */; };
 		42D391BA474CAD91152DE726 /* CardReviewScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969F62B7FCBE4533272D8C65 /* CardReviewScheduler.swift */; };
 		45E7122CD8FA60859800C874 /* CardReviewSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47AA450BCDB84BB76988B30E /* CardReviewSchedulerTests.swift */; };
 		461CE6B56C4B4F4C6A818ED9 /* SumSprintGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCCDFB3421635BB25E3A75BB /* SumSprintGeneratorTests.swift */; };
@@ -94,9 +97,12 @@
 		547A424F8ABA1E591352CAA8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F5E1261557B57C9FD31842 /* SettingsView.swift */; };
 		54CBAF0A5868D81125A2E2FD /* TwoFingerProtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */; };
 		555A0D80EB93DAF706D08DCB /* PairingChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */; };
+		557BD6880507336DD0D2659A /* ActivityLearningEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */; };
 		55A9150D972B03376700D13C /* AngleArcadeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */; };
 		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
+		573F44DA8976FD3F1862F7EB /* IOSLearningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */; };
 		5740442F29746383B2ADB113 /* CompareCampProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C672ED06F9F40FCA2BC5EC /* CompareCampProgressTests.swift */; };
+		5A9B729A6A30CB897709C192 /* IOSLearningContentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */; };
 		5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */; };
 		5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */; };
 		5CE1DFBF8D1C2A3B1BE945D7 /* FactoryCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA57A8B34A66D341922064FD /* FactoryCardsView.swift */; };
@@ -119,9 +125,11 @@
 		7152D501D6B4641F75716E04 /* StoryAnchorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848B1652547224E6778C19F0 /* StoryAnchorView.swift */; };
 		73677957CEDF883A4CC75D9E /* LabConceptSessionProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92740460961DA8CA221823A6 /* LabConceptSessionProgressStore.swift */; };
 		739452A890EDE3E9C9B6B9C4 /* SliceStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */; };
+		73C54F70D1AC605023AE0F04 /* LearningContentImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A33FCDDD30D467942B209AAC /* LearningContentImage.swift */; };
 		7490086270DAF9207569780C /* MemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 366AD7B30EF70212D0D9555A /* MemoryStageView.swift */; };
 		76018B4BC6FB47E7D0135B2F /* VS1SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45002CF11E285E8168354DEF /* VS1SharedUI.swift */; };
 		7612AD75CE6F5D18E40574F0 /* CountryGameplayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F524E9BE37DC9742658E9AAC /* CountryGameplayThreadTests.swift */; };
+		7674DA5721CF34ACA1D1F3E1 /* GameplayEnrichmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8046907309327BB23FE1CA /* GameplayEnrichmentTests.swift */; };
 		770A683D79CF3AD5930B96D5 /* LaneMasteryStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934BEC63B805B504B59413AB /* LaneMasteryStateTests.swift */; };
 		77DCF398DD7491EA04BC4921 /* AngleArcadeCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */; };
 		788C086623F5B8FA17E6BAE7 /* BondBlastStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099533155FF79CD98EB9419A /* BondBlastStageView.swift */; };
@@ -170,11 +178,14 @@
 		A4B5AFA2FA430D40BDBDD100 /* ExplorerLabMasteryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */; };
 		A580D6F96249197C9148D59D /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B3F29980CE5E67E05A4F30F /* HapticsService.swift */; };
 		A5F7844025B41514A7161DE1 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD74E168EE297B4DF4194D5 /* FeatureFlags.swift */; };
+		A655FC3DE8DABF5035BB37ED /* LearningQuestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060914B145E337A317F542AD /* LearningQuestUITests.swift */; };
 		A6891D078FBDD42E246E32C9 /* ProfilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03EDAEC986A0BA1487A577C5 /* ProfilePickerView.swift */; };
 		A69CA8555CD17709DDFD6D01 /* TimerChallengePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B049757C9324E4EA88DAB861 /* TimerChallengePolicy.swift */; };
 		A732110EC5FC0A752C762C67 /* CompareCampUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B2BA2869FAA0D0EF7112D2 /* CompareCampUITests.swift */; };
 		A779844753DA571C970996A5 /* RectangleFactoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C46ED7E65F16A1DF70CB677 /* RectangleFactoryView.swift */; };
 		AAE7CF51B1F49E35BD60B8AE /* CountryGameplayThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562AF40D141D963EFC3CD914 /* CountryGameplayThread.swift */; };
+		ACFCA4BFA985FE6B075F78CD /* LaneRecallReviewEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E990090E82249BFB590CB421 /* LaneRecallReviewEngine.swift */; };
+		AD176DB0009A353EDC5E60DD /* LearningQuestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD6DFC46CBBB3E4C4DB075D /* LearningQuestView.swift */; };
 		AD23681094CEC90B58309E61 /* LaneMasteryState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3532C8409F42C5B9DB67FE2B /* LaneMasteryState.swift */; };
 		AD25DE80FB639941F8FED967 /* LearningCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B53717367D538E7DE828161 /* LearningCardTests.swift */; };
 		B0308880F0715867E50261B2 /* MemoryViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */; };
@@ -192,6 +203,7 @@
 		B8C505B0ADB2C5A6FA25D6CB /* ConcreteBuildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564AB9C763C10252EE5A2846 /* ConcreteBuildView.swift */; };
 		B984FCE5483DCCB107FE5E07 /* CompareCampTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EF10163D07336252CEAE42B /* CompareCampTVView.swift */; };
 		B9E51CE352C2F2EE84050C32 /* FactRecordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0EA4CACF4806645904C6A6 /* FactRecordStore.swift */; };
+		BA1D65AE55009DFB2A797ED6 /* LearningQuestEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */; };
 		BB913D05F7D884574BC05A04 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893845D3340A27F687CF2A30 /* SessionConfigView.swift */; };
 		BC4310F44E31D4A1B5BE57CC /* AngleArcadeProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */; };
 		BD615CEA7E05371830F03ECD /* SliceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B557BC960B2E1946C97F0B6A /* SliceModels.swift */; };
@@ -217,6 +229,7 @@
 		D4B429F154A0C75454821970 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128EAA2ABCC936C76AD253C9 /* Assets.xcassets */; };
 		D6B77D0E1066EF25C62E070A /* VehicleSpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */; };
 		DA45F6891A71F34545469DA0 /* MemoryVarietyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */; };
+		DACF12D2FE3533F43646C074 /* QuestCheckpointStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */; };
 		DB3C8F8C5DBDACE7D281EEEA /* GameplayProgressStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */; };
 		DC2C0CD91CED290951B27D8A /* MemoryAskConversationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */; };
 		DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4672C3C1769CB0F788B925E2 /* SwiftDataStoreRecovery.swift */; };
@@ -226,6 +239,7 @@
 		E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */; };
 		E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A34215EE8D8788E7185EB /* MatherTheme.swift */; };
+		E31F85269F83609EBCA828F8 /* LearningQuestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A077338DEFE216483C0A99 /* LearningQuestTests.swift */; };
 		E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */; };
 		E52D76FF8EA2C75FBBC82E3B /* CapabilityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C221EA39753544B4F0EE9E7 /* CapabilityModels.swift */; };
 		E5EF60B12DB66C2E809178DB /* MemoryGalleryContentPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47213D8ACC4E1AE37D8AA7AF /* MemoryGalleryContentPack.swift */; };
@@ -280,6 +294,8 @@
 		01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataStoreRecoveryTests.swift; sourceTree = "<group>"; };
 		028559322E9A969FEDF61096 /* MemoryGalleryContentUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryContentUITests.swift; sourceTree = "<group>"; };
 		03EDAEC986A0BA1487A577C5 /* ProfilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePickerView.swift; sourceTree = "<group>"; };
+		05A077338DEFE216483C0A99 /* LearningQuestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestTests.swift; sourceTree = "<group>"; };
+		060914B145E337A317F542AD /* LearningQuestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestUITests.swift; sourceTree = "<group>"; };
 		067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayProgressStoreTests.swift; sourceTree = "<group>"; };
 		083027676123401E2610A43E /* ExplorerLabMasteryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorerLabMasteryStore.swift; sourceTree = "<group>"; };
 		099533155FF79CD98EB9419A /* BondBlastStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BondBlastStageView.swift; sourceTree = "<group>"; };
@@ -331,6 +347,7 @@
 		37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintEngine.swift; sourceTree = "<group>"; };
 		383EE87126C22A00D3232A1E /* NumberStoryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryModels.swift; sourceTree = "<group>"; };
 		3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeModelTests.swift; sourceTree = "<group>"; };
+		3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestCheckpointStore.swift; sourceTree = "<group>"; };
 		3ABD019864C46683CF30CA35 /* GameplayThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayThreadView.swift; sourceTree = "<group>"; };
 		3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryContent.swift; sourceTree = "<group>"; };
 		3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayout.swift; sourceTree = "<group>"; };
@@ -366,6 +383,7 @@
 		57321A0556CEB2A30DE5A7A7 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		576411C3ACD2B1B55F53CC89 /* SumSprintModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintModels.swift; sourceTree = "<group>"; };
 		5B3A14DB8CB30729E7702637 /* CapabilityLaneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapabilityLaneTests.swift; sourceTree = "<group>"; };
+		5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSLearningContentStore.swift; sourceTree = "<group>"; };
 		5BDB51F823663A838C970D5C /* StepCountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepCountService.swift; sourceTree = "<group>"; };
 		5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberRepresentation.swift; sourceTree = "<group>"; };
 		5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTVRootView.swift; sourceTree = "<group>"; };
@@ -381,6 +399,7 @@
 		6A74CE23F3D2B93F449906B1 /* RoomSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSessionView.swift; sourceTree = "<group>"; };
 		6AEF903C0449A30A678CFAE0 /* LearningLoopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningLoopTests.swift; sourceTree = "<group>"; };
 		6BD171B9D7D588D72C7E9D71 /* GameplayThreadContent+WaterCycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WaterCycle.swift"; sourceTree = "<group>"; };
+		6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLearningEvidence.swift; sourceTree = "<group>"; };
 		6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldAnimals.swift"; sourceTree = "<group>"; };
 		6E01EEE9604B8700E4F60EE2 /* MemoryAskConversationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicy.swift; sourceTree = "<group>"; };
 		704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestLiveScanner.swift; sourceTree = "<group>"; };
@@ -396,6 +415,7 @@
 		7BF01F4BE2F8CA4783F74177 /* GameplayThreadContent+WorldBirds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldBirds.swift"; sourceTree = "<group>"; };
 		7C13E59DB0E8C3C0F5D863FF /* LabLaneDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabLaneDetailView.swift; sourceTree = "<group>"; };
 		7E3256A636C3B109D53BE146 /* BondMatchViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BondMatchViewTests.swift; sourceTree = "<group>"; };
+		81907A58A02016D7B031B93B /* LearningQuestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestModels.swift; sourceTree = "<group>"; };
 		82B9AA9EA4CE0C8465C1D7E4 /* RoomQuestEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestEngine.swift; sourceTree = "<group>"; };
 		844F100CEAAE2CCA4E9BF7E8 /* MemoryGalleryContentPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryContentPackTests.swift; sourceTree = "<group>"; };
 		848B1652547224E6778C19F0 /* StoryAnchorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryAnchorView.swift; sourceTree = "<group>"; };
@@ -427,8 +447,11 @@
 		A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpecTests.swift; sourceTree = "<group>"; };
 		A1B4A5B93ABCEBAB19EC49F6 /* SpacedRepetitionScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionScheduler.swift; sourceTree = "<group>"; };
 		A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceTheme.swift; sourceTree = "<group>"; };
+		A33FCDDD30D467942B209AAC /* LearningContentImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningContentImage.swift; sourceTree = "<group>"; };
 		A5C80ECCAE5D25201666CBD0 /* SliceStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachineTests.swift; sourceTree = "<group>"; };
 		A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameActivityCard.swift; sourceTree = "<group>"; };
+		AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestEngine.swift; sourceTree = "<group>"; };
+		AE8046907309327BB23FE1CA /* GameplayEnrichmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayEnrichmentTests.swift; sourceTree = "<group>"; };
 		AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpec.swift; sourceTree = "<group>"; };
 		AF1CA797802F7A65CC411D3C /* CompareCampPassportStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampPassportStoreTests.swift; sourceTree = "<group>"; };
 		AF3772D0CE080725B37A115F /* SliceStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceStateMachine.swift; sourceTree = "<group>"; };
@@ -441,6 +464,7 @@
 		B557BC960B2E1946C97F0B6A /* SliceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliceModels.swift; sourceTree = "<group>"; };
 		B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayPreludeModels.swift; sourceTree = "<group>"; };
 		B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabRememberStageView.swift; sourceTree = "<group>"; };
+		BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRecallReviewEngineTests.swift; sourceTree = "<group>"; };
 		BD8A34215EE8D8788E7185EB /* MatherTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTheme.swift; sourceTree = "<group>"; };
 		BF7F4303A94026305057151C /* CompareCampPassportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampPassportStore.swift; sourceTree = "<group>"; };
 		C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
@@ -448,10 +472,12 @@
 		C6840F2651B5C50EE285F52B /* GameplayStageViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModels.swift; sourceTree = "<group>"; };
 		C6F76B8BE6B3409EDE0B4CBF /* GameplayStageViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageViewModelTests.swift; sourceTree = "<group>"; };
 		C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningLoopModels.swift; sourceTree = "<group>"; };
+		C8DEAF1A6BC799FB9E48158E /* IOSLearningCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSLearningCatalog.swift; sourceTree = "<group>"; };
 		C967C3358A30DF062153D794 /* TransferExactRebuildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferExactRebuildTests.swift; sourceTree = "<group>"; };
 		C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicTheme.swift; sourceTree = "<group>"; };
 		CA57A8B34A66D341922064FD /* FactoryCardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsView.swift; sourceTree = "<group>"; };
 		CA9C7E1D1DB31287EE04B0F8 /* RouteSupportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSupportViews.swift; sourceTree = "<group>"; };
+		CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSLearningCatalogTests.swift; sourceTree = "<group>"; };
 		CCCDFB3421635BB25E3A75BB /* SumSprintGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintGeneratorTests.swift; sourceTree = "<group>"; };
 		CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferIntentTests.swift; sourceTree = "<group>"; };
 		CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTVApp.swift; sourceTree = "<group>"; };
@@ -473,6 +499,7 @@
 		D9E6A4D2C61679954D59F25A /* MemoryContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryContentTests.swift; sourceTree = "<group>"; };
 		DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLayoutTests.swift; sourceTree = "<group>"; };
 		DBDE340757D1657A76B2F5C5 /* EquationResolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquationResolveView.swift; sourceTree = "<group>"; };
+		DDD6DFC46CBBB3E4C4DB075D /* LearningQuestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestView.swift; sourceTree = "<group>"; };
 		DFCD4C8917D5860736F0F192 /* SpotPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotPromptView.swift; sourceTree = "<group>"; };
 		E03630CF5371D46C896D8A2B /* RouteQuestModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteQuestModelsTests.swift; sourceTree = "<group>"; };
 		E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoFingerProtractorTests.swift; sourceTree = "<group>"; };
@@ -486,6 +513,7 @@
 		E78C3729BD6D6038D63EA71D /* SumSprintDifficultyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintDifficultyView.swift; sourceTree = "<group>"; };
 		E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonPlayThread.swift; sourceTree = "<group>"; };
 		E8DA96C428EF71E628E7BF19 /* Mather.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Mather.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E990090E82249BFB590CB421 /* LaneRecallReviewEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRecallReviewEngine.swift; sourceTree = "<group>"; };
 		EAA8053C3D08C6A425800E8F /* CompareCampRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampRoundTests.swift; sourceTree = "<group>"; };
 		EB3E740DD832B432B8867661 /* SoundDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundDetectionService.swift; sourceTree = "<group>"; };
 		ECFA05754CC31E013A31DED6 /* LearningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCard.swift; sourceTree = "<group>"; };
@@ -515,6 +543,7 @@
 				3FD74E168EE297B4DF4194D5 /* FeatureFlags.swift */,
 				A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */,
 				86F359E021403BCD8321EE41 /* LabDetailFlowLayout.swift */,
+				A33FCDDD30D467942B209AAC /* LearningContentImage.swift */,
 				BD8A34215EE8D8788E7185EB /* MatherTheme.swift */,
 				3B2892D2B5CEF3CA073DD5FF /* ResponsiveLayout.swift */,
 				E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */,
@@ -557,10 +586,12 @@
 				BF7F4303A94026305057151C /* CompareCampPassportStore.swift */,
 				F7B5305570771ED55816AC6B /* GameplayProgressStore.swift */,
 				3B3F29980CE5E67E05A4F30F /* HapticsService.swift */,
+				5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */,
 				2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */,
 				2F4016B80628D3A384DD33D8 /* MemoryGalleryContentStore.swift */,
 				8A166DB67AC6450C763D8DC1 /* MotionService.swift */,
 				6A29E7A58DAED343241CCEA8 /* PlaceMatchService.swift */,
+				3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */,
 				704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */,
 				157718747997491EAA58488C /* SensorCapabilityService.swift */,
 				2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */,
@@ -639,6 +670,7 @@
 				F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */,
 				1C8860EA72978DA67542C17D /* FactRecordStoreTests.swift */,
 				2763860DCF54A19D357794B7 /* FeatureFlagTests.swift */,
+				AE8046907309327BB23FE1CA /* GameplayEnrichmentTests.swift */,
 				067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */,
 				CE8229E7972721FCD8BA70DA /* GameplaySchedulerTests.swift */,
 				FD32F97BA3A293DBCFAFCEC4 /* GameplayStageViewModelsTests.swift */,
@@ -648,11 +680,14 @@
 				1846B5A411083D259E3D510B /* GravitySplitStateTests.swift */,
 				6A181025AE1DD3CABF30F968 /* GroupedNumberRepresentationTests.swift */,
 				2E970DEFCF041ABB53657A27 /* HapticsServiceTests.swift */,
+				CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */,
 				1F451B67C2A515584DDB54A4 /* LabModelsTests.swift */,
 				12757B691EB1421D33AAADD3 /* LabRouteRegressionTests.swift */,
 				934BEC63B805B504B59413AB /* LaneMasteryStateTests.swift */,
+				BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */,
 				8B53717367D538E7DE828161 /* LearningCardTests.swift */,
 				6AEF903C0449A30A678CFAE0 /* LearningLoopTests.swift */,
+				05A077338DEFE216483C0A99 /* LearningQuestTests.swift */,
 				4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */,
 				F63A1076A1793340A1C5D287 /* MemoryArtStyleTests.swift */,
 				2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */,
@@ -722,6 +757,7 @@
 				547B4F588C6009F6C7BED5BD /* LabModels.swift */,
 				B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */,
 				B42394C64D2D5C8DC32CE604 /* LabView.swift */,
+				E990090E82249BFB590CB421 /* LaneRecallReviewEngine.swift */,
 			);
 			path = Lab;
 			sourceTree = "<group>";
@@ -737,6 +773,7 @@
 		4356714DEE880CBB965F848D /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */,
 				7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */,
 				2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */,
 				2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */,
@@ -759,9 +796,12 @@
 				6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */,
 				7BF01F4BE2F8CA4783F74177 /* GameplayThreadContent+WorldBirds.swift */,
 				5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */,
+				C8DEAF1A6BC799FB9E48158E /* IOSLearningCatalog.swift */,
 				3532C8409F42C5B9DB67FE2B /* LaneMasteryState.swift */,
 				ECFA05754CC31E013A31DED6 /* LearningCard.swift */,
 				C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */,
+				AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */,
+				81907A58A02016D7B031B93B /* LearningQuestModels.swift */,
 				E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */,
 				3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */,
 				47213D8ACC4E1AE37D8AA7AF /* MemoryGalleryContentPack.swift */,
@@ -810,6 +850,7 @@
 			children = (
 				25D95B06E78CC53DBC9DE6C3 /* AngleArcadeCampaignUITests.swift */,
 				DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */,
+				060914B145E337A317F542AD /* LearningQuestUITests.swift */,
 				9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */,
 				D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */,
 			);
@@ -840,6 +881,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		72E6F69FC894035CB3FEA665 /* LearningQuests */ = {
+			isa = PBXGroup;
+			children = (
+				DDD6DFC46CBBB3E4C4DB075D /* LearningQuestView.swift */,
+			);
+			path = LearningQuests;
+			sourceTree = "<group>";
+		};
 		84FF393BFF148342A503F7F2 = {
 			isa = PBXGroup;
 			children = (
@@ -867,6 +916,7 @@
 				AF48F93C44FB9BB58BAE05EB /* GravityArtist */,
 				3E323FA1891D652911EFE43F /* Lab */,
 				1519BB067A4599C6802A939B /* LearningLoop */,
+				72E6F69FC894035CB3FEA665 /* LearningQuests */,
 				D5894AD240541084BE919F39 /* Memory */,
 				433674BD7E75DF2E8A4C95A1 /* MixMatchRecall */,
 				17AC38778B657066B28213D3 /* ParentSummary */,
@@ -1200,6 +1250,7 @@
 				E6C705C8FA9F7D0FB49B864D /* FactRecordStoreTests.swift in Sources */,
 				E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */,
 				C83522C9248AECC33815B967 /* FeatureFlagTests.swift in Sources */,
+				7674DA5721CF34ACA1D1F3E1 /* GameplayEnrichmentTests.swift in Sources */,
 				DB3C8F8C5DBDACE7D281EEEA /* GameplayProgressStoreTests.swift in Sources */,
 				CDD69C30B5B6E38E0F8D13A6 /* GameplaySchedulerTests.swift in Sources */,
 				4D1AA6EA86EADDD1EBCD1F2C /* GameplayStageViewModelTests.swift in Sources */,
@@ -1209,11 +1260,14 @@
 				7D0CBF090E04696122DC9AC6 /* GravitySplitStateTests.swift in Sources */,
 				19F4E103CE0765211AAF66E7 /* GroupedNumberRepresentationTests.swift in Sources */,
 				CB8A79541F268760FD4A0AC2 /* HapticsServiceTests.swift in Sources */,
+				573F44DA8976FD3F1862F7EB /* IOSLearningCatalogTests.swift in Sources */,
 				1ED4CA54DD386B5AFD07D0A2 /* LabModelsTests.swift in Sources */,
 				D2F4940226141CE989EBDF64 /* LabRouteRegressionTests.swift in Sources */,
 				770A683D79CF3AD5930B96D5 /* LaneMasteryStateTests.swift in Sources */,
+				2A15E2F3F8A237089C550986 /* LaneRecallReviewEngineTests.swift in Sources */,
 				AD25DE80FB639941F8FED967 /* LearningCardTests.swift in Sources */,
 				2E80D1B4BA2B8B8C1BADADE6 /* LearningLoopTests.swift in Sources */,
+				E31F85269F83609EBCA828F8 /* LearningQuestTests.swift in Sources */,
 				260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */,
 				1676C6C5EF99E76129ACB09B /* MemoryArtStyleTests.swift in Sources */,
 				DC2C0CD91CED290951B27D8A /* MemoryAskConversationPolicyTests.swift in Sources */,
@@ -1264,6 +1318,7 @@
 			files = (
 				B7D8226F991C2302946311DE /* AngleArcadeCampaignUITests.swift in Sources */,
 				17BE88060C10E1B1E35E439F /* CompactLayoutTests.swift in Sources */,
+				A655FC3DE8DABF5035BB37ED /* LearningQuestUITests.swift in Sources */,
 				DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */,
 				E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */,
 			);
@@ -1283,6 +1338,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				557BD6880507336DD0D2659A /* ActivityLearningEvidence.swift in Sources */,
 				CB311043CC65C7D6561DB37D /* AngleArcadeCampaign.swift in Sources */,
 				E01695DD62E032ED9922E2F0 /* AngleArcadeEngine.swift in Sources */,
 				6FCBEF02AFFDFDA13749BB83 /* AngleArcadeModel.swift in Sources */,
@@ -1335,6 +1391,8 @@
 				EF44551359C1EF6A68E0542C /* GroupedNumberView.swift in Sources */,
 				A580D6F96249197C9148D59D /* HapticsService.swift in Sources */,
 				7AFB5C436E9AA208870BEFE3 /* HomeView.swift in Sources */,
+				4290CA784B52558F26FB9DF5 /* IOSLearningCatalog.swift in Sources */,
+				5A9B729A6A30CB897709C192 /* IOSLearningContentStore.swift in Sources */,
 				F21340E80E2E9E684539BD11 /* KidProfileStore.swift in Sources */,
 				73677957CEDF883A4CC75D9E /* LabConceptSessionProgressStore.swift in Sources */,
 				F26656D088FBDE870C083797 /* LabDetailFlowLayout.swift in Sources */,
@@ -1343,9 +1401,14 @@
 				B1BF9BACC018161AFD8CC164 /* LabRememberStageView.swift in Sources */,
 				138E4B58418EE08549CF1407 /* LabView.swift in Sources */,
 				AD23681094CEC90B58309E61 /* LaneMasteryState.swift in Sources */,
+				ACFCA4BFA985FE6B075F78CD /* LaneRecallReviewEngine.swift in Sources */,
 				0D0A34DB7759B11FEB4B6D94 /* LearningCard.swift in Sources */,
+				73C54F70D1AC605023AE0F04 /* LearningContentImage.swift in Sources */,
 				5032EE3DF5732E53D7FE3B3A /* LearningLoopModels.swift in Sources */,
 				999475484BEF4CCF53D9BA27 /* LearningLoopViews.swift in Sources */,
+				BA1D65AE55009DFB2A797ED6 /* LearningQuestEngine.swift in Sources */,
+				09C8F8414F94346FCCC232F0 /* LearningQuestModels.swift in Sources */,
+				AD176DB0009A353EDC5E60DD /* LearningQuestView.swift in Sources */,
 				66765A2B68242976AE35A375 /* LessonPlayThread.swift in Sources */,
 				4CB8E6289BE2BD95813E3B9A /* LocationService.swift in Sources */,
 				7E0E98FBA46C7A3525FA661F /* MatherApp.swift in Sources */,
@@ -1368,6 +1431,7 @@
 				9308B9369B782D66D75DECAC /* PlaceMatchService.swift in Sources */,
 				C7EEA58201720EC27B0B0B22 /* ProblemGenerator.swift in Sources */,
 				A6891D078FBDD42E246E32C9 /* ProfilePickerView.swift in Sources */,
+				DACF12D2FE3533F43646C074 /* QuestCheckpointStore.swift in Sources */,
 				A779844753DA571C970996A5 /* RectangleFactoryView.swift in Sources */,
 				30A171142A2C7ECF758109BE /* ResponsiveLayout.swift in Sources */,
 				01BA7E85C10B874F9C3BE7F3 /* RoomQuestEngine.swift in Sources */,
@@ -1547,6 +1611,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
+				IOS_LEARNING_CONTENT_URL = "https://raw.githubusercontent.com/ganesh47/mather-content/main/ios/catalog.json";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1623,6 +1688,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
+				IOS_LEARNING_CONTENT_URL = "https://raw.githubusercontent.com/ganesh47/mather-content/main/ios/catalog.json";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

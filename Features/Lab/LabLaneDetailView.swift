@@ -29,6 +29,8 @@ struct LabLaneDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header(selectedLane, presentation: presentation, progress: progress, tint: tint)
+                    pilotQuestSection(tint: tint)
+                    moreTopicCards
                     guidedSessionSection(tint: tint)
                     gamesSection(selectedLane, tint: tint)
                     supportPanel(selectedLane, progress: progress, tint: tint)
@@ -41,7 +43,10 @@ struct LabLaneDetailView: View {
         }
         .onAppear {
             sensorCapabilities = SensorCapabilityService().currentCapabilities()
+            appModel.laneRecallReviewEngine.beginVisit(laneID)
         }
+        .onDisappear { appModel.laneRecallReviewEngine.finishVisit(title: "\(lane.title) review") }
+        .onChange(of: appModel.profileStore.activeProfileId) { _, _ in appModel.laneRecallReviewEngine.beginVisit(laneID) }
     }
 
     private func header(
@@ -142,6 +147,23 @@ struct LabLaneDetailView: View {
     }
 
     @ViewBuilder
+    private func pilotQuestSection(tint: Color) -> some View {
+        let quests = LearningQuestID.pilots.filter { $0.laneID == laneID }
+        if !quests.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Tiny quests").font(.title3.bold()).foregroundStyle(MatherTheme.ink)
+                ForEach(quests) { quest in
+                    Button { appModel.launchLearningQuest(quest, returnLaneID: laneID) } label: {
+                        HStack { Text(quest.emoji).font(.largeTitle); Text(quest.title).font(.headline.bold()); Spacer(); Image(systemName: "play.circle.fill") }
+                            .foregroundStyle(tint).padding(16).frame(maxWidth: .infinity, minHeight: 80)
+                            .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain).accessibilityIdentifier("lab-quest-\(quest.rawValue)")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
     private func guidedSessionSection(tint: Color) -> some View {
         if !sessionPlans.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
@@ -195,7 +217,7 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.9)
-                        .frame(minWidth: 92, minHeight: 44)
+                        .frame(minWidth: 92, minHeight: 80)
                         .background(tint, in: Capsule())
                 }
                 .buttonStyle(.plain)
@@ -263,7 +285,7 @@ struct LabLaneDetailView: View {
                 Image(systemName: stage.stage.symbolName)
                     .font(.caption.weight(.black))
                     .foregroundStyle(tint)
-                Text(stage.stage.rawValue)
+                Text(stage.stage.childTitle)
                     .font(.caption.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
                 Spacer(minLength: 0)
@@ -345,6 +367,7 @@ struct LabLaneDetailView: View {
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                         expandedReview.toggle()
                     }
+                    if expandedReview, let entry = lane.firstRecallEntry { appModel.laneRecallReviewEngine.speakPrompt(entry.card) }
                 } label: {
                     Text(expandedReview ? "Hide review" : "Review cards")
                         .font(.caption.weight(.black))
@@ -462,7 +485,7 @@ struct LabLaneDetailView: View {
             }
         }
         .frame(height: 10)
-        .accessibilityLabel("Lane mastery \(progress.masteryPercentLabel)")
+        .accessibilityLabel("Lane exploration \(progress.masteryPercentLabel)")
     }
 
     private func recallReviewPanel(_ lane: CapabilityLane, tint: Color) -> some View {
@@ -474,29 +497,34 @@ struct LabLaneDetailView: View {
                         .foregroundStyle(MatherTheme.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    LabDetailFlowLayout(spacing: 6) {
+                    if let asset = entry.card.prompt.assetName {
+                        LearningContentImage(name: asset).scaledToFit().frame(maxHeight: 130)
+                    }
+                    Button { appModel.laneRecallReviewEngine.speakPrompt(entry.card) } label: {
+                        Label("Listen", systemImage: "speaker.wave.2.fill").frame(minWidth: 80, minHeight: 80)
+                    }.buttonStyle(.plain)
+                    LabDetailFlowLayout(spacing: 12) {
                         ForEach(entry.card.choices) { choice in
-                            Button {
-                                recordReviewAction(
-                                    LaneRecallReviewAction(
-                                        laneID: entry.laneID,
-                                        cardID: entry.card.id,
-                                        choiceID: choice.id,
-                                        isCorrect: choice.isCorrect
-                                    )
-                                )
-                            } label: {
+                            Button { appModel.laneRecallReviewEngine.select(choice.id, card: entry.card) } label: {
                                 Text(choice.answer.displayText ?? choice.answer.speechText)
-                                    .font(.caption2.weight(.black))
-                                    .foregroundStyle(tint)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 7)
-                                    .background(MatherTheme.card.opacity(0.86), in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Review \(lane.title): \(choice.answer.speechText)")
+                                    .font(.headline.bold()).foregroundStyle(tint)
+                                    .frame(minWidth: 80, minHeight: 80).padding(.horizontal, 12)
+                                    .background(appModel.laneRecallReviewEngine.selectedChoices[entry.card.id] == choice.id ? tint.opacity(0.22) : MatherTheme.card, in: RoundedRectangle(cornerRadius: 16))
+                            }.buttonStyle(.plain).disabled(appModel.laneRecallReviewEngine.completedCards.contains(entry.card.id))
+                                .accessibilityLabel("Listen and choose: \(choice.answer.speechText)")
+                                .accessibilityIdentifier("lane-review-choice-\(choice.id)")
                         }
                     }
+                    HStack {
+                        Button { appModel.laneRecallReviewEngine.help(entry.card) } label: { Label("Help", systemImage: "hand.raised.fill").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.plain).disabled(appModel.laneRecallReviewEngine.completedCards.contains(entry.card.id))
+                        Button { submitReview(entry) } label: {
+                            Label(appModel.laneRecallReviewEngine.completedCards.contains(entry.card.id) ? "Done" : "Check", systemImage: "checkmark.circle.fill").font(.headline.bold()).frame(maxWidth: .infinity, minHeight: 80)
+                        }.buttonStyle(.plain)
+                            .disabled(appModel.laneRecallReviewEngine.selectedChoices[entry.card.id] == nil || appModel.laneRecallReviewEngine.completedCards.contains(entry.card.id))
+                            .accessibilityIdentifier("lane-review-check")
+                    }
+                    if let feedback = appModel.laneRecallReviewEngine.feedback[entry.card.id] { Text(feedback).font(.headline).foregroundStyle(tint) }
+
                 }
                 .padding(8)
                 .background(MatherTheme.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -555,12 +583,31 @@ struct LabLaneDetailView: View {
         .accessibilityLabel("Lab artwork for \(lane.title)")
     }
 
+    @ViewBuilder private var moreTopicCards: some View {
+        let threads: [GameplayThreadID] = switch lane.id { case .geometry: [.shapes]; case .physics: [.waterCycle]; case .electronics: [.electronics]; default: [] }
+        if !threads.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("More topic cards").font(.title3.bold()).foregroundStyle(MatherTheme.ink)
+                ForEach(threads, id: \.self) { thread in
+                    Button {
+                        appModel.pickProfileThenRun { appModel.engine.showGameplayThread(thread, returnRoute: .labLane(lane.id)) }
+                    } label: {
+                        Label("Explore \(appModel.iosLearningContentStore.catalog.thread(for: thread).title)", systemImage: "rectangle.stack.fill")
+                            .font(.headline).frame(maxWidth: .infinity, minHeight: 80).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain).accessibilityIdentifier("lane-more-cards-\(thread.rawValue)")
+                }
+            }
+        }
+    }
+
     private func startLabel(for plan: LabConceptSessionPlan) -> String {
-        appModel.labConceptSessionProgressStore.resumeLabel(for: plan)
+        if appModel.labConceptSessionProgressStore.progress(for: plan)?.completedStages.count == plan.stages.count { return "Play again" }
+        return appModel.labConceptSessionProgressStore.resumeLabel(for: plan)
     }
 
     private func visibleStartLabel(for plan: LabConceptSessionPlan) -> String {
-        appModel.labConceptSessionProgressStore.hasProgress(for: plan)
+        if appModel.labConceptSessionProgressStore.progress(for: plan)?.completedStages.count == plan.stages.count { return "Play again" }
+        return appModel.labConceptSessionProgressStore.hasProgress(for: plan)
             ? plan.continueAffordanceLabel
             : plan.startAffordanceLabel
     }
@@ -573,31 +620,14 @@ struct LabLaneDetailView: View {
     }
 
     private func start(_ plan: LabConceptSessionPlan) {
-        let progress = appModel.labConceptSessionProgressStore.progress(for: plan)
-        let stage = progress?.currentStagePlan(in: plan) ?? plan.stages.first(where: { $0.route != nil })
-        guard let stage, let route = stage.route else { return }
-        appModel.pickProfileThenRun {
-            _ = appModel.labConceptSessionProgressStore.beginGuidedStage(stage.stage, in: plan)
-            if stage.stage == .play || stage.stage == .blast {
-                appModel.prepareLabGameplayCompletion(plan: plan, stage: stage.stage)
-            } else {
-                appModel.clearLabGameplayCompletion()
-            }
-            if plan.id == LabConceptSessionPlan.numbersNumberBondsTo10.id {
-                appModel.engine.updateConfig(problemCount: 4, minTarget: 1, maxTarget: 10)
-            }
-            if stage.stage == .blast {
-                appModel.engine.startBondBlastFinale(target: 10)
-            } else {
-                showActivityRoute(route, returnLaneID: plan.laneID)
-                if route == .sumSprint {
-                    appModel.sumSprintEngine.showDifficultyPick()
-                }
-            }
-        }
+        guard let quest = LearningQuestID.guided(plan.id) else { return }
+        appModel.launchLearningQuest(quest, guidedPlanID: plan.id, returnLaneID: plan.laneID)
     }
 
     private func launch(_ activityID: LabActivityID) {
+        if let quest = activityID.pilotQuest {
+            appModel.launchLearningQuest(quest, returnLaneID: lane.id); return
+        }
         appModel.pickProfileThenRun {
             appModel.clearLabGameplayCompletion()
             let activityRoute = route(for: activityID, laneID: lane.id)
@@ -616,7 +646,7 @@ struct LabLaneDetailView: View {
         if case let .gameplayThread(threadID) = route {
             appModel.engine.showGameplayThread(threadID, returnRoute: .labLane(returnLaneID))
         } else {
-            appModel.engine.show(route)
+            appModel.engine.showActivity(route, returnRoute: .labLane(returnLaneID))
         }
     }
 
@@ -632,17 +662,11 @@ struct LabLaneDetailView: View {
         }
     }
 
-    private func recordReviewAction(_ action: LaneRecallReviewAction) {
-        appModel.markExplorerLabReviewedCard(laneID: action.laneID, cardID: action.cardID)
-        appModel.markExplorerLabModeCompleted(laneID: action.laneID, mode: .review)
-
-        if action.isCorrect,
-           let card = CapabilityLane.defaultExplorerLanes
-            .first(where: { $0.id == action.laneID })?
-            .recallEntries
-            .first(where: { $0.card.id == action.cardID })?
-            .card {
-            appModel.setExplorerLabConceptConfidence(.steady, for: card.conceptID, laneID: action.laneID)
+    private func submitReview(_ entry: LaneRecallEntry) {
+        guard let attempt = appModel.laneRecallReviewEngine.submit(entry.card) else { return }
+        appModel.markExplorerLabReviewedCard(laneID: entry.laneID, cardID: entry.card.id)
+        if attempt.outcome == .independentCorrect || attempt.outcome == .supportedCorrect {
+            appModel.markExplorerLabModeCompleted(laneID: entry.laneID, mode: .review)
         }
     }
 

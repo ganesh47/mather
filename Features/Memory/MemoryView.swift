@@ -52,7 +52,7 @@ enum CountryMemoryClueKind: String, CaseIterable, Equatable {
         case .currency: return "Match each money picture to its country"
         case .monument: return "Match each landmark to its country"
         case .capital: return "Match each capital to its country"
-        case .language: return "Match each official language to its country"
+        case .language: return "Match each language clue to its country"
         }
     }
 
@@ -113,6 +113,7 @@ struct MemoryView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
+    var contentCatalog: IOSLearningCatalog = .bundled
 
     @State private var deck: [MemoryAnimal] = MemoryDeck.domesticAnimals
     @State private var difficulty: MemoryDifficulty = .easy
@@ -132,11 +133,19 @@ struct MemoryView: View {
     @State private var latestAskResponse: MemoryAskResponse? = nil
     @State private var descriptionTask: Task<Void, Never>? = nil
     @State private var countryClueKind: CountryMemoryClueKind = .flag
+    @State private var boardFeedbackTask: Task<Void, Never>?
+    @State private var boardToken = UUID()
+    @State private var evidenceSessionID = UUID().uuidString
+    @State private var evidenceProfileID: String
+    @State private var attempts: [ItemAttempt] = []
+    @State private var supportedAnimalIDs: Set<String> = []
 
-    init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil) {
+    init(appModel: AppModel, initialDeckKind: MemoryDeckKind? = nil, contentCatalog: IOSLearningCatalog = .bundled) {
         self.appModel = appModel
+        self.contentCatalog = contentCatalog
+        _evidenceProfileID = State(initialValue: appModel.profileStore.activeProfileId)
         let initialSelection = DeckSelection(kind: initialDeckKind)
-        _deck = State(initialValue: initialSelection.animals)
+        _deck = State(initialValue: contentCatalog.cards(for: initialSelection.kind))
         _deckSelection = State(initialValue: initialSelection)
         _directEntryKind = State(initialValue: Self.directStagedEntryKind(for: initialDeckKind))
         _difficulty = State(initialValue: Self.initialDifficulty(for: initialDeckKind))
@@ -159,6 +168,22 @@ struct MemoryView: View {
             case .fruits: self = .fruits
             case .numberBondsTo10: self = .numberBondsTo10
             case nil: self = .domestic
+            }
+        }
+
+        var kind: MemoryDeckKind {
+            switch self {
+            case .domestic: return .domesticAnimals
+            case .birds: return .birds
+            case .vehicles: return .vehicles
+            case .planets: return .planets
+            case .fishes: return .fishes
+            case .countries: return .countries
+            case .countryFlags: return .countryFlags
+            case .indiaStates: return .indiaStates
+            case .waterCycle: return .waterCycle
+            case .fruits: return .fruits
+            case .numberBondsTo10: return .numberBondsTo10
             }
         }
 
@@ -245,6 +270,11 @@ struct MemoryView: View {
         }
         .onDisappear {
             descriptionTask?.cancel()
+            boardFeedbackTask?.cancel()
+            boardToken = UUID()
+            if !attempts.isEmpty {
+                appModel.gameplayProgressStore.saveActivityResult(ActivityResult(id: evidenceSessionID, activityID: LabActivityID.memoryMatch.rawValue, title: "Memory Match", startedAt: sessionStart, attempts: attempts, completedStageIDs: roundsPlayed > 0 ? ["match"] : [], profileID: evidenceProfileID, contentVersion: contentCatalog.contentVersion))
+            }
             guard roundsPlayed > 0 else { return }
             appModel.gameSessionStore.save(
                 gameName: "Memory Match",
@@ -283,12 +313,12 @@ struct MemoryView: View {
 
     private var backButton: some View {
         Button {
-            appModel.engine.showLab()
+            appModel.engine.returnFromGameplay(defaultRoute: .home)
         } label: {
             Image(systemName: "chevron.left")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(MatherTheme.accent)
-                .frame(width: 44, height: 44)
+                .frame(width: 80, height: 80)
         }
         .accessibilityLabel("Back")
     }
@@ -325,7 +355,7 @@ struct MemoryView: View {
                     ForEach(DeckSelection.allCases, id: \.label) { selectedDeck in
                         Button(selectedDeck.label) {
                             deckSelection = selectedDeck
-                            deck = selectedDeck.animals
+                            deck = contentCatalog.cards(for: selectedDeck.kind)
                             recentPairHistory = []
                             dealRound()
                         }
@@ -410,7 +440,8 @@ struct MemoryView: View {
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
                 let canLearn = Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete)
-                cardView(card)
+                VStack(spacing: 8) {
+                    cardView(card)
                     .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
                     .accessibilityLabel(Self.accessibilityLabel(for: card, difficulty: difficulty))
@@ -421,6 +452,16 @@ struct MemoryView: View {
                         actionName: canLearn ? Self.learnAboutActionName(for: animal(for: card)) : nil,
                         action: { handleDoubleTap(card) }
                     ))
+                    if canLearn {
+                        Button { handleDoubleTap(card) } label: {
+                            Label("Explore", systemImage: "speaker.wave.2.fill")
+                                .font(.headline.weight(.bold))
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("memory-explore-\(card.id)")
+                    }
+                }
             }
         }
         .frame(maxWidth: ResponsiveLayout.memoryBoardMaxWidth(for: horizontalSizeClass))
@@ -440,8 +481,7 @@ struct MemoryView: View {
                 .font(.system(size: preferredEmojiSize ?? emojiSize))
                 .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
         case .asset(let assetName):
-            Image(assetName)
-                .resizable()
+            LearningContentImage(name: assetName)
                 .scaledToFit()
                 .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
                 .padding(4)
@@ -734,7 +774,7 @@ struct MemoryView: View {
     }
 
     static func learnMoreHintText(for deckSelection: DeckSelection) -> String {
-        supportsLearningDetails(for: deckSelection) ? "Double-tap a card to learn more" : ""
+        supportsLearningDetails(for: deckSelection) ? "Tap Explore to hear and learn more" : ""
     }
 
     static func roundCompleteMessage(for deckSelection: DeckSelection, roundsPlayed: Int) -> String {
@@ -764,6 +804,9 @@ struct MemoryView: View {
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
         let cardAnimal = animal(for: card)
         let selectedAnimal = Self.originalCountryAnimal(for: cardAnimal)
+        supportedAnimalIDs.insert(cardAnimal.id)
+        recordMemoryAttempt(for: cardAnimal, outcome: .help, response: "explore")
+        appModel.speechService.speak(selectedAnimal.canonicalName, enabled: appModel.featureFlags.audioEnabled)
         descriptionTask?.cancel()
         askSession = nil
         latestAskResponse = nil
@@ -839,8 +882,7 @@ struct MemoryView: View {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
                             ForEach(animal.learningArtwork, id: \.self) { artwork in
                                 VStack(spacing: 8) {
-                                    Image(artwork.assetName)
-                                        .resizable()
+                                    LearningContentImage(name: artwork.assetName)
                                         .scaledToFit()
                                         .frame(maxWidth: .infinity)
                                         .aspectRatio(1, contentMode: .fit)
@@ -944,6 +986,8 @@ struct MemoryView: View {
 
     private func dealRound() {
         descriptionTask?.cancel()
+        boardFeedbackTask?.cancel()
+        boardToken = UUID()
         let roundAnimals: [MemoryAnimal]
         if deckSelection == .countryFlags {
             countryClueKind = Self.countryClueKind(forRound: roundsPlayed)
@@ -973,12 +1017,24 @@ struct MemoryView: View {
     }
 
     private func handleTap(_ card: MemoryCard) {
+        guard appModel.profileStore.activeProfileId == evidenceProfileID else { return }
         guard !card.isMatched, !isProcessingMismatch, !card.isSelected else { return }
 
         if let idx = cards.firstIndex(where: { $0.id == card.id }) {
             cards[idx].isSelected = true
         }
         appModel.hapticsService.counterSettle(enabled: appModel.featureFlags.hapticsEnabled)
+        if !difficulty.faceDown {
+            if case .picture(let animal) = card.content, appModel.featureFlags.audioEnabled {
+                switch animal.picture {
+                case .text: break // Read the prompt without revealing a missing answer.
+                case .asset, .emoji:
+                    supportedAnimalIDs.insert(animal.id)
+                    recordMemoryAttempt(for: animal, outcome: .help, response: "heard name")
+                }
+            }
+            appModel.speechService.speak(Self.spokenTapPrompt(for: card), enabled: appModel.featureFlags.audioEnabled)
+        }
 
         guard let first = firstSelected else {
             firstSelected = card
@@ -987,16 +1043,26 @@ struct MemoryView: View {
 
         firstSelected = nil
 
-        if first.pairId == card.pairId {
-            Task { @MainActor in
+        let token = boardToken
+        isProcessingMismatch = true
+        let promptAnimal: MemoryAnimal
+        if case .picture(let animal) = first.content { promptAnimal = animal } else { promptAnimal = animal(for: card) }
+        if Self.cardsFormValidMatch(first, card) {
+            recordMemoryAttempt(for: promptAnimal, outcome: supportedAnimalIDs.contains(promptAnimal.id) ? .supportedCorrect : .independentCorrect, response: animal(for: first).name + " ↔ " + animal(for: card).name)
+            boardFeedbackTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(300))
-                markMatched(pairId: card.pairId)
+                guard !Task.isCancelled, boardToken == token else { return }
+                markMatched(ids: [first.id, card.id])
+                isProcessingMismatch = false
             }
         } else {
+            supportedAnimalIDs.insert(promptAnimal.id)
+            recordMemoryAttempt(for: promptAnimal, outcome: .incorrect, response: animal(for: first).name + " ↔ " + animal(for: card).name)
             isProcessingMismatch = true
             mismatchIds = [first.id, card.id]
-            Task { @MainActor in
+            boardFeedbackTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(600))
+                guard !Task.isCancelled, boardToken == token else { return }
                 deselect(id: first.id)
                 deselect(id: card.id)
                 mismatchIds = []
@@ -1005,8 +1071,31 @@ struct MemoryView: View {
         }
     }
 
-    private func markMatched(pairId: String) {
-        for idx in cards.indices where cards[idx].pairId == pairId {
+    private func recordMemoryAttempt(for animal: MemoryAnimal, outcome: ItemAttemptOutcome, response: String) {
+        let attempt = ItemAttempt(activityID: LabActivityID.memoryMatch.rawValue, conceptID: animal.metadata.deck.rawValue, entityID: animal.id, propertyID: "match", stageID: "match", outcome: outcome, response: response, profileID: evidenceProfileID, sessionID: evidenceSessionID, contentVersion: contentCatalog.contentVersion)
+        attempts.append(attempt)
+        appModel.gameplayProgressStore.recordAttempts([attempt], sessionID: evidenceSessionID)
+    }
+
+    static func spokenTapPrompt(for card: MemoryCard) -> String {
+        switch card.content {
+        case .label(let animal): return animal.name
+        case .picture(let animal):
+            if case .text(let prompt) = animal.picture { return prompt }
+            return animal.canonicalName
+        }
+    }
+
+    static func cardsFormValidMatch(_ first: MemoryCard, _ second: MemoryCard) -> Bool {
+        switch (first.content, second.content) {
+        case (.picture(let picture), .label(let label)), (.label(let label), .picture(let picture)):
+            return picture.name.trimmingCharacters(in: .whitespacesAndNewlines).localizedCaseInsensitiveCompare(label.name.trimmingCharacters(in: .whitespacesAndNewlines)) == .orderedSame
+        default: return false
+        }
+    }
+
+    private func markMatched(ids: Set<UUID>) {
+        for idx in cards.indices where ids.contains(cards[idx].id) {
             cards[idx].isMatched = true
             cards[idx].isSelected = false
         }
@@ -1036,8 +1125,11 @@ struct MemoryView: View {
         withAnimation(.easeOut(duration: 0.2)) {
             showRoundComplete = false
         }
-        Task { @MainActor in
+        boardFeedbackTask?.cancel()
+        let token = boardToken
+        boardFeedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled, boardToken == token else { return }
             dealRound()
         }
     }

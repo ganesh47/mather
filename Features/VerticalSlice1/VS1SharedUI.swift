@@ -70,7 +70,7 @@ struct VS1PrimaryButton: View {
                     .font(.headline.weight(.bold))
             }
             .frame(maxWidth: .infinity)
-            .frame(minHeight: 72)
+            .frame(minHeight: 80)
             .padding(.horizontal, 18)
             .foregroundStyle(.white)
             .background(
@@ -100,7 +100,7 @@ struct VS1SecondaryButton: View {
                     .font(.headline.weight(.semibold))
             }
             .frame(maxWidth: .infinity)
-            .frame(minHeight: 64)
+            .frame(minHeight: 80)
             .padding(.horizontal, 16)
             .foregroundStyle(MatherTheme.ink)
             .background(

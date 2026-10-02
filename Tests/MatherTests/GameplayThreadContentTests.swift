@@ -189,7 +189,9 @@ struct GameplayThreadContentTests {
     @Test
     func electronicsCardsResolveToDeterministicVectorArtworkKeys() {
         let thread = GameplayThreadCatalog.electronics
-        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: thread.stages[0], seed: 1071)
+        let stage = thread.stages[0]
+        let round = GameplayRoundDefinition(id: "electronics-artwork-coverage", stageID: stage.id, kind: stage.kind,
+            items: SpacedRepetitionScheduler.candidateItems(thread: thread, stage: stage), seed: 1071)
         let cards = GameplayStageContentBuilder.flashcards(thread: thread, round: round)
         let mappedKeys = Set(cards.compactMap(\.electronicsArtworkKey))
 
@@ -371,7 +373,7 @@ struct WorldCreatureGameplayThreadTests {
         #expect(habitatStage.propertyTypeIDs == ["habitat"])
         #expect(dietStage.kind == .multipleChoice)
         #expect(dietStage.propertyTypeIDs == ["diet"])
-        #expect(mixedStage.propertyTypeIDs == ["name", "habitat", "diet", "movement", "sound", "colors", "kind"])
+        #expect(mixedStage.propertyTypeIDs == ["name", "habitat", "diet", "movement", "sound", "colors"])
 
         let dietValues = Set(thread.entities.compactMap { entity in
             entity.properties.first { $0.typeID == "diet" }?.value
@@ -398,7 +400,7 @@ struct WorldCreatureGameplayThreadTests {
         let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 1049)
         let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
 
-        #expect(round.items.count == min(stage.maximumItemCount, thread.entities.count))
+        #expect(round.items.count == min(4, min(stage.maximumItemCount, thread.entities.count)))
         #expect(round.items.allSatisfy { $0.propertyTypeID == "name" })
         #expect(pairs.allSatisfy { $0.left.title == "Name this bird" })
         #expect(pairs.allSatisfy { $0.left.visualAssetName?.isEmpty == false })
@@ -419,7 +421,10 @@ struct WorldCreatureGameplayThreadTests {
         let birdStage = try #require(birdThread.stages.first { $0.kind == .bondBlast })
 
         #expect(animalStage.propertyTypeIDs.count >= 5)
-        #expect(birdStage.propertyTypeIDs.count >= 5)
+        #expect(Set(birdStage.propertyTypeIDs) == ["name", "home", "colors"])
+        #expect(!birdStage.propertyTypeIDs.contains("weight"))
+        #expect(!birdStage.propertyTypeIDs.contains("lifespan"))
+        #expect(!birdStage.propertyTypeIDs.contains("size"))
         #expect(animalThread.entities.allSatisfy { entity in
             Set(animalStage.propertyTypeIDs).isSubset(of: Set(entity.properties.map(\.typeID)))
         })

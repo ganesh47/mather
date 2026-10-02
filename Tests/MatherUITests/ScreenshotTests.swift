@@ -810,7 +810,11 @@ final class ScreenshotTests: XCTestCase {
             XCTAssertTrue(leftCard.waitForExistence(timeout: 5), "Missing left Bond Blast card \(left) for target \(target)")
             XCTAssertTrue(rightCard.waitForExistence(timeout: 5), "Missing right Bond Blast card \(right) for target \(target)")
             leftCard.tap()
+            let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "selected"), object: leftCard)
+            XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 3), .completed, "Left card must be selected before tapping its match")
             rightCard.tap()
+            let matched = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "matched"), object: leftCard)
+            XCTAssertEqual(XCTWaiter.wait(for: [matched], timeout: 3), .completed, "Wait for the matched state before starting another pair")
         }
     }
 

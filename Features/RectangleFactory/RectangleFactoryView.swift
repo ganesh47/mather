@@ -19,6 +19,7 @@ struct RectangleFactoryView: View {
     }
 
     @Bindable var appModel: AppModel
+    var initialTarget: Int = 4
 
     private static let nSequence: [Int] = [4, 6, 9, 12, 7, 11, 16, 18, 13, 24]
 
@@ -33,6 +34,11 @@ struct RectangleFactoryView: View {
     @State private var allFoundForN: Bool = false
     @State private var completedTargetCount: Int = 0
     @State private var celebratingFactorKey: String?
+    @State private var factorFeedbackTask: Task<Void, Never>?
+    @State private var roundToken = UUID()
+    @State private var completedTargets: Set<Int> = []
+
+    private var missionTargets: [Int] { Array(([initialTarget] + [4, 6, 9, 8]).reduce(into: [Int]()) { result, value in if !result.contains(value) { result.append(value) } }.prefix(3)) }
 
     // MARK: - Grid constants
 
@@ -59,9 +65,13 @@ struct RectangleFactoryView: View {
         .onAppear {
             sessionStart = .now
             completedTargetCount = 0
-            loadN(RectangleFactoryView.nSequence[0], speakPrompt: true)
+            sequenceIndex = 0
+            completedTargets = []
+            loadN(initialTarget, speakPrompt: true)
         }
         .onDisappear {
+            factorFeedbackTask?.cancel()
+            roundToken = UUID()
             guard completedTargetCount > 0 else { return }
             appModel.gameSessionStore.save(
                 gameName: "Rectangle Factory",
@@ -122,12 +132,13 @@ struct RectangleFactoryView: View {
             }
             Spacer(minLength: 12)
             Button {
-                appModel.engine.showHome()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.secondary)
             }
+            .frame(minWidth: 80, minHeight: 80)
             .accessibilityLabel("Done")
         }
         .padding(.horizontal, 24)
@@ -265,7 +276,7 @@ struct RectangleFactoryView: View {
     private func selectionFrame(w: CGFloat, h: CGFloat, valid: Bool, cellPitch: CGFloat) -> some View {
         let borderColor: Color = valid ? MatherTheme.accent : MatherTheme.softBlue
         let borderWidth: CGFloat = valid ? 3 : 2
-        let handleSize = max(24, min(40, cellPitch * 1.35))
+        let handleSize: CGFloat = 80
 
         return ZStack(alignment: .bottomTrailing) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -301,6 +312,12 @@ struct RectangleFactoryView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                dimensionButton("Fewer rows", symbol: "minus") { frameHeight = max(1, frameHeight - 1); checkValidity() }
+                dimensionButton("More rows", symbol: "plus") { frameHeight = min(Self.playableGrid(for: targetN).rows, frameHeight + 1); checkValidity() }
+                dimensionButton("Fewer columns", symbol: "minus") { frameWidth = max(1, frameWidth - 1); checkValidity() }
+                dimensionButton("More columns", symbol: "plus") { frameWidth = min(Self.playableGrid(for: targetN).columns, frameWidth + 1); checkValidity() }
+            }.padding(.horizontal, 24)
             // Found-factors gallery: mini dot-grid thumbnails
             if !foundFactors.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -314,6 +331,12 @@ struct RectangleFactoryView: View {
                 .frame(height: 56)
             }
 
+            if !foundFactors.isEmpty && !allFoundForN {
+                Button(sequenceIndex + 1 < missionTargets.count ? "Next order" : "Finish factory mission", action: advanceToNextN)
+                    .buttonStyle(PrimaryActionButtonStyle())
+                    .padding(.horizontal, 24)
+            }
+
             if allFoundForN {
                 completionPanel
                     .padding(.horizontal, 24)
@@ -323,7 +346,7 @@ struct RectangleFactoryView: View {
                 Label(Self.resetButtonTitle, systemImage: "arrow.counterclockwise")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
-                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .frame(maxWidth: .infinity, minHeight: 80)
                     .background(MatherTheme.card.opacity(0.96))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(
@@ -336,6 +359,15 @@ struct RectangleFactoryView: View {
             .padding(.horizontal, 24)
                 .padding(.bottom, 16)
         }
+    }
+
+    private func dimensionButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: symbol)
+                Text(title).font(.caption.weight(.bold)).multilineTextAlignment(.center)
+            }.frame(maxWidth: .infinity, minHeight: 80)
+        }.buttonStyle(.bordered)
     }
 
     private var solvedStatusBanner: some View {
@@ -430,7 +462,7 @@ struct RectangleFactoryView: View {
         .foregroundStyle(filled ? .white : tint)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .frame(maxWidth: 260, minHeight: 64, alignment: .leading)
+        .frame(maxWidth: 260, minHeight: 80, alignment: .leading)
         .background(filled ? tint : MatherTheme.card.opacity(0.96))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
@@ -486,7 +518,7 @@ struct RectangleFactoryView: View {
                     }
 
                     Button(action: advanceToNextN) {
-                        Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
+                        Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < missionTargets.count))
                             .font(.headline.weight(.bold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -494,7 +526,7 @@ struct RectangleFactoryView: View {
                             .background(MatherTheme.coral)
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-                    .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
+                    .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < missionTargets.count))
                 }
                 .padding(16)
                 .background(
@@ -516,7 +548,7 @@ struct RectangleFactoryView: View {
                 )
             } else {
                 Button(action: advanceToNextN) {
-                    Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
+                    Text(Self.advanceButtonTitle(hasNext: sequenceIndex + 1 < missionTargets.count))
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -524,7 +556,7 @@ struct RectangleFactoryView: View {
                         .background(MatherTheme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
-                .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < RectangleFactoryView.nSequence.count))
+                .accessibilityLabel(Self.advanceButtonAccessibilityLabel(hasNext: sequenceIndex + 1 < missionTargets.count))
             }
         }
     }
@@ -640,8 +672,11 @@ struct RectangleFactoryView: View {
             Self.discoverySpeech(width: frameWidth, height: frameHeight, target: targetN),
             enabled: appModel.featureFlags.audioEnabled
         )
-        Task { @MainActor in
+        factorFeedbackTask?.cancel()
+        let token = roundToken
+        factorFeedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled, roundToken == token else { return }
             showEquation = false
             celebratingFactorKey = nil
             checkAllFound()
@@ -652,7 +687,8 @@ struct RectangleFactoryView: View {
         let allFactors = Self.factorsOf(targetN)
         guard foundFactors.count >= allFactors.count else { return }
         allFoundForN = true
-        completedTargetCount = max(completedTargetCount, Self.completedTargetCount(sequenceIndex: sequenceIndex, allFoundForCurrentTarget: true))
+        completedTargets.insert(targetN)
+        completedTargetCount = completedTargets.count
         appModel.hapticsService.bondMatchComplete(enabled: appModel.featureFlags.hapticsEnabled)
         appModel.speechService.speak(
             Self.completionSpeech(for: targetN),
@@ -661,14 +697,17 @@ struct RectangleFactoryView: View {
     }
 
     private func advanceToNextN() {
+        guard !foundFactors.isEmpty else { return }
+        completedTargets.insert(targetN)
+        completedTargetCount = completedTargets.count
         let next = sequenceIndex + 1
-        guard next < RectangleFactoryView.nSequence.count else {
-            appModel.engine.showHome()
+        guard next < missionTargets.count else {
+            appModel.engine.returnFromGameplay(defaultRoute: .home)
             return
         }
         let previousN = targetN
         sequenceIndex = next
-        loadN(RectangleFactoryView.nSequence[next], speakPrompt: false)
+        loadN(missionTargets[next], speakPrompt: false)
         appModel.speechService.speak(
             Self.transitionSpeech(from: previousN, to: targetN),
             enabled: appModel.featureFlags.audioEnabled
@@ -678,6 +717,8 @@ struct RectangleFactoryView: View {
     /// Load a new target N, starting the frame near √N so the child
     /// makes small adjustments rather than dragging from 1×1.
     private func loadN(_ n: Int, speakPrompt: Bool = false) {
+        factorFeedbackTask?.cancel()
+        roundToken = UUID()
         targetN = n
         foundFactors = []
         allFoundForN = false

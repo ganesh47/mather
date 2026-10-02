@@ -4,6 +4,7 @@ import SwiftUI
 
 struct RootView: View {
     @Bindable var appModel: AppModel
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \StoredSessionSummary.startedAt, order: .reverse) private var sessionSummaries: [StoredSessionSummary]
     @Query(sort: \StoredGameSession.startedAt, order: .reverse) private var gameSessions: [StoredGameSession]
     @Query(sort: \StoredKidProfile.createdAt) private var kidProfiles: [StoredKidProfile]
@@ -16,8 +17,8 @@ struct RootView: View {
         gameSessions.filter { $0.profileId == appModel.profileStore.activeProfileId }
     }
 
-    private static func gameplayThread(for id: GameplayThreadID) -> GameplayThreadDefinition {
-        GameplayThreadCatalog.thread(for: id)
+    private static func isContentBoundary(_ route: AppRoute) -> Bool {
+        switch route { case .home, .lab, .labGames, .labLane, .settings, .parentSummary: true; default: false }
     }
 
     var body: some View {
@@ -33,7 +34,7 @@ struct RootView: View {
                 case .sessionSummary:
                     SessionSummaryView(appModel: appModel)
                 case .parentSummary:
-                    ParentSummaryView(appModel: appModel, summaries: sessionSummaries, gameSessions: gameSessions, profiles: kidProfiles)
+                    ParentSummaryView(appModel: appModel, summaries: activeProfileSummaries, gameSessions: activeProfileGameSessions, profiles: kidProfiles)
                 case .settings:
                     SettingsView(appModel: appModel, summaries: activeProfileSummaries, gameSessions: activeProfileGameSessions)
                 case .roomQuest:
@@ -45,7 +46,7 @@ struct RootView: View {
                             RoomQuestScannerSheet(scanner: appModel.roomQuestScanner)
                         }
                 case .rectangleFactory:
-                    RectangleFactoryView(appModel: appModel)
+                    RectangleFactoryView(appModel: appModel, initialTarget: appModel.rectangleFactoryStartingTarget)
                 case .factoryCards:
                     FactoryCardsView(appModel: appModel)
                 case .sumSprint:
@@ -85,19 +86,21 @@ struct RootView: View {
                 case .labLane(let laneID):
                     LabLaneDetailView(appModel: appModel, laneID: laneID)
                 case .memory:
-                    MemoryView(appModel: appModel)
+                    MemoryView(appModel: appModel, contentCatalog: appModel.iosLearningContentStore.catalog)
                 case .memoryDeck(let deckKind):
-                    MemoryView(appModel: appModel, initialDeckKind: deckKind)
+                    MemoryView(appModel: appModel, initialDeckKind: deckKind, contentCatalog: appModel.iosLearningContentStore.catalog)
                 case .labRememberStage(let deckID):
                     LabRememberStageView(appModel: appModel, deckID: deckID)
                 case .waterCycle:
                     WaterCycleLabView(appModel: appModel)
                 case .gameplayThread(let threadID):
-                    GameplayThreadView(thread: Self.gameplayThread(for: threadID), appModel: appModel)
+                    GameplayThreadView(thread: appModel.iosLearningContentStore.catalog.thread(for: threadID), contentVersion: appModel.iosLearningContentStore.catalog.contentVersion, assetURLs: appModel.iosLearningContentStore.assetURLs, appModel: appModel)
                 case .soundVolume:
                     SoundVolumeLabView(appModel: appModel)
+                case .learningQuest:
+                    LearningQuestView(appModel: appModel, engine: appModel.learningQuestEngine)
                 case .shapeGeometry:
-                    GameplayThreadView(thread: GameplayThreadCatalog.shapes, appModel: appModel)
+                    GameplayThreadView(thread: appModel.iosLearningContentStore.catalog.thread(for: .shapes), contentVersion: appModel.iosLearningContentStore.catalog.contentVersion, assetURLs: appModel.iosLearningContentStore.assetURLs, appModel: appModel)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -106,10 +109,35 @@ struct RootView: View {
             if ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") { appModel.engine.showAngleCannon() }
         }
         .background(MatherTheme.background.ignoresSafeArea())
-        .sheet(isPresented: $appModel.showingProfilePicker) {
+        .environment(\.learningContentAssetURLs, appModel.iosLearningContentStore.assetURLs)
+        .onChange(of: appModel.profileStore.activeProfileId) { _, _ in
+            appModel.explorerLabMasteryProfile = appModel.explorerLabMasteryStore.load()
+        }
+        .onChange(of: appModel.engine.route) { _, route in
+            if Self.isContentBoundary(route) { appModel.iosLearningContentStore.activatePending() }
+        }
+        .onChange(of: appModel.iosLearningContentStore.catalog.contentVersion) { _, version in
+            appModel.gameplayProgressStore.invalidateCatalogConfidence(contentVersion: version)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { @MainActor in await refreshContent() } }
+        }
+        .task {
+            appModel.gameplayProgressStore.invalidateCatalogConfidence(contentVersion: appModel.iosLearningContentStore.catalog.contentVersion)
+            await refreshContent()
+        }
+        .sheet(isPresented: $appModel.showingProfilePicker, onDismiss: { appModel.cancelPendingProfilePick() }) {
             ProfilePickerView(store: appModel.profileStore) {
                 appModel.confirmProfilePick()
             }
         }
+    }
+
+    private func refreshContent() async {
+        if appModel.featureFlags.testModeEnabled && UserDefaults.standard.bool(forKey: "uiTest.disableContentRefresh") { return }
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "IOSLearningContentURL") as? String,
+              let url = URL(string: value) else { return }
+        await appModel.iosLearningContentStore.refresh(from: url,
+            canActivate: { Self.isContentBoundary(appModel.engine.route) })
     }
 }

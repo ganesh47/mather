@@ -23,6 +23,7 @@ struct SymmetryFoldView: View {
     // MARK: - Local state
 
     @State private var neutralRoll: Double? = nil
+    @State private var useTouchFold = true
     /// 0 = shape open; 1 = right half fully folded onto left.
     @State private var foldAngle: Double = 0
     @State private var success = false
@@ -175,7 +176,7 @@ struct SymmetryFoldView: View {
             }
         }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
-            guard let neutral = neutralRoll, !success else { return }
+            guard !useTouchFold, let neutral = neutralRoll, !success else { return }
             let delta = roll - neutral
             let newFold = Self.foldAngle(tiltRoll: roll, neutralRoll: neutral)
             foldAngle = newFold
@@ -185,6 +186,7 @@ struct SymmetryFoldView: View {
         .onAppear {
             sessionStart = .now
             appModel.motionService.startUpdates()
+            appModel.speechService.speak("Tap Fold to move one side over the other. Do the sides match? You can also choose tilt.", enabled: appModel.featureFlags.audioEnabled)
         }
         .onDisappear {
             holdTask?.cancel()
@@ -231,7 +233,7 @@ struct SymmetryFoldView: View {
             Button {
                 stopAllTasks()
                 appModel.motionService.stopUpdates()
-                appModel.engine.showHome()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 34, weight: .black))
@@ -239,6 +241,7 @@ struct SymmetryFoldView: View {
                     .frame(width: 56, height: 56)
                     .background(config.color.opacity(0.12), in: Circle())
             }
+            .frame(minWidth: 80, minHeight: 80)
             .accessibilityLabel("Done")
             .accessibilityIdentifier("symmetry-fold-done-button")
         }
@@ -435,6 +438,19 @@ struct SymmetryFoldView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 12) {
+            if !success {
+                HStack(spacing: 12) {
+                    Button { useTouchFold = true; if neutralRoll == nil { handleSceneTap() }; foldAngle = 0; updateHoldProgress(for: 0) } label: {
+                        Label("Open", systemImage: "arrow.left.and.right").frame(minWidth: 80, minHeight: 80)
+                    }.buttonStyle(.bordered)
+                    Button { useTouchFold = true; if neutralRoll == nil { handleSceneTap() }; foldAngle = 1; updateHoldProgress(for: 1) } label: {
+                        Label("Fold", systemImage: "hand.tap").frame(minWidth: 80, minHeight: 80)
+                    }.buttonStyle(.borderedProminent)
+                    Button { useTouchFold.toggle(); if neutralRoll == nil { handleSceneTap() } } label: {
+                        Text(useTouchFold ? "Use tilt" : "Use touch").frame(minWidth: 80, minHeight: 80)
+                    }.buttonStyle(.bordered)
+                }
+            }
             // Contextual tilt hint
             if !success && neutralRoll != nil {
                 HStack(spacing: 8) {
@@ -458,7 +474,7 @@ struct SymmetryFoldView: View {
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(config.color)
                     } else {
-                        Text("Tilt left to match the mirror")
+                        Text(useTouchFold ? "Fold one side onto the other" : "Tilt left to match the mirror")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(MatherTheme.cardSubtitle)
                     }
@@ -561,7 +577,7 @@ struct SymmetryFoldView: View {
     private var currentSpeechPrompt: String {
         switch playMode {
         case .lesson:
-            return config.speechPrompt
+            return useTouchFold ? "Tap Fold to move one side over the other. Look for matching sides on the middle line." : config.speechPrompt
         case .timedChallenge:
             return "Timed challenge. Tap when ready, then tilt left to fold the \(config.shapeName) before the timer ends!"
         }
@@ -705,7 +721,7 @@ struct SymmetryFoldView: View {
             currentLevel += 1
             resetAttemptForCurrentMode()
         } else {
-            appModel.engine.showHome()
+            appModel.engine.returnFromGameplay(defaultRoute: .home)
         }
     }
 }

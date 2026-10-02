@@ -170,6 +170,8 @@ final class SpeechService {
         let twoPi = 2 * Double.pi
 
         switch example {
+        case .pitchLow, .pitchMiddle, .pitchHigh:
+            return sin(twoPi * primary * t)
         case .decibelPulse:
             let tone = progress < 0.5 ? primary : secondary
             return sin(twoPi * tone * t)

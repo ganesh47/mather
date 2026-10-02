@@ -37,7 +37,7 @@ struct MemoryTextFitTests {
             .flatMap(\.detailCards)
             .map(\.value)
             .max { $0.count < $1.count }
-        #expect(longestBirdFact == "Woodland streams in Africa and Asia")
-        #expect(longestBirdFact?.count == 35)
+        #expect(longestBirdFact == "Gardens and woodlands in Africa and Asia")
+        #expect(longestBirdFact?.count == 40)
     }
 }

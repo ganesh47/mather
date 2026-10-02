@@ -27,6 +27,11 @@ final class AppModel {
     var angleArcadeEngine: AngleArcadeEngine
     private var angleArcadeProfileScope: String
     let explorerLabMasteryStore: ExplorerLabMasteryStore
+    let questCheckpointStore: QuestCheckpointStore
+    let learningQuestEngine: LearningQuestEngine
+    let laneRecallReviewEngine: LaneRecallReviewEngine
+    let iosLearningContentStore = IOSLearningContentStore()
+    var rectangleFactoryStartingTarget = 4
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
     var showingProfilePicker = false
@@ -42,7 +47,10 @@ final class AppModel {
         showingProfilePicker = true
     }
 
+    func cancelPendingProfilePick() { pendingGameAction = nil }
+
     func confirmProfilePick() {
+        explorerLabMasteryProfile = explorerLabMasteryStore.load()
         showingProfilePicker = false
         let action = pendingGameAction
         pendingGameAction = nil
@@ -138,6 +146,73 @@ final class AppModel {
         return AngleArcadeProgressStore(defaults: defaults, scope: scope)
     }
 
+    func launchLearningQuest(_ questID: LearningQuestID, guidedPlanID: String? = nil, returnLaneID: CapabilityLaneID? = nil, returnToGames: Bool = false) {
+        pickProfileThenRun { [weak self] in
+            guard let self else { return }
+            self.clearLabGameplayCompletion()
+            self.learningQuestEngine.start(questID, guidedPlanID: guidedPlanID, returnLaneID: returnLaneID, returnToGames: returnToGames, content: LearningQuestContentSnapshot(catalog: self.iosLearningContentStore.catalog))
+            if let guidedPlanID, let plan = LabConceptSessionPlan.plan(for: guidedPlanID) {
+                _ = self.labConceptSessionProgressStore.beginGuidedStage(self.learningQuestEngine.checkpoint.step.guidedStage, in: plan)
+            }
+            self.engine.showLearningQuest(questID)
+        }
+    }
+
+    func clearActiveProfileLearningData() {
+        historyStore.clearActiveProfile(); gameSessionStore.clearActiveProfile(); telemetryWriter.clearEventsForActiveProfile()
+        gameplayProgressStore.clearActiveProfile(); questCheckpointStore.reset(); labConceptSessionProgressStore.reset()
+        explorerLabMasteryStore.reset(); explorerLabMasteryProfile = explorerLabMasteryStore.load()
+        angleArcadeEngine.cancelFlight()
+        let angleStore = Self.angleArcadeStore(scope: Self.angleArcadeScope(profileID: profileStore.activeProfileId))
+        angleStore.save(AngleArcadeProgress())
+        angleArcadeProfileScope = angleStore.scope
+        angleArcadeEngine = AngleArcadeEngine(store: angleStore)
+    }
+
+    func leaveLearningQuest() { returnFromLearningQuest(learningQuestEngine.checkpoint) }
+    private func returnFromLearningQuest(_ checkpoint: LearningQuestCheckpoint) {
+        if let lane = checkpoint.returnLaneID { engine.showLabLane(lane) }
+        else if checkpoint.returnToGames { engine.showLabGames() }
+        else { engine.showHome() }
+    }
+
+    private var nextResumeThread: GameplayThreadID? {
+        guard let saved = gameplayProgressStore.mostRecentCheckpoint(), let thread = GameplayThreadID(rawValue: saved.activityID) else { return nil }
+        if let quest = questCheckpointStore.mostRecent, quest.updatedAt > (saved.updatedAt ?? saved.startedAt) { return nil }
+        return thread
+    }
+    private var nextReviewThread: GameplayThreadID? {
+        guard questCheckpointStore.mostRecent == nil else { return nil }
+        return gameplayProgressStore.dueAndWeakRecords().compactMap { GameplayThreadID(rawValue: $0.threadId) }.first
+    }
+    var nextLearningQuest: LearningQuestID {
+        if let checkpoint = questCheckpointStore.mostRecent { return checkpoint.questID }
+        if let record = gameplayProgressStore.dueAndWeakRecords().first(where: { record in LearningQuestID.allCases.contains { $0.conceptID == record.conceptId } }), let quest = LearningQuestID.allCases.first(where: { $0.conceptID == record.conceptId }) { return quest }
+        let completedIDs = Set(gameplayProgressStore.allSessions().map(\.threadId))
+        return LearningQuestID.pilots.first { !completedIDs.contains($0.activityID) } ?? .numbers
+    }
+    var nextLearningQuestLabel: String {
+        if let thread = nextResumeThread { return "Continue \(iosLearningContentStore.catalog.thread(for: thread).title)" }
+        if let checkpoint = questCheckpointStore.mostRecent { return "Continue \(checkpoint.questID.title) · \(checkpoint.step.title)" }
+        if let thread = nextReviewThread { return "Remember \(iosLearningContentStore.catalog.thread(for: thread).title)" }
+        return "Try \(nextLearningQuest.title)"
+    }
+    func launchNextLearningQuest() {
+        // Re-resolve after child selection so a different child never inherits Resume.
+        pickProfileThenRun { [weak self] in
+            guard let self else { return }
+            if let thread = self.nextResumeThread {
+                self.engine.showGameplayThread(thread, returnRoute: .home); return
+            }
+            if let thread = self.nextReviewThread {
+                self.engine.showGameplayThread(thread, returnRoute: .home); return
+            }
+            let quest = self.nextLearningQuest
+            self.learningQuestEngine.start(quest, content: LearningQuestContentSnapshot(catalog: self.iosLearningContentStore.catalog))
+            self.engine.showLearningQuest(quest)
+        }
+    }
+
     init(modelContext: ModelContext) {
         let profileStore = KidProfileStore(modelContext: modelContext)
         let scope = Self.angleArcadeScope(profileID: profileStore.activeProfileId)
@@ -188,7 +263,7 @@ final class AppModel {
             stationStore: roomQuestStationStore
         )
         self.roomQuestEngine = roomQuestEngine
-        roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
+        roomQuestEngine.onExitToHome = { [weak vsEngine] in vsEngine?.returnFromGameplay(defaultRoute: .home) }
 
         roomQuestScanner.onVerifyFeedback = { [weak speechService, weak featureFlags] feedback in
             guard let speechService, let featureFlags else { return }
@@ -212,7 +287,10 @@ final class AppModel {
         let gameSessionStore = GameSessionStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let gameplayProgressStore = GameplayProgressStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let labConceptSessionProgressStore = LabConceptSessionProgressStore(activeProfileIdProvider: { profileStore.activeProfileId })
-        let explorerLabMasteryStore = ExplorerLabMasteryStore()
+        let explorerLabMasteryStore = ExplorerLabMasteryStore(activeProfileIdProvider: { profileStore.activeProfileId })
+        let questCheckpointStore = QuestCheckpointStore(activeProfileID: { profileStore.activeProfileId })
+        let learningQuestEngine = LearningQuestEngine(store: questCheckpointStore, activeProfileID: { profileStore.activeProfileId })
+        let laneRecallReviewEngine = LaneRecallReviewEngine(activeProfileID: { profileStore.activeProfileId })
         let explorerLabMasteryProfile = explorerLabMasteryStore.load()
         let sumSprintEngine = SumSprintEngine(
             featureFlags: featureFlags,
@@ -225,10 +303,44 @@ final class AppModel {
         self.gameSessionStore = gameSessionStore
         self.gameplayProgressStore = gameplayProgressStore
         self.labConceptSessionProgressStore = labConceptSessionProgressStore
+        self.questCheckpointStore = questCheckpointStore
+        self.learningQuestEngine = learningQuestEngine
+        self.laneRecallReviewEngine = laneRecallReviewEngine
         self.explorerLabMasteryStore = explorerLabMasteryStore
         self.explorerLabMasteryProfile = explorerLabMasteryProfile
         self.sumSprintEngine = sumSprintEngine
-        sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.showHome() }
+        laneRecallReviewEngine.onSpeak = { [weak speechService, weak featureFlags] text in
+            guard let speechService, let featureFlags else { return }
+            speechService.speak(text, enabled: featureFlags.audioEnabled)
+        }
+        laneRecallReviewEngine.onAttempt = { [weak gameplayProgressStore] attempt, sessionID in gameplayProgressStore?.recordAttempts([attempt], sessionID: sessionID) }
+        laneRecallReviewEngine.onResult = { [weak gameplayProgressStore] result in gameplayProgressStore?.saveActivityResult(result) }
+        learningQuestEngine.onSpeak = { [weak speechService, weak featureFlags] text in
+            guard let speechService, let featureFlags else { return }
+            speechService.speak(text, enabled: featureFlags.audioEnabled)
+        }
+        learningQuestEngine.onAttempt = { [weak gameplayProgressStore] attempt, sessionID in
+            gameplayProgressStore?.recordAttempts([attempt], sessionID: sessionID)
+        }
+        learningQuestEngine.onStageCompleted = { [weak labConceptSessionProgressStore] checkpoint, step in
+            guard let planID = checkpoint.guidedPlanID, let plan = LabConceptSessionPlan.plan(for: planID) else { return }
+            _ = labConceptSessionProgressStore?.markCompleted(step.guidedStage, in: plan)
+        }
+        learningQuestEngine.onCompleted = { [weak self, weak gameplayProgressStore] checkpoint, result in
+            gameplayProgressStore?.saveActivityResult(result)
+            self?.markExplorerLabModeCompleted(laneID: checkpoint.questID.laneID, mode: .learn)
+            self?.returnFromLearningQuest(checkpoint)
+        }
+        sumSprintEngine.onExitToHome = { [weak vsEngine] in vsEngine?.returnFromGameplay(defaultRoute: .home) }
+        vsEngine.activityProfileIDProvider = { profileStore.activeProfileId }
+        roomQuestEngine.activityProfileIDProvider = { profileStore.activeProfileId }
+        sumSprintEngine.activityProfileIDProvider = { profileStore.activeProfileId }
+        vsEngine.onItemAttempt = { [weak gameplayProgressStore] attempt, sessionID in gameplayProgressStore?.recordAttempts([attempt], sessionID: sessionID) }
+        roomQuestEngine.onItemAttempt = { [weak gameplayProgressStore] attempt, sessionID in gameplayProgressStore?.recordAttempts([attempt], sessionID: sessionID) }
+        sumSprintEngine.onItemAttempt = { [weak gameplayProgressStore] attempt, sessionID in gameplayProgressStore?.recordAttempts([attempt], sessionID: sessionID) }
+        vsEngine.onActivityResult = { [weak gameplayProgressStore] result in gameplayProgressStore?.saveActivityResult(result) }
+        roomQuestEngine.onActivityResult = { [weak gameplayProgressStore] result in gameplayProgressStore?.saveActivityResult(result) }
+        sumSprintEngine.onActivityResult = { [weak gameplayProgressStore] result in gameplayProgressStore?.saveActivityResult(result) }
         vsEngine.onSessionComplete = { [weak self] summary in
             self?.completePendingLabBondBlast(with: summary)
         }

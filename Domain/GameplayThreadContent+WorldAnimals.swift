@@ -7,7 +7,7 @@ extension GameplayThreadCatalog {
         category: GameplayCategory(
             id: "geography-world",
             title: "Geography + World",
-            subtitle: "Animal names, homes, food clues, sounds, movements, colors, and kinds around the world"
+            subtitle: "Animal names, homes, food clues, sounds, movements, and visible colors around the world"
         ),
         propertyTypes: [
             GameplayPropertyType(id: "name", displayName: "Name", prompt: "Find the animal name."),
@@ -26,7 +26,7 @@ extension GameplayThreadCatalog {
             GameplayStageDefinition(id: "world-animals-name-match", kind: .easyMemory, title: "Name Match", prompt: "Start by matching each animal picture to its name.", propertyTypeIDs: ["name"], maximumItemCount: 8),
             GameplayStageDefinition(id: "world-animals-habitat-match", kind: .flipMemory, title: "Habitat Match", prompt: "Remember which home clue belongs with each animal.", propertyTypeIDs: ["habitat"], maximumItemCount: 8),
             GameplayStageDefinition(id: "world-animals-diet-quiz", kind: .multipleChoice, title: "Food Quiz", prompt: "Pick whether each animal mostly eats plants, meat, or both.", propertyTypeIDs: ["diet"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "world-animals-bond-blast", kind: .bondBlast, title: "Animal Blast", prompt: "Connect each animal with its name, home, food clue, movement, sound, colors, and kind.", propertyTypeIDs: ["name", "habitat", "diet", "movement", "sound", "colors", "kind"], maximumItemCount: 12),
+            GameplayStageDefinition(id: "world-animals-bond-blast", kind: .bondBlast, title: "Animal Blast", prompt: "Connect each animal with its name, home, food clue, movement, sound, and visible colors.", propertyTypeIDs: ["name", "habitat", "diet", "movement", "sound", "colors"], maximumItemCount: 12),
         ],
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
     )

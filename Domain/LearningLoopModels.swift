@@ -51,6 +51,9 @@ enum SoundExampleKind: String, CaseIterable, Equatable {
     case pleasantBirds
     case noisyBurst
     case protectEarsMuffle
+    case pitchLow
+    case pitchMiddle
+    case pitchHigh
 
     static let hearingSafeMaximumDurationSeconds = 0.65
     static let hearingSafeMaximumPeakAmplitude = 0.18
@@ -66,6 +69,9 @@ enum SoundExampleKind: String, CaseIterable, Equatable {
         case .pleasantBirds: return "bird chirp"
         case .noisyBurst: return "short noise burst"
         case .protectEarsMuffle: return "muffled warning"
+        case .pitchLow: return "low pitch"
+        case .pitchMiddle: return "middle pitch"
+        case .pitchHigh: return "high pitch"
         }
     }
 
@@ -91,6 +97,12 @@ enum SoundExampleKind: String, CaseIterable, Equatable {
             return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.10, primaryFrequency: 980, secondaryFrequency: 1320)
         case .noisyBurst:
             return SoundExamplePlaybackProfile(durationSeconds: 0.32, peakAmplitude: 0.10, primaryFrequency: 260, secondaryFrequency: 520)
+        case .pitchLow:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.10, primaryFrequency: 160)
+        case .pitchMiddle:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.10, primaryFrequency: 500)
+        case .pitchHigh:
+            return SoundExamplePlaybackProfile(durationSeconds: 0.50, peakAmplitude: 0.10, primaryFrequency: 1100)
         case .protectEarsMuffle:
             return SoundExamplePlaybackProfile(durationSeconds: 0.44, peakAmplitude: 0.08, primaryFrequency: 320, secondaryFrequency: 180)
         }
@@ -565,6 +577,14 @@ enum SoundPitchBand: String, CaseIterable, Equatable, Identifiable {
         }
     }
 
+    var soundExample: SoundExampleKind {
+        switch self {
+        case .low: return .pitchLow
+        case .middle: return .pitchMiddle
+        case .high: return .pitchHigh
+        }
+    }
+
     var frequencyRangeLabel: String {
         switch self {
         case .low: return "about 80–250 Hz"
@@ -759,12 +779,12 @@ enum ShapeGeometryContent {
     }
 
     static let basicCards: [LearningConceptCard] = [
-        LearningConceptCard(id: "circle", title: "Circle", explanation: "A circle is round with no corners or sides.", visualKey: "●", audioPrompt: "Circle is round with no corners."),
+        LearningConceptCard(id: "circle", title: "Circle", explanation: "A circle is round with no corners or straight sides.", visualKey: "●", audioPrompt: "Circle is round with no corners."),
         LearningConceptCard(id: "triangle", title: "Triangle", explanation: "A triangle has three sides and three corners.", visualKey: "▲", audioPrompt: "Triangle has three sides."),
         LearningConceptCard(id: "square", title: "Square", explanation: "A square has four equal sides and four square corners.", visualKey: "■", audioPrompt: "Square has four equal sides."),
         LearningConceptCard(id: "rectangle", title: "Rectangle", explanation: "A rectangle has four square corners with opposite sides matching.", visualKey: "▭", audioPrompt: "Rectangle has four square corners."),
         LearningConceptCard(id: "oval", title: "Oval", explanation: "An oval is stretched like an egg and has no corners.", visualKey: "⬭", audioPrompt: "Oval is a stretched round shape."),
-        LearningConceptCard(id: "diamond", title: "Diamond", explanation: "A diamond is a square turned onto a point.", visualKey: "◆", audioPrompt: "Diamond sits on a point."),
+        LearningConceptCard(id: "diamond", title: "Rhombus", explanation: "A rhombus has four equal sides. Diamond is a nickname. Turning a square keeps it a square.", visualKey: "◆", audioPrompt: "A rhombus has four equal sides."),
         LearningConceptCard(id: "star", title: "Star", explanation: "A star has points that reach out from the middle.", visualKey: "★", audioPrompt: "Star has points."),
         LearningConceptCard(id: "heart", title: "Heart", explanation: "A heart has two bumps on top and one point below.", visualKey: "♥", audioPrompt: "Heart has two bumps and one point."),
     ]
@@ -780,7 +800,7 @@ enum ShapeGeometryContent {
 
     static let quizQuestions: [ConceptQuizQuestion] = [
         ConceptQuizQuestion(id: "three-sides", prompt: "Which shape has three sides?", choices: ["Triangle", "Circle", "Oval"], correctChoice: "Triangle", feedback: "Yes — a triangle has three sides."),
-        ConceptQuizQuestion(id: "no-corners", prompt: "Which shape is round with no corners?", choices: ["Circle", "Square", "Diamond"], correctChoice: "Circle", feedback: "Correct — circles have no corners."),
+        ConceptQuizQuestion(id: "no-corners", prompt: "Which shape is round with no corners?", choices: ["Circle", "Square", "Rhombus"], correctChoice: "Circle", feedback: "Correct — circles have no corners."),
         ConceptQuizQuestion(id: "four-equal-sides", prompt: "Which shape has four equal sides?", choices: ["Square", "Rectangle", "Heart"], correctChoice: "Square", feedback: "Yes — every side of a square matches."),
         ConceptQuizQuestion(id: "two-bumps", prompt: "Which shape has two bumps on top and one point below?", choices: ["Heart", "Star", "Oval"], correctChoice: "Heart", feedback: "Right — that is the heart outline clue."),
     ]
@@ -791,21 +811,21 @@ enum ShapeGeometryContent {
         ConceptMatchPair(id: "square-equal", left: "Square picture", right: "Square", feedback: "Square locked — four equal sides.", leftVisualKey: "■", rightVisualKey: "4"),
         ConceptMatchPair(id: "rectangle-long", left: "Rectangle picture", right: "Rectangle", feedback: "Rectangle locked — long box shape.", leftVisualKey: "▭", rightVisualKey: "▭"),
         ConceptMatchPair(id: "oval-egg", left: "Oval picture", right: "Oval", feedback: "Oval locked — stretched round shape.", leftVisualKey: "⬭", rightVisualKey: "🥚"),
-        ConceptMatchPair(id: "diamond-point", left: "Diamond picture", right: "Diamond", feedback: "Diamond locked — point on top and bottom.", leftVisualKey: "◆", rightVisualKey: "💎"),
+        ConceptMatchPair(id: "diamond-point", left: "Rhombus picture", right: "Rhombus", feedback: "Rhombus locked — four equal sides.", leftVisualKey: "◆", rightVisualKey: "💎"),
     ]
 
     static let huntMatchPairs: [ConceptMatchPair] = [
         ConceptMatchPair(id: "clock-circle", left: "Clock", right: "Circle", feedback: "A clock can show a circle.", leftVisualKey: "🕘", rightVisualKey: "●"),
         ConceptMatchPair(id: "pizza-triangle", left: "Pizza slice", right: "Triangle", feedback: "A pizza slice can show a triangle.", leftVisualKey: "🍕", rightVisualKey: "▲"),
         ConceptMatchPair(id: "window-rectangle", left: "Window", right: "Rectangle", feedback: "A window can show a rectangle.", leftVisualKey: "🪟", rightVisualKey: "▭"),
-        ConceptMatchPair(id: "kite-diamond", left: "Kite", right: "Diamond", feedback: "A kite can show a diamond.", leftVisualKey: "🪁", rightVisualKey: "◆"),
+        ConceptMatchPair(id: "kite-diamond", left: "Kite", right: "Rhombus", feedback: "A kite can show a rhombus.", leftVisualKey: "🪁", rightVisualKey: "◆"),
     ]
 
     static let levels: [Level] = [
         Level(id: "shape-names", title: "Level 1: Shape names", cards: basicCards, quizQuestions: quizQuestions, matchPairs: matchPairs),
         Level(id: "shape-hunt", title: "Level 2: Shape hunt", cards: huntCards, quizQuestions: [
             ConceptQuizQuestion(id: "clock-shape", prompt: "What shape can a clock show?", choices: ["Circle", "Triangle", "Star"], correctChoice: "Circle", feedback: "Yes — many clocks are circles."),
-            ConceptQuizQuestion(id: "kite-shape", prompt: "What shape can a kite show?", choices: ["Diamond", "Oval", "Heart"], correctChoice: "Diamond", feedback: "Correct — a kite can look like a diamond."),
+            ConceptQuizQuestion(id: "kite-shape", prompt: "What shape can a kite show?", choices: ["Rhombus", "Oval", "Heart"], correctChoice: "Rhombus", feedback: "Correct — some kites have four equal sides like a rhombus."),
         ], matchPairs: huntMatchPairs),
     ]
 }

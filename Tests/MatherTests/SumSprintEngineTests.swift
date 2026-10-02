@@ -492,3 +492,23 @@ struct SumSprintEngineTests {
         #expect(engine.cards[0].elapsedSeconds != nil)
     }
 }
+
+
+extension SumSprintEngineTests {
+    @Test func repeatedTimeoutsFinishAfterOneBoundedReviewPass() async throws {
+        let (engine, _) = try makeEngine(feedbackDuration: 0)
+        engine.selectDifficulty(.sprint)
+        let initialCount = engine.cards.count
+        for _ in 0..<(initialCount * 2) {
+            guard engine.phase == .session else { break }
+            let index = engine.currentCardIndex
+            engine.setCardTimeRemainingForTests(0.01)
+            await waitFor("bounded timeout card \(index)") { engine.currentCardIndex > index || engine.phase == .summary }
+        }
+        #expect(engine.phase == .summary)
+        #expect(engine.cards.count <= initialCount * 2)
+        let everyCardTimedOut = engine.cards.allSatisfy { $0.timedOut }
+        #expect(everyCardTimedOut)
+        #expect(engine.completedSummary != nil)
+    }
+}

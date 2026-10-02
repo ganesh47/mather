@@ -422,7 +422,7 @@ struct ParentSummaryExplorerLabSummaryTests {
         #expect(summary.completedModeCount == 2)
         #expect(summary.subtitle == "1 active lane · 2 modes completed")
         #expect(summary.rows.map(\.laneTitle) == ["Numbers Lab"])
-        #expect(summary.rows.first?.masteryLabel == "50% ready")
+        #expect(summary.rows.first?.masteryLabel == "50% explored")
         #expect(summary.rows.first?.detailLabel == "2 / 4 modes · Try Timed next · 2 steady concepts")
     }
 

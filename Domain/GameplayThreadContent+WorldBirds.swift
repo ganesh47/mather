@@ -7,7 +7,7 @@ extension GameplayThreadCatalog {
         category: GameplayCategory(
             id: "geography-world",
             title: "Geography + World",
-            subtitle: "Bird homes, colors, size, weight, and lifespan around the world"
+            subtitle: "Bird picture names, homes, and visible colors around the world"
         ),
         propertyTypes: [
             GameplayPropertyType(id: "name", displayName: "Name", prompt: "Find the bird name."),
@@ -23,7 +23,7 @@ extension GameplayThreadCatalog {
         stages: [
             GameplayStageDefinition(id: "world-birds-flashcards", kind: .flashcards, title: "Bird Cards", prompt: "Meet colorful birds from different world habitats.", maximumItemCount: 12),
             GameplayStageDefinition(id: "world-birds-easy-memory", kind: .easyMemory, title: "Bird Match", prompt: "Start with one focused round matching each bird picture to its name.", propertyTypeIDs: ["name"], maximumItemCount: 8),
-            GameplayStageDefinition(id: "world-birds-bond-blast", kind: .bondBlast, title: "Bird Blast", prompt: "Connect each bird with its home, colors, size, lifespan, and weight.", propertyTypeIDs: ["home", "colors", "size", "lifespan", "weight"], maximumItemCount: 12),
+            GameplayStageDefinition(id: "world-birds-bond-blast", kind: .bondBlast, title: "Bird Blast", prompt: "Connect bird pictures with their names, home clues, and visible colors.", propertyTypeIDs: ["name", "home", "colors"], maximumItemCount: 12),
         ],
         progressionPolicy: GameplayProgressionPolicy(minimumAccuracyToAdvance: 0.70, retryMissedItemsFirst: true)
     )

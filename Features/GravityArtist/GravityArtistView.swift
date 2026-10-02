@@ -177,6 +177,9 @@ struct GravityArtistView: View {
 
     // Tilt
     @State private var neutralRoll: Double? = nil
+    @State private var useTouchAim = true
+    @State private var hasChosenPrediction = false
+    @State private var predictionFraction: Double = 0.5
     @State private var currentAngle: Double = 45       // degrees, 5–80
 
     // Game state
@@ -208,6 +211,14 @@ struct GravityArtistView: View {
                             angleLabelOverlay
                         }
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { location in
+                        guard roundState.phase == .aim else { return }
+                        targetX = max(40, min(location.x, geo.size.width - 40))
+                        predictionFraction = targetX / geo.size.width
+                        hasChosenPrediction = true
+                        appModel.speechService.speak("Your landing guess is set. Lock it, then observe.", enabled: appModel.featureFlags.audioEnabled)
+                    }
                     .onAppear {
                         handleCanvasSizeChange(geo.size)
                     }
@@ -219,7 +230,7 @@ struct GravityArtistView: View {
             }
         }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
-            guard roundState.phase == .aim else { return }
+            guard !useTouchAim, roundState.phase == .aim else { return }
             if neutralRoll == nil { neutralRoll = roll }
             let delta = roll - neutralRoll!
             let raw = 45 + delta / (.pi / 4) * 35
@@ -228,6 +239,7 @@ struct GravityArtistView: View {
         .onAppear {
             sessionStart = .now
             appModel.motionService.startUpdates()
+            appModel.speechService.speak("Choose the launch power and aim. Tap where you think the ball will land. Lock your guess, then observe.", enabled: appModel.featureFlags.audioEnabled)
         }
         .onDisappear {
             appModel.motionService.stopUpdates()
@@ -268,12 +280,13 @@ struct GravityArtistView: View {
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
             Button {
-                appModel.engine.showHome()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.secondary)
             }
+            .frame(minWidth: 80, minHeight: 80)
             .accessibilityLabel("Done")
         }
         .padding(.horizontal, 24)
@@ -292,9 +305,9 @@ struct GravityArtistView: View {
 
     private var phaseHint: String {
         switch roundState.phase {
-        case .aim:       return "Guess where the pebble will roll"
-        case .predicted: return "Prediction locked — tilt, watch, and compare"
-        case .fired:     return hitTarget ? "You predicted gravity!" : "New guess: what changed?"
+        case .aim:       return "Tap where you think the ball will land"
+        case .predicted: return "Prediction locked. Observe, then compare"
+        case .fired:     return hitTarget ? "Your landing guess was close!" : "Compare your guess and the landing"
         }
     }
 
@@ -316,16 +329,7 @@ struct GravityArtistView: View {
             // Target marker
             let ty = groundY
             let tx = targetX
-            drawTarget(ctx: ctx, x: tx, y: ty)
-
-            // Predicted arc (dotted amber) — drawn behind fired arc
-            if let predicted = predictedArcPoints, predicted.count >= 2 {
-                var path = Path()
-                path.move(to: predicted[0])
-                for pt in predicted.dropFirst() { path.addLine(to: pt) }
-                ctx.stroke(path, with: .color(MatherTheme.warm.opacity(0.6)),
-                           style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [8, 6]))
-            }
+            if hasChosenPrediction { drawTarget(ctx: ctx, x: tx, y: ty) }
 
             // Fired arc (solid accent/red)
             if let fired = firedArcPoints, fired.count >= 2 {
@@ -334,21 +338,6 @@ struct GravityArtistView: View {
                 for pt in fired.dropFirst() { path.addLine(to: pt) }
                 ctx.stroke(path, with: .color(hitTarget ? MatherTheme.accent : MatherTheme.coral),
                            style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            }
-
-            // Live preview arc when aiming (faint, solid)
-            if roundState.phase == .aim {
-                let liveVelocity = GravityArtistPhysics.velocityForPower[roundState.selectedPower] ?? 350
-                let livePts = GravityArtistPhysics.arcPoints(
-                    angleDeg: currentAngle, velocity: liveVelocity,
-                    cannonOrigin: cannon, canvasHeight: groundY)
-                if livePts.count >= 2 {
-                    var lp = Path()
-                    lp.move(to: livePts[0])
-                    for pt in livePts.dropFirst() { lp.addLine(to: pt) }
-                    ctx.stroke(lp, with: .color(MatherTheme.ink.opacity(0.2)),
-                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 4]))
-                }
             }
 
             // Cannon
@@ -429,7 +418,7 @@ struct GravityArtistView: View {
                         .font(.system(size: size))
                         .foregroundStyle(roundState.selectedPower == p ? MatherTheme.accent : MatherTheme.ink.opacity(0.3))
                 }
-                .frame(width: 44, height: 44)
+                .frame(width: 80, height: 80)
                 .disabled(roundState.phase != .aim)
             }
         }
@@ -463,13 +452,20 @@ struct GravityArtistView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
+            if roundState.phase == .aim {
+                HStack(spacing: 10) {
+                    Button { useTouchAim = true; currentAngle = max(15, currentAngle - 15) } label: { Label("Lower", systemImage: "arrow.down").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                    Button { useTouchAim = true; currentAngle = min(75, currentAngle + 15) } label: { Label("Higher", systemImage: "arrow.up").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                    Button { useTouchAim.toggle() } label: { Text(useTouchAim ? "Use tilt" : "Use touch").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                }
+            }
             conceptCard
             HStack(spacing: 16) {
                 switch roundState.phase {
                 case .aim:
-                    crispActionButton(title: "PREDICT ROLL", fill: MatherTheme.warm) {
+                    crispActionButton(title: "LOCK MY GUESS", fill: MatherTheme.warm) {
                         handlePredict()
-                    }
+                    }.disabled(!hasChosenPrediction)
 
                 case .predicted:
                     crispActionButton(title: "OBSERVE", fill: MatherTheme.coral) {
@@ -477,14 +473,14 @@ struct GravityArtistView: View {
                     }
 
                 case .fired:
-                    crispActionButton(title: "NEW ROLL", fill: MatherTheme.softBlue) {
+                    crispActionButton(title: roundsPlayed >= 3 ? "FINISH" : "NEW ROLL", fill: MatherTheme.softBlue) {
                         handleNextRound()
                     }
                 }
             }
             .padding(.horizontal, 24)
 
-            Text("Tilt the device: the arrow shows screen-down gravity • no camera or location")
+            Text("Tap a landing guess before you observe. Touch or tilt can set your aim.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
@@ -514,18 +510,18 @@ struct GravityArtistView: View {
         .background(MatherTheme.card.opacity(0.86), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 24)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(contract?.accessibilityLabel ?? conceptCardText)
+        .accessibilityLabel(conceptCardText)
     }
 
     private var conceptCardText: String {
         let contract = LabActivityID.gravityArtist.introConceptCard
         switch roundState.phase {
         case .aim:
-            return contract?.childPrompt ?? "Predict the path first."
+            return "Choose an aim and power. Tap the ground where you think the ball will land."
         case .predicted:
-            return "Now simulate: compare your dotted guess with the real roll."
+            return "Your marker is your guess. Observe and compare it with the landing."
         case .fired:
-            return hitTarget ? (contract?.summaryPrompt ?? "Your prediction matched the simulation.") : "Learning: change angle or power, then test again."
+            return hitTarget ? "Your landing prediction was close. What happens with a different power?" : "The ball landed somewhere else. Compare your marker and the landing, then make another guess."
         }
     }
 
@@ -534,7 +530,7 @@ struct GravityArtistView: View {
             Text(title)
                 .font(.system(size: 19, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity, minHeight: 62)
+                .frame(maxWidth: .infinity, minHeight: 80)
                 .background(fill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -549,9 +545,9 @@ struct GravityArtistView: View {
     // MARK: - Actions
 
     private func handlePredict() {
-        guard canvasSize != .zero else { return }
-        let launch = roundState.lockPrediction(angleDeg: currentAngle)
-        predictedArcPoints = GravityArtistPhysics.arcPoints(launch: launch, canvasSize: canvasSize)
+        guard canvasSize != .zero, hasChosenPrediction else { return }
+        _ = roundState.lockPrediction(angleDeg: currentAngle)
+        predictedArcPoints = nil
         appModel.speechService.speak(
             "Prediction locked. Now fire!",
             enabled: appModel.featureFlags.audioEnabled
@@ -571,20 +567,21 @@ struct GravityArtistView: View {
             successStreak += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
-                "Bull's eye! The launch angle was \(Int(launch.angleDeg.rounded())) degrees.",
+                "Your guess was close! The ball landed near your marker.",
                 enabled: appModel.featureFlags.audioEnabled
             )
         } else {
             successStreak = 0
             appModel.hapticsService.failure(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
-                "So close! Try again.",
+                "Compare your guess with where the ball landed. What would you change?",
                 enabled: appModel.featureFlags.audioEnabled
             )
         }
     }
 
     private func handleNextRound() {
+        if roundsPlayed >= 3 { appModel.engine.returnFromGameplay(defaultRoute: .home); return }
         guard canvasSize != .zero else { return }
         setupNewRound(size: canvasSize)
     }
@@ -593,11 +590,9 @@ struct GravityArtistView: View {
         // Randomise target angle and power to keep rounds varied
         let angles = [20.0, 30.0, 45.0, 55.0, 65.0]
         roundState.startNewRound(targetAngle: angles.randomElement() ?? 45)
-        targetX = GravityArtistPhysics.targetX(
-            angleDeg: roundState.targetAngle,
-            power: roundState.targetPower,
-            canvasSize: size
-        )
+        targetX = size.width * 0.5
+        predictionFraction = 0.5
+        hasChosenPrediction = false
         predictedArcPoints = nil
         firedArcPoints = nil
         hitTarget = false
@@ -619,15 +614,8 @@ struct GravityArtistView: View {
     }
 
     private func refreshGeometryDependentState(size: CGSize) {
-        targetX = GravityArtistPhysics.targetX(
-            angleDeg: roundState.targetAngle,
-            power: roundState.targetPower,
-            canvasSize: size
-        )
-
-        if let predictedLaunch = roundState.predictedLaunch {
-            predictedArcPoints = GravityArtistPhysics.arcPoints(launch: predictedLaunch, canvasSize: size)
-        }
+        targetX = size.width * predictionFraction
+        predictedArcPoints = nil
 
         if let firedLaunch = roundState.firedLaunch {
             let fired = GravityArtistPhysics.arcPoints(launch: firedLaunch, canvasSize: size)

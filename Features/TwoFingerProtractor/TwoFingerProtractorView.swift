@@ -34,6 +34,18 @@ enum ProtractorMath {
     }
 }
 
+struct ProtractorCompletionProgress: Equatable {
+    private(set) var completedLevelIndices: Set<Int> = []
+    var count: Int { completedLevelIndices.count }
+    mutating func complete(levelIndex: Int, levelCount: Int) -> Bool {
+        guard levelCount > 0, levelIndex >= 0 else { return false }
+        return completedLevelIndices.insert(levelIndex % levelCount).inserted
+    }
+    func isComplete(levelIndex: Int, levelCount: Int) -> Bool {
+        levelCount > 0 && completedLevelIndices.contains(levelIndex % levelCount)
+    }
+}
+
 // MARK: - UIKit multi-touch view
 
 /// Exposes simultaneous two-touch positions via a callback.
@@ -296,6 +308,8 @@ struct TwoFingerProtractorView: View {
     @State private var matched: Bool = false
     @State private var levelIndex: Int = 0
     @State private var wonCount: Int = 0
+    @State private var completionProgress = ProtractorCompletionProgress()
+    @State private var touchAimAngle: Double = 30
     @State private var sessionStart: Date = .now
     @State private var showDegreeLabel: Bool = false
     @State private var canvasSize: CGSize = .zero
@@ -342,6 +356,8 @@ struct TwoFingerProtractorView: View {
                                     .allowsHitTesting(false)
                             }
                         }
+                        .onAppear { canvasSize = geo.size }
+                        .onChange(of: geo.size) { _, size in canvasSize = size }
                     }
                     bottomBar
                 }
@@ -383,12 +399,13 @@ struct TwoFingerProtractorView: View {
             }
             Spacer()
             Button {
-                appModel.engine.showHome()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.secondary)
             }
+            .frame(minWidth: 80, minHeight: 80)
             .accessibilityLabel("Done")
         }
         .padding(.horizontal, 24)
@@ -535,7 +552,7 @@ struct TwoFingerProtractorView: View {
         measuredAngle = 0
         mode = .touchBuild
         appModel.speechService.speak(
-            "Now use two fingers to make \(Int(level.targetAngle)) degrees.",
+            "Make \(Int(level.targetAngle)) degrees. Use two fingers, or tap Smaller and Wider.",
             enabled: appModel.featureFlags.audioEnabled
         )
     }
@@ -544,13 +561,17 @@ struct TwoFingerProtractorView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Button { adjustTouchArms(by: -15) } label: { Label("Smaller", systemImage: "arrow.down.right.and.arrow.up.left").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                Button { adjustTouchArms(by: 15) } label: { Label("Wider", systemImage: "arrow.up.left.and.arrow.down.right").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+            }
             if matched {
                 Button(action: advanceLevel) {
                     Text(wonCount >= protractorLevels.count ? "All done!" : "Next angle →")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                        .frame(minHeight: 80)
                         .background(MatherTheme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
@@ -739,6 +760,17 @@ struct TwoFingerProtractorView: View {
 
     // MARK: - Logic
 
+    private func adjustTouchArms(by delta: Double) {
+        guard canvasSize != .zero else { return }
+        touchAimAngle = max(0, min(180, (touch1 == nil ? 30 : measuredAngle) + delta))
+        let pivot = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+        let radius = min(canvasSize.width, canvasSize.height) * 0.32
+        touch1 = CGPoint(x: pivot.x + radius, y: pivot.y)
+        let radians = touchAimAngle * .pi / 180
+        touch2 = CGPoint(x: pivot.x + radius * cos(radians), y: pivot.y - radius * sin(radians))
+        updateAngle(canvasSize: canvasSize)
+    }
+
     private func updateAngle(canvasSize: CGSize) {
         guard let p1 = touch1, let p2 = touch2 else {
             measuredAngle = 0
@@ -757,7 +789,8 @@ struct TwoFingerProtractorView: View {
         matched = transition.matched
 
         if transition.newlyMatched {
-            wonCount += 1
+            guard completionProgress.complete(levelIndex: levelIndex, levelCount: protractorLevels.count) else { return }
+            wonCount = completionProgress.count
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
                 "That's \(Int(level.targetAngle)) degrees! \(level.sceneName).",
@@ -768,10 +801,10 @@ struct TwoFingerProtractorView: View {
 
     private func advanceLevel() {
         if wonCount >= protractorLevels.count {
-            appModel.engine.showHome()
+            appModel.engine.returnFromGameplay(defaultRoute: .home)
             return
         }
-        levelIndex += 1
+        repeat { levelIndex += 1 } while completionProgress.isComplete(levelIndex: levelIndex, levelCount: protractorLevels.count)
         matched = false
         showDegreeLabel = false
         touch1 = nil

@@ -75,10 +75,10 @@ struct CountryGameplayThreadTests {
         let thread = CountryGameplayThread.thread
 
         let flashcards = try round(kind: .flashcards, thread: thread)
-        #expect(flashcards.items.count == 8)
+        #expect(flashcards.items.count == 4)
         #expect(thread.entities.count > flashcards.items.count)
         #expect(flashcards.items.allSatisfy { $0.propertyID == nil })
-        #expect(GameplayStageContentBuilder.flashcards(thread: thread, round: flashcards).count == 8)
+        #expect(GameplayStageContentBuilder.flashcards(thread: thread, round: flashcards).count == flashcards.items.count)
 
         let easy = try round(kind: .easyMemory, thread: thread)
         #expect(!easy.items.isEmpty)
@@ -96,7 +96,7 @@ struct CountryGameplayThreadTests {
         #expect(flipPairs.allSatisfy { $0.right.presentation == .visualWithTitle })
 
         let bondBlast = try round(kind: .bondBlast, thread: thread)
-        #expect(bondBlast.items.count == 10)
+        #expect(bondBlast.items.count == 4)
         #expect(bondBlast.items.allSatisfy { $0.propertyTypeID == "currency" })
 
         let quiz = try round(kind: .multipleChoice, thread: thread)
@@ -118,7 +118,7 @@ struct CountryGameplayThreadTests {
         let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, seed: 912)
         let pairs = GameplayStageContentBuilder.matchPairs(thread: thread, round: round)
 
-        #expect(round.items.count == min(stage.maximumItemCount, thread.entities.count))
+        #expect(round.items.count == min(4, min(stage.maximumItemCount, thread.entities.count)))
         #expect(round.items.allSatisfy { $0.propertyTypeID == "flag" })
         #expect(pairs.allSatisfy { $0.left.title == "Name this flag" })
         #expect(pairs.allSatisfy { $0.left.presentation == .visualOnly })
@@ -156,7 +156,8 @@ struct CountryGameplayThreadTests {
         let questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round, choicesPerQuestion: 4)
         let kenyaQuestion = try #require(questions.first { $0.answer.entityID == "country-kenya" })
 
-        #expect(kenyaQuestion.prompt == "Which one matches Kenya?")
+        #expect(kenyaQuestion.prompt.contains("Kenya"))
+        #expect(kenyaQuestion.prompt.contains(thread.propertyTypes.first { $0.id == "continent" }!.prompt))
         #expect(kenyaQuestion.answer.title == "Africa")
         #expect(kenyaQuestion.choices.map(\.title).filter { $0 == "Africa" }.count == 1)
         #expect(questions.allSatisfy { question in

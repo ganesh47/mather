@@ -18,10 +18,10 @@ extension GameplayThreadCatalog {
             GameplayPropertyType(id: "sides", displayName: "Sides", prompt: "Find the sides clue."),
         ],
         entities: [
-            GameplayEntity(id: "shape-circle", name: "Circle", summary: "Round with no corners or sides.", visualKey: "●", properties: [
+            GameplayEntity(id: "shape-circle", name: "Circle", summary: "Round with no corners or straight sides.", visualKey: "●", properties: [
                 GameplayProperty(id: "shape-circle-name",  typeID: "name",  value: "Circle",          explanation: "Circle is this shape's name.",                  visualKey: "●"),
                 GameplayProperty(id: "shape-circle-clue",  typeID: "clue",  value: "Round, no corners", explanation: "A circle is round with no corners."),
-                GameplayProperty(id: "shape-circle-sides", typeID: "sides", value: "0 sides",          explanation: "A circle has no straight sides."),
+                GameplayProperty(id: "shape-circle-sides", typeID: "sides", value: "0 straight sides",          explanation: "A circle has no straight sides."),
             ]),
             GameplayEntity(id: "shape-triangle", name: "Triangle", summary: "Three sides and three corners.", visualKey: "▲", properties: [
                 GameplayProperty(id: "shape-triangle-name",  typeID: "name",  value: "Triangle",       explanation: "Triangle is this shape's name.",                 visualKey: "▲"),
@@ -41,12 +41,12 @@ extension GameplayThreadCatalog {
             GameplayEntity(id: "shape-oval", name: "Oval", summary: "Stretched like an egg, no corners.", visualKey: "⬭", properties: [
                 GameplayProperty(id: "shape-oval-name",  typeID: "name",  value: "Oval",               explanation: "Oval is this shape's name.",                     visualKey: "⬭"),
                 GameplayProperty(id: "shape-oval-clue",  typeID: "clue",  value: "Egg shape",          explanation: "An oval is round and stretched like an egg."),
-                GameplayProperty(id: "shape-oval-sides", typeID: "sides", value: "0 sides",            explanation: "An oval has no straight sides."),
+                GameplayProperty(id: "shape-oval-sides", typeID: "sides", value: "0 straight sides",            explanation: "An oval has no straight sides."),
             ]),
-            GameplayEntity(id: "shape-diamond", name: "Diamond", summary: "A square turned onto a point.", visualKey: "◆", properties: [
-                GameplayProperty(id: "shape-diamond-name",  typeID: "name",  value: "Diamond",          explanation: "Diamond is this shape's name.",                  visualKey: "◆"),
-                GameplayProperty(id: "shape-diamond-clue",  typeID: "clue",  value: "Point on top",     explanation: "A diamond sits with a point at top and bottom."),
-                GameplayProperty(id: "shape-diamond-sides", typeID: "sides", value: "4 sides",          explanation: "A diamond has four straight sides."),
+            GameplayEntity(id: "shape-diamond", name: "Rhombus", summary: "Four equal sides. Diamond is a nickname for this shape.", visualKey: "◆", properties: [
+                GameplayProperty(id: "shape-diamond-name",  typeID: "name",  value: "Rhombus",          explanation: "Rhombus is the math name. Diamond is a nickname.",                  visualKey: "◆"),
+                GameplayProperty(id: "shape-diamond-clue",  typeID: "clue",  value: "4 equal sides",     explanation: "A rhombus can point any way. Turning a square keeps it a square."),
+                GameplayProperty(id: "shape-diamond-sides", typeID: "sides", value: "4 sides",          explanation: "A rhombus has four equal straight sides."),
             ]),
             GameplayEntity(id: "shape-star", name: "Star", summary: "Points reaching out from the middle.", visualKey: "★", properties: [
                 GameplayProperty(id: "shape-star-name",  typeID: "name",  value: "Star",               explanation: "Star is this shape's name.",                     visualKey: "★"),
@@ -73,8 +73,8 @@ extension GameplayThreadCatalog {
                 GameplayProperty(id: "shape-crescent-clue",  typeID: "clue",  value: "Moon curve",        explanation: "A crescent looks like a thin moon."),
                 GameplayProperty(id: "shape-crescent-sides", typeID: "sides", value: "Curved",            explanation: "A crescent is made from curved lines."),
             ]),
-            GameplayEntity(id: "shape-trapezoid", name: "Trapezoid", summary: "Four sides with one pair of opposite sides parallel.", visualKey: "▰", properties: [
-                GameplayProperty(id: "shape-trapezoid-name",  typeID: "name",  value: "Trapezoid",        explanation: "Trapezoid is this shape's name.",               visualKey: "▰"),
+            GameplayEntity(id: "shape-trapezoid", name: "Trapezoid", summary: "Four sides with one pair of opposite sides parallel.", visualKey: "⏢", properties: [
+                GameplayProperty(id: "shape-trapezoid-name",  typeID: "name",  value: "Trapezoid",        explanation: "Trapezoid is this shape's name.",               visualKey: "⏢"),
                 GameplayProperty(id: "shape-trapezoid-clue",  typeID: "clue",  value: "Table top",        explanation: "A trapezoid can look like a table top or ramp."),
                 GameplayProperty(id: "shape-trapezoid-sides", typeID: "sides", value: "4 sides",          explanation: "A trapezoid has four straight sides."),
             ]),

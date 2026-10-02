@@ -246,8 +246,7 @@ private struct GameplayDisplayVisual: View {
                     .font(.system(size: visualSize, weight: .black, design: .rounded))
                     .foregroundStyle(MatherTheme.accent)
             } else if let assetName = item.visualAssetName {
-                Image(assetName)
-                    .resizable()
+                LearningContentImage(name: assetName)
                     .scaledToFit()
                     .accessibilityHidden(true)
                     .padding(visualAssetPadding)
@@ -442,10 +441,8 @@ struct GameplayPairingStageShell: View {
     var showsStagePrompt = true
     @Binding var viewModel: GameplayMatchStageViewModel
     let actions: GameplayStageFeedbackActions
-    let onComplete: (Int, Int, Int) -> Void
+    let onComplete: ([ItemAttempt]) -> Void
 
-    @State private var autoProgressTask: Task<Void, Never>?
-    @State private var autoProgressSignature: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
@@ -464,6 +461,7 @@ struct GameplayPairingStageShell: View {
                     let state = viewModel.cardState(forLeft: pair)
                     Button {
                         viewModel.selectLeft(pairID: pair.id)
+                        actions.speak(pair.left.title + ". Find its match.")
                     } label: {
                         GameplayDisplayCard(
                             item: pair.left,
@@ -488,13 +486,13 @@ struct GameplayPairingStageShell: View {
                         let correct = viewModel.chooseRight(item)
                         if correct { actions.success() }
                         else if wasMatching { actions.failure() }
-                        scheduleAutoProgressIfReady()
+                        actions.speak(correct ? "You found it. " + item.spokenText : (wasMatching ? "Try another match. You can ask for help." : item.spokenText))
                     } label: {
                         GameplayDisplayCard(
                             item: item,
                             compact: compact,
                             showsSubtitle: false,
-                            selected: state == .selected,
+                            selected: state == .selected || viewModel.helpedRightID == item.id,
                             inspected: state == .inspected,
                             matched: state == .matched,
                             correct: state == .justMatched,
@@ -506,10 +504,13 @@ struct GameplayPairingStageShell: View {
                     .accessibilityLabel(viewModel.accessibilityLabel(for: item, side: .right))
                 }
             }
-            if autoProgressSignature != nil {
-                GameplayMatchRewardBanner(text: "Turn complete! Tap Next turn now, or it will open automatically.")
+            if viewModel.canAdvanceTurn {
+                GameplayMatchRewardBanner(text: "You found these matches! Tap Next turn when ready.")
             } else if viewModel.isComplete {
                 GameplayMatchRewardBanner(text: "Stage complete — finish when you’re ready!")
+            }
+            if let helpText = viewModel.helpText {
+                GameplayTurnGuidance(text: helpText, compact: compact)
             }
             if let item = viewModel.inspectedItem, !viewModel.shouldConcealRight(item) {
                 GameplayCardDetailCallout(item: item, compact: compact)
@@ -530,45 +531,17 @@ struct GameplayPairingStageShell: View {
         .padding(compact ? 14 : 20)
         .padding(.bottom, compact ? 12 : 8)
         .background(GameplayStagePanel())
-        .onDisappear { cancelAutoProgress() }
+        .onAppear { narrateTurn() }
+        .onChange(of: viewModel.activeTurnIndex) { _, _ in narrateTurn() }
     }
 
-    private func scheduleAutoProgressIfReady() {
-        let signature: String?
-        if viewModel.canAdvanceTurn {
-            signature = "turn-\(viewModel.activeTurnIndex)-\(viewModel.correctCount)"
-        } else {
-            signature = nil
-        }
-        guard let signature else { return }
-        guard autoProgressSignature != signature else { return }
-        cancelAutoProgress()
-        autoProgressSignature = signature
-        autoProgressTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1_200))
-            guard autoProgressSignature == signature else { return }
-            if viewModel.canAdvanceTurn {
-                if reduceMotion {
-                    viewModel.advanceTurn()
-                } else {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                        viewModel.advanceTurn()
-                    }
-                }
-            }
-            autoProgressSignature = nil
-            autoProgressTask = nil
-        }
-    }
-
-    private func cancelAutoProgress() {
-        autoProgressTask?.cancel()
-        autoProgressTask = nil
-        autoProgressSignature = nil
+    private func narrateTurn() {
+        let choices = viewModel.mode == .flipMemory ? "Turn a hidden card to hear it." : "Choices: " + viewModel.shuffledRights.map(\.title).joined(separator: ", ")
+        actions.speak(prompt + " " + choices)
     }
 
     private var hintControl: some View {
-        Button("Hint") { viewModel.hintCount += 1 }
+        Button("Help me") { actions.speak(viewModel.showHelp()) }
             .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
     }
 
@@ -597,8 +570,7 @@ struct GameplayPairingStageShell: View {
 
     private var finishStageButton: some View {
         Button("Finish stage") {
-            cancelAutoProgress()
-            onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+            onComplete(viewModel.evidence.attempts)
         }
         .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
         .accessibilityIdentifier("gameplay-match-finish-stage")
@@ -607,8 +579,7 @@ struct GameplayPairingStageShell: View {
     @ViewBuilder
     private var footerProgressOrAction: some View {
         if viewModel.canAdvanceTurn {
-            Button(autoProgressSignature == nil ? "Next turn" : "Next turn now") {
-                cancelAutoProgress()
+            Button("Next turn") {
                 viewModel.advanceTurn()
             }
             .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))

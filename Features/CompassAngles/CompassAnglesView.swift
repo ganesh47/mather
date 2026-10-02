@@ -155,9 +155,11 @@ struct CompassAnglesView: View {
     @State private var showDegreeLabel: Bool = false
     @State private var showTurnFallback: Bool = false
     @State private var turnFallbackTask: Task<Void, Never>?
+    @State private var playSeated = true
+    @State private var manualYaw: Double = 0
 
     private var level: CompassWalkTurnLevel { compassWalkTurnLevels[levelIndex % compassWalkTurnLevels.count] }
-    private var currentYaw: Double { appModel.motionService.relativeYaw }
+    private var currentYaw: Double { playSeated ? manualYaw : appModel.motionService.relativeYaw }
     private var stepService: StepCountService { appModel.stepCountService }
     private var turnMatched: Bool { phase == .success }
 
@@ -174,7 +176,7 @@ struct CompassAnglesView: View {
                     }
                 }
                 .onChange(of: appModel.motionService.relativeYaw) { _, yaw in
-                    checkSnap(yaw: yaw)
+                    if !playSeated { checkSnap(yaw: yaw) }
                 }
                 .onChange(of: stepService.countedSteps) { _, _ in
                     checkWalkProgress()
@@ -185,6 +187,7 @@ struct CompassAnglesView: View {
         .onAppear {
             sessionStart = .now
             appModel.motionService.startUpdates()
+            appModel.speechService.speak("Play seated with taps, or choose walking. Move the arrow, then turn it to the guide.", enabled: appModel.featureFlags.audioEnabled)
         }
         .onDisappear {
             turnFallbackTask?.cancel()
@@ -209,20 +212,21 @@ struct CompassAnglesView: View {
                 Text("Compass Walk")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text(level.shortHint)
+                Text(playSeated ? "Move \(level.steps) spaces \(level.walkDirection.title), then turn the arrow." : level.shortHint)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Clear space • small steps • no running")
+                Text(playSeated ? "Touch controls · stay seated" : "Clear space • small steps • no running")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
             Spacer()
-            Button { appModel.engine.showHome() } label: {
+            Button { appModel.engine.returnFromGameplay(defaultRoute: .home) } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.secondary)
             }
+            .frame(minWidth: 80, minHeight: 80)
             .accessibilityLabel("Done")
         }
         .padding(.horizontal, 24)
@@ -237,15 +241,15 @@ struct CompassAnglesView: View {
             Image(systemName: "figure.walk")
                 .font(.system(size: 48))
                 .foregroundStyle(MatherTheme.softBlue)
-            Text("Make a safe space first")
+            Text(playSeated ? "Move and turn an arrow" : "Make a safe space first")
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.center)
-            Text("Take small careful steps. Keep the iPad steady. No running, jumping, stairs, or bumps.")
+            Text(playSeated ? "Tap Move one space. Then use Turn left and Turn right to match the guide." : "Take small careful steps. Keep the iPad steady. No running, jumping, stairs, or bumps.")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(MatherTheme.cardSubtitle)
                 .multilineTextAlignment(.center)
-            Text(level.instruction)
+            Text(playSeated ? "Move \(level.steps) spaces \(level.walkDirection.title). Then turn." : level.instruction)
                 .font(.title3.weight(.black))
                 .foregroundStyle(MatherTheme.ink)
                 .multilineTextAlignment(.center)
@@ -350,6 +354,15 @@ struct CompassAnglesView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 8) {
+            if phase == .ready {
+                Button { playSeated.toggle() } label: { Text(playSeated ? "Seated play · choose walking" : "Walking play · choose seated").frame(maxWidth: .infinity, minHeight: 80) }.buttonStyle(.bordered)
+            }
+            if phase == .turning && (playSeated || showTurnFallback) {
+                HStack(spacing: 12) {
+                    Button { playSeated = true; manualYaw = CompassMath.normalise(manualYaw - 45); checkSnap(yaw: manualYaw) } label: { Label("Turn left", systemImage: "arrow.turn.up.left").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                    Button { playSeated = true; manualYaw = CompassMath.normalise(manualYaw + 45); checkSnap(yaw: manualYaw) } label: { Label("Turn right", systemImage: "arrow.turn.up.right").frame(minWidth: 80, minHeight: 80) }.buttonStyle(.bordered)
+                }
+            }
             phaseCueCard
 
             if phase == .success {
@@ -366,7 +379,7 @@ struct CompassAnglesView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            Text("Clear space, small steps, no running")
+            Text(playSeated ? "Seated play: taps move and turn the arrow" : "Clear space, small steps, no running")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 16)
@@ -398,9 +411,7 @@ struct CompassAnglesView: View {
             if phase == .walking {
                 stepProgressView
             }
-            if phase == .turning, showTurnFallback {
-                turnFallbackButton
-            }
+
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -437,19 +448,19 @@ struct CompassAnglesView: View {
             ProgressView(value: stepService.progress.fractionComplete)
                 .tint(MatherTheme.accent)
             HStack {
-                Text("\(min(stepService.countedSteps, level.steps)) / \(level.steps) small steps")
+                Text("\(min(stepService.countedSteps, level.steps)) / \(level.steps) \(playSeated ? "spaces" : "small steps")")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
                 Spacer()
                 if case .manualFallback(let reason) = stepService.mode {
-                    Button("I took a step") {
+                    Button(playSeated ? "Move one space" : "I took a step") {
                         stepService.addManualStep()
                         checkWalkProgress()
                     }
                     .font(.caption.weight(.black))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .frame(minWidth: 80, minHeight: 80)
                     .background(MatherTheme.accent, in: Capsule())
                     .accessibilityHint(reason)
                 } else {
@@ -488,10 +499,10 @@ struct CompassAnglesView: View {
 
     private var phaseSubtitle: String {
         switch phase {
-        case .ready: level.instruction
-        case .walking: level.walkHint
-        case .turning: Self.bodyRelativeHint(for: level.targetDeg)
-        case .success: "Nice careful movement."
+        case .ready: playSeated ? "Move and turn the arrow with taps." : level.instruction
+        case .walking: playSeated ? "Tap to move \(level.steps) spaces \(level.walkDirection.title)." : level.walkHint
+        case .turning: playSeated ? "Turn the red pointer until it matches the blue guide." : Self.bodyRelativeHint(for: level.targetDeg)
+        case .success: playSeated ? "The arrow matches the guide." : "Nice careful movement."
         }
     }
 
@@ -537,9 +548,11 @@ struct CompassAnglesView: View {
         showDegreeLabel = false
         turnFallbackTask?.cancel()
         appModel.motionService.stopRelativeYawTracking()
+        manualYaw = 0
         stepService.start(requiredSteps: level.steps)
+        if playSeated { stepService.useManualFallback() }
         appModel.speechService.speak(
-            "Clear space. Walk \(level.steps) small careful steps \(level.walkDirection.title). No running.",
+            playSeated ? "Tap to move \(level.steps) spaces \(level.walkDirection.title). Then turn the arrow." : "Clear space. Walk \(level.steps) small careful steps \(level.walkDirection.title). No running.",
             enabled: appModel.featureFlags.audioEnabled
         )
     }
@@ -562,8 +575,8 @@ struct CompassAnglesView: View {
         stepService.stop()
         appModel.motionService.startRelativeYawTracking()
         appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
-        appModel.speechService.speak(level.turnHint, enabled: appModel.featureFlags.audioEnabled)
-        scheduleTurnFallbackIfNeeded()
+        appModel.speechService.speak(playSeated ? "Now turn the arrow to match the guide. Use Turn left or Turn right." : level.turnHint, enabled: appModel.featureFlags.audioEnabled)
+        if !playSeated { scheduleTurnFallbackIfNeeded() }
     }
 
     private func checkSnap(yaw: Double) {
@@ -575,7 +588,7 @@ struct CompassAnglesView: View {
             wonCount += 1
             appModel.hapticsService.success(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak(
-                "Perfect! You walked carefully, then turned \(Int(level.targetDeg.magnitude)) degrees.",
+                playSeated ? "The arrow matches! You moved, then turned it \(Int(level.targetDeg.magnitude)) degrees." : "Perfect! You walked carefully, then turned \(Int(level.targetDeg.magnitude)) degrees.",
                 enabled: appModel.featureFlags.audioEnabled
             )
         }
@@ -583,7 +596,7 @@ struct CompassAnglesView: View {
 
     private func advanceLevel() {
         if wonCount >= compassWalkTurnLevels.count {
-            appModel.engine.showHome()
+            appModel.engine.returnFromGameplay(defaultRoute: .home)
             return
         }
         levelIndex += 1

@@ -71,8 +71,9 @@ struct WaterCycleGameplayThreadTests {
 
         let bondStage = thread.stages[3]
         let bondRound = SpacedRepetitionScheduler.makeRound(thread: thread, stage: bondStage, seed: 912)
-        #expect(bondRound.items.count == 8)
-        #expect(Set(bondRound.items.compactMap(\.propertyTypeID)) == ["cause", "visualClue"])
+        #expect(bondRound.items.count == 4)
+        #expect(!bondRound.items.isEmpty)
+        #expect(Set(bondRound.items.compactMap(\.propertyTypeID)).isSubset(of: ["cause", "visualClue"]))
 
         let quizStage = thread.stages[4]
         let quizRound = SpacedRepetitionScheduler.makeRound(thread: thread, stage: quizStage, seed: 912)

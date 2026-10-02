@@ -222,53 +222,22 @@ struct GravitySplitView: View {
 
     private var seesawBalancePreview: some View {
         let placedCount = state.leftCount + state.rightCount
-        let totalPlaced = max(1, placedCount)
-        let tilt = CGFloat(state.rightCount - state.leftCount) / CGFloat(totalPlaced)
-        let rotation = placedCount == 0 ? 0 : Double(max(-0.16, min(0.16, tilt)) * 18)
-        let barStyle = placedCount == 0
-            ? AnyShapeStyle(MatherTheme.cardSubtitle.opacity(0.24))
-            : AnyShapeStyle(LinearGradient(
-                colors: [MatherTheme.warm.opacity(0.86), MatherTheme.accent.opacity(0.86)],
-                startPoint: .leading,
-                endPoint: .trailing
-            ))
-
-        return VStack(spacing: 4) {
-            ZStack(alignment: .center) {
-                Capsule()
-                    .fill(barStyle)
-                    .frame(height: 12)
-                    .overlay(
-                        Capsule()
-                            .strokeBorder(MatherTheme.ink.opacity(0.10), lineWidth: 1)
-                    )
-                    .rotationEffect(.degrees(rotation))
-                    .animation(.spring(response: 0.32, dampingFraction: 0.72), value: state.leftCount)
-                    .animation(.spring(response: 0.32, dampingFraction: 0.72), value: state.rightCount)
-
-                GravitySplitTrianglePivot()
-                    .fill(MatherTheme.ink.opacity(0.18))
-                    .frame(width: 34, height: 24)
-                    .offset(y: 17)
-
-                HStack {
-                    balancePan(label: vocabulary.leftLabel, count: state.leftCount, fill: MatherTheme.warm)
-                    Spacer(minLength: 34)
-                    balancePan(label: vocabulary.rightLabel, count: state.rightCount, fill: MatherTheme.accent)
-                }
-                .padding(.horizontal, 8)
+        return VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                balancePan(label: vocabulary.leftLabel, count: state.leftCount, fill: MatherTheme.warm)
+                Text("+").font(.title2.weight(.black))
+                balancePan(label: vocabulary.rightLabel, count: state.rightCount, fill: MatherTheme.accent)
+                Text("= \(placedCount)").font(.title2.weight(.black))
             }
-            .frame(height: 58)
-
-            Text(state.isLocked ? "See-saw balanced" : (placedCount == 0 ? "Place counters to start balancing" : "Balance the see-saw"))
-                .font(.caption2.weight(.black))
+            Text(state.isLocked ? "Both parts make \(state.target)" : (placedCount == 0 ? "Move counters into two parts" : "The whole stays the same"))
+                .font(.caption.weight(.black))
                 .foregroundStyle(state.isLocked ? MatherTheme.accent : MatherTheme.cardSubtitle)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(10)
+        .frame(maxWidth: .infinity)
         .background(MatherTheme.panel.opacity(0.56), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Lever see-saw balance. Left side has \(state.leftCount), right side has \(state.rightCount).")
+        .accessibilityLabel("Two parts of one whole. Left side has \(state.leftCount), right side has \(state.rightCount). Together they make \(placedCount).")
         .accessibilityIdentifier("gravity-seesaw-balance-preview")
     }
 
@@ -290,7 +259,7 @@ struct GravitySplitView: View {
                 .font(.subheadline.weight(.black))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, minHeight: 46)
+                .frame(maxWidth: .infinity, minHeight: 80)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

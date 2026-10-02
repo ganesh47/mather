@@ -5,18 +5,18 @@ struct MultipleChoiceStageView: View {
     let attemptID: String
     let actions: GameplayStageFeedbackActions
     let compact: Bool
-    let onComplete: (Int, Int, Int) -> Void
+    let onComplete: ([ItemAttempt]) -> Void
+    let onProgress: ([ItemAttempt], Data) -> Void
     @State private var viewModel: GameplayMultipleChoiceStageViewModel
-    @State private var showCorrectCelebration = false
-    @State private var delayedAdvanceTask: Task<Void, Never>?
 
-    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, attemptID: String, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
+    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, attemptID: String, actions: GameplayStageFeedbackActions, compact: Bool, stateData: Data? = nil, onProgress: @escaping ([ItemAttempt], Data) -> Void = { _, _ in }, onComplete: @escaping ([ItemAttempt]) -> Void) {
         self.stage = stage
         self.attemptID = attemptID
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
-        _viewModel = State(initialValue: GameplayMultipleChoiceStageViewModel(thread: thread, round: round))
+        self.onProgress = onProgress
+        _viewModel = State(initialValue: stateData.flatMap { try? JSONDecoder().decode(GameplayMultipleChoiceStageViewModel.self, from: $0) } ?? GameplayMultipleChoiceStageViewModel(thread: thread, round: round))
     }
 
     var body: some View {
@@ -39,8 +39,8 @@ struct MultipleChoiceStageView: View {
                                     GameplayDisplayCard(
                                         item: choice,
                                         compact: compact,
-                                        showsSubtitle: true,
-                                        selected: viewModel.isSelectedIncorrect(choice),
+                                        showsSubtitle: viewModel.canAdvanceAfterCorrectChoice || viewModel.helpedChoiceID == choice.id,
+                                        selected: viewModel.isSelectedIncorrect(choice) || viewModel.helpedChoiceID == choice.id,
                                         correct: viewModel.isSelectedCorrect(choice)
                                     )
                                 }
@@ -51,13 +51,26 @@ struct MultipleChoiceStageView: View {
                             }
                         }
 
-                        if showCorrectCelebration {
-                            MultipleChoiceCorrectCelebration(compact: compact)
-                                .transition(.scale.combined(with: .opacity))
-                                .accessibilityHidden(true)
-                        }
+
                     }
 
+                    if let helpText = viewModel.helpText {
+                        Text(helpText).font(.headline).foregroundStyle(MatherTheme.ink)
+                    }
+                    HStack(spacing: 12) {
+                        Button("Listen again") { narrateQuestion() }
+                            .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+                        Button("Help me") { actions.speak(viewModel.showHelp()) }
+                            .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+                            .disabled(viewModel.canAdvanceAfterCorrectChoice)
+                    }
+                    if viewModel.canAdvanceAfterCorrectChoice {
+                        Button(viewModel.activeIndex == viewModel.questions.count - 1 ? "Finish stage" : "Next question") {
+                            if viewModel.advanceAfterCorrectChoice() { onComplete(viewModel.evidence.attempts) }
+                        }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                        .accessibilityIdentifier("MultipleChoiceNextButton")
+                    }
                     if let selectedChoiceID = viewModel.selectedChoiceID {
                         let wasCorrect = viewModel.selectedChoiceWasCorrect == true
                         Text(wasCorrect ? "You found it!" : "Try that one again.")
@@ -69,50 +82,41 @@ struct MultipleChoiceStageView: View {
                     }
                 }
             } else {
-                Text("Quiz complete")
+                Text("You explored these clues.")
                     .font(.headline)
                     .foregroundStyle(MatherTheme.ink)
+                Button("Continue exploring") { onComplete(viewModel.evidence.attempts) }
+                    .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
+                    .accessibilityIdentifier("MultipleChoiceContinueExploringButton")
             }
         }
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
-        .onDisappear {
-            cancelDelayedAdvance()
+        .onAppear { narrateQuestion() }
+        .onChange(of: viewModel.activeIndex) { _, _ in narrateQuestion() }
+        .onChange(of: viewModel, initial: true) { _, value in
+            if let data = try? JSONEncoder().encode(value) { onProgress(value.evidence.attempts, data) }
         }
     }
 
-    @MainActor
     private func choose(_ choice: GameplayDisplayItem) {
-        cancelDelayedAdvance()
         let correct = viewModel.choose(choice)
         if correct {
             actions.success()
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.64)) {
-                showCorrectCelebration = true
-            }
-            let taskAttemptID = attemptID
-            delayedAdvanceTask = Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 850_000_000)
-                guard !Task.isCancelled, taskAttemptID == attemptID else { return }
-                withAnimation(.easeOut(duration: 0.16)) {
-                    showCorrectCelebration = false
-                }
-                guard !Task.isCancelled, taskAttemptID == attemptID else { return }
-                if viewModel.advanceAfterCorrectChoice() {
-                    onComplete(viewModel.correctCount, viewModel.mistakeCount, 0)
-                }
-                delayedAdvanceTask = nil
-            }
+            let explanation = viewModel.activeQuestion.flatMap { viewModel.explanationsByItemID[$0.id] } ?? ""
+            actions.speak("You found it! " + choice.title + ". " + explanation + " Continue when you’re ready.")
         } else {
-            showCorrectCelebration = false
             actions.failure()
+            actions.speak("Try another answer. You can ask for help.")
         }
     }
 
-    @MainActor
-    private func cancelDelayedAdvance() {
-        delayedAdvanceTask?.cancel()
-        delayedAdvanceTask = nil
+    private func narrateQuestion() {
+        guard let question = viewModel.activeQuestion else {
+            actions.speak("You explored these clues. Tap Continue exploring when ready.")
+            return
+        }
+        actions.speak(question.prompt + ". Choices: " + question.choices.map(\.title).joined(separator: ", "))
     }
 
     private func choiceColumns(for question: GameplayMultipleChoiceQuestion) -> [GridItem] {

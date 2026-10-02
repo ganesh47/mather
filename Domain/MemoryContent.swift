@@ -295,8 +295,8 @@ enum MemoryDeck {
         bird("bird-a04", name: "Hummingbird", asset: "MemoryBirdA04", home: "Tropical Americas", lifespan: "3 to 5 years", weight: "3 to 6 g", size: "8 to 12 cm long", colors: "green, purple, teal"),
         bird("bird-a05", name: "Blue Macaw", asset: "MemoryBirdA05", home: "South American forests", lifespan: "35 to 50 years", weight: "1.0 to 1.4 kg", size: "85 to 100 cm long", colors: "blue and gold"),
         bird("bird-a06", name: "Kingfisher", asset: "MemoryBirdA06", home: "Asian and Oceanian waterways", lifespan: "6 to 10 years", weight: "30 to 45 g", size: "16 to 20 cm long", colors: "blue and orange"),
-        bird("bird-a07", name: "Sunbird", asset: "MemoryBirdA07", home: "South American cloud forests", lifespan: "3 to 5 years", weight: "4 to 7 g", size: "10 to 14 cm long", colors: "gold, orange, brown"),
-        bird("bird-a08", name: "Pied Kingfisher", asset: "MemoryBirdA08", home: "Woodland streams in Africa and Asia", lifespan: "5 to 10 years", weight: "35 to 50 g", size: "18 to 22 cm long", colors: "blue, white, black"),
+        bird("bird-a07", name: "Sunbird", asset: "MemoryBirdA07", home: "Gardens and woodlands in Africa and Asia", lifespan: "3 to 5 years", weight: "4 to 7 g", size: "10 to 14 cm long", colors: "gold, orange, brown"),
+        bird("bird-a08", name: "Pied Kingfisher", asset: "MemoryBirdA08", home: "Woodland streams in Africa and Asia", lifespan: "5 to 10 years", weight: "35 to 50 g", size: "18 to 22 cm long", colors: "black and white"),
         bird("bird-a09", name: "Toucan", asset: "MemoryBirdA09", home: "Tropical South America", lifespan: "15 to 20 years", weight: "0.5 to 0.7 kg", size: "55 to 65 cm long", colors: "black, white, orange"),
         bird("bird-a10", name: "Parrot", asset: "MemoryBirdA10", home: "Tropical forests", lifespan: "20 to 30 years", weight: "0.2 to 0.4 kg", size: "25 to 35 cm long", colors: "green, yellow, red"),
         bird("bird-a11", name: "Palm Bird", asset: "MemoryBirdA11", home: "New Guinea and northern Australia", lifespan: "40 to 60 years", weight: "0.9 to 1.2 kg", size: "55 to 65 cm long", colors: "charcoal and red"),
@@ -499,16 +499,16 @@ enum MemoryDeck {
     ]
 
     static let numberBondsTo10: [MemoryAnimal] = [
-        numberBondTo10("bond-1-9", prompt: "1 + 9", match: "10", clue: "One and nine fill the ten-frame."),
-        numberBondTo10("bond-2-8", prompt: "2 + 8", match: "10", clue: "Two and eight make a full ten."),
-        numberBondTo10("bond-3-7", prompt: "3 + 7", match: "10", clue: "Three and seven are friendly ten partners."),
-        numberBondTo10("bond-4-6", prompt: "4 + 6", match: "10", clue: "Four and six snap together to ten."),
-        numberBondTo10("bond-5-5", prompt: "5 + 5", match: "10", clue: "Five and five are doubles that make ten."),
-        numberBondTo10("bond-6-4", prompt: "6 + 4", match: "10", clue: "Six needs four more to make ten."),
-        numberBondTo10("bond-7-3", prompt: "7 + 3", match: "10", clue: "Seven needs three more to make ten."),
-        numberBondTo10("bond-8-2", prompt: "8 + 2", match: "10", clue: "Eight and two complete the ten-frame."),
-        numberBondTo10("bond-9-1", prompt: "9 + 1", match: "10", clue: "Nine needs one more to make ten."),
-        numberBondTo10("bond-10-0", prompt: "10 + 0", match: "10", clue: "Ten and zero stay ten."),
+        numberBondTo10("bond-1-9", prompt: "1 + ? = 10", match: "9", clue: "One and nine fill the ten-frame."),
+        numberBondTo10("bond-2-8", prompt: "2 + ? = 10", match: "8", clue: "Two and eight make a full ten."),
+        numberBondTo10("bond-3-7", prompt: "3 + ? = 10", match: "7", clue: "Three and seven are friendly ten partners."),
+        numberBondTo10("bond-4-6", prompt: "4 + ? = 10", match: "6", clue: "Four and six snap together to ten."),
+        numberBondTo10("bond-5-5", prompt: "5 + ? = 10", match: "5", clue: "Five and five are doubles that make ten."),
+        numberBondTo10("bond-6-4", prompt: "6 + ? = 10", match: "4", clue: "Six needs four more to make ten."),
+        numberBondTo10("bond-7-3", prompt: "7 + ? = 10", match: "3", clue: "Seven needs three more to make ten."),
+        numberBondTo10("bond-8-2", prompt: "8 + ? = 10", match: "2", clue: "Eight and two complete the ten-frame."),
+        numberBondTo10("bond-9-1", prompt: "9 + ? = 10", match: "1", clue: "Nine needs one more to make ten."),
+        numberBondTo10("bond-10-0", prompt: "10 + ? = 10", match: "0", clue: "Ten and zero stay ten."),
     ]
 
     static let fruits: [MemoryAnimal] = [
@@ -523,23 +523,23 @@ enum MemoryDeck {
     ]
 
     static let waterCycle: [MemoryAnimal] = [
-        waterCycleConcept("water-cycle-evaporation", name: "Evaporation", asset: "MemoryWaterCycleEvaporation", action: "warm water goes up", whereSeen: "above warm ponds, lakes, and puddles", everydayWords: "The sun warms water into vapor", cycleStep: "Water rises into the air"),
+        waterCycleConcept("water-cycle-evaporation", name: "Evaporation", asset: "MemoryWaterCycleEvaporation", action: "warm water goes up", whereSeen: "above warm ponds, lakes, and puddles", everydayWords: "Warmth helps liquid water change into invisible water vapor", cycleStep: "Water rises into the air"),
         waterCycleConcept("water-cycle-condensation", name: "Condensation", asset: "MemoryWaterCycleCondensation", action: "tiny drops make a cloud", whereSeen: "inside cool clouds", everydayWords: "Vapor cools and gathers as tiny drops", cycleStep: "Drops gather together"),
         waterCycleConcept("water-cycle-precipitation", name: "Precipitation", asset: "MemoryWaterCyclePrecipitation", action: "rain falls down", whereSeen: "under heavy clouds", everydayWords: "Cloud drops get heavy and fall", cycleStep: "Rain returns to the ground"),
         waterCycleConcept("water-cycle-collection", name: "Collection", asset: "MemoryWaterCycleCollection", action: "water gathers again", whereSeen: "in ponds, lakes, rivers, and puddles", everydayWords: "Fallen water gathers in low places", cycleStep: "Water waits for the sun again"),
         waterCycleConcept("water-cycle-sun-heat", name: "Sun Heat", asset: "MemoryWaterCycleSunHeat", action: "the sun warms water", whereSeen: "where sunlight touches water", everydayWords: "Warm sunlight starts the cycle", cycleStep: "Heat helps water rise"),
-        waterCycleConcept("water-cycle-vapor", name: "Vapor", asset: "MemoryWaterCycleVapor", action: "water is in the air", whereSeen: "above warm water", everydayWords: "Vapor is water we cannot easily see", cycleStep: "Vapor moves upward"),
+        waterCycleConcept("water-cycle-vapor", name: "Vapor", asset: "MemoryWaterCycleVapor", action: "water is in the air", whereSeen: "above warm water", everydayWords: "Water vapor is an invisible gas", cycleStep: "Vapor moves upward"),
         waterCycleConcept("water-cycle-cloud", name: "Cloud", asset: "MemoryWaterCycleCloud", action: "drops gather together", whereSeen: "up in the sky", everydayWords: "A cloud holds many tiny drops", cycleStep: "Clouds can grow heavy"),
         waterCycleConcept("water-cycle-pond", name: "Pond", asset: "MemoryWaterCyclePond", action: "water waits here", whereSeen: "on the ground after rain", everydayWords: "A pond can collect rain water", cycleStep: "Collected water can rise again")
     ]
 
     static let waterCycleImageAssetPlan: [MemoryImageAssetPlan] = [
-        importedImagePlan("water-cycle-evaporation", asset: "MemoryWaterCycleEvaporation", prompt: "warm sun over pond with vapor rising", notes: "rising vapor must be readable at card size", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-evaporation", asset: "MemoryWaterCycleEvaporation", prompt: "warm sun over pond with upward arrows for invisible vapor", notes: "arrows represent invisible water vapor, not rising liquid drops", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-condensation", asset: "MemoryWaterCycleCondensation", prompt: "vapor dots gathering into a cloud", notes: "cloud and gathered drops should be visually central", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-precipitation", asset: "MemoryWaterCyclePrecipitation", prompt: "rain falling from a cloud into a pond", notes: "falling rain should be distinct from vapor", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-collection", asset: "MemoryWaterCycleCollection", prompt: "rain water collecting in pond or lake", notes: "pond should read as the destination for rain", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-sun-heat", asset: "MemoryWaterCycleSunHeat", prompt: "sun warming water", notes: "sun rays should clearly touch water", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
-        importedImagePlan("water-cycle-vapor", asset: "MemoryWaterCycleVapor", prompt: "water vapor rising from a pond", notes: "vapor arrows should differ from rain drops", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
+        importedImagePlan("water-cycle-vapor", asset: "MemoryWaterCycleVapor", prompt: "upward arrows above a pond represent invisible water vapor", notes: "vapor is invisible; arrows are a picture model, not visible gas", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-cloud", asset: "MemoryWaterCycleCloud", prompt: "cloud with tiny gathered drops", notes: "cloud should be clear without needing text", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned"),
         importedImagePlan("water-cycle-pond", asset: "MemoryWaterCyclePond", prompt: "pond holding collected water after rain", notes: "pond should be large and high contrast", sourceName: "Codex CLI image generation water cycle prompt family", license: "Project-owned")
     ]
@@ -1201,7 +1201,7 @@ enum MemoryDeck {
         MemoryAnimal(
             id: id,
             name: match,
-            canonicalName: "\(prompt) = \(match)",
+            canonicalName: "\(prompt). Missing part \(match)",
             picture: .text(prompt),
             metadata: MemoryCardMetadata(
                 deck: .numberBondsTo10,

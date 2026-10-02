@@ -89,7 +89,7 @@ struct GameplayStageViewModelTests {
         let firstQuestion = viewModel.activeQuestion!
 
         #expect(firstQuestion.choices.contains(firstQuestion.answer))
-        #expect(firstQuestion.prompt.hasPrefix("Which one matches "))
+        #expect(firstQuestion.prompt.contains("capital") || firstQuestion.prompt.contains("Capital"))
         let quizResult = viewModel.choose(firstQuestion.answer)
         #expect(quizResult)
         #expect(viewModel.correctCount == 1)
@@ -141,7 +141,7 @@ struct GameplayStageViewModelTests {
     func compactStageLayoutKeepsLargeTapTargets() {
         #expect(GameplayStageRenderSupport.usesCompactStageLayout(width: 393, height: 700))
         #expect(GameplayStageRenderSupport.cardMinimumWidth(availableWidth: 393, compact: true) >= 132)
-        #expect(GameplayStageRenderSupport.touchTargetSize(compact: true) >= 54)
+        #expect(GameplayStageRenderSupport.touchTargetSize(compact: true) >= 80)
         #expect(GameplayStageRenderSupport.maximumContentWidth(compact: false) == 920)
     }
     @Test func fruitFlashcardsExposeSpottingAffordanceState() throws {

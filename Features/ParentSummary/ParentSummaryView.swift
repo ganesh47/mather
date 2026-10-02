@@ -1,11 +1,13 @@
 import Observation
 import SwiftUI
+import SwiftData
 
 struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
     let gameSessions: [StoredGameSession]
     let profiles: [StoredKidProfile]
+    @Query(sort: \StoredGameplayThreadSession.startedAt, order: .reverse) private var allLearningSessions: [StoredGameplayThreadSession]
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -21,7 +23,7 @@ struct ParentSummaryView: View {
                 VStack(spacing: 16) {
                     CardSurface {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Parent Summary")
+                            Text("Parent Summary · \(appModel.profileStore.profiles.first(where: { $0.id == appModel.profileStore.activeProfileId })?.name ?? "Child")")
                                 .font(.largeTitle.weight(.black))
                             Text(overview.hasValidMakeBreakProgress ? digest.objectiveTitle : overview.headerSubtitle)
                                 .font(.headline.weight(.semibold))
@@ -31,7 +33,10 @@ struct ParentSummaryView: View {
                         }
                     }
 
-                    if !overview.hasAnyHistory {
+                    learningEvidenceCard
+                    if appModel.explorerLabMasteryStore.legacyDeviceHistory != nil { legacyDeviceActivityCard }
+
+                    if !overview.hasAnyHistory && selectedLearningSessions.isEmpty {
                         CardSurface {
                             VStack(spacing: 12) {
                                 Image(systemName: "chart.bar.xaxis")
@@ -94,6 +99,50 @@ struct ParentSummaryView: View {
                 .padding(ResponsiveLayout.contentPadding(for: horizontalSizeClass))
                 .frame(maxWidth: ResponsiveLayout.contentMaxWidth(for: horizontalSizeClass))
                 .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var selectedLearningSessions: [StoredGameplayThreadSession] {
+        allLearningSessions.filter { $0.profileId == appModel.profileStore.activeProfileId }
+    }
+    private var learningEvidenceCard: some View {
+        let evidence = ParentLearningEvidenceSummary.make(records: appModel.gameplayProgressStore.allRecords())
+        return CardSurface {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Learning through play").font(.title3.bold())
+                Text("Actual choices and attempts for the selected child. Exploring a card is separate from remembering or using an idea.")
+                    .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 130))], spacing: 12) {
+                    evidenceTile("\(evidence.exposures)", "Explored")
+                    evidenceTile("\(evidence.independent)", "Independent answers")
+                    evidenceTile("\(evidence.supported)", "Answers with help")
+                    evidenceTile("\(evidence.independentTransfers)", "Independent transfers")
+                }
+                Text("Next: \(appModel.nextLearningQuestLabel)").font(.headline).foregroundStyle(MatherTheme.accent)
+                ForEach(selectedLearningSessions.prefix(8), id: \.id) { session in
+                    let attempts = ParentLearningEvidenceSummary.attempts(from: session.itemAttemptsData)
+                    let summary = ParentLearningEvidenceSummary(attempts: attempts)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(session.activityTitle ?? session.threadId.replacingOccurrences(of: "-", with: " ").capitalized).font(.headline)
+                        Text(session.startedAt.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                        Text(attempts.isEmpty ? "Earlier activity history; item-level evidence was not recorded." : "\(summary.independent) independent · \(summary.supported) with help · \(summary.independentTransfers) independent transfers")
+                            .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
+                    }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(MatherTheme.panel.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
+                }
+            }.accessibilityIdentifier("parent-summary-learning-evidence")
+        }
+    }
+    private func evidenceTile(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) { Text(value).font(.title.bold()).foregroundStyle(MatherTheme.accent); Text(label).font(.caption).foregroundStyle(MatherTheme.cardSubtitle) }
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private var legacyDeviceActivityCard: some View {
+        CardSurface {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Earlier device activity").font(.headline)
+                Text("Explorer activity saved before child profiles were separated remains on this device. Its ownership is unknown, so it does not count as this child's learning confidence.")
+                    .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
             }
         }
     }
@@ -339,7 +388,7 @@ struct ParentSummaryView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Profile overview")
                     .font(.title3.weight(.bold))
-                ForEach(profiles, id: \.id) { profile in
+                ForEach(profiles.filter { $0.id == appModel.profileStore.activeProfileId }, id: \.id) { profile in
                     let count = summaries.filter { $0.profileId == profile.id }.count + gameSessions.filter { $0.profileId == profile.id }.count
                     HStack {
                         Text("\(profile.emoji) \(profile.name)")
@@ -686,7 +735,7 @@ struct ParentSummaryExplorerLabLaneRow: Identifiable, Equatable {
         self.completedModeCount = completedModeCount
         self.availableModeCount = state.availableModes.count
         self.masteryFraction = state.masteryFraction
-        self.masteryLabel = "\(Int((state.masteryFraction * 100).rounded()))% ready"
+        self.masteryLabel = "\(Int((state.masteryFraction * 100).rounded()))% explored"
         self.nextModeLabel = state.nextRecommendedMode.map { "Try \($0.rawValue) next" } ?? "Choose any mode"
         self.conceptLabel = Self.conceptLabel(for: state)
     }
@@ -816,5 +865,26 @@ private struct StatTile: View {
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("parent-summary-stat-\(label.lowercased().replacingOccurrences(of: " ", with: "-"))")
+    }
+}
+
+
+struct ParentLearningEvidenceSummary: Equatable {
+    let exposures: Int
+    let independent: Int
+    let supported: Int
+    let independentTransfers: Int
+    init(attempts: [ItemAttempt]) {
+        let unique = Dictionary(attempts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }).values
+        exposures = unique.filter { $0.outcome == .exposure }.count
+        independent = unique.filter { $0.outcome == .independentCorrect }.count
+        supported = unique.filter { $0.outcome == .supportedCorrect }.count
+        independentTransfers = unique.filter { $0.outcome == .independentCorrect && ($0.propertyID == "transfer" || $0.stageID == "transfer") }.count
+    }
+    static func attempts(from data: Data?) -> [ItemAttempt] {
+        data.flatMap { try? JSONDecoder().decode([ItemAttempt].self, from: $0) } ?? []
+    }
+    static func make(records: [StoredGameplayProgressRecord]) -> Self {
+        Self(attempts: records.flatMap { attempts(from: $0.itemAttemptsData) })
     }
 }

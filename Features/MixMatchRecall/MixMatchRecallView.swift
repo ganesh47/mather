@@ -218,8 +218,7 @@ struct LearningCardView: View {
                 .font(.system(size: min(58, max(34, cardHeight * 0.42))))
                 .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
         case .asset(let assetName):
-            Image(assetName)
-                .resizable()
+            LearningContentImage(name: assetName)
                 .scaledToFit()
                 .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
                 .padding(4)

@@ -9,17 +9,26 @@ enum SpacedRepetitionScheduler {
         seed: UInt64 = 0,
         policy: SpacedRepetitionSelectionPolicy? = nil
     ) -> GameplayRoundDefinition {
-        let effectivePolicy = policy ?? SpacedRepetitionSelectionPolicy(maximumItemCount: stage.maximumItemCount)
+        let requestedPolicy = policy ?? SpacedRepetitionSelectionPolicy(maximumItemCount: stage.maximumItemCount)
+        let effectivePolicy = SpacedRepetitionSelectionPolicy(maximumItemCount: min(4, requestedPolicy.maximumItemCount),
+            dueItemRatio: requestedPolicy.dueItemRatio, reviewNeededPriority: requestedPolicy.reviewNeededPriority,
+            newItemPriority: requestedPolicy.newItemPriority, steadyPriority: requestedPolicy.steadyPriority)
         let candidates = candidateItems(thread: thread, stage: stage)
         let ranked = candidates.sorted { lhs, rhs in
             let leftRecord = records[recordKey(for: lhs, stageID: stage.id)]
             let rightRecord = records[recordKey(for: rhs, stageID: stage.id)]
-            let leftRank = rank(item: lhs, record: leftRecord, now: now, seed: seed)
-            let rightRank = rank(item: rhs, record: rightRecord, now: now, seed: seed)
+            let leftRank = rank(item: lhs, record: leftRecord, now: now, seed: seed, policy: effectivePolicy)
+            let rightRank = rank(item: rhs, record: rightRecord, now: now, seed: seed, policy: effectivePolicy)
             return leftRank < rightRank
         }
+        // Reserve a small place for exploration, while keeping due/recovery items first.
+        let due = ranked.filter { records[recordKey(for: $0, stageID: stage.id)].map { $0.dueAt <= now } ?? false }
+        let new = ranked.filter { records[recordKey(for: $0, stageID: stage.id)] == nil }
+        let dueQuota = Int(ceil(Double(effectivePolicy.maximumItemCount) * effectivePolicy.dueItemRatio))
+        let preferred = Array(due.prefix(dueQuota)) + Array(new.prefix(max(0, effectivePolicy.maximumItemCount - dueQuota)))
+        let preferredIDs = Set(preferred.map(\.id))
         let selected = childSafeSelection(
-            from: ranked,
+            from: preferred + ranked.filter { !preferredIDs.contains($0.id) },
             maximumItemCount: effectivePolicy.maximumItemCount,
             stageKind: stage.kind,
             thread: thread
@@ -41,7 +50,14 @@ enum SpacedRepetitionScheduler {
                 items.append(GameplayRoundItem(id: "\(entity.id)::entity", entityID: entity.id, propertyID: nil, propertyTypeID: nil))
                 continue
             }
-            let properties = entity.properties.filter { propertyTypeFilter.isEmpty || propertyTypeFilter.contains($0.typeID) }
+            let properties = entity.properties.filter { property in
+                guard propertyTypeFilter.isEmpty || propertyTypeFilter.contains(property.typeID) else { return false }
+                guard stage.kind == .multipleChoice else { return true }
+                let values = Set(thread.entities.flatMap { $0.properties.filter { $0.typeID == property.typeID }.map {
+                    $0.value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                } })
+                return values.count >= 2
+            }
             for property in properties {
                 items.append(GameplayRoundItem(id: "\(entity.id)::\(property.id)", entityID: entity.id, propertyID: property.id, propertyTypeID: property.typeID))
             }
@@ -60,10 +76,16 @@ enum SpacedRepetitionScheduler {
             switch update.outcome {
             case .correct:
                 record.correctCount += 1
+                record.consecutiveIndependentCorrect += 1
+                if let sessionID = update.sessionID { record.independentSessionIDs.insert(sessionID) }
             case .supportedCorrect:
                 record.supportedCorrectCount += 1
+                record.consecutiveIndependentCorrect = 0
+                record.independentSessionIDs.removeAll()
             case .incorrect:
                 record.mistakeCount += 1
+                record.consecutiveIndependentCorrect = 0
+                record.independentSessionIDs.removeAll()
             }
             record.lastSeenAt = update.occurredAt
             record.lastOutcome = update.outcome
@@ -92,19 +114,14 @@ enum SpacedRepetitionScheduler {
         var selected: [GameplayRoundItem] = []
         var selectedEntityIDs = Set<String>()
         var selectedAnswerKeys = Set<String>()
-        var deferred: [GameplayRoundItem] = []
         for item in ranked {
             guard selected.count < limit else { break }
             let answerKey = visibleAnswerKey(for: item, in: thread)
-            if selectedEntityIDs.insert(item.entityID).inserted,
-               selectedAnswerKeys.insert(answerKey).inserted {
+            if !selectedEntityIDs.contains(item.entityID), !selectedAnswerKeys.contains(answerKey) {
+                selectedEntityIDs.insert(item.entityID)
+                selectedAnswerKeys.insert(answerKey)
                 selected.append(item)
-            } else {
-                deferred.append(item)
             }
-        }
-        for item in deferred where selected.count < limit {
-            selected.append(item)
         }
         return selected
     }
@@ -118,23 +135,23 @@ enum SpacedRepetitionScheduler {
         return "\(property.typeID)::\(property.value)".trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    private static func rank(item: GameplayRoundItem, record: GameplayExposureRecord?, now: Date, seed: UInt64) -> GameplayItemRank {
+    private static func rank(item: GameplayRoundItem, record: GameplayExposureRecord?, now: Date, seed: UInt64, policy: SpacedRepetitionSelectionPolicy) -> GameplayItemRank {
         guard let record else {
-            return GameplayItemRank(priority: 1, dueAt: .distantPast, mistakeDebt: 0, tieBreak: stableTieBreak(item.id, seed: seed))
+            return GameplayItemRank(priority: policy.newItemPriority, dueAt: .distantPast, mistakeDebt: 0, tieBreak: stableTieBreak(item.id, seed: seed))
         }
         let isDue = record.dueAt <= now
         let confidencePriority: Int
         switch record.lastOutcome {
         case .incorrect:
-            confidencePriority = 0
+            confidencePriority = policy.reviewNeededPriority
         case .supportedCorrect:
-            confidencePriority = 1
+            confidencePriority = policy.newItemPriority
         case .correct, nil:
             switch record.confidenceBand {
-            case .reviewNeeded: confidencePriority = 0
-            case .new: confidencePriority = 2
-            case .learning: confidencePriority = 3
-            case .steady: confidencePriority = 4
+            case .reviewNeeded: confidencePriority = policy.reviewNeededPriority
+            case .new: confidencePriority = policy.newItemPriority
+            case .learning: confidencePriority = policy.newItemPriority + 1
+            case .steady: confidencePriority = policy.steadyPriority
             }
         }
         let duePenalty = isDue ? 0 : 5
@@ -147,9 +164,9 @@ enum SpacedRepetitionScheduler {
     }
 
     private static func confidenceBand(for record: GameplayExposureRecord) -> GameplayConfidenceBand {
-        if record.mistakeCount > 0 && record.mistakeCount >= record.totalSuccessfulCount { return .reviewNeeded }
+        if record.lastOutcome == .incorrect { return .reviewNeeded }
         if record.attemptCount == 0 { return .new }
-        if record.independentCorrectCount >= 3 && record.mistakeCount == 0 { return .steady }
+        if record.consecutiveIndependentCorrect >= 3 && record.independentSessionIDs.count >= 2 { return .steady }
         return .learning
     }
 
@@ -165,7 +182,7 @@ enum SpacedRepetitionScheduler {
             timesSeen: record.attemptCount,
             correctCount: record.totalSuccessfulCount,
             incorrectCount: record.mistakeCount,
-            currentCorrectStreak: outcome == .correct ? max(1, record.independentCorrectCount) : 0,
+            currentCorrectStreak: outcome == .correct ? max(1, record.consecutiveIndependentCorrect) : 0,
             lastReviewedAt: date,
             lastReviewResult: outcome.cardReviewResult
         )

@@ -42,6 +42,8 @@ struct GameplayExposureRecord: Codable, Equatable, Hashable {
     var lastOutcome: GameplayExposureOutcome?
     var dueAt: Date
     var confidenceBand: GameplayConfidenceBand
+    var consecutiveIndependentCorrect: Int
+    var independentSessionIDs: Set<String>
 
     init(
         key: GameplayExposureKey,
@@ -51,7 +53,9 @@ struct GameplayExposureRecord: Codable, Equatable, Hashable {
         lastSeenAt: Date? = nil,
         lastOutcome: GameplayExposureOutcome? = nil,
         dueAt: Date = .distantPast,
-        confidenceBand: GameplayConfidenceBand = .new
+        confidenceBand: GameplayConfidenceBand = .new,
+        consecutiveIndependentCorrect: Int = 0,
+        independentSessionIDs: Set<String> = []
     ) {
         self.key = key
         self.correctCount = correctCount
@@ -61,6 +65,8 @@ struct GameplayExposureRecord: Codable, Equatable, Hashable {
         self.lastOutcome = lastOutcome
         self.dueAt = dueAt
         self.confidenceBand = confidenceBand
+        self.consecutiveIndependentCorrect = consecutiveIndependentCorrect
+        self.independentSessionIDs = independentSessionIDs
     }
 
     var attemptCount: Int { correctCount + supportedCorrectCount + mistakeCount }
@@ -96,13 +102,15 @@ struct SpacedRepetitionUpdate: Codable, Equatable, Hashable {
     let key: GameplayExposureKey
     let outcome: GameplayExposureOutcome
     let occurredAt: Date
+    var sessionID: String? = nil
 
     var wasCorrect: Bool { outcome != .incorrect }
 
-    init(key: GameplayExposureKey, outcome: GameplayExposureOutcome, occurredAt: Date) {
+    init(key: GameplayExposureKey, outcome: GameplayExposureOutcome, occurredAt: Date, sessionID: String? = nil) {
         self.key = key
         self.outcome = outcome
         self.occurredAt = occurredAt
+        self.sessionID = sessionID
     }
 
     init(key: GameplayExposureKey, wasCorrect: Bool, occurredAt: Date) {

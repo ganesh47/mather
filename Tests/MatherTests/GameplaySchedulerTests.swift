@@ -136,8 +136,98 @@ struct GameplaySchedulerTests {
         #expect(summary.mistakeCount == 1)
         #expect(summary.durationSeconds == 45)
         #expect(summary.stars == 3)
-        #expect(summary.scorePoints == 84)
+        #expect(summary.scorePoints == 90)
         #expect(summary.averageSecondsPerAttempt == 4.5)
+    }
+
+    @Test
+    func steadyRequiresThreeConsecutiveIndependentAnswersAcrossTwoSessionsAndRecoversAfterError() throws {
+        let key = GameplayExposureKey(entityID: "mango", propertyID: "taste", stageID: "quiz")
+        let now = Date(timeIntervalSince1970: 8_000)
+        var records: [GameplayExposureKey: GameplayExposureRecord] = [:]
+        for index in 0..<3 {
+            records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .correct,
+                occurredAt: now.addingTimeInterval(Double(index)), sessionID: "one")], to: records)
+        }
+        #expect(records[key]?.confidenceBand == .learning)
+        records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .correct, occurredAt: now, sessionID: "two")], to: records)
+        #expect(records[key]?.confidenceBand == .steady)
+        records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .incorrect, occurredAt: now, sessionID: "two")], to: records)
+        #expect(records[key]?.confidenceBand == .reviewNeeded)
+        #expect(records[key]?.consecutiveIndependentCorrect == 0)
+        #expect(records[key]?.independentSessionIDs.isEmpty == true)
+        records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .correct, occurredAt: now, sessionID: "three")], to: records)
+        #expect(records[key]?.dueAt == now.addingTimeInterval(24 * 60 * 60))
+        #expect(records[key]?.confidenceBand == .learning)
+        for session in ["three", "four"] {
+            records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .correct, occurredAt: now, sessionID: session)], to: records)
+        }
+        #expect(records[key]?.confidenceBand == .steady)
+        #expect(records[key]?.mistakeCount == 1)
+    }
+
+    @Test
+    func supportedAnswerBreaksIndependentStreakWithoutSubtractingScore() {
+        let key = GameplayExposureKey(entityID: "apple", stageID: "quiz")
+        let now = Date(timeIntervalSince1970: 9_000)
+        let previous = GameplayExposureRecord(key: key, correctCount: 20, dueAt: now, confidenceBand: .steady,
+            consecutiveIndependentCorrect: 3, independentSessionIDs: ["one", "two"])
+        let records = SpacedRepetitionScheduler.applying(updates: [SpacedRepetitionUpdate(key: key, outcome: .supportedCorrect, occurredAt: now, sessionID: "three")], to: [key: previous])
+        #expect(records[key]?.correctCount == 20)
+        #expect(records[key]?.consecutiveIndependentCorrect == 0)
+        #expect(records[key]?.confidenceBand == .learning)
+        let noHelp = GameplayStageResult(id: "one", stageID: "quiz", correctCount: 3, mistakeCount: 1, hintsUsed: 0, durationSeconds: 10, completedAt: now)
+        let withHelp = GameplayStageResult(id: "two", stageID: "quiz", correctCount: 3, mistakeCount: 1, hintsUsed: 10, durationSeconds: 10, completedAt: now)
+        #expect(noHelp.scorePoints == withHelp.scorePoints)
+        #expect(GameplayScoreSummary.summarize([noHelp]).stars == GameplayScoreSummary.summarize([withHelp]).stars)
+    }
+
+    @Test
+    func dueRatioReservesExplorationAndMemoryDoesNotFillDuplicateAnswers() throws {
+        let thread = sampleThread()
+        let stage = GameplayStageDefinition(id: "quiz", kind: .multipleChoice, title: "Quiz", prompt: "Choose", propertyTypeIDs: ["capital"], maximumItemCount: 2)
+        let now = Date(timeIntervalSince1970: 10_000)
+        let keys = thread.entities.prefix(2).map { GameplayExposureKey(entityID: $0.id, propertyID: $0.properties[0].id, stageID: stage.id) }
+        let records = Dictionary(uniqueKeysWithValues: keys.map { ($0, GameplayExposureRecord(key: $0, lastOutcome: .incorrect, dueAt: now, confidenceBand: .reviewNeeded)) })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, records: records, now: now, seed: 5, policy: SpacedRepetitionSelectionPolicy(maximumItemCount: 2, dueItemRatio: 0.5))
+        #expect(round.items.count == 2)
+        #expect(round.items.contains { $0.entityID == "country-france" })
+        #expect(round.items.filter { $0.entityID != "country-france" }.count == 1)
+        let duplicateThread = GameplayThreadDefinition(id: "duplicate", title: "Duplicate", category: GameplayCategory(id: "test", title: "Test", subtitle: ""),
+            propertyTypes: [GameplayPropertyType(id: "taste", displayName: "Taste", prompt: "Taste?")],
+            entities: (0..<4).map { GameplayEntity(id: "fruit-\($0)", name: "Fruit \($0)", properties: [GameplayProperty(id: "sweet-\($0)", typeID: "taste", value: "sweet")]) })
+        let memoryStage = GameplayStageDefinition(id: "memory", kind: .easyMemory, title: "Memory", prompt: "Match", maximumItemCount: 4)
+        let memoryRound = SpacedRepetitionScheduler.makeRound(thread: duplicateThread, stage: memoryStage)
+        #expect(memoryRound.items.count == 1)
+        let quizStage = GameplayStageDefinition(id: "quiz", kind: .multipleChoice, title: "Quiz", prompt: "Choose", propertyTypeIDs: ["taste"])
+        let quizRound = SpacedRepetitionScheduler.makeRound(thread: duplicateThread, stage: quizStage)
+        #expect(quizRound.items.isEmpty)
+        #expect(GameplayStageContentBuilder.multipleChoiceQuestions(thread: duplicateThread, round: quizRound).isEmpty)
+        let emptyQuiz = GameplayMultipleChoiceStageViewModel(thread: duplicateThread, round: quizRound)
+        #expect(emptyQuiz.isComplete)
+        #expect(emptyQuiz.evidence.attempts.isEmpty)
+        let largeRound = SpacedRepetitionScheduler.makeRound(thread: GameplayThreadCatalog.fruits,
+            stage: GameplayThreadCatalog.fruits.stages[0], policy: SpacedRepetitionSelectionPolicy(maximumItemCount: 20))
+        #expect(largeRound.items.count == 4)
+    }
+
+    @Test
+    func rejectedDuplicateAnswerDoesNotExcludeAnotherPropertyOfThatEntity() {
+        let thread = GameplayThreadDefinition(id: "fruit", title: "Fruit", category: GameplayCategory(id: "test", title: "Test", subtitle: ""),
+            propertyTypes: [GameplayPropertyType(id: "taste", displayName: "Taste", prompt: "Taste?"), GameplayPropertyType(id: "home", displayName: "Home", prompt: "Where?")],
+            entities: [GameplayEntity(id: "a", name: "A", properties: [GameplayProperty(id: "a-taste", typeID: "taste", value: "Sweet")]),
+                GameplayEntity(id: "b", name: "B", properties: [GameplayProperty(id: "b-taste", typeID: "taste", value: "Sweet"), GameplayProperty(id: "b-home", typeID: "home", value: "Tree")])])
+        let stage = GameplayStageDefinition(id: "memory", kind: .easyMemory, title: "Memory", prompt: "Match", maximumItemCount: 2)
+        let now = Date(timeIntervalSince1970: 5_000)
+        let orderedKeys = [GameplayExposureKey(entityID: "a", propertyID: "a-taste", stageID: stage.id),
+            GameplayExposureKey(entityID: "b", propertyID: "b-taste", stageID: stage.id),
+            GameplayExposureKey(entityID: "b", propertyID: "b-home", stageID: stage.id)]
+        let records = Dictionary(uniqueKeysWithValues: orderedKeys.enumerated().map { index, key in
+            (key, GameplayExposureRecord(key: key, lastOutcome: .incorrect, dueAt: now.addingTimeInterval(Double(index - 3)), confidenceBand: .reviewNeeded))
+        })
+        let round = SpacedRepetitionScheduler.makeRound(thread: thread, stage: stage, records: records, now: now,
+            policy: SpacedRepetitionSelectionPolicy(maximumItemCount: 2, dueItemRatio: 1))
+        #expect(round.items.map(\.propertyID) == ["a-taste", "b-home"])
     }
 
     private func sampleThread() -> GameplayThreadDefinition {

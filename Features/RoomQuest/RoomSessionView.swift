@@ -647,7 +647,7 @@ private struct RoomCompleteView: View {
             Spacer()
 
             Button("Done") {
-                vsEngine.showHome()
+                vsEngine.returnFromGameplay(defaultRoute: .home)
             }
             .buttonStyle(PrimaryActionButtonStyle())
             .padding(.horizontal, 40)

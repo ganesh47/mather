@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-struct GameplayStageNavigationState: Equatable {
+struct GameplayStageNavigationState: Codable, Equatable {
     var activeStageIndex: Int
     var stageResults: [GameplayStageResult]
     var startedAt: Date
@@ -91,8 +91,8 @@ struct GameplayStageNavigationState: Equatable {
     }
 }
 
-struct GameplayDisplayItem: Identifiable, Equatable, Hashable {
-    enum Presentation: Equatable, Hashable {
+struct GameplayDisplayItem: Identifiable, Codable, Equatable, Hashable {
+    enum Presentation: Codable, Equatable, Hashable {
         case visualWithTitle
         case visualOnly
         case titleOnly
@@ -176,7 +176,7 @@ enum ElectronicsArtworkKey: String, CaseIterable, Equatable, Hashable {
     }
 }
 
-struct GameplayMatchPair: Identifiable, Equatable, Hashable {
+struct GameplayMatchPair: Identifiable, Codable, Equatable, Hashable {
     let id: String
     let left: GameplayDisplayItem
     let right: GameplayDisplayItem
@@ -190,7 +190,7 @@ enum GameplayMatchCardState: Equatable {
     case justMatched
 }
 
-struct GameplayMultipleChoiceQuestion: Identifiable, Equatable, Hashable {
+struct GameplayMultipleChoiceQuestion: Identifiable, Codable, Equatable, Hashable {
     let id: String
     let prompt: String
     let answer: GameplayDisplayItem
@@ -201,14 +201,38 @@ struct GameplayMultipleChoiceQuestion: Identifiable, Equatable, Hashable {
     }
 }
 
-struct GameplayFlashcardStageViewModel: Equatable {
+struct GameplayStageEvidence: Codable, Equatable {
+    let activityID: String
+    let stageID: String
+    let items: [GameplayRoundItem]
+    var attempts: [ItemAttempt] = []
+    var supportedItemIDs: Set<String> = []
+
+    init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition) {
+        activityID = thread.id
+        stageID = round.stageID
+        items = round.items
+    }
+
+    mutating func record(itemID: String, outcome: ItemAttemptOutcome, response: String? = nil, at date: Date = Date()) {
+        guard let item = items.first(where: { $0.id == itemID }) else { return }
+        let effective = outcome == .independentCorrect && supportedItemIDs.contains(itemID) ? ItemAttemptOutcome.supportedCorrect : outcome
+        if effective == .incorrect || effective == .help { supportedItemIDs.insert(itemID) }
+        attempts.append(ItemAttempt(activityID: activityID, conceptID: item.propertyTypeID ?? activityID, entityID: item.entityID,
+            propertyID: item.propertyID, stageID: stageID, outcome: effective, response: response, occurredAt: date))
+    }
+}
+
+struct GameplayFlashcardStageViewModel: Codable, Equatable {
     let cards: [GameplayDisplayItem]
     var activeIndex: Int = 0
     var exposureCount: Int = 0
     var spottedCardIDs: Set<String> = []
+    var evidence: GameplayStageEvidence
 
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition) {
         self.cards = GameplayStageContentBuilder.flashcards(thread: thread, round: round)
+        self.evidence = GameplayStageEvidence(thread: thread, round: round)
     }
 
     var activeCard: GameplayDisplayItem? {
@@ -250,6 +274,9 @@ struct GameplayFlashcardStageViewModel: Equatable {
 
     mutating func markExposure() {
         exposureCount += 1
+        if let card = activeCard, let item = evidence.items.first(where: { $0.entityID == card.entityID }) {
+            evidence.record(itemID: item.id, outcome: .exposure)
+        }
     }
 
     mutating func advance() -> Bool {
@@ -259,7 +286,7 @@ struct GameplayFlashcardStageViewModel: Equatable {
     }
 }
 
-struct GameplayMatchStageViewModel: Equatable {
+struct GameplayMatchStageViewModel: Codable, Equatable {
     let pairs: [GameplayMatchPair]
     let mode: GameplayStageKind
     let turnItemCount: Int
@@ -272,6 +299,10 @@ struct GameplayMatchStageViewModel: Equatable {
     var mismatchCount = 0
     var hintCount = 0
     var activeTurnIndex = 0
+    var evidence: GameplayStageEvidence
+    var helpText: String?
+    var helpedRightID: String?
+    let explanationsByItemID: [String: String]
 
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, mode: GameplayStageKind, turnItemCount: Int? = nil) {
         self.pairs = GameplayStageContentBuilder.turnFriendlyOrder(
@@ -280,6 +311,12 @@ struct GameplayMatchStageViewModel: Equatable {
             seed: round.seed
         )
         self.mode = mode
+        self.explanationsByItemID = Dictionary(uniqueKeysWithValues: round.items.map { item in
+            let entity = thread.entities.first { $0.id == item.entityID }
+            let property = entity?.properties.first { $0.id == item.propertyID }
+            return (item.id, property?.explanation ?? entity?.summary ?? "")
+        })
+        self.evidence = GameplayStageEvidence(thread: thread, round: round)
         self.turnItemCount = max(1, turnItemCount ?? Self.defaultTurnItemCount(for: mode, itemCount: round.items.count))
         self.seed = round.seed
     }
@@ -368,6 +405,7 @@ struct GameplayMatchStageViewModel: Equatable {
 
     mutating func selectLeft(pairID: String) {
         guard activePairs.contains(where: { $0.id == pairID }), !matchedPairIDs.contains(pairID) else { return }
+        if selectedLeftID != pairID { helpText = nil; helpedRightID = nil }
         selectedLeftID = pairID
         inspectedItemID = activePairs.first(where: { $0.id == pairID })?.left.id
         lastMatchedPairID = nil
@@ -391,7 +429,8 @@ struct GameplayMatchStageViewModel: Equatable {
             inspect(right)
             return false
         }
-        let correct = pair.right.id == right.id
+        let correct = pair.right.id == right.id || pair.right.title.localizedCaseInsensitiveCompare(right.title) == .orderedSame
+        evidence.record(itemID: pair.id, outcome: correct ? .independentCorrect : .incorrect, response: right.title)
         if correct {
             matchedPairIDs.insert(pair.id)
             lastMatchedPairID = pair.id
@@ -407,6 +446,20 @@ struct GameplayMatchStageViewModel: Equatable {
         return correct
     }
 
+    @discardableResult
+    mutating func showHelp() -> String {
+        let pair = activePairs.first { $0.id == selectedLeftID && !matchedPairIDs.contains($0.id) }
+            ?? activePairs.first { !matchedPairIDs.contains($0.id) }
+        guard let pair else { return "All matches found. Continue when ready." }
+        selectLeft(pairID: pair.id)
+        hintCount += 1
+        evidence.record(itemID: pair.id, outcome: .help)
+        revealedRightIDs.insert(pair.right.id)
+        helpedRightID = pair.right.id
+        helpText = "\(pair.left.title) goes with \(pair.right.title). \(explanationsByItemID[pair.id] ?? pair.right.subtitle)"
+        return helpText ?? "Look at the highlighted match."
+    }
+
     mutating func advanceTurn() {
         guard canAdvanceTurn else { return }
         activeTurnIndex = min(activeTurnIndex + 1, turnCount - 1)
@@ -414,6 +467,8 @@ struct GameplayMatchStageViewModel: Equatable {
         inspectedItemID = nil
         lastMatchedPairID = nil
         revealedRightIDs.removeAll()
+        helpText = nil
+        helpedRightID = nil
     }
 
     private static func defaultTurnItemCount(for mode: GameplayStageKind, itemCount: Int) -> Int {
@@ -433,16 +488,26 @@ enum GameplayMatchSide {
     case right
 }
 
-struct GameplayMultipleChoiceStageViewModel: Equatable {
+struct GameplayMultipleChoiceStageViewModel: Codable, Equatable {
     let questions: [GameplayMultipleChoiceQuestion]
     var activeIndex = 0
     var selectedChoiceID: String?
     var selectedChoiceWasCorrect: Bool?
     var correctCount = 0
     var mistakeCount = 0
+    var evidence: GameplayStageEvidence
+    var helpText: String?
+    var helpedChoiceID: String?
+    let explanationsByItemID: [String: String]
 
     init(thread: GameplayThreadDefinition, round: GameplayRoundDefinition) {
         self.questions = GameplayStageContentBuilder.multipleChoiceQuestions(thread: thread, round: round)
+        self.explanationsByItemID = Dictionary(uniqueKeysWithValues: round.items.map { item in
+            let entity = thread.entities.first { $0.id == item.entityID }
+            let property = entity?.properties.first { $0.id == item.propertyID }
+            return ("quiz-" + item.id, property?.explanation ?? entity?.summary ?? "")
+        })
+        self.evidence = GameplayStageEvidence(thread: thread, round: round)
     }
 
     var activeQuestion: GameplayMultipleChoiceQuestion? {
@@ -450,7 +515,7 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
         return questions[activeIndex]
     }
 
-    var isComplete: Bool { !questions.isEmpty && activeIndex >= questions.count }
+    var isComplete: Bool { questions.isEmpty || activeIndex >= questions.count }
 
     var progressText: String {
         guard !questions.isEmpty else { return "0 of 0" }
@@ -481,6 +546,7 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
         selectedChoiceID = choice.id
         let correct = question.isCorrect(choice)
         selectedChoiceWasCorrect = correct
+        evidence.record(itemID: String(question.id.dropFirst("quiz-".count)), outcome: correct ? .independentCorrect : .incorrect, response: choice.title)
         if correct {
             correctCount += 1
         } else {
@@ -489,9 +555,21 @@ struct GameplayMultipleChoiceStageViewModel: Equatable {
         return correct
     }
 
+    @discardableResult
+    mutating func showHelp() -> String {
+        guard let question = activeQuestion else { return "All done." }
+        if canAdvanceAfterCorrectChoice { return question.answer.title + ". " + (explanationsByItemID[question.id] ?? "") }
+        evidence.record(itemID: String(question.id.dropFirst("quiz-".count)), outcome: .help)
+        helpedChoiceID = question.answer.id
+        helpText = "\(question.prompt) \(question.answer.title). \(explanationsByItemID[question.id] ?? question.answer.subtitle)"
+        return helpText ?? question.answer.spokenText
+    }
+
     mutating func advanceAfterCorrectChoice() -> Bool {
         guard canAdvanceAfterCorrectChoice else { return false }
         activeIndex += 1
+        helpText = nil
+        helpedChoiceID = nil
         selectedChoiceID = nil
         selectedChoiceWasCorrect = nil
         return isComplete
@@ -506,7 +584,7 @@ enum GameplayStageContentBuilder {
                 id: "\(item.id)-card",
                 entityID: entity.id,
                 title: entity.name,
-                subtitle: entity.summary,
+                subtitle: [entity.summary, entity.properties.first?.explanation].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "),
                 visualKey: entity.visualKey,
                 visualAssetName: entity.visualAssetName,
                 visualShapeKey: entity.visualShapeKey,
@@ -548,18 +626,25 @@ enum GameplayStageContentBuilder {
 
     static func multipleChoiceQuestions(thread: GameplayThreadDefinition, round: GameplayRoundDefinition, choicesPerQuestion: Int = 4) -> [GameplayMultipleChoiceQuestion] {
         let pairs = matchPairs(thread: thread, round: round)
-        return pairs.map { pair in
-            let sameTypeDistractors = pairs
-                .filter { $0.id != pair.id && $0.right.subtitle == pair.right.subtitle }
-                .map(\.right)
-            let fallbackDistractors = pairs
-                .filter { $0.id != pair.id }
-                .map(\.right)
-            let distractors = uniqued(sameTypeDistractors + fallbackDistractors, excluding: pair.right)
+        return pairs.compactMap { pair in
+            let item = round.items.first { $0.id == pair.id }
+            let property = thread.entities.first { $0.id == item?.entityID }?.properties.first { $0.id == item?.propertyID }
+            let candidateItems = thread.entities.flatMap { entity in
+                entity.properties.filter { $0.typeID == property?.typeID }.map { candidate in
+                    GameplayRoundItem(id: "choice-\(candidate.id)", entityID: entity.id, propertyID: candidate.id, propertyTypeID: candidate.typeID)
+                }
+            }
+            let candidateRound = GameplayRoundDefinition(id: "choice-round-\(pair.id)", stageID: round.stageID,
+                kind: round.kind, items: candidateItems, seed: round.seed)
+            let candidates = matchPairs(thread: thread, round: candidateRound).map(\.right)
+            let distractors = uniqued(candidates, excluding: pair.right).filter {
+                $0.title.trimmingCharacters(in: .whitespacesAndNewlines).localizedCaseInsensitiveCompare(pair.right.title.trimmingCharacters(in: .whitespacesAndNewlines)) != .orderedSame
+            }
             let choices = deterministicOrder([pair.right] + Array(distractors.prefix(max(0, choicesPerQuestion - 1))), seed: stableSeed(pair.id))
+            guard choices.count >= 2 else { return nil }
             return GameplayMultipleChoiceQuestion(
                 id: "quiz-\(pair.id)",
-                prompt: "Which one matches \(pair.left.title)?",
+                prompt: "\(thread.propertyTypes.first { $0.id == property?.typeID }?.prompt ?? "Find the match.") \(thread.entities.first { $0.id == item?.entityID }?.name ?? pair.left.title)",
                 answer: pair.right,
                 choices: choices
             )
@@ -719,7 +804,7 @@ enum GameplayStageRenderSupport {
     }
 
     static func touchTargetSize(compact: Bool) -> CGFloat {
-        compact ? 54 : 64
+        80
     }
 
     static func usesCompactStageLayout(width: CGFloat, height: CGFloat) -> Bool {
@@ -732,5 +817,30 @@ enum GameplayStageRenderSupport {
 
     static func showsStagePrompt(kind: GameplayStageKind, compact: Bool) -> Bool {
         !(compact && kind == .easyMemory)
+    }
+}
+
+/// A fixed round and its exact interaction state survive leaving the activity.
+struct GameplayThreadCheckpoint: Codable, Equatable {
+    var navigation: GameplayStageNavigationState
+    var round: GameplayRoundDefinition?
+    var stageState: Data?
+    var attempts: [ItemAttempt]
+    var introductionIndex: Int
+    var introductionFinished: Bool
+    let sessionID: String
+    let threadSnapshot: GameplayThreadDefinition
+    let contentVersion: Int
+    let assetURLs: [String: URL]
+    var profileID: String? = nil
+
+    func matches(thread: GameplayThreadDefinition) -> Bool {
+        guard thread.id == threadSnapshot.id, contentVersion > 0,
+              let stage = navigation.activeStage(in: threadSnapshot), let round else { return false }
+        guard stage.id == round.stageID, stage.kind == round.kind else { return false }
+        return round.items.allSatisfy { item in
+            guard let entity = threadSnapshot.entities.first(where: { $0.id == item.entityID }) else { return false }
+            return item.propertyID == nil || entity.properties.contains { $0.id == item.propertyID }
+        }
     }
 }
