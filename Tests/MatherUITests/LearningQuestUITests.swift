@@ -216,13 +216,25 @@ final class LearningQuestUITests: XCTestCase {
         // A presented Form is a collection view above the underlying summary.
         for _ in 0..<8 {
             if button.exists, button.isHittable { break }
-            let visibleContainer = [.collectionView, .table, .scrollView]
-                .lazy
-                .compactMap { (type: XCUIElement.ElementType) in
-                    app.descendants(matching: type).allElementsBoundByIndex.reversed()
-                        .first { $0.exists && $0.isHittable }
-                }
-                .first
+            let observationForm = app.collectionViews.containing(
+                NSPredicate(format: "identifier BEGINSWITH %@", "parent-observation-")
+            ).firstMatch
+            let visibleContainer: XCUIElement?
+            // SwiftUI Form containers can report non-hittable even while their
+            // controls are visible. Scope this exception to the presented sheet.
+            if app.navigationBars["Offscreen observation"].exists,
+               observationForm.exists,
+               observationForm.frame.intersects(app.windows.firstMatch.frame) {
+                visibleContainer = observationForm
+            } else {
+                visibleContainer = [.collectionView, .table, .scrollView]
+                    .lazy
+                    .compactMap { (type: XCUIElement.ElementType) in
+                        app.descendants(matching: type).allElementsBoundByIndex.reversed()
+                            .first { $0.exists && $0.isHittable }
+                    }
+                    .first
+            }
             guard let visibleContainer else { break }
             if button.exists, button.frame.minY < app.windows.firstMatch.frame.minY + 80 {
                 visibleContainer.swipeDown()
