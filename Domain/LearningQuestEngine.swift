@@ -23,7 +23,7 @@ final class LearningQuestEngine {
     func start(_ quest: LearningQuestID, guidedPlanID: String? = nil, returnLaneID: CapabilityLaneID? = nil, returnToGames: Bool = false, content: LearningQuestContentSnapshot = .bundled) {
         if let guidedPlanID, LearningQuestID.guided(guidedPlanID) != quest { return }
         requestedQuestID = quest; sessionStarted = false; sessionPaused = false
-        guard store.refreshStorage() else { pause(); return }
+        guard store.refreshStorage(), store.seedKnownProbeHistory() else { pause(); return }
         if let saved = store.checkpoint(for: quest) { checkpoint = saved }
         else {
             guard let ordinal = store.nextVariantOrdinal(for: quest) else { pause(); return }
@@ -229,8 +229,7 @@ final class LearningQuestEngine {
         if anotherNumberProbe { checkpoint.numberProbeIndex = (checkpoint.numberProbeIndex ?? 0) + 1 }
         else { checkpoint.step = LearningQuestStep.allCases[index+1] }
         if checkpoint.step == .challenge {
-            if checkpoint.questID == .numbers, !store.markProbeSeen(checkpoint.numberProbe.id) { pause(); return }
-            if let pilot = checkpoint.pilotVariant, !store.markProbeSeen(pilot.id) { pause(); return }
+            if let id = checkpoint.currentProbeID, !store.markProbeSeen(id) { pause(); return }
         }
         checkpoint.selectedChoice = nil; checkpoint.accepted = false; checkpoint.hasManipulated = false; checkpoint.supportVisible = false; checkpoint.feedback = ""
         checkpoint.counterCount = 0; checkpoint.selectedPoints = []; checkpoint.angleDegrees = 30; checkpoint.waterState = checkpoint.questID == .waterCycle && checkpoint.step == .play ? 1 : 0; checkpoint.predictionMade = false

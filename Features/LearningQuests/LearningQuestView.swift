@@ -216,7 +216,8 @@ struct LearningQuestView: View {
     private var circuitBoard: some View {
         VStack(spacing: 16) {
             QuestCircuitPicture(connected: state.wireConnected, closed: state.switchClosed, secondClosed: state.step == .challenge ? state.secondSwitchClosed : nil, concealLight: state.step == .challenge && !state.predictionMade)
-                .frame(height: 230).accessibilityLabel(circuitDescription)
+                .frame(height: 230).accessibilityElement(children: .ignore)
+                .accessibilityLabel(state.circuitAccessibilityDescription).accessibilityIdentifier("quest-circuit-state")
             if state.step == .learn || state.step == .play || (state.step == .challenge && state.predictionMade) {
                 HStack {
                     if state.step == .play { QuestButton(label: state.wireConnected ? "Open wire" : "Join wire", symbol: "link", tint: MatherTheme.softBlue) { engine.repairWire() }.accessibilityIdentifier("quest-wire-repair") }
@@ -226,7 +227,6 @@ struct LearningQuestView: View {
             }
         }.padding(24).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 24))
     }
-    private var circuitDescription: String { if state.step == .challenge && !state.predictionMade { return "Pretend battery, bulb and two switches. Trace the pictured path and predict the bulb." }; return state.wireConnected && state.switchClosed && (state.step != .challenge || state.secondSwitchClosed) ? "Full pretend circuit. Bulb is lit." : "Pretend circuit has an open path. Bulb is off." }
     private var angleBoard: some View {
         VStack(spacing: 12) {
             ZStack {

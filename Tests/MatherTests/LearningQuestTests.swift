@@ -523,6 +523,7 @@ struct QuestCheckpointStorageTests {
             #expect(!store.remove(.numbers) && !store.reset())
             #expect(store.nextVariantOrdinal(for: .numbers) == nil)
             #expect(!store.markProbeSeen("new-probe"))
+            #expect(!store.seedKnownProbeHistory())
             #expect(store.hasSeenProbe("never-seen"))
             #expect(defaults.data(forKey: key) == bytes)
             #expect(defaults.data(forKey: historyKey) == oldHistory)
@@ -540,6 +541,7 @@ struct QuestCheckpointStorageTests {
             #expect(store.hasSeenProbe("picnic-8-3"))
             #expect(store.nextVariantOrdinal(for: .numbers) == nil)
             #expect(!store.markProbeSeen("new-item") && !store.reset() && !store.remove(.numbers))
+            #expect(!store.seedKnownProbeHistory())
             #expect(!store.save(LearningQuestCheckpoint(profileID: "child-a", questID: .numbers)))
             #expect(defaults.data(forKey: historyKey) == bytes && defaults.data(forKey: key) == valid)
         }
@@ -607,5 +609,165 @@ struct QuestCheckpointStorageTests {
         #expect(actual.storageIssue == .couldNotSave && engine.pauseMessage != nil)
         #expect(engine.checkpoint == before && events == 0 && stages == 0)
         #expect(defaults.data(forKey: key) == savedBytes)
+    }
+}
+
+@MainActor
+struct LegacyQuestProbeMigrationTests {
+    @Test func legacyExposureMarkersSeedDefaultsWithoutCreatingScoredEvidence() {
+        let markers = LearningQuestID.pilots.map { quest in
+            ItemAttempt(activityID: quest.activityID, conceptID: quest.conceptID, entityID: quest.conceptID + ".challenge",
+                stageID: "legacy", outcome: .exposure, profileID: "child-a")
+        }
+        let store = QuestCheckpointStore(storage: QuestTestDefaults(), activeProfileID: { "child-a" }, priorAttempts: { markers })
+        let engine = LearningQuestEngine(store: store, activeProfileID: { "child-a" })
+        var events = 0, stages = 0
+        engine.onAttempt = { _, _ in events += 1 }; engine.onStageCompleted = { _, _ in stages += 1 }
+        for quest in LearningQuestID.pilots {
+            engine.start(quest)
+            #expect(store.hasSeenProbe(LearningQuestProbeIdentity.legacyDefault(for: quest)!))
+            #expect(engine.checkpoint.attempts.isEmpty && events == 0 && stages == 0)
+            if quest == .numbers { #expect(engine.checkpoint.numberProbeFreshness == [false, true]) }
+            else { #expect(engine.checkpoint.pilotProbeFresh == false) }
+        }
+        // Seeing the practice portion of a bank variant does not mean its fresh
+        // challenge was seen. Its item identity must actually be a probe.
+        let practice = ItemAttempt(activityID: "quest-shapes", conceptID: "shape", entityID: "shape.remember",
+            propertyID: "practice", stageID: "remember", outcome: .independentCorrect, itemVariantID: "shape-sign-triangle")
+        #expect(LearningQuestProbeIdentity.knownProbe(in: practice) == nil)
+    }
+    @Test func unknownPriorJournalPausesWithoutAllocatingOrPublishingFreshEvidence() throws {
+        let defaults = QuestTestDefaults(), profile = QuestTestProfile()
+        var journalReadable = false
+        let key = "learningQuestCheckpoints.v1", historyKey = key + ".reviewedVariants.v1"
+        let legacy = LearningQuestCheckpoint(profileID: profile.id, questID: .numbers, numbersVariant: nil, variantOrdinal: nil)
+        let other = LearningQuestCheckpoint(profileID: "other-child", questID: .numbers, numbersVariant: nil, variantOrdinal: nil)
+        let checkpoints = try JSONEncoder().encode([profile.id: ["numbers": legacy], "other-child": ["numbers": other]])
+        let history = Data("{\"ordinals\":{},\"seenNumberProbes\":{}}".utf8)
+        defaults.set(checkpoints, forKey: key); defaults.set(history, forKey: historyKey)
+        let store = QuestCheckpointStore(storage: defaults, activeProfileID: { profile.id }, priorAttempts: { journalReadable ? [] : nil })
+        let engine = LearningQuestEngine(store: store, activeProfileID: { profile.id }), before = engine.checkpoint
+        var events = 0, stages = 0
+        engine.onAttempt = { _, _ in events += 1 }; engine.onStageCompleted = { _, _ in stages += 1 }
+        engine.start(.numbers); engine.adjustCount(1); engine.help(); engine.submit()
+        #expect(store.storageIssue == .unsupportedPriorAttempts && engine.pauseMessage != nil)
+        #expect(engine.checkpoint == before && events == 0 && stages == 0)
+        #expect(defaults.data(forKey: key) == checkpoints && defaults.data(forKey: historyKey) == history)
+        #expect(store.nextVariantOrdinal(for: .numbers) == nil && store.hasSeenProbe("picnic-8-3"))
+        journalReadable = true
+        #expect(store.reset()) // The selected-child external journal was cleared first.
+        let remaining = try JSONDecoder().decode([String: [String: LearningQuestCheckpoint]].self, from: #require(defaults.data(forKey: key)))
+        #expect(remaining["other-child"]?["numbers"] == other && remaining[profile.id] == nil)
+        engine.start(.numbers)
+        #expect(engine.pauseMessage == nil && engine.checkpoint.numberProbeFreshness == [true, true])
+        journalReadable = false; store.clearAllProfiles(); engine.start(.numbers)
+        #expect(engine.pauseMessage != nil) // Deleting checkpoints alone does not repair an unreadable external journal.
+    }
+    @Test func circuitVoiceOverStatesDescribeBothReviewedArrangementsWithoutAnswer() {
+        for (ordinal, variant) in LearningPilotVariant.reviewed(for: .circuitSpark).enumerated() {
+            var state = LearningQuestCheckpoint(profileID: "child-a", questID: .circuitSpark, numbersVariant: nil,
+                variantOrdinal: ordinal, pilotVariant: variant, pilotProbeFresh: true)
+            state.step = .challenge; state.wireConnected = true
+            state.switchClosed = variant.openSwitch != 1; state.secondSwitchClosed = variant.openSwitch != 2
+            let label = state.circuitAccessibilityDescription
+            #expect(label.contains("Wire is connected."))
+            #expect(label.contains("First, upper switch is \(state.switchClosed ? "closed" : "open")."))
+            #expect(label.contains("Second, lower switch is \(state.secondSwitchClosed ? "closed" : "open")."))
+            #expect(!label.contains("Bulb is off") && !label.contains("Bulb is lit"))
+            #expect(label.contains("Predict what the bulb will do"))
+            state.wireConnected = false
+            #expect(state.circuitAccessibilityDescription.contains("Wire has a gap."))
+            state.predictionMade = true
+            #expect(state.circuitAccessibilityDescription.contains("Bulb is off."))
+            state.wireConnected = true; state.switchClosed = true; state.secondSwitchClosed = true
+            #expect(state.circuitAccessibilityDescription.contains("Bulb is lit."))
+        }
+    }
+    @Test func legacyNumberAliasAndRestoredAttemptStayUnverifiedWhileNextSessionIsRepeated() throws {
+        let defaults = QuestTestDefaults(), profile = QuestTestProfile()
+        defaults.set(Data("{\"ordinals\":{},\"seenNumberProbes\":{\"child-a\":[\"legacy-picnic-8-3\"]}}".utf8), forKey: "learningQuestCheckpoints.v1.reviewedVariants.v1")
+        let store = QuestCheckpointStore(storage: defaults, activeProfileID: { profile.id })
+        #expect(store.hasSeenProbe("picnic-8-3") && store.hasSeenProbe("legacy-picnic-8-3"))
+        var legacy = LearningQuestCheckpoint(profileID: profile.id, questID: .numbers, numbersVariant: nil, variantOrdinal: nil)
+        legacy.step = .challenge; legacy.counterCount = 4
+        let old = ItemAttempt(activityID: legacy.activityID, conceptID: "number-bond", entityID: "number-bond.challenge",
+            propertyID: "transfer", stageID: "challenge", outcome: .help, response: "legacy-help")
+        legacy.attempts = [old]
+        #expect(store.save(legacy))
+        let engine = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+        engine.start(.numbers)
+        #expect(engine.checkpoint.attempts == [old] && engine.checkpoint.numberProbe.id == "legacy-picnic-8-3")
+        #expect(engine.checkpoint.isFreshNumberProbe == nil)
+        engine.adjustCount(1); engine.submit(); engine.submit(); engine.submit()
+        engine.start(.numbers)
+        #expect(engine.checkpoint.numbersVariant?.id == "numbers-v1-picnic")
+        #expect(engine.checkpoint.numberProbeFreshness == [false, true])
+        #expect(old.isFreshProbe == nil && old.itemVariantID == nil && old.adultHelp == nil)
+    }
+    @Test func completedLegacyLedgerSeedsOnlyKnownOwnedDefaultsWithoutRewritingAttempts() {
+        let profile = QuestTestProfile(), defaults = QuestTestDefaults()
+        let old = LearningQuestID.pilots.map { quest in
+            ItemAttempt(activityID: quest.activityID, conceptID: quest.conceptID,
+                entityID: quest.conceptID + ".challenge" + (quest == .circuitSpark ? ".prediction" : ""),
+                propertyID: "transfer", stageID: "challenge", outcome: .independentCorrect,
+                profileID: "child-a", sessionID: "old-\(quest.id)")
+        }
+        let attempts = old + [ItemAttempt(activityID: "quest-numbers", conceptID: "number-bond", entityID: "number-bond.challenge",
+            propertyID: "transfer", stageID: "challenge", outcome: .incorrect, profileID: "other-child")]
+        let store = QuestCheckpointStore(storage: defaults, activeProfileID: { profile.id }, priorAttempts: { attempts })
+        let engine = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+        for quest in LearningQuestID.pilots {
+            engine.start(quest)
+            if quest == .numbers { #expect(engine.checkpoint.numberProbeFreshness == [false, true]) }
+            else { #expect(engine.checkpoint.pilotProbeFresh == false) }
+            #expect(store.hasSeenProbe(LearningQuestProbeIdentity.legacyDefault(for: quest)!))
+        }
+        #expect(attempts.prefix(4) == old[...])
+        #expect(old.allSatisfy { $0.isFreshProbe == nil && $0.itemVariantID == nil })
+        #expect(store.hasSeenProbe("coat-7-1") == false)
+        #expect(store.hasSeenProbe("shape-sign-triangle") == false)
+        #expect(store.hasSeenProbe("water-cold-bottle") == false)
+        #expect(store.hasSeenProbe("circuit-first-switch-open") == false)
+        profile.id = "unseen-child"; engine.start(.numbers)
+        #expect(engine.checkpoint.numberProbeFreshness == [true, true])
+    }
+    @Test func enteringAndCompletingLegacyDefaultProbeSeedsLaterReviewedSessions() throws {
+        for quest in LearningQuestID.pilots {
+            let profile = QuestTestProfile(), store = QuestCheckpointStore(storage: QuestTestDefaults(), activeProfileID: { "child-a" })
+            var legacy = LearningQuestCheckpoint(profileID: profile.id, questID: quest, numbersVariant: nil, variantOrdinal: nil)
+            legacy.step = .play
+            legacy.counterCount = 0
+            if quest == .waterCycle { legacy.waterState = 1 }
+            if quest == .circuitSpark { legacy.wireConnected = false; legacy.switchClosed = true }
+            #expect(store.save(legacy))
+            let engine = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+            engine.start(quest)
+            switch quest {
+            case .numbers: engine.adjustCount(4)
+            case .shapes: for point in [0, 1, 3] { engine.togglePoint(point) }
+            case .waterCycle: engine.choose("drops")
+            case .circuitSpark: engine.repairWire()
+            default: break
+            }
+            engine.submit(); engine.submit()
+            #expect(engine.checkpoint.step == .challenge)
+            #expect(store.hasSeenProbe(LearningQuestProbeIdentity.legacyDefault(for: quest)!))
+            switch quest {
+            case .numbers: engine.adjustCount(5); engine.submit()
+            case .shapes: engine.choose("rectangle"); engine.submit()
+            case .waterCycle: engine.choose("outside"); engine.submit()
+            case .circuitSpark: engine.choose("off"); engine.submit(); engine.toggleSwitch(second: true); engine.submit()
+            default: break
+            }
+            #expect(engine.checkpoint.accepted)
+            let legacyAttempts = engine.checkpoint.attempts.filter { $0.stageID == "challenge" }
+            #expect(legacyAttempts.allSatisfy { $0.isFreshProbe == nil })
+            engine.submit(); engine.submit()
+            #expect(store.checkpoint(for: quest) == nil)
+            engine.start(quest)
+            if quest == .numbers { #expect(engine.checkpoint.numberProbeFreshness == [false, true]) }
+            else { #expect(engine.checkpoint.pilotProbeFresh == false) }
+            #expect(engine.pauseMessage == nil)
+        }
     }
 }

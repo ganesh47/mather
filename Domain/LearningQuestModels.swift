@@ -130,6 +130,44 @@ struct LearningPilotVariant: Codable, Equatable {
     var isReviewed: Bool { Self.reviewed(for: questID).contains(self) }
 }
 
+/// Known legacy tasks are aliases of the reviewed defaults, not new probes.
+enum LearningQuestProbeIdentity {
+    static func canonical(_ id: String) -> String { id == "legacy-picnic-8-3" ? "picnic-8-3" : id }
+    static func legacyDefault(for quest: LearningQuestID) -> String? {
+        switch quest {
+        case .numbers: "picnic-8-3"
+        case .shapes: "shape-door-rectangle"
+        case .waterCycle: "water-cold-cup"
+        case .circuitSpark: "circuit-second-switch-open"
+        default: nil
+        }
+    }
+    static func knownProbe(in attempt: ItemAttempt) -> String? {
+        guard let quest = LearningQuestID.allCases.first(where: { $0.activityID == attempt.activityID }) else { return nil }
+        let known = Set(quest == .numbers ? LearningNumbersVariant.reviewed.flatMap(\.probes).map(\.id)
+            : LearningPilotVariant.reviewed(for: quest).map(\.id))
+        let legacyTarget = quest.conceptID + ".challenge"
+        if attempt.entityID == legacyTarget || (quest == .circuitSpark && [legacyTarget + ".prediction", legacyTarget + ".repair"].contains(attempt.entityID)) {
+            return legacyDefault(for: quest)
+        }
+        let prefix = quest.conceptID + ".probe."
+        if attempt.entityID.hasPrefix(prefix) {
+            var id = String(attempt.entityID.dropFirst(prefix.count))
+            if quest == .circuitSpark {
+                for suffix in [".prediction", ".repair"] where id.hasSuffix(suffix) { id.removeLast(suffix.count) }
+            }
+            id = canonical(id)
+            return known.contains(id) ? id : nil
+        }
+        // Pilot variant IDs also occur on practice events; only transfer-stage
+        // events can establish that such a probe has already been presented.
+        guard attempt.propertyID == "transfer" || ["challenge", "transfer"].contains(attempt.stageID),
+              let variant = attempt.itemVariantID else { return nil }
+        let id = canonical(variant)
+        return known.contains(id) ? id : nil
+    }
+}
+
 /// Frozen child and content identity, actual responses, and manipulation state.
 /// A checkpoint restores the exact task; it never restores another child's evidence.
 struct LearningQuestCheckpoint: Codable, Equatable {
@@ -205,6 +243,28 @@ struct LearningQuestCheckpoint: Codable, Equatable {
         let index = numberProbeIndex ?? 0
         return values.indices.contains(index) ? values[index] : nil
     } }
+    var currentProbeID: String? {
+        questID == .numbers ? LearningQuestProbeIdentity.canonical(numberProbe.id)
+            : pilotVariant?.id ?? LearningQuestProbeIdentity.legacyDefault(for: questID)
+    }
+    var presentedProbeIDs: Set<String> {
+        var ids = Set(attempts.compactMap(LearningQuestProbeIdentity.knownProbe))
+        guard step == .challenge || step == .celebrate || completedSteps.contains(.challenge) else { return ids }
+        if let variant = numbersVariant {
+            let count = step == .celebrate || completedSteps.contains(.challenge) ? variant.probes.count : (numberProbeIndex ?? 0) + 1
+            ids.formUnion(variant.probes.prefix(count).map(\.id))
+        } else if let id = currentProbeID { ids.insert(id) }
+        return ids
+    }
+    var circuitAccessibilityDescription: String {
+        let wire = wireConnected ? "Wire is connected." : "Wire has a gap."
+        let first = "First, upper switch is \(switchClosed ? "closed" : "open")."
+        let second = step == .challenge ? " Second, lower switch is \(secondSwitchClosed ? "closed" : "open")." : ""
+        let states = "Pretend battery and bulb. \(wire) \(first)\(second)"
+        if step == .challenge && !predictionMade { return states + " Predict what the bulb will do." }
+        let lit = wireConnected && switchClosed && (step != .challenge || secondSwitchClosed)
+        return states + (lit ? " Bulb is lit." : " Bulb is off.")
+    }
     var targetID: String {
         if questID == .numbers && numbersVariant != nil {
             if step == .challenge { return "number-bond.probe.\(numberProbe.id)" }
@@ -271,24 +331,34 @@ extension LearningQuestCheckpoint {
     var choices: [LearningQuestChoice] {
         switch questID {
         case .numbers:
-            let answer = numberAnswer
-            let distractors = (0...numberWhole).filter { $0 != answer }.sorted { abs($0-answer) == abs($1-answer) ? $0 < $1 : abs($0-answer) < abs($1-answer) }
-            let values = ([answer] + distractors.prefix(2)).sorted()
-            return values.map { .init(id: String($0), label: String($0), symbol: String($0)) }
+            let answer: Int = numberAnswer
+            let candidates: [Int] = Array(0...numberWhole)
+            let alternatives: [Int] = candidates.filter { candidate in candidate != answer }
+            let distractors: [Int] = alternatives.sorted { (left: Int, right: Int) -> Bool in
+                let leftDistance: Int = abs(left - answer)
+                let rightDistance: Int = abs(right - answer)
+                if leftDistance == rightDistance { return left < right }
+                return leftDistance < rightDistance
+            }
+            let nearest: [Int] = Array(distractors.prefix(2))
+            let values: [Int] = ([answer] + nearest).sorted()
+            return values.map { value in LearningQuestChoice(id: String(value), label: String(value), symbol: String(value)) }
         case .shapes:
             if step == .challenge {
-                let kinds = shapeTransferKind == "triangle" ? ["circle", "rectangle", "triangle"] : ["rectangle", "triangle", "circle"]
-                return zip(kinds, ["one", "two", "three"]).map { .init(id: $0.0, label: "Picture \($0.1)", symbol: $0.0) }
+                let kinds: [String] = shapeTransferKind == "triangle" ? ["circle", "rectangle", "triangle"] : ["rectangle", "triangle", "circle"]
+                return zip(kinds, ["one", "two", "three"]).map { kind, position in
+                    LearningQuestChoice(id: kind, label: "Picture \(position)", symbol: kind)
+                }
             }
-            return [.init(id: "square", label: "Picture one", symbol: "square"), .init(id: "triangle", label: "Picture two", symbol: "triangle"), .init(id: "circle", label: "Picture three", symbol: "circle")]
+            return [LearningQuestChoice(id: "square", label: "Picture one", symbol: "square"), LearningQuestChoice(id: "triangle", label: "Picture two", symbol: "triangle"), LearningQuestChoice(id: "circle", label: "Picture three", symbol: "circle")]
         case .waterCycle:
-            if step == .challenge { return [.init(id: "outside", label: "Drops on the outside", symbol: "🥤💧"), .init(id: "inside", label: "Drops inside the cup", symbol: "inside"), .init(id: "none", label: "No drops appear", symbol: "none")] }
-            return [.init(id: "vapor", label: "Invisible water vapor", symbol: "💧⬆️"), .init(id: "drops", label: "Tiny drops make a cloud", symbol: "☁️💧"), .init(id: "ice", label: "An ice block", symbol: "🧊")]
+            if step == .challenge { return [LearningQuestChoice(id: "outside", label: "Drops on the outside", symbol: "🥤💧"), LearningQuestChoice(id: "inside", label: "Drops inside the cup", symbol: "inside"), LearningQuestChoice(id: "none", label: "No drops appear", symbol: "none")] }
+            return [LearningQuestChoice(id: "vapor", label: "Invisible water vapor", symbol: "💧⬆️"), LearningQuestChoice(id: "drops", label: "Tiny drops make a cloud", symbol: "☁️💧"), LearningQuestChoice(id: "ice", label: "An ice block", symbol: "🧊")]
         case .circuitSpark:
-            if step == .challenge { return [.init(id: "off", label: "Light off", symbol: "🌑"), .init(id: "on", label: "Light on", symbol: "💡")] }
-            return [.init(id: "open", label: "Picture one", symbol: "open"), .init(id: "closed", label: "Picture two", symbol: "closed")]
-        case .angles: return [.init(id: "30", label: "Picture one", symbol: "30"), .init(id: "90", label: "Picture two", symbol: "90"), .init(id: "150", label: "Picture three", symbol: "150")]
-        case .symmetry: return [.init(id: "broken", label: "Picture one", symbol: "broken"), .init(id: "match", label: "Picture two", symbol: "match")]
+            if step == .challenge { return [LearningQuestChoice(id: "off", label: "Light off", symbol: "🌑"), LearningQuestChoice(id: "on", label: "Light on", symbol: "💡")] }
+            return [LearningQuestChoice(id: "open", label: "Picture one", symbol: "open"), LearningQuestChoice(id: "closed", label: "Picture two", symbol: "closed")]
+        case .angles: return [LearningQuestChoice(id: "30", label: "Picture one", symbol: "30"), LearningQuestChoice(id: "90", label: "Picture two", symbol: "90"), LearningQuestChoice(id: "150", label: "Picture three", symbol: "150")]
+        case .symmetry: return [LearningQuestChoice(id: "broken", label: "Picture one", symbol: "broken"), LearningQuestChoice(id: "match", label: "Picture two", symbol: "match")]
         }
     }
     var support: String {

@@ -69,23 +69,35 @@ final class LearningQuestUITests: XCTestCase {
     }
 
     func testCircuitPredictsRepairsAndFinishesDifferentArrangement() {
-        let app = launch("quest-circuit-spark")
-        tap("quest-switch-first", in: app)
-        snapshot(app, "Circuit-Learn")
-        tap("quest-primary", in: app)
-        step("Remember", in: app)
-        tap("quest-choice-closed", in: app)
-        submitAndContinue(in: app)
-        step("Play", in: app)
-        tap("quest-wire-repair", in: app)
-        submitAndContinue(in: app)
-        step("Challenge", in: app)
-        tap("quest-choice-off", in: app)
-        tap("quest-primary", in: app) // Store the prediction before revealing the repair controls.
-        tap("quest-switch-second", in: app)
-        snapshot(app, "Circuit-Transfer")
-        submitAndContinue(in: app)
-        finish(in: app, name: "Circuit")
+        let app = XCUIApplication()
+        for ordinal in 0..<2 {
+            app.launchArguments = arguments("quest-circuit-spark", clear: ordinal == 0)
+            app.launch()
+            XCTAssertTrue(app.staticTexts["learning-quest-circuitSpark"].waitForExistence(timeout: 10))
+            tap("quest-switch-first", in: app)
+            snapshot(app, "Circuit-Learn")
+            tap("quest-primary", in: app)
+            step("Remember", in: app)
+            tap("quest-choice-closed", in: app)
+            submitAndContinue(in: app)
+            step("Play", in: app)
+            tap("quest-wire-repair", in: app)
+            submitAndContinue(in: app)
+            step("Challenge", in: app)
+            let circuit = app.descendants(matching: .any)["quest-circuit-state"].firstMatch
+            XCTAssertTrue(circuit.waitForExistence(timeout: 5))
+            XCTAssertTrue(circuit.label.contains("Wire is connected."))
+            XCTAssertTrue(circuit.label.contains("First, upper switch is \(ordinal == 0 ? "closed" : "open")."))
+            XCTAssertTrue(circuit.label.contains("Second, lower switch is \(ordinal == 0 ? "open" : "closed")."))
+            XCTAssertFalse(circuit.label.contains("Bulb is off") || circuit.label.contains("Bulb is lit"))
+            tap("quest-choice-off", in: app)
+            tap("quest-primary", in: app) // Store the prediction before revealing the repair controls.
+            tap(ordinal == 0 ? "quest-switch-second" : "quest-switch-first", in: app)
+            snapshot(app, "Circuit-Transfer")
+            submitAndContinue(in: app)
+            finish(in: app, name: "Circuit")
+            app.terminate()
+        }
     }
 
     func testSavingAndRelaunchingRestoresExactNumberTask() {
