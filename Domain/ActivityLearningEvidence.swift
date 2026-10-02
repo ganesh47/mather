@@ -1,9 +1,15 @@
 import Foundation
 
+/// Adult assistance is reported context, never inferred from a correct tap.
+enum AdultHelpStatus: String, Codable, Equatable, Hashable {
+    case unknown, reportedNoHelp, reportedHelp
+}
+
 /// Viewing, support and eventual success are deliberately different evidence.
 enum ItemAttemptOutcome: String, Codable, Equatable, Hashable {
     case exposure, help, independentCorrect, supportedCorrect, incorrect
 
+    #if !os(tvOS)
     var recallOutcome: GameplayExposureOutcome? {
         switch self {
         case .exposure, .help: nil
@@ -12,6 +18,7 @@ enum ItemAttemptOutcome: String, Codable, Equatable, Hashable {
         case .incorrect: .incorrect
         }
     }
+    #endif
 }
 
 struct ItemAttempt: Identifiable, Codable, Equatable, Hashable {
@@ -27,8 +34,12 @@ struct ItemAttempt: Identifiable, Codable, Equatable, Hashable {
     let profileID: String?
     let sessionID: String?
     let contentVersion: Int?
+    let itemVariantID: String?
+    let appHintUsed: Bool?
+    let isFreshProbe: Bool?
+    let adultHelp: AdultHelpStatus?
 
-    init(id: UUID = UUID(), activityID: String, conceptID: String, entityID: String, propertyID: String? = nil, stageID: String, outcome: ItemAttemptOutcome, response: String? = nil, occurredAt: Date = Date(), profileID: String? = nil, sessionID: String? = nil, contentVersion: Int? = nil) {
+    init(id: UUID = UUID(), activityID: String, conceptID: String, entityID: String, propertyID: String? = nil, stageID: String, outcome: ItemAttemptOutcome, response: String? = nil, occurredAt: Date = Date(), profileID: String? = nil, sessionID: String? = nil, contentVersion: Int? = nil, itemVariantID: String? = nil, appHintUsed: Bool? = nil, isFreshProbe: Bool? = nil, adultHelp: AdultHelpStatus? = nil) {
         self.id = id
         self.activityID = activityID
         self.conceptID = conceptID
@@ -41,35 +52,47 @@ struct ItemAttempt: Identifiable, Codable, Equatable, Hashable {
         self.profileID = profileID
         self.sessionID = sessionID
         self.contentVersion = contentVersion
+        self.itemVariantID = itemVariantID
+        self.appHintUsed = appHintUsed
+        self.isFreshProbe = isFreshProbe
+        self.adultHelp = adultHelp
     }
 
     func withContext(profileID: String? = nil, sessionID: String? = nil, contentVersion: Int? = nil) -> ItemAttempt {
         ItemAttempt(id: id, activityID: activityID, conceptID: conceptID, entityID: entityID, propertyID: propertyID,
             stageID: stageID, outcome: outcome, response: response, occurredAt: occurredAt,
-            profileID: profileID ?? self.profileID, sessionID: sessionID ?? self.sessionID, contentVersion: contentVersion ?? self.contentVersion)
+            profileID: profileID ?? self.profileID, sessionID: sessionID ?? self.sessionID, contentVersion: contentVersion ?? self.contentVersion,
+            itemVariantID: itemVariantID, appHintUsed: appHintUsed, isFreshProbe: isFreshProbe, adultHelp: adultHelp)
     }
 
     func withOutcome(_ outcome: ItemAttemptOutcome) -> ItemAttempt {
         ItemAttempt(id: id, activityID: activityID, conceptID: conceptID, entityID: entityID, propertyID: propertyID,
             stageID: stageID, outcome: outcome, response: response, occurredAt: occurredAt,
-            profileID: profileID, sessionID: sessionID, contentVersion: contentVersion)
+            profileID: profileID, sessionID: sessionID, contentVersion: contentVersion,
+            itemVariantID: itemVariantID, appHintUsed: appHintUsed, isFreshProbe: isFreshProbe, adultHelp: adultHelp)
     }
 
+    #if !os(tvOS)
     var exposureKey: GameplayExposureKey { GameplayExposureKey(entityID: entityID, propertyID: propertyID, stageID: stageID) }
+    #endif
 }
 
 /// Restarting a screen does not erase support already used for that item in this session.
 enum ActivityEvidenceNormalizer {
     private struct Target: Hashable {
         let activityID: String
-        let key: GameplayExposureKey
+        let entityID: String
+        let propertyID: String?
+        let stageID: String
         let profileID: String?
         let sessionID: String?
         let contentVersion: Int?
 
         init(_ attempt: ItemAttempt) {
             activityID = attempt.activityID
-            key = attempt.exposureKey
+            entityID = attempt.entityID
+            propertyID = attempt.propertyID
+            stageID = attempt.stageID
             profileID = attempt.profileID
             sessionID = attempt.sessionID
             contentVersion = attempt.contentVersion
@@ -83,7 +106,7 @@ enum ActivityEvidenceNormalizer {
             if event.outcome == .help || event.outcome == .incorrect || event.outcome == .supportedCorrect {
                 supported.insert(target)
             }
-            return event.outcome == .independentCorrect && supported.contains(target) ? event.withOutcome(.supportedCorrect) : event
+            return event.outcome == .independentCorrect && (supported.contains(target) || event.appHintUsed == true || event.adultHelp == .reportedHelp) ? event.withOutcome(.supportedCorrect) : event
         }
     }
 }
@@ -112,6 +135,7 @@ struct ActivityResult: Identifiable, Codable, Equatable {
     }
 }
 
+#if !os(tvOS)
 struct ActivityLaunchContext: Codable, Equatable {
     let activityID: String
     let conceptID: String?
@@ -123,6 +147,7 @@ struct ActivityLaunchContext: Codable, Equatable {
         self.returnLaneID = returnLaneID
     }
 }
+#endif
 
 /// Small generic envelope; each activity owns and validates its payload.
 struct QuestCheckpoint: Codable, Equatable {
