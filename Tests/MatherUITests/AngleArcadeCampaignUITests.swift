@@ -11,11 +11,6 @@ final class AngleArcadeCampaignUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        XCUIDevice.shared.orientation = .portrait
-    }
-
-    override func tearDownWithError() throws {
-        XCUIDevice.shared.orientation = .portrait
     }
 
     func testAllWorldsCompleteWithTouchAndCanReplay() {
@@ -94,6 +89,7 @@ final class AngleArcadeCampaignUITests: XCTestCase {
     }
 
     private func launch(reset: Bool) -> XCUIApplication {
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments = ["-angle-arcade-ui-test"] + (reset ? ["-angle-arcade-reset-progress"] : [])
         app.launch()
