@@ -276,7 +276,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Data reset")
                     .font(.title2.weight(.bold))
-                Text("Clears this child's learning attempts, summaries, quest checkpoints, Explorer progress, and telemetry on this device.")
+                Text("Clears this child's learning attempts, summaries, quest checkpoints, Explorer and Angle progress, and telemetry on this device.")
                     .font(.subheadline)
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)

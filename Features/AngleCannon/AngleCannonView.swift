@@ -135,7 +135,7 @@ struct AngleCannonView: View {
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .accessibilityElement(children: .contain)
             .accessibilityLabel(engine.level.title)
-            .accessibilityValue(engine.phase == .result ? engine.feedback : engine.hint)
+            .accessibilityValue(engine.phase == .result ? engine.feedback : engine.prompt)
             .accessibilityIdentifier("angle-cannon-canvas")
     }
 
