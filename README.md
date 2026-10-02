@@ -117,6 +117,21 @@ Keep these pages in sync whenever privacy-sensitive features change, especially 
 
 ## Release readiness notes
 
+Before pushing a new version tag, prepare its exact Xcode Cloud trigger with
+`gh workflow run release.yml --ref main -f tag=v2.9.0 -f prepare_tag_only=true`
+(replace the version). Wait for the preparation run to succeed, then tag the reviewed
+merge commit and push that tag. Preparation changes only a single version tag condition;
+custom broader workflow conditions are preserved. The release job reuses the automatic
+build for that exact tag, retrieves signed iOS and tvOS exports, and confirms both
+platforms are `IN_BETA_TESTING`. A GitHub Release or a successful diagnostics-only run
+does not confirm TestFlight delivery.
+
+If a tag's archive fails without a usable App Store export, retry it with
+`gh workflow run release.yml --ref main -f tag=v2.9.0 -f fresh_build=true`.
+The tag remains fixed; this requests another build rather than repeatedly recovering
+the failed run. An explicit `build_run_id` instead resumes that run after verifying its
+workflow and exact tag.
+
 - Recent build 104 crash-hardening work tightened delayed callback/lifecycle handling in Bond Blast and Angle Cannon/Targets flows.
 - Issue #912 Slice H polish routes country cards, fruit cards, and water cycle through the reusable gameplay-thread surface.
 - The legacy water-cycle lab route remains intentionally available for explicit legacy/UI-test launches, while Explorer Lab and direct water-cycle launches delegate to `GameplayThreadView`.

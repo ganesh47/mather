@@ -7,7 +7,7 @@ Current games:
 - Memory Gallery — picture and name matching
 - Angle Arcade — predict and launch with angles
 - Sum Sprint Party — calm addition practice
-- Compare Camp — count and compare two groups
+- Compare Camp — 24 themed camps with building, counting, comparison and number signs
 - Shape Detective — solve geometry clues
 
 Generation and build checks:
@@ -35,3 +35,14 @@ Angle Arcade:
 - Play/Pause repeats guidance. Menu returns to all games; reentering starts a fresh guided round.
 
 Before device handoff, check each game with the Siri Remote: initial prompt, rapid focus movement, answer feedback, next round, repeat prompt, Menu return, and VoiceOver enabled. Confirm that Memory picture prompts do not speak the answer before selection.
+
+Compare Camp:
+
+- Six regions contain four camps each: plants/sheep, ocean creatures, birds, planet models, travel, and builders. The artwork identifies one object per token tile.
+- Choose Camp Adventure or one of five focused trails, then groups up to 5, 10 or 20. Every trail contains eight stops and a natural finish.
+- Adventure progresses from adding/removing items to match, through pictured more/fewer comparisons, to number signs and transfer into a new region.
+- Count left/right advances one highlighted object per Select. Pair up shows matching link markers and extra plus markers. Guide me speaks a scaffold. Incorrect checks and choices remain open for another try.
+- From answer controls, Left reaches help; Down from Check Match or the final answer reaches the counting row. Up from help returns to the answer controls. Down from any group-size choice reaches Start Exploring.
+- Play/Pause repeats the current task, chosen options, scaffold or solved explanation. Menu returns to all games. Reentry starts at the camp chooser.
+- Completed trails earn a device-local passport sticker. Replay and later completed-camp visits vary the groups. Exploration is celebrated without a timer or accuracy score.
+- The printable companion is `output/pdf/compare-camp-family-play-kit.pdf`; its builder and the content manifest exporter live in `scripts/`.

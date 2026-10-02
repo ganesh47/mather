@@ -1,0 +1,341 @@
+{
+  "schemaVersion": 1,
+  "categoryCount": 24,
+  "categories": [
+    {
+      "id": "apple-orchard",
+      "title": "Apple Orchard",
+      "subtitle": "Pack a picnic",
+      "region": "woodland",
+      "singular": "apple",
+      "plural": "apples",
+      "symbol": "apple.logo",
+      "asset": "CompareCampApple",
+      "accentHex": "F5AD6B"
+    },
+    {
+      "id": "flower-garden",
+      "title": "Flower Garden",
+      "subtitle": "Grow a colorful camp",
+      "region": "woodland",
+      "singular": "flower",
+      "plural": "flowers",
+      "symbol": "camera.macro",
+      "asset": "CompareCampFlower",
+      "accentHex": "F4A7C4"
+    },
+    {
+      "id": "leaf-trail",
+      "title": "Leaf Trail",
+      "subtitle": "Gather forest treasures",
+      "region": "woodland",
+      "singular": "leaf",
+      "plural": "leaves",
+      "symbol": "leaf.fill",
+      "asset": "CompareCampLeaf",
+      "accentHex": "9ED5A0"
+    },
+    {
+      "id": "sheep-meadow",
+      "title": "Sheep Meadow",
+      "subtitle": "Help the fluffy flock",
+      "region": "woodland",
+      "singular": "sheep",
+      "plural": "sheep",
+      "symbol": "pawprint.fill",
+      "asset": "CompareCampSheep",
+      "accentHex": "DDD5B2"
+    },
+    {
+      "id": "clownfish-reef",
+      "title": "Clownfish Reef",
+      "subtitle": "Meet bright reef friends",
+      "region": "ocean",
+      "singular": "clownfish",
+      "plural": "clownfish",
+      "symbol": "fish.fill",
+      "asset": "MemoryFishClownfish",
+      "accentHex": "F8AE76"
+    },
+    {
+      "id": "goldfish-pond",
+      "title": "Goldfish Pond",
+      "subtitle": "Make a splash",
+      "region": "ocean",
+      "singular": "goldfish",
+      "plural": "goldfish",
+      "symbol": "fish.fill",
+      "asset": "MemoryFishGoldfish",
+      "accentHex": "F9D574"
+    },
+    {
+      "id": "seahorse-bay",
+      "title": "Seahorse Bay",
+      "subtitle": "Visit curly-tailed friends",
+      "region": "ocean",
+      "singular": "seahorse",
+      "plural": "seahorses",
+      "symbol": "water.waves",
+      "asset": "MemoryFishSeahorse",
+      "accentHex": "9DDCE2"
+    },
+    {
+      "id": "angelfish-lagoon",
+      "title": "Angelfish Lagoon",
+      "subtitle": "Explore the calm lagoon",
+      "region": "ocean",
+      "singular": "angelfish",
+      "plural": "angelfish",
+      "symbol": "fish.fill",
+      "asset": "MemoryFishAngelfish",
+      "accentHex": "B8CFF4"
+    },
+    {
+      "id": "macaw-canopy",
+      "title": "Macaw Canopy",
+      "subtitle": "Find rainbow feathers",
+      "region": "sky",
+      "singular": "macaw",
+      "plural": "macaws",
+      "symbol": "bird.fill",
+      "asset": "CompareCampMacaw",
+      "accentHex": "F1B389"
+    },
+    {
+      "id": "peafowl-garden",
+      "title": "Peafowl Garden",
+      "subtitle": "Enjoy a feather parade",
+      "region": "sky",
+      "singular": "peafowl",
+      "plural": "peafowl",
+      "symbol": "bird.fill",
+      "asset": "CompareCampPeafowl",
+      "accentHex": "8DD1C1"
+    },
+    {
+      "id": "flamingo-lake",
+      "title": "Flamingo Lake",
+      "subtitle": "Visit the pink flock",
+      "region": "sky",
+      "singular": "flamingo",
+      "plural": "flamingos",
+      "symbol": "bird.fill",
+      "asset": "CompareCampFlamingo",
+      "accentHex": "EEACC7"
+    },
+    {
+      "id": "puffin-cliffs",
+      "title": "Puffin Cliffs",
+      "subtitle": "Look out over the sea",
+      "region": "sky",
+      "singular": "puffin",
+      "plural": "puffins",
+      "symbol": "bird.fill",
+      "asset": "CompareCampPuffin",
+      "accentHex": "B8D9EF"
+    },
+    {
+      "id": "earth-workshop",
+      "title": "Earth Workshop",
+      "subtitle": "Sort little planet models",
+      "region": "space",
+      "singular": "Earth model",
+      "plural": "Earth models",
+      "symbol": "globe.americas.fill",
+      "asset": "MemoryPlanetEarth",
+      "accentHex": "95C6F4"
+    },
+    {
+      "id": "mars-workshop",
+      "title": "Mars Workshop",
+      "subtitle": "Count red planet models",
+      "region": "space",
+      "singular": "Mars model",
+      "plural": "Mars models",
+      "symbol": "circle.fill",
+      "asset": "MemoryPlanetMars",
+      "accentHex": "F0A28C"
+    },
+    {
+      "id": "jupiter-workshop",
+      "title": "Jupiter Workshop",
+      "subtitle": "Explore striped models",
+      "region": "space",
+      "singular": "Jupiter model",
+      "plural": "Jupiter models",
+      "symbol": "circle.fill",
+      "asset": "MemoryPlanetJupiter",
+      "accentHex": "E3C294"
+    },
+    {
+      "id": "saturn-workshop",
+      "title": "Saturn Workshop",
+      "subtitle": "Count models with rings",
+      "region": "space",
+      "singular": "Saturn model",
+      "plural": "Saturn models",
+      "symbol": "sparkles",
+      "asset": "MemoryPlanetSaturn",
+      "accentHex": "DFCFAC"
+    },
+    {
+      "id": "car-camp",
+      "title": "Car Camp",
+      "subtitle": "Park a colorful convoy",
+      "region": "travel",
+      "singular": "car",
+      "plural": "cars",
+      "symbol": "car.fill",
+      "asset": "MemoryVehicleCar",
+      "accentHex": "F5AFA6"
+    },
+    {
+      "id": "train-station",
+      "title": "Train Station",
+      "subtitle": "All aboard the number trail",
+      "region": "travel",
+      "singular": "train",
+      "plural": "trains",
+      "symbol": "tram.fill",
+      "asset": "MemoryVehicleTrain",
+      "accentHex": "B6CAF8"
+    },
+    {
+      "id": "boat-harbor",
+      "title": "Boat Harbor",
+      "subtitle": "Bring the boats home",
+      "region": "travel",
+      "singular": "boat",
+      "plural": "boats",
+      "symbol": "sailboat.fill",
+      "asset": "MemoryVehicleBoat",
+      "accentHex": "8DD5E6"
+    },
+    {
+      "id": "airplane-field",
+      "title": "Airplane Field",
+      "subtitle": "Get ready to take off",
+      "region": "travel",
+      "singular": "airplane",
+      "plural": "airplanes",
+      "symbol": "airplane",
+      "asset": "MemoryVehiclePlane",
+      "accentHex": "BDD6EC"
+    },
+    {
+      "id": "excavator-hill",
+      "title": "Excavator Hill",
+      "subtitle": "Dig into a new adventure",
+      "region": "builders",
+      "singular": "excavator",
+      "plural": "excavators",
+      "symbol": "hammer.fill",
+      "asset": "MemoryVehicleExcavator",
+      "accentHex": "F8CF79"
+    },
+    {
+      "id": "bulldozer-trail",
+      "title": "Bulldozer Trail",
+      "subtitle": "Build a path together",
+      "region": "builders",
+      "singular": "bulldozer",
+      "plural": "bulldozers",
+      "symbol": "hammer.fill",
+      "asset": "MemoryVehicleBulldozer",
+      "accentHex": "EBC477"
+    },
+    {
+      "id": "dump-truck-quarry",
+      "title": "Dump Truck Quarry",
+      "subtitle": "Help the hauling crew",
+      "region": "builders",
+      "singular": "dump truck",
+      "plural": "dump trucks",
+      "symbol": "truck.box.fill",
+      "asset": "MemoryVehicleDumpTruck",
+      "accentHex": "F5B582"
+    },
+    {
+      "id": "mixer-yard",
+      "title": "Mixer Yard",
+      "subtitle": "Mix up some number fun",
+      "region": "builders",
+      "singular": "mixer truck",
+      "plural": "mixer trucks",
+      "symbol": "truck.box.fill",
+      "asset": "MemoryVehicleConcreteMixerTruck",
+      "accentHex": "B5D7BB"
+    }
+  ],
+  "activities": [
+    "adventure",
+    "more",
+    "fewer",
+    "makeEqual",
+    "difference",
+    "symbols"
+  ],
+  "difficultyMaxima": {
+    "small": 5,
+    "growing": 10,
+    "big": 20
+  },
+  "stopsPerTrail": 8,
+  "generatedAssets": [
+    {
+      "name": "CompareCampApple",
+      "path": "App/Assets.xcassets/CompareCampApple.imageset/CompareCampApple.png",
+      "sha256": "a8beec68b01d36c930c87fa528d56785444042b2644542a0bde7660ed11a2d41"
+    },
+    {
+      "name": "CompareCampBadge",
+      "path": "App/Assets.xcassets/CompareCampBadge.imageset/CompareCampBadge.png",
+      "sha256": "b74b1a54053e8aba7fb164141b7fcdbcfb7d895dd249de69bef8fdd474409057"
+    },
+    {
+      "name": "CompareCampFlamingo",
+      "path": "App/Assets.xcassets/CompareCampFlamingo.imageset/CompareCampFlamingo.png",
+      "sha256": "436f2dec42f4764e3229dbcdcdf00a88a38afe90602493e81bf0c59f7f8f9705"
+    },
+    {
+      "name": "CompareCampFlower",
+      "path": "App/Assets.xcassets/CompareCampFlower.imageset/CompareCampFlower.png",
+      "sha256": "f01ee86f6407d9c8bec1a9648765c6001fcafb544ab47e6571bfa018ecabad85"
+    },
+    {
+      "name": "CompareCampGuide",
+      "path": "App/Assets.xcassets/CompareCampGuide.imageset/CompareCampGuide.png",
+      "sha256": "a24c8736323d8a2af0ff049a61ea80fcac76283e454ef73abb3e8bac95e7ff83"
+    },
+    {
+      "name": "CompareCampLandscape",
+      "path": "App/Assets.xcassets/CompareCampLandscape.imageset/CompareCampLandscape.png",
+      "sha256": "1dec84527935662d0ec5d39e6aab04a2e64205c0641e0b103033d7a4a32db28f"
+    },
+    {
+      "name": "CompareCampLeaf",
+      "path": "App/Assets.xcassets/CompareCampLeaf.imageset/CompareCampLeaf.png",
+      "sha256": "08410e311da0487e5544630990e45fb985bdf72af826c8fa8dbf7bb1714b8e6c"
+    },
+    {
+      "name": "CompareCampMacaw",
+      "path": "App/Assets.xcassets/CompareCampMacaw.imageset/CompareCampMacaw.png",
+      "sha256": "886ac375f662132c614848030d787a8a33c534188ef69ceb38f18151d5e090ed"
+    },
+    {
+      "name": "CompareCampPeafowl",
+      "path": "App/Assets.xcassets/CompareCampPeafowl.imageset/CompareCampPeafowl.png",
+      "sha256": "768b8729b240a971b8e0638c8b9aed9abbc855ef83cfd3b9adc2d38576c46766"
+    },
+    {
+      "name": "CompareCampPuffin",
+      "path": "App/Assets.xcassets/CompareCampPuffin.imageset/CompareCampPuffin.png",
+      "sha256": "0a2ae4a56a555573fde0da42882034466aaac43f9ab5b397cc981008181dfa5c"
+    },
+    {
+      "name": "CompareCampSheep",
+      "path": "App/Assets.xcassets/CompareCampSheep.imageset/CompareCampSheep.png",
+      "sha256": "2eb5f97ab00331a1325be4ca300b6a7232b0b7949f2cf83fd9115d6574031c75"
+    }
+  ]
+}
