@@ -140,11 +140,12 @@ struct MatherTVRootView: View {
             AngleArcadeTVView(onExit: { exitGame(.angle) })
         case .sprint:
             SumSprintPartyTVView(profileID: learningStore.context.profileID, familyMode: learningStore.context.familyMode,
-                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) })
+                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) }, onExit: { exitGame(.sprint) })
         case .compare:
             CompareCampTVView()
         case .shapes:
-            ShapeDetectiveTVView()
+            ShapeDetectiveTVView(profileID: learningStore.context.profileID, familyMode: learningStore.context.familyMode,
+                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) }, onExit: { exitGame(.shapes) })
         }
     }
 

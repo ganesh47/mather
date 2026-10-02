@@ -88,4 +88,18 @@ struct TVLearningStoreTests {
         #expect(old.withContext(profileID: "learner").adultHelp == nil)
         #expect(event.withOutcome(.supportedCorrect).itemVariantID == event.itemVariantID)
     }
+
+    @Test func differentFrozenProbeDoesNotInheritPracticeHelpButLegacySupportSurvives() {
+        let help = ItemAttempt(activityID: "shapes", conceptID: "corners", entityID: "rectangle", stageID: "check", outcome: .help,
+            profileID: "learner", sessionID: "session", contentVersion: 1, itemVariantID: "practice")
+        let probe = ItemAttempt(activityID: "shapes", conceptID: "corners", entityID: "rectangle", stageID: "check", outcome: .independentCorrect,
+            profileID: "learner", sessionID: "session", contentVersion: 1, itemVariantID: "fresh-turned-rectangle", appHintUsed: false, isFreshProbe: true)
+        #expect(ActivityEvidenceNormalizer.normalized([probe], after: [help]).first?.outcome == .independentCorrect)
+        let legacyHelp = ItemAttempt(activityID: "shapes", conceptID: "corners", entityID: "rectangle", stageID: "check", outcome: .help,
+            profileID: "learner", sessionID: "session", contentVersion: 1)
+        #expect(ActivityEvidenceNormalizer.normalized([probe], after: [legacyHelp]).first?.outcome == .supportedCorrect)
+        let legacyCorrect = ItemAttempt(activityID: "shapes", conceptID: "corners", entityID: "rectangle", stageID: "check", outcome: .independentCorrect,
+            profileID: "learner", sessionID: "session", contentVersion: 1)
+        #expect(ActivityEvidenceNormalizer.normalized([legacyCorrect], after: [help]).first?.outcome == .supportedCorrect)
+    }
 }

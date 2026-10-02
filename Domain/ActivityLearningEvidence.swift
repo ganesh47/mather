@@ -84,6 +84,7 @@ enum ActivityEvidenceNormalizer {
         let entityID: String
         let propertyID: String?
         let stageID: String
+        var itemVariantID: String?
         let profileID: String?
         let sessionID: String?
         let contentVersion: Int?
@@ -93,20 +94,33 @@ enum ActivityEvidenceNormalizer {
             entityID = attempt.entityID
             propertyID = attempt.propertyID
             stageID = attempt.stageID
+            itemVariantID = attempt.itemVariantID
             profileID = attempt.profileID
             sessionID = attempt.sessionID
             contentVersion = attempt.contentVersion
+        }
+
+        var legacyTarget: Target {
+            var value = self
+            value.itemVariantID = nil
+            return value
         }
     }
 
     static func normalized(_ events: [ItemAttempt], after previous: [ItemAttempt] = []) -> [ItemAttempt] {
         var supported = Set(previous.filter { $0.outcome == .help || $0.outcome == .incorrect || $0.outcome == .supportedCorrect }.map(Target.init))
+        var supportedBases = Set(supported.map(\.legacyTarget))
         return events.map { event in
             let target = Target(event)
             if event.outcome == .help || event.outcome == .incorrect || event.outcome == .supportedCorrect {
                 supported.insert(target)
+                supportedBases.insert(target.legacyTarget)
             }
-            return event.outcome == .independentCorrect && (supported.contains(target) || event.appHintUsed == true || event.adultHelp == .reportedHelp) ? event.withOutcome(.supportedCorrect) : event
+            // Unknown legacy variants retain conservative support. Explicitly different
+            // frozen variants do not contaminate a new probe for the same concept.
+            let previouslySupported = supported.contains(target) || supported.contains(target.legacyTarget)
+                || (event.itemVariantID == nil && supportedBases.contains(target.legacyTarget))
+            return event.outcome == .independentCorrect && (previouslySupported || event.appHintUsed == true || event.adultHelp == .reportedHelp) ? event.withOutcome(.supportedCorrect) : event
         }
     }
 }
