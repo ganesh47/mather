@@ -8,10 +8,13 @@ struct SumSprintPartyTVView: View {
     @FocusState private var focusedControl: String?
     @State private var session: SumSprintPartyTVSession
     @State private var narration = TVNarrationController()
+    private let onExit: (() -> Void)?
 
     init(profileID: String = "tv-family", familyMode: Bool = true,
          onAttempt: @escaping (ItemAttempt) -> Void = { _ in },
-         onResult: @escaping (ActivityResult) -> Void = { _ in }) {
+         onResult: @escaping (ActivityResult) -> Void = { _ in },
+         onExit: (() -> Void)? = nil) {
+        self.onExit = onExit
         let arguments = ProcessInfo.processInfo.arguments
         var store: SumSprintPartyTVSessionStore?
         if arguments.contains("-sum-sprint-ui-test"), let defaults = UserDefaults(suiteName: "mather.sumSprint.ui.tests") {
@@ -302,10 +305,17 @@ struct SumSprintPartyTVView: View {
                     .font(.system(size: 23, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.72))
             }
-            actionButton("Choose another session", symbol: "circle.grid.2x2", id: "ranges", width: 700) {
-                session.showRanges(); presentPrompt(); restoreFocus()
+            HStack(spacing: 26) {
+                actionButton("Choose another session", symbol: "circle.grid.2x2", id: "ranges", width: 700) {
+                    session.showRanges(); presentPrompt(); restoreFocus()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-another-session")
+                actionButton("All done", symbol: "checkmark.circle", id: "done", width: 350) {
+                    if let onExit { narration.stop(); onExit() }
+                    else { session.showRanges(); presentPrompt(); restoreFocus() }
+                }
+                .accessibilityIdentifier("tv-sum-sprint-all-done")
             }
-            .accessibilityIdentifier("tv-sum-sprint-another-session")
             Text("Or press Menu to finish playing.")
                 .font(.system(size: 25, weight: .medium, design: .rounded))
         }
@@ -340,6 +350,7 @@ struct SumSprintPartyTVView: View {
         case "resume": return "Resume your saved puzzle."
         case "next": return session.currentItem?.isProbe == true ? "Finish this session." : "Next number idea."
         case "ranges": return "Choose another session."
+        case "done": return "All done. Finish playing Sum Sprint."
         default: return focusedControl.hasPrefix("range-") ? "Start a new session with totals through \(focusedControl.dropFirst(6))." : nil
         }
     }

@@ -26,8 +26,11 @@ final class SumSprintPartyUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["tv-sum-sprint-finish"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["tv-sum-sprint-outcomes"].label, "6 without app hints · 0 with counting help")
         XCTAssertFalse(app.buttons["tv-sum-sprint-next-fact"].exists)
+        XCTAssertTrue(app.buttons["tv-sum-sprint-all-done"].exists)
         screenshot("Calm finite session finish")
         waitFocus(app.buttons["tv-sum-sprint-another-session"])
+        XCUIRemote.shared.press(.right)
+        waitFocus(app.buttons["tv-sum-sprint-all-done"])
         XCUIRemote.shared.press(.select)
         XCTAssertTrue(app.buttons["tv-sum-sprint-range-5"].waitForExistence(timeout: 10))
     }

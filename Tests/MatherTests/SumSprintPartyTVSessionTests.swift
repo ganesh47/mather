@@ -223,4 +223,22 @@ struct SumSprintPartyTVSessionTests {
         #expect(session.checkpoint?.attempts.last?.isFreshProbe == false)
         #expect(session.checkpoint?.result?.completedStageIDs == ["practice", "transfer"])
     }
+
+    @Test func clearRemovesOnlyTheFrozenProfilesLearningSessionAndHistory() throws {
+        let (defaults, familyStore) = store()
+        defaults.set(27, forKey: "tv.sumSprintParty.personalBest")
+        let family = SumSprintPartyTVSession(store: familyStore)
+        family.start(range: .through5, seed: 1)
+        family.start(range: .through5, seed: 2)
+        let childStore = SumSprintPartyTVSessionStore(defaults: defaults, profileID: "child-a", familyMode: false)
+        let child = SumSprintPartyTVSession(profileID: "child-a", familyMode: false, store: childStore)
+        child.start(range: .through10, seed: 1)
+        let savedChild = try #require(child.checkpoint)
+        #expect(!familyStore.history().isEmpty)
+        familyStore.clear()
+        #expect(familyStore.load(profileID: "tv-family", familyMode: true) == nil)
+        #expect(familyStore.history().isEmpty)
+        #expect(childStore.load(profileID: "child-a", familyMode: false) == savedChild)
+        #expect(defaults.integer(forKey: "tv.sumSprintParty.personalBest") == 27)
+    }
 }

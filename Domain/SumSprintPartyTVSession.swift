@@ -160,6 +160,10 @@ final class SumSprintPartyTVSessionStore {
         guard let data = defaults.data(forKey: key + ".history") else { return [] }
         return (try? JSONDecoder().decode([SumSprintPartyTVCheckpoint].self, from: data)) ?? []
     }
+    func clear() {
+        defaults.removeObject(forKey: key)
+        defaults.removeObject(forKey: key + ".history")
+    }
 }
 
 @MainActor

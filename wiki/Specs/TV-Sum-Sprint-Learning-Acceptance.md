@@ -28,7 +28,8 @@ SumSprintPartyTVView(
     profileID: frozenProfileID,
     familyMode: familyMode,
     onAttempt: { attempt in /* coordinator ledger */ },
-    onResult: { result in /* coordinator ledger */ }
+    onResult: { result in /* coordinator ledger */ },
+    onExit: { /* return to the TV launcher */ }
 )
 ```
 
@@ -50,6 +51,9 @@ commit.
 - Each event is saved before callback delivery. Reentry/resume replays the same UUIDs;
   the shared ledger must deduplicate them. Completed results replay with the same session/result ID.
 - New sessions archive earlier incomplete or completed checkpoints instead of clearing their evidence.
+- `SumSprintPartyTVSessionStore.clear()` removes this frozen profile/mode's checkpoint
+  and history only. Parent reset must call it before reentry to prevent ledger replay
+  from resurrecting cleared evidence. It preserves legacy personal best and other profiles.
 
 The engine owns every domain mutation. The view owns transient focus/narration.
 No root, profile, shared store, release workflow, or legacy record migration is
@@ -76,7 +80,8 @@ part of this slice.
    practice does not contaminate this distinct probe; help on the probe does.
 8. Finish the sixth item. A calm recap separates answers without app hints from
    counting-assisted answers. Another session is optional. Repeated Select cannot
-   skip an unsolved item or duplicate a result.
+   skip an unsolved item or duplicate a result. All done calls the injected root exit;
+   without an exit callback, it returns to the range chooser.
 9. Replay Through 5 enough times to use all six probe variants. They are distinct
    until exhaustion; later familiar transfer practice is not labelled fresh.
 10. Switch child/family context. A session never restores another profile's item
@@ -85,9 +90,9 @@ part of this slice.
 ## Automated validation
 
 - `SumSprintPartyTVRoundTests`: six legacy compatibility tests.
-- `SumSprintPartyTVSessionTests`: thirteen domain/persistence/evidence tests,
+- `SumSprintPartyTVSessionTests`: fourteen domain/persistence/evidence tests,
   including corrupted checkpoint rejection, exact UUID replay, family/profile
-  isolation, partial-session archival and probe exhaustion.
+  isolation, partial-session archival, probe exhaustion and scoped reset preservation.
 - `SumSprintPartyUITests`: remote finite session and fresh probe, corrected answer
   after Menu/relaunch, and stepwise counting/background/foreground restoration.
 
