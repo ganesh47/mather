@@ -170,6 +170,157 @@ struct ShapeDetectiveTVSessionTests {
         #expect(other.usedProbeIDs == [ShapeDetectiveCatalog.probes[1].id])
     }
 
+    @Test func futureCheckpointPreservesOriginalBytesAndBlocksAllEvidenceUntilParentReset() {
+        let (store, defaults) = isolatedStore()
+        let key = "mather.shape-detective.v1.child"
+        let future = Data(#"{"version":999,"futureData":{"keep":"exactly"}}"#.utf8)
+        defaults.set(future, forKey: key)
+        #expect(store.loadState() == .blocked(.unsupportedCheckpoint))
+        var events: [ItemAttempt] = []
+        var results: [ActivityResult] = []
+        let session = ShapeDetectiveTVSession(profileID: "child", store: store,
+                                              onAttempt: { events.append($0) }, onResult: { results.append($0) })
+        #expect(session.storageIssue == .unsupportedCheckpoint)
+        #expect(session.current == nil && session.result == nil && !session.isComplete)
+        #expect(!session.choose(ShapeDetectiveCatalog.practice[0].answerID))
+        session.requestHint(); session.advance(); session.showRoomPrompt(); session.replay()
+        #expect(!store.save(session.checkpoint))
+        #expect(!store.reserveProbe(ShapeDetectiveCatalog.probes[0].id))
+        #expect(events.isEmpty && results.isEmpty)
+        #expect(defaults.data(forKey: key) == future)
+        #expect(defaults.object(forKey: "\(key).used-probes") == nil)
+        store.clear()
+        // A paused instance remains paused; the root reopens after parent reset.
+        session.replay()
+        #expect(events.isEmpty)
+        let reopened = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(reopened.storageIssue == nil && reopened.current != nil)
+        #expect(events.count == 1 && events[0].outcome == .exposure)
+    }
+
+    @Test func undecodableAndWrongTypeCheckpointsArePreserved() {
+        for payload: Any in [Data("bad json".utf8), "unexpected string", ["unexpected": "dictionary"]] {
+            let (store, defaults) = isolatedStore()
+            let key = "mather.shape-detective.v1.child"
+            defaults.set(payload, forKey: key)
+            let before = defaults.object(forKey: key) as! NSObject
+            var events: [ItemAttempt] = []
+            let paused = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+            #expect(paused.storageIssue == .corruptCheckpoint)
+            paused.requestHint(); paused.advance(); paused.replay()
+            #expect(events.isEmpty)
+            #expect(before.isEqual(defaults.object(forKey: key)))
+            #expect(!store.save(paused.checkpoint))
+        }
+    }
+
+    @Test func malformedProbeHistoryNeverBecomesEmptyOrClaimsFreshEvidence() {
+        let knownID = ShapeDetectiveCatalog.probes[0].id
+        for history: Any in [37, ["unknown-probe"], [knownID, knownID], [1, 2], "not an array"] {
+            let (store, defaults) = isolatedStore()
+            let key = "mather.shape-detective.v1.child"
+            defaults.set(history, forKey: "\(key).used-probes")
+            let before = defaults.object(forKey: "\(key).used-probes") as! NSObject
+            #expect(store.loadState() == .blocked(.corruptProbeHistory))
+            #expect(store.usedProbeIDs == Set(ShapeDetectiveCatalog.probes.map(\.id)))
+            var events: [ItemAttempt] = []
+            let session = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+            #expect(session.storageIssue == .corruptProbeHistory)
+            #expect(!session.checkpoint.probeIsFresh)
+            #expect(session.current == nil && events.isEmpty)
+            #expect(!store.reserveProbe(knownID))
+            #expect(!store.save(session.checkpoint))
+            #expect(defaults.object(forKey: key) == nil)
+            #expect(before.isEqual(defaults.object(forKey: "\(key).used-probes")))
+        }
+    }
+
+    @Test func malformedHistoryWithValidCheckpointPreservesBothAndDoesNotReplayEvidence() {
+        let (store, defaults) = isolatedStore()
+        let original = ShapeDetectiveTVSession(profileID: "child", store: store)
+        original.requestHint()
+        let key = "mather.shape-detective.v1.child"
+        let bytes = defaults.data(forKey: key)!
+        defaults.set(["unrecognized-probe"], forKey: "\(key).used-probes")
+        var events: [ItemAttempt] = []
+        let paused = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(paused.storageIssue == .corruptProbeHistory && events.isEmpty)
+        #expect(defaults.data(forKey: key) == bytes)
+        #expect(defaults.stringArray(forKey: "\(key).used-probes") == ["unrecognized-probe"])
+    }
+
+    @Test func missingExposedProbeHistoryBlocksResumeInsteadOfReusingFreshVariant() {
+        let (store, defaults) = isolatedStore()
+        let session = ShapeDetectiveTVSession(profileID: "child", store: store)
+        for _ in 0..<6 { _ = session.choose(session.current!.answerID); session.advance() }
+        let key = "mather.shape-detective.v1.child"
+        let bytes = defaults.data(forKey: key)!
+        defaults.removeObject(forKey: "\(key).used-probes")
+        #expect(store.loadState() == .blocked(.inconsistentProbeHistory))
+        var events: [ItemAttempt] = []
+        let paused = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(paused.storageIssue == .inconsistentProbeHistory && events.isEmpty)
+        #expect(defaults.data(forKey: key) == bytes)
+    }
+
+    @Test func missingRevisitHistoryBlocksEvenBeforeProbeExposureAndRejectsInconsistentWrites() throws {
+        let (store, defaults) = isolatedStore()
+        let revisit = ShapeDetectiveCheckpoint(profileID: "child", familyMode: true,
+                                               probeID: ShapeDetectiveCatalog.probes[0].id, probeIsFresh: false)
+        #expect(!store.save(revisit))
+        #expect(store.loadState() == .empty)
+        let bytes = try JSONEncoder().encode(revisit)
+        defaults.set(bytes, forKey: "mather.shape-detective.v1.child")
+        #expect(store.loadState() == .blocked(.inconsistentProbeHistory))
+        var events: [ItemAttempt] = []
+        let paused = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(paused.storageIssue == .inconsistentProbeHistory && events.isEmpty)
+        #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+    }
+
+    @Test func invalidCheckpointVariantsAndSupportDowngradesAreBlockedWithoutOverwrite() throws {
+        let (store, defaults) = isolatedStore()
+        let session = ShapeDetectiveTVSession(profileID: "child", store: store)
+        session.requestHint()
+        _ = session.choose(session.current!.answerID)
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(session.checkpoint)) as? [String: Any])
+        var attemptJSON = try #require(json["attempts"] as? [[String: Any]])
+        attemptJSON[0]["itemVariantID"] = "unknown-item"
+        json["attempts"] = attemptJSON
+        let wrongVariant = try JSONDecoder().decode(ShapeDetectiveCheckpoint.self, from: JSONSerialization.data(withJSONObject: json))
+        var supportDowngrade = session.checkpoint
+        let correct = supportDowngrade.attempts.count - 1
+        supportDowngrade.attempts[correct] = supportDowngrade.attempts[correct].withOutcome(.independentCorrect)
+        var wrongCounters = session.checkpoint
+        wrongCounters.hintLevel = 0
+        for invalid in [wrongVariant, supportDowngrade, wrongCounters] {
+            let bytes = try JSONEncoder().encode(invalid)
+            defaults.set(bytes, forKey: "mather.shape-detective.v1.child")
+            #expect(store.loadState() == .blocked(.corruptCheckpoint))
+            #expect(ShapeDetectiveTVSession(profileID: "child", store: store).storageIssue == .corruptCheckpoint)
+            #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+        }
+        json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(session.checkpoint)) as? [String: Any])
+        json["probeID"] = "unknown-probe"
+        let bytes = try JSONSerialization.data(withJSONObject: json)
+        defaults.set(bytes, forKey: "mather.shape-detective.v1.child")
+        #expect(store.loadState() == .blocked(.corruptCheckpoint))
+        #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+    }
+
+    @Test func corruptionAppearingDuringGameplayStopsFurtherWritesAndCallbacks() {
+        let (store, defaults) = isolatedStore()
+        var events: [ItemAttempt] = []
+        let session = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        let bytes = Data("corruption introduced after exposure".utf8)
+        defaults.set(bytes, forKey: "mather.shape-detective.v1.child")
+        #expect(!session.choose(ShapeDetectiveCatalog.practice[0].answerID))
+        session.requestHint(); session.advance(); session.showRoomPrompt(); session.replay()
+        #expect(session.storageIssue == .corruptCheckpoint)
+        #expect(events.count == 1)
+        #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+    }
+
     @Test func everyClueHasOnePropertyAnswerAndAccurateDrawnGeometry() {
         for item in ShapeDetectiveCatalog.practice + ShapeDetectiveCatalog.probes {
             #expect(item.choices.count == 4)

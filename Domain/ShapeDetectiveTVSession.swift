@@ -157,10 +157,42 @@ struct ShapeDetectiveCheckpoint: Codable, Equatable {
               (index == 7) == (endedAt != nil), index < 7 || !solved else { return false }
         if let lastChoiceID, index < 7, !rounds[index].choices.contains(where: { $0.id == lastChoiceID }) { return false }
         let exposedIDs = Set(rounds.prefix(min(index + 1, 7)).map(\.id))
-        return Set(attempts.map(\.id)).count == attempts.count && attempts.allSatisfy {
-            $0.activityID == ShapeDetectiveTVSession.activityID && $0.profileID == profileID &&
-            $0.sessionID == sessionID && $0.contentVersion == version && exposedIDs.contains($0.itemVariantID ?? "")
+        guard Set(attempts.map(\.id)).count == attempts.count else { return false }
+        var exposed = Set<String>()
+        var supported = Set<String>()
+        var correctIDs: [String] = []
+        for attempt in attempts {
+            guard attempt.activityID == ShapeDetectiveTVSession.activityID, attempt.profileID == profileID,
+                  attempt.sessionID == sessionID, attempt.contentVersion == version,
+                  let variant = attempt.itemVariantID, exposedIDs.contains(variant),
+                  let item = rounds.first(where: { $0.id == variant }),
+                  attempt.conceptID == "shape-properties", attempt.entityID == item.answer.rawValue,
+                  attempt.propertyID == item.id, attempt.stageID == (item.isProbe ? "transfer" : "investigation"),
+                  attempt.isFreshProbe == (item.isProbe && probeIsFresh), attempt.appHintUsed != nil else { return false }
+            switch attempt.outcome {
+            case .exposure:
+                guard exposed.insert(variant).inserted, attempt.response == nil else { return false }
+            case .help:
+                guard exposed.contains(variant), !correctIDs.contains(variant), attempt.appHintUsed == true,
+                      ["property-clue", "trace-sides-and-corners"].contains(attempt.response ?? "") else { return false }
+                supported.insert(variant)
+            case .incorrect:
+                guard exposed.contains(variant), !correctIDs.contains(variant),
+                      item.choices.contains(where: { $0.id == attempt.response && $0.id != item.answerID }) else { return false }
+                supported.insert(variant)
+            case .independentCorrect, .supportedCorrect:
+                guard exposed.contains(variant), !correctIDs.contains(variant), attempt.response == item.answerID else { return false }
+                if attempt.outcome == .independentCorrect && (supported.contains(variant) || attempt.appHintUsed == true) { return false }
+                correctIDs.append(variant)
+            }
         }
+        guard correctIDs == completedIDs else { return false }
+        if index < rounds.count {
+            let currentAttempts = attempts.filter { $0.itemVariantID == rounds[index].id }
+            guard misses == currentAttempts.filter({ $0.outcome == .incorrect }).count,
+                  hintLevel == currentAttempts.filter({ $0.outcome == .help }).count else { return false }
+        }
+        return true
     }
 }
 
@@ -169,6 +201,7 @@ struct ShapeDetectiveCheckpoint: Codable, Equatable {
 final class ShapeDetectiveTVSession {
     nonisolated static let activityID = "tv-shape-detective"
     private(set) var checkpoint: ShapeDetectiveCheckpoint
+    private(set) var storageIssue: ShapeDetectiveStorageIssue?
     @ObservationIgnored private let store: ShapeDetectiveTVSessionStore
     @ObservationIgnored private let onAttempt: (ItemAttempt) -> Void
     @ObservationIgnored private let onResult: (ActivityResult) -> Void
@@ -180,18 +213,28 @@ final class ShapeDetectiveTVSession {
         self.store = store
         self.onAttempt = onAttempt
         self.onResult = onResult
-        checkpoint = store.load() ?? Self.newCheckpoint(profileID: profileID, familyMode: familyMode, store: store)
+        switch store.loadState() {
+        case .ready(let saved): checkpoint = saved
+        case .empty: checkpoint = Self.newCheckpoint(profileID: profileID, familyMode: familyMode, store: store)
+        case .blocked(let issue):
+            // Placeholder only: no write, exposure, fresh claim, or callback.
+            checkpoint = .init(profileID: profileID, familyMode: familyMode,
+                               probeID: ShapeDetectiveCatalog.probes[0].id, probeIsFresh: false)
+            storageIssue = issue
+            return
+        }
         // Replaying frozen IDs repairs an interrupted write at the shared ledger.
         checkpoint.attempts.forEach(onAttempt)
         if let result { onResult(result) }
         exposeCurrentItem()
     }
 
-    var isComplete: Bool { checkpoint.index == checkpoint.rounds.count }
-    var current: ShapeDetectiveInvestigation? { isComplete ? nil : checkpoint.rounds[checkpoint.index] }
+    var isComplete: Bool { storageIssue == nil && checkpoint.index == checkpoint.rounds.count }
+    var current: ShapeDetectiveInvestigation? { storageIssue != nil || isComplete ? nil : checkpoint.rounds[checkpoint.index] }
     var unaidedCount: Int { checkpoint.attempts.filter { $0.outcome == .independentCorrect }.count }
     var supportedCount: Int { checkpoint.attempts.filter { $0.outcome == .supportedCorrect }.count }
     var prompt: String {
+        if storageIssue != nil { return "This saved investigation needs a parent. Your saved work is kept safe. Return to all games; a parent can review and reset it when ready." }
         guard let current else { return "Investigation complete. You checked seven shapes. You can finish, look for a shape in your room, or investigate again." }
         if checkpoint.solved { return "Mystery solved! \(current.fact) Select Next to continue." }
         let support = checkpoint.hintLevel > 0 ? " \(current.hint)" : ""
@@ -204,7 +247,7 @@ final class ShapeDetectiveTVSession {
         return checkpoint.misses > 0 ? "Keep investigating. \(current.hint)" : checkpoint.hintLevel > 0 ? current.hint : "Check the shapes, then select."
     }
     var result: ActivityResult? {
-        guard let endedAt = checkpoint.endedAt else { return nil }
+        guard storageIssue == nil, let endedAt = checkpoint.endedAt else { return nil }
         return .init(id: checkpoint.sessionID, activityID: Self.activityID, title: "Shape Detective",
                      startedAt: checkpoint.startedAt, endedAt: endedAt, attempts: checkpoint.attempts,
                      completedStageIDs: checkpoint.completedIDs, profileID: checkpoint.profileID, contentVersion: checkpoint.version)
@@ -212,7 +255,7 @@ final class ShapeDetectiveTVSession {
 
     @discardableResult
     func choose(_ choiceID: String) -> Bool {
-        guard let current, !checkpoint.solved, let choice = current.choices.first(where: { $0.id == choiceID }) else { return false }
+        guard canUseStorage(), let current, !checkpoint.solved, let choice = current.choices.first(where: { $0.id == choiceID }) else { return false }
         let correct = choice.figure.kind == current.answer
         let supported = checkpoint.hintLevel > 0 || checkpoint.misses > 0
         checkpoint.lastChoiceID = choiceID
@@ -230,7 +273,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func requestHint() {
-        guard current != nil, !checkpoint.solved else { return }
+        guard canUseStorage(), current != nil, !checkpoint.solved else { return }
         guard checkpoint.hintLevel < 2 else { return }
         checkpoint.hintLevel += 1
         record(.help, response: checkpoint.hintLevel == 1 ? "property-clue" : "trace-sides-and-corners")
@@ -238,7 +281,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func advance() {
-        guard current != nil, checkpoint.solved else { return }
+        guard canUseStorage(), current != nil, checkpoint.solved else { return }
         checkpoint.index += 1
         checkpoint.solved = false
         checkpoint.hintLevel = 0
@@ -250,14 +293,14 @@ final class ShapeDetectiveTVSession {
     }
 
     func showRoomPrompt() {
-        guard isComplete else { return }
+        guard canUseStorage(), isComplete else { return }
         checkpoint.roomPromptShown = true
         persist()
         // This optional conversation is not a verified response or transfer.
     }
 
     func replay() {
-        guard isComplete else { return }
+        guard canUseStorage(), isComplete else { return }
         checkpoint = Self.newCheckpoint(profileID: checkpoint.profileID, familyMode: checkpoint.familyMode, store: store)
         exposeCurrentItem()
     }
@@ -270,7 +313,7 @@ final class ShapeDetectiveTVSession {
 
     private func exposeCurrentItem() {
         guard let current, !checkpoint.attempts.contains(where: { $0.itemVariantID == current.id && $0.outcome == .exposure }) else { return }
-        if current.isProbe { store.reserveProbe(current.id) }
+        if current.isProbe, !store.reserveProbe(current.id) { checkStorageIssue(); return }
         record(.exposure)
         persist()
     }
@@ -284,9 +327,28 @@ final class ShapeDetectiveTVSession {
                                   appHintUsed: checkpoint.hintLevel > 0, isFreshProbe: current.isProbe && checkpoint.probeIsFresh,
                                   adultHelp: .unknown)
         checkpoint.attempts.append(attempt)
-        persist() // Local durability precedes the external callback.
+        guard persist() else { return } // Local durability precedes the external callback.
         onAttempt(attempt)
     }
 
-    private func persist() { store.save(checkpoint) }
+    private func canUseStorage() -> Bool {
+        guard storageIssue == nil else { return false }
+        checkStorageIssue()
+        return storageIssue == nil
+    }
+
+    private func checkStorageIssue() {
+        if case .blocked(let issue) = store.loadState() { storageIssue = issue }
+    }
+
+    @discardableResult
+    private func persist() -> Bool {
+        guard storageIssue == nil else { return false }
+        guard store.save(checkpoint) else {
+            checkStorageIssue()
+            if storageIssue == nil { storageIssue = .corruptCheckpoint }
+            return false
+        }
+        return true
+    }
 }
