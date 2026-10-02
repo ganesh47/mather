@@ -22,6 +22,7 @@ from ci_scripts.xcode_cloud_testflight import (
     find_existing_tag_build,
     inspect_ipa,
     normalize_private_key,
+    normalized_tag_condition,
     prerelease_version_id,
     run_altool,
     matching_tag_build,
@@ -34,6 +35,20 @@ from ci_scripts.xcode_cloud_testflight import (
 
 
 class XcodeCloudTestFlightTests(unittest.TestCase):
+    def test_unconstrained_matcher_normalizes_apple_null_and_empty_fields(self) -> None:
+        condition = tag_start_condition("v2.9.0")
+        observed = copy.deepcopy(condition)
+        observed["filesAndFoldersRule"]["matchers"] = [{"directory": None, "fileName": "", "fileExtension": None}]
+        self.assertEqual(normalized_tag_condition(observed), condition)
+        self.assertEqual(observed["filesAndFoldersRule"]["matchers"][0]["directory"], None)
+
+    def test_matcher_normalization_preserves_actual_file_constraints(self) -> None:
+        condition = tag_start_condition("v2.9.0")
+        condition["filesAndFoldersRule"]["matchers"] = [{"directory": "App", "fileName": None, "fileExtension": "swift"}]
+        normalized = normalized_tag_condition(condition)
+        self.assertEqual(normalized["filesAndFoldersRule"]["matchers"], [{"directory": "App", "fileExtension": "swift"}])
+        self.assertNotEqual(normalized, tag_start_condition("v2.9.0"))
+
     def tag_run_response(self) -> dict:
         return {"data": [{
             "type": "ciBuildRuns", "id": "run-162",

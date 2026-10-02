@@ -231,10 +231,25 @@ def tag_start_condition(tag: str) -> dict[str, Any]:
             "patterns": [{"pattern": tag, "isPrefix": False}],
         },
         "filesAndFoldersRule": {
-            "mode": "START_IF_ANY_FILE_MATCHES", "matchers": [],
+            # Apple requires a nonempty matcher list; absent constraints mean any file.
+            "mode": "START_IF_ANY_FILE_MATCHES", "matchers": [{}],
         },
         "autoCancel": False,
     }
+
+
+def normalized_tag_condition(condition: dict[str, Any] | None) -> dict[str, Any] | None:
+    if condition is None:
+        return None
+    result = json.loads(json.dumps(condition))
+    rule = result.get("filesAndFoldersRule") or {}
+    if "matchers" in rule:
+        rule["matchers"] = [
+            {key: value for key, value in matcher.items()
+             if key not in {"directory", "fileName", "fileExtension"} or value not in (None, "")}
+            for matcher in rule["matchers"]
+        ]
+    return result
 
 
 def prepare_tag_trigger(
@@ -252,7 +267,7 @@ def prepare_tag_trigger(
     repository = workflow.get("relationships", {}).get("repository", {}).get("data") or {}
     if repository.get("id") != repository_id:
         raise ReleaseError("Tag preparation workflow uses a different repository")
-    existing = workflow["attributes"].get("tagStartCondition")
+    existing = normalized_tag_condition(workflow["attributes"].get("tagStartCondition"))
     if existing is not None and existing != condition:
         patterns = existing.get("source", {}).get("patterns") or []
         previous_tag = patterns[0].get("pattern", "") if len(patterns) == 1 else ""
@@ -271,7 +286,7 @@ def prepare_tag_trigger(
             }},
         )
     observed = client.request(path)["data"]["attributes"]
-    if observed.get("tagStartCondition") != condition:
+    if normalized_tag_condition(observed.get("tagStartCondition")) != condition:
         raise ReleaseError("Xcode Cloud did not confirm the exact tag trigger")
     if observed.get("manualTagStartCondition") != workflow["attributes"].get("manualTagStartCondition"):
         raise ReleaseError("Xcode Cloud changed the workflow's manual tag condition")
@@ -1091,7 +1106,7 @@ def release(args: argparse.Namespace) -> None:
                 workflow = client.request(
                     f"/v1/ciWorkflows/{workflow_id}?fields[ciWorkflows]=tagStartCondition"
                 )["data"]
-                automatic = workflow["attributes"].get("tagStartCondition") == tag_start_condition(args.tag)
+                automatic = normalized_tag_condition(workflow["attributes"].get("tagStartCondition")) == tag_start_condition(args.tag)
                 # The automatic build may be visible before the SCM tag index catches up.
                 if automatic:
                     existing = find_existing_tag_build(
