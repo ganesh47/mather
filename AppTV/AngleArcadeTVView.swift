@@ -72,6 +72,11 @@ struct AngleArcadeTVView: View {
         return .init(store: .init(defaults: defaults, scope: "tv-ui-test"))
     }
 
+    private var motionReduced: Bool {
+        reduceMotion || (ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") &&
+                         ProcessInfo.processInfo.arguments.contains("-angle-arcade-reduce-motion"))
+    }
+
     private var phaseName: String {
         switch engine.phase {
         case .worldSelection: "Choose a world"
@@ -126,18 +131,15 @@ struct AngleArcadeTVView: View {
                             HStack(spacing: 12) {
                                 ForEach(0..<3) { index in
                                     Image(systemName: index < count ? "checkmark.circle.fill" : "circle")
-                                        .foregroundStyle(index < count ? Color.green : Color.white.opacity(0.6))
+                                        .foregroundStyle(focusedAction == world.id ? Color(red: 0.10, green: 0.34, blue: 0.24) : index < count ? Color.green : Color.white.opacity(0.75))
                                 }
                                 Text("\(count) of 3 complete").font(.system(size: 21, weight: .semibold, design: .rounded))
                             }
                         }
-                        .foregroundStyle(.white)
                         .padding(28)
                         .frame(width: 475, height: 490, alignment: .topLeading)
-                        .background(.white.opacity(focusedAction == world.id ? 0.20 : 0.09), in: RoundedRectangle(cornerRadius: 28))
-                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(focusedAction == world.id ? Color.orange : .white.opacity(0.18), lineWidth: focusedAction == world.id ? 5 : 2))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(AngleArcadeWorldCardStyle(reduceMotion: motionReduced))
                     .focused($focusedAction, equals: world.id)
                     .prefersDefaultFocus(world == suggestedLevel.world, in: actionFocusScope)
                     .accessibilityLabel("\(world.title). \(world.subtitle). \(count) of 3 missions complete")
@@ -324,9 +326,9 @@ struct AngleArcadeTVView: View {
         guard engine.submit() else { return }
         guard engine.phase == .flying else { return }
         narration.stop()
-        flightProgress = reduceMotion ? 1 : 0
+        flightProgress = motionReduced ? 1 : 0
         let attempt = engine.attemptID
-        let reduced = reduceMotion
+        let reduced = motionReduced
         flightTask?.cancel()
         flightTask = Task { @MainActor in
             let steps = reduced ? 1 : 40
@@ -396,5 +398,20 @@ struct AngleArcadeTVView: View {
         engine.cancelFlight()
         if wasFlying { flightProgress = 0 }
         narration.stop()
+    }
+}
+
+/// Own both colors so tvOS never puts forced white labels on its pale focus fill.
+private struct AngleArcadeWorldCardStyle: ButtonStyle {
+    @Environment(\.isFocused) private var isFocused
+    let reduceMotion: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isFocused ? Color(red: 0.06, green: 0.10, blue: 0.16) : .white)
+            .background(isFocused ? Color(red: 0.95, green: 0.97, blue: 0.98) : Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 28))
+            .overlay(RoundedRectangle(cornerRadius: 28).stroke(isFocused ? Color.orange : .white.opacity(0.18), lineWidth: isFocused ? 5 : 2))
+            .scaleEffect(isFocused && !reduceMotion ? 1.035 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isFocused)
     }
 }

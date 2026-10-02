@@ -121,9 +121,29 @@ final class AngleArcadeUITests: XCTestCase {
         screenshot("Moon correction after help")
     }
 
-    private func launch(reset: Bool) -> XCUIApplication {
+    func testEveryWorldFocusRemainsReadableAndReducedMotionCanLaunch() {
+        let app = launch(reset: true, reducedMotion: true)
+        for world in ["garden", "builder", "moon"] {
+            let card = app.buttons["angle-world-\(world)"]
+            let focused = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: card)
+            wait(for: [focused], timeout: 10)
+            XCTAssertTrue(card.label.contains("0 of 3 missions complete"))
+            screenshot("Reduced Motion focused \(world), all card labels visible")
+            XCUIRemote.shared.press(.playPause)
+            if world != "moon" { XCUIRemote.shared.press(.right) }
+        }
+        XCUIRemote.shared.press(.left)
+        XCUIRemote.shared.press(.left)
+        openWorld("garden", app: app)
+        XCUIRemote.shared.press(.select)
+        waitPrimary(app, label: "Next mission")
+        assertMission("garden-guided", app: app)
+        screenshot("Reduced Motion guided Garden success")
+    }
+
+    private func launch(reset: Bool, reducedMotion: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-angle-arcade-ui-test"] + (reset ? ["-angle-arcade-reset-progress"] : [])
+        app.launchArguments = ["-angle-arcade-ui-test"] + (reset ? ["-angle-arcade-reset-progress"] : []) + (reducedMotion ? ["-angle-arcade-reduce-motion"] : [])
         app.launch()
         waitPhase(app, "worldSelection")
         return app
