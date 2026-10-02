@@ -27,6 +27,7 @@ enum AppRoute: Hashable {
     case gameplayThread(GameplayThreadID)
     case soundVolume
     case shapeGeometry
+    case learningQuest(LearningQuestID)
 }
 
 @MainActor
@@ -42,6 +43,9 @@ final class VerticalSliceEngine {
     private(set) var currentProblemState = ProblemState()
     private var sessionStartedAt: Date = .now
     private var problemStartedAt: Date = .now
+    private var problemResponseCount = 0
+    private var problemErrorCount = 0
+    private var problemTransferCompleted = false
     private let sessionTimeLimitSeconds: TimeInterval = 7 * 60
     private let gravitySplitTiltStep: Double = 0.16
 
@@ -72,6 +76,12 @@ final class VerticalSliceEngine {
     private let hapticsService: HapticsService
     private let saveSummary: (SessionSummaryDraft) -> Void
     var onSessionComplete: ((SessionSummaryDraft) -> Void)?
+    var activityProfileIDProvider: () -> String = { KidProfilePersistence.defaultProfileId }
+    private(set) var activityProfileID = KidProfilePersistence.defaultProfileId
+    var onItemAttempt: ((ItemAttempt, String) -> Void)?
+    var onActivityResult: ((ActivityResult) -> Void)?
+    private var itemAttempts: [ItemAttempt] = []
+    private var completedStageIDs: Set<String> = []
     private var initialStageOverride: SliceStage?
     // Injected so unit tests can pass 0 to skip the animation delay.
     let celebrationDuration: TimeInterval
@@ -148,6 +158,7 @@ final class VerticalSliceEngine {
     func showCompassAngles() { show(.compassAngles) }
     func showLab() { show(.lab) }
     func showLabGames() { show(.labGames) }
+    func showLearningQuest(_ questID: LearningQuestID) { show(.learningQuest(questID)) }
     func showLabLane(_ laneID: CapabilityLaneID) { show(.labLane(laneID)) }
     func showMemory() { show(.memory) }
     func showLabRememberStage(_ deckID: LabRememberStageDeckID) { show(.labRememberStage(deckID)) }
@@ -155,8 +166,15 @@ final class VerticalSliceEngine {
     func showWaterCycle() { showGameplayThread(.waterCycle) }
     func showLegacyWaterCycleLab() { show(.waterCycle) }
     func showGameplayThread(_ id: GameplayThreadID, returnRoute: AppRoute? = nil) {
+        showActivity(.gameplayThread(id), returnRoute: returnRoute)
+    }
+
+    /// A launch boundary freezes the origin until Back/Done. Explicit Home
+    /// navigation still clears it through showHome().
+    func showActivity(_ route: AppRoute, returnRoute: AppRoute? = nil) {
+        cancelPendingStageAdvance()
         gameplayReturnRoute = returnRoute
-        route = .gameplayThread(id)
+        self.route = route
     }
 
     func returnFromGameplay(defaultRoute: AppRoute = .lab) {
@@ -173,6 +191,7 @@ final class VerticalSliceEngine {
     }
 
     func startSession() {
+        activityProfileID = activityProfileIDProvider()
         cancelPendingStageAdvance()
         // Freeze the active theme from the user's current selection — unless a custom
         // theme was injected at init time (e.g. in unit tests using an arbitrary theme).
@@ -206,10 +225,15 @@ final class VerticalSliceEngine {
             config.deterministicMode = featureFlags.testModeEnabled
             problems = ProblemGenerator.generateProblems(config: config)
         }
+        itemAttempts = []
+        completedStageIDs = []
         currentProblemIndex = 0
         currentStage = initialStageForCurrentRoute()
         initialStageOverride = nil
         currentProblemState = ProblemState(stage: currentStage)
+        problemResponseCount = 0
+        problemErrorCount = 0
+        problemTransferCompleted = false
         currentSession = SliceSession(
             sessionId: UUID(),
             startedAt: .now,
@@ -275,10 +299,12 @@ final class VerticalSliceEngine {
     }
 
     func adjustConcrete(by delta: Int) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         setConcreteTotal(concreteCount + delta)
     }
 
     func adjustConcrete(by delta: Int, side: ConcreteGroup) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard let currentProblem else { return }
         guard currentProblem.target <= 20 else {
             setConcreteTotal(concreteCount + delta)
@@ -300,6 +326,7 @@ final class VerticalSliceEngine {
     }
 
     func moveSplit(delta: Int) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard let currentProblem else { return }
         splitLeftCount = min(max(splitLeftCount + delta, 0), currentProblem.target)
         recordInteraction(action: "split", value: splitLeftCount)
@@ -309,6 +336,7 @@ final class VerticalSliceEngine {
     }
 
     func appendEquationDigit(_ digit: Int, side: EquationSide) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         switch side {
         case .left:
             equationLeftInput = appendDigit(to: equationLeftInput, digit: digit)
@@ -319,6 +347,7 @@ final class VerticalSliceEngine {
     }
 
     func clearEquation(side: EquationSide) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         switch side {
         case .left: equationLeftInput = ""
         case .right: equationRightInput = ""
@@ -328,6 +357,7 @@ final class VerticalSliceEngine {
     var transferCount: Int { transferLeftCount + transferRightCount }
 
     func adjustTransfer(by delta: Int, side: TransferSide) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard let currentProblem else { return }
         let previousLeft = transferLeftCount
         let previousRight = transferRightCount
@@ -346,11 +376,13 @@ final class VerticalSliceEngine {
     }
 
     func submitCurrentStage() {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard let currentProblem else { return }
         // Guard: ignore taps while celebration is playing — stage hasn't advanced yet
         // and a second submit would register as an erroneous attempt.
         guard !showCelebration else { return }
         currentProblemState.attempts += 1
+        problemResponseCount += 1
 
         let isCorrect: Bool
         switch currentStage {
@@ -378,9 +410,20 @@ final class VerticalSliceEngine {
         }
 
         currentProblemState.isCorrect = isCorrect
+        let response: String
+        switch currentStage {
+        case .abstract: response = equationLeftInput + " + " + equationRightInput
+        case .transfer: response = "\(transferLeftCount) + \(transferRightCount)"
+        default: response = "\(concreteCount) counters"
+        }
+        recordItemAttempt(correct: isCorrect, response: response)
         if isCorrect {
+            if currentStage == .abstract, let left = Int(equationLeftInput), let right = Int(equationRightInput) {
+                problems[currentProblemIndex] = SliceProblem(id: currentProblem.id, target: currentProblem.target, decompositionA: left, decompositionB: right, skillTag: currentProblem.skillTag, difficultyTier: currentProblem.difficultyTier)
+            }
             completeStage(successMessage: successMessage(for: currentStage, problem: currentProblem))
         } else {
+            problemErrorCount += 1
             feedbackMessage = feedbackMessageForFailure(stage: currentStage, problem: currentProblem)
             speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
             hapticsService.failure(enabled: featureFlags.hapticsEnabled)
@@ -408,6 +451,7 @@ final class VerticalSliceEngine {
     }
 
     func selectSumSprintCard(id: UUID) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard currentStage == .sumSprint, var state = sumSprintBurstState,
               let tappedIndex = state.cards.firstIndex(where: { $0.id == id }),
               !state.cards[tappedIndex].isMatched else { return }
@@ -426,6 +470,9 @@ final class VerticalSliceEngine {
             let selectedCard = state.cards[selectedIndex]
             let tappedCard = state.cards[tappedIndex]
             let isMatch = SumSprintBurstState.cardsFormValidMatch(selectedCard, tappedCard)
+            problemResponseCount += 1
+            if !isMatch { problemErrorCount += 1 }
+            recordItemAttempt(correct: isMatch, response: selectedCard.content.displayText + " ↔ " + tappedCard.content.displayText, propertyID: selectedCard.content.displayText)
 
             state.cards[selectedIndex].isSelected = false
             state.cards[tappedIndex].isSelected = false
@@ -487,6 +534,7 @@ final class VerticalSliceEngine {
     /// Called when the child successfully matches a complement pair.
     /// Advances to `.done` when all pairs are matched.
     func matchPair(id: UUID) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard isBondBlastStage,
               !showCelebration,
               pendingStageAdvanceTask == nil,
@@ -495,8 +543,10 @@ final class VerticalSliceEngine {
               let idx = state.pairs.firstIndex(where: { $0.id == id }),
               !state.pairs[idx].isMatched else { return }
 
+        problemResponseCount += 1
         state.pairs[idx].isMatched = true
         let pair = state.pairs[idx]
+        recordItemAttempt(correct: true, response: "\(pair.left) + \(pair.right)", propertyID: "bond-\(pair.left)-\(pair.right)")
         bondMatchState = state
 
         logBondMatchTelemetry("pair_matched", extra: [
@@ -514,7 +564,11 @@ final class VerticalSliceEngine {
 
     /// Called when the child drops a card on the wrong target.
     func mismatchPair() {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard isBondBlastStage, !showCelebration, let problem = currentProblem else { return }
+        problemResponseCount += 1
+        problemErrorCount += 1
+        recordItemAttempt(correct: false, response: "mismatched bond")
         logBondMatchTelemetry("pair_mismatch", extra: [:])
         hapticsService.cardSnapMismatch(enabled: featureFlags.hapticsEnabled)
         let msg = "Try again! Find two numbers that make \(problem.target)."
@@ -525,6 +579,7 @@ final class VerticalSliceEngine {
     // MARK: - Gravity Split actions
 
     func adjustGravitySplitByTilt(_ tiltRoll: Double) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard currentStage == .gravitySplit,
               var state = gravitySplitState,
               !state.isLocked else { return }
@@ -553,12 +608,15 @@ final class VerticalSliceEngine {
         }
 
         if state.isLocked, let problem = currentProblem {
+            problemResponseCount += 1
+            recordItemAttempt(correct: true, response: "\(state.leftCount) + \(state.rightCount)", outcomeOverride: .supportedCorrect)
             hapticsService.balanceLock(enabled: featureFlags.hapticsEnabled)
             completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
         }
     }
 
     func adjustGravitySplitByTap(delta: Int, side: TransferSide = .left) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard currentStage == .gravitySplit, var state = gravitySplitState,
               !state.isLocked else { return }
 
@@ -578,6 +636,8 @@ final class VerticalSliceEngine {
         }
 
         if state.isLocked, let problem = currentProblem {
+            problemResponseCount += 1
+            recordItemAttempt(correct: true, response: "\(state.leftCount) + \(state.rightCount)", outcomeOverride: .supportedCorrect)
             hapticsService.balanceLock(enabled: featureFlags.hapticsEnabled)
             completeStage(successMessage: successMessage(for: .gravitySplit, problem: problem))
         }
@@ -603,13 +663,15 @@ final class VerticalSliceEngine {
 
     private func validateEquation(for problem: SliceProblem) -> Bool {
         guard let left = Int(equationLeftInput), let right = Int(equationRightInput) else { return false }
-        return left + right == problem.target
+        return left >= 0 && right >= 0 && left + right == problem.target
     }
 
     private func completeStage(successMessage: String) {
         guard pendingStageAdvanceTask == nil else { return }
 
         let completedStage = currentStage
+        if completedStage == .transfer { problemTransferCompleted = true }
+        completedStageIDs.insert(completedStage.rawValue)
         feedbackMessage = successMessage
         speechService.speak(successMessage, enabled: featureFlags.audioEnabled)
 
@@ -621,7 +683,7 @@ final class VerticalSliceEngine {
         // with/without bond match.
         let isProblemComplete = next == .done
         if isProblemComplete {
-            recordProblemCompletion(transferCorrect: true)
+            recordProblemCompletion(transferCorrect: problemTransferCompleted)
             if completedStage == .bondMatch {
                 hapticsService.bondMatchComplete(enabled: featureFlags.hapticsEnabled)
             } else {
@@ -645,7 +707,7 @@ final class VerticalSliceEngine {
                 }
             }
             try? await Task.sleep(for: .seconds(celebrationDuration))
-            guard !Task.isCancelled, pendingStageAdvanceToken == transitionToken, currentStage == completedStage else { return }
+            guard !Task.isCancelled, activityProfileIDProvider() == activityProfileID, pendingStageAdvanceToken == transitionToken, currentStage == completedStage else { return }
             showCelebration = false
             currentStage = next
             currentProblemState.stage = next
@@ -665,6 +727,8 @@ final class VerticalSliceEngine {
     }
 
     private func prepareForStage(_ stage: SliceStage) {
+        currentProblemState.attempts = 0
+        currentProblemState.isCorrect = false
         switch stage {
         case .storyAnchor:
             break
@@ -742,6 +806,9 @@ final class VerticalSliceEngine {
             }
             currentStage = initialStageForCurrentRoute()
             currentProblemState = ProblemState(stage: currentStage)
+            problemResponseCount = 0
+            problemErrorCount = 0
+            problemTransferCompleted = false
             concreteWarmCount = 0
             concreteAccentCount = 0
             splitLeftCount = 0
@@ -779,6 +846,7 @@ final class VerticalSliceEngine {
             exportFileName: "swiftdata://session/\(currentSession.sessionId.uuidString)"
         )
         saveSummary(summary)
+        onActivityResult?(ActivityResult(id: currentSession.sessionId.uuidString, activityID: "make-break", title: "Make & Break", startedAt: currentSession.startedAt, attempts: itemAttempts, completedStageIDs: completedStageIDs.sorted(), profileID: activityProfileID, contentVersion: 1))
         onSessionComplete?(summary)
         completedSummary = summary
         feedbackMessage = activeTheme.sessionEndPhrase()
@@ -878,6 +946,15 @@ final class VerticalSliceEngine {
         )
     }
 
+    private func recordItemAttempt(correct: Bool, response: String, propertyID: String? = nil, outcomeOverride: ItemAttemptOutcome? = nil) {
+        guard let problem = currentProblem else { return }
+        let entityID = "whole-\(problem.target)"
+        let supported = itemAttempts.contains { $0.entityID == entityID && $0.stageID == currentStage.rawValue && ($0.outcome == .incorrect || $0.outcome == .help) }
+        let attempt = ItemAttempt(activityID: "make-break", conceptID: "number-bonds", entityID: entityID, propertyID: propertyID ?? currentStage.rawValue, stageID: currentStage.rawValue, outcome: outcomeOverride ?? (correct ? (supported ? .supportedCorrect : .independentCorrect) : .incorrect), response: response, profileID: activityProfileID, sessionID: currentSession.sessionId.uuidString, contentVersion: 1)
+        itemAttempts.append(attempt)
+        onItemAttempt?(attempt, currentSession.sessionId.uuidString)
+    }
+
     private func recordProblemCompletion(transferCorrect: Bool) {
         guard let currentProblem else { return }
         let elapsedMs = Int(Date.now.timeIntervalSince(problemStartedAt) * 1000)
@@ -890,15 +967,15 @@ final class VerticalSliceEngine {
                     type: .problemCompleted,
                     payload: [
                         "problem_id": currentProblem.id.uuidString,
-                        "attempts": String(currentProblemState.attempts),
+                        "attempts": String(problemResponseCount),
                         "time_ms": String(elapsedMs),
                         "transfer_correct": String(transferCorrect)
                     ]
                 )
             ],
-            firstTryCorrect: currentProblemState.attempts == 1,
-            attemptCount: currentProblemState.attempts,
-            retryCount: max(currentProblemState.attempts - 1, 0),
+            firstTryCorrect: problemResponseCount > 0 && problemErrorCount == 0,
+            attemptCount: problemResponseCount,
+            retryCount: problemErrorCount,
             transferCorrect: transferCorrect
         )
         currentSession.problems.append(problemSession)

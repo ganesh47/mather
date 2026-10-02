@@ -42,6 +42,8 @@ struct LabView: View {
 
                             guidedLabsIntro(compact: compactGrid)
                         } else if catalogPresentation.showsDirectGames {
+                            pilotGamesSection
+                            moreTopicCards
                             directGamesSection(compact: compactGrid, width: proxy.size.width)
                         }
                     }
@@ -116,7 +118,7 @@ struct LabView: View {
                     Text("Guided path")
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text("Optional staged learning appears after the stream cards so other streams stay visible.")
+                    Text("Try an idea, remember it, then use it in a new way.")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                 }
@@ -141,7 +143,7 @@ struct LabView: View {
     private func compactStageStrip(compact: Bool) -> some View {
         LabDetailFlowLayout(spacing: compact ? 5 : 6) {
             ForEach(GuidedLabStage.allCases) { stage in
-                Label(stage.rawValue, systemImage: stage.symbolName)
+                Label(stage.childTitle, systemImage: stage.symbolName)
                     .font(.caption2.weight(.black))
                     .foregroundStyle(MatherTheme.accent)
                     .padding(.horizontal, 8)
@@ -211,13 +213,41 @@ struct LabView: View {
         .accessibilityLabel("Open \(path.title). \(path.subtitle). Stages: \(path.stages.map(\.rawValue).joined(separator: ", "))")
     }
 
+    private var pilotGamesSection: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 14)], spacing: 14) {
+            ForEach(LearningQuestID.pilots) { quest in
+                Button { appModel.launchLearningQuest(quest, returnToGames: true) } label: {
+                    VStack(spacing: 12) { Text(quest.emoji).font(.system(size: 44)); Text(quest.title).font(.headline.bold()) }
+                        .foregroundStyle(MatherTheme.ink).frame(maxWidth: .infinity, minHeight: 140)
+                        .background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 22))
+                }.buttonStyle(.plain).accessibilityIdentifier("game-quest-\(quest.rawValue)")
+            }
+        }
+    }
+
+    private var moreTopicCards: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("More topic cards").font(.title3.bold()).foregroundStyle(MatherTheme.ink)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 180))]) {
+                ForEach([GameplayThreadID.shapes, .waterCycle, .electronics], id: \.self) { thread in
+                    Button {
+                        appModel.pickProfileThenRun { appModel.engine.showGameplayThread(thread, returnRoute: .labGames) }
+                    } label: {
+                        Label(appModel.iosLearningContentStore.catalog.thread(for: thread).title, systemImage: "rectangle.stack.fill")
+                            .font(.headline).frame(maxWidth: .infinity, minHeight: 80).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain).accessibilityIdentifier("game-more-cards-\(thread.rawValue)")
+                }
+            }
+        }
+    }
+
     private func directGamesSection(compact: Bool, width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Games")
+                Text("More games & cards")
                     .font(.title3.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
-                Text("Direct launch stays one tap away. Pick any game without entering a staged lab session.")
+                Text("Pick a game and explore.")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
             }
@@ -243,9 +273,13 @@ struct LabView: View {
     }
 
     private func launchDirectGame(_ entry: ExplorerGameEntry) {
+        // Direct core topics now lead into a short manipulation quest.
+        if let quest = entry.activity.id.pilotQuest {
+            appModel.launchLearningQuest(quest, returnToGames: true); return
+        }
         appModel.pickProfileThenRun {
             appModel.clearLabGameplayCompletion()
-            appModel.engine.show(entry.directRoute)
+            appModel.engine.showActivity(entry.directRoute, returnRoute: .labGames)
             if entry.activity.id == .sumSprint {
                 appModel.sumSprintEngine.showDifficultyPick()
             }

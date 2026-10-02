@@ -802,3 +802,34 @@ private struct FakeRoomQuestScanner: RoomQuestScanner {
         try await handler(role, mode)
     }
 }
+
+
+extension RoomQuestEngineTests {
+    @Test func incorrectTransferRemainsEditableThenCompletesAfterCorrection() {
+        let engine = makeEngine()
+        engine.startSession()
+        guard let problem = engine.problem else { Issue.record("Expected a problem"); return }
+        var completions = 0
+        engine.onSessionComplete = { _ in completions += 1 }
+        engine.registerStation(.redRocket)
+        engine.registerStation(.blueBubble)
+        engine.markSetupComplete()
+        engine.markSpotVisited(index: 0)
+        engine.markSpotVisited(index: 1)
+        engine.markReturned()
+        engine.submitPictorial()
+        engine.equationLeftInput = String(problem.decompositionA)
+        engine.equationRightInput = String(problem.decompositionB)
+        engine.submitAbstract()
+        engine.transferLeftCount = 0
+        engine.transferRightCount = 0
+        engine.submitTransfer()
+        #expect(engine.phase == .onScreenTransfer)
+        #expect(completions == 0)
+        engine.transferLeftCount = problem.decompositionA
+        engine.transferRightCount = problem.decompositionB
+        engine.submitTransfer()
+        #expect(engine.phase == .complete)
+        #expect(completions == 1)
+    }
+}

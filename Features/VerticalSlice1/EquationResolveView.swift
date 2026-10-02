@@ -77,7 +77,7 @@ struct EquationResolveView: View {
         }
         .font(.title3.weight(.bold))
         .foregroundStyle(MatherTheme.ink)
-        .frame(maxWidth: .infinity, minHeight: 56)
+        .frame(maxWidth: .infinity, minHeight: 80)
         .background(selectedSide == .left ? MatherTheme.softBlue.opacity(0.75) : MatherTheme.warm.opacity(0.75))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -101,7 +101,7 @@ struct EquationResolveView: View {
                     VStack(spacing: 4) {
                         Text(value.isEmpty ? "?" : value)
                             .font(.system(size: 30, weight: .black, design: .rounded))
-                            .frame(maxWidth: .infinity, minHeight: 60)
+                            .frame(maxWidth: .infinity, minHeight: 80)
                             .background(selectedSide == side ? MatherTheme.accent.opacity(colorScheme == .dark ? 0.30 : 0.20) : MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.32 : 0.25))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18, style: .continuous)

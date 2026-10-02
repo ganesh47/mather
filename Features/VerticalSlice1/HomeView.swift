@@ -122,7 +122,7 @@ struct HomeView: View {
 
     private var childQuickStartBand: some View {
         Button {
-            requestParentAction(.sessionSetup)
+            appModel.launchNextLearningQuest()
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: "play.circle.fill")
@@ -136,7 +136,7 @@ struct HomeView: View {
                     Text("Next up")
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
-                    Text("Start a short Targets round")
+                    Text(appModel.nextLearningQuestLabel)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
@@ -159,7 +159,7 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("home-child-next-up")
-        .accessibilityLabel("Next up, start a short Targets round")
+        .accessibilityLabel("Next up, \(appModel.nextLearningQuestLabel)")
     }
 
     private var parentControlsBand: some View {

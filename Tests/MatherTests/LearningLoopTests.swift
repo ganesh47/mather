@@ -331,7 +331,7 @@ extension LearningLoopTests {
     func testShapeGeometryContentCoversExpectedCardsAndLevels() {
         let titles = Set(ShapeGeometryContent.cards.map(\.title))
         XCTAssertEqual(ShapeGeometryContent.cards.count, 8)
-        XCTAssertTrue(titles.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Star", "Heart", "Diamond"]))
+        XCTAssertTrue(titles.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Star", "Heart", "Rhombus"]))
         XCTAssertEqual(ShapeGeometryContent.levels.count, 2)
         XCTAssertTrue(ShapeGeometryContent.levels.allSatisfy { !$0.cards.isEmpty && !$0.matchPairs.isEmpty })
     }
@@ -353,7 +353,7 @@ extension LearningLoopTests {
     func testShapeHuntLevelMatchesObjectsToShapeNames() {
         let pairs = ShapeGeometryContent.huntMatchPairs
         XCTAssertTrue(LearningLoopScoring.isMatch(left: "Clock", right: "Circle", pairs: pairs))
-        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Kite", right: "Diamond", pairs: pairs))
+        XCTAssertTrue(LearningLoopScoring.isMatch(left: "Kite", right: "Rhombus", pairs: pairs))
     }
 
     // MARK: - Shape thread (System B — GameplayThreadDefinition)
@@ -361,7 +361,7 @@ extension LearningLoopTests {
     func testShapeThreadCoversExpectedEntities() {
         let thread = GameplayThreadCatalog.shapes
         let names = Set(thread.entities.map(\.name))
-        XCTAssertTrue(names.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Diamond", "Star", "Heart"]))
+        XCTAssertTrue(names.isSuperset(of: ["Circle", "Triangle", "Square", "Rectangle", "Oval", "Rhombus", "Star", "Heart"]))
         XCTAssertEqual(thread.entities.count, 12)
     }
 

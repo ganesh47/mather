@@ -147,6 +147,8 @@ struct SoundConceptFlashcardCarouselView: View {
 struct ConceptQuizRoundView: View {
     let questions: [ConceptQuizQuestion]
     @Binding var answersByQuestionId: [String: String]
+    var onSpeak: (String) -> Void = { _ in }
+    var onAnswer: (ConceptQuizQuestion, String) -> Void = { _, _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -158,10 +160,15 @@ struct ConceptQuizRoundView: View {
                     Text(question.prompt)
                         .font(.headline.weight(.black))
                         .foregroundStyle(MatherTheme.ink)
+                    Button { onSpeak(question.prompt + " " + question.choices.joined(separator: ". ")) } label: {
+                        Label("Hear the question", systemImage: "speaker.wave.2.fill").frame(minHeight: 80)
+                    }.buttonStyle(.bordered)
                     HStack(spacing: 8) {
                         ForEach(question.choices, id: \.self) { choice in
                             Button {
+                                onAnswer(question, choice)
                                 answersByQuestionId[question.id] = choice
+                                onSpeak(question.isCorrect(choice) ? question.feedback : "Try another idea. You can hear the question again.")
                             } label: {
                                 Text(choice)
                                     .font(.subheadline.weight(.bold))
@@ -169,7 +176,7 @@ struct ConceptQuizRoundView: View {
                                     .minimumScaleFactor(0.7)
                                     .padding(.vertical, 10)
                                     .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity)
+                                    .frame(maxWidth: .infinity, minHeight: 80)
                                     .background(choiceFill(for: choice, in: question))
                                     .foregroundStyle(MatherTheme.ink)
                                     .clipShape(Capsule())
@@ -189,6 +196,7 @@ struct ConceptQuizRoundView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
         }
+        .onAppear { if let first = questions.first { onSpeak(first.prompt + " " + first.choices.joined(separator: ". ")) } }
     }
 
     private func choiceFill(for choice: String, in question: ConceptQuizQuestion) -> Color {
@@ -213,6 +221,7 @@ struct ConceptMixMatchRoundView: View {
     @Binding var matchedPairIds: Set<String>
     let onFeedback: (String) -> Void
     let onHapticCue: (ConceptMixMatchHapticCue) -> Void
+    let onAttempt: (String, Bool) -> Void
 
     init(
         pairs: [ConceptMatchPair],
@@ -220,7 +229,8 @@ struct ConceptMixMatchRoundView: View {
         selectedLeft: Binding<String?>,
         matchedPairIds: Binding<Set<String>>,
         onFeedback: @escaping (String) -> Void,
-        onHapticCue: @escaping (ConceptMixMatchHapticCue) -> Void = { _ in }
+        onHapticCue: @escaping (ConceptMixMatchHapticCue) -> Void = { _ in },
+        onAttempt: @escaping (String, Bool) -> Void = { _, _ in }
     ) {
         self.pairs = pairs
         self.shuffleSeed = shuffleSeed
@@ -228,6 +238,7 @@ struct ConceptMixMatchRoundView: View {
         self._matchedPairIds = matchedPairIds
         self.onFeedback = onFeedback
         self.onHapticCue = onHapticCue
+        self.onAttempt = onAttempt
     }
 
     @State private var mismatchedPairId: String?
@@ -294,7 +305,7 @@ struct ConceptMixMatchRoundView: View {
                     Image(systemName: matchedPairIds.contains(pair.id) ? "checkmark.circle.fill" : "arrow.right")
                         .font(.system(size: 16, weight: .black))
                         .foregroundStyle(matchedPairIds.contains(pair.id) ? MatherTheme.accent : Color.secondary.opacity(0.45))
-                        .frame(height: 58)
+                        .frame(height: 80)
                 }
             }
             .accessibilityHidden(true)
@@ -356,7 +367,7 @@ struct ConceptMixMatchRoundView: View {
                 }
             }
             .padding(.horizontal, 10)
-            .frame(maxWidth: .infinity, minHeight: 58)
+            .frame(maxWidth: .infinity, minHeight: 80)
             .background(tileFill(isMatched: isMatched, isSelected: isSelected, isMismatched: isMismatched, side: side))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -404,12 +415,14 @@ struct ConceptMixMatchRoundView: View {
                 matchedPairIds: matchedPairIds
             ) {
             case .locked(let pairId, let feedback):
+                onAttempt(pairId, true)
                 matchedPairIds.insert(pairId)
                 selectedLeft = nil
                 mismatchedPairId = nil
                 onHapticCue(matchedPairIds.count == pairs.count ? .complete : .success)
                 onFeedback(feedback)
             case .mismatch(let feedback):
+                onAttempt(selectedLeft ?? pair.id, false)
                 mismatchedPairId = pair.id
                 onHapticCue(.error)
                 onFeedback(feedback)
@@ -498,6 +511,10 @@ private enum SoundVolumeActivityStage: CaseIterable {
 struct SoundVolumeLabView: View {
     @Bindable var appModel: AppModel
     @State private var introPageIndex = 0
+    @State private var evidenceSessionID = UUID().uuidString
+    @State private var evidenceProfileID: String?
+    @State private var evidenceStartedAt = Date()
+    @State private var attempts: [ItemAttempt] = []
     @State private var hasStartedActivities = false
     @State private var activityStage: SoundVolumeActivityStage = .flashcards
     @State private var selectedSoundCardIndex = 0
@@ -565,11 +582,13 @@ struct SoundVolumeLabView: View {
                 introControls
             }
         }
+        .onAppear { if evidenceProfileID == nil { evidenceProfileID = appModel.profileStore.activeProfileId }; speakSoundInstructions() }
+        .onChange(of: introPageIndex) { _, _ in speakSoundInstructions() }
+        .onChange(of: selectedSoundCardIndex) { _, _ in speakSoundInstructions() }
         .onDisappear {
             appModel.soundDetectionService.stopSoundLabMeter()
-            if summary.starCount > 0 || matchedPairIds.count == SoundVolumeContent.matchPairs.count {
-                appModel.markExplorerLabModeCompleted(laneID: .physics, mode: .review)
-                appModel.setExplorerLabConceptConfidence(.steady, for: ConceptId(rawValue: "sound-volume"), laneID: .physics)
+            if !attempts.isEmpty {
+                appModel.gameplayProgressStore.saveActivityResult(ActivityResult(id: evidenceSessionID, activityID: LabActivityID.soundVolume.rawValue, title: "Sound Lab", startedAt: evidenceStartedAt, attempts: attempts, completedStageIDs: [], profileID: evidenceProfileID, contentVersion: 1))
             }
         }
     }
@@ -596,6 +615,9 @@ struct SoundVolumeLabView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                Button { speakSoundInstructions() } label: {
+                    Label("Hear instructions", systemImage: "speaker.wave.2.fill").frame(minHeight: 80)
+                }.buttonStyle(.bordered)
                 introPageContent
                 introProgressDots
             }
@@ -659,11 +681,34 @@ struct SoundVolumeLabView: View {
         .background(.thinMaterial)
     }
 
+    private func recordSoundAttempt(entityID: String, stageID: String, correct: Bool, response: String) {
+        guard evidenceProfileID == appModel.profileStore.activeProfileId else { return }
+        let corrected = attempts.contains { $0.entityID == entityID && $0.stageID == stageID && $0.outcome == .incorrect }
+        let outcome: ItemAttemptOutcome = correct ? (corrected ? .supportedCorrect : .independentCorrect) : .incorrect
+        let attempt = ItemAttempt(activityID: LabActivityID.soundVolume.rawValue, conceptID: "sound-volume", entityID: entityID, stageID: stageID, outcome: outcome, response: response, profileID: evidenceProfileID, sessionID: evidenceSessionID, contentVersion: 1)
+        attempts.append(attempt)
+        appModel.gameplayProgressStore.recordAttempts([attempt], sessionID: evidenceSessionID)
+    }
+
+    private func speakSoundInstructions() {
+        let text: String
+        if !hasStartedActivities {
+            text = introPage.title + ". " + introPage.subtitle
+        } else if activityStage == .flashcards, SoundVolumeContent.cards.indices.contains(selectedSoundCardIndex) {
+            let card = SoundVolumeContent.cards[selectedSoundCardIndex]
+            text = card.audioPrompt + " " + card.explanation
+        } else {
+            text = feedback
+        }
+        appModel.speechService.speak(text, enabled: appModel.featureFlags.audioEnabled)
+    }
+
     private func advanceIntro() {
         if isLastIntroPage {
             hasStartedActivities = true
             activityStage = .flashcards
             feedback = "Start with flashcards. Tap Play sound for a short, hearing-safe example."
+            speakSoundInstructions()
         } else {
             introPageIndex = SoundVolumeContent.clampedIntroPageIndex(safeIntroPageIndex + 1)
         }
@@ -720,7 +765,9 @@ struct SoundVolumeLabView: View {
         case .quiz:
             ConceptQuizRoundView(
                 questions: SoundVolumeContent.quizQuestions,
-                answersByQuestionId: $answersByQuestionId
+                answersByQuestionId: $answersByQuestionId,
+                onSpeak: { appModel.speechService.speak($0, enabled: appModel.featureFlags.audioEnabled) },
+                onAnswer: { question, answer in recordSoundAttempt(entityID: question.id, stageID: "quiz", correct: question.isCorrect(answer), response: answer) }
             )
         case .match:
             ConceptMixMatchRoundView(
@@ -728,8 +775,9 @@ struct SoundVolumeLabView: View {
                 shuffleSeed: matchShuffleSeed,
                 selectedLeft: $selectedMatchPairId,
                 matchedPairIds: $matchedPairIds,
-                onFeedback: { feedback = $0 },
-                onHapticCue: playSoundMatchHaptic
+                onFeedback: { feedback = $0; appModel.speechService.speak($0, enabled: appModel.featureFlags.audioEnabled) },
+                onHapticCue: playSoundMatchHaptic,
+                onAttempt: { id, correct in recordSoundAttempt(entityID: id, stageID: "match", correct: correct, response: correct ? "matched" : "mismatch") }
             )
         case .summary:
             summaryCard
@@ -767,6 +815,7 @@ struct SoundVolumeLabView: View {
         }
         activityStage = newStage
         updateFeedbackForCurrentStage()
+        speakSoundInstructions()
     }
 
     private func updateFeedbackForCurrentStage() {
@@ -1017,7 +1066,9 @@ struct SoundVolumeLabView: View {
                 NavigationLink {
                     SoundPitchFollowUpView(
                         pitchChallengeState: $pitchChallengeState,
-                        onFeedback: { feedback = $0 }
+                        onFeedback: { feedback = $0; appModel.speechService.speak($0, enabled: appModel.featureFlags.audioEnabled) },
+                        onPlayPitch: { appModel.speechService.playSoundExample($0.soundExample, enabled: appModel.featureFlags.audioEnabled) },
+                        onAnswer: { band, correct in recordSoundAttempt(entityID: "pitch", stageID: "pitch", correct: correct, response: band.rawValue) }
                     )
                 } label: {
                     Label(SoundVolumeContent.pitchFollowUpRouteTitle, systemImage: "music.note.list")
@@ -1092,6 +1143,8 @@ struct SoundVolumeLabView: View {
 private struct SoundPitchFollowUpView: View {
     @Binding var pitchChallengeState: SoundPitchChallengeState
     let onFeedback: (String) -> Void
+    let onPlayPitch: (SoundPitchBand) -> Void
+    let onAnswer: (SoundPitchBand, Bool) -> Void
 
     var body: some View {
         ScrollView {
@@ -1119,6 +1172,9 @@ private struct SoundPitchFollowUpView: View {
                             Text(band.frequencyRangeLabel)
                                 .font(.caption.weight(.black))
                                 .foregroundStyle(MatherTheme.accent)
+                            Button { onPlayPitch(band) } label: {
+                                Label("Listen", systemImage: "speaker.wave.2.fill").frame(maxWidth: .infinity, minHeight: 80)
+                            }.buttonStyle(.bordered)
                             Text(band.teachingCopy)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(MatherTheme.cardSubtitle)
@@ -1141,11 +1197,12 @@ private struct SoundPitchFollowUpView: View {
                             ForEach(pitchChallengeState.challenge.options) { band in
                                 Button {
                                     pitchChallengeState.select(band)
+                                    onAnswer(band, pitchChallengeState.isCorrect)
                                     onFeedback(pitchChallengeState.feedback)
                                 } label: {
                                     Text("\(band.visualKey) \(band.title)")
                                         .font(.caption.weight(.black))
-                                        .frame(maxWidth: .infinity)
+                                        .frame(maxWidth: .infinity, minHeight: 80)
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .tint(pitchChallengeState.selectedBand == band ? MatherTheme.accent : MatherTheme.softBlue)
@@ -1166,6 +1223,7 @@ private struct SoundPitchFollowUpView: View {
             .frame(maxWidth: .infinity)
         }
         .background(MatherTheme.background.ignoresSafeArea())
+        .onAppear { onFeedback("Listen to the low, middle, and high sounds. They use the same volume. Pitch changes how deep or bright the sound is.") }
         .navigationTitle(SoundVolumeContent.pitchFollowUpTitle)
         .accessibilityIdentifier("SoundPitchFollowUpScreen")
     }

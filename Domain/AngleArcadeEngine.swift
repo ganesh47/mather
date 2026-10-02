@@ -201,7 +201,7 @@ final class AngleArcadeEngine {
         if won {
             sessionCompletionCount += 1
             var completion = progress.completions[level.id] ?? AngleArcadeCompletion()
-            if level.guided || helpRequested { completion.assisted = true }
+            if level.guided || helpRequested || misses > 0 { completion.assisted = true }
             else { completion.independent = true }
             progress.completions[level.id] = completion
             feedback = "You did it! \(level.successExplanation)"

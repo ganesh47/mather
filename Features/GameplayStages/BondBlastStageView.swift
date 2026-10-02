@@ -4,15 +4,17 @@ struct BondBlastStageView: View {
     let stage: GameplayStageDefinition
     let actions: GameplayStageFeedbackActions
     let compact: Bool
-    let onComplete: (Int, Int, Int) -> Void
+    let onComplete: ([ItemAttempt]) -> Void
+    let onProgress: ([ItemAttempt], Data) -> Void
     @State private var viewModel: GameplayMatchStageViewModel
 
-    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
+    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, stateData: Data? = nil, onProgress: @escaping ([ItemAttempt], Data) -> Void = { _, _ in }, onComplete: @escaping ([ItemAttempt]) -> Void) {
         self.stage = stage
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
-        _viewModel = State(initialValue: GameplayMatchStageViewModel(thread: thread, round: round, mode: .bondBlast, turnItemCount: stage.recommendedTurnItemCount))
+        self.onProgress = onProgress
+        _viewModel = State(initialValue: stateData.flatMap { try? JSONDecoder().decode(GameplayMatchStageViewModel.self, from: $0) } ?? GameplayMatchStageViewModel(thread: thread, round: round, mode: .bondBlast, turnItemCount: stage.recommendedTurnItemCount))
     }
 
     var body: some View {
@@ -24,6 +26,9 @@ struct BondBlastStageView: View {
             actions: actions,
             onComplete: onComplete
         )
+        .onChange(of: viewModel, initial: true) { _, value in
+            if let data = try? JSONEncoder().encode(value) { onProgress(value.evidence.attempts, data) }
+        }
     }
 }
 
@@ -39,13 +44,11 @@ struct ReusableBondBlastBoard: View {
     let compact: Bool
     @Binding var viewModel: GameplayMatchStageViewModel
     let actions: GameplayStageFeedbackActions
-    let onComplete: (Int, Int, Int) -> Void
+    let onComplete: ([ItemAttempt]) -> Void
 
     @State private var mismatchedRightID: String?
     @State private var mismatchResetTask: Task<Void, Never>?
     @State private var mismatchResetRevision = 0
-    @State private var autoProgressTask: Task<Void, Never>?
-    @State private var autoProgressSignature: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
@@ -82,8 +85,11 @@ struct ReusableBondBlastBoard: View {
 
             progressDots
 
-            if autoProgressSignature != nil {
-                GameplayMatchRewardBanner(text: viewModel.canAdvanceTurn ? "Great matches! Next turn is coming…" : "Great matches! Your reward is coming…")
+            if viewModel.canAdvanceTurn || viewModel.isComplete {
+                GameplayMatchRewardBanner(text: "Great matches! Continue when you’re ready.")
+            }
+            if let helpText = viewModel.helpText {
+                Text(helpText).font(.headline).foregroundStyle(MatherTheme.ink)
             }
 
             if let item = viewModel.inspectedItem, shouldShowDetail(for: item) {
@@ -91,19 +97,17 @@ struct ReusableBondBlastBoard: View {
             }
 
             HStack {
-                Button("Hint") { viewModel.hintCount += 1 }
+                Button("Help me") { actions.speak(viewModel.showHelp()) }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
                 Spacer()
                 if viewModel.canAdvanceTurn {
                     Button("Next turn") {
-                        cancelAutoProgress()
                         viewModel.advanceTurn()
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
                 } else {
                     Button("Finish stage") {
-                        cancelAutoProgress()
-                        onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
+                        onComplete(viewModel.evidence.attempts)
                     }
                     .buttonStyle(GameplayStageControlButtonStyle(kind: .primary, compact: compact))
                     .disabled(!viewModel.isComplete)
@@ -113,46 +117,11 @@ struct ReusableBondBlastBoard: View {
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
         .accessibilityLabel("\(title). \(viewModel.correctCount) of \(viewModel.pairs.count) bonds matched.")
-        .onDisappear {
-            cancelAutoProgress()
-            cancelMismatchReset()
-        }
+        .onAppear { actions.speak(prompt) }
+        .onChange(of: viewModel.activeTurnIndex) { _, _ in actions.speak(prompt) }
+        .onDisappear { cancelMismatchReset() }
     }
 
-
-    private func scheduleAutoProgressIfReady() {
-        let signature: String?
-        if viewModel.canAdvanceTurn {
-            signature = "turn-\(viewModel.activeTurnIndex)-\(viewModel.correctCount)"
-        } else if viewModel.isComplete {
-            signature = "complete-\(viewModel.correctCount)"
-        } else {
-            signature = nil
-        }
-        guard let signature else { return }
-        guard autoProgressSignature != signature else { return }
-        cancelAutoProgress()
-        autoProgressSignature = signature
-        autoProgressTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1_200))
-            guard autoProgressSignature == signature else { return }
-            if viewModel.canAdvanceTurn {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                    viewModel.advanceTurn()
-                }
-            } else if viewModel.isComplete {
-                onComplete(viewModel.correctCount, viewModel.mismatchCount, viewModel.hintCount)
-            }
-            autoProgressSignature = nil
-            autoProgressTask = nil
-        }
-    }
-
-    private func cancelAutoProgress() {
-        autoProgressTask?.cancel()
-        autoProgressTask = nil
-        autoProgressSignature = nil
-    }
 
     private var instructionText: String {
         viewModel.selectedLeftID == nil ? prompt : "Now find its match."
@@ -177,6 +146,7 @@ struct ReusableBondBlastBoard: View {
         return Button {
             withAnimation(.spring(response: 0.22, dampingFraction: 0.66)) {
                 viewModel.selectLeft(pairID: pair.id)
+                actions.speak(pair.left.title + ". Choices: " + viewModel.shuffledRights.map(\.title).joined(separator: ", "))
             }
         } label: {
             GameplayDisplayCard(
@@ -208,13 +178,13 @@ struct ReusableBondBlastBoard: View {
                 actions.failure()
                 triggerMismatch(for: item.id)
             }
-            scheduleAutoProgressIfReady()
+            actions.speak(correct ? "You found it. " + item.spokenText : (hadSelection ? "Try another match. You can ask for help." : item.spokenText))
         } label: {
             GameplayDisplayCard(
                 item: item,
                 compact: compact,
                 showsSubtitle: isRevealed,
-                selected: viewModel.inspectedItemID == item.id && isRevealed,
+                selected: (viewModel.inspectedItemID == item.id && isRevealed) || viewModel.helpedRightID == item.id,
                 matched: isMatched,
                 concealed: !isRevealed,
                 prominence: .normal

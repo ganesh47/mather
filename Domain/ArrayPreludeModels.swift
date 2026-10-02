@@ -50,7 +50,7 @@ struct ArrayFact: Identifiable, Hashable {
     var canonicalColumns: Int { max(rows, columns) }
     var canonicalKey: String { "\(canonicalRows)x\(canonicalColumns)" }
     var rowColumnPhrase: String { "\(rows) rows of \(columns)" }
-    var spokenPrompt: String { "Pack \(product) boxes as \(rows) rows of \(columns)." }
+    var spokenPrompt: String { "There are \(rows) rows of \(columns) boxes. How many boxes altogether?" }
     var equationText: String { "\(rows) x \(columns) = \(product)" }
 
     func matches(product: Int) -> Bool {

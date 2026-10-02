@@ -13,6 +13,8 @@ struct FactoryCardsView: View {
     @State private var sessionStart: Date = .now
     @State private var savedSession = false
     @State private var didCompleteFirstLook = false
+    @State private var feedbackTask: Task<Void, Never>?
+    @State private var roundToken = UUID()
 
     private var currentStep: ArrayPreludeRound.Step? {
         guard round.steps.indices.contains(currentIndex) else { return nil }
@@ -51,6 +53,8 @@ struct FactoryCardsView: View {
             resetRound(speak: true)
         }
         .onDisappear {
+            feedbackTask?.cancel()
+            roundToken = UUID()
             saveIfNeeded()
         }
     }
@@ -68,12 +72,12 @@ struct FactoryCardsView: View {
             }
             Spacer()
             Button {
-                appModel.engine.showLab()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 30))
                     .foregroundStyle(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 80, height: 80)
             }
             .accessibilityLabel("Done")
         }
@@ -91,7 +95,7 @@ struct FactoryCardsView: View {
                         .foregroundStyle(option == difficulty ? .white : MatherTheme.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
-                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .frame(maxWidth: .infinity, minHeight: 80)
                         .padding(.horizontal, 8)
                         .background(option == difficulty ? MatherTheme.accent : MatherTheme.card)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -136,7 +140,7 @@ struct FactoryCardsView: View {
                             .foregroundStyle(MatherTheme.ink)
                             .minimumScaleFactor(0.72)
 
-                        if difficulty.showsEquation {
+                        if difficulty.showsEquation && selectedTotal == step.fact.product {
                             Text(step.fact.equationText)
                                 .font(.system(size: 24, weight: .black, design: .rounded))
                                 .foregroundStyle(MatherTheme.accent)
@@ -190,7 +194,7 @@ struct FactoryCardsView: View {
                 Label("I found the rows", systemImage: "checkmark.circle.fill")
                     .font(.headline.weight(.black))
                     .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: 58)
+                    .frame(maxWidth: .infinity, minHeight: 80)
                     .background(MatherTheme.accent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -242,7 +246,8 @@ struct FactoryCardsView: View {
 
             Button {
                 saveIfNeeded()
-                appModel.engine.showRectangleFactory()
+                appModel.rectangleFactoryStartingTarget = ArrayPreludeRound.handoffTarget(after: round)
+                appModel.engine.showActivity(.rectangleFactory, returnRoute: appModel.engine.gameplayReturnRoute)
             } label: {
                 Label("Factory Challenge", systemImage: "arrow.right.circle.fill")
             }
@@ -265,6 +270,8 @@ struct FactoryCardsView: View {
     }
 
     private func resetRound(speak: Bool) {
+        feedbackTask?.cancel()
+        roundToken = UUID()
         round = ArrayPreludeRound.make(difficulty: difficulty, seed: Int(Date().timeIntervalSince1970))
         currentIndex = 0
         correctCount = 0
@@ -282,6 +289,7 @@ struct FactoryCardsView: View {
     }
 
     private func choose(_ total: Int, for step: ArrayPreludeRound.Step) {
+        guard selectedTotal == nil, currentStep?.id == step.id else { return }
         selectedTotal = total
         attemptedStepIds.insert(step.id)
 
@@ -289,8 +297,10 @@ struct FactoryCardsView: View {
             correctCount += 1
             appModel.hapticsService.cardSnapCorrect(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak("Yes. \(step.fact.rowColumnPhrase) makes \(step.fact.product).", enabled: appModel.featureFlags.audioEnabled)
-            Task { @MainActor in
+            let token = roundToken
+            feedbackTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 750_000_000)
+                guard !Task.isCancelled, roundToken == token else { return }
                 currentIndex += 1
                 selectedTotal = nil
                 if roundComplete {
@@ -299,7 +309,7 @@ struct FactoryCardsView: View {
                 } else {
                     faceUp = !difficulty.startsFaceDown
                     if Self.shouldRequireFirstLook(forAdvancedIndex: currentIndex, totalSteps: round.steps.count) {
-                        didCompleteFirstLook = false
+                        didCompleteFirstLook = true
                     }
                     speakCurrentPrompt()
                 }
@@ -307,8 +317,10 @@ struct FactoryCardsView: View {
         } else {
             appModel.hapticsService.cardSnapMismatch(enabled: appModel.featureFlags.hapticsEnabled)
             appModel.speechService.speak("Try again. Count each row.", enabled: appModel.featureFlags.audioEnabled)
-            Task { @MainActor in
+            let token = roundToken
+            feedbackTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 550_000_000)
+                guard !Task.isCancelled, roundToken == token else { return }
                 selectedTotal = nil
             }
         }

@@ -36,6 +36,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.Mather
         INFOPLIST_FILE: App/Info.plist
+        IOS_LEARNING_CONTENT_URL: "https://raw.githubusercontent.com/ganesh47/mather-content/main/ios/catalog.json"
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO

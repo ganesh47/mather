@@ -9,7 +9,7 @@ struct ArrayPreludeModelsTests {
         #expect(fact.product == 6)
         #expect(fact.canonicalKey == "2x3")
         #expect(fact.rowColumnPhrase == "3 rows of 2")
-        #expect(fact.spokenPrompt == "Pack 6 boxes as 3 rows of 2.")
+        #expect(fact.spokenPrompt == "There are 3 rows of 2 boxes. How many boxes altogether?")
         #expect(fact.equationText == "3 x 2 = 6")
     }
 

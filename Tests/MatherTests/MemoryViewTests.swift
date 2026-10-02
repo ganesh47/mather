@@ -403,7 +403,7 @@ struct MemoryViewTests {
         #expect(CountryMemoryClueKind.currency.prompt.localizedCaseInsensitiveContains("money picture"))
         #expect(CountryMemoryClueKind.monument.prompt.localizedCaseInsensitiveContains("landmark"))
         #expect(CountryMemoryClueKind.capital.prompt.localizedCaseInsensitiveContains("capital"))
-        #expect(CountryMemoryClueKind.language.prompt.localizedCaseInsensitiveContains("official language"))
+        #expect(CountryMemoryClueKind.language.prompt.localizedCaseInsensitiveContains("language clue"))
         #expect(Set(CountryMemoryClueKind.allCases.map(\.symbolName)).count == CountryMemoryClueKind.allCases.count)
     }
 
@@ -640,7 +640,7 @@ struct MemoryViewTests {
         #expect(!MemoryView.canOpenLearningDetails(for: hiddenHardPlanetCard, deckSelection: .planets, difficulty: .hard, showRoundComplete: false))
         #expect(MemoryView.canOpenLearningDetails(for: revealedHardPlanetCard, deckSelection: .planets, difficulty: .hard, showRoundComplete: false))
         #expect(MemoryView.canOpenLearningDetails(for: matchedVehicleCard, deckSelection: .vehicles, difficulty: .hard, showRoundComplete: true))
-        #expect(MemoryView.learnMoreHintText(for: .vehicles) == "Double-tap a card to learn more")
+        #expect(MemoryView.learnMoreHintText(for: .vehicles) == "Tap Explore to hear and learn more")
         #expect(MemoryView.roundCompleteMessage(for: .planets, roundsPlayed: 1) == "Double-tap a card to learn more, or start the next round.")
         #expect(!MemoryView.roundCompleteMessage(for: .vehicles, roundsPlayed: 1).localizedCaseInsensitiveContains("bird"))
         #expect(MemoryView.learnAboutActionName(for: planet) == "Learn about Mercury")
@@ -791,7 +791,7 @@ struct MemoryCardDescribeServiceTests {
         #expect(description.source == .curatedFallback)
         #expect(description.shortDescription.localizedCaseInsensitiveContains("water cycle"))
         #expect(description.shortDescription.localizedCaseInsensitiveContains("warm water goes up"))
-        #expect(description.shortDescription.localizedCaseInsensitiveContains("sun warms water into vapor"))
+        #expect(description.shortDescription.localizedCaseInsensitiveContains("liquid water change into invisible water vapor"))
         #expect(Array(description.factChips.map(\.title).prefix(4)) == ["Concept", "Action", "Where", "Everyday Words"])
     }
 

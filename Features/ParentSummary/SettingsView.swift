@@ -99,12 +99,10 @@ struct SettingsView: View {
         .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
-                appModel.historyStore.clearActiveProfile()
-                appModel.gameSessionStore.clearActiveProfile()
-                appModel.telemetryWriter.clearEventsForActiveProfile()
+                appModel.clearActiveProfileLearningData()
             }
         } message: {
-            Text("This removes saved summaries and telemetry events for the active kid profile.")
+            Text("This removes summaries, learning attempts, saved quest steps, Explorer progress, and telemetry for the selected child. Other children keep their history.")
         }
     }
 
@@ -118,6 +116,23 @@ struct SettingsView: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(MatherTheme.cardSubtitle)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+
+                settingsSection(title: "Learning content", systemImage: "arrow.down.circle.fill") {
+                    Text("Version \(appModel.iosLearningContentStore.catalog.contentVersion)")
+                        .font(.headline.bold()).accessibilityIdentifier("ios-learning-content-version")
+                    Text(appModel.iosLearningContentStore.catalog.contentVersion > IOSLearningCatalog.bundled.contentVersion
+                         ? "Verified downloaded content is saved on this device and works offline. Updates appear between activities."
+                         : "Bundled content is available offline. Verified updates download automatically when this device is online.")
+                        .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle).fixedSize(horizontal: false, vertical: true)
+                    if appModel.iosLearningContentStore.isRefreshing {
+                        Text("Downloading and checking a content update. Current content stays available.")
+                            .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                            .accessibilityIdentifier("ios-learning-content-update-status")
+                    } else if appModel.iosLearningContentStore.lastRefreshError != nil {
+                        Text("The latest update could not be checked. The saved content remains available.")
+                            .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                    }
                 }
 
                 settingsSection(title: "Child experience", systemImage: "sparkles") {
@@ -171,7 +186,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Kid profiles")
                     .font(.title2.weight(.bold))
-                Text("Each profile keeps session data separate. Parent summary combines all profiles.")
+                Text("Each child keeps learning attempts, saved steps, and history separate. Parent Summary shows the selected child.")
                     .foregroundStyle(MatherTheme.cardSubtitle)
 
                 activeProfilePicker
@@ -234,8 +249,8 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Session history")
                     .font(.title2.weight(.bold))
-                let savedCount = summaries.count + gameSessions.count
-                Text(savedCount == 0 ? "No history saved yet." : "\(savedCount) saved locally across all games")
+                let savedCount = summaries.count + gameSessions.count + appModel.gameplayProgressStore.allSessions().count
+                Text(savedCount == 0 ? "No history saved yet." : "\(savedCount) saved locally for this child")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .accessibilityIdentifier("settings-history-summary")
@@ -261,7 +276,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Data reset")
                     .font(.title2.weight(.bold))
-                Text("Clears saved summaries, cross-game sessions, and telemetry events for the active kid profile on this device.")
+                Text("Clears this child's learning attempts, summaries, quest checkpoints, Explorer and Angle progress, and telemetry on this device.")
                     .font(.subheadline)
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)
@@ -333,7 +348,7 @@ private struct RoomQuestSettingsEntry: View {
             }
             .font(.headline.weight(.bold))
             .foregroundStyle(MatherTheme.ink)
-            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
             .background(MatherTheme.softBlue.opacity(0.45))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))

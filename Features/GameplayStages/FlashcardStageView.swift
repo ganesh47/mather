@@ -4,16 +4,21 @@ struct FlashcardStageView: View {
     let stage: GameplayStageDefinition
     let actions: GameplayStageFeedbackActions
     let compact: Bool
-    let onComplete: (Int, Int, Int) -> Void
+    let onComplete: ([ItemAttempt]) -> Void
+    let onProgress: ([ItemAttempt], Data) -> Void
     @State private var viewModel: GameplayFlashcardStageViewModel
     @State private var lastSpokenCardID: String?
+    @State private var showsPropertyExplorer = false
+    let thread: GameplayThreadDefinition
 
-    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, onComplete: @escaping (Int, Int, Int) -> Void) {
+    init(thread: GameplayThreadDefinition, stage: GameplayStageDefinition, round: GameplayRoundDefinition, actions: GameplayStageFeedbackActions, compact: Bool, stateData: Data? = nil, onProgress: @escaping ([ItemAttempt], Data) -> Void = { _, _ in }, onComplete: @escaping ([ItemAttempt]) -> Void) {
         self.stage = stage
+        self.thread = thread
         self.actions = actions
         self.compact = compact
         self.onComplete = onComplete
-        _viewModel = State(initialValue: GameplayFlashcardStageViewModel(thread: thread, round: round))
+        self.onProgress = onProgress
+        _viewModel = State(initialValue: stateData.flatMap { try? JSONDecoder().decode(GameplayFlashcardStageViewModel.self, from: $0) } ?? GameplayFlashcardStageViewModel(thread: thread, round: round))
     }
 
     var body: some View {
@@ -34,6 +39,26 @@ struct FlashcardStageView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Open flashcard: \(card.title), \(card.subtitle)")
 
+                Button(showsPropertyExplorer ? "Close clues" : "Explore more clues") {
+                    showsPropertyExplorer.toggle()
+                    if showsPropertyExplorer { actions.speak("Choose a clue to hear more.") }
+                }
+                .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+                if showsPropertyExplorer, let entity = thread.entities.first(where: { $0.id == card.entityID }) {
+                    ForEach(entity.properties) { property in
+                        Button {
+                            viewModel.markExposure()
+                            actions.speak(property.value + ". " + property.explanation)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(thread.propertyTypes.first { $0.id == property.typeID }?.displayName ?? "Clue").font(.headline)
+                                Text(property.value).font(.subheadline)
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(GameplayStageControlButtonStyle(kind: .secondary, compact: compact))
+                        .accessibilityLabel("Hear clue: " + property.value)
+                    }
+                }
                 VStack(spacing: 8) {
                     Text(viewModel.activeDiscoveryPrompt)
                         .font(.caption.weight(.bold))
@@ -56,9 +81,11 @@ struct FlashcardStageView: View {
                     .accessibilityLabel(viewModel.listenAgainAccessibilityLabel)
 
                     Button(viewModel.isLastCard ? "Finish stage" : "Next card") {
+                        showsPropertyExplorer = false
                         if viewModel.advance() {
-                            onComplete(max(1, viewModel.cards.count), 0, 0)
+                            onComplete(viewModel.evidence.attempts)
                         } else if let active = viewModel.activeCard {
+                            viewModel.markExposure()
                             speak(active)
                         }
                     }
@@ -69,10 +96,14 @@ struct FlashcardStageView: View {
         .padding(compact ? 14 : 20)
         .background(GameplayStagePanel())
         .onAppear { speakActiveCardIfNeeded() }
+        .onChange(of: viewModel, initial: true) { _, value in
+            if let data = try? JSONEncoder().encode(value) { onProgress(value.evidence.attempts, data) }
+        }
     }
 
     private func speakActiveCardIfNeeded() {
         guard let card = viewModel.activeCard, lastSpokenCardID != card.id else { return }
+        viewModel.markExposure()
         speak(card)
     }
 

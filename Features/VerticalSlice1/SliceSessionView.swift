@@ -396,6 +396,8 @@ struct SliceSessionView: View {
                     .background(MatherTheme.softBlue.opacity(colorScheme == .dark ? 0.24 : 0.18))
                     .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
                     .clipShape(Circle())
+                    .frame(width: 80, height: 80)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel(appModel.featureFlags.audioEnabled ? "Play prompt" : "Enable audio and play prompt")
             .accessibilityHint("Speaks the current instruction aloud.")
@@ -410,6 +412,8 @@ struct SliceSessionView: View {
                     .background(MatherTheme.warm.opacity(colorScheme == .dark ? 0.24 : 0.18))
                     .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.08 : 0), lineWidth: 1))
                     .clipShape(Circle())
+                    .frame(width: 80, height: 80)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Replay prompt")
             .accessibilityHint("Speaks the current instruction aloud.")
@@ -424,6 +428,8 @@ struct SliceSessionView: View {
                     .background(Color.secondary.opacity(colorScheme == .dark ? 0.18 : 0.12))
                     .overlay(Circle().strokeBorder(.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1))
                     .clipShape(Circle())
+                    .frame(width: 80, height: 80)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Go to Home")
         }

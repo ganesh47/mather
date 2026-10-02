@@ -62,6 +62,12 @@ final class RoomQuestEngine {
     private let stationStore: RoomQuestStationStore
     var onExitToHome: (() -> Void)?
     var onSessionComplete: (@MainActor (RoomQuestSessionSummary) -> Void)?
+    var activityProfileIDProvider: () -> String = { KidProfilePersistence.defaultProfileId }
+    private(set) var activityProfileID = KidProfilePersistence.defaultProfileId
+    var onItemAttempt: ((ItemAttempt, String) -> Void)?
+    var onActivityResult: ((ActivityResult) -> Void)?
+    private var evidenceSessionID = UUID().uuidString
+    private var itemAttempts: [ItemAttempt] = []
     private(set) var sessionStartedAt: Date = .now
     private(set) var collectedTokenCount = 0
     private var collectedStationRoles: Set<RoomQuestStationRole> = []
@@ -93,6 +99,9 @@ final class RoomQuestEngine {
     // MARK: - Session lifecycle
 
     func startSession() {
+        activityProfileID = activityProfileIDProvider()
+        evidenceSessionID = UUID().uuidString
+        itemAttempts = []
         let problems = ProblemGenerator.generateProblems(config: SliceConfig())
         guard let p = problems.first else { return }
         problem = p
@@ -597,12 +606,16 @@ final class RoomQuestEngine {
     }
 
     func submitPictorial() {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         phase = .onScreenAbstract
     }
 
     func submitAbstract() {
-        guard let p = problem else { return }
-        if equationLeftInput == String(p.decompositionA) && equationRightInput == String(p.decompositionB) {
+        guard activityProfileIDProvider() == activityProfileID else { return }
+        guard phase == .onScreenAbstract, let p = problem else { return }
+        let correct = equationLeftInput == String(p.decompositionA) && equationRightInput == String(p.decompositionB)
+        recordItemAttempt(correct: correct, stageID: "equation", response: equationLeftInput + " + " + equationRightInput)
+        if correct {
             flashCelebration()
             phase = .onScreenTransfer
         } else {
@@ -612,10 +625,17 @@ final class RoomQuestEngine {
     }
 
     func submitTransfer() {
+        guard activityProfileIDProvider() == activityProfileID else { return }
         guard phase == .onScreenTransfer else { return }
         guard let p = problem else { return }
         let correct = transferLeftCount == p.decompositionA && transferRightCount == p.decompositionB
-        finishSession(abstractCorrect: correct)
+        recordItemAttempt(correct: correct, stageID: "transfer", response: "\(transferLeftCount) + \(transferRightCount)")
+        guard correct else {
+            feedbackMessage = "Let's rebuild the collection. \(p.decompositionA) at Red Rocket and \(p.decompositionB) at Blue Bubble. You can change the counters and try again."
+            speechService.speak(feedbackMessage, enabled: featureFlags.audioEnabled)
+            return
+        }
+        finishSession(abstractCorrect: true)
     }
 
     func pauseSession() {
@@ -686,6 +706,14 @@ final class RoomQuestEngine {
         }
     }
 
+    private func recordItemAttempt(correct: Bool, stageID: String, response: String) {
+        guard let problem else { return }
+        let supported = itemAttempts.contains { $0.stageID == stageID && $0.outcome == .incorrect }
+        let attempt = ItemAttempt(activityID: "roomQuest", conceptID: "number-bonds", entityID: "whole-\(problem.target)", propertyID: stageID, stageID: stageID, outcome: correct ? (supported ? .supportedCorrect : .independentCorrect) : .incorrect, response: response, profileID: activityProfileID, sessionID: evidenceSessionID, contentVersion: 1)
+        itemAttempts.append(attempt)
+        onItemAttempt?(attempt, evidenceSessionID)
+    }
+
     private func finishSession(abstractCorrect: Bool) {
         guard let p = problem else { return }
         let endedAt = Date.now
@@ -695,6 +723,7 @@ final class RoomQuestEngine {
         ))
         phase = .complete
         feedbackMessage = abstractCorrect ? "Well done! You made \(p.target)." : "Good try!"
+        onActivityResult?(ActivityResult(id: evidenceSessionID, activityID: "roomQuest", title: "Room Quest", startedAt: sessionStartedAt, attempts: itemAttempts, completedStageIDs: ["equation", "transfer"], profileID: activityProfileID, contentVersion: 1))
         onSessionComplete?(RoomQuestSessionSummary(
             startedAt: sessionStartedAt,
             endedAt: endedAt,

@@ -223,36 +223,13 @@ struct LabRememberStageDeck: Equatable, Identifiable {
     )
 
     private static func numberBondCardsTo10() -> [LabRememberStageCard] {
-        let mixMatchSupport = "Picture the two parts snapping into one full ten-frame."
-        let existingNumberBondCards = CapabilityLane.starterMixMatchCardsByLane[.numbers, default: []]
-            .filter { $0.concept == "number-bond" && $0.match == "10" }
-            .map { LabRememberStageCard(mixMatchCard: $0, supportCopy: mixMatchSupport) }
-        let existingIDs = Set(existingNumberBondCards.map(\.id))
-        let supplementalPairs: [(String, String)] = [
-            ("0 + 10", "empty and full ten-frame"),
-            ("1 + 9", "one dot plus nine more fills ten"),
-            ("2 + 8", "two dots need eight friends"),
-            ("3 + 7", "three and seven make a full row pair"),
-            ("4 + 6", "four dots need six to make ten"),
-            ("5 + 5", "five-frame plus five-frame makes ten"),
-            ("6 + 4", "six and four are switch partners"),
-            ("7 + 3", "seven and three are switch partners"),
-            ("8 + 2", "eight and two are switch partners"),
-            ("9 + 1", "nine needs one more"),
-            ("10 + 0", "full ten-frame plus none stays ten"),
-        ]
-        let supplemental = supplementalPairs.map { prompt, clue in
-            LabRememberStageCard(
-                id: "numbers-number-bond-\(prompt.replacingOccurrences(of: " + ", with: "-plus-"))",
-                laneID: .numbers,
-                concept: "number-bond",
-                prompt: prompt,
-                answer: "10",
-                supportCopy: clue
-            )
+        (0...10).map { part in
+            LabRememberStageCard(id: "numbers-missing-part-\(part)", laneID: .numbers, concept: "number-bond",
+                prompt: "\(part) + ? = 10", answer: String(10-part),
+                supportCopy: "Picture ten spaces. \(part) are filled; \(10-part) are empty.")
         }
-        return existingNumberBondCards + supplemental.filter { !existingIDs.contains($0.id) }
     }
+
 }
 
 struct LabRememberStageExecution: Equatable {
@@ -515,6 +492,8 @@ enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var id: String { rawValue }
 
+    var childTitle: String { self == .blast ? "Challenge" : self == .score ? "Celebrate" : rawValue }
+
     var emoji: String {
         switch self {
         case .learn: return "📖"
@@ -554,8 +533,8 @@ enum GuidedLabStage: String, CaseIterable, Codable, Hashable, Identifiable {
         case .learn: return "See the idea"
         case .remember: return "Recall cards"
         case .play: return "Practice calmly"
-        case .blast: return "Fast round"
-        case .score: return "Celebrate progress"
+        case .blast: return "Use it a new way"
+        case .score: return "Celebrate trying"
         }
     }
 }
@@ -613,7 +592,7 @@ struct LabSessionStagePlan: Identifiable, Equatable {
     }
 
     var accessibilityLabel: String {
-        "\(stage.rawValue). \(title). \(childCopy)"
+        "\(stage.childTitle). \(title). \(childCopy)"
     }
 
     func accessibilityLabel(withProgressState progressState: String?) -> String {
@@ -641,7 +620,7 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
     var startRoute: AppRoute? { stages.first(where: { $0.route != nil })?.route }
     var startAffordanceLabel: String { "Start" }
     var continueAffordanceLabel: String { "Continue" }
-    var pathLabel: String { stageOrder.map(\.rawValue).joined(separator: " → ") }
+    var pathLabel: String { stageOrder.map(\.childTitle).joined(separator: " → ") }
     var cardPresentation: LabConceptSessionPlanCardPresentation {
         LabConceptSessionPlanCardPresentation(plan: self)
     }
@@ -665,8 +644,8 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         id: "numbers-number-bonds-to-10",
         laneID: .numbers,
         title: "Number Bonds to 10",
-        subtitle: "Build pairs that make ten, remember friendly facts, then celebrate with Bond Blast.",
-        estimatedLength: "8–10 min",
+        subtitle: "Move ten seeds, remember your own parts, fill a garden, then try a new picnic.",
+        estimatedLength: "3–5 min",
         masteryStateLabel: "Recommended first",
         recommendedNextActivity: "Make & Break warm-up",
         stages: [
@@ -676,39 +655,39 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
                 childCopy: "Move counters and see two parts make one ten.",
                 parentCopy: "Concrete/pictorial discovery before symbols; elapsed time is tracked only.",
                 timerPolicy: .learnTrackedOnly,
-                route: .sessionConfig
+                route: .learningQuest(.numbers)
             ),
             LabSessionStagePlan(
                 stage: .remember,
                 title: "Bring pairs back",
-                childCopy: "Use friendly picture clues to remember ten pairs.",
+                childCopy: "Remember the missing part from your own garden split.",
                 parentCopy: "Soft retrieval with visual support; no punitive countdown.",
                 timerPolicy: .calmNoCountdown,
-                route: .labRememberStage(.numbersNumberBondsTo10)
+                route: .learningQuest(.numbers)
             ),
             LabSessionStagePlan(
                 stage: .play,
                 title: "Try it for real",
-                childCopy: "Practice bonds inside playful number games.",
+                childCopy: "Fill the missing spaces in your garden.",
                 parentCopy: "Application stays calm before any readiness-gated speed round.",
                 timerPolicy: .calmNoCountdown,
-                route: .sumSprint
+                route: .learningQuest(.numbers)
             ),
             LabSessionStagePlan(
                 stage: .blast,
-                title: "Bond Blast",
-                childCopy: "A rocket round appears when you’re ready to celebrate.",
-                parentCopy: "Blast is celebratory and readiness gated; countdown pressure is not default.",
+                title: "Picnic challenge",
+                childCopy: "Try a new whole of eight when you’re ready.",
+                parentCopy: "A new context checks transfer; readiness gated and no countdown.",
                 timerPolicy: .readinessGatedBlast,
-                route: .session
+                route: .learningQuest(.numbers)
             ),
             LabSessionStagePlan(
                 stage: .score,
-                title: "Spark score",
+                title: "Celebrate",
                 childCopy: "See what grew and pick the next tiny quest.",
-                parentCopy: "Child score stays encouraging; richer analytics can live in parent detail later.",
+                parentCopy: "Celebrates persistence; parent detail separates independent answers and support.",
                 timerPolicy: .calmNoCountdown,
-                route: nil
+                route: .learningQuest(.numbers)
             ),
         ]
     )
@@ -717,16 +696,16 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         id: "geometry-shape-names",
         laneID: .geometry,
         title: "Shape Lab",
-        subtitle: "Learn shape cards, remember clues, play the existing Shape Lab, then finish with a quick match blast.",
-        estimatedLength: "6–8 min",
+        subtitle: "Explore four shapes, recall corners, build a triangle, and find a turned rectangle door.",
+        estimatedLength: "3–5 min",
         masteryStateLabel: "Geometry starter",
         recommendedNextActivity: "Shape Lab play",
         stages: [
-            LabSessionStagePlan(stage: .learn, title: "Meet the shapes", childCopy: "Look at shape cards and notice sides, corners, and curves.", parentCopy: "Introduces shape vocabulary with visual-first cards.", timerPolicy: .learnTrackedOnly, route: .shapeGeometry),
-            LabSessionStagePlan(stage: .remember, title: "Bring clues back", childCopy: "Match each clue to the shape it describes.", parentCopy: "Calm retrieval stage using reusable Remember cards.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometryShapeNames)),
-            LabSessionStagePlan(stage: .play, title: "Play Shape Lab", childCopy: "Use the current Shape Lab to quiz and match shapes.", parentCopy: "Wraps existing Shape Lab as the Play stage without removing direct game access.", timerPolicy: .calmNoCountdown, route: .shapeGeometry),
-            LabSessionStagePlan(stage: .blast, title: "Shape quick match", childCopy: "Do a celebratory fast match when you feel ready.", parentCopy: "Blast stays readiness gated and non-punitive.", timerPolicy: .readinessGatedBlast, route: .shapeGeometry),
-            LabSessionStagePlan(stage: .score, title: "Shape spark score", childCopy: "Celebrate shapes you can name and pick the next quest.", parentCopy: "Score stage summarizes progress later; no timer pressure.", timerPolicy: .calmNoCountdown, route: nil),
+            LabSessionStagePlan(stage: .learn, title: "Meet the shapes", childCopy: "Look at shape cards and notice sides, corners, and curves.", parentCopy: "Introduces shape vocabulary with visual-first cards.", timerPolicy: .learnTrackedOnly, route: .learningQuest(.shapes)),
+            LabSessionStagePlan(stage: .remember, title: "Bring clues back", childCopy: "Match each clue to the shape it describes.", parentCopy: "Calm retrieval stage using reusable Remember cards.", timerPolicy: .calmNoCountdown, route: .learningQuest(.shapes)),
+            LabSessionStagePlan(stage: .play, title: "Build a triangle", childCopy: "Choose three corners and join them into a triangle.", parentCopy: "A construction checks three non-collinear corners and a closed triangle.", timerPolicy: .calmNoCountdown, route: .learningQuest(.shapes)),
+            LabSessionStagePlan(stage: .blast, title: "Turned-door challenge", childCopy: "Find a rectangle door after it turns.", parentCopy: "Blast stays readiness gated and non-punitive.", timerPolicy: .readinessGatedBlast, route: .learningQuest(.shapes)),
+            LabSessionStagePlan(stage: .score, title: "Celebrate shapes", childCopy: "Celebrate shapes you can name and pick the next quest.", parentCopy: "Score stage summarizes progress later; no timer pressure.", timerPolicy: .calmNoCountdown, route: .learningQuest(.shapes)),
         ]
     )
 
@@ -734,16 +713,16 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         id: "geometry-angles-basic",
         laneID: .geometry,
         title: "Angle Lab",
-        subtitle: "Learn angle benchmarks, remember degrees, measure with two fingers, then explore angles and turns in Angle Arcade.",
-        estimatedLength: "7–9 min",
+        subtitle: "Move a gate, recall a square corner, match a quarter turn, and open a wider doorway.",
+        estimatedLength: "3–5 min",
         masteryStateLabel: "Recommended next",
         recommendedNextActivity: "Two-Finger Protractor",
         stages: [
-            LabSessionStagePlan(stage: .learn, title: "See angle turns", childCopy: "Open, close, and compare small, square, wide, and straight turns.", parentCopy: "Concept-first angle vocabulary before sensor play.", timerPolicy: .learnTrackedOnly, route: .twoFingerProtractor),
-            LabSessionStagePlan(stage: .remember, title: "Remember degrees", childCopy: "Recall 90°, 180°, acute, and obtuse clues.", parentCopy: "Soft retrieval with no countdown.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometryAnglesBasic)),
-            LabSessionStagePlan(stage: .play, title: "Measure with fingers", childCopy: "Use two fingers like a protractor to feel the size of an angle.", parentCopy: "Existing Two-Finger Protractor remains directly playable and also serves this Play stage.", timerPolicy: .calmNoCountdown, route: .twoFingerProtractor),
-            LabSessionStagePlan(stage: .blast, title: "Angle Arcade", childCopy: "Launch deliveries and turn corners to build a world.", parentCopy: "Geometry-first missions share progress with the existing Angle Cannon route.", timerPolicy: .readinessGatedBlast, route: .angleCannon),
-            LabSessionStagePlan(stage: .score, title: "Angle spark score", childCopy: "Celebrate the angles you measured and blasted.", parentCopy: "Score remains child-safe and pressure-free.", timerPolicy: .calmNoCountdown, route: nil),
+            LabSessionStagePlan(stage: .learn, title: "See angle turns", childCopy: "Open, close, and compare small, square, wide, and straight turns.", parentCopy: "Concept-first angle vocabulary before sensor play.", timerPolicy: .learnTrackedOnly, route: .learningQuest(.angles)),
+            LabSessionStagePlan(stage: .remember, title: "Remember degrees", childCopy: "Remember a square-corner quarter turn.", parentCopy: "Soft retrieval with no countdown.", timerPolicy: .calmNoCountdown, route: .learningQuest(.angles)),
+            LabSessionStagePlan(stage: .play, title: "Open the gate", childCopy: "Match the guide by opening or closing a gate.", parentCopy: "A touch-controlled gate checks a square-corner turn; protractor remains in More games.", timerPolicy: .calmNoCountdown, route: .learningQuest(.angles)),
+            LabSessionStagePlan(stage: .blast, title: "Wider-door challenge", childCopy: "Use the same turn idea for a wider doorway.", parentCopy: "Transfer uses a new 120-degree gate target without a timer.", timerPolicy: .readinessGatedBlast, route: .learningQuest(.angles)),
+            LabSessionStagePlan(stage: .score, title: "Celebrate turns", childCopy: "Celebrate the turns you explored and matched.", parentCopy: "Score remains child-safe and pressure-free.", timerPolicy: .calmNoCountdown, route: .learningQuest(.angles)),
         ]
     )
 
@@ -751,16 +730,16 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         id: "geometry-symmetry-folds",
         laneID: .geometry,
         title: "Symmetry Lab",
-        subtitle: "Learn mirror halves, remember symmetric examples, play Symmetry Fold, then try a mirror challenge blast.",
-        estimatedLength: "6–8 min",
+        subtitle: "Fold matching halves, remember a mirror pattern, repair a wing, then test a new butterfly.",
+        estimatedLength: "3–5 min",
         masteryStateLabel: "Fold and compare",
         recommendedNextActivity: "Symmetry Fold",
         stages: [
-            LabSessionStagePlan(stage: .learn, title: "See mirror halves", childCopy: "Look for halves that cover each other after a fold.", parentCopy: "Visual symmetry examples introduce the fold idea.", timerPolicy: .learnTrackedOnly, route: .symmetryFold),
-            LabSessionStagePlan(stage: .remember, title: "Remember mirror clues", childCopy: "Sort symmetric, not symmetric, and fold-line clues.", parentCopy: "Reusable Remember cards prepare children before sensor play.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometrySymmetryFolds)),
-            LabSessionStagePlan(stage: .play, title: "Play Symmetry Fold", childCopy: "Fold shapes and see whether both sides match.", parentCopy: "Existing Symmetry Fold is wrapped as the Play stage.", timerPolicy: .calmNoCountdown, route: .symmetryFold),
-            LabSessionStagePlan(stage: .blast, title: "Mirror challenge", childCopy: "Try a celebratory fold challenge when ready.", parentCopy: "Blast is framed as celebration, not a punitive speed test.", timerPolicy: .readinessGatedBlast, route: .symmetryFold),
-            LabSessionStagePlan(stage: .score, title: "Symmetry spark score", childCopy: "Celebrate the mirror matches you found.", parentCopy: "Score stage can show richer analytics later.", timerPolicy: .calmNoCountdown, route: nil),
+            LabSessionStagePlan(stage: .learn, title: "See mirror halves", childCopy: "Look for halves that cover each other after a fold.", parentCopy: "Visual symmetry examples introduce the fold idea.", timerPolicy: .learnTrackedOnly, route: .learningQuest(.symmetry)),
+            LabSessionStagePlan(stage: .remember, title: "Remember mirror clues", childCopy: "Sort symmetric, not symmetric, and fold-line clues.", parentCopy: "Reusable Remember cards prepare children before sensor play.", timerPolicy: .calmNoCountdown, route: .learningQuest(.symmetry)),
+            LabSessionStagePlan(stage: .play, title: "Repair the wing", childCopy: "Change wing patches so the two halves mirror each other.", parentCopy: "Patch repair checks visual mirror matching; the free folding game remains accessible.", timerPolicy: .calmNoCountdown, route: .learningQuest(.symmetry)),
+            LabSessionStagePlan(stage: .blast, title: "Mirror challenge", childCopy: "Try a celebratory fold challenge when ready.", parentCopy: "Blast is framed as celebration, not a punitive speed test.", timerPolicy: .readinessGatedBlast, route: .learningQuest(.symmetry)),
+            LabSessionStagePlan(stage: .score, title: "Celebrate mirrors", childCopy: "Celebrate the mirror matches you found.", parentCopy: "Parent detail includes actual attempts and transfer; child celebrates trying.", timerPolicy: .calmNoCountdown, route: .learningQuest(.symmetry)),
         ]
     )
 
@@ -845,7 +824,7 @@ struct GuidedLabPath: Identifiable, Equatable {
         GuidedLabPath(
             laneID: .geometry,
             title: "Geometry Path",
-            subtitle: "Staged Shape, Angle, and Symmetry labs using Learn → Remember → Play → Blast → Score.",
+            subtitle: "Staged Shape, Angle, and Symmetry labs using Learn → Remember → Play → Challenge → Celebrate.",
             stages: [.learn, .remember, .play, .blast, .score],
             sessionPlans: [.geometryShapeNames, .geometryAnglesBasic, .geometrySymmetryFolds]
         ),
@@ -1006,7 +985,7 @@ enum LabSensorNeed: CaseIterable, Equatable {
                 isAvailable: available,
                 label: available ? "Tilt ready" : "Tilt not available",
                 permissionCopy: "Tilt sensing does not ask for a child permission prompt.",
-                fallback: .none
+                fallback: .sameRoute(copy: "Play with touch instead", actionTitle: "Play")
             )
         case .compass:
             return LabSensorAffordance(
@@ -1014,7 +993,7 @@ enum LabSensorNeed: CaseIterable, Equatable {
                 isAvailable: available,
                 label: available ? "Body turns ready" : "Body turns not available",
                 permissionCopy: "Uses gentle body-relative motion, not a precise compass reading.",
-                fallback: .none
+                fallback: .sameRoute(copy: "Play with touch instead", actionTitle: "Play")
             )
         case .stepCounting:
             return LabSensorAffordance(
@@ -1235,11 +1214,11 @@ struct CapabilityLaneProgress: Equatable {
     }
 
     var masteryPercentLabel: String {
-        "\(Int((masteryFraction * 100).rounded()))% ready"
+        "\(Int((masteryFraction * 100).rounded()))% explored"
     }
 
     var progressSummaryLabel: String {
-        "🚀 \(completedModeCount)/\(availableModes.count) missions unlocked"
+        "🚀 \(completedModeCount)/\(availableModes.count) missions explored"
     }
 
     var nextRecommendedModeLabel: String {
@@ -1595,8 +1574,8 @@ struct CapabilityLane: Identifiable, Equatable {
         CapabilityLane(
             id: .chemistry,
             emoji: "⚗️",
-            promise: "Future: sort materials, mix safely, and predict properties.",
-            ageBandHint: "Future lane",
+            promise: "Notice fruit properties, then explore materials with a grown-up.",
+            ageBandHint: "Ages 5–7",
             modes: [.explore, .challenge, .review],
             ageEntries: [
                 CapabilityAgeEntry(ageBand: .preschool, posture: "material sorting", entryPlay: "color and texture"),
@@ -1779,9 +1758,9 @@ struct LabConceptSessionProgress: Codable, Equatable, Identifiable {
 
     var resumeCopy: String {
         if completedStages.isEmpty {
-            return "Continue: \(currentStage.rawValue)"
+            return "Continue: \(currentStage.childTitle)"
         }
-        return "Continue: \(currentStage.rawValue) next"
+        return "Continue: \(currentStage.childTitle) next"
     }
 
     func currentStagePlan(in plan: LabConceptSessionPlan) -> LabSessionStagePlan? {
@@ -1819,5 +1798,12 @@ struct LabConceptSessionProgress: Codable, Equatable, Identifiable {
     private static func uniqueStages(_ stages: [GuidedLabStage]) -> [GuidedLabStage] {
         var seen = Set<GuidedLabStage>()
         return stages.filter { seen.insert($0).inserted }
+    }
+}
+
+
+extension LabActivityID {
+    var pilotQuest: LearningQuestID? {
+        switch self { case .shapeGeometry: .shapes; case .waterCycle: .waterCycle; case .circuitSpark: .circuitSpark; default: nil }
     }
 }

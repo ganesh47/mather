@@ -66,10 +66,24 @@ private extension MatherApp {
 
     static func applyUITestStartRouteIfRequested(using appModel: AppModel) {
         let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "-uiTest.clearQuestCheckpoints"), arguments.indices.contains(index+1), arguments[index+1] == "YES" {
+            appModel.questCheckpointStore.clearAllProfiles()
+            appModel.gameplayProgressStore.clearAllProfiles()
+            appModel.labConceptSessionProgressStore.resetAllProfiles()
+        }
         guard let flagIndex = arguments.firstIndex(of: "-uiTest.startRoute"),
               arguments.indices.contains(flagIndex + 1) else { return }
 
         switch arguments[flagIndex + 1].lowercased() {
+        case "quest-numbers", "quest-shapes", "quest-water-cycle", "quest-circuit-spark":
+            let quest: LearningQuestID = switch arguments[flagIndex + 1].lowercased() {
+            case "quest-shapes": .shapes
+            case "quest-water-cycle": .waterCycle
+            case "quest-circuit-spark": .circuitSpark
+            default: .numbers
+            }
+            appModel.learningQuestEngine.start(quest, content: LearningQuestContentSnapshot(catalog: appModel.iosLearningContentStore.catalog))
+            appModel.engine.showLearningQuest(quest)
         case "lab", "explorerlab", "explorer-lab":
             appModel.engine.showLab()
         case "labgames", "lab-games":

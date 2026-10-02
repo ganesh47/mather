@@ -12,8 +12,23 @@ struct AngleCannonView: View {
     @State private var tiltEnabled = false
     @State private var neutralRoll: Double?
     @State private var neutralAngle = 45.0
+    @State private var sessionEngine: AngleArcadeEngine?
+    @State private var evidenceProfileID: String
+    @State private var evidenceSessionID = UUID().uuidString
+    @State private var evidenceStartedAt = Date.now
+    @State private var attempts: [ItemAttempt] = []
+    @State private var completedMissionIDs: [String] = []
+    @State private var helpedMissionIDs: Set<String> = []
+    @State private var pendingAttempt: ItemAttempt?
+    @State private var pendingAttemptID: Int?
 
-    private var engine: AngleArcadeEngine { appModel.angleArcadeEngine }
+    init(appModel: AppModel) {
+        self.appModel = appModel
+        _evidenceProfileID = State(initialValue: appModel.profileStore.activeProfileId)
+    }
+
+    private var engine: AngleArcadeEngine { sessionEngine ?? appModel.angleArcadeEngine }
+    private var isActiveProfile: Bool { appModel.profileStore.activeProfileId == evidenceProfileID }
 
     var body: some View {
         GeometryReader { geometry in
@@ -22,9 +37,11 @@ struct AngleCannonView: View {
                 if engine.phase == .worldSelection {
                     ScrollView { worldPicker.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
+                        .disabled(!isActiveProfile)
                 } else if engine.phase == .worldComplete {
                     ScrollView { celebration.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
+                        .disabled(!isActiveProfile)
                 } else if UIDevice.current.userInterfaceIdiom == .pad && geometry.size.width > geometry.size.height && geometry.size.width >= 750 {
                     HStack(alignment: .top, spacing: 22) {
                         VStack(spacing: 14) {
@@ -32,7 +49,7 @@ struct AngleCannonView: View {
                             missionScene
                                 .frame(maxHeight: .infinity)
                         }
-                        controls.frame(width: 350)
+                        controls.frame(width: 350).disabled(!isActiveProfile)
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 18)
@@ -41,7 +58,7 @@ struct AngleCannonView: View {
                         VStack(spacing: 18) {
                             missionHeader
                             missionScene.frame(height: max(240, min(380, geometry.size.height * 0.34)))
-                            controls
+                            controls.disabled(!isActiveProfile)
                         }
                         .padding(18)
                     }
@@ -54,13 +71,17 @@ struct AngleCannonView: View {
             .background(MatherTheme.background.ignoresSafeArea())
         }
         .onAppear {
+            guard sessionEngine == nil, isActiveProfile else { return }
             appModel.prepareAngleArcadeProfile()
+            sessionEngine = appModel.angleArcadeEngine
+            evidenceStartedAt = .now
             engine.beginSession()
             narrate()
         }
         .onChange(of: engine.phase) { _, phase in
             if phase == .flying { animateDelivery() }
             else {
+                if phase == .result { recordCompletedAttempt() }
                 narrate()
             }
         }
@@ -70,7 +91,7 @@ struct AngleCannonView: View {
             narrate()
         }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
-            guard tiltEnabled, engine.phase == .aiming,
+            guard isActiveProfile, tiltEnabled, engine.phase == .aiming,
                   engine.level.kind == .launch, engine.level.allowsAngle else { return }
             guard let neutralRoll else {
                 self.neutralRoll = roll
@@ -86,15 +107,24 @@ struct AngleCannonView: View {
                 appModel.speechService.stop()
             } else { narrate() }
         }
-        .onDisappear {
+        .onChange(of: appModel.profileStore.activeProfileId) { _, _ in
+            guard !isActiveProfile else { return }
             cancelFlight()
             stopTilt()
             appModel.speechService.stop()
+        }
+        .onDisappear {
+            recordCompletedAttempt()
+            cancelFlight()
+            stopTilt()
+            appModel.speechService.stop()
+            guard isActiveProfile else { return }
+            saveEvidenceResult()
             if engine.sessionCompletionCount > 0 {
                 appModel.gameSessionStore.save(
                     gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
                     scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
-                    detail: "Passport: \(engine.progress.completions.values.filter { $0.assisted }.count) missions explored with help; \(engine.progress.completions.values.filter { $0.independent }.count) independently. Completion records exploration, not mastery."
+                    detail: "This play: \(attempts.filter { $0.outcome == .supportedCorrect }.count) missions completed with support; \(attempts.filter { $0.outcome == .independentCorrect }.count) independently. Completion records exploration, not mastery."
                 )
             }
         }
@@ -105,7 +135,7 @@ struct AngleCannonView: View {
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .accessibilityElement(children: .contain)
             .accessibilityLabel(engine.level.title)
-            .accessibilityValue(engine.phase == .result ? engine.feedback : engine.hint)
+            .accessibilityValue(engine.phase == .result ? engine.feedback : engine.prompt)
             .accessibilityIdentifier("angle-cannon-canvas")
     }
 
@@ -131,12 +161,17 @@ struct AngleCannonView: View {
                     .accessibilityIdentifier("angle-arcade-phase")
             }
             Spacer()
-            Button { appModel.engine.showHome() } label: {
-                Image(systemName: "house.fill").font(.title2)
+            Button {
+                recordCompletedAttempt()
+                cancelFlight()
+                stopTilt()
+                appModel.engine.returnFromGameplay(defaultRoute: .home)
+            } label: {
+                Image(systemName: "xmark.circle.fill").font(.title2)
                     .frame(width: 80, height: 80)
             }
             .buttonStyle(.bordered)
-            .accessibilityLabel("All games")
+            .accessibilityLabel("Done")
             .accessibilityIdentifier("angle-cannon-done-button")
         }
         .foregroundStyle(MatherTheme.ink)
@@ -218,7 +253,7 @@ struct AngleCannonView: View {
             .accessibilityIdentifier("angle-arcade-primary")
             HStack(spacing: 12) {
                 utilityButton("Help", symbol: "ear.badge.waveform", identifier: "angle-arcade-help") {
-                    engine.requestHelp(); speak(engine.prompt + " " + engine.hint)
+                    requestHelp()
                 }
                 utilityButton("Worlds", symbol: "square.grid.2x2.fill", identifier: "angle-arcade-worlds") {
                     cancelFlight(); stopTilt(); engine.showWorlds()
@@ -316,9 +351,76 @@ struct AngleCannonView: View {
     }
 
     private func primaryAction() {
+        guard isActiveProfile else { return }
         if engine.phase == .result {
             if engine.success { engine.nextMission() } else { engine.retry() }
-        } else { _ = engine.submit() }
+        } else if engine.phase == .aiming {
+            let level = engine.level
+            let angle = engine.angle
+            let power = engine.power
+            let misses = engine.misses
+            let preview = engine.showsFullPreview
+            let helped = helpedMissionIDs.contains(level.id)
+            let earlierSupport = attempts.contains {
+                $0.entityID == level.id && ($0.outcome == .help || $0.outcome == .incorrect || $0.outcome == .supportedCorrect)
+            }
+            guard engine.submit() else { return }
+            pendingAttemptID = engine.attemptID
+            pendingAttempt = ItemAttempt(
+                activityID: LabActivityID.angleCannon.rawValue,
+                conceptID: level.kind == .rotation ? "rotation" : "angle-and-power",
+                entityID: level.id, propertyID: level.kind == .rotation ? "turn" : "launch",
+                stageID: level.id,
+                outcome: level.guided || preview || helped || earlierSupport || misses > 0 ? .supportedCorrect : .independentCorrect,
+                response: "attempt=\(engine.attemptID); angle=\(angle); push=\(power); input=\(tiltEnabled ? "tilt enabled" : "touch"); guided=\(level.guided); fullPreview=\(preview); help=\(helped); earlierSupport=\(earlierSupport); priorMisses=\(misses)",
+                profileID: evidenceProfileID, sessionID: evidenceSessionID, contentVersion: 1
+            )
+            // Rotation checks resolve synchronously; launches resolve after their flight.
+            recordCompletedAttempt()
+        }
+    }
+
+    private func requestHelp() {
+        guard isActiveProfile, engine.phase == .aiming || engine.phase == .result, !engine.success else { return }
+        engine.requestHelp()
+        if helpedMissionIDs.insert(engine.level.id).inserted {
+            record(ItemAttempt(
+                activityID: LabActivityID.angleCannon.rawValue,
+                conceptID: engine.level.kind == .rotation ? "rotation" : "angle-and-power",
+                entityID: engine.level.id, propertyID: engine.level.kind == .rotation ? "turn" : "launch",
+                stageID: engine.level.id, outcome: .help, response: engine.hint,
+                profileID: evidenceProfileID, sessionID: evidenceSessionID, contentVersion: 1
+            ))
+            saveEvidenceResult()
+        }
+        speak(engine.prompt + " " + engine.hint)
+    }
+
+    private func recordCompletedAttempt() {
+        guard isActiveProfile, engine.phase == .result,
+              pendingAttemptID == engine.attemptID, let pendingAttempt else { return }
+        let outcome = engine.success ? pendingAttempt.outcome : .incorrect
+        record(pendingAttempt.withOutcome(outcome))
+        if engine.success, !completedMissionIDs.contains(engine.level.id) {
+            completedMissionIDs.append(engine.level.id)
+        }
+        self.pendingAttempt = nil
+        pendingAttemptID = nil
+        saveEvidenceResult()
+    }
+
+    private func record(_ attempt: ItemAttempt) {
+        attempts.append(attempt)
+        appModel.gameplayProgressStore.recordAttempts([attempt], sessionID: evidenceSessionID)
+    }
+
+    private func saveEvidenceResult() {
+        guard isActiveProfile, !attempts.isEmpty else { return }
+        appModel.gameplayProgressStore.saveActivityResult(ActivityResult(
+            id: evidenceSessionID, activityID: LabActivityID.angleCannon.rawValue,
+            title: "Angle Arcade", startedAt: evidenceStartedAt, attempts: attempts,
+            completedStageIDs: completedMissionIDs, profileID: evidenceProfileID, contentVersion: 1
+        ))
     }
 
     private func animateDelivery() {
@@ -332,10 +434,12 @@ struct AngleCannonView: View {
             for step in 1...steps {
                 do { try await Task.sleep(for: .milliseconds(reduced ? 300 : 30)) }
                 catch { return }
-                guard !Task.isCancelled, currentEngine.attemptID == attempt, currentEngine.phase == .flying else { return }
+                guard !Task.isCancelled, isActiveProfile,
+                      currentEngine.attemptID == attempt, currentEngine.phase == .flying else { return }
                 flightProgress = Double(step) / Double(steps)
             }
             currentEngine.finishFlight(expectedAttemptID: attempt)
+            recordCompletedAttempt()
             flightTask = nil
         }
     }
@@ -343,6 +447,8 @@ struct AngleCannonView: View {
     private func cancelFlight() {
         flightTask?.cancel(); flightTask = nil
         engine.cancelFlight()
+        pendingAttempt = nil
+        pendingAttemptID = nil
         if engine.phase != .result { flightProgress = 0 }
     }
 
@@ -358,6 +464,7 @@ struct AngleCannonView: View {
     }
 
     private func narrate() {
+        guard isActiveProfile else { return }
         switch engine.phase {
         case .worldSelection: speak("Choose Garden deliveries, Builder bay, or Moon parcels. Every world is open. Touch a picture to play.")
         case .worldComplete: speak("You built it! Three discoveries made a wonderful creation. Play again or choose another world.")

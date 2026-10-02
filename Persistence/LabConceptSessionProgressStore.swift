@@ -1,5 +1,15 @@
 import Foundation
 
+struct LabRememberSavedProgress: Codable, Equatable {
+    let deckID: LabRememberStageDeckID
+    let sessionID: String
+    let startedAt: Date
+    var currentIndex: Int
+    var reviewedCardIDs: [String]
+    var correctCardIDs: Set<String>
+    var supportedCardIDs: Set<String>
+}
+
 final class LabConceptSessionProgressStore {
     static let defaultStorageKey = "labConceptSessionProgress.v1"
     private static let defaultActiveProfileId = "default-profile"
@@ -89,6 +99,23 @@ final class LabConceptSessionProgressStore {
         var all = loadAll()
         all[activeProfileIdProvider()] = [:]
         saveAll(all)
+        var remember = loadRememberProfiles(); remember.removeValue(forKey: activeProfileIdProvider()); saveRememberProfiles(remember)
+    }
+
+    func resetAllProfiles() { storage.removeObject(forKey: storageKey); storage.removeObject(forKey: storageKey + ".remember") }
+
+    func rememberProgress(for deckID: LabRememberStageDeckID) -> LabRememberSavedProgress? {
+        loadRememberProfiles()[activeProfileIdProvider()]?[deckID.rawValue]
+    }
+    func saveRememberProgress(_ progress: LabRememberSavedProgress) {
+        var all = loadRememberProfiles(); all[activeProfileIdProvider(), default: [:]][progress.deckID.rawValue] = progress; saveRememberProfiles(all)
+    }
+    private func loadRememberProfiles() -> [String: [String: LabRememberSavedProgress]] {
+        guard let data = storage.data(forKey: storageKey + ".remember") else { return [:] }
+        return (try? decoder.decode([String: [String: LabRememberSavedProgress]].self, from: data)) ?? [:]
+    }
+    private func saveRememberProfiles(_ values: [String: [String: LabRememberSavedProgress]]) {
+        storage.set(try? encoder.encode(values), forKey: storageKey + ".remember")
     }
 
     private func update(

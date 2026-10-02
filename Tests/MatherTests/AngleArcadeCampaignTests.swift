@@ -174,6 +174,30 @@ struct AngleArcadeEngineTests {
         #expect(engine.progress.completion(for: "moon-compare")?.assisted == true)
     }
 
+    @Test func oneMissThenSuccessIsAssistedBeforeAutomaticHelp() {
+        let engine = engine()
+        engine.selectLevel("builder-corner")
+        engine.submit()
+        #expect(engine.phase == .result)
+        #expect(!engine.success)
+        #expect(engine.misses == 1)
+        #expect(engine.progress.helpCounts["builder-corner"] == nil)
+        engine.retry()
+        engine.setAngle(45)
+        engine.submit()
+        #expect(engine.success)
+        #expect(engine.sessionCompletionCount == 1)
+        #expect(engine.progress.completion(for: "builder-corner")?.assisted == true)
+        #expect(engine.progress.completion(for: "builder-corner")?.independent == false)
+
+        // A fresh later mission can still add independent evidence to the passport.
+        engine.selectLevel("builder-corner")
+        engine.setAngle(45)
+        engine.submit()
+        #expect(engine.progress.completion(for: "builder-corner")?.independent == true)
+        #expect(engine.progress.completion(for: "builder-corner")?.assisted == true)
+    }
+
     @Test func worldCompletionAndSessionRestartHaveExplicitBoundaries() {
         let engine = engine()
         engine.selectLevel("builder-transfer")

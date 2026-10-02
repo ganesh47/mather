@@ -786,6 +786,14 @@ final class StoredGameplayProgressRecord {
     var lastOutcomeRawValue: String?
     var lastStageId: String?
     var lastResultMetadata: String?
+    // Additive migration: historical aggregate counters are never recall evidence.
+    var evidenceSchemaVersion: Int = 0
+    var consecutiveIndependentCorrect: Int = 0
+    var independentSessionIdsData: Data?
+    var itemAttemptsData: Data?
+    var conceptId: String?
+    var legacyAggregateCountsData: Data?
+    var evidenceContentVersion: Int = 0
 
     init(
         uniqueKey: String,
@@ -848,6 +856,9 @@ final class StoredGameplayThreadSession {
     var totalScore: Int
     var stars: Int
     var stageSummaryData: Data?
+    var activityTitle: String?
+    var itemAttemptsData: Data?
+    var evidenceSchemaVersion: Int = 0
 
     init(
         id: String = UUID().uuidString,

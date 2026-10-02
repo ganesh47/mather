@@ -1334,3 +1334,57 @@ struct VerticalSliceEngineTests {
     }
 
 }
+
+
+extension VerticalSliceEngineTests {
+    @Test func acceptedAlternativeEquationIsPreservedForTransfer() async {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.makeBreakLoopV2Enabled = false
+        flags.vs1BondMatchEnabled = true
+        flags.vs1GravitySplitEnabled = false
+        flags.audioEnabled = false
+        let engine = VerticalSliceEngine(featureFlags: flags, telemetryWriter: TelemetryWriter(), speechService: SpeechService(), celebrationDuration: 0, saveSummary: { _ in })
+        engine.updateConfig(problemCount: 1, minTarget: 6, maxTarget: 6)
+        engine.startSession()
+        engine.adjustConcrete(by: 6)
+        engine.submitCurrentStage()
+        await waitFor("alternative equation pictorial") { engine.currentStage == .pictorial }
+        completePictorialBondBlast(engine)
+        await waitFor("alternative equation abstract") { engine.currentStage == .abstract }
+        engine.equationLeftInput = "0"
+        engine.equationRightInput = "6"
+        engine.submitCurrentStage()
+        await waitFor("alternative equation transfer") { engine.currentStage == .transfer }
+        #expect(engine.currentProblem?.decompositionA == 0)
+        #expect(engine.currentProblem?.decompositionB == 6)
+        #expect(engine.currentProblemState.attempts == 0)
+        engine.transferLeftCount = 0
+        engine.transferRightCount = 6
+        engine.submitCurrentStage()
+        #expect(engine.currentProblemState.isCorrect == true)
+        await waitFor("alternative equation finale") { engine.currentStage == .bondMatch }
+        completePictorialBondBlast(engine)
+        await waitFor("alternative equation completion") { engine.route == .sessionSummary }
+        #expect(engine.currentSession.problems.first?.transferCorrect == true)
+        #expect(engine.currentSession.problems.first?.firstTryCorrect == true)
+        #expect(engine.currentSession.problems.first?.retryCount == 0)
+    }
+
+    @Test func directBondCompletionDoesNotClaimTransferAndRetainsMistakes() async {
+        let flags = FeatureFlagService(defaults: UserDefaults(suiteName: #function)!)
+        flags.testModeEnabled = true
+        flags.audioEnabled = false
+        let engine = VerticalSliceEngine(featureFlags: flags, telemetryWriter: TelemetryWriter(), speechService: SpeechService(), celebrationDuration: 0, saveSummary: { _ in })
+        engine.startBondBlastFinale(target: 10)
+        engine.mismatchPair()
+        let ids = engine.bondMatchState?.pairs.map(\.id) ?? []
+        for id in ids { engine.matchPair(id: id) }
+        await waitFor("bond evidence completion") { engine.route == .sessionSummary }
+        let result = engine.currentSession.problems.first
+        #expect(result?.transferCorrect == false)
+        #expect(result?.firstTryCorrect == false)
+        #expect(result?.retryCount == 1)
+        #expect(result?.attemptCount == ids.count + 1)
+    }
+}

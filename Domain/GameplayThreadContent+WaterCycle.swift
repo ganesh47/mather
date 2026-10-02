@@ -27,16 +27,16 @@ enum GameplayThreadCatalog {
         GameplayEntity(
             id: "water-cycle-evaporation",
             name: "Evaporation",
-            summary: "Warm water changes into vapor and rises into the air.",
+            summary: "Liquid water changes into invisible water vapor and joins the air.",
             visualKey: "☀️💧⬆️",
             visualAssetName: "MemoryWaterCycleEvaporation",
             properties: properties(
                 for: "water-cycle-evaporation",
                 order: "1 of 4",
-                simpleExplanation: "Water goes up as vapor.",
+                simpleExplanation: "Liquid water changes into an invisible gas.",
                 cause: "The sun warms ponds, lakes, rivers, puddles, and wet ground.",
-                whatHappens: "Liquid water changes into tiny vapor particles that float upward.",
-                visualClue: "Look for mist or rising drops above warm water."
+                whatHappens: "Liquid water changes into water vapor, an invisible gas in the air.",
+                visualClue: "The upward arrows represent invisible water vapor. Mist and drops are liquid water."
             )
         ),
         GameplayEntity(

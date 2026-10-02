@@ -22,6 +22,11 @@ struct MemoryGalleryContentPack: Codable, Equatable {
     enum ValidationError: Error { case invalidPack(String) }
 
     func validate() throws {
+        try validate(requiredKinds: Set(MemoryGalleryTVCategory.allCases.map(\.deckKind)))
+    }
+
+    /// The iOS catalog is a separate feed; the public TV contract remains four decks.
+    func validate(requiredKinds: Set<MemoryDeckKind>) throws {
         func require(_ condition: Bool, _ reason: String) throws {
             guard condition else { throw ValidationError.invalidPack(reason) }
         }
@@ -33,8 +38,7 @@ struct MemoryGalleryContentPack: Codable, Equatable {
                 && id.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_").contains($0) }
         }
         try require(schemaVersion == 1 && contentVersion > 0, "Unsupported schema or version")
-        let requiredKinds = Set(MemoryGalleryTVCategory.allCases.map(\.deckKind))
-        try require(decks.count == requiredKinds.count && Set(decks.map(\.kind)) == requiredKinds, "Expected all four gallery decks")
+        try require(decks.count == requiredKinds.count && Set(decks.map(\.kind)) == requiredKinds, "Expected every supported deck exactly once")
         try require(assets.count <= 200, "Too many assets")
         try require(Set(assets.map(\.id)).count == assets.count, "Duplicate asset IDs")
         try require(Set(assets.map(\.file)).count == assets.count, "Duplicate asset filenames")

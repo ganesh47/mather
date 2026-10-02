@@ -232,8 +232,8 @@ final class LabModelsTests: XCTestCase {
             "See the idea",
             "Recall cards",
             "Practice calmly",
-            "Fast round",
-            "Celebrate progress",
+            "Use it a new way",
+            "Celebrate trying",
         ])
     }
 
@@ -245,8 +245,8 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(plan.laneID, .numbers)
         XCTAssertEqual(plan.title, "Number Bonds to 10")
         XCTAssertEqual(plan.stageOrder, [.learn, .remember, .play, .blast, .score])
-        XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Blast → Score")
-        XCTAssertEqual(plan.startRoute, .sessionConfig)
+        XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Challenge → Celebrate")
+        XCTAssertEqual(plan.startRoute, .learningQuest(.numbers))
         XCTAssertEqual(plan.startAffordanceLabel, "Start")
         XCTAssertEqual(plan.continueAffordanceLabel, "Continue")
     }
@@ -285,12 +285,12 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(path.title, "Numbers Path")
         XCTAssertTrue(path.subtitle.contains("Number Bonds to 10"))
         XCTAssertEqual(path.stages, plan.stageOrder)
-        XCTAssertEqual(plan.subtitle, "Build pairs that make ten, remember friendly facts, then celebrate with Bond Blast.")
-        XCTAssertEqual(plan.estimatedLength, "8–10 min")
+        XCTAssertEqual(plan.subtitle, "Move ten seeds, remember your own parts, fill a garden, then try a new picnic.")
+        XCTAssertEqual(plan.estimatedLength, "3–5 min")
         XCTAssertEqual(plan.masteryStateLabel, "Recommended first")
         XCTAssertEqual(plan.recommendedNextActivity, "Make & Break warm-up")
         XCTAssertTrue(plan.stages.allSatisfy { !$0.accessibilityLabel.isEmpty })
-        XCTAssertEqual(plan.stages.map(\.actionLabel), ["Start", "Continue", "Continue", "Continue", "Preview"])
+        XCTAssertEqual(plan.stages.map(\.actionLabel), ["Start", "Continue", "Continue", "Continue", "Continue"])
     }
 
     func testNumbersLabPlanDoesNotChangeDirectGamesRegistry() {
@@ -369,7 +369,7 @@ final class LabModelsTests: XCTestCase {
     }
 
 
-    func testRememberStageDeckReusesNumberBondMixMatchAndKeepsCalmPolicy() throws {
+    func testRememberStageDeckUsesUniqueMissingPartsAndKeepsCalmPolicy() throws {
         let deck = LabRememberStageDeck.numbersNumberBondsTo10
 
         XCTAssertEqual(deck.id, .numbersNumberBondsTo10)
@@ -378,9 +378,11 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(deck.laneID, .numbers)
         XCTAssertFalse(deck.hasPunitiveCountdown)
         XCTAssertEqual(deck.timerPolicy, .calmNoCountdown)
-        XCTAssertGreaterThanOrEqual(deck.cards.count, 10)
-        XCTAssertTrue(deck.cards.contains { $0.id == "numbers-number-bond-6 + 4" || ($0.prompt == "6 + 4" && $0.answer == "10") })
-        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
+        XCTAssertEqual(deck.cards.count, 11)
+        XCTAssertEqual(Set(deck.cards.map(\.prompt)).count, 11)
+        XCTAssertEqual(Set(deck.cards.map(\.answer)), Set((0...10).map(String.init)))
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "6 + ? = 10" && $0.answer == "4" })
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + ? = 10" && $0.answer == "3" })
         XCTAssertTrue(deck.cards.allSatisfy { $0.concept == "number-bond" && $0.laneID == .numbers })
     }
 
@@ -426,8 +428,8 @@ final class LabModelsTests: XCTestCase {
         let plan = LabConceptSessionPlan.numbersNumberBondsTo10
         let remember = try XCTUnwrap(plan.stages.first { $0.stage == .remember })
 
-        XCTAssertEqual(remember.route, .labRememberStage(.numbersNumberBondsTo10))
-        XCTAssertEqual(LabRememberStageDeck.deck(for: .numbersNumberBondsTo10).route, remember.route)
+        XCTAssertEqual(remember.route, .learningQuest(.numbers))
+        XCTAssertEqual(LabRememberStageDeck.deck(for: .numbersNumberBondsTo10).route, .labRememberStage(.numbersNumberBondsTo10))
         XCTAssertFalse(remember.timerPolicy.showsCountdown)
         XCTAssertFalse(remember.timerPolicy.isPunitive)
     }
@@ -443,7 +445,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(progress.completedStages, [])
         XCTAssertEqual(progress.lastActivityAt, startedAt)
         XCTAssertEqual(progress.resumeCopy, "Continue: Learn")
-        XCTAssertEqual(progress.currentStagePlan(in: plan)?.route, .sessionConfig)
+        XCTAssertEqual(progress.currentStagePlan(in: plan)?.route, .learningQuest(.numbers))
     }
 
     func testLabConceptProgressNextStageCalculationAndCompletedOrdering() {
@@ -460,7 +462,7 @@ final class LabModelsTests: XCTestCase {
         XCTAssertEqual(progress.completedStages, [.learn, .remember, .play])
         XCTAssertEqual(progress.nextIncompleteStage(in: plan), .blast)
         XCTAssertEqual(progress.currentStage, .blast)
-        XCTAssertEqual(progress.resumeCopy, "Continue: Blast next")
+        XCTAssertEqual(progress.resumeCopy, "Continue: Challenge next")
     }
 
     func testLabConceptProgressStorePersistsGuidedLaunchWithoutFakingMastery() throws {
@@ -534,24 +536,24 @@ final class LabModelsTests: XCTestCase {
 
         let blastStage = try XCTUnwrap(plan.stages.first { $0.stage == .blast })
 
-        XCTAssertEqual(rememberStage.route, .labRememberStage(.numbersNumberBondsTo10))
-        XCTAssertEqual(blastStage.route, .session)
+        XCTAssertEqual(rememberStage.route, .learningQuest(.numbers))
+        XCTAssertEqual(blastStage.route, .learningQuest(.numbers))
         XCTAssertEqual(rememberStage.timerPolicy, .calmNoCountdown)
         XCTAssertFalse(rememberStage.timerPolicy.showsCountdown)
         XCTAssertFalse(rememberStage.timerPolicy.isPunitive)
         XCTAssertEqual(deck.route, .labRememberStage(.numbersNumberBondsTo10))
-        XCTAssertTrue(deck.cards.contains { $0.prompt == "6 + 4" && $0.answer == "10" })
-        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + 3" && $0.answer == "10" })
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "6 + ? = 10" && $0.answer == "4" })
+        XCTAssertTrue(deck.cards.contains { $0.prompt == "7 + ? = 10" && $0.answer == "3" })
     }
 
 
 
-    func testLabBlastStageLaunchesBondBlastFinaleRoute() throws {
+    func testLabChallengeStageKeepsNumbersTransferInItsQuest() throws {
         let plan = LabConceptSessionPlan.numbersNumberBondsTo10
         let blast = try XCTUnwrap(plan.stages.first { $0.stage == .blast })
 
-        XCTAssertEqual(blast.title, "Bond Blast")
-        XCTAssertEqual(blast.route, .session)
+        XCTAssertEqual(blast.title, "Picnic challenge")
+        XCTAssertEqual(blast.route, .learningQuest(.numbers))
         XCTAssertEqual(blast.timerPolicy, .readinessGatedBlast)
         XCTAssertFalse(blast.timerPolicy.showsCountdown)
         XCTAssertFalse(blast.timerPolicy.isPunitive)
@@ -691,8 +693,8 @@ extension LabModelsTests {
         var progress = numbers.emptyProgress
 
         XCTAssertEqual(progress.progressLabel, "0 / 4 modes")
-        XCTAssertEqual(progress.masteryPercentLabel, "0% ready")
-        XCTAssertEqual(progress.progressSummaryLabel, "🚀 0/4 missions unlocked")
+        XCTAssertEqual(progress.masteryPercentLabel, "0% explored")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 0/4 missions explored")
         XCTAssertEqual(progress.nextRecommendedMode, .learn)
         XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ First Learn mission waiting")
 
@@ -700,8 +702,8 @@ extension LabModelsTests {
         progress.markCompleted(.timed)
 
         XCTAssertEqual(progress.progressLabel, "2 / 4 modes")
-        XCTAssertEqual(progress.masteryPercentLabel, "50% ready")
-        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions unlocked")
+        XCTAssertEqual(progress.masteryPercentLabel, "50% explored")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions explored")
         XCTAssertEqual(progress.nextRecommendedMode, .challenge)
         XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ Try Challenge next")
     }
@@ -728,7 +730,7 @@ extension LabModelsTests {
 
         let progress = CapabilityLaneProgress(masteryState: masteryState)
 
-        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions unlocked")
+        XCTAssertEqual(progress.progressSummaryLabel, "🚀 2/4 missions explored")
         XCTAssertEqual(progress.nextRecommendedModeLabel, "⭐ Try Challenge next")
         XCTAssertEqual(progress.reviewedCardIDs, ["numbers-number-bond-five-and-five"])
     }
@@ -815,12 +817,12 @@ extension LabModelsTests {
         )
     }
 
-    func testSensorLaunchPolicyKeepsFallbackGamesPlayableButDisablesSensorOnlyRoutes() {
+    func testSensorLaunchPolicyKeepsTouchFallbackGamesPlayableWithoutSensors() {
         XCTAssertTrue(LabActivityID.sumSprint.canDirectLaunch(with: .unavailable))
         XCTAssertTrue(LabActivityID.roomQuest.canDirectLaunch(with: .unavailable))
         XCTAssertTrue(LabActivityID.angleCannon.canDirectLaunch(with: .unavailable))
-        XCTAssertFalse(LabActivityID.gravityArtist.canDirectLaunch(with: .unavailable))
-        XCTAssertFalse(LabActivityID.compassAngles.canDirectLaunch(with: .unavailable))
+        XCTAssertTrue(LabActivityID.gravityArtist.canDirectLaunch(with: .unavailable))
+        XCTAssertTrue(LabActivityID.compassAngles.canDirectLaunch(with: .unavailable))
 
         let roomQuestCopy = LabActivityID.roomQuest.capabilitySummary(with: .unavailable)
         XCTAssertTrue(roomQuestCopy.contains("Use same-place setup"))
@@ -828,7 +830,13 @@ extension LabModelsTests {
     }
 
     func testSensorAffordancesExposePermissionAwareChildSafeCopy() {
-        let unavailableTilt = LabActivityID.angleCannon.sensorAffordances(with: .unavailable)
+        let angleAffordances = LabActivityID.angleCannon.sensorAffordances(with: .unavailable)
+        XCTAssertEqual(LabActivityID.angleCannon.sensorNeeds, [.noSpecialSensor])
+        XCTAssertEqual(angleAffordances.map(\.displayLabel), ["Touch ready"])
+        XCTAssertTrue(angleAffordances.allSatisfy(\.permitsLaunch))
+
+        let unavailableTilt = LabActivityID.gravityArtist.sensorAffordances(with: .unavailable)
+        XCTAssertEqual(unavailableTilt.first?.accessibilityHint, "Play with touch instead")
         XCTAssertTrue(unavailableTilt.allSatisfy(\.permitsLaunch))
 
         let stepFallback = LabSensorNeed.stepCounting.copy(with: .unavailable)
@@ -851,9 +859,9 @@ extension LabModelsTests {
         for plan in geometryPath.sessionPlans {
             XCTAssertEqual(plan.laneID, .geometry)
             XCTAssertEqual(plan.stageOrder, [.learn, .remember, .play, .blast, .score])
-            XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Blast → Score")
+            XCTAssertEqual(plan.pathLabel, "Learn → Remember → Play → Challenge → Celebrate")
             XCTAssertEqual(LabConceptSessionPlan.plan(for: plan.id), plan)
-            XCTAssertEqual(plan.stages.first { $0.stage == .score }?.route, nil)
+            XCTAssertEqual(plan.stages.first { $0.stage == .score }?.route, .learningQuest(LearningQuestID.guided(plan.id)!))
             XCTAssertTrue(plan.stages.allSatisfy { !$0.accessibilityLabel.isEmpty })
         }
     }
@@ -863,28 +871,14 @@ extension LabModelsTests {
         let symmetry = LabConceptSessionPlan.geometrySymmetryFolds
         let shape = LabConceptSessionPlan.geometryShapeNames
 
-        XCTAssertEqual(angle.stages.map(\.route), [
-            .twoFingerProtractor,
-            .labRememberStage(.geometryAnglesBasic),
-            .twoFingerProtractor,
-            .angleCannon,
-            nil,
-        ])
-        XCTAssertEqual(symmetry.stages.map(\.route), [
-            .symmetryFold,
-            .labRememberStage(.geometrySymmetryFolds),
-            .symmetryFold,
-            .symmetryFold,
-            nil,
-        ])
-        XCTAssertEqual(shape.stages.map(\.route), [
-            .shapeGeometry,
-            .labRememberStage(.geometryShapeNames),
-            .shapeGeometry,
-            .shapeGeometry,
-            nil,
-        ])
+        XCTAssertEqual(angle.stages.map(\.route), Array(repeating: .learningQuest(.angles), count: 5))
+        XCTAssertEqual(symmetry.stages.map(\.route), Array(repeating: .learningQuest(.symmetry), count: 5))
+        XCTAssertEqual(shape.stages.map(\.route), Array(repeating: .learningQuest(.shapes), count: 5))
 
+        let geometry = try XCTUnwrap(CapabilityLane.defaultExplorerLanes.first { $0.id == .geometry })
+        let angleArcade = try XCTUnwrap(geometry.activities.first { $0.id == .angleCannon })
+        XCTAssertEqual(angleArcade.title, "Angle Arcade")
+        XCTAssertEqual(angleArcade.tagline, "Launch, turn and build — touch or tilt")
         XCTAssertEqual(LabActivityID.angleCannon.appRoute, .angleCannon)
         XCTAssertEqual(LabActivityID.twoFingerProtractor.appRoute, .twoFingerProtractor)
         XCTAssertEqual(LabActivityID.symmetryFold.appRoute, .symmetryFold)
@@ -906,7 +900,7 @@ extension LabModelsTests {
             XCTAssertFalse(deck.hasPunitiveCountdown)
             XCTAssertGreaterThanOrEqual(deck.cards.count, 4)
             XCTAssertEqual(LabRememberStageDeck.deck(for: deck.id), deck)
-            XCTAssertEqual(LabConceptSessionPlan.plan(for: deck.planID)?.stages.first { $0.stage == .remember }?.route, deck.route)
+            XCTAssertEqual(LabConceptSessionPlan.plan(for: deck.planID)?.stages.first { $0.stage == .remember }?.route, .learningQuest(LearningQuestID.guided(deck.planID)!))
             XCTAssertTrue(deck.cards.allSatisfy { $0.laneID == .geometry })
             XCTAssertTrue(deck.cards.allSatisfy { !$0.accessibilityLabel.isEmpty })
         }

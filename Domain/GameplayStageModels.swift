@@ -199,7 +199,7 @@ struct GameplayStageResult: Identifiable, Codable, Equatable, Hashable {
     }
 
     var scorePoints: Int {
-        max(0, correctCount * 10 - mistakeCount * 4 - hintsUsed * 2)
+        correctCount * 10
     }
 
     var averageSecondsPerAttempt: TimeInterval {
@@ -222,7 +222,7 @@ struct GameplayScoreSummary: Codable, Equatable, Hashable {
     }
 
     var scorePoints: Int {
-        max(0, correctCount * 10 - mistakeCount * 4 - hintsUsed * 2)
+        correctCount * 10
     }
 
     var averageSecondsPerAttempt: TimeInterval {
@@ -253,13 +253,12 @@ struct GameplayScoreSummary: Codable, Equatable, Hashable {
         else if accuracy >= 0.7 { baseStars = 2 }
         else if accuracy >= 0.45 { baseStars = 1 }
         else { baseStars = 0 }
-        let hintPenalty = hints >= 4 ? 1 : 0
         return GameplayScoreSummary(
             correctCount: correct,
             mistakeCount: mistakes,
             hintsUsed: hints,
             durationSeconds: duration,
-            stars: max(0, baseStars - hintPenalty)
+            stars: correct > 0 ? max(1, baseStars) : 0
         )
     }
 }
