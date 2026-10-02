@@ -25,7 +25,7 @@ struct AngleCannonView: View {
                 } else if engine.phase == .worldComplete {
                     ScrollView { celebration.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
-                } else if geometry.size.width > geometry.size.height && geometry.size.width >= 750 {
+                } else if UIDevice.current.userInterfaceIdiom == .pad && geometry.size.width > geometry.size.height && geometry.size.width >= 750 {
                     HStack(alignment: .top, spacing: 22) {
                         VStack(spacing: 14) {
                             missionHeader

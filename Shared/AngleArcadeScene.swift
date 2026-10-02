@@ -28,17 +28,20 @@ struct AngleArcadeScene: View {
                     .padding(18)
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if engine.phase == .result && engine.success {
-                Text(degreeDiscovery)
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
-                    .foregroundStyle(ink)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(.white.opacity(0.93), in: Capsule())
-                    .padding(18)
-                    .accessibilityLabel(degreeDiscovery.replacingOccurrences(of: "°", with: " degrees"))
-                    .accessibilityIdentifier("angle-arcade-degree-reveal")
+        .overlay {
+            GeometryReader { geometry in
+                if geometry.size.width >= 600 && engine.phase == .result && engine.success {
+                    Text(degreeDiscovery)
+                        .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .foregroundStyle(ink)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(.white.opacity(0.93), in: Capsule())
+                        .padding(18)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                        .accessibilityLabel(degreeDiscovery.replacingOccurrences(of: "°", with: " degrees"))
+                        .accessibilityIdentifier("angle-arcade-degree-reveal")
+                }
             }
         }
         .accessibilityElement(children: .contain)
@@ -162,8 +165,10 @@ struct AngleArcadeScene: View {
         }
         context.fill(Circle().path(in: CGRect(x: center.x - 11, y: center.y - 11, width: 22, height: 22)), with: .color(ink))
         let targetTip = CGPoint(x: center.x + radius * cos(targetAngle * .pi / 180), y: center.y - radius * sin(targetAngle * .pi / 180))
-        let label = context.resolve(Text("Match the dotted shape").font(.system(size: max(18, min(26, size.height * 0.06)), weight: .bold, design: .rounded)).foregroundStyle(blue))
-        context.draw(label, at: CGPoint(x: center.x, y: max(34, center.y - radius * 1.50 - 30)))
+        if engine.phase != .result || !engine.success {
+            let label = context.resolve(Text("Match the dotted shape").font(.system(size: max(18, min(26, size.height * 0.06)), weight: .bold, design: .rounded)).foregroundStyle(blue))
+            context.draw(label, at: CGPoint(x: center.x, y: max(34, center.y - radius * 1.50 - 30)))
+        }
         if engine.level.id == "builder-quarter-turn" {
             drawSymbol("door.left.hand.open", at: targetTip, size: 36, context: context, color: blue)
         } else {

@@ -13,16 +13,16 @@ set -e
 echo "--- ci_post_clone: installing XcodeGen ---"
 brew install xcodegen
 
-# Stamp MARKETING_VERSION from the git tag so Apple accepts the archive.
-# project.yml ships with "0.1.0-dev" as a dev placeholder; release builds
-# must use a clean semver string like "0.1.2" (no -dev suffix).
-if [ -n "${CI_TAG:-}" ]; then
-  VERSION="${CI_TAG#v}"   # strip leading "v": v0.1.2 → 0.1.2
-  echo "--- ci_post_clone: stamping MARKETING_VERSION=${VERSION} from tag ${CI_TAG} ---"
-  sed -i '' "s/MARKETING_VERSION: .*/MARKETING_VERSION: ${VERSION}/" \
-    "$CI_PRIMARY_REPOSITORY_PATH/project.yml"
+# Even when Apple indexes only main, stamp a release version only when an
+# unambiguous remote version tag points at this exact checkout. Ordinary branch
+# builds without a matching release tag retain the development placeholder.
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+VERSION=$(python3 ci_scripts/resolve_cloud_release_tag.py)
+if [ -n "$VERSION" ]; then
+  echo "--- ci_post_clone: stamping MARKETING_VERSION=${VERSION} from verified release commit ---"
+  sed -i '' "s/MARKETING_VERSION: .*/MARKETING_VERSION: ${VERSION}/" project.yml
 else
-  echo "--- ci_post_clone: no tag — keeping MARKETING_VERSION as-is (dev build) ---"
+  echo "--- ci_post_clone: no matching release tag — keeping development version ---"
 fi
 
 if [ -n "${CI_BUILD_NUMBER:-}" ]; then
