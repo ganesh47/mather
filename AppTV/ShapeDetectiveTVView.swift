@@ -23,6 +23,9 @@ struct ShapeDetectiveTVView: View {
            let defaults = UserDefaults(suiteName: "mather.shapeDetective.tvUITests") {
             if ProcessInfo.processInfo.arguments.contains("-shape-detective-reset-progress"), !Self.didResetUITestProgress {
                 defaults.removePersistentDomain(forName: "mather.shapeDetective.tvUITests")
+                if ProcessInfo.processInfo.arguments.contains("-shape-detective-corrupt-checkpoint") {
+                    defaults.set(Data("unreadable saved investigation".utf8), forKey: "mather.shape-detective.v1.\(profileID)")
+                }
                 Self.didResetUITestProgress = true
             }
             store = .init(defaults: defaults, profileID: profileID)
@@ -41,7 +44,8 @@ struct ShapeDetectiveTVView: View {
             MatherTVBackdrop()
             VStack(alignment: .leading, spacing: 26) {
                 header
-                if session.isComplete { finale }
+                if session.storageIssue != nil { storageNotice }
+                else if session.isComplete { finale }
                 else if let item = session.current {
                     clueCard(item)
                     shapeChoices(item)
@@ -72,18 +76,20 @@ struct ShapeDetectiveTVView: View {
                 Text("Shape Detective")
                     .font(.system(size: 60, weight: .heavy, design: .rounded))
                     .accessibilityIdentifier("tv-shape-title")
-                Text(session.isComplete ? "Investigation complete" : "Check the sides and corners. A turn does not change a shape.")
+                Text(session.storageIssue != nil ? "Saved investigation paused" : session.isComplete ? "Investigation complete" : "Check the sides and corners. A turn does not change a shape.")
                     .font(.system(size: 26, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.82))
                     .accessibilityIdentifier("tv-shape-phase")
-                    .accessibilityValue(session.isComplete ? "Complete" : session.checkpoint.solved ? "Solved" : "Investigating")
+                    .accessibilityValue(session.storageIssue != nil ? "Needs parent" : session.isComplete ? "Complete" : session.checkpoint.solved ? "Solved" : "Investigating")
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 10) {
-                Label("\(session.checkpoint.completedIDs.count) of 7 solved", systemImage: "checkmark.seal.fill")
-                    .font(.system(size: 25, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color(red: 0.82, green: 0.94, blue: 0.73))
-                    .accessibilityIdentifier("tv-shape-progress")
+            if session.storageIssue == nil {
+                VStack(alignment: .trailing, spacing: 10) {
+                    Label("\(session.checkpoint.completedIDs.count) of 7 solved", systemImage: "checkmark.seal.fill")
+                        .font(.system(size: 25, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color(red: 0.82, green: 0.94, blue: 0.73))
+                        .accessibilityIdentifier("tv-shape-progress")
+                }
             }
         }
         .foregroundStyle(.white)
@@ -182,6 +188,25 @@ struct ShapeDetectiveTVView: View {
         }
     }
 
+    private var storageNotice: some View {
+        VStack(alignment: .leading, spacing: 26) {
+            Label("A parent can help", systemImage: "lock.shield")
+                .font(.system(size: 40, weight: .bold, design: .rounded))
+            Text("Your saved investigation is kept safe. A parent can review and reset it when ready.")
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("tv-shape-storage-notice")
+            actionButton("All games", id: "paused-exit", symbol: "chevron.backward") {
+                if let onExit { onExit() } else { dismiss() }
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30))
+        .padding(.top, 35)
+    }
+
     private var finale: some View {
         VStack(alignment: .leading, spacing: 26) {
             Label("Seven mysteries checked", systemImage: "checkmark.seal.fill")
@@ -230,7 +255,7 @@ struct ShapeDetectiveTVView: View {
         }
         .buttonStyle(ShapeDetectiveButtonStyle(reduceMotion: motionReduced))
         .focused($focusedAction, equals: id)
-        .prefersDefaultFocus(id == (session.isComplete ? "done" : "next"), in: focusScope)
+        .prefersDefaultFocus(id == (session.storageIssue != nil ? "paused-exit" : session.isComplete ? "done" : "next"), in: focusScope)
         .accessibilityIdentifier("tv-shape-\(id)")
     }
 
@@ -250,6 +275,7 @@ struct ShapeDetectiveTVView: View {
         switch action {
         case "hint": return "Hint. Hear a clue about the sides and corners."
         case "next": return session.current?.isProbe == true ? "Finish investigation." : "Next clue."
+        case "paused-exit": return "All games. Return while your saved investigation stays safe."
         case "done": return "All done. Return to all games."
         case "room": return "Optional room shape. Look around and talk about an object together."
         case "replay": return "Investigate again. Begin a new investigation."
@@ -276,7 +302,7 @@ struct ShapeDetectiveTVView: View {
         focusTask = Task { @MainActor in
             do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
             guard !Task.isCancelled, scenePhase == .active else { return }
-            focusedAction = session.isComplete ? "done" : session.checkpoint.solved ? "next" : session.current?.choices.first?.id
+            focusedAction = session.storageIssue != nil ? "paused-exit" : session.isComplete ? "done" : session.checkpoint.solved ? "next" : session.current?.choices.first?.id
             resetFocus(in: focusScope)
         }
     }

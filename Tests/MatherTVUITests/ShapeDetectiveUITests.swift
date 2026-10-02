@@ -86,10 +86,29 @@ final class ShapeDetectiveUITests: XCTestCase {
         waitFocus(app.buttons["tv-shape-next"])
     }
 
-    private func launch(reset: Bool, reducedMotion: Bool = false) -> XCUIApplication {
+    func testUnreadableCheckpointPausesAndRemainsPreservedOnReentry() {
+        let app = launch(reset: true, corruptCheckpoint: true)
+        XCTAssertEqual(app.staticTexts["tv-shape-phase"].value as? String, "Needs parent")
+        XCTAssertTrue(app.staticTexts["tv-shape-storage-notice"].label.contains("kept safe"))
+        XCTAssertFalse(app.buttons["tv-shape-choice-A"].exists)
+        XCTAssertFalse(app.buttons["tv-shape-hint"].exists)
+        XCTAssertFalse(app.staticTexts["tv-shape-progress"].exists)
+        XCUIRemote.shared.press(.playPause)
+        waitFocus(app.buttons["tv-shape-paused-exit"])
+        screenshot("Unreadable saved investigation pauses without replacing progress")
+        XCUIRemote.shared.press(.menu)
+        waitFocus(app.buttons["tv-mode-shapes"])
+        XCUIRemote.shared.press(.select)
+        waitFocus(app.buttons["tv-shape-paused-exit"])
+        XCTAssertTrue(app.staticTexts["tv-shape-storage-notice"].exists)
+        XCTAssertFalse(app.buttons["tv-shape-choice-A"].exists)
+    }
+
+    private func launch(reset: Bool, reducedMotion: Bool = false, corruptCheckpoint: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-shape-detective-ui-test"] + (reset ? ["-shape-detective-reset-progress"] : []) +
-            (reducedMotion ? ["-shape-detective-reduce-motion"] : [])
+            (reducedMotion ? ["-shape-detective-reduce-motion"] : []) +
+            (corruptCheckpoint ? ["-shape-detective-corrupt-checkpoint"] : [])
         app.launch()
         waitFocus(app.buttons["tv-mode-memory"])
         XCUIRemote.shared.press(.down)
@@ -97,7 +116,7 @@ final class ShapeDetectiveUITests: XCTestCase {
         XCUIRemote.shared.press(.right)
         waitFocus(app.buttons["tv-mode-shapes"])
         XCUIRemote.shared.press(.select)
-        waitFocus(app.buttons["tv-shape-choice-A"])
+        waitFocus(app.buttons[corruptCheckpoint ? "tv-shape-paused-exit" : "tv-shape-choice-A"])
         return app
     }
 
