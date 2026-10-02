@@ -1,4 +1,6 @@
 import unittest
+import argparse
+import copy
 import plistlib
 import tempfile
 import urllib.error
@@ -17,15 +19,243 @@ from ci_scripts.xcode_cloud_testflight import (
     ensure_internal_beta_group_access,
     find_build,
     find_git_reference,
+    find_existing_tag_build,
     inspect_ipa,
     normalize_private_key,
     prerelease_version_id,
     run_altool,
+    matching_tag_build,
+    prepare_tag_trigger,
+    tag_start_condition,
+    validate_resumed_tag_build,
+    release,
     workflow_supports_platform,
 )
 
 
 class XcodeCloudTestFlightTests(unittest.TestCase):
+    def tag_run_response(self) -> dict:
+        return {"data": [{
+            "type": "ciBuildRuns", "id": "run-162",
+            "attributes": {"number": 162, "completionStatus": "FAILED", "isPullRequestBuild": False},
+            "relationships": {
+                "workflow": {"data": {"type": "ciWorkflows", "id": "release"}},
+                "sourceBranchOrTag": {"data": {"type": "scmGitReferences", "id": "tag-id"}},
+                "pullRequest": {"data": None},
+            },
+        }], "included": [{
+            "type": "scmGitReferences", "id": "tag-id",
+            "attributes": {
+                "kind": "TAG", "name": "v2.9.0", "canonicalName": "refs/tags/v2.9.0",
+                "isDeleted": False,
+            },
+        }], "links": {"next": None}}
+
+    def test_tag_preparation_changes_only_exact_trigger_and_reads_back(self) -> None:
+        condition = tag_start_condition("v2.9.0")
+        before = {"data": {"attributes": {"isEnabled": True, "tagStartCondition": None},
+                  "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        after = copy.deepcopy(before)
+        after["data"]["attributes"]["tagStartCondition"] = condition
+        client = MagicMock()
+        client.request.side_effect = [before, {}, after]
+        prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+        self.assertEqual(client.request.call_args_list[1].kwargs, {
+            "method": "PATCH", "payload": {"data": {
+                "type": "ciWorkflows", "id": "release", "attributes": {"tagStartCondition": condition},
+            }},
+        })
+
+    def test_tag_preparation_rejects_unsafe_pattern_or_changed_workflow(self) -> None:
+        for tag in ("main", "v2.9.*", "refs/tags/v2.9.0"):
+            with self.subTest(tag=tag), self.assertRaises(ReleaseError):
+                tag_start_condition(tag)
+        for enabled, repository, condition in (
+            (False, "repo", None), (True, "another-repo", None),
+            (True, "repo", {"source": {"isAllMatch": True}}),
+        ):
+            client = MagicMock()
+            client.request.return_value = {"data": {
+                "attributes": {"isEnabled": enabled, "tagStartCondition": condition},
+                "relationships": {"repository": {"data": {"id": repository}}},
+            }}
+            with self.subTest(enabled=enabled, repository=repository, condition=condition):
+                with self.assertRaises(ReleaseError):
+                    prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+                self.assertEqual(client.request.call_count, 1)
+
+    def test_tag_preparation_requires_confirmed_readback(self) -> None:
+        client = MagicMock()
+        before = {"data": {"attributes": {"isEnabled": True, "tagStartCondition": None},
+                  "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        client.request.side_effect = [before, {}, before]
+        with self.assertRaisesRegex(ReleaseError, "did not confirm"):
+            prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+
+    def test_preparation_rolls_forward_only_a_single_managed_version_tag(self) -> None:
+        before = {"data": {"attributes": {
+            "isEnabled": True, "tagStartCondition": tag_start_condition("v2.9.0"),
+            "manualTagStartCondition": {"source": {"isAllMatch": True, "patterns": []}},
+        }, "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        after = copy.deepcopy(before)
+        after["data"]["attributes"]["tagStartCondition"] = tag_start_condition("v2.9.1")
+        client = MagicMock()
+        client.request.side_effect = [before, {}, after]
+        prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.1")
+        self.assertEqual(client.request.call_args_list[1].kwargs["payload"]["data"]["attributes"], {"tagStartCondition": tag_start_condition("v2.9.1")})
+
+    def test_same_tag_preparation_is_idempotent(self) -> None:
+        client = MagicMock()
+        client.request.return_value = {"data": {"attributes": {
+            "isEnabled": True, "tagStartCondition": tag_start_condition("v2.9.0"),
+        }, "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+        self.assertEqual(client.request.call_count, 2)
+        self.assertTrue(all(call.kwargs.get("method", "GET") == "GET" for call in client.request.call_args_list))
+
+    def test_preparation_preserves_custom_trigger_configuration(self) -> None:
+        for change in ("prefix", "all", "multiple", "files", "cancel"):
+            condition = tag_start_condition("v2.8.1")
+            if change == "prefix": condition["source"]["patterns"][0]["isPrefix"] = True
+            if change == "all": condition["source"]["isAllMatch"] = True
+            if change == "multiple": condition["source"]["patterns"].append({"pattern": "v2.8.2", "isPrefix": False})
+            if change == "files": condition["filesAndFoldersRule"]["matchers"] = [{"directory": "App"}]
+            if change == "cancel": condition["autoCancel"] = True
+            client = MagicMock()
+            client.request.return_value = {"data": {"attributes": {
+                "isEnabled": True, "tagStartCondition": condition,
+            }, "relationships": {"repository": {"data": {"id": "repo"}}}}}
+            with self.subTest(change=change), self.assertRaises(ReleaseError):
+                prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+            self.assertEqual(client.request.call_count, 1)
+
+    def test_matching_tag_build_accepts_recoverable_failed_exports(self) -> None:
+        response = self.tag_run_response()
+        self.assertEqual(matching_tag_build(response, workflow_id="release", tag="v2.9.0")["id"], "run-162")
+
+    def test_matching_tag_build_rejects_other_sources(self) -> None:
+        for change in ("workflow", "branch", "tag", "deleted", "canceled", "pr", "missing_ref"):
+            response = self.tag_run_response()
+            run = response["data"][0]
+            ref = response["included"][0]["attributes"]
+            if change == "workflow": run["relationships"]["workflow"]["data"]["id"] = "other"
+            if change == "branch": ref["kind"] = "BRANCH"
+            if change == "tag": ref["name"] = "v2.8.1"
+            if change == "deleted": ref["isDeleted"] = True
+            if change == "canceled": run["attributes"]["completionStatus"] = "CANCELED"
+            if change == "pr": run["attributes"]["isPullRequestBuild"] = True
+            if change == "missing_ref": response["included"] = []
+            with self.subTest(change=change):
+                self.assertIsNone(matching_tag_build(response, workflow_id="release", tag="v2.9.0"))
+
+    def test_existing_tag_build_preserves_included_resources_across_pages(self) -> None:
+        client = MagicMock()
+        client.request.side_effect = [{"data": [], "links": {"next": "next-page"}}, self.tag_run_response()]
+        self.assertEqual(find_existing_tag_build(client, workflow_id="release", tag="v2.9.0"), ("run-162", "162"))
+        self.assertEqual(client.request.call_args_list[1].args, ("next-page",))
+
+    def test_existing_tag_build_waits_for_automatic_start(self) -> None:
+        client = MagicMock()
+        client.request.side_effect = [{"data": [], "links": {}}, self.tag_run_response()]
+        with patch("ci_scripts.xcode_cloud_testflight.time.sleep") as sleep:
+            self.assertEqual(find_existing_tag_build(client, workflow_id="release", tag="v2.9.0", timeout_seconds=60), ("run-162", "162"))
+        sleep.assert_called_once()
+
+    def test_resumed_run_must_match_tag_and_workflow(self) -> None:
+        client = MagicMock()
+        response = self.tag_run_response()
+        response["data"] = response["data"][0]
+        client.request.return_value = response
+        self.assertEqual(validate_resumed_tag_build(client, build_run_id="run-162", workflow_id="release", tag="v2.9.0"), ("run-162", "162"))
+        with self.assertRaisesRegex(ReleaseError, "does not match"):
+            validate_resumed_tag_build(client, build_run_id="run-162", workflow_id="release", tag="v2.8.1")
+
+    def test_prepare_only_never_discovers_builds_or_publishes(self) -> None:
+        args = argparse.Namespace(tag="v2.9.0", platform="all", workflow_id="release", repository_id="repo", prepare_tag_trigger=True, build_run_id="", force_new_build=False)
+        with (
+            patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
+            patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient"),
+            patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
+            patch("ci_scripts.xcode_cloud_testflight.prepare_tag_trigger") as prepare,
+            patch("ci_scripts.xcode_cloud_testflight.find_existing_tag_build") as find,
+            patch("ci_scripts.xcode_cloud_testflight.find_git_reference") as reference,
+            patch("ci_scripts.xcode_cloud_testflight.start_build_run") as start,
+            patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+        ):
+            release(args)
+        prepare.assert_called_once()
+        find.assert_not_called()
+        reference.assert_not_called()
+        start.assert_not_called()
+        publish.assert_not_called()
+
+    def test_release_reuses_automatic_run_before_reference_lookup(self) -> None:
+        args = argparse.Namespace(
+            tag="v2.9.0", platform="all", workflow_id="release", repository_id="repo",
+            prepare_tag_trigger=False, build_run_id="", output_dir=None, force_new_build=False,
+            cloud_timeout_seconds=1800, poll_seconds=20,
+        )
+        with (
+            patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
+            patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient"),
+            patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
+            patch("ci_scripts.xcode_cloud_testflight.find_existing_tag_build", return_value=("auto-run", "162")),
+            patch("ci_scripts.xcode_cloud_testflight.find_git_reference") as reference,
+            patch("ci_scripts.xcode_cloud_testflight.start_build_run") as start,
+            patch("ci_scripts.xcode_cloud_testflight.wait_for_export", return_value=({}, "162")),
+            patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+        ):
+            release(args)
+        reference.assert_not_called()
+        start.assert_not_called()
+        self.assertEqual(publish.call_count, 2)
+
+    def test_automatic_run_appearing_after_first_lookup_bypasses_stale_tag_index(self) -> None:
+        args = argparse.Namespace(
+            tag="v2.9.0", platform="all", workflow_id="release", repository_id="repo",
+            prepare_tag_trigger=False, build_run_id="", output_dir=None, force_new_build=False,
+            cloud_timeout_seconds=1800, poll_seconds=20,
+        )
+        with (
+            patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
+            patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient") as client,
+            patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
+            patch("ci_scripts.xcode_cloud_testflight.find_existing_tag_build", side_effect=[None, ("auto-run", "162")]),
+            patch("ci_scripts.xcode_cloud_testflight.find_git_reference", side_effect=ReleaseError("stale tag index")) as reference,
+            patch("ci_scripts.xcode_cloud_testflight.start_build_run") as start,
+            patch("ci_scripts.xcode_cloud_testflight.wait_for_export", return_value=({}, "162")),
+            patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+        ):
+            client.return_value.request.return_value = {"data": {"attributes": {"tagStartCondition": tag_start_condition("v2.9.0")}}}
+            release(args)
+        reference.assert_not_called()
+        start.assert_not_called()
+        self.assertEqual(publish.call_count, 2)
+
+    def test_fresh_retry_bypasses_failed_run_recovery(self) -> None:
+        args = argparse.Namespace(
+            tag="v2.9.0", platform="all", workflow_id="release", repository_id="repo",
+            prepare_tag_trigger=False, build_run_id="", output_dir=None, force_new_build=True,
+            cloud_timeout_seconds=1800, poll_seconds=20,
+        )
+        with (
+            patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
+            patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient"),
+            patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
+            patch("ci_scripts.xcode_cloud_testflight.find_existing_tag_build") as recover,
+            patch("ci_scripts.xcode_cloud_testflight.find_git_reference", return_value="exact-tag") as reference,
+            patch("ci_scripts.xcode_cloud_testflight.start_build_run", return_value=("fresh-run", "163")) as start,
+            patch("ci_scripts.xcode_cloud_testflight.wait_for_export", return_value=({}, "163")),
+            patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+        ):
+            release(args)
+        recover.assert_not_called()
+        reference.assert_called_once()
+        start.assert_called_once()
+        self.assertEqual(start.call_args.kwargs["git_reference_id"], "exact-tag")
+        self.assertEqual(publish.call_count, 2)
+
+
     def test_git_tag_waits_for_reference_sync(self) -> None:
         client = MagicMock()
         client.pages.side_effect = [[], [{"id": "tag-id", "attributes": {

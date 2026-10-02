@@ -26,9 +26,17 @@ on:
         description: Inspect Xcode Cloud repository references without starting a build
         type: boolean
         default: false
+      prepare_tag_only:
+        description: Configure Xcode Cloud for this exact upcoming tag before pushing it
+        type: boolean
+        default: false
+      fresh_build:
+        description: Retry a failed archive with a fresh build of the same immutable tag
+        type: boolean
+        default: false
 
 concurrency:
-  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -37,7 +45,7 @@ permissions:
 jobs:
   github-release:
     name: Create GitHub Release
-    if: ${{ !inputs.diagnostics_only }}
+    if: ${{ !inputs.diagnostics_only && !inputs.prepare_tag_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: testflight-release
@@ -106,6 +114,8 @@ jobs:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           RESUME_BUILD_RUN_ID: ${{ inputs.build_run_id || '' }}
           DIAGNOSTICS_ONLY: ${{ inputs.diagnostics_only || false }}
+          PREPARE_TAG_ONLY: ${{ inputs.prepare_tag_only || false }}
+          FRESH_BUILD: ${{ inputs.fresh_build || false }}
         run: |
           if [[ "${DIAGNOSTICS_ONLY}" == "true" ]]; then
             .venv-testflight/bin/python ci_scripts/xcode_cloud_diagnostics.py
@@ -117,6 +127,12 @@ jobs:
             --tag "${RELEASE_TAG}"
             --platform all
           )
+          if [[ "${PREPARE_TAG_ONLY}" == "true" ]]; then
+            args+=(--prepare-tag-trigger)
+          fi
+          if [[ "${FRESH_BUILD}" == "true" ]]; then
+            args+=(--force-new-build)
+          fi
           if [[ -n "${RESUME_BUILD_RUN_ID}" ]]; then
             args+=(--build-run-id "${RESUME_BUILD_RUN_ID}")
           fi

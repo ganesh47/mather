@@ -147,8 +147,7 @@ final class AngleArcadeUITests: XCTestCase {
     func testBackgroundDuringFlightCancelsResultAndAllowsAnotherShot() {
         let app = launchArcade()
         XCUIRemote.shared.press(.select)
-        XCUIDevice.shared.press(.home)
-        app.activate()
+        backgroundAndActivate(app)
         waitForPrimary(app, label: "Fire")
         XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "0 hits")
         XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Ready")
@@ -158,14 +157,22 @@ final class AngleArcadeUITests: XCTestCase {
         attachScreenshot("New shot works after foregrounding")
 
         // Foreground focus must also return without erasing a completed result.
-        XCUIDevice.shared.press(.home)
-        app.activate()
+        backgroundAndActivate(app)
         waitForPrimary(app, label: "Next target")
         XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "1 hit")
         XCTAssertEqual(app.staticTexts["angle-arcade-result"].label, "Great aim!")
         XCUIRemote.shared.press(.select)
         waitForPrimary(app, label: "Fire")
         XCTAssertEqual(app.staticTexts["angle-arcade-target-progress"].label, "Target 2 of 3")
+    }
+
+    private func backgroundAndActivate(_ app: XCUIApplication) {
+        XCUIDevice.shared.press(.home)
+        // Wait for Home to finish backgrounding the app before requesting activation.
+        // Otherwise the pending Home transition can cover the newly activated game.
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10), "Home must background MatherTV")
+        app.activate()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10), "MatherTV must return to the foreground")
     }
 
     private func launchArcade() -> XCUIApplication {

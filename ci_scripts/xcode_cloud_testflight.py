@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import plistlib
+import re
 import shutil
 import subprocess
 import sys
@@ -219,6 +220,122 @@ def start_build_run(
     build_run = client.request("/v1/ciBuildRuns", method="POST", payload=payload)["data"]
     number = str(build_run["attributes"]["number"])
     return build_run["id"], number
+
+
+def tag_start_condition(tag: str) -> dict[str, Any]:
+    if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
+        raise ReleaseError("Tag preparation requires a version tag such as v2.9.0")
+    return {
+        "source": {
+            "isAllMatch": False,
+            "patterns": [{"pattern": tag, "isPrefix": False}],
+        },
+        "filesAndFoldersRule": {
+            "mode": "START_IF_ANY_FILE_MATCHES", "matchers": [],
+        },
+        "autoCancel": False,
+    }
+
+
+def prepare_tag_trigger(
+    client: AppStoreConnectClient, *, workflow_id: str, repository_id: str, tag: str,
+) -> None:
+    """Configure the exact upcoming tag before it is pushed; never start a build."""
+    condition = tag_start_condition(tag)
+    path = (
+        f"/v1/ciWorkflows/{workflow_id}"
+        "?fields[ciWorkflows]=isEnabled,repository,tagStartCondition,manualTagStartCondition&include=repository"
+    )
+    workflow = client.request(path)["data"]
+    if not workflow["attributes"].get("isEnabled"):
+        raise ReleaseError("Cannot prepare a disabled Xcode Cloud workflow")
+    repository = workflow.get("relationships", {}).get("repository", {}).get("data") or {}
+    if repository.get("id") != repository_id:
+        raise ReleaseError("Tag preparation workflow uses a different repository")
+    existing = workflow["attributes"].get("tagStartCondition")
+    if existing is not None and existing != condition:
+        patterns = existing.get("source", {}).get("patterns") or []
+        previous_tag = patterns[0].get("pattern", "") if len(patterns) == 1 else ""
+        try:
+            managed = existing == tag_start_condition(previous_tag)
+        except ReleaseError:
+            managed = False
+        if not managed:
+            raise ReleaseError("Workflow already has a custom automatic tag condition")
+    if existing != condition:
+        client.request(
+            f"/v1/ciWorkflows/{workflow_id}", method="PATCH",
+            payload={"data": {
+                "type": "ciWorkflows", "id": workflow_id,
+                "attributes": {"tagStartCondition": condition},
+            }},
+        )
+    observed = client.request(path)["data"]["attributes"]
+    if observed.get("tagStartCondition") != condition:
+        raise ReleaseError("Xcode Cloud did not confirm the exact tag trigger")
+    if observed.get("manualTagStartCondition") != workflow["attributes"].get("manualTagStartCondition"):
+        raise ReleaseError("Xcode Cloud changed the workflow's manual tag condition")
+    print(f"Prepared Xcode Cloud workflow {workflow_id} for upcoming tag {tag}", flush=True)
+
+
+def matching_tag_build(
+    response: dict[str, Any], *, workflow_id: str, tag: str,
+) -> dict[str, Any] | None:
+    included = {(item["type"], item["id"]): item for item in response.get("included", [])}
+    runs = response.get("data", [])
+    if isinstance(runs, dict):
+        runs = [runs]
+    for run in runs:
+        relationships = run.get("relationships", {})
+        workflow = relationships.get("workflow", {}).get("data") or {}
+        reference = relationships.get("sourceBranchOrTag", {}).get("data") or {}
+        attrs = included.get(("scmGitReferences", reference.get("id")), {}).get("attributes", {})
+        if (
+            workflow.get("id") == workflow_id
+            and not relationships.get("pullRequest", {}).get("data")
+            and not run.get("attributes", {}).get("isPullRequestBuild")
+            and attrs.get("kind") == "TAG"
+            and attrs.get("name") == tag
+            and attrs.get("canonicalName") == f"refs/tags/{tag}"
+            and not attrs.get("isDeleted")
+            and run.get("attributes", {}).get("completionStatus") != "CANCELED"
+        ):
+            return run
+    return None
+
+
+def find_existing_tag_build(
+    client: AppStoreConnectClient, *, workflow_id: str, tag: str,
+    timeout_seconds: int = 0, poll_seconds: int = 15,
+) -> tuple[str, str] | None:
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        url = (
+            f"/v1/ciWorkflows/{workflow_id}/buildRuns"
+            "?sort=-number&limit=200&include=sourceBranchOrTag,workflow,pullRequest"
+        )
+        while url:
+            response = client.request(url)
+            run = matching_tag_build(response, workflow_id=workflow_id, tag=tag)
+            if run:
+                return run["id"], str(run["attributes"]["number"])
+            url = response.get("links", {}).get("next")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        time.sleep(min(poll_seconds, remaining))
+
+
+def validate_resumed_tag_build(
+    client: AppStoreConnectClient, *, build_run_id: str, workflow_id: str, tag: str,
+) -> tuple[str, str]:
+    response = client.request(
+        f"/v1/ciBuildRuns/{build_run_id}?include=sourceBranchOrTag,workflow,pullRequest"
+    )
+    run = matching_tag_build(response, workflow_id=workflow_id, tag=tag)
+    if not run:
+        raise ReleaseError("Requested build run does not match the release workflow and Git tag")
+    return run["id"], str(run["attributes"]["number"])
 
 
 def workflow_supports_platform(
@@ -771,6 +888,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--build-run-id", default="")
     parser.add_argument(
+        "--force-new-build", action="store_true",
+        help="Start a fresh exact-tag build instead of recovering a previous failed run.",
+    )
+    parser.add_argument(
+        "--prepare-tag-trigger", action="store_true",
+        help="Prepare the exact upcoming tag trigger without building or publishing.",
+    )
+    parser.add_argument(
         "--artifact-only",
         action="store_true",
         help="Download and inspect the IPA without validating or uploading it.",
@@ -930,27 +1055,70 @@ def release(args: argparse.Namespace) -> None:
         preferred_workflow_id=args.workflow_id,
         platforms=platforms,
     )
+    if args.prepare_tag_trigger:
+        if args.build_run_id or args.force_new_build:
+            raise ReleaseError("Tag preparation cannot resume or start a build run")
+        for workflow_id in workflows:
+            prepare_tag_trigger(
+                client, workflow_id=workflow_id, repository_id=args.repository_id, tag=args.tag,
+            )
+        return
     if args.build_run_id and len(workflows) != 1:
         raise ReleaseError(
             "--build-run-id cannot cover platforms resolved to multiple workflows"
         )
+    if args.build_run_id and args.force_new_build:
+        raise ReleaseError("Choose a resumed build run or a fresh build, not both")
 
     build_runs: dict[str, tuple[str, str]] = {}
     if args.build_run_id:
         workflow_id = next(iter(workflows))
-        build_runs[workflow_id] = (args.build_run_id, "")
+        build_runs[workflow_id] = validate_resumed_tag_build(
+            client, build_run_id=args.build_run_id, workflow_id=workflow_id, tag=args.tag,
+        )
     else:
-        reference_id = find_git_reference(client, args.repository_id, args.tag)
         for workflow_id, workflow_platforms in workflows.items():
-            build_run_id, build_number = start_build_run(
-                client,
-                workflow_id=workflow_id,
-                git_reference_id=reference_id,
-            )
+            if args.force_new_build:
+                reference_id = find_git_reference(client, args.repository_id, args.tag)
+                build_run_id, build_number = start_build_run(
+                    client, workflow_id=workflow_id, git_reference_id=reference_id,
+                )
+                build_runs[workflow_id] = (build_run_id, build_number)
+                print(f"Started fresh Xcode Cloud build {build_number} ({build_run_id}) for {args.tag}", flush=True)
+                continue
+            existing = find_existing_tag_build(client, workflow_id=workflow_id, tag=args.tag)
+            if not existing:
+                workflow = client.request(
+                    f"/v1/ciWorkflows/{workflow_id}?fields[ciWorkflows]=tagStartCondition"
+                )["data"]
+                automatic = workflow["attributes"].get("tagStartCondition") == tag_start_condition(args.tag)
+                # The automatic build may be visible before the SCM tag index catches up.
+                if automatic:
+                    existing = find_existing_tag_build(
+                        client, workflow_id=workflow_id, tag=args.tag, timeout_seconds=60,
+                    )
+            if not existing:
+                try:
+                    reference_id = find_git_reference(client, args.repository_id, args.tag)
+                except ReleaseError:
+                    existing = find_existing_tag_build(client, workflow_id=workflow_id, tag=args.tag)
+                    if not existing:
+                        raise
+                else:
+                    # Recheck immediately before POST to avoid duplicating a newly queued run.
+                    existing = find_existing_tag_build(client, workflow_id=workflow_id, tag=args.tag)
+            if existing:
+                build_run_id, build_number = existing
+                action = "Reusing"
+            else:
+                build_run_id, build_number = start_build_run(
+                    client, workflow_id=workflow_id, git_reference_id=reference_id,
+                )
+                action = "Started"
             build_runs[workflow_id] = (build_run_id, build_number)
             labels = " and ".join(item.label for item in workflow_platforms)
             print(
-                f"Started Xcode Cloud build {build_number} ({build_run_id}) "
+                f"{action} Xcode Cloud build {build_number} ({build_run_id}) "
                 f"for {args.tag}: {labels}",
                 flush=True,
             )
