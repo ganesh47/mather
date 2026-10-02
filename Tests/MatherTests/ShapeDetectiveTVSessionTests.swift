@@ -63,6 +63,7 @@ struct ShapeDetectiveTVSessionTests {
         let before = session.checkpoint
         var replayed: [ItemAttempt] = []
         let resumed = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { replayed.append($0) })
+        resumed.activate()
         #expect(resumed.checkpoint == before)
         #expect(replayed == before.attempts)
         #expect(resumed.choose(item.answerID))
@@ -129,6 +130,7 @@ struct ShapeDetectiveTVSessionTests {
         #expect(session.result == result)
         var replayedResults: [ActivityResult] = []
         let resumed = ShapeDetectiveTVSession(profileID: "child", store: store, onResult: { replayedResults.append($0) })
+        resumed.activate()
         #expect(resumed.isComplete)
         #expect(replayedResults == [result])
     }
@@ -194,6 +196,7 @@ struct ShapeDetectiveTVSessionTests {
         session.replay()
         #expect(events.isEmpty)
         let reopened = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        reopened.activate()
         #expect(reopened.storageIssue == nil && reopened.current != nil)
         #expect(events.count == 1 && events[0].outcome == .exposure)
     }
@@ -312,12 +315,33 @@ struct ShapeDetectiveTVSessionTests {
         let (store, defaults) = isolatedStore()
         var events: [ItemAttempt] = []
         let session = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        session.activate()
         let bytes = Data("corruption introduced after exposure".utf8)
         defaults.set(bytes, forKey: "mather.shape-detective.v1.child")
         #expect(!session.choose(ShapeDetectiveCatalog.practice[0].answerID))
         session.requestHint(); session.advance(); session.showRoomPrompt(); session.replay()
         #expect(session.storageIssue == .corruptCheckpoint)
         #expect(events.count == 1)
+        #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+    }
+
+    @Test func constructingDiscardedStateValuesHasNoWritesOrCallbacksAndActivationIsIdempotent() {
+        let (store, defaults) = isolatedStore()
+        var events: [ItemAttempt] = []
+        let retained = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        _ = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(events.isEmpty)
+        #expect(defaults.object(forKey: "mather.shape-detective.v1.child") == nil)
+        retained.activate()
+        retained.activate()
+        #expect(events.count == 1)
+        #expect(store.load() == retained.checkpoint)
+        let bytes = defaults.data(forKey: "mather.shape-detective.v1.child")
+        let restored = ShapeDetectiveTVSession(profileID: "child", store: store, onAttempt: { events.append($0) })
+        #expect(events.count == 1 && defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
+        restored.activate()
+        restored.activate()
+        #expect(events.count == 2 && events[0].id == events[1].id)
         #expect(defaults.data(forKey: "mather.shape-detective.v1.child") == bytes)
     }
 

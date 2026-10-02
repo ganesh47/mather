@@ -56,6 +56,31 @@ final class TVFamilyLearningUITests: XCTestCase {
         attach("TV confirmed learner reset")
     }
 
+    func testSelectedLearnerShapeEvidenceSurvivesRootReentryWithoutDuplicating() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-tv-family-ui-test", "-tv-family-reset"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["tv-family-title"].waitForExistence(timeout: 20))
+        choose(app, app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Jamie")).firstMatch)
+        XCUIRemote.shared.press(.menu)
+        choose(app, app.buttons["tv-mode-shapes"])
+        XCTAssertTrue(app.buttons["tv-shape-choice-B"].waitForExistence(timeout: 10))
+        choose(app, app.buttons["tv-shape-choice-B"])
+        XCTAssertTrue(app.buttons["tv-shape-next"].waitForExistence(timeout: 5))
+        attach("Selected learner shape answer")
+        XCUIRemote.shared.press(.menu)
+        choose(app, app.buttons["tv-family-panel"])
+        XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 answers without app help"))
+        XCUIRemote.shared.press(.menu)
+        choose(app, app.buttons["tv-mode-shapes"])
+        XCTAssertTrue(app.buttons["tv-shape-next"].waitForExistence(timeout: 10))
+        XCUIRemote.shared.press(.menu)
+        choose(app, app.buttons["tv-family-panel"])
+        XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 answers without app help"))
+        attach("Reentered shape has one durable answer")
+    }
+
     private func choose(_ app: XCUIApplication, _ target: XCUIElement) {
         XCTAssertTrue(target.waitForExistence(timeout: 5))
         var previous: String?

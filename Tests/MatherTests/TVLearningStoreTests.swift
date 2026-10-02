@@ -98,7 +98,8 @@ struct TVLearningStoreTests {
         #expect(storage.string(forKey: key) == "unreadable")
         wrongType.resetAll()
         #expect(wrongType.addLearner(name: "A"))
-        var json = try #require(JSONSerialization.jsonObject(with: #require(storage.data(forKey: key))) as? [String: Any])
+        let savedData = try #require(storage.data(forKey: key))
+        var json = try #require(JSONSerialization.jsonObject(with: savedData) as? [String: Any])
         json["futureField"] = ["preserve": true]
         let future = try JSONSerialization.data(withJSONObject: json)
         storage.set(future, forKey: key)

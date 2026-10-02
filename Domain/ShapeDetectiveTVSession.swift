@@ -205,6 +205,7 @@ final class ShapeDetectiveTVSession {
     @ObservationIgnored private let store: ShapeDetectiveTVSessionStore
     @ObservationIgnored private let onAttempt: (ItemAttempt) -> Void
     @ObservationIgnored private let onResult: (ActivityResult) -> Void
+    @ObservationIgnored private var hasActivated = false
 
     init(profileID: String = "tv-family", familyMode: Bool = true,
          store: ShapeDetectiveTVSessionStore? = nil,
@@ -223,6 +224,13 @@ final class ShapeDetectiveTVSession {
             storageIssue = issue
             return
         }
+    }
+
+    /// SwiftUI can construct and discard State initial values during rendering.
+    /// Durability and callbacks start only when the retained session appears.
+    func activate() {
+        guard !hasActivated, canUseStorage() else { return }
+        hasActivated = true
         // Replaying frozen IDs repairs an interrupted write at the shared ledger.
         checkpoint.attempts.forEach(onAttempt)
         if let result { onResult(result) }
@@ -255,6 +263,7 @@ final class ShapeDetectiveTVSession {
 
     @discardableResult
     func choose(_ choiceID: String) -> Bool {
+        activate()
         guard canUseStorage(), let current, !checkpoint.solved, let choice = current.choices.first(where: { $0.id == choiceID }) else { return false }
         let correct = choice.figure.kind == current.answer
         let supported = checkpoint.hintLevel > 0 || checkpoint.misses > 0
@@ -273,6 +282,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func requestHint() {
+        activate()
         guard canUseStorage(), current != nil, !checkpoint.solved else { return }
         guard checkpoint.hintLevel < 2 else { return }
         checkpoint.hintLevel += 1
@@ -281,6 +291,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func advance() {
+        activate()
         guard canUseStorage(), current != nil, checkpoint.solved else { return }
         checkpoint.index += 1
         checkpoint.solved = false
@@ -293,6 +304,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func showRoomPrompt() {
+        activate()
         guard canUseStorage(), isComplete else { return }
         checkpoint.roomPromptShown = true
         persist()
@@ -300,6 +312,7 @@ final class ShapeDetectiveTVSession {
     }
 
     func replay() {
+        activate()
         guard canUseStorage(), isComplete else { return }
         checkpoint = Self.newCheckpoint(profileID: checkpoint.profileID, familyMode: checkpoint.familyMode, store: store)
         exposeCurrentItem()

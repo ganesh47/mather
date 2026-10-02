@@ -58,7 +58,7 @@ struct ShapeDetectiveTVView: View {
             .padding(.bottom, 55)
         }
         .focusScope(focusScope)
-        .onAppear { restoreFocus(); announce(session.prompt) }
+        .onAppear { session.activate(); restoreFocus(); announce(session.prompt) }
         .onChange(of: focusedAction) { _, action in narration.focus(focusDescription(action)) }
         .onPlayPauseCommand { announce(session.prompt) }
         .onMoveCommand(perform: move)
