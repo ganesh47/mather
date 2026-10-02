@@ -256,9 +256,17 @@ private struct QuestShapePicture: Shape {
 private struct QuestAnglePicture: Shape {
     let degrees: Int
     func path(in rect: CGRect) -> Path {
-        let pivot = CGPoint(x:rect.width/2,y:rect.height*0.8), radius = min(rect.width/2-8,rect.height*0.7)
-        let angle = Double(degrees)*Double.pi/180
-        return Path { p in p.move(to: .init(x:pivot.x+radius,y:pivot.y));p.addLine(to:pivot);p.addLine(to:.init(x:pivot.x+radius*cos(angle),y:pivot.y-radius*sin(angle))) }
+        let pivot = CGPoint(x: rect.width / 2, y: rect.height * 0.8)
+        let radius: CGFloat = min(rect.width / 2 - 8, rect.height * 0.7)
+        let angle: Double = Double(degrees) * Double.pi / 180
+        let start = CGPoint(x: pivot.x + radius, y: pivot.y)
+        let end = CGPoint(x: pivot.x + radius * CGFloat(cos(angle)),
+                          y: pivot.y - radius * CGFloat(sin(angle)))
+        return Path { path in
+            path.move(to: start)
+            path.addLine(to: pivot)
+            path.addLine(to: end)
+        }
     }
 }
 private struct QuestCircuitPicture: View {
@@ -299,8 +307,9 @@ private struct QuestColdCupPicture: View {
                 Image(systemName: "snowflake").font(.system(size: h*0.2)).foregroundStyle(MatherTheme.softBlue).position(x: w*0.5, y: h*0.17)
                 if drops != "none" {
                     ForEach(0..<3, id: \.self) { index in
+                        let verticalFraction: CGFloat = 0.42 + CGFloat(index) * 0.15
                         Image(systemName: "drop.fill").font(.system(size: h*0.13)).foregroundStyle(MatherTheme.accent)
-                            .position(x: drops == "outside" ? w*0.83 : w*0.5, y: h*(0.42 + Double(index)*0.15))
+                            .position(x: drops == "outside" ? w*0.83 : w*0.5, y: h * verticalFraction)
                     }
                 }
             }
