@@ -18,7 +18,15 @@ final class LearningQuestUITests: XCTestCase {
         for _ in 0..<5 { tap("quest-count-add", in: app) }
         snapshot(app, "Numbers-Transfer")
         submitAndContinue(in: app)
+        step("Challenge", in: app)
+        XCTAssertEqual(app.staticTexts["quest-probe-progress"].label, "New task 2 of 2")
+        for _ in 0..<6 { tap("quest-count-add", in: app) }
+        submitAndContinue(in: app)
         finish(in: app, name: "Numbers")
+        tap("Parent Summary", in: app)
+        XCTAssertTrue(app.staticTexts["Parts and wholes"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["New context: 2/2 fresh probes correct without an app hint"].exists)
+        snapshot(app, "Numbers-Parent-Evidence")
     }
 
     func testShapesExploresFourCoreShapesBuildsAndTransfers() {
@@ -34,6 +42,7 @@ final class LearningQuestUITests: XCTestCase {
         for index in [0, 1, 3] { tap("quest-shape-point-\(index)", in: app) }
         submitAndContinue(in: app)
         step("Challenge", in: app)
+        XCTAssertFalse(app.buttons["quest-choice-rectangle"].label.lowercased().contains("rectangle"))
         tap("quest-choice-rectangle", in: app)
         snapshot(app, "Shapes-Transfer")
         submitAndContinue(in: app)
@@ -98,7 +107,7 @@ final class LearningQuestUITests: XCTestCase {
 
     func testDownloadedCatalogIsVisibleAndSurvivesOfflineRelaunch() {
         let app = XCUIApplication()
-        app.launchArguments = arguments("home", clear: false)
+        app.launchArguments = Array(arguments("home", clear: false).dropLast(2))
         app.launch()
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 10))
         app.buttons["Settings"].tap()
@@ -122,6 +131,25 @@ final class LearningQuestUITests: XCTestCase {
         snapshot(app, "External-Catalog-Offline")
     }
 
+    func testCompactActionsStayVisibleAndOptionalParentReportSaves() {
+        let app = launch("quest-numbers")
+        XCTAssertTrue(app.buttons["quest-primary"].isHittable)
+        XCTAssertTrue(app.buttons["quest-help"].isHittable)
+        app.scrollViews.firstMatch.swipeUp()
+        XCTAssertTrue(app.buttons["quest-primary"].isHittable)
+        XCTAssertTrue(app.buttons["quest-help"].isHittable)
+        tap("quest-save", in: app)
+        app.terminate()
+        app.launchArguments = arguments("home", clear: false)
+        app.launch()
+        tap("Parent Summary", in: app)
+        tap("parent-observation-add", in: app)
+        tap("parent-observation-save", in: app)
+        snapshot(app, "Parent-Concept-Evidence")
+        let report = app.descendants(matching: .any)["parent-offscreen-observation"].firstMatch
+        XCTAssertTrue(report.waitForExistence(timeout: 5), app.debugDescription)
+    }
+
     private func launch(_ route: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = arguments(route, clear: true)
@@ -130,7 +158,7 @@ final class LearningQuestUITests: XCTestCase {
         return app
     }
     private func arguments(_ route: String, clear: Bool) -> [String] {
-        var result = ["-feature.audioEnabled", "NO", "-feature.hapticsEnabled", "NO", "-feature.testModeEnabled", "YES", "-feature.skipProfilePicker", "YES", "-uiTest.startRoute", route]
+        var result = ["-feature.audioEnabled", "NO", "-feature.hapticsEnabled", "NO", "-feature.testModeEnabled", "YES", "-feature.skipProfilePicker", "YES", "-uiTest.startRoute", route, "-uiTest.disableContentRefresh", "YES"]
         if clear { result += ["-uiTest.clearQuestCheckpoints", "YES"] }
         return result
     }

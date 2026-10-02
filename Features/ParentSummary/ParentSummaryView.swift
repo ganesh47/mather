@@ -2,6 +2,11 @@ import Observation
 import SwiftUI
 import SwiftData
 
+private struct ParentObservationPresentation: Identifiable {
+    let profileID: String
+    var id: String { profileID }
+}
+
 struct ParentSummaryView: View {
     @Bindable var appModel: AppModel
     let summaries: [StoredSessionSummary]
@@ -9,6 +14,11 @@ struct ParentSummaryView: View {
     let profiles: [StoredKidProfile]
     @Query(sort: \StoredGameplayThreadSession.startedAt, order: .reverse) private var allLearningSessions: [StoredGameplayThreadSession]
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var observationStore = ParentOffscreenObservationStore()
+    @State private var observationPresentation: ParentObservationPresentation?
+    @State private var observationQuest = LearningQuestID.numbers
+    @State private var observationOutcome = ParentOffscreenOutcome.notYet
+    @State private var observationError: String?
 
     var body: some View {
         let overview = ParentSummaryOverview.make(summaries: summaries, gameSessions: gameSessions)
@@ -101,36 +111,119 @@ struct ParentSummaryView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+        .sheet(item: $observationPresentation) { context in observationSheet(profileID: context.profileID) }
     }
 
     private var selectedLearningSessions: [StoredGameplayThreadSession] {
         allLearningSessions.filter { $0.profileId == appModel.profileStore.activeProfileId }
     }
     private var learningEvidenceCard: some View {
-        let evidence = ParentLearningEvidenceSummary.make(records: appModel.gameplayProgressStore.allRecords())
+        let attempts = appModel.gameplayProgressStore.allRecords().flatMap { ParentLearningEvidenceSummary.attempts(from: $0.itemAttemptsData) }
+        let evidence = ParentLearningEvidenceSummary(attempts: attempts)
+        let concepts = ParentLearningConceptEvidence.rows(from: attempts)
+        let observations = observationStore.observations(profileID: appModel.profileStore.activeProfileId)
         return CardSurface {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Learning through play").font(.title3.bold())
-                Text("Actual choices and attempts for the selected child. Exploring a card is separate from remembering or using an idea.")
+                Text("Learning through play").font(.title3.bold()).accessibilityIdentifier("parent-summary-learning-evidence")
+                Text("A task counts once per session, even after retries. Correct without an app hint does not tell us whether an adult helped.")
                     .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 130))], spacing: 12) {
-                    evidenceTile("\(evidence.exposures)", "Explored")
-                    evidenceTile("\(evidence.independent)", "Independent answers")
-                    evidenceTile("\(evidence.supported)", "Answers with help")
-                    evidenceTile("\(evidence.independentTransfers)", "Independent transfers")
+                    evidenceTile("\(evidence.exposures)", "Explorations")
+                    evidenceTile("\(evidence.independent)/\(evidence.tasksAttempted)", "Correct, no app hint")
+                    evidenceTile("\(evidence.supported)/\(evidence.tasksAttempted)", "Correct, app support")
+                    evidenceTile("\(evidence.independentTransfers)/\(evidence.freshProbes)", "Fresh probes, no app hint")
                 }
-                Text("Next: \(appModel.nextLearningQuestLabel)").font(.headline).foregroundStyle(MatherTheme.accent)
-                ForEach(selectedLearningSessions.prefix(8), id: \.id) { session in
+                Text("Adult help: unknown for app play unless explicitly reported. Fresh means a previously unused item in a different context or representation.")
+                    .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                if evidence.unverifiedTransfers > 0 {
+                    Text("\(evidence.unverifiedTransfers) earlier transfer tasks have no freshness metadata; they are kept as history.")
+                        .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                }
+                ForEach(concepts.prefix(4)) { row in
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text(row.title).font(.headline)
+                        Text("Latest attempt: \(row.latestDate.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                        Text("\(row.summary.independent)/\(row.summary.tasksAttempted) tasks correct without an app hint · \(row.summary.supported)/\(row.summary.tasksAttempted) with app support")
+                            .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
+                        Text("New context: \(row.summary.independentTransfers)/\(row.summary.freshProbes) fresh probes correct without an app hint")
+                            .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
+                        if let quest = row.questID {
+                            Text("Try next: \(quest.offscreenPrompt)").font(.subheadline).foregroundStyle(MatherTheme.ink)
+                        } else {
+                            Text("Try next: revisit this idea using different objects, then ask for a prediction before giving a hint.")
+                                .font(.subheadline).foregroundStyle(MatherTheme.ink)
+                        }
+                    }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MatherTheme.panel.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
+                }
+                Text("Next app quest: \(appModel.nextLearningQuestLabel)").font(.headline).foregroundStyle(MatherTheme.accent)
+                if concepts.isEmpty {
+                    Text("Offscreen idea: \(LearningQuestID.numbers.offscreenPrompt)").font(.subheadline).foregroundStyle(MatherTheme.ink)
+                }
+                Button {
+                    observationQuest = concepts.first?.questID ?? .numbers
+                    observationOutcome = .notYet
+                    observationError = nil
+                    observationPresentation = ParentObservationPresentation(profileID: appModel.profileStore.activeProfileId)
+                } label: { Label("Add an offscreen observation (optional)", systemImage: "plus.bubble.fill").frame(maxWidth: .infinity, minHeight: 80) }
+                    .buttonStyle(.bordered).accessibilityIdentifier("parent-observation-add")
+                Text("Parent reports are saved only on this device and are separate from app-observed learning.")
+                    .font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
+                if let issue = observationStore.storageIssue {
+                    Text(issue.message).font(.subheadline).foregroundStyle(MatherTheme.coral)
+                        .accessibilityIdentifier("parent-observation-storage-error")
+                }
+                ForEach(observations.prefix(3)) { observation in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Parent report · \(observation.questID.conceptTitle)").font(.headline)
+                        Text(observation.occurredAt.formatted(date: .abbreviated, time: .shortened)).font(.caption)
+                        Text(observation.outcome.title).font(.subheadline)
+                    }.foregroundStyle(MatherTheme.ink).padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MatherTheme.softBlue.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("parent-offscreen-observation")
+                }
+                ForEach(selectedLearningSessions.prefix(4), id: \.id) { session in
                     let attempts = ParentLearningEvidenceSummary.attempts(from: session.itemAttemptsData)
                     let summary = ParentLearningEvidenceSummary(attempts: attempts)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(session.activityTitle ?? session.threadId.replacingOccurrences(of: "-", with: " ").capitalized).font(.headline)
                         Text(session.startedAt.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(MatherTheme.cardSubtitle)
-                        Text(attempts.isEmpty ? "Earlier activity history; item-level evidence was not recorded." : "\(summary.independent) independent · \(summary.supported) with help · \(summary.independentTransfers) independent transfers")
+                        Text(attempts.isEmpty ? "Earlier activity history; item-level evidence was not recorded." : "\(summary.independent)/\(summary.tasksAttempted) tasks correct without app hints · \(summary.independentTransfers)/\(summary.freshProbes) fresh probes")
                             .font(.subheadline).foregroundStyle(MatherTheme.cardSubtitle)
                     }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(MatherTheme.panel.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
                 }
-            }.accessibilityIdentifier("parent-summary-learning-evidence")
+            }
+        }
+    }
+    private func observationSheet(profileID: String) -> some View {
+        NavigationStack {
+            Form {
+                Section("Concept and offscreen activity") {
+                    Picker("Concept", selection: $observationQuest) {
+                        ForEach(LearningQuestID.allCases) { quest in Text(quest.conceptTitle).tag(quest) }
+                    }.accessibilityIdentifier("parent-observation-concept")
+                    Text(observationQuest.offscreenPrompt)
+                }
+                Section("What did you notice?") {
+                    Picker("Parent observation", selection: $observationOutcome) {
+                        ForEach(ParentOffscreenOutcome.allCases) { outcome in Text(outcome.title).tag(outcome) }
+                    }.pickerStyle(.inline).accessibilityIdentifier("parent-observation-outcome")
+                    Text("This is your report, not a scored test. The date is saved with the selected child's concept. No recording is needed.")
+                        .font(.caption)
+                }
+                Button("Save parent observation") {
+                    guard profileID == appModel.profileStore.activeProfileId else { return }
+                    if observationStore.record(profileID: profileID, questID: observationQuest, outcome: observationOutcome) != nil { observationPresentation = nil }
+                    else { observationError = observationStore.storageIssue?.message ?? "This observation could not be saved. Please try again." }
+                }.frame(minHeight: 80).accessibilityIdentifier("parent-observation-save")
+                    .disabled(profileID != appModel.profileStore.activeProfileId)
+                if let observationError {
+                    Text(observationError).foregroundStyle(MatherTheme.coral).accessibilityIdentifier("parent-observation-save-error")
+                }
+            }
+            .navigationTitle("Offscreen observation")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { observationPresentation = nil } } }
         }
     }
     private func evidenceTile(_ value: String, _ label: String) -> some View {
@@ -874,17 +967,54 @@ struct ParentLearningEvidenceSummary: Equatable {
     let independent: Int
     let supported: Int
     let independentTransfers: Int
+    let tasksAttempted: Int
+    let freshProbes: Int
+    let unverifiedTransfers: Int
     init(attempts: [ItemAttempt]) {
-        let unique = Dictionary(attempts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }).values
+        let unique = Array(Dictionary(attempts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }).values)
+        struct TaskKey: Hashable {
+            let activity: String
+            let session: String
+            let item: String
+            let property: String?
+            init(_ event: ItemAttempt) {
+                activity = event.activityID; session = event.sessionID ?? event.id.uuidString
+                item = event.entityID; property = event.propertyID
+            }
+        }
+        let tasks = Dictionary(grouping: unique, by: TaskKey.init).values
+        func success(_ task: [ItemAttempt]) -> Bool { task.contains { $0.outcome == .independentCorrect || $0.outcome == .supportedCorrect } }
+        func hasSupport(_ task: [ItemAttempt]) -> Bool { task.contains { $0.appHintUsed == true || $0.outcome == .help || $0.outcome == .incorrect || $0.outcome == .supportedCorrect } }
+        func transfer(_ task: [ItemAttempt]) -> Bool { task.contains { $0.propertyID == "transfer" || $0.stageID == "transfer" } }
+        func attempted(_ task: [ItemAttempt]) -> Bool { task.contains { $0.outcome != .exposure } }
         exposures = unique.filter { $0.outcome == .exposure }.count
-        independent = unique.filter { $0.outcome == .independentCorrect }.count
-        supported = unique.filter { $0.outcome == .supportedCorrect }.count
-        independentTransfers = unique.filter { $0.outcome == .independentCorrect && ($0.propertyID == "transfer" || $0.stageID == "transfer") }.count
+        tasksAttempted = tasks.filter(attempted).count
+        independent = tasks.filter { success($0) && !hasSupport($0) }.count
+        supported = tasks.filter { success($0) && hasSupport($0) }.count
+        freshProbes = tasks.filter { transfer($0) && attempted($0) && $0.contains { $0.isFreshProbe == true } }.count
+        independentTransfers = tasks.filter { transfer($0) && success($0) && !hasSupport($0) && $0.contains { $0.isFreshProbe == true } }.count
+        unverifiedTransfers = tasks.filter { transfer($0) && attempted($0) && $0.allSatisfy { $0.isFreshProbe == nil } }.count
     }
     static func attempts(from data: Data?) -> [ItemAttempt] {
         data.flatMap { try? JSONDecoder().decode([ItemAttempt].self, from: $0) } ?? []
     }
     static func make(records: [StoredGameplayProgressRecord]) -> Self {
         Self(attempts: records.flatMap { attempts(from: $0.itemAttemptsData) })
+    }
+}
+
+struct ParentLearningConceptEvidence: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let questID: LearningQuestID?
+    let latestDate: Date
+    let summary: ParentLearningEvidenceSummary
+    static func rows(from attempts: [ItemAttempt]) -> [Self] {
+        Dictionary(grouping: attempts, by: { LearningQuestID.matching(conceptID: $0.conceptID)?.conceptID ?? $0.conceptID }).map { concept, events in
+            let quest = LearningQuestID.matching(conceptID: concept)
+            return Self(id: concept, title: quest?.conceptTitle ?? concept.replacingOccurrences(of: "-", with: " ").capitalized,
+                questID: quest, latestDate: events.map(\.occurredAt).max() ?? .distantPast,
+                summary: ParentLearningEvidenceSummary(attempts: events))
+        }.sorted { $0.latestDate == $1.latestDate ? $0.id < $1.id : $0.latestDate > $1.latestDate }
     }
 }

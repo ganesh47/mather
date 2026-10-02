@@ -18,11 +18,23 @@ final class LearningQuestEngine {
     }
     func start(_ quest: LearningQuestID, guidedPlanID: String? = nil, returnLaneID: CapabilityLaneID? = nil, returnToGames: Bool = false, content: LearningQuestContentSnapshot = .bundled) {
         if let guidedPlanID, LearningQuestID.guided(guidedPlanID) != quest { return }
-        checkpoint = store.checkpoint(for: quest) ?? LearningQuestCheckpoint(profileID: profileID(), questID: quest, guidedPlanID: guidedPlanID, returnLaneID: returnLaneID, returnToGames: returnToGames, content: content)
+        if let saved = store.checkpoint(for: quest) { checkpoint = saved }
+        else {
+            let ordinal = store.nextVariantOrdinal(for: quest)
+            let variant = LearningNumbersVariant.at(ordinal: ordinal)
+            let pilot = LearningPilotVariant.at(quest: quest, ordinal: ordinal)
+            checkpoint = LearningQuestCheckpoint(profileID: profileID(), questID: quest, guidedPlanID: guidedPlanID,
+                returnLaneID: returnLaneID, returnToGames: returnToGames, content: content,
+                numbersVariant: quest == .numbers ? variant : nil, variantOrdinal: ordinal,
+                numberProbeFreshness: quest == .numbers ? variant.probes.map { !store.hasSeenProbe($0.id) } : nil,
+                pilotVariant: pilot, pilotProbeFresh: pilot.map { !store.hasSeenProbe($0.id) })
+        }
         if let guidedPlanID { checkpoint.guidedPlanID = guidedPlanID }
         if let returnLaneID { checkpoint.returnLaneID = returnLaneID }
         checkpoint.returnToGames = returnToGames
         persist()
+        // Frozen event UUIDs make replay idempotent in the integration ledger.
+        for attempt in checkpoint.attempts { onAttempt(attempt, checkpoint.sessionID) }
         for step in checkpoint.completedSteps { onStageCompleted(checkpoint, step) }
         speakPrompt()
     }
@@ -35,7 +47,7 @@ final class LearningQuestEngine {
     }
     func adjustCount(_ delta: Int) {
         guard activeChild, !checkpoint.accepted else { return }
-        let total = checkpoint.step == .challenge ? 8 : 10
+        let total = checkpoint.numberWhole
         checkpoint.counterCount = min(total, max(0, checkpoint.counterCount + delta)); checkpoint.hasManipulated = true
         onSpeak("\(checkpoint.counterCount)"); persist()
     }
@@ -89,7 +101,7 @@ final class LearningQuestEngine {
         }
         if checkpoint.questID == .circuitSpark && checkpoint.step == .challenge && !checkpoint.predictionMade {
             let correct = checkpoint.selectedChoice == "off"
-            let supported = checkpoint.attempts.contains { $0.entityID == "closed-circuit.challenge.prediction" && ($0.outcome == .help || $0.outcome == .incorrect) }
+            let supported = checkpoint.attempts.contains { $0.entityID == checkpoint.targetID + ".prediction" && ($0.outcome == .help || $0.outcome == .incorrect) }
             record(correct ? (supported ? .supportedCorrect : .independentCorrect) : .incorrect, response: checkpoint.selectedChoice ?? "none", targetSuffix: "prediction")
             checkpoint.predictionMade = true; checkpoint.supportVisible = !correct
             checkpoint.feedback = correct ? "Good prediction. Now close both switches and watch the new circuit." : "One open switch breaks the loop. The light stays off. Now close both switches and watch what changes."
@@ -97,23 +109,28 @@ final class LearningQuestEngine {
         }
         let correct = isCorrect
         let currentTarget = checkpoint.targetID + (checkpoint.questID == .circuitSpark && checkpoint.step == .challenge ? ".repair" : "")
-        let hadSupport = checkpoint.attempts.contains { $0.entityID == currentTarget && ($0.outcome == .help || $0.outcome == .incorrect) }
+        let hadSupport = checkpoint.attempts.contains { $0.entityID == currentTarget && ($0.outcome == .help || $0.outcome == .incorrect || $0.outcome == .supportedCorrect) }
+            || (checkpoint.questID == .numbers && checkpoint.step == .play && checkpoint.attempts.contains {
+                $0.stageID == "remember" && ($0.outcome == .independentCorrect || $0.outcome == .supportedCorrect)
+            }) // This is rehearsal after the same answer was explained.
+            || (checkpoint.questID == .circuitSpark && checkpoint.step == .challenge) // Repair follows observed feedback; only the prediction is a probe.
         record(correct ? (hadSupport ? .supportedCorrect : .independentCorrect) : .incorrect, response: manipulationResponse, targetSuffix: checkpoint.questID == .circuitSpark && checkpoint.step == .challenge ? "repair" : nil)
         if checkpoint.questID == .waterCycle && checkpoint.step == .play { checkpoint.waterState = 2 }
         checkpoint.accepted = correct
         checkpoint.feedback = correct ? successExplanation : "\(retryExplanation) You can change your idea and try again."
-        if correct { completeStep() }
+        if correct && !(checkpoint.questID == .numbers && checkpoint.step == .challenge
+            && (checkpoint.numberProbeIndex ?? 0) + 1 < checkpoint.numberProbeCount) { completeStep() }
         onSpeak(checkpoint.feedback); persist()
     }
     private var activeChild: Bool { checkpoint.profileID == profileID() }
     private var isCorrect: Bool {
         switch (checkpoint.questID, checkpoint.step) {
-        case (.numbers, .remember): checkpoint.selectedChoice == String(10-checkpoint.learnedLeftPart)
-        case (.numbers, .play): checkpoint.counterCount == 10-checkpoint.learnedLeftPart
-        case (.numbers, .challenge): checkpoint.counterCount == 5
+        case (.numbers, .remember): checkpoint.selectedChoice == String(checkpoint.numberAnswer)
+        case (.numbers, .play): checkpoint.counterCount == checkpoint.numberAnswer
+        case (.numbers, .challenge): checkpoint.counterCount == checkpoint.numberAnswer
         case (.shapes, .remember): checkpoint.selectedChoice == "triangle"
         case (.shapes, .play): validTriangle
-        case (.shapes, .challenge): checkpoint.selectedChoice == "rectangle"
+        case (.shapes, .challenge): checkpoint.selectedChoice == checkpoint.shapeTransferKind
         case (.waterCycle, .remember): checkpoint.selectedChoice == "vapor"
         case (.waterCycle, .play): checkpoint.selectedChoice == "drops"
         case (.waterCycle, .challenge): checkpoint.selectedChoice == "outside"
@@ -148,7 +165,7 @@ final class LearningQuestEngine {
     }
     private var successExplanation: String {
         switch checkpoint.questID {
-        case .numbers: return checkpoint.step == .challenge ? "Three and five make eight! The same parts-and-whole idea works at the picnic." : "\(checkpoint.learnedLeftPart) and \(10-checkpoint.learnedLeftPart) make ten. You filled the missing part!"
+        case .numbers: return "\(checkpoint.numberKnownPart) and \(checkpoint.numberAnswer) make \(checkpoint.numberWhole). You found the missing part!"
         case .shapes: return checkpoint.step == .play ? "Three corners joined by three straight sides make a triangle." : "You found it. Turning changes direction, not the shape's name."
         case .waterCycle: return "You used the water-changing idea. Warmth helps make invisible gas; cooling helps make liquid drops."
         case .circuitSpark: return "You predicted and repaired the path. A full loop lets the pretend battery light the bulb."
@@ -158,7 +175,7 @@ final class LearningQuestEngine {
     }
     private var retryExplanation: String {
         switch checkpoint.questID {
-        case .numbers: return checkpoint.counterCount < (checkpoint.step == .challenge ? 5 : 10-checkpoint.learnedLeftPart) ? "There is still space in the whole. Count the missing spaces." : "Check the whole: use the picture to find the missing part."
+        case .numbers: return checkpoint.counterCount < checkpoint.numberAnswer ? "There is still space in the whole. Count the missing spaces." : "Check the whole: use the picture to find the missing part."
         case .shapes: return "Count corners and straight sides. A triangle has exactly three, joined into a closed shape."
         case .waterCycle: return checkpoint.step == .play ? "Look at what happened: cooling made tiny drops in the cloud." : "Think about warm water becoming gas, and cool gas becoming drops."
         case .circuitSpark: return "Trace the path. A gap or open switch keeps the light off."
@@ -169,7 +186,12 @@ final class LearningQuestEngine {
     private func record(_ outcome: ItemAttemptOutcome, response: String, targetSuffix: String? = nil) {
         let suffix = targetSuffix ?? (checkpoint.questID == .circuitSpark && checkpoint.step == .challenge ? (checkpoint.predictionMade ? "repair" : "prediction") : nil)
         let target = checkpoint.targetID + (suffix.map { ".\($0)" } ?? "")
-        let attempt = ItemAttempt(activityID: checkpoint.activityID, conceptID: checkpoint.questID.conceptID, entityID: target, propertyID: checkpoint.isTransfer ? "transfer" : "practice", stageID: checkpoint.step.rawValue, outcome: outcome, response: response, profileID: checkpoint.profileID, sessionID: checkpoint.sessionID, contentVersion: checkpoint.contentVersion)
+        let attempt = ItemAttempt(activityID: checkpoint.activityID, conceptID: checkpoint.questID.conceptID, entityID: target, propertyID: checkpoint.isTransfer ? "transfer" : "practice", stageID: checkpoint.step.rawValue, outcome: outcome, response: response, profileID: checkpoint.profileID, sessionID: checkpoint.sessionID, contentVersion: checkpoint.contentVersion,
+            itemVariantID: checkpoint.questID == .numbers ? (checkpoint.step == .challenge ? checkpoint.numberProbe.id : checkpoint.numbersVariant?.id) : checkpoint.pilotVariant?.id,
+            appHintUsed: outcome == .help || outcome == .supportedCorrect || checkpoint.attempts.contains { $0.entityID == target && ($0.outcome == .help || $0.outcome == .incorrect || $0.outcome == .supportedCorrect) },
+            isFreshProbe: checkpoint.questID == .numbers ? (checkpoint.step == .challenge ? checkpoint.isFreshNumberProbe : false)
+                : checkpoint.pilotVariant != nil ? (checkpoint.step == .challenge && suffix != "repair" ? checkpoint.pilotProbeFresh : false) : nil,
+            adultHelp: .unknown)
         checkpoint.attempts.append(attempt); onAttempt(attempt, checkpoint.sessionID); persist()
     }
     private func completeStep() {
@@ -178,10 +200,20 @@ final class LearningQuestEngine {
     }
     private func advance() {
         guard let index = LearningQuestStep.allCases.firstIndex(of: checkpoint.step), index + 1 < LearningQuestStep.allCases.count else { return }
-        checkpoint.step = LearningQuestStep.allCases[index+1]
+        let anotherNumberProbe = checkpoint.questID == .numbers && checkpoint.step == .challenge
+            && (checkpoint.numberProbeIndex ?? 0) + 1 < checkpoint.numberProbeCount
+        if anotherNumberProbe { checkpoint.numberProbeIndex = (checkpoint.numberProbeIndex ?? 0) + 1 }
+        else { checkpoint.step = LearningQuestStep.allCases[index+1] }
+        if checkpoint.step == .challenge {
+            if checkpoint.questID == .numbers { store.markProbeSeen(checkpoint.numberProbe.id) }
+            if let pilot = checkpoint.pilotVariant { store.markProbeSeen(pilot.id) }
+        }
         checkpoint.selectedChoice = nil; checkpoint.accepted = false; checkpoint.hasManipulated = false; checkpoint.supportVisible = false; checkpoint.feedback = ""
         checkpoint.counterCount = 0; checkpoint.selectedPoints = []; checkpoint.angleDegrees = 30; checkpoint.waterState = checkpoint.questID == .waterCycle && checkpoint.step == .play ? 1 : 0; checkpoint.predictionMade = false
         checkpoint.wireConnected = checkpoint.step != .play; checkpoint.switchClosed = checkpoint.step != .learn; checkpoint.secondSwitchClosed = false
+        if checkpoint.questID == .circuitSpark && checkpoint.step == .challenge, let openSwitch = checkpoint.pilotVariant?.openSwitch {
+            checkpoint.switchClosed = openSwitch != 1; checkpoint.secondSwitchClosed = openSwitch != 2
+        }
         checkpoint.mirrorCells = checkpoint.step == .challenge ? [true, true, true] : [false, false, true]; checkpoint.folded = false
         persist(); speakPrompt()
     }

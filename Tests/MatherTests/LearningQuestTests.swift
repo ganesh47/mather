@@ -51,13 +51,19 @@ struct LearningQuestTests {
         engine.submit(); engine.submit()
         #expect(engine.checkpoint.step == .challenge)
         for _ in 0..<5 { engine.adjustCount(1) }
+        engine.submit(); engine.submit()
+        #expect(engine.checkpoint.step == .challenge)
+        #expect(engine.checkpoint.numberProbe.id == "coat-7-1")
+        for _ in 0..<6 { engine.adjustCount(1) }
         engine.submit(); engine.submit(); engine.submit()
         let saved = try #require(result)
         #expect(saved.completedStageIDs == ["learn", "remember", "play", "challenge", "celebrate"])
         #expect(saved.attempts.filter { $0.outcome == .exposure }.count == 1)
         #expect(saved.attempts.filter { $0.outcome == .independentCorrect }.count == 3)
+        #expect(saved.attempts.first { $0.stageID == "play" }?.outcome == .supportedCorrect)
+        #expect(saved.attempts.first { $0.stageID == "play" }?.isFreshProbe == false)
         #expect(saved.attempts.last?.propertyID == "transfer")
-        #expect(saved.attempts.last?.response == "placed=5")
+        #expect(saved.attempts.last?.response == "placed=6")
         #expect(saved.profileID == "child-a")
         #expect(store.checkpoint(for: .numbers) == nil)
     }
@@ -116,7 +122,8 @@ struct LearningQuestTests {
         #expect(transfer.count == 2)
         #expect(Set(transfer.map(\.entityID)).count == 2)
         #expect(transfer.map(\.response) == ["off", "wire=true;switch=true;second=true"])
-        #expect(transfer.allSatisfy { $0.outcome == .independentCorrect })
+        #expect(transfer.map(\.outcome) == [.independentCorrect, .supportedCorrect])
+        #expect(transfer.last?.appHintUsed == true)
     }
     @Test func shapeExplorationNeedsFourShapesAndRotationAndRejectsCollinearCorners() {
         let (_, _, engine) = fixture()
@@ -262,7 +269,7 @@ struct LearningQuestTests {
     }
     @Test func parentEvidenceSeparatesExposureSupportAndActualTransferAndDeduplicates() {
         func attempt(_ outcome: ItemAttemptOutcome, property: String? = nil) -> ItemAttempt {
-            ItemAttempt(activityID: "quest", conceptID: "parts", entityID: UUID().uuidString, propertyID: property, stageID: "challenge", outcome: outcome)
+            ItemAttempt(activityID: "quest", conceptID: "parts", entityID: UUID().uuidString, propertyID: property, stageID: "challenge", outcome: outcome, isFreshProbe: property == "transfer" ? true : nil)
         }
         let transfer = attempt(.independentCorrect, property: "transfer")
         let summary = ParentLearningEvidenceSummary(attempts: [attempt(.exposure), attempt(.help), attempt(.supportedCorrect, property: "transfer"), transfer, transfer])
@@ -271,4 +278,196 @@ struct LearningQuestTests {
         #expect(summary.supported == 1)
         #expect(summary.independentTransfers == 1)
     }
+    private func finishNumbers(_ engine: LearningQuestEngine) {
+        engine.adjustCount(1); engine.submit()
+        engine.choose(String(engine.checkpoint.numberAnswer)); engine.submit(); engine.submit()
+        for _ in 0..<engine.checkpoint.numberAnswer { engine.adjustCount(1) }
+        engine.submit(); engine.submit()
+        while engine.checkpoint.step == .challenge {
+            for _ in 0..<engine.checkpoint.numberAnswer { engine.adjustCount(1) }
+            engine.submit(); engine.submit()
+        }
+        engine.submit()
+    }
+    @Test func reviewedNumberBankHasCorrectUniqueChangedWholeProbesAndCompleteChoices() {
+        let probes = LearningNumbersVariant.reviewed.flatMap(\.probes)
+        #expect(probes.count == 6)
+        #expect(Set(probes.map(\.id)).count == probes.count)
+        #expect(Set(probes.map { "\($0.total)-\($0.knownPart)" }).count == probes.count)
+        for (ordinal, variant) in LearningNumbersVariant.reviewed.enumerated() {
+            #expect(variant.isReviewed)
+            #expect(Set(variant.probes.map(\.answer)).count == variant.probes.count)
+            #expect(LearningNumbersVariant.at(ordinal: ordinal + 3) == variant)
+            #expect(variant.probes.allSatisfy { (1...9).contains($0.total) && (1..<$0.total).contains($0.knownPart) && $0.answer + $0.knownPart == $0.total })
+            for part in 0...10 {
+                var state = LearningQuestCheckpoint(profileID: "child-a", questID: .numbers, numbersVariant: variant)
+                state.step = .remember; state.learnedLeftPart = part
+                #expect(state.choices.count == 3)
+                #expect(Set(state.choices.map(\.id)).count == 3)
+                #expect(state.choices.contains { $0.id == String(10-part) })
+            }
+        }
+    }
+    @Test func repeatedSupportedPracticeAndIndependentFreshProbeRemainDistinctAfterResume() throws {
+        let (profile, store, engine) = fixture()
+        engine.start(.numbers); engine.adjustCount(1); engine.submit(); engine.help()
+        engine.choose("3"); engine.submit(); engine.submit()
+        let resumed = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+        var replay: [ItemAttempt] = []
+        resumed.onAttempt = { attempt, _ in replay.append(attempt) }
+        resumed.start(.numbers)
+        #expect(replay.map(\.id) == engine.checkpoint.attempts.map(\.id))
+        for _ in 0..<3 { resumed.adjustCount(1) }
+        resumed.submit()
+        #expect(resumed.checkpoint.attempts.last?.outcome == .supportedCorrect)
+        #expect(resumed.checkpoint.attempts.last?.appHintUsed == true)
+        #expect(resumed.checkpoint.attempts.last?.isFreshProbe == false)
+        resumed.submit(); resumed.help()
+        for _ in 0..<5 { resumed.adjustCount(1) }
+        resumed.submit(); resumed.submit()
+        #expect(resumed.checkpoint.step == .challenge)
+        #expect(!resumed.checkpoint.completedSteps.contains(.challenge))
+        #expect(resumed.checkpoint.counterCount == 0)
+        let freshCheckpoint = resumed.checkpoint
+        let resumedProbe = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+        resumedProbe.start(.numbers)
+        var restored = resumedProbe.checkpoint; restored.updatedAt = freshCheckpoint.updatedAt
+        #expect(restored == freshCheckpoint)
+        #expect(resumedProbe.checkpoint.numberProbeIndex == 1)
+        for _ in 0..<6 { resumedProbe.adjustCount(1) }
+        resumedProbe.submit()
+        let last = try #require(resumedProbe.checkpoint.attempts.last)
+        #expect(last.outcome == .independentCorrect)
+        #expect(last.appHintUsed == false)
+        #expect(last.isFreshProbe == true)
+        #expect(last.adultHelp == .unknown)
+        #expect(resumedProbe.checkpoint.completedSteps.contains(.challenge))
+    }
+    @Test func rotationIsPersistentChildScopedAndRecycledProbesAreNotFresh() throws {
+        let (profile, store, engine) = fixture()
+        var variants: [String] = []
+        for index in 0..<4 {
+            engine.start(.numbers)
+            variants.append(try #require(engine.checkpoint.numbersVariant).id)
+            #expect(engine.checkpoint.numberProbeFreshness == [index < 3, index < 3])
+            let before = engine.checkpoint
+            engine.start(.numbers)
+            #expect(engine.checkpoint.variantOrdinal == before.variantOrdinal)
+            finishNumbers(engine)
+        }
+        #expect(variants == LearningNumbersVariant.reviewed.map(\.id) + [LearningNumbersVariant.reviewed[0].id])
+        profile.id = "child-b"; engine.start(.numbers)
+        #expect(engine.checkpoint.variantOrdinal == 0)
+        #expect(engine.checkpoint.numberProbeFreshness == [true, true])
+        store.reset(); engine.start(.numbers)
+        #expect(engine.checkpoint.variantOrdinal == 0)
+        profile.id = "child-a"; engine.start(.numbers)
+        #expect(engine.checkpoint.variantOrdinal == 4)
+        store.clearAllProfiles(); engine.start(.numbers)
+        #expect(engine.checkpoint.variantOrdinal == 0)
+    }
+    @Test func legacyCheckpointRetainsSingleTaskAndSupportWhileUnknownBankIsRejected() throws {
+        let (profile, store, engine) = fixture()
+        var old = LearningQuestCheckpoint(profileID: profile.id, questID: .numbers, numbersVariant: nil, variantOrdinal: nil)
+        old.step = .challenge; old.counterCount = 4
+        old.attempts = [ItemAttempt(activityID: old.activityID, conceptID: "number-bond", entityID: "number-bond.challenge", propertyID: "transfer", stageID: "challenge", outcome: .help)]
+        let encoded = try JSONEncoder().encode(old)
+        let decoded = try JSONDecoder().decode(LearningQuestCheckpoint.self, from: encoded)
+        store.save(decoded); engine.start(.numbers)
+        #expect(engine.checkpoint.numbersVariant == nil)
+        #expect(engine.checkpoint.numberProbeCount == 1)
+        engine.adjustCount(1); engine.submit()
+        #expect(engine.checkpoint.attempts.last?.outcome == .supportedCorrect)
+        #expect(engine.checkpoint.attempts.last?.isFreshProbe == nil)
+        engine.submit(); #expect(engine.checkpoint.step == .celebrate)
+        var corrupted = LearningQuestCheckpoint(profileID: profile.id, questID: .numbers)
+        corrupted.numbersVariant = .init(id: "unreviewed", initialPart: 99, probes: [])
+        store.save(corrupted)
+        #expect(store.checkpoint(for: .numbers) == nil)
+    }
+    @Test func recognitionChoiceLabelsDoNotNameTheAnswer() {
+        for quest in [LearningQuestID.shapes, .angles, .symmetry, .circuitSpark] {
+            var state = LearningQuestCheckpoint(profileID: "child-a", questID: quest)
+            state.step = .remember
+            #expect(state.choices.allSatisfy { $0.label.hasPrefix("Picture ") })
+        }
+        var shape = LearningQuestCheckpoint(profileID: "child-a", questID: .shapes)
+        shape.step = .challenge
+        #expect(shape.choices.allSatisfy { $0.label.hasPrefix("Picture ") })
+        #expect(LearningQuestID.allCases.allSatisfy { !$0.offscreenPrompt.isEmpty })
+    }
+
+    @Test func reviewedPilotVariantsCompleteAndResumeWithTheirFrozenArrangement() throws {
+        for quest in [LearningQuestID.shapes, .waterCycle, .circuitSpark] {
+            let (profile, store, engine) = fixture()
+            for ordinal in 0..<3 {
+                engine.start(quest)
+                let variant = try #require(engine.checkpoint.pilotVariant)
+                #expect(variant.isReviewed)
+                #expect(engine.checkpoint.pilotProbeFresh == (ordinal < 2))
+                switch quest {
+                case .shapes:
+                    for shape in ["circle", "square", "rectangle"] { engine.selectShape(shape) }
+                    engine.turnShape(); engine.submit(); answer(engine, "triangle")
+                    for point in [0, 1, 3] { engine.togglePoint(point) }
+                    engine.submit(); engine.submit()
+                case .waterCycle:
+                    engine.warmWater(); engine.coolWater(); engine.submit()
+                    answer(engine, "vapor"); answer(engine, "drops")
+                case .circuitSpark:
+                    engine.toggleSwitch(); engine.submit(); answer(engine, "closed")
+                    engine.repairWire(); engine.submit(); engine.submit()
+                default: break
+                }
+                let resumed = LearningQuestEngine(store: store, activeProfileID: { profile.id })
+                resumed.start(quest)
+                #expect(resumed.checkpoint.pilotVariant == variant)
+                #expect(resumed.checkpoint.step == .challenge)
+                switch quest {
+                case .shapes: resumed.choose(variant.shapeKind!); resumed.submit()
+                case .waterCycle: resumed.choose("outside"); resumed.submit()
+                case .circuitSpark:
+                    #expect(resumed.checkpoint.switchClosed == (variant.openSwitch != 1))
+                    #expect(resumed.checkpoint.secondSwitchClosed == (variant.openSwitch != 2))
+                    resumed.choose("off"); resumed.submit()
+                    if !resumed.checkpoint.switchClosed { resumed.toggleSwitch() }
+                    if !resumed.checkpoint.secondSwitchClosed { resumed.toggleSwitch(second: true) }
+                    resumed.submit()
+                default: break
+                }
+                #expect(resumed.checkpoint.accepted)
+                let probes = resumed.checkpoint.attempts.filter { $0.stageID == "challenge" && $0.isFreshProbe == true }
+                #expect(probes.count == (ordinal < 2 ? 1 : 0))
+                #expect(probes.allSatisfy { $0.outcome == .independentCorrect && $0.adultHelp == .unknown })
+                resumed.submit(); resumed.submit()
+                #expect(store.checkpoint(for: quest) == nil)
+            }
+        }
+    }
+    @Test func parentTaskDenominatorsDeduplicateRetriesAndExcludeUnverifiedTransfers() {
+        let when = Date(timeIntervalSince1970: 100)
+        func event(_ entity: String, _ outcome: ItemAttemptOutcome, stage: String, fresh: Bool? = nil) -> ItemAttempt {
+            ItemAttempt(activityID: "quest-numbers", conceptID: "number-bond", entityID: entity,
+                propertyID: stage == "challenge" ? "transfer" : "practice", stageID: stage, outcome: outcome,
+                occurredAt: when, profileID: "child-a", sessionID: "session-a", isFreshProbe: fresh, adultHelp: .unknown)
+        }
+        let fresh = event("fresh-two", .independentCorrect, stage: "challenge", fresh: true)
+        let events = [event("practice", .help, stage: "remember"), event("practice", .supportedCorrect, stage: "remember"),
+            event("practice", .supportedCorrect, stage: "play"), event("fresh-one", .incorrect, stage: "challenge", fresh: true),
+            event("fresh-one", .supportedCorrect, stage: "challenge", fresh: true), fresh, fresh,
+            event("legacy", .independentCorrect, stage: "challenge")]
+        let summary = ParentLearningEvidenceSummary(attempts: events)
+        #expect(summary.tasksAttempted == 4)
+        #expect(summary.independent == 2)
+        #expect(summary.supported == 2)
+        #expect(summary.freshProbes == 2)
+        #expect(summary.independentTransfers == 1)
+        #expect(summary.unverifiedTransfers == 1)
+        let rows = ParentLearningConceptEvidence.rows(from: events)
+        #expect(rows.count == 1)
+        #expect(rows.first?.title == "Parts and wholes")
+        #expect(rows.first?.latestDate == when)
+        #expect(rows.first?.summary == summary)
+    }
+
 }
