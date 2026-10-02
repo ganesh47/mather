@@ -324,9 +324,11 @@ struct SettingsView: View {
                 }
                 if let issue = appModel.questCheckpointStore.storageIssue {
                     Text(issue.message).foregroundStyle(.red)
-                    Button("Delete all quest checkpoints", role: .destructive) { showingQuestDeletion = true }
-                        .buttonStyle(DestructiveOutlineButtonStyle())
-                        .accessibilityIdentifier("settings-delete-all-quest-checkpoints")
+                    if issue != .unsupportedPriorAttempts {
+                        Button("Delete all quest checkpoints", role: .destructive) { showingQuestDeletion = true }
+                            .buttonStyle(DestructiveOutlineButtonStyle())
+                            .accessibilityIdentifier("settings-delete-all-quest-checkpoints")
+                    }
                 }
             }
         }

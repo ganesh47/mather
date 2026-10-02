@@ -47,11 +47,16 @@ final class TVFamilyLearningUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["tv-family-title"].waitForExistence(timeout: 10))
         choose(app, app.buttons["tv-family-clear-selected"])
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
-        choose(app, app.alerts.buttons["Cancel"])
+        attach("TV parent reset confirmation before cancel")
+        XCUIRemote.shared.press(.menu)
+        XCTAssertTrue(app.staticTexts["tv-family-title"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 with help"))
         choose(app, app.buttons["tv-family-clear-selected"])
-        choose(app, app.alerts.buttons["Clear learning"])
-        XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("0 with help"))
+        attach("TV parent reset confirmation before clear")
+        chooseAlert(app, label: "Clear learning")
+        let cleared = expectation(for: NSPredicate(format: "label CONTAINS %@", "0 with help"), evaluatedWith: app.staticTexts["tv-family-evidence"])
+        wait(for: [cleared], timeout: 5)
+        XCTAssertFalse(app.staticTexts["tv-family-reset-message"].exists, app.debugDescription)
         XCTAssertEqual(app.staticTexts["tv-family-selected"].label, "Playing: Alex")
         attach("TV confirmed learner reset")
     }
@@ -79,6 +84,25 @@ final class TVFamilyLearningUITests: XCTestCase {
         choose(app, app.buttons["tv-family-panel"])
         XCTAssertTrue(app.staticTexts["tv-family-evidence"].label.contains("1 answers without app help"))
         attach("Reentered shape has one durable answer")
+    }
+
+    private func chooseAlert(_ app: XCUIApplication, label: String) {
+        let matches = app.alerts.buttons.matching(identifier: label)
+        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 5))
+        // tvOS exposes both a focusable wrapper and its nested action.
+        for _ in 0..<12 {
+            if matches.allElementsBoundByIndex.contains(where: { $0.hasFocus }) {
+                XCUIRemote.shared.press(.select)
+                return
+            }
+            let target = matches.firstMatch
+            let current = app.buttons.matching(NSPredicate(format: "hasFocus == true")).firstMatch
+            XCTAssertTrue(current.waitForExistence(timeout: 5))
+            let dx = target.frame.midX - current.frame.midX
+            let dy = target.frame.midY - current.frame.midY
+            XCUIRemote.shared.press(abs(dy) > 40 ? (dy > 0 ? .down : .up) : (dx > 0 ? .right : .left))
+        }
+        XCTFail("Could not focus alert action \(label): \(app.debugDescription)")
     }
 
     private func choose(_ app: XCUIApplication, _ target: XCUIElement) {

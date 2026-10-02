@@ -10,6 +10,7 @@ struct TVFamilyLearningView: View {
     @State private var narration = TVNarrationController()
     @State private var companionContext: TVLearningContext?
     @State private var deletionContext: TVLearningContext?
+    @State private var showsSelectedDeletion = false
     @State private var showsAllDeletion = false
     @State private var resetMessage: String?
 
@@ -40,7 +41,7 @@ struct TVFamilyLearningView: View {
         .sheet(item: $companionContext) { context in
             LearningCompanionView(profileID: context.profileID, displayName: context.name, onClose: { companionContext = nil })
         }
-        .alert("Clear this learner's TV learning?", isPresented: Binding(get: { deletionContext != nil }, set: { if !$0 { deletionContext = nil } })) {
+        .alert("Clear this learner's TV learning?", isPresented: $showsSelectedDeletion) {
             Button("Cancel", role: .cancel) { deletionContext = nil }
             Button("Clear learning", role: .destructive) {
                 if let context = deletionContext { resetMessage = onClearSelected(context) }
@@ -81,11 +82,11 @@ struct TVFamilyLearningView: View {
             }
             Button("Parent: continue an idea") { companionContext = store.context }
                 .accessibilityIdentifier("tv-family-companion")
-            Button("Parent: clear \(store.context.name)'s learning") { deletionContext = store.context }
+            Button("Parent: clear \(store.context.name)'s learning") { deletionContext = store.context; showsSelectedDeletion = true }
                 .accessibilityIdentifier("tv-family-clear-selected")
             Button("Parent: delete all TV learning") { showsAllDeletion = true }
                 .accessibilityIdentifier("tv-family-clear-all")
-            if let resetMessage { Text(resetMessage).font(.system(size: 23)).foregroundStyle(.yellow) }
+            if let resetMessage { Text(resetMessage).font(.system(size: 23)).foregroundStyle(.yellow).accessibilityIdentifier("tv-family-reset-message") }
         }.padding(24).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 24))
     }
 

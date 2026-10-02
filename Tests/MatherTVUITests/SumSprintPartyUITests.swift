@@ -32,6 +32,8 @@ final class SumSprintPartyUITests: XCTestCase {
         XCUIRemote.shared.press(.right)
         waitFocus(app.buttons["tv-sum-sprint-all-done"])
         XCUIRemote.shared.press(.select)
+        waitFocus(app.buttons["tv-mode-sprint"])
+        XCUIRemote.shared.press(.select)
         XCTAssertTrue(app.buttons["tv-sum-sprint-range-5"].waitForExistence(timeout: 10))
     }
 
@@ -104,7 +106,7 @@ final class SumSprintPartyUITests: XCTestCase {
         XCTAssertFalse(app.buttons["tv-sum-sprint-range-5"].exists)
         XCTAssertFalse(app.buttons["tv-sum-sprint-resume"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["tv-sum-sprint-picture-prompt"].firstMatch.exists)
-        waitFocus(app.buttons["tv-sum-sprint-recovery-repeat"])
+        waitFocus(app.buttons["tv-sum-sprint-recovery-exit"])
         XCUIRemote.shared.press(.playPause)
         screenshot("Unsupported history is preserved with a recovery message")
         XCUIRemote.shared.press(.menu)

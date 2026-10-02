@@ -268,6 +268,7 @@
 		E982982CABB43977EDECE3FF /* FactoryCardsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */; };
 		EA514902B3549363146AF031 /* SessionHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448A9249C8294633E1A87C43 /* SessionHistoryTests.swift */; };
 		EA9F6126D6C7D3EEABADF800 /* LearningCompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3B62612E4453F4318BE31C /* LearningCompanionView.swift */; };
+		EB1FE8A54095DD8864005F0E /* QuestPriorEvidenceReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AE1D91C7C35B8CDAA4B7C1 /* QuestPriorEvidenceReaderTests.swift */; };
 		EC6BF303C1C4C208BC9C95C9 /* ActivityLearningEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */; };
 		ECB54B0B0D69875B207B7B2D /* TVNarrationControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */; };
 		ECD8D5A562596BB07C9DDD9E /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A8BF9BA66E94F09BB1AC3C /* ClassicTheme.swift */; };
@@ -281,6 +282,7 @@
 		F2FE6235B5172729686213C7 /* LearningHandoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DF71CDD3207C95FF8C8800 /* LearningHandoffTests.swift */; };
 		F39D59589F91F6F6153E9B9B /* ShapeDetectiveTVSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD5F675BC6397940EC69C25 /* ShapeDetectiveTVSessionStore.swift */; };
 		F55EB25F2419D85355F9EC22 /* WaterCycleGameplayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */; };
+		F799E72B8D77460E16E77F6E /* QuestPriorEvidenceReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8B24DCB64263D42E8CC280 /* QuestPriorEvidenceReader.swift */; };
 		F923DB4F4C743145651425E1 /* ShapeDetectiveTVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCA407405915133AEE9E7FA /* ShapeDetectiveTVSession.swift */; };
 		FA5235973330EA5A32289F3D /* CompareCampPassportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F4303A94026305057151C /* CompareCampPassportStore.swift */; };
 		FAE49D35BAA07CE0B5573806 /* SessionHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBF689FCFE4D506002AB78E /* SessionHistoryStore.swift */; };
@@ -366,6 +368,7 @@
 		2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteQuestModels.swift; sourceTree = "<group>"; };
 		2E970DEFCF041ABB53657A27 /* HapticsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsServiceTests.swift; sourceTree = "<group>"; };
 		2F4016B80628D3A384DD33D8 /* MemoryGalleryContentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryContentStore.swift; sourceTree = "<group>"; };
+		31AE1D91C7C35B8CDAA4B7C1 /* QuestPriorEvidenceReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestPriorEvidenceReaderTests.swift; sourceTree = "<group>"; };
 		32A026C6F2490BFE57BBD4B6 /* SplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitView.swift; sourceTree = "<group>"; };
 		3306B614047A590655CA68FA /* SensorCapabilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorCapabilityServiceTests.swift; sourceTree = "<group>"; };
 		33D6998F27C6B1C6EFDA26B6 /* PlaceMatchServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceMatchServiceTests.swift; sourceTree = "<group>"; };
@@ -503,6 +506,7 @@
 		B9F8B3A242D38D5AA75D613C /* LabRememberStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabRememberStageView.swift; sourceTree = "<group>"; };
 		BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRecallReviewEngineTests.swift; sourceTree = "<group>"; };
 		BD8A34215EE8D8788E7185EB /* MatherTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTheme.swift; sourceTree = "<group>"; };
+		BD8B24DCB64263D42E8CC280 /* QuestPriorEvidenceReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestPriorEvidenceReader.swift; sourceTree = "<group>"; };
 		BF7F4303A94026305057151C /* CompareCampPassportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampPassportStore.swift; sourceTree = "<group>"; };
 		C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
 		C5C0EC27EA8E30BDA854CE9E /* RoomQuestEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestEngineTests.swift; sourceTree = "<group>"; };
@@ -636,6 +640,7 @@
 				897421EDA9E608319D73BD0F /* ParentOffscreenObservationStore.swift */,
 				6A29E7A58DAED343241CCEA8 /* PlaceMatchService.swift */,
 				3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */,
+				BD8B24DCB64263D42E8CC280 /* QuestPriorEvidenceReader.swift */,
 				704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */,
 				157718747997491EAA58488C /* SensorCapabilityService.swift */,
 				2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */,
@@ -752,6 +757,7 @@
 				EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */,
 				33D6998F27C6B1C6EFDA26B6 /* PlaceMatchServiceTests.swift */,
 				000C9B49685F8A6A3703EB65 /* ProblemGeneratorTests.swift */,
+				31AE1D91C7C35B8CDAA4B7C1 /* QuestPriorEvidenceReaderTests.swift */,
 				AFD37E9E79CB13908866EFD5 /* RectangleFactoryOnboardingTests.swift */,
 				8AD35E38E6ACEE1DF4AB812F /* RectangleFactoryTests.swift */,
 				62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */,
@@ -1362,6 +1368,7 @@
 				5A545D0F35C92DAEFBCFB14D /* ParentOffscreenObservationTests.swift in Sources */,
 				468988AB46B048C0A7DC0414 /* PlaceMatchServiceTests.swift in Sources */,
 				D0FA2DF7DD9A64D4BB9C8080 /* ProblemGeneratorTests.swift in Sources */,
+				EB1FE8A54095DD8864005F0E /* QuestPriorEvidenceReaderTests.swift in Sources */,
 				0226754603BAAA93415D4111 /* RectangleFactoryOnboardingTests.swift in Sources */,
 				6D1D0FF96EBD4238CCF37EB4 /* RectangleFactoryTests.swift in Sources */,
 				388F1605AC5009767EFB7F00 /* ResponsiveLayoutTests.swift in Sources */,
@@ -1520,6 +1527,7 @@
 				C7EEA58201720EC27B0B0B22 /* ProblemGenerator.swift in Sources */,
 				A6891D078FBDD42E246E32C9 /* ProfilePickerView.swift in Sources */,
 				DACF12D2FE3533F43646C074 /* QuestCheckpointStore.swift in Sources */,
+				F799E72B8D77460E16E77F6E /* QuestPriorEvidenceReader.swift in Sources */,
 				A779844753DA571C970996A5 /* RectangleFactoryView.swift in Sources */,
 				30A171142A2C7ECF758109BE /* ResponsiveLayout.swift in Sources */,
 				01BA7E85C10B874F9C3BE7F3 /* RoomQuestEngine.swift in Sources */,

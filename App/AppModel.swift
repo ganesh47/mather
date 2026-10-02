@@ -299,7 +299,12 @@ final class AppModel {
         let gameplayProgressStore = GameplayProgressStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let labConceptSessionProgressStore = LabConceptSessionProgressStore(activeProfileIdProvider: { profileStore.activeProfileId })
         let explorerLabMasteryStore = ExplorerLabMasteryStore(activeProfileIdProvider: { profileStore.activeProfileId })
-        let questCheckpointStore = QuestCheckpointStore(activeProfileID: { profileStore.activeProfileId })
+        let questCheckpointStore = QuestCheckpointStore(
+            activeProfileID: { profileStore.activeProfileId },
+            priorAttempts: {
+                QuestPriorEvidenceReader.attempts(profileID: profileStore.activeProfileId, context: modelContext)
+            }
+        )
         let learningQuestEngine = LearningQuestEngine(store: questCheckpointStore, activeProfileID: { profileStore.activeProfileId })
         let laneRecallReviewEngine = LaneRecallReviewEngine(activeProfileID: { profileStore.activeProfileId })
         let explorerLabMasteryProfile = explorerLabMasteryStore.load()
