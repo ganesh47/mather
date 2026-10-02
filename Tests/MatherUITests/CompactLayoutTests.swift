@@ -337,10 +337,15 @@ final class CompactLayoutTests: XCTestCase {
             primaryAction.tap()
         }
 
-        XCTAssertTrue(app.staticTexts["Cycle complete"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-primary-action"].isHittable)
-        XCTAssertTrue(app.buttons["water-cycle-replay-prompt"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["water-cycle-reset"].waitForExistence(timeout: 5))
+        // Completing the cycle now opens its picture lesson instead of keeping
+        // the earlier completion banner and cycle controls on screen.
+        XCTAssertTrue(app.staticTexts["Look & Learn"].waitForExistence(timeout: 5))
+        let nextCard = app.buttons["Next look card"]
+        XCTAssertTrue(nextCard.isHittable)
+        XCTAssertTrue(app.buttons["Replay stage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Reset"].waitForExistence(timeout: 5))
+        nextCard.tap()
+        XCTAssertTrue(app.staticTexts["Level 1 of 4 - Card 2 of 5"].waitForExistence(timeout: 5))
     }
 
     func testCountryCardsCompactGameplayControlsStayPinned() throws {
