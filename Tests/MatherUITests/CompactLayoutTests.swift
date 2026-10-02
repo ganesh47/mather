@@ -295,7 +295,7 @@ final class CompactLayoutTests: XCTestCase {
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 10)
 
         configureRoomQuestSetupViaManualFallback(app)
-        app.buttons["Ready, start Room Quest!"].tap()
+        tapWhenHittable(app.buttons["Ready, start Room Quest!"], in: app)
 
         XCTAssertTrue(app.staticTexts["Red Rocket"].waitForExistence(timeout: 10))
 
@@ -391,35 +391,26 @@ final class CompactLayoutTests: XCTestCase {
     }
 
     private func configureRoomQuestSetupViaManualFallback(_ app: XCUIApplication) {
-        let redCard = app.otherElements["room-station-card-redRocket"]
-        let blueCard = app.otherElements["room-station-card-blueBubble"]
-
-        XCTAssertTrue(redCard.waitForExistence(timeout: 5))
-        XCTAssertTrue(blueCard.waitForExistence(timeout: 5))
-
-        redCard.buttons["Scan station marker"].tap()
-        XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
-        tapWhenHittable(redCard.buttons["Save same-place fallback"], in: app)
-
-        blueCard.buttons["Scan station marker"].tap()
-        XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
-        tapWhenHittable(blueCard.buttons["Save same-place fallback"], in: app)
+        // Compact station cards are materialized as the parent scrolls them
+        // into view. Configure each actual station before starting the child.
+        for role in ["redRocket", "blueBubble"] {
+            tapWhenHittable(app.buttons["room-station-camera-\(role)"], in: app)
+            XCTAssertTrue(app.staticTexts["room-scan-status"].waitForExistence(timeout: 5))
+            tapWhenHittable(app.buttons["room-station-manual-\(role)"], in: app)
+        }
     }
 
     private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication) {
-        XCTAssertTrue(element.waitForExistence(timeout: 5))
-        for _ in 0..<6 {
-            if element.isHittable {
+        for _ in 0..<8 {
+            if element.exists, element.isHittable,
+               element.frame.minY >= app.frame.minY + 50,
+               element.frame.maxY <= app.frame.maxY - 20 {
                 element.tap()
                 return
             }
             app.swipeUp()
         }
-        if element.exists {
-            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            return
-        }
-        XCTFail("Expected element to exist before tap fallback: \(element)")
+        XCTFail("Expected a fully visible, hittable control after scrolling: \(element)")
     }
 
     private func launch(startRoute: String? = nil) -> XCUIApplication {
