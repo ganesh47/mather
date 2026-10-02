@@ -211,16 +211,37 @@ final class LearningQuestUITests: XCTestCase {
     }
     private func tap(_ identifier: String, in app: XCUIApplication) {
         let button = app.buttons[identifier]
-        XCTAssertTrue(button.waitForExistence(timeout: 5), "Missing \(identifier)")
-        for _ in 0..<5 {
-            if button.isHittable { break }
-            if button.frame.minY < app.windows.firstMatch.frame.minY + 80 {
-                app.scrollViews.firstMatch.swipeDown()
+        var didScroll = false
+        // Lazy grids and Forms create offscreen buttons only after scrolling.
+        // A presented Form is a collection view above the underlying summary.
+        for _ in 0..<8 {
+            if button.exists, button.isHittable { break }
+            let visibleContainer = [.collectionView, .table, .scrollView]
+                .lazy
+                .compactMap { (type: XCUIElement.ElementType) in
+                    app.descendants(matching: type).allElementsBoundByIndex.reversed()
+                        .first { $0.exists && $0.isHittable }
+                }
+                .first
+            guard let visibleContainer else { break }
+            if button.exists, button.frame.minY < app.windows.firstMatch.frame.minY + 80 {
+                visibleContainer.swipeDown()
             } else {
-                app.scrollViews.firstMatch.swipeUp()
+                visibleContainer.swipeUp()
             }
+            didScroll = true
         }
-        XCTAssertTrue(button.isHittable, "Unreachable \(identifier)")
+        guard button.waitForExistence(timeout: 2) else {
+            snapshot(app, "Missing-\(identifier)")
+            XCTFail("Missing \(identifier) after bounded visible scrolling")
+            return
+        }
+        guard button.isHittable else {
+            snapshot(app, "Unreachable-\(identifier)")
+            XCTFail("Unreachable \(identifier) after bounded visible scrolling")
+            return
+        }
+        if didScroll { snapshot(app, "Scrolled-\(identifier)") }
         button.tap()
     }
     private func submitAndContinue(in app: XCUIApplication) {
