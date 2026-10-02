@@ -90,7 +90,8 @@ jobs:
 
   apple-testflight:
     name: Publish iOS and tvOS to TestFlight
-    runs-on: macos-15
+    # API-only preparation/diagnostics do not need Xcode or a scarce Mac runner.
+    runs-on: ${{ (inputs.prepare_tag_only || inputs.diagnostics_only) && 'ubuntu-latest' || 'macos-15' }}
     timeout-minutes: 80
     environment: testflight-release
 
@@ -98,6 +99,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Select Xcode
+        if: ${{ !inputs.prepare_tag_only && !inputs.diagnostics_only }}
         run: sudo xcode-select -s /Applications/Xcode.app
 
       - name: Install App Store Connect client dependencies
