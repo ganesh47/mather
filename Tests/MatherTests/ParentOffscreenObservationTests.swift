@@ -11,6 +11,19 @@ private final class ObservationDefaults: ExplorerLabMasteryKeyValueStore {
 
 @MainActor
 struct ParentOffscreenObservationTests {
+    @Test func nonDataUserDefaultsValueIsPreservedUntilExplicitAllReset() throws {
+        let suite = "parent-observation-test-\(UUID().uuidString)", key = "parentOffscreenObservations.v1"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("unsupported future storage", forKey: key)
+        let store = ParentOffscreenObservationStore(storage: defaults)
+        #expect(store.storageIssue == .unreadableHistory)
+        #expect(store.record(profileID: "a", questID: .numbers, outcome: .notYet) == nil)
+        #expect(!store.clearSelectedProfile(profileID: "a"))
+        #expect(defaults.string(forKey: key) == "unsupported future storage")
+        store.clearAllProfiles()
+        #expect(defaults.object(forKey: key) == nil && store.storageIssue == nil)
+    }
     @Test func reportsPersistConceptDateAndParentHelpSeparatelyForEachChild() throws {
         let defaults = ObservationDefaults(), store = ParentOffscreenObservationStore(storage: ObservationDefaults())
         #expect(store.record(profileID: "", questID: .numbers, outcome: .notYet) == nil)

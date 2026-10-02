@@ -163,6 +163,23 @@ final class LearningQuestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["parent-summary-companion"].waitForExistence(timeout: 5))
     }
 
+    func testUnsupportedQuestStorageShowsPausedContextAndQuitWithoutPlayControls() {
+        let app = XCUIApplication()
+        for key in ["learningQuestCheckpoints.v1", "learningQuestCheckpoints.v1.reviewedVariants.v1"] {
+            app.launchArguments = arguments("quest-shapes", clear: false) + ["-" + key, "unsupported-test-value"]
+            app.launch()
+            XCTAssertTrue(app.staticTexts["quest-paused"].waitForExistence(timeout: 10))
+            XCTAssertTrue(app.staticTexts["quest-storage-message"].label.contains("Delete all quest checkpoints in Settings"))
+            XCTAssertFalse(app.buttons["quest-primary"].exists)
+            XCTAssertFalse(app.buttons["quest-help"].exists)
+            XCTAssertFalse(app.buttons["quest-save"].exists)
+            snapshot(app, "Quest-Storage-Paused")
+            tap("quest-paused-quit", in: app)
+            XCTAssertTrue(app.buttons["Parent Summary"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
+    }
+
     private func launch(_ route: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = arguments(route, clear: true)

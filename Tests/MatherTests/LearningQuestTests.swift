@@ -7,8 +7,9 @@ import Testing
 private final class QuestTestProfile { var id = "child-a" }
 private final class QuestTestDefaults: ExplorerLabMasteryKeyValueStore {
     var values: [String: Data] = [:]
+    var rejectWrites = false
     func data(forKey key: String) -> Data? { values[key] }
-    func set(_ value: Data?, forKey key: String) { values[key] = value }
+    func set(_ value: Data?, forKey key: String) { if !rejectWrites { values[key] = value } }
     func removeObject(forKey key: String) { values.removeValue(forKey: key) }
 }
 
@@ -382,8 +383,8 @@ struct LearningQuestTests {
         engine.submit(); #expect(engine.checkpoint.step == .celebrate)
         var corrupted = LearningQuestCheckpoint(profileID: profile.id, questID: .numbers)
         corrupted.numbersVariant = .init(id: "unreviewed", initialPart: 99, probes: [])
-        store.save(corrupted)
-        #expect(store.checkpoint(for: .numbers) == nil)
+        #expect(!store.save(corrupted))
+        #expect(store.checkpoint(for: .numbers)?.numbersVariant == nil)
     }
     @Test func recognitionChoiceLabelsDoNotNameTheAnswer() {
         for quest in [LearningQuestID.shapes, .angles, .symmetry, .circuitSpark] {
@@ -470,4 +471,141 @@ struct LearningQuestTests {
         #expect(rows.first?.summary == summary)
     }
 
+}
+
+@MainActor
+struct QuestCheckpointStorageTests {
+    private let key = "learningQuestCheckpoints.v1"
+    private var historyKey: String { key + ".reviewedVariants.v1" }
+    private func checkpoints() throws -> Data {
+        let a = LearningQuestCheckpoint(profileID: "child-a", questID: .numbers)
+        let b = LearningQuestCheckpoint(profileID: "child-b", questID: .numbers, numbersVariant: nil, variantOrdinal: nil)
+        return try JSONEncoder().encode(["child-a": ["numbers": a], "child-b": ["numbers": b]])
+    }
+    private func history() -> Data {
+        Data("{\"ordinals\":{\"child-a::numbers\":2,\"child-b::shapes\":5},\"seenNumberProbes\":{\"child-a\":[\"picnic-8-3\"],\"child-b\":[\"shape-door-rectangle\"]}}".utf8)
+    }
+    @Test func nonDataDefaultsAtEitherKeyCannotBeTreatedAsMissing() throws {
+        for badKey in [key, historyKey] {
+            let suite = "quest-checkpoint-test-\(UUID().uuidString)"
+            let defaults = try #require(UserDefaults(suiteName: suite))
+            defer { defaults.removePersistentDomain(forName: suite) }
+            defaults.set("future typed value", forKey: badKey)
+            let store = QuestCheckpointStore(storage: defaults, activeProfileID: { "child-a" })
+            #expect(store.storageIssue != nil)
+            #expect(!store.save(LearningQuestCheckpoint(profileID: "child-a", questID: .numbers)))
+            #expect(!store.reset() && !store.markProbeSeen("new"))
+            #expect(store.nextVariantOrdinal(for: .numbers) == nil && store.hasSeenProbe("old"))
+            #expect(defaults.string(forKey: badKey) == "future typed value")
+            store.clearAllProfiles()
+            #expect(defaults.object(forKey: badKey) == nil && store.refreshStorage())
+        }
+    }
+    @Test func unknownCheckpointForAnyChildPreservesBothKeysAndBlocksEveryMutation() throws {
+        let valid = try checkpoints(), oldHistory = history()
+        var future = try #require(JSONSerialization.jsonObject(with: valid) as? [String: [String: [String: Any]]])
+        future["child-b"]?["numbers"]?["schemaVersion"] = 2
+        let futureSchema = try JSONSerialization.data(withJSONObject: future)
+        future["child-b"]?["numbers"]?["schemaVersion"] = 1
+        future["child-b"]?["numbers"]?["futureProgress"] = "keep this"
+        let extraField = try JSONSerialization.data(withJSONObject: future)
+        future["child-b"]?["numbers"]?.removeValue(forKey: "futureProgress")
+        future["child-b"]?["numbers"]?["profileID"] = "wrong-child"
+        let wrongChild = try JSONSerialization.data(withJSONObject: future)
+        for bytes in [Data("bad bytes".utf8), Data("{\"schemaVersion\":2,\"profiles\":{}}".utf8), futureSchema, extraField, wrongChild] {
+            let defaults = QuestTestDefaults(); defaults.set(bytes, forKey: key); defaults.set(oldHistory, forKey: historyKey)
+            let store = QuestCheckpointStore(storage: defaults, activeProfileID: { "child-a" })
+            #expect(store.checkpointState == .unsupported)
+            #expect(store.variantHistoryState == .healthy)
+            #expect(store.storageIssue == .unsupportedCheckpoints)
+            #expect(store.checkpoint(for: .numbers) == nil && store.mostRecent == nil)
+            #expect(!store.save(LearningQuestCheckpoint(profileID: "child-a", questID: .numbers)))
+            #expect(!store.remove(.numbers) && !store.reset())
+            #expect(store.nextVariantOrdinal(for: .numbers) == nil)
+            #expect(!store.markProbeSeen("new-probe"))
+            #expect(store.hasSeenProbe("never-seen"))
+            #expect(defaults.data(forKey: key) == bytes)
+            #expect(defaults.data(forKey: historyKey) == oldHistory)
+        }
+    }
+    @Test func unknownVariantHistoryNeverRestartsFreshnessOrOverwritesAnotherChild() throws {
+        let valid = try checkpoints()
+        for bytes in [Data("broken history".utf8), Data("{\"version\":2,\"ordinals\":{},\"seenNumberProbes\":{}}".utf8),
+            Data("{\"ordinals\":{\"child-b::numbers\":-1},\"seenNumberProbes\":{}}".utf8),
+            Data("{\"ordinals\":{\"child-b::futureQuest\":4},\"seenNumberProbes\":{}}".utf8)] {
+            let defaults = QuestTestDefaults(); defaults.set(valid, forKey: key); defaults.set(bytes, forKey: historyKey)
+            let store = QuestCheckpointStore(storage: defaults, activeProfileID: { "child-a" })
+            #expect(store.checkpointState == .healthy && store.variantHistoryState == .unsupported)
+            #expect(store.storageIssue == .unsupportedVariantHistory)
+            #expect(store.hasSeenProbe("picnic-8-3"))
+            #expect(store.nextVariantOrdinal(for: .numbers) == nil)
+            #expect(!store.markProbeSeen("new-item") && !store.reset() && !store.remove(.numbers))
+            #expect(!store.save(LearningQuestCheckpoint(profileID: "child-a", questID: .numbers)))
+            #expect(defaults.data(forKey: historyKey) == bytes && defaults.data(forKey: key) == valid)
+        }
+    }
+    @Test func legacyAndCurrentProfilesSurviveSelectedResetAndExplicitAllResetRecovers() throws {
+        let defaults = QuestTestDefaults(); defaults.set(try checkpoints(), forKey: key); defaults.set(history(), forKey: historyKey)
+        let profile = QuestTestProfile(), store = QuestCheckpointStore(storage: defaults, activeProfileID: { profile.id })
+        #expect(store.storageIssue == nil && store.checkpointState == .healthy && store.variantHistoryState == .healthy)
+        profile.id = "child-b"
+        let legacy = try #require(store.checkpoint(for: .numbers))
+        #expect(legacy.numbersVariant == nil && legacy.numberProbeCount == 1)
+        profile.id = "child-a"
+        #expect(store.reset())
+        #expect(store.checkpoint(for: .numbers) == nil)
+        #expect(store.nextVariantOrdinal(for: .numbers) == 0)
+        profile.id = "child-b"
+        #expect(store.checkpoint(for: .numbers) == legacy)
+        #expect(store.nextVariantOrdinal(for: .shapes) == 5)
+        #expect(store.hasSeenProbe("shape-door-rectangle"))
+        let bytes = Data("unreadable".utf8); defaults.set(bytes, forKey: historyKey)
+        #expect(!store.refreshStorage())
+        // A failed selected-child reset cannot delete valid checkpoints or unknown history.
+        let before = defaults.data(forKey: key)
+        #expect(!store.reset())
+        #expect(defaults.data(forKey: key) == before && defaults.data(forKey: historyKey) == bytes)
+        store.clearAllProfiles()
+        #expect(store.storageIssue == nil && store.checkpointState == .missing && store.variantHistoryState == .missing)
+        #expect(defaults.data(forKey: key) == nil && defaults.data(forKey: historyKey) == nil)
+        let engine = LearningQuestEngine(store: store, activeProfileID: { profile.id }); engine.start(.numbers)
+        #expect(engine.pauseMessage == nil && engine.checkpoint.variantOrdinal == 0)
+        #expect(engine.checkpoint.numberProbeFreshness == [true, true])
+    }
+    @Test func pausedEngineDoesNotCreateReplayMutateOrPublishEvidence() throws {
+        for badKey in [key, historyKey] {
+            let defaults = QuestTestDefaults(), bytes = Data("future data".utf8)
+            defaults.set(bytes, forKey: badKey)
+            let store = QuestCheckpointStore(storage: defaults, activeProfileID: { "child-a" })
+            let engine = LearningQuestEngine(store: store, activeProfileID: { "child-a" }), before = engine.checkpoint
+            var events = 0, stages = 0, completions = 0
+            engine.onAttempt = { _, _ in events += 1 }; engine.onStageCompleted = { _, _ in stages += 1 }; engine.onCompleted = { _, _ in completions += 1 }
+            engine.start(.shapes); engine.adjustCount(1); engine.selectShape("rectangle"); engine.turnShape(); engine.help(); engine.submit()
+            #expect(engine.pauseMessage?.contains("preserved") == true && engine.requestedQuestID == .shapes)
+            #expect(engine.checkpoint == before)
+            #expect(events == 0 && stages == 0 && completions == 0)
+            #expect(defaults.data(forKey: badKey) == bytes)
+            store.clearAllProfiles(); engine.start(.numbers)
+            #expect(engine.pauseMessage == nil)
+            let running = engine.checkpoint
+            defaults.set(bytes, forKey: historyKey)
+            engine.adjustCount(1); engine.help(); engine.submit()
+            #expect(engine.checkpoint == running && engine.pauseMessage != nil)
+            #expect(events == 0 && stages == 0 && completions == 0)
+        }
+    }
+    @Test func failedCheckpointWriteDoesNotPublishAnUnsavedAttempt() throws {
+        let defaults = QuestTestDefaults(), store = QuestCheckpointStore(storage: QuestTestDefaults(), activeProfileID: { "child-a" })
+        #expect(store.checkpointState == .missing && store.variantHistoryState == .missing)
+        let actual = QuestCheckpointStore(storage: defaults, activeProfileID: { "child-a" })
+        let engine = LearningQuestEngine(store: actual, activeProfileID: { "child-a" })
+        engine.start(.numbers); engine.adjustCount(1)
+        let before = engine.checkpoint, savedBytes = defaults.data(forKey: key)
+        var events = 0, stages = 0
+        engine.onAttempt = { _, _ in events += 1 }; engine.onStageCompleted = { _, _ in stages += 1 }
+        defaults.rejectWrites = true; engine.submit()
+        #expect(actual.storageIssue == .couldNotSave && engine.pauseMessage != nil)
+        #expect(engine.checkpoint == before && events == 0 && stages == 0)
+        #expect(defaults.data(forKey: key) == savedBytes)
+    }
 }

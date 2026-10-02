@@ -69,6 +69,7 @@ final class ParentOffscreenObservationStore {
     /// Only an explicit all-profile reset may discard unknown or unreadable history.
     func clearAllProfiles() { storage.removeObject(forKey: storageKey); storageIssue = nil; revision += 1 }
     private func readHistory() -> [ParentOffscreenObservation]? {
+        if let defaults = storage as? UserDefaults, let value = defaults.object(forKey: storageKey), !(value is Data) { return nil }
         guard let data = storage.data(forKey: storageKey) else { return [] }
         // Preserve the original array format. Extra fields may belong to a future version;
         // decoding then re-encoding them would silently erase information.

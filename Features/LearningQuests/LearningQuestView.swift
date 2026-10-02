@@ -5,7 +5,24 @@ struct LearningQuestView: View {
     @Bindable var engine: LearningQuestEngine
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var state: LearningQuestCheckpoint { engine.checkpoint }
+    @ViewBuilder
     var body: some View {
+        if let message = engine.pauseMessage { pausedQuest(message: message) }
+        else { playableQuest }
+    }
+    private func pausedQuest(message: String) -> some View {
+        VStack(spacing: 24) {
+            Text("Quest paused").font(.largeTitle.bold()).accessibilityIdentifier("quest-paused")
+            Text(engine.requestedQuestID?.title ?? state.questID.title).font(.title2.bold())
+            Text(message).font(.headline).multilineTextAlignment(.center).accessibilityIdentifier("quest-storage-message")
+            QuestButton(label: "Listen", symbol: "speaker.wave.2.fill", tint: MatherTheme.softBlue) { engine.speakPrompt() }
+            QuestButton(label: "Quit", symbol: "house.fill", tint: MatherTheme.accent) { appModel.engine.showHome() }
+                .accessibilityIdentifier("quest-paused-quit")
+        }.padding(24).frame(maxWidth: 850).frame(maxWidth: .infinity, maxHeight: .infinity)
+            .foregroundStyle(MatherTheme.ink).background(MatherTheme.background.ignoresSafeArea())
+            .onAppear { engine.speakPrompt() }
+    }
+    private var playableQuest: some View {
         ScrollViewReader { scroll in
         ScrollView {
             VStack(spacing: 20) {
