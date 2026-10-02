@@ -46,6 +46,11 @@ enum LearningQuestID: String, CaseIterable, Codable, Hashable, Identifiable {
         switch self { case .numbers: "number-bond"; case .shapes: "shape"; case .waterCycle: "water-cycle"; case .circuitSpark: "closed-circuit"; case .angles: "angle"; case .symmetry: "symmetry" }
     }
     var activityID: String { "quest-\(rawValue)" }
+    static func matching(conceptID: String?) -> Self? {
+        guard let conceptID else { return nil }
+        if conceptID == "number-bond" || conceptID == "number-bonds" { return .numbers }
+        return allCases.first { $0.conceptID == conceptID }
+    }
     static func guided(_ planID: String) -> Self? {
         switch planID {
         case "numbers-number-bonds-to-10": .numbers

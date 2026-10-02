@@ -14,6 +14,21 @@ private final class QuestTestDefaults: ExplorerLabMasteryKeyValueStore {
 
 @MainActor
 struct LearningQuestTests {
+    @Test func dueStandaloneNumberBondReturnsToNumbersInsteadOfUnrelatedNewQuest() throws {
+        let schema = Schema([StoredSessionSummary.self, StoredRoomQuestStationReference.self, StoredFactRecord.self, StoredKidProfile.self, StoredTelemetryEvent.self, StoredGameSession.self, StoredGameplayProgressRecord.self, StoredGameplayThreadSession.self])
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
+        let model = AppModel(modelContext: ModelContext(container))
+        model.profileStore.addProfile(name: "Recommendation", emoji: "🌱")
+        defer { model.clearActiveProfileLearningData() }
+        model.gameplayProgressStore.saveActivityResult(ActivityResult(activityID: LearningQuestID.numbers.activityID,
+            title: "Ten Together", startedAt: Date(), attempts: [], completedStageIDs: ["celebrate"]))
+        #expect(model.nextLearningQuest == .shapes)
+        let attempt = ItemAttempt(activityID: "make-break", conceptID: "number-bonds", entityID: "whole-6",
+            stageID: "transfer", outcome: .incorrect, response: "2 + 3")
+        model.gameplayProgressStore.recordAttempts([attempt], sessionID: "standalone-number-review")
+        #expect(model.nextLearningQuest == .numbers)
+        #expect(LearningQuestID.matching(conceptID: "number-bond") == .numbers)
+    }
     private func fixture() -> (QuestTestProfile, QuestCheckpointStore, LearningQuestEngine) {
         let profile = QuestTestProfile()
         let store = QuestCheckpointStore(storage: QuestTestDefaults(), activeProfileID: { profile.id })

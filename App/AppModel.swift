@@ -187,7 +187,7 @@ final class AppModel {
     }
     var nextLearningQuest: LearningQuestID {
         if let checkpoint = questCheckpointStore.mostRecent { return checkpoint.questID }
-        if let record = gameplayProgressStore.dueAndWeakRecords().first(where: { record in LearningQuestID.allCases.contains { $0.conceptID == record.conceptId } }), let quest = LearningQuestID.allCases.first(where: { $0.conceptID == record.conceptId }) { return quest }
+        if let quest = gameplayProgressStore.dueAndWeakRecords().compactMap({ LearningQuestID.matching(conceptID: $0.conceptId) }).first { return quest }
         let completedIDs = Set(gameplayProgressStore.allSessions().map(\.threadId))
         return LearningQuestID.pilots.first { !completedIDs.contains($0.activityID) } ?? .numbers
     }
