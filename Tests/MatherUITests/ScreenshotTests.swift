@@ -968,57 +968,59 @@ final class ScreenshotTests: XCTestCase {
     private func completeVisibleSumSprintPairs(in app: XCUIApplication, target: Int, expectedPairs: Int) {
         let promptPrefix = "sumsprint-prompt-"
         let sumPrefix = "sumsprint-sum-"
-        var usedPromptTokens = Set<String>()
-
-        for pairIndex in 0..<expectedPairs {
-            let promptButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", promptPrefix))
-            var selectedPrompt: XCUIElement?
-            var promptToken = ""
-
-            if promptButtons.firstMatch.waitForExistence(timeout: 2) {
-                for index in 0..<promptButtons.count {
-                    let button = promptButtons.element(boundBy: index)
-                    let identifier = button.identifier
-                    guard identifier.hasPrefix(promptPrefix), button.waitForExistence(timeout: 1), button.isHittable else { continue }
-                    let candidateToken = String(identifier.dropFirst(promptPrefix.count))
-                    guard !usedPromptTokens.contains(candidateToken) else { continue }
-                    promptToken = candidateToken
-                    selectedPrompt = button
-                    break
-                }
-            }
-
-            guard let promptButton = selectedPrompt else {
-                if waitForBondBlast(in: app, timeout: 5) {
-                    return
-                }
-                XCTFail("Expected a new hittable Sum Sprint prompt for target \(target) pair \(pairIndex + 1); already used \(usedPromptTokens)")
-                return
-            }
-            promptButton.tap()
-
-            let sumButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", sumPrefix))
-            var selectedSum: XCUIElement?
-            if sumButtons.firstMatch.waitForExistence(timeout: 2) {
-                for index in 0..<sumButtons.count {
-                    let button = sumButtons.element(boundBy: index)
-                    let identifier = button.identifier
-                    guard identifier.contains("-for-\(promptToken)"), button.waitForExistence(timeout: 1), button.isHittable else { continue }
-                    selectedSum = button
-                    break
-                }
-            }
-
-            guard let sumButton = selectedSum else {
-                if waitForBondBlast(in: app, timeout: 5) {
-                    return
-                }
-                XCTFail("Expected a hittable Sum Sprint sum match for prompt token \(promptToken) on target \(target) pair \(pairIndex + 1)")
-                return
-            }
-            sumButton.tap()
-            usedPromptTokens.insert(promptToken)
+        let prompts = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", promptPrefix))
+        guard prompts.firstMatch.waitForExistence(timeout: 5) else {
+            XCTFail("Expected Sum Sprint cards for target \(target)")
+            return
         }
+
+        // Capture the whole fresh board before any tap. The burst removes duplicate
+        // facts (target 6 has two pairs), so the caller's historical pair count is
+        // an upper bound. Every rendered pair must still be completed. Indexed XCUI
+        // handles cannot survive the automatic transition after the final match.
+        let promptIDs = prompts.allElementsBoundByIndex.map(\.identifier).sorted()
+        let sumIDs = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", sumPrefix))
+            .allElementsBoundByIndex.map(\.identifier)
+        guard !promptIDs.isEmpty, promptIDs.count <= expectedPairs,
+              Set(promptIDs).count == promptIDs.count, sumIDs.count == promptIDs.count else {
+            XCTFail("Expected a complete, unique Sum Sprint board for target \(target); prompts \(promptIDs), sums \(sumIDs)")
+            return
+        }
+        XCTAssertTrue(app.staticTexts["Matches 0 / \(promptIDs.count)"].exists,
+                      "Every visible Sprint pair must belong to the fresh target \(target) board")
+
+        for (pairIndex, promptID) in promptIDs.enumerated() {
+            let token = String(promptID.dropFirst(promptPrefix.count))
+            let sumID = "\(sumPrefix)\(target)-for-\(token)"
+            guard sumIDs.contains(sumID) else {
+                XCTFail("Missing total \(target) for Sprint prompt \(token)")
+                return
+            }
+            let prompt = app.buttons[promptID]
+            let sum = app.buttons[sumID]
+            guard prompt.waitForExistence(timeout: 3), prompt.isEnabled, prompt.isHittable,
+                  sum.exists, sum.isEnabled, sum.isHittable else {
+                XCTFail("Expected unmatched, hittable Sprint pair \(token) for target \(target)")
+                return
+            }
+            prompt.tap()
+            sum.tap()
+
+            let isFinalPair = pairIndex == promptIDs.count - 1
+            let matched = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                if isFinalPair {
+                    return app.staticTexts["Bond Blast!"].exists || self.firstBondBlastCard(in: app).exists
+                }
+                return prompt.exists && sum.exists && !prompt.isEnabled && !sum.isEnabled
+                    && prompt.label.contains("matched") && sum.label.contains("matched")
+            }, object: app)
+            guard XCTWaiter.wait(for: [matched], timeout: isFinalPair ? 15 : 5) == .completed else {
+                XCTFail("Sprint pair \(token) must match before continuing target \(target)")
+                return
+            }
+        }
+        XCTAssertTrue(waitForBondBlast(in: app, timeout: 15),
+                      "Completing every Sprint pair must reach Bond Blast for target \(target)")
     }
 
     private func waitForBondBlast(in app: XCUIApplication, timeout: TimeInterval) -> Bool {

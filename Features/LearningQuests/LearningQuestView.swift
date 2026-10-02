@@ -3,19 +3,13 @@ import SwiftUI
 struct LearningQuestView: View {
     @Bindable var appModel: AppModel
     @Bindable var engine: LearningQuestEngine
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var state: LearningQuestCheckpoint { engine.checkpoint }
     var body: some View {
         ScrollViewReader { scroll in
         ScrollView {
             VStack(spacing: 20) {
-                HStack {
-                    QuestButton(label: "Save", symbol: "bookmark.fill", tint: MatherTheme.softBlue) { appModel.leaveLearningQuest() }.accessibilityIdentifier("quest-save")
-                    Spacer()
-                    Text("\(state.questID.emoji) \(state.questID.title)")
-                        .font(.title.bold()).foregroundStyle(MatherTheme.ink)
-                    Spacer()
-                    QuestButton(label: "Listen", symbol: "speaker.wave.2.fill", tint: MatherTheme.softBlue) { engine.speakPrompt() }.accessibilityIdentifier("quest-listen")
-                }
+                header
                 HStack(spacing: 8) {
                     ForEach(LearningQuestStep.allCases, id: \.self) { step in
                         Image(systemName: stepSymbol(step))
@@ -50,6 +44,28 @@ struct LearningQuestView: View {
         .background(MatherTheme.background.ignoresSafeArea())
         .accessibilityIdentifier("learning-quest-\(state.questID.rawValue)")
         .onAppear { engine.speakPrompt() }
+    }
+    @ViewBuilder private var header: some View {
+        if horizontalSizeClass == .compact {
+            VStack(spacing: 12) {
+                questTitle
+                HStack(spacing: 16) { saveButton; listenButton }
+            }
+        } else {
+            HStack { saveButton; Spacer(); questTitle; Spacer(); listenButton }
+        }
+    }
+    private var questTitle: some View {
+        Text("\(state.questID.emoji) \(state.questID.title)")
+            .font(.title.bold()).foregroundStyle(MatherTheme.ink).multilineTextAlignment(.center)
+    }
+    private var saveButton: some View {
+        QuestButton(label: "Save", symbol: "bookmark.fill", tint: MatherTheme.softBlue) { appModel.leaveLearningQuest() }
+            .accessibilityIdentifier("quest-save")
+    }
+    private var listenButton: some View {
+        QuestButton(label: "Listen", symbol: "speaker.wave.2.fill", tint: MatherTheme.softBlue) { engine.speakPrompt() }
+            .accessibilityIdentifier("quest-listen")
     }
     @ViewBuilder private var taskBoard: some View {
         switch state.questID {
@@ -89,12 +105,22 @@ struct LearningQuestView: View {
         }.padding(20).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 24))
     }
     private func seedGarden(count: Int, tint: Color, action: @escaping () -> Void) -> some View {
-        VStack {
-            Text("\(count)").font(.largeTitle.bold()).foregroundStyle(tint)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
-                ForEach(0..<count, id: \.self) { _ in Button(action: action) { Text("🌱").font(.system(size: 38)).frame(minWidth: 80, minHeight: 80).background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16)) }.buttonStyle(.plain).accessibilityLabel("Move one seed to the other garden") }
+        Button(action: action) {
+            VStack(spacing: 12) {
+                Text("\(count)").font(.largeTitle.bold()).foregroundStyle(tint)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
+                    ForEach(0..<count, id: \.self) { _ in
+                        Text("🌱").font(.system(size: horizontalSizeClass == .compact ? 25 : 38))
+                            .frame(maxWidth: .infinity, minHeight: horizontalSizeClass == .compact ? 38 : 60)
+                            .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }.frame(minHeight: 80)
             }
-        }.frame(maxWidth: .infinity).padding(12).background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
+            .frame(maxWidth: .infinity, minHeight: 80).padding(12)
+            .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 20)).contentShape(Rectangle())
+        }.buttonStyle(.plain).disabled(count == 0)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(count) seeds. Move one seed to the other garden")
     }
     @ViewBuilder private var shapesBoard: some View {
         if state.step == .play {
