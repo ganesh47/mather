@@ -34,6 +34,10 @@ on:
         description: Retry a failed archive with a fresh build of the same immutable tag
         type: boolean
         default: false
+      restore_manual_tags:
+        description: With preparation, restore an all-tag manual condition cleared by a prior update
+        type: boolean
+        default: false
 
 concurrency:
   group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
@@ -118,6 +122,7 @@ jobs:
           DIAGNOSTICS_ONLY: ${{ inputs.diagnostics_only || false }}
           PREPARE_TAG_ONLY: ${{ inputs.prepare_tag_only || false }}
           FRESH_BUILD: ${{ inputs.fresh_build || false }}
+          RESTORE_MANUAL_TAGS: ${{ inputs.restore_manual_tags || false }}
         run: |
           if [[ "${DIAGNOSTICS_ONLY}" == "true" ]]; then
             .venv-testflight/bin/python ci_scripts/xcode_cloud_diagnostics.py
@@ -134,6 +139,9 @@ jobs:
           fi
           if [[ "${FRESH_BUILD}" == "true" ]]; then
             args+=(--force-new-build)
+          fi
+          if [[ "${RESTORE_MANUAL_TAGS}" == "true" ]]; then
+            args+=(--restore-manual-tags)
           fi
           if [[ -n "${RESUME_BUILD_RUN_ID}" ]]; then
             args+=(--build-run-id "${RESUME_BUILD_RUN_ID}")

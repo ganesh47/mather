@@ -117,7 +117,48 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
         client = MagicMock()
         client.request.side_effect = [before, {}, after]
         prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.1")
-        self.assertEqual(client.request.call_args_list[1].kwargs["payload"]["data"]["attributes"], {"tagStartCondition": tag_start_condition("v2.9.1")})
+        self.assertEqual(client.request.call_args_list[1].kwargs["payload"]["data"]["attributes"], {
+            "tagStartCondition": tag_start_condition("v2.9.1"),
+            "manualTagStartCondition": before["data"]["attributes"]["manualTagStartCondition"],
+        })
+
+    def test_preparation_resends_and_verifies_all_existing_start_conditions(self) -> None:
+        before = {"data": {"attributes": {
+            "isEnabled": True, "tagStartCondition": None,
+            "manualTagStartCondition": {"source": {"isAllMatch": True, "patterns": []}},
+            "branchStartCondition": {"source": {"isAllMatch": False, "patterns": [{"pattern": "main", "isPrefix": False}]}},
+            "scheduledStartCondition": {"schedule": "existing-schedule"},
+        }, "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        after = copy.deepcopy(before)
+        after["data"]["attributes"]["tagStartCondition"] = tag_start_condition("v2.9.0")
+        client = MagicMock()
+        client.request.side_effect = [before, {}, after]
+        prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
+        payload = client.request.call_args_list[1].kwargs["payload"]["data"]["attributes"]
+        for field in ("branchStartCondition", "scheduledStartCondition", "manualTagStartCondition"):
+            self.assertEqual(payload[field], before["data"]["attributes"][field])
+
+    def test_explicit_manual_tag_restore_recovers_prior_all_tag_setting(self) -> None:
+        before = {"data": {"attributes": {"isEnabled": True, "tagStartCondition": tag_start_condition("v2.9.0")},
+                  "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        after = copy.deepcopy(before)
+        after["data"]["attributes"]["manualTagStartCondition"] = {"source": {"isAllMatch": True, "patterns": []}}
+        client = MagicMock()
+        client.request.side_effect = [before, {}, after]
+        prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0", restore_manual_tags=True)
+        self.assertEqual(client.request.call_args_list[1].kwargs["payload"]["data"]["attributes"]["manualTagStartCondition"], after["data"]["attributes"]["manualTagStartCondition"])
+
+    def test_preparation_detects_a_cleared_sibling_condition(self) -> None:
+        before = {"data": {"attributes": {
+            "isEnabled": True, "tagStartCondition": None,
+            "manualTagStartCondition": {"source": {"isAllMatch": True, "patterns": []}},
+        }, "relationships": {"repository": {"data": {"id": "repo"}}}}}
+        after = copy.deepcopy(before)
+        after["data"]["attributes"].update(tagStartCondition=tag_start_condition("v2.9.0"), manualTagStartCondition=None)
+        client = MagicMock()
+        client.request.side_effect = [before, {}, after]
+        with self.assertRaisesRegex(ReleaseError, "manualTagStartCondition"):
+            prepare_tag_trigger(client, workflow_id="release", repository_id="repo", tag="v2.9.0")
 
     def test_same_tag_preparation_is_idempotent(self) -> None:
         client = MagicMock()

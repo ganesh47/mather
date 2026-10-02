@@ -39,6 +39,11 @@ DEFAULT_POLL_SECONDS = 20
 DEFAULT_CLOUD_TIMEOUT_SECONDS = 30 * 60
 DEFAULT_TESTFLIGHT_TIMEOUT_SECONDS = 20 * 60
 DEFAULT_AUTOMATIC_UPLOAD_GRACE_SECONDS = 2 * 60
+START_CONDITION_FIELDS = (
+    "branchStartCondition", "tagStartCondition", "pullRequestStartCondition",
+    "scheduledStartCondition", "manualBranchStartCondition",
+    "manualTagStartCondition", "manualPullRequestStartCondition",
+)
 
 
 @dataclass(frozen=True)
@@ -254,12 +259,13 @@ def normalized_tag_condition(condition: dict[str, Any] | None) -> dict[str, Any]
 
 def prepare_tag_trigger(
     client: AppStoreConnectClient, *, workflow_id: str, repository_id: str, tag: str,
+    restore_manual_tags: bool = False,
 ) -> None:
     """Configure the exact upcoming tag before it is pushed; never start a build."""
     condition = tag_start_condition(tag)
     path = (
         f"/v1/ciWorkflows/{workflow_id}"
-        "?fields[ciWorkflows]=isEnabled,repository,tagStartCondition,manualTagStartCondition&include=repository"
+        f"?fields[ciWorkflows]=isEnabled,repository,{','.join(START_CONDITION_FIELDS)}&include=repository"
     )
     workflow = client.request(path)["data"]
     if not workflow["attributes"].get("isEnabled"):
@@ -267,7 +273,8 @@ def prepare_tag_trigger(
     repository = workflow.get("relationships", {}).get("repository", {}).get("data") or {}
     if repository.get("id") != repository_id:
         raise ReleaseError("Tag preparation workflow uses a different repository")
-    existing = normalized_tag_condition(workflow["attributes"].get("tagStartCondition"))
+    before = workflow["attributes"]
+    existing = normalized_tag_condition(before.get("tagStartCondition"))
     if existing is not None and existing != condition:
         patterns = existing.get("source", {}).get("patterns") or []
         previous_tag = patterns[0].get("pattern", "") if len(patterns) == 1 else ""
@@ -277,19 +284,28 @@ def prepare_tag_trigger(
             managed = False
         if not managed:
             raise ReleaseError("Workflow already has a custom automatic tag condition")
-    if existing != condition:
+    # Apple replaces the start-condition group, so resend unchanged non-null siblings.
+    desired = {name: before[name] for name in START_CONDITION_FIELDS if before.get(name) is not None}
+    desired["tagStartCondition"] = condition
+    if restore_manual_tags:
+        manual = {"source": {"isAllMatch": True, "patterns": []}}
+        if before.get("manualTagStartCondition") not in (None, manual):
+            raise ReleaseError("Cannot restore all manual tags over a custom manual condition")
+        desired["manualTagStartCondition"] = manual
+    if existing != condition or any(before.get(name) != desired.get(name) for name in START_CONDITION_FIELDS if name != "tagStartCondition"):
         client.request(
             f"/v1/ciWorkflows/{workflow_id}", method="PATCH",
             payload={"data": {
                 "type": "ciWorkflows", "id": workflow_id,
-                "attributes": {"tagStartCondition": condition},
+                "attributes": desired,
             }},
         )
     observed = client.request(path)["data"]["attributes"]
     if normalized_tag_condition(observed.get("tagStartCondition")) != condition:
         raise ReleaseError("Xcode Cloud did not confirm the exact tag trigger")
-    if observed.get("manualTagStartCondition") != workflow["attributes"].get("manualTagStartCondition"):
-        raise ReleaseError("Xcode Cloud changed the workflow's manual tag condition")
+    for name in START_CONDITION_FIELDS:
+        if name != "tagStartCondition" and observed.get(name) != desired.get(name):
+            raise ReleaseError(f"Xcode Cloud changed the workflow's {name}")
     print(f"Prepared Xcode Cloud workflow {workflow_id} for upcoming tag {tag}", flush=True)
 
 
@@ -911,6 +927,10 @@ def parse_args() -> argparse.Namespace:
         help="Prepare the exact upcoming tag trigger without building or publishing.",
     )
     parser.add_argument(
+        "--restore-manual-tags", action="store_true",
+        help="With tag preparation, explicitly restore a previously cleared all-tag manual condition.",
+    )
+    parser.add_argument(
         "--artifact-only",
         action="store_true",
         help="Download and inspect the IPA without validating or uploading it.",
@@ -1076,8 +1096,11 @@ def release(args: argparse.Namespace) -> None:
         for workflow_id in workflows:
             prepare_tag_trigger(
                 client, workflow_id=workflow_id, repository_id=args.repository_id, tag=args.tag,
+                restore_manual_tags=getattr(args, "restore_manual_tags", False),
             )
         return
+    if getattr(args, "restore_manual_tags", False):
+        raise ReleaseError("Manual-tag restoration requires tag preparation mode")
     if args.build_run_id and len(workflows) != 1:
         raise ReleaseError(
             "--build-run-id cannot cover platforms resolved to multiple workflows"
