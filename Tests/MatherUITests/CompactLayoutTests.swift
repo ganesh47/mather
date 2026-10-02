@@ -291,11 +291,7 @@ final class CompactLayoutTests: XCTestCase {
     }
 
     func testRoomQuestCompactSpotScreenKeepsPrimaryActionReachableWithoutSwipe() {
-        let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-
-        openExplorerLab(app)
-        app.buttons["Room Quest"].tap()
+        let app = launch(startRoute: "roomQuest")
         _ = app.staticTexts["Set up the room"].waitForExistence(timeout: 10)
 
         configureRoomQuestSetupViaManualFallback(app)
@@ -317,11 +313,7 @@ final class CompactLayoutTests: XCTestCase {
     }
 
     func testMemoryCompactHeaderKeepsControlsReachableWithoutCrowding() {
-        let app = launch()
-        _ = app.staticTexts["Mather"].waitForExistence(timeout: 10)
-
-        openExplorerLab(app)
-        app.buttons["Memory Match"].tap()
+        let app = launch(startRoute: "memory")
         _ = app.staticTexts["Memory Match"].waitForExistence(timeout: 10)
 
         let deckMenu = app.buttons["memory-deck-menu"]
@@ -423,11 +415,6 @@ final class CompactLayoutTests: XCTestCase {
             return
         }
         XCTFail("Expected element to exist before tap fallback: \(element)")
-    }
-
-    private func openExplorerLab(_ app: XCUIApplication) {
-        app.buttons["ExplorerLab"].tap()
-        _ = app.staticTexts["Explorer Lab"].waitForExistence(timeout: 5)
     }
 
     private func launch(startRoute: String? = nil) -> XCUIApplication {
