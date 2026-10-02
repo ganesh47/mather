@@ -54,6 +54,12 @@ commit.
 - `SumSprintPartyTVSessionStore.clear()` removes this frozen profile/mode's checkpoint
   and history only. Parent reset must call it before reentry to prevent ledger replay
   from resurrecting cleared evidence. It preserves legacy personal best and other profiles.
+- Storage distinguishes missing, loaded and unsupported values. Checkpoint and history
+  must both decode with the supported version and validate their frozen scope/progress;
+  history must also have unique session identities. Unsupported bytes are preserved,
+  and save/archive refuse to overwrite either key. The activity shows a recovery message,
+  blocks play and suppresses event/result replay. Unknown history never becomes an empty
+  freshness baseline. An explicit parent reset is required to clear incompatible data.
 
 The engine owns every domain mutation. The view owns transient focus/narration.
 No root, profile, shared store, release workflow, or legacy record migration is
@@ -86,15 +92,22 @@ part of this slice.
    until exhaustion; later familiar transfer practice is not labelled fresh.
 10. Switch child/family context. A session never restores another profile's item
     or attributes family assistance to a child. Old personal best remains intact.
+11. Provide an unreadable or future-version checkpoint/history, including a decoded
+    history with invalid scope/progress. Its exact bytes and the other valid value stay
+    unchanged after start/save/archive attempts. No fresh-probe claim or result is replayed.
+    Recovery copy explains that data is kept, Play/Pause repeats it, and Menu returns to
+    all games. Only the explicit scoped parent reset clears those values and enables play.
 
 ## Automated validation
 
 - `SumSprintPartyTVRoundTests`: six legacy compatibility tests.
-- `SumSprintPartyTVSessionTests`: fourteen domain/persistence/evidence tests,
+- `SumSprintPartyTVSessionTests`: twenty-one domain/persistence/evidence tests,
   including corrupted checkpoint rejection, exact UUID replay, family/profile
-  isolation, partial-session archival, probe exhaustion and scoped reset preservation.
+  isolation, partial-session archival, probe exhaustion, scoped reset preservation,
+  unsupported/future data byte preservation, history validation and recovery.
 - `SumSprintPartyUITests`: remote finite session and fresh probe, corrected answer
-  after Menu/relaunch, and stepwise counting/background/foreground restoration.
+  after Menu/relaunch, stepwise counting/background/foreground restoration, and
+  unsupported-history recovery without offering start/resume.
 
 Local tests use separate derived data and private simulators, never a parallel
 slice's running TV device. Physical Siri Remote and VoiceOver listening remain

@@ -142,7 +142,7 @@ struct SumSprintPartyTVSessionTests {
         #expect(results.count == 1)
         #expect(results.first?.completedStageIDs == ["practice", "fresh-probe"])
         #expect(results.first?.attempts.count == 12)
-        #expect(persistence.history().count == 1)
+        #expect(persistence.history()?.count == 1)
     }
 
     @Test func completionCanReplayAfterCrashBetweenSavingAndLedgerDelivery() throws {
@@ -187,11 +187,12 @@ struct SumSprintPartyTVSessionTests {
     }
 
     @Test func malformedCheckpointIsRejectedRatherThanIndexingInvalidItems() throws {
-        let (_, persistence) = store()
+        let (defaults, persistence) = store()
         var checkpoint = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "tv-family", familyMode: true, seed: 2)
         checkpoint.currentIndex = 6
-        persistence.save(checkpoint)
+        defaults.set(try JSONEncoder().encode(checkpoint), forKey: "tv.sumSprintParty.learning.v1.family.tv-family")
         #expect(persistence.load(profileID: "tv-family", familyMode: true) == nil)
+        #expect(persistence.checkpointState == .unsupported)
         checkpoint.currentIndex = 0
         checkpoint.progress[0].support = .groups
         checkpoint.progress[0].selectedAnswer = checkpoint.items[0].round.correctAnswer
@@ -234,11 +235,146 @@ struct SumSprintPartyTVSessionTests {
         let child = SumSprintPartyTVSession(profileID: "child-a", familyMode: false, store: childStore)
         child.start(range: .through10, seed: 1)
         let savedChild = try #require(child.checkpoint)
-        #expect(!familyStore.history().isEmpty)
+        #expect(familyStore.history()?.isEmpty == false)
         familyStore.clear()
         #expect(familyStore.load(profileID: "tv-family", familyMode: true) == nil)
-        #expect(familyStore.history().isEmpty)
+        #expect(familyStore.history()?.isEmpty == true)
         #expect(childStore.load(profileID: "child-a", familyMode: false) == savedChild)
+        #expect(defaults.integer(forKey: "tv.sumSprintParty.personalBest") == 27)
+    }
+
+    @Test func storageStatesDistinguishMissingLoadedAndUnsupportedValues() throws {
+        let (defaults, persistence) = store()
+        #expect(persistence.checkpointState == .missing)
+        #expect(persistence.historyState == .missing)
+        let checkpoint = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "tv-family", familyMode: true, seed: 2)
+        #expect(persistence.save(checkpoint))
+        #expect(persistence.archive(checkpoint))
+        #expect(persistence.checkpointState == .loaded(checkpoint))
+        #expect(persistence.historyState == .loaded([checkpoint]))
+        defaults.set("not encoded data", forKey: "tv.sumSprintParty.learning.v1.family.tv-family")
+        #expect(persistence.checkpointState == .unsupported)
+        #expect(persistence.storageMessage != nil)
+        #expect(!persistence.save(checkpoint))
+        #expect(defaults.string(forKey: "tv.sumSprintParty.learning.v1.family.tv-family") == "not encoded data")
+    }
+
+    @Test func futureCheckpointAndValidHistoryArePreservedWhenStartingOrSaving() throws {
+        let (defaults, persistence) = store()
+        let key = "tv.sumSprintParty.learning.v1.family.tv-family"
+        let checkpoint = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "tv-family", familyMode: true, seed: 2)
+        #expect(persistence.archive(checkpoint))
+        let originalHistory = try #require(defaults.data(forKey: key + ".history"))
+        var future = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(checkpoint)) as? [String: Any])
+        future["version"] = 99
+        let original = try JSONSerialization.data(withJSONObject: future)
+        defaults.set(original, forKey: key)
+        var events: [ItemAttempt] = []
+        let session = SumSprintPartyTVSession(store: persistence, onAttempt: { events.append($0) })
+        session.start(range: .through10, seed: 3); session.resume(); session.replayEvidence()
+        #expect(session.storageMessage != nil)
+        #expect(!session.isSessionOpen)
+        #expect(!session.canResume)
+        #expect(events.isEmpty)
+        #expect(!persistence.save(checkpoint))
+        #expect(!persistence.archive(checkpoint))
+        #expect(defaults.data(forKey: key) == original)
+        #expect(defaults.data(forKey: key + ".history") == originalHistory)
+    }
+
+    @Test func unknownHistoryBlocksProbeClaimsAndKeepsCompletedCheckpointBytes() throws {
+        let (defaults, persistence) = store()
+        let key = "tv.sumSprintParty.learning.v1.family.tv-family"
+        let session = SumSprintPartyTVSession(store: persistence)
+        session.start(range: .through5, seed: 17)
+        for _ in 0..<6 { session.choose(try #require(session.currentItem).round.correctAnswer); session.advance() }
+        let checkpointBytes = try #require(defaults.data(forKey: key))
+        let historyBytes = Data("future-or-damaged-history".utf8)
+        defaults.set(historyBytes, forKey: key + ".history")
+        var events: [ItemAttempt] = []
+        var results: [ActivityResult] = []
+        let restored = SumSprintPartyTVSession(store: persistence,
+            onAttempt: { events.append($0) }, onResult: { results.append($0) })
+        restored.replayEvidence(); restored.resume(); restored.start(range: .through5, seed: 17)
+        #expect(persistence.historyState == .unsupported)
+        #expect(persistence.history() == nil)
+        #expect(restored.storageMessage != nil)
+        #expect(!restored.isSessionOpen)
+        #expect(events.isEmpty)
+        #expect(results.isEmpty)
+        #expect(defaults.data(forKey: key) == checkpointBytes)
+        #expect(defaults.data(forKey: key + ".history") == historyBytes)
+    }
+
+    @Test func historyValidatesScopeVersionProgressAndDuplicateSessionIdentities() throws {
+        let (defaults, persistence) = store()
+        let key = "tv.sumSprintParty.learning.v1.family.tv-family.history"
+        let checkpoint = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "tv-family", familyMode: true, seed: 2)
+        let wrongProfile = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "other-child", familyMode: false, seed: 2)
+        var wrongProgress = checkpoint
+        wrongProgress.currentIndex = 100
+        var future = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(checkpoint)) as? [String: Any])
+        future["version"] = 2
+        let fixtures = [try JSONEncoder().encode([wrongProfile]), try JSONEncoder().encode([wrongProgress]),
+            try JSONEncoder().encode([checkpoint, checkpoint]), try JSONSerialization.data(withJSONObject: [future])]
+        for fixture in fixtures {
+            defaults.set(fixture, forKey: key)
+            #expect(persistence.historyState == .unsupported)
+            #expect(!persistence.archive(checkpoint))
+            #expect(!persistence.save(checkpoint))
+            #expect(defaults.data(forKey: key) == fixture)
+        }
+    }
+
+    @Test func malformedCheckpointIsNotOverwrittenAndInvalidNewWritesAreRejected() {
+        let (defaults, persistence) = store()
+        let key = "tv.sumSprintParty.learning.v1.family.tv-family"
+        let original = Data("not-json".utf8)
+        defaults.set(original, forKey: key)
+        let valid = SumSprintPartyTVCheckpoint.make(range: .through5, profileID: "tv-family", familyMode: true, seed: 2)
+        #expect(!persistence.save(valid))
+        #expect(!persistence.archive(valid))
+        #expect(defaults.data(forKey: key) == original)
+        #expect(defaults.object(forKey: key + ".history") == nil)
+        persistence.clear()
+        var invalid = valid
+        invalid.currentIndex = 100
+        #expect(!persistence.save(invalid))
+        #expect(!persistence.archive(invalid))
+        #expect(persistence.checkpointState == .missing)
+        #expect(persistence.historyState == .missing)
+    }
+
+    @Test func corruptionAppearingDuringPlayPausesWithoutDeliveringNewEvidence() throws {
+        let (defaults, persistence) = store()
+        let key = "tv.sumSprintParty.learning.v1.family.tv-family"
+        var events: [ItemAttempt] = []
+        let session = SumSprintPartyTVSession(store: persistence, onAttempt: { events.append($0) })
+        session.start(range: .through5, seed: 17)
+        let item = try #require(session.currentItem)
+        let original = try #require(defaults.data(forKey: key))
+        let history = Data("unsupported".utf8)
+        defaults.set(history, forKey: key + ".history")
+        let delivered = events
+        session.choose(item.round.correctAnswer); session.requestHelp(); session.countNext(); session.advance()
+        #expect(events == delivered)
+        #expect(session.storageMessage != nil)
+        #expect(!session.isSessionOpen)
+        #expect(defaults.data(forKey: key) == original)
+        #expect(defaults.data(forKey: key + ".history") == history)
+    }
+
+    @Test func explicitScopedResetAllowsLearningAgainAfterUnsupportedStorage() {
+        let (defaults, persistence) = store()
+        defaults.set(Data("unsupported".utf8), forKey: "tv.sumSprintParty.learning.v1.family.tv-family.history")
+        defaults.set(27, forKey: "tv.sumSprintParty.personalBest")
+        let session = SumSprintPartyTVSession(store: persistence)
+        #expect(session.storageMessage != nil)
+        persistence.clear()
+        session.start(range: .through5, seed: 17)
+        #expect(session.storageMessage == nil)
+        #expect(session.isSessionOpen)
+        #expect(session.checkpoint?.items.last?.isFreshProbe == true)
         #expect(defaults.integer(forKey: "tv.sumSprintParty.personalBest") == 27)
     }
 }

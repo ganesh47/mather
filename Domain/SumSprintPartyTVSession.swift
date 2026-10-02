@@ -130,35 +130,78 @@ private struct SumSprintPartyTVRandom: RandomNumberGenerator {
     }
 }
 
+/// Absence and unreadable saved data have different preservation rules.
+enum SumSprintPartyTVStorageState<Value: Equatable>: Equatable {
+    case missing
+    case loaded(Value)
+    case unsupported
+
+    var isUnsupported: Bool {
+        if case .unsupported = self { return true }
+        return false
+    }
+}
+
 /// Separate keys preserve the shipped personal-best record and each child's session.
 @MainActor
 final class SumSprintPartyTVSessionStore {
     private let defaults: UserDefaults
     private let key: String
+    private let profileID: String
+    private let familyMode: Bool
     init(defaults: UserDefaults = .standard, profileID: String, familyMode: Bool = true) {
         self.defaults = defaults
+        self.profileID = profileID
+        self.familyMode = familyMode
         key = "tv.sumSprintParty.learning.v1.\(familyMode ? "family" : "child").\(profileID)"
     }
-    func load(profileID: String, familyMode: Bool) -> SumSprintPartyTVCheckpoint? {
-        guard let data = defaults.data(forKey: key),
+    var checkpointState: SumSprintPartyTVStorageState<SumSprintPartyTVCheckpoint> {
+        guard let value = defaults.object(forKey: key) else { return .missing }
+        guard let data = value as? Data,
               let saved = try? JSONDecoder().decode(SumSprintPartyTVCheckpoint.self, from: data),
-              saved.isValid(for: profileID, familyMode: familyMode) else { return nil }
-        return saved
+              saved.isValid(for: profileID, familyMode: familyMode) else { return .unsupported }
+        return .loaded(saved)
     }
-    func save(_ checkpoint: SumSprintPartyTVCheckpoint) {
-        guard let data = try? JSONEncoder().encode(checkpoint) else { return }
+    var historyState: SumSprintPartyTVStorageState<[SumSprintPartyTVCheckpoint]> {
+        guard let value = defaults.object(forKey: key + ".history") else { return .missing }
+        guard let data = value as? Data,
+              let saved = try? JSONDecoder().decode([SumSprintPartyTVCheckpoint].self, from: data),
+              Set(saved.map(\.sessionID)).count == saved.count,
+              saved.allSatisfy({ $0.isValid(for: profileID, familyMode: familyMode) }) else { return .unsupported }
+        return .loaded(saved)
+    }
+    var storageMessage: String? {
+        guard checkpointState.isUnsupported || historyState.isUnsupported else { return nil }
+        return "Your saved learning needs a compatible app version. It has been kept on this TV. Sum Sprint is paused; a grown-up can help."
+    }
+    func load(profileID: String, familyMode: Bool) -> SumSprintPartyTVCheckpoint? {
+        guard profileID == self.profileID, familyMode == self.familyMode else { return nil }
+        if case let .loaded(saved) = checkpointState { return saved }
+        return nil
+    }
+    @discardableResult
+    func save(_ checkpoint: SumSprintPartyTVCheckpoint) -> Bool {
+        guard storageMessage == nil, checkpoint.isValid(for: profileID, familyMode: familyMode),
+              let data = try? JSONEncoder().encode(checkpoint) else { return false }
         defaults.set(data, forKey: key)
+        return true
     }
-    func archive(_ checkpoint: SumSprintPartyTVCheckpoint) {
-        var history = history()
+    @discardableResult
+    func archive(_ checkpoint: SumSprintPartyTVCheckpoint) -> Bool {
+        guard storageMessage == nil, checkpoint.isValid(for: profileID, familyMode: familyMode) else { return false }
+        guard var history = history() else { return false }
         history.removeAll { $0.sessionID == checkpoint.sessionID }
         history.append(checkpoint)
-        guard let data = try? JSONEncoder().encode(history) else { return }
+        guard let data = try? JSONEncoder().encode(history) else { return false }
         defaults.set(data, forKey: key + ".history")
+        return true
     }
-    func history() -> [SumSprintPartyTVCheckpoint] {
-        guard let data = defaults.data(forKey: key + ".history") else { return [] }
-        return (try? JSONDecoder().decode([SumSprintPartyTVCheckpoint].self, from: data)) ?? []
+    func history() -> [SumSprintPartyTVCheckpoint]? {
+        switch historyState {
+        case .missing: []
+        case let .loaded(saved): saved
+        case .unsupported: nil
+        }
     }
     func clear() {
         defaults.removeObject(forKey: key)
@@ -171,6 +214,7 @@ final class SumSprintPartyTVSessionStore {
 final class SumSprintPartyTVSession {
     private(set) var checkpoint: SumSprintPartyTVCheckpoint?
     private(set) var isSessionOpen = false
+    private(set) var storageMessage: String?
     @ObservationIgnored private let profileID: String
     @ObservationIgnored private let familyMode: Bool
     @ObservationIgnored private let store: SumSprintPartyTVSessionStore
@@ -187,11 +231,12 @@ final class SumSprintPartyTVSession {
         self.store = store ?? SumSprintPartyTVSessionStore(profileID: self.profileID, familyMode: familyMode)
         self.onAttempt = onAttempt; self.onResult = onResult; self.now = now
         checkpoint = self.store.load(profileID: self.profileID, familyMode: familyMode)
+        storageMessage = self.store.storageMessage
     }
 
     var currentItem: SumSprintPartyTVItem? { checkpoint.map { $0.items[$0.currentIndex] } }
     var currentProgress: SumSprintPartyTVItemProgress? { checkpoint.map { $0.progress[$0.currentIndex] } }
-    var canResume: Bool { checkpoint != nil && checkpoint?.isComplete == false }
+    var canResume: Bool { storageMessage == nil && checkpoint != nil && checkpoint?.isComplete == false }
     var prompt: String {
         guard let item = currentItem, let progress = currentProgress else { return "Choose a number range with a grown-up. Five practice ideas and one new puzzle. Take your time." }
         if progress.outcome != nil { return "You joined the parts. \(item.round.fact.addendA) plus \(item.round.fact.addendB) is \(item.round.correctAnswer). Select Next to continue." }
@@ -207,25 +252,28 @@ final class SumSprintPartyTVSession {
     }
 
     func start(range: SumSprintPartyTVRange, seed: UInt64 = UInt64.random(in: 0...UInt64.max)) {
-        if let checkpoint { store.archive(checkpoint) }
-        let seen = Set(store.history().flatMap(\.attempts).compactMap(\.itemVariantID))
+        guard ensureWritableStorage() else { return }
+        if let checkpoint, !store.archive(checkpoint) { _ = ensureWritableStorage(); return }
+        guard let history = store.history() else { _ = ensureWritableStorage(); return }
+        let seen = Set(history.flatMap(\.attempts).compactMap(\.itemVariantID))
         checkpoint = .make(range: range, profileID: profileID, familyMode: familyMode, seed: seed, startedAt: now(), previouslySeenVariants: seen)
         isSessionOpen = true
         exposeCurrentItem()
     }
     func resume() {
-        guard checkpoint != nil else { return }
+        guard ensureWritableStorage(), checkpoint != nil else { return }
         isSessionOpen = true
         replayEvidence()
         exposeCurrentItem()
     }
     func showRanges() { isSessionOpen = false }
     func replayEvidence() {
+        guard ensureWritableStorage() else { return }
         checkpoint?.attempts.forEach(onAttempt)
         if let result = checkpoint?.result { onResult(result) }
     }
     func choose(_ answer: Int) {
-        guard isSessionOpen, let item = currentItem, currentProgress?.outcome == nil,
+        guard ensureWritableStorage(), isSessionOpen, let item = currentItem, currentProgress?.outcome == nil,
               item.round.answerChoices.contains(answer), let index = checkpoint?.currentIndex else { return }
         checkpoint?.progress[index].selectedAnswer = answer
         if answer == item.round.correctAnswer {
@@ -239,25 +287,25 @@ final class SumSprintPartyTVSession {
         }
     }
     func requestHelp() {
-        guard isSessionOpen, currentProgress?.outcome == nil, let index = checkpoint?.currentIndex,
+        guard ensureWritableStorage(), isSessionOpen, currentProgress?.outcome == nil, let index = checkpoint?.currentIndex,
               let progress = currentProgress else { return }
         checkpoint?.progress[index].support = progress.support == .none ? .groups : .countOn
         record(.help, response: scaffold)
     }
     func countNext() {
-        guard isSessionOpen, let item = currentItem, let progress = currentProgress,
+        guard ensureWritableStorage(), isSessionOpen, let item = currentItem, let progress = currentProgress,
               progress.outcome == nil, progress.support == .countOn,
               progress.counted < item.round.fact.addendB, let index = checkpoint?.currentIndex else { return }
         checkpoint?.progress[index].counted += 1
         persist()
     }
     func advance() {
-        guard isSessionOpen, checkpoint?.isComplete == false, currentProgress?.outcome != nil,
+        guard ensureWritableStorage(), isSessionOpen, checkpoint?.isComplete == false, currentProgress?.outcome != nil,
               let index = checkpoint?.currentIndex else { return }
         if index == SumSprintPartyTVCheckpoint.itemCount - 1 {
             checkpoint?.completedAt = now()
-            persist()
-            if let checkpoint { store.archive(checkpoint); if let result = checkpoint.result { onResult(result) } }
+            guard persist() else { return }
+            if let checkpoint, store.archive(checkpoint), let result = checkpoint.result { onResult(result) }
         } else {
             checkpoint?.currentIndex += 1
             exposeCurrentItem()
@@ -279,8 +327,17 @@ final class SumSprintPartyTVSession {
             appHintUsed: currentProgress.map { $0.support != .none || $0.counted > 0 } ?? false,
             isFreshProbe: item.isFreshProbe, adultHelp: .unknown)
         self.checkpoint?.attempts.append(attempt)
-        persist() // Save the event identity before handing it to the idempotent shared ledger.
+        guard persist() else { return } // Save the event identity before delivery.
         onAttempt(attempt)
     }
-    private func persist() { if let checkpoint { store.save(checkpoint) } }
+    @discardableResult
+    private func persist() -> Bool {
+        guard let checkpoint, store.save(checkpoint) else { _ = ensureWritableStorage(); return false }
+        return true
+    }
+    private func ensureWritableStorage() -> Bool {
+        storageMessage = store.storageMessage
+        if storageMessage != nil { isSessionOpen = false; return false }
+        return true
+    }
 }

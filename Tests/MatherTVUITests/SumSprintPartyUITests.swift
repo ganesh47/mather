@@ -96,9 +96,27 @@ final class SumSprintPartyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Counting helped you join the parts!"].exists)
     }
 
-    private func launch(reset: Bool) -> XCUIApplication {
+    func testUnsupportedHistoryShowsRecoveryInsteadOfStartingOrResuming() {
+        let app = launch(reset: true, extraArguments: ["-sum-sprint-unsupported-history-fixture"])
+        let message = app.staticTexts["tv-sum-sprint-storage-message"]
+        XCTAssertTrue(message.waitForExistence(timeout: 10))
+        XCTAssertTrue(message.label.contains("kept on this TV"))
+        XCTAssertFalse(app.buttons["tv-sum-sprint-range-5"].exists)
+        XCTAssertFalse(app.buttons["tv-sum-sprint-resume"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["tv-sum-sprint-picture-prompt"].firstMatch.exists)
+        waitFocus(app.buttons["tv-sum-sprint-recovery-repeat"])
+        XCUIRemote.shared.press(.playPause)
+        screenshot("Unsupported history is preserved with a recovery message")
+        XCUIRemote.shared.press(.menu)
+        waitFocus(app.buttons["tv-mode-sprint"])
+        XCUIRemote.shared.press(.select)
+        XCTAssertTrue(message.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["tv-sum-sprint-range-5"].exists)
+    }
+
+    private func launch(reset: Bool, extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-sum-sprint-ui-test"] + (reset ? ["-sum-sprint-reset-progress"] : [])
+        app.launchArguments = ["-sum-sprint-ui-test"] + (reset ? ["-sum-sprint-reset-progress"] : []) + extraArguments
         app.launch()
         let sprint = app.buttons["tv-mode-sprint"]
         XCTAssertTrue(sprint.waitForExistence(timeout: 10))

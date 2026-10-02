@@ -22,6 +22,9 @@ struct SumSprintPartyTVView: View {
                 defaults.removePersistentDomain(forName: "mather.sumSprint.ui.tests")
                 Self.didResetUITestProgress = true
             }
+            if arguments.contains("-sum-sprint-unsupported-history-fixture") {
+                defaults.set(Data("unsupported-history".utf8), forKey: "tv.sumSprintParty.learning.v1.\(familyMode ? "family" : "child").\(familyMode ? "tv-family" : profileID).history")
+            }
             store = SumSprintPartyTVSessionStore(defaults: defaults, profileID: familyMode ? "tv-family" : profileID, familyMode: familyMode)
         }
         _session = State(initialValue: SumSprintPartyTVSession(profileID: profileID, familyMode: familyMode,
@@ -33,7 +36,9 @@ struct SumSprintPartyTVView: View {
             MatherTVBackdrop()
             VStack(alignment: .leading, spacing: 28) {
                 header
-                if !session.isSessionOpen {
+                if let message = session.storageMessage {
+                    recoveryPanel(message)
+                } else if !session.isSessionOpen {
                     rangeChooser
                 } else if session.checkpoint?.isComplete == true {
                     finish
@@ -129,6 +134,36 @@ struct SumSprintPartyTVView: View {
         .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 30))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("tv-sum-sprint-range-chooser")
+    }
+
+    private func recoveryPanel(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: 28) {
+            Label("Saved learning is kept", systemImage: "tray.full.fill")
+                .font(.system(size: 38, weight: .bold, design: .rounded))
+            Text(message)
+                .font(.system(size: 28, weight: .medium, design: .rounded))
+                .frame(maxWidth: 1300, alignment: .leading)
+                .accessibilityIdentifier("tv-sum-sprint-storage-message")
+            if let onExit {
+                actionButton("All games", symbol: "chevron.backward", id: "recovery-exit", width: 500) {
+                    narration.stop(); onExit()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-recovery-exit")
+            } else {
+                actionButton("Hear this again", symbol: "speaker.wave.2", id: "recovery-repeat", width: 500) {
+                    narration.repeatPrompt()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-recovery-repeat")
+            }
+            Text("Press Menu to return to all games. A grown-up can help with the saved learning.")
+                .font(.system(size: 25, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.75))
+        }
+        .foregroundStyle(.white)
+        .padding(44)
+        .frame(maxWidth: .infinity, minHeight: 340, alignment: .leading)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30))
+        .accessibilityElement(children: .contain)
     }
 
     private func learningStage(item: SumSprintPartyTVItem, progress: SumSprintPartyTVItemProgress) -> some View {
@@ -351,18 +386,23 @@ struct SumSprintPartyTVView: View {
         case "next": return session.currentItem?.isProbe == true ? "Finish this session." : "Next number idea."
         case "ranges": return "Choose another session."
         case "done": return "All done. Finish playing Sum Sprint."
+        case "recovery-exit": return "Return to all games. Saved learning stays on this TV."
+        case "recovery-repeat": return "Hear the saved learning message again. Menu returns to all games."
         default: return focusedControl.hasPrefix("range-") ? "Start a new session with totals through \(focusedControl.dropFirst(6))." : nil
         }
     }
     private func presentPrompt() {
-        if !session.isSessionOpen {
+        if let message = session.storageMessage {
+            narration.presentPrompt("\(message) Press Menu to return to all games.")
+        } else if !session.isSessionOpen {
             narration.presentPrompt("Choose a number range with a grown-up. Five practice ideas and one new puzzle. \(session.canResume ? "Resume keeps your saved puzzle. " : "")Take your time. Play Pause repeats these instructions.")
         } else if session.checkpoint?.isComplete == true {
             narration.presentPrompt("You explored six number ideas. Some you solved without app hints, and counting helped with others. Choose another session, or press Menu to finish playing.")
         } else { narration.presentPrompt(session.prompt) }
     }
     private func restoreFocus() {
-        if !session.isSessionOpen { focusedControl = session.canResume ? "resume" : "range-5" }
+        if session.storageMessage != nil { focusedControl = onExit == nil ? "recovery-repeat" : "recovery-exit" }
+        else if !session.isSessionOpen { focusedControl = session.canResume ? "resume" : "range-5" }
         else if session.checkpoint?.isComplete == true { focusedControl = "ranges" }
         else if session.currentProgress?.outcome != nil { focusedControl = "next" }
         else if let answer = session.currentItem?.round.answerChoices.first { focusedControl = "answer-\(answer)" }
