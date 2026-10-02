@@ -35,6 +35,7 @@ final class AppModel {
 
     var explorerLabMasteryProfile: ExplorerLabMasteryProfile
     var showingProfilePicker = false
+    var learningDataResetIssue: String?
     private var pendingGameAction: (() -> Void)?
     private var pendingLabGameplayCompletionContext: LabGameplayCompletionContext?
 
@@ -151,7 +152,7 @@ final class AppModel {
             guard let self else { return }
             self.clearLabGameplayCompletion()
             self.learningQuestEngine.start(questID, guidedPlanID: guidedPlanID, returnLaneID: returnLaneID, returnToGames: returnToGames, content: LearningQuestContentSnapshot(catalog: self.iosLearningContentStore.catalog))
-            if let guidedPlanID, let plan = LabConceptSessionPlan.plan(for: guidedPlanID) {
+            if self.learningQuestEngine.pauseMessage == nil, let guidedPlanID, let plan = LabConceptSessionPlan.plan(for: guidedPlanID) {
                 _ = self.labConceptSessionProgressStore.beginGuidedStage(self.learningQuestEngine.checkpoint.step.guidedStage, in: plan)
             }
             self.engine.showLearningQuest(questID)
@@ -159,14 +160,24 @@ final class AppModel {
     }
 
     func clearActiveProfileLearningData() {
+        learningDataResetIssue = nil
+        let profileID = profileStore.activeProfileId
+        let reports = ParentOffscreenObservationStore()
+        var issues: [String] = []
+        if !reports.clearSelectedProfile(profileID: profileID), let message = reports.storageIssue?.message { issues.append(message) }
+        do { try LearningHandoffStore().reset(profileID: profileID) }
+        catch { issues.append("The companion data could not be read and was preserved. Open Continue an idea in Parent Summary to review its recovery options.") }
         historyStore.clearActiveProfile(); gameSessionStore.clearActiveProfile(); telemetryWriter.clearEventsForActiveProfile()
-        gameplayProgressStore.clearActiveProfile(); questCheckpointStore.reset(); labConceptSessionProgressStore.reset()
+        gameplayProgressStore.clearActiveProfile()
+        if !questCheckpointStore.reset(), let message = questCheckpointStore.storageIssue?.message { issues.append(message) }
+        labConceptSessionProgressStore.reset()
         explorerLabMasteryStore.reset(); explorerLabMasteryProfile = explorerLabMasteryStore.load()
         angleArcadeEngine.cancelFlight()
         let angleStore = Self.angleArcadeStore(scope: Self.angleArcadeScope(profileID: profileStore.activeProfileId))
         angleStore.save(AngleArcadeProgress())
         angleArcadeProfileScope = angleStore.scope
         angleArcadeEngine = AngleArcadeEngine(store: angleStore)
+        learningDataResetIssue = issues.isEmpty ? nil : issues.joined(separator: "\n\n")
     }
 
     func leaveLearningQuest() { returnFromLearningQuest(learningQuestEngine.checkpoint) }
@@ -288,7 +299,12 @@ final class AppModel {
         let gameplayProgressStore = GameplayProgressStore(modelContext: modelContext, activeProfileIdProvider: { profileStore.activeProfileId })
         let labConceptSessionProgressStore = LabConceptSessionProgressStore(activeProfileIdProvider: { profileStore.activeProfileId })
         let explorerLabMasteryStore = ExplorerLabMasteryStore(activeProfileIdProvider: { profileStore.activeProfileId })
-        let questCheckpointStore = QuestCheckpointStore(activeProfileID: { profileStore.activeProfileId })
+        let questCheckpointStore = QuestCheckpointStore(
+            activeProfileID: { profileStore.activeProfileId },
+            priorAttempts: {
+                QuestPriorEvidenceReader.attempts(profileID: profileStore.activeProfileId, context: modelContext)
+            }
+        )
         let learningQuestEngine = LearningQuestEngine(store: questCheckpointStore, activeProfileID: { profileStore.activeProfileId })
         let laneRecallReviewEngine = LaneRecallReviewEngine(activeProfileID: { profileStore.activeProfileId })
         let explorerLabMasteryProfile = explorerLabMasteryStore.load()

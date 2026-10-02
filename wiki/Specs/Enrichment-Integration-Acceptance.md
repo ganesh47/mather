@@ -1,0 +1,9 @@
+# October learning enrichment integration
+
+The TV launcher selects a local learner or Family play before a journey. Sum Sprint and Shape Detective save attempts and frozen checkpoints in that scope; the family guide separates app hints, correct answers without app help, and fresh probes. Adult assistance remains unknown. Its Next action opens a short journey for the selected scope. Earlier device scores retain unknown ownership.
+
+Parent Summary and the TV family guide open Continue an idea with the recipient ID and name frozen at presentation. This is a parent-approved offline reviewed-mission code proof. It transfers no learner identity, history, attempt results or exact saved session. Automatic cross-device progress synchronization and history import are deferred.
+
+Parent reset is explicitly confirmed. Selected-child reset clears the matching new ledger, activity checkpoints and probe history, parent reports and companion assignment; other children remain. Anonymous consumed companion receipts prevent code replay. TV all-data recovery also removes TV learner profiles and all new TV learning/companion state, while retaining earlier game scores. Handheld recovery offers narrowly confirmed all-profile deletion of unreadable parent reports or quest checkpoints/history. Unsupported bytes stay unchanged until explicit recovery; partial reset failures remain visible.
+
+Validation gates: regenerated project committed; all iOS domain tests; the four core quests, exact resume, parent evidence, downloaded/offline catalog, paused recovery and companion entry UI; all TV game regressions and family recipient/reset UI. Private simulators use synthetic learners only. Physical Siri Remote feel, couch-distance legibility, VoiceOver audio and system Reduce Motion still require device verification.

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MatherTVRootView: View {
     @State private var narration = TVNarrationController()
+    @State private var learningStore = Self.makeLearningStore()
+    @State private var showsFamilyGuide = ProcessInfo.processInfo.arguments.contains("-tv-family-ui-test")
     @FocusState private var focusedAction: MatherTVAction.ID?
     @State private var activeGame: MatherTVAction? = ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") ? .angle : nil
     @State private var lastFocusedAction = MatherTVAction.memory
@@ -11,9 +13,18 @@ struct MatherTVRootView: View {
 
     var body: some View {
         Group {
-            if let activeGame {
+            if showsFamilyGuide {
+                TVFamilyLearningView(store: learningStore, onExit: {
+                    showsFamilyGuide = false
+                    focusLauncher()
+                }, onClearSelected: { TVLearningDataReset.clearSelected($0, ledger: learningStore) },
+                    onClearAll: { TVLearningDataReset.clearAll(ledger: learningStore) }, onStartJourney: { action in
+                        showsFamilyGuide = false
+                        openGame(action)
+                    })
+            } else if let activeGame {
                 gameView(for: activeGame)
-                    .id(activeGame.id)
+                    .id(activeGame.id + "-" + learningStore.context.profileID)
                     .overlay(alignment: .top) {
                         if activeGame != .angle {
                         Label("Menu  ·  All games", systemImage: "chevron.backward")
@@ -72,6 +83,18 @@ struct MatherTVRootView: View {
                 }
                 .font(.system(size: 23, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.68))
+
+                HStack(spacing: 24) {
+                    Button("Learners & family guide") {
+                        focusedAction = nil
+                        showsFamilyGuide = true
+                    }.buttonStyle(TVFamilyButtonStyle())
+                        .accessibilityIdentifier("tv-family-panel")
+                    Text("Playing: \(learningStore.context.name)")
+                        .font(.system(size: 25, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .accessibilityIdentifier("tv-launcher-learner")
+                }
             }
             .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, 90)
@@ -120,15 +143,21 @@ struct MatherTVRootView: View {
         case .angle:
             AngleArcadeTVView(onExit: { exitGame(.angle) })
         case .sprint:
-            SumSprintPartyTVView()
+            SumSprintPartyTVView(profileID: learningStore.context.profileID, familyMode: learningStore.context.familyMode,
+                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) }, onExit: { exitGame(.sprint) })
         case .compare:
             CompareCampTVView()
         case .shapes:
-            ShapeDetectiveTVView()
+            ShapeDetectiveTVView(profileID: learningStore.context.profileID, familyMode: learningStore.context.familyMode,
+                onAttempt: { _ = learningStore.record($0) }, onResult: { _ = learningStore.save($0) }, onExit: { exitGame(.shapes) })
         }
     }
 
     private func openGame(_ action: MatherTVAction) {
+        if (action == .sprint || action == .shapes), learningStore.storageMessage != nil {
+            showsFamilyGuide = true
+            return
+        }
         narration.stop()
         lastFocusedAction = action
         focusedAction = nil
@@ -142,11 +171,37 @@ struct MatherTVRootView: View {
     }
 
     private func focusLauncher() {
-        guard activeGame == nil else { return }
+        guard activeGame == nil, !showsFamilyGuide else { return }
         Task { @MainActor in
             focusedAction = lastFocusedAction.id
         }
     }
+
+    private static func makeLearningStore() -> TVLearningStore {
+        guard ProcessInfo.processInfo.arguments.contains("-tv-family-ui-test") else { return TVLearningStore() }
+        return familyUITestStore
+    }
+
+    // State initial values can be evaluated again when SwiftUI recreates a view.
+    // Reset and seed the synthetic suite once per process, never during reentry.
+    private static let familyUITestStore: TVLearningStore = {
+        let arguments = ProcessInfo.processInfo.arguments
+        let suite = "mather.tvFamily.uiTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        if arguments.contains("-tv-family-reset") { defaults.removePersistentDomain(forName: suite) }
+        let store = TVLearningStore(defaults: defaults)
+        if store.learners.isEmpty {
+            _ = store.addLearner(name: "Alex")
+            let profileID = store.context.profileID
+            let attempt = ItemAttempt(activityID: "tv-sum-sprint", conceptID: "number-parts", entityID: "2+3", stageID: "practice",
+                outcome: .supportedCorrect, profileID: profileID, sessionID: "fixture", contentVersion: 1,
+                itemVariantID: "trays-2-3", appHintUsed: true, isFreshProbe: false, adultHelp: .unknown)
+            _ = store.save(ActivityResult(id: "fixture", activityID: attempt.activityID, title: "Sum Sprint", startedAt: Date(), attempts: [attempt], completedStageIDs: ["practice"], profileID: profileID, contentVersion: 1))
+            _ = store.addLearner(name: "Jamie")
+            store.selectLearner(nil)
+        }
+        return store
+    }()
 }
 
 private struct MatherTVGameCard: View {
@@ -218,7 +273,7 @@ struct MatherTVBackdrop: View {
     }
 }
 
-private enum MatherTVAction: String, CaseIterable, Identifiable {
+enum MatherTVAction: String, CaseIterable, Identifiable {
     case memory
     case angle
     case sprint
@@ -241,9 +296,9 @@ private enum MatherTVAction: String, CaseIterable, Identifiable {
         switch self {
         case .memory: "Match pictures and names"
         case .angle: "Predict, aim, launch"
-        case .sprint: "Build addition streaks"
+        case .sprint: "Build parts, try a new puzzle"
         case .compare: "Explore 24 learning camps"
-        case .shapes: "Solve shape clues"
+        case .shapes: "Trace properties, explore shapes"
         }
     }
 

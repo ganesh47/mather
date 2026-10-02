@@ -1,398 +1,463 @@
 import SwiftUI
 
+@MainActor
 struct SumSprintPartyTVView: View {
-    @FocusState private var focusedAnswer: Int?
-    @FocusState private var nextButtonFocused: Bool
-
-    @AppStorage("tv.sumSprintParty.personalBest") private var personalBest = 0
-
-    @State private var roundIndex = 0
-    @State private var selectedAnswer: Int?
-    @State private var streak = 0
+    private static var didResetUITestProgress = false
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @FocusState private var focusedControl: String?
+    @State private var session: SumSprintPartyTVSession
     @State private var narration = TVNarrationController()
+    private let onExit: (() -> Void)?
 
-    private var round: SumSprintPartyTVRound {
-        SumSprintPartyTVRound.make(index: roundIndex)
-    }
-
-    private var answeredCorrectly: Bool {
-        SumSprintPartyTVRound.isCorrect(selection: selectedAnswer, for: round)
+    init(profileID: String = "tv-family", familyMode: Bool = true,
+         onAttempt: @escaping (ItemAttempt) -> Void = { _ in },
+         onResult: @escaping (ActivityResult) -> Void = { _ in },
+         onExit: (() -> Void)? = nil) {
+        self.onExit = onExit
+        let arguments = ProcessInfo.processInfo.arguments
+        var store: SumSprintPartyTVSessionStore?
+        if arguments.contains("-sum-sprint-ui-test"), let defaults = UserDefaults(suiteName: "mather.sumSprint.ui.tests") {
+            if arguments.contains("-sum-sprint-reset-progress"), !Self.didResetUITestProgress {
+                defaults.removePersistentDomain(forName: "mather.sumSprint.ui.tests")
+                Self.didResetUITestProgress = true
+            }
+            if arguments.contains("-sum-sprint-unsupported-history-fixture") {
+                defaults.set(Data("unsupported-history".utf8), forKey: "tv.sumSprintParty.learning.v1.\(familyMode ? "family" : "child").\(familyMode ? "tv-family" : profileID).history")
+            }
+            store = SumSprintPartyTVSessionStore(defaults: defaults, profileID: familyMode ? "tv-family" : profileID, familyMode: familyMode)
+        }
+        _session = State(initialValue: SumSprintPartyTVSession(profileID: profileID, familyMode: familyMode,
+            store: store, onAttempt: onAttempt, onResult: onResult))
     }
 
     var body: some View {
         ZStack {
             MatherTVBackdrop()
-
-            VStack(alignment: .leading, spacing: 36) {
+            VStack(alignment: .leading, spacing: 28) {
                 header
-                stage
+                if let message = session.storageMessage {
+                    recoveryPanel(message)
+                } else if !session.isSessionOpen {
+                    rangeChooser
+                } else if session.checkpoint?.isComplete == true {
+                    finish
+                } else if let item = session.currentItem, let progress = session.currentProgress {
+                    learningStage(item: item, progress: progress)
+                }
             }
             .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, 90)
-            .padding(.vertical, 66)
+            .padding(.top, 86)
+            .padding(.bottom, 50)
         }
         .onAppear {
-            presentRoundPrompt(introduction: "Welcome to Sum Sprint Party. Take your time and count the two groups.")
-            focusedAnswer = round.answerChoices.first
+            session.replayEvidence()
+            presentPrompt()
+            restoreFocus()
         }
         .onDisappear { narration.stop() }
         .onPlayPauseCommand { narration.repeatPrompt() }
-        .onChange(of: focusedNarration) { _, text in
-            narration.focus(text)
+        .onChange(of: focusedControl) { _, _ in narration.focus(focusedNarration) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { restoreFocus() } else { narration.stop() }
         }
-    }
-
-    private var focusedNarration: String? {
-        if selectedAnswer != nil {
-            return nextButtonFocused ? "Next fact. Press select to continue." : nil
-        }
-        return focusedAnswer.map { "\($0)" }
     }
 
     private var header: some View {
         HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Sum Sprint Party")
-                    .font(.system(size: 70, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 62, weight: .bold, design: .rounded))
                     .accessibilityIdentifier("tv-sum-sprint-title")
-
-                Text("Four answers, no countdown. Build a calm streak together.")
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
+                Text("Join number parts. Take your time.")
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.74))
                     .accessibilityIdentifier("tv-sum-sprint-no-timer-copy")
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Sum Sprint Party. Four answers. No countdown.")
-
-            Spacer(minLength: 24)
-
-            HStack(spacing: 18) {
-                metricPill(title: "Streak", value: "\(streak)", color: Color(red: 0.78, green: 0.94, blue: 0.66))
-                metricPill(title: "Best", value: "\(personalBest)", color: Color(red: 1.0, green: 0.82, blue: 0.44))
+            Spacer(minLength: 20)
+            if session.isSessionOpen, let checkpoint = session.checkpoint {
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(checkpoint.isComplete ? "Session complete" : "\(checkpoint.currentIndex + 1) of 6")
+                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                        .accessibilityIdentifier("tv-sum-sprint-progress")
+                    Text(checkpoint.range.title)
+                        .font(.system(size: 25, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
             }
         }
+        .foregroundStyle(.white)
     }
 
-    private var stage: some View {
-        HStack(alignment: .top, spacing: 42) {
-            factPanel
+    private var rangeChooser: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            Text("Choose with a grown-up")
+                .font(.system(size: 38, weight: .bold, design: .rounded))
+            Text("Five practice ideas, then one new puzzle. No countdown.")
+                .font(.system(size: 28, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.75))
+            if session.canResume, let checkpoint = session.checkpoint {
+                actionButton("Resume \(checkpoint.range.title)", symbol: "play.fill", id: "resume") {
+                    session.resume(); presentPrompt(); restoreFocus()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-resume")
+            }
+            HStack(spacing: 30) {
+                ForEach(SumSprintPartyTVRange.allCases) { range in
+                    actionButton(range.title, symbol: "circle.grid.2x2.fill", id: "range-\(range.rawValue)", width: 400) {
+                        if ProcessInfo.processInfo.arguments.contains("-sum-sprint-ui-test") {
+                            session.start(range: range, seed: 17)
+                        } else {
+                            session.start(range: range)
+                        }
+                        presentPrompt(); restoreFocus()
+                    }
+                    .accessibilityLabel("Start a new session with totals through \(range.rawValue)")
+                    .accessibilityIdentifier("tv-sum-sprint-range-\(range.rawValue)")
+                }
+            }
+            Text(session.canResume ? "Resume keeps the same puzzle and any counting help. Starting a new session keeps your earlier session in history." : "Explore two groups, rows of five, and a number-parts picture.")
+                .font(.system(size: 25, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.65))
+                .frame(maxWidth: 1350, alignment: .leading)
+            let earlierBest = UserDefaults.standard.integer(forKey: "tv.sumSprintParty.personalBest")
+            if earlierBest > 0 {
+                Text("Earlier personal best: \(earlierBest)")
+                    .font(.system(size: 22, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 30))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("tv-sum-sprint-range-chooser")
+    }
 
-            VStack(alignment: .leading, spacing: 22) {
-                Text("Choose the total")
-                    .font(.system(size: 32, weight: .black, design: .rounded))
+    private func recoveryPanel(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: 28) {
+            Label("Saved learning is kept", systemImage: "tray.full.fill")
+                .font(.system(size: 38, weight: .bold, design: .rounded))
+            Text(message)
+                .font(.system(size: 28, weight: .medium, design: .rounded))
+                .frame(maxWidth: 1300, alignment: .leading)
+                .accessibilityIdentifier("tv-sum-sprint-storage-message")
+            if let onExit {
+                actionButton("All games", symbol: "chevron.backward", id: "recovery-exit", width: 500) {
+                    narration.stop(); onExit()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-recovery-exit")
+            } else {
+                actionButton("Hear this again", symbol: "speaker.wave.2", id: "recovery-repeat", width: 500) {
+                    narration.repeatPrompt()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-recovery-repeat")
+            }
+            Text("Press Menu to return to all games. A grown-up can help with the saved learning.")
+                .font(.system(size: 25, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.75))
+        }
+        .foregroundStyle(.white)
+        .padding(44)
+        .frame(maxWidth: .infinity, minHeight: 340, alignment: .leading)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30))
+        .accessibilityElement(children: .contain)
+    }
+
+    private func learningStage(item: SumSprintPartyTVItem, progress: SumSprintPartyTVItemProgress) -> some View {
+        HStack(alignment: .top, spacing: 40) {
+            factPanel(item: item, progress: progress)
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Choose the whole")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-
-                answerGrid
-
-                feedbackBar
+                LazyVGrid(columns: [GridItem(.fixed(390), spacing: 22), GridItem(.fixed(390), spacing: 22)], spacing: 22) {
+                    ForEach(item.round.answerChoices, id: \.self) { answer in
+                        Button {
+                            session.choose(answer)
+                            narration.presentPrompt(session.prompt)
+                            if session.currentProgress?.outcome != nil { focusedControl = "next" }
+                        } label: {
+                            answerTile(answer, item: item, progress: progress)
+                        }
+                        .buttonStyle(.plain)
+                        .focused($focusedControl, equals: "answer-\(answer)")
+                        .disabled(progress.outcome != nil)
+                        .accessibilityLabel("\(answer)")
+                        .accessibilityHint("Select this total. You can try again.")
+                        .accessibilityIdentifier("tv-sum-sprint-answer-\(answer)")
+                    }
+                }
+                feedback(item: item, progress: progress)
+                if progress.outcome == nil {
+                    HStack(spacing: 22) {
+                        actionButton("Guide me", symbol: "hand.point.up.left.fill", id: "help", width: 330) {
+                            session.requestHelp(); presentPrompt()
+                        }
+                        .accessibilityIdentifier("tv-sum-sprint-help")
+                        if progress.support == .countOn {
+                            actionButton("Count one", symbol: "plus.circle.fill", id: "count", width: 330) {
+                                session.countNext()
+                                let counted = session.currentProgress?.counted ?? 0
+                                narration.presentPrompt("\(item.round.fact.addendA + counted). \(counted == item.round.fact.addendB ? "All counters are counted. Choose the whole." : "Select Count one to keep counting, or choose the whole.")")
+                                if counted == item.round.fact.addendB { focusedControl = "answer-\(item.round.answerChoices[0])" }
+                            }
+                            .disabled(progress.counted == item.round.fact.addendB)
+                            .accessibilityIdentifier("tv-sum-sprint-count")
+                        }
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(width: 802, alignment: .leading)
         }
     }
 
-    private var factPanel: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            Text("Fact")
+    private func factPanel(item: SumSprintPartyTVItem, progress: SumSprintPartyTVItemProgress) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            Text(item.isProbe ? (item.isFreshProbe ? "New puzzle" : "Number-parts puzzle") : "Two parts")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1.0))
-
-            Text(round.fact.promptText)
-                .font(.system(size: 82, weight: .black, design: .rounded))
+                .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1))
+                .accessibilityIdentifier("tv-sum-sprint-stage")
+            Text(item.round.fact.promptText)
+                .font(.system(size: 72, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .accessibilityIdentifier("tv-sum-sprint-fact")
-
-            SumSprintPartyTokensView(fact: round.fact)
-                .frame(width: 500, height: 294)
-                .accessibilityHidden(true)
-
-            Text("Look at the two groups, then pick the total.")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.58))
-                .lineLimit(2)
+            if item.representation == .numberParts && progress.support == .none {
+                numberParts(item.round.fact)
+            } else {
+                SumSprintPartyTVPartsPicture(fact: item.round.fact, representation: item.representation,
+                    support: progress.support, counted: progress.counted)
+            }
+            if progress.support == .countOn {
+                Text("\(item.round.fact.addendA) → \(item.round.fact.addendA + progress.counted)")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .accessibilityIdentifier("tv-sum-sprint-counted")
+            } else {
+                Text(item.isProbe ? "Two number parts make one whole." : "Keep both parts. Find the whole.")
+                    .font(.system(size: 25, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.72))
+            }
         }
         .padding(36)
-        .frame(width: 600, height: 590, alignment: .leading)
-        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(.white.opacity(0.14), lineWidth: 1)
-        )
+        .frame(width: 600, height: 580, alignment: .topLeading)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30))
+        .overlay(RoundedRectangle(cornerRadius: 30).stroke(.white.opacity(0.15), lineWidth: 1))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(round.fact.spokenPrompt) Picture support shows \(round.fact.addendA) counters plus \(round.fact.addendB) counters.")
-        .accessibilityHint("Move right to choose the total.")
+        .accessibilityLabel("\(item.representation.spokenDescription). \(item.round.fact.spokenPrompt) \(session.scaffold)")
+        .accessibilityValue("Part \(item.round.fact.addendA) and part \(item.round.fact.addendB). Idea \(item.round.index + 1) of 6.")
         .accessibilityIdentifier("tv-sum-sprint-picture-prompt")
     }
 
-    private var answerGrid: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.fixed(390), spacing: 22),
-                GridItem(.fixed(390), spacing: 22)
-            ],
-            spacing: 22
-        ) {
-            ForEach(round.answerChoices, id: \.self) { answer in
-                Button {
-                    choose(answer)
-                } label: {
-                    SumSprintPartyAnswerTile(
-                        answer: answer,
-                        isFocused: focusedAnswer == answer,
-                        state: answerState(for: answer)
-                    )
-                }
-                .buttonStyle(.plain)
-                .focused($focusedAnswer, equals: answer)
-                .disabled(selectedAnswer != nil)
-                .accessibilityLabel("\(answer)")
-                .accessibilityHint("Select \(answer) as the total.")
-                .accessibilityIdentifier("tv-sum-sprint-answer-\(answer)")
+    private func numberParts(_ fact: SumSprintPartyTVFact) -> some View {
+        VStack(spacing: 8) {
+            Text("?")
+                .font(.system(size: 65, weight: .black, design: .rounded))
+                .frame(width: 140, height: 105)
+                .background(.white.opacity(0.13), in: RoundedRectangle(cornerRadius: 25))
+            HStack(spacing: 90) {
+                Image(systemName: "arrow.up.right"); Image(systemName: "arrow.up.left")
+            }
+            .font(.system(size: 35, weight: .bold))
+            HStack(spacing: 65) {
+                partLabel(fact.addendA, tint: .orange)
+                partLabel(fact.addendB, tint: .cyan)
             }
         }
+        .foregroundStyle(.white)
+        .frame(width: 500, height: 260)
+        .accessibilityHidden(true)
+    }
+    private func partLabel(_ number: Int, tint: Color) -> some View {
+        Text("\(number)")
+            .font(.system(size: 55, weight: .black, design: .rounded))
+            .frame(width: 150, height: 100)
+            .background(tint.opacity(0.22), in: RoundedRectangle(cornerRadius: 24))
     }
 
-    @ViewBuilder
-    private var feedbackBar: some View {
-        if let selectedAnswer {
-            HStack(spacing: 20) {
-                Image(systemName: answeredCorrectly ? "checkmark.circle.fill" : "arrow.uturn.backward.circle.fill")
-                    .font(.system(size: 38, weight: .bold))
-                    .foregroundStyle(answeredCorrectly ? Color(red: 0.78, green: 0.94, blue: 0.66) : Color(red: 1.0, green: 0.78, blue: 0.42))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(answeredCorrectly ? "Nice total!" : "Good try")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-
-                    Text(answeredCorrectly ? "\(round.fact.promptText) = \(round.correctAnswer). Keep the streak going." : "\(selectedAnswer) is not it yet. \(round.fact.promptText) = \(round.correctAnswer).")
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.68))
-                }
-
-                Spacer(minLength: 18)
-
-                Button {
-                    nextRound()
-                } label: {
-                    Label("Next fact", systemImage: "forward.fill")
-                        .font(.system(size: 24, weight: .black, design: .rounded))
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 18)
-                }
-                .buttonStyle(.plain)
-                .focused($nextButtonFocused)
-                .background(nextButtonFocused ? .white : Color(red: 0.55, green: 0.88, blue: 1.0).opacity(0.20), in: Capsule())
-                .foregroundStyle(nextButtonFocused ? Color(red: 0.07, green: 0.10, blue: 0.16) : .white)
-                .accessibilityIdentifier("tv-sum-sprint-next-fact")
-            }
-            .padding(24)
-            .frame(width: 802)
-            .frame(minHeight: 120)
-            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .stroke(.white.opacity(0.14), lineWidth: 1)
-            )
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(feedbackAccessibilityLabel(selectedAnswer: selectedAnswer))
-        } else {
-            Text("No timer. The only counters here are your streak and your personal best.")
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.58))
-                .frame(width: 802, alignment: .leading)
-                .frame(minHeight: 120, alignment: .leading)
-                .accessibilityIdentifier("tv-sum-sprint-calm-copy")
-        }
-    }
-
-    private func metricPill(title: String, value: String, color: Color) -> some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Text(value)
-                .font(.system(size: 56, weight: .black, design: .rounded))
-                .foregroundStyle(color)
-
-            Text(title)
-                .font(.system(size: 23, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.62))
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .frame(minWidth: 150, alignment: .trailing)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title) \(value)")
-    }
-
-    private func choose(_ answer: Int) {
-        guard selectedAnswer == nil else { return }
-        selectedAnswer = answer
-        if answer == round.correctAnswer {
-            streak += 1
-            personalBest = max(personalBest, streak)
-        } else {
-            streak = 0
-        }
-        let feedback = answeredCorrectly ? "Nice total!" : "Good try. Let's count together."
-        narration.announce("\(feedback) \(round.fact.addendA) plus \(round.fact.addendB) equals \(round.correctAnswer). Press select for the next fact.")
-        nextButtonFocused = true
-    }
-
-    private func presentRoundPrompt(introduction: String = "") {
-        narration.presentPrompt("\(introduction) \(round.fact.spokenPrompt) Swipe to hear the answers, then press select to choose the total. Press Play Pause to hear the question again.")
-    }
-
-    private func nextRound() {
-        let nextIndex = roundIndex + 1
-        let nextRound = SumSprintPartyTVRound.make(index: nextIndex)
-        roundIndex = nextIndex
-        selectedAnswer = nil
-        presentRoundPrompt()
-        focusedAnswer = nextRound.answerChoices.first
-        nextButtonFocused = false
-    }
-
-    private func answerState(for answer: Int) -> SumSprintPartyAnswerTile.State {
-        guard let selectedAnswer else { return .idle }
-        if answer == round.correctAnswer { return .correct }
-        if answer == selectedAnswer { return .incorrect }
-        return .dimmed
-    }
-
-    private func feedbackAccessibilityLabel(selectedAnswer: Int) -> String {
-        if selectedAnswer == round.correctAnswer {
-            return "Correct. \(round.fact.promptText) equals \(round.correctAnswer). Streak \(streak)."
-        }
-        return "Not yet. \(round.fact.promptText) equals \(round.correctAnswer). Streak reset to zero."
-    }
-}
-
-private struct SumSprintPartyTokensView: View {
-    let fact: SumSprintPartyTVFact
-
-    var body: some View {
-        HStack(spacing: 22) {
-            tokenGroup(count: fact.addendA, tint: Color(red: 0.98, green: 0.73, blue: 0.34), label: "\(fact.addendA)")
-
-            Text("+")
-                .font(.system(size: 50, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.72))
-                .frame(width: 42)
-
-            tokenGroup(count: fact.addendB, tint: Color(red: 0.42, green: 0.82, blue: 0.90), label: "\(fact.addendB)")
-        }
-    }
-
-    private func tokenGroup(count: Int, tint: Color, label: String) -> some View {
-        VStack(spacing: 16) {
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.fixed(28), spacing: 8), count: 5),
-                spacing: 8
-            ) {
-                ForEach(0..<count, id: \.self) { index in
-                    Circle()
-                        .fill(tint)
-                        .frame(width: 28, height: 28)
-                        .overlay(Circle().stroke(.white.opacity(index % 2 == 0 ? 0.45 : 0.18), lineWidth: 2))
-                }
-            }
-            .frame(width: 174, height: 122, alignment: .top)
-            .padding(18)
-            .background(.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-
-            Text(label)
-                .font(.system(size: 34, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-        }
-    }
-}
-
-private struct SumSprintPartyAnswerTile: View {
-    enum State {
-        case idle
-        case correct
-        case incorrect
-        case dimmed
-    }
-
-    let answer: Int
-    let isFocused: Bool
-    let state: State
-
-    var body: some View {
-        HStack(spacing: 18) {
-            statusIcon
-
+    private func answerTile(_ answer: Int, item: SumSprintPartyTVItem, progress: SumSprintPartyTVItemProgress) -> some View {
+        let focused = focusedControl == "answer-\(answer)"
+        let solved = progress.outcome != nil && answer == item.round.correctAnswer
+        let tried = progress.outcome == nil && progress.selectedAnswer == answer
+        return HStack(spacing: 22) {
+            Image(systemName: solved ? "checkmark.circle.fill" : tried ? "arrow.uturn.backward.circle" : "circle")
+                .font(.system(size: 34, weight: .bold))
             Text("\(answer)")
                 .font(.system(size: 58, weight: .black, design: .rounded))
-                .foregroundStyle(foregroundColor)
                 .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 20)
-        .frame(width: 390, height: 150, alignment: .leading)
-        .background(backgroundStyle, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(strokeColor, lineWidth: 3)
-        )
-        .scaleEffect(isFocused ? 1.055 : 1.0)
-        .opacity(state == .dimmed ? 0.45 : 1)
-        .shadow(color: .black.opacity(isFocused ? 0.28 : 0.12), radius: isFocused ? 20 : 8, x: 0, y: isFocused ? 14 : 5)
-        .animation(.spring(response: 0.26, dampingFraction: 0.78), value: isFocused)
-        .animation(.easeInOut(duration: 0.16), value: state)
+        .foregroundStyle(focused ? Color(red: 0.08, green: 0.12, blue: 0.18) : .white)
+        .padding(28)
+        .frame(width: 390, height: 140)
+        .background(focused ? .white : solved ? Color.green.opacity(0.3) : .white.opacity(0.08), in: RoundedRectangle(cornerRadius: 24))
+        .overlay(RoundedRectangle(cornerRadius: 24).stroke(focused ? .white : .white.opacity(0.18), lineWidth: 3))
+        .scaleEffect(focused && !reduceMotion ? 1.035 : 1)
     }
 
-    @ViewBuilder
-    private var statusIcon: some View {
-        switch state {
-        case .correct:
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 38, weight: .black))
-                .foregroundStyle(Color(red: 0.36, green: 0.63, blue: 0.30))
-        case .incorrect:
-            Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 38, weight: .black))
-                .foregroundStyle(Color(red: 0.80, green: 0.28, blue: 0.22))
-        case .idle, .dimmed:
-            Image(systemName: "circle")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(foregroundColor.opacity(0.72))
+    private func feedback(item: SumSprintPartyTVItem, progress: SumSprintPartyTVItemProgress) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let outcome = progress.outcome {
+                Text(outcome == .independentCorrect ? "You joined the parts!" : "Counting helped you join the parts!")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                Text("\(item.round.fact.promptText) = \(item.round.correctAnswer)")
+                    .font(.system(size: 25, weight: .medium, design: .rounded))
+                actionButton(item.isProbe ? "Finish" : "Next", symbol: "arrow.right", id: "next", width: 350) {
+                    session.advance(); presentPrompt(); restoreFocus()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-next-fact")
+            } else {
+                Text(progress.missCount > 0 ? "Try counting the parts" : progress.support != .none ? "Let's count together" : "No timer. You can count, think, or ask for help.")
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
+                Text(session.scaffold.isEmpty ? "Menu saves your place. Play Pause repeats the question." : session.scaffold)
+                    .font(.system(size: 23, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.74))
+                    .lineLimit(3)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(24)
+        .frame(width: 802)
+        .frame(minHeight: 150, alignment: .leading)
+        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 25))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("tv-sum-sprint-feedback")
+    }
+
+    private var finish: some View {
+        VStack(alignment: .leading, spacing: 26) {
+            Label("You explored six number ideas", systemImage: "sparkles")
+                .font(.system(size: 42, weight: .bold, design: .rounded))
+            if let checkpoint = session.checkpoint {
+                Text("\(checkpoint.unaidedCount) without app hints · \(checkpoint.helpedCount) with counting help")
+                    .font(.system(size: 30, weight: .semibold, design: .rounded))
+                    .accessibilityIdentifier("tv-sum-sprint-outcomes")
+                Text(probeRecap(checkpoint))
+                    .font(.system(size: 27, weight: .medium, design: .rounded))
+                Text("Family play may include grown-up help. This session shows what you explored.")
+                    .font(.system(size: 23, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+            HStack(spacing: 26) {
+                actionButton("Choose another session", symbol: "circle.grid.2x2", id: "ranges", width: 700) {
+                    session.showRanges(); presentPrompt(); restoreFocus()
+                }
+                .accessibilityIdentifier("tv-sum-sprint-another-session")
+                actionButton("All done", symbol: "checkmark.circle", id: "done", width: 350) {
+                    if let onExit { narration.stop(); onExit() }
+                    else { session.showRanges(); presentPrompt(); restoreFocus() }
+                }
+                .accessibilityIdentifier("tv-sum-sprint-all-done")
+            }
+            Text("Or press Menu to finish playing.")
+                .font(.system(size: 25, weight: .medium, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(44)
+        .frame(maxWidth: .infinity, minHeight: 460, alignment: .leading)
+        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 32))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("tv-sum-sprint-finish")
+    }
+
+    private func actionButton(_ title: String, symbol: String, id: String, width: CGFloat = 650, action: @escaping () -> Void) -> some View {
+        let focused = focusedControl == id
+        return Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 27, weight: .bold, design: .rounded))
+                .padding(.horizontal, 24)
+                .frame(width: width, height: 90, alignment: .leading)
+                .foregroundStyle(focused ? Color(red: 0.08, green: 0.12, blue: 0.18) : .white)
+                .background(focused ? .white : .white.opacity(0.12), in: RoundedRectangle(cornerRadius: 22))
+                .overlay(RoundedRectangle(cornerRadius: 22).stroke(.white.opacity(focused ? 1 : 0.22), lineWidth: 3))
+        }
+        .buttonStyle(.plain)
+        .focused($focusedControl, equals: id)
+    }
+    private var focusedNarration: String? {
+        guard let focusedControl else { return nil }
+        if focusedControl.hasPrefix("answer-") { return String(focusedControl.dropFirst(7)) }
+        switch focusedControl {
+        case "help": return "Guide me. Select for counting help."
+        case "count": return "Count one more counter."
+        case "resume": return "Resume your saved puzzle."
+        case "next": return session.currentItem?.isProbe == true ? "Finish this session." : "Next number idea."
+        case "ranges": return "Choose another session."
+        case "done": return "All done. Finish playing Sum Sprint."
+        case "recovery-exit": return "Return to all games. Saved learning stays on this TV."
+        case "recovery-repeat": return "Hear the saved learning message again. Menu returns to all games."
+        default: return focusedControl.hasPrefix("range-") ? "Start a new session with totals through \(focusedControl.dropFirst(6))." : nil
         }
     }
-
-    private var foregroundColor: Color {
-        isFocused ? Color(red: 0.08, green: 0.12, blue: 0.18) : .white
+    private func presentPrompt() {
+        if let message = session.storageMessage {
+            narration.presentPrompt("\(message) Press Menu to return to all games.")
+        } else if !session.isSessionOpen {
+            narration.presentPrompt("Choose a number range with a grown-up. Five practice ideas and one new puzzle. \(session.canResume ? "Resume keeps your saved puzzle. " : "")Take your time. Play Pause repeats these instructions.")
+        } else if session.checkpoint?.isComplete == true {
+            narration.presentPrompt("You explored six number ideas. Some you solved without app hints, and counting helped with others. Choose another session, or press Menu to finish playing.")
+        } else { narration.presentPrompt(session.prompt) }
     }
-
-    private var strokeColor: Color {
-        switch state {
-        case .correct: return Color(red: 0.78, green: 0.94, blue: 0.66)
-        case .incorrect: return Color(red: 1.0, green: 0.60, blue: 0.50)
-        case .idle, .dimmed:
-            return isFocused ? .white : .white.opacity(0.12)
-        }
+    private func restoreFocus() {
+        if session.storageMessage != nil { focusedControl = onExit == nil ? "recovery-repeat" : "recovery-exit" }
+        else if !session.isSessionOpen { focusedControl = session.canResume ? "resume" : "range-5" }
+        else if session.checkpoint?.isComplete == true { focusedControl = "ranges" }
+        else if session.currentProgress?.outcome != nil { focusedControl = "next" }
+        else if let answer = session.currentItem?.round.answerChoices.first { focusedControl = "answer-\(answer)" }
     }
+    private func probeRecap(_ checkpoint: SumSprintPartyTVCheckpoint) -> String {
+        if checkpoint.freshProbeUnaided { return "You solved the new number-parts puzzle without app hints." }
+        if checkpoint.items.last?.isFreshProbe == false { return "You revisited a number-parts puzzle. Familiar puzzles help us practice." }
+        return "You explored a new puzzle with help. Try a new one another day."
+    }
+}
 
-    private var backgroundStyle: some ShapeStyle {
-        if isFocused {
-            return AnyShapeStyle(.white)
+private struct SumSprintPartyTVPartsPicture: View {
+    let fact: SumSprintPartyTVFact
+    let representation: SumSprintPartyTVRepresentation
+    let support: SumSprintPartyTVSupport
+    let counted: Int
+    private let first = Color(red: 0.98, green: 0.73, blue: 0.34)
+    private let second = Color(red: 0.42, green: 0.82, blue: 0.9)
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 18) {
+            group(count: fact.addendA, tint: first, isCounting: false)
+            Text("+").font(.system(size: 42, weight: .bold, design: .rounded)).padding(.top, 60)
+            group(count: fact.addendB, tint: second, isCounting: support == .countOn)
         }
-        switch state {
-        case .correct:
-            return AnyShapeStyle(Color(red: 0.20, green: 0.50, blue: 0.32).opacity(0.82))
-        case .incorrect:
-            return AnyShapeStyle(Color(red: 0.52, green: 0.17, blue: 0.17).opacity(0.78))
-        case .idle, .dimmed:
-            return AnyShapeStyle(.white.opacity(0.08))
+        .foregroundStyle(.white)
+        .frame(width: 500, height: 265)
+        .accessibilityHidden(true)
+    }
+    private func group(count: Int, tint: Color, isCounting: Bool) -> some View {
+        let structured = representation != .counterTrays || support != .none
+        return VStack(spacing: 16) {
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(28), spacing: 8), count: structured || count > 16 ? 5 : 4), spacing: 9) {
+                ForEach(0..<(structured ? ((count + 4) / 5) * 5 : count), id: \.self) { index in
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(.white.opacity(structured ? 0.25 : 0), lineWidth: 1)
+                        if index < count {
+                            Circle().fill(tint)
+                                .frame(width: 23, height: 23)
+                                .opacity(isCounting && index >= counted ? 0.38 : 1)
+                            if isCounting && index < counted {
+                                Image(systemName: "checkmark").font(.system(size: 13, weight: .black)).foregroundStyle(.black)
+                            }
+                        }
+                    }
+                    .frame(width: 28, height: 28)
+                }
+            }
+            .frame(width: 174, height: 150, alignment: .topLeading)
+            .padding(14)
+            .background(.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 22))
+            Text("\(count)").font(.system(size: 38, weight: .bold, design: .rounded))
         }
     }
 }
 
-#Preview {
-    SumSprintPartyTVView()
-}
+#Preview { SumSprintPartyTVView() }

@@ -5,7 +5,24 @@ struct LearningQuestView: View {
     @Bindable var engine: LearningQuestEngine
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var state: LearningQuestCheckpoint { engine.checkpoint }
+    @ViewBuilder
     var body: some View {
+        if let message = engine.pauseMessage { pausedQuest(message: message) }
+        else { playableQuest }
+    }
+    private func pausedQuest(message: String) -> some View {
+        VStack(spacing: 24) {
+            Text("Quest paused").font(.largeTitle.bold()).accessibilityIdentifier("quest-paused")
+            Text(engine.requestedQuestID?.title ?? state.questID.title).font(.title2.bold())
+            Text(message).font(.headline).multilineTextAlignment(.center).accessibilityIdentifier("quest-storage-message")
+            QuestButton(label: "Listen", symbol: "speaker.wave.2.fill", tint: MatherTheme.softBlue) { engine.speakPrompt() }
+            QuestButton(label: "Quit", symbol: "house.fill", tint: MatherTheme.accent) { appModel.engine.showHome() }
+                .accessibilityIdentifier("quest-paused-quit")
+        }.padding(24).frame(maxWidth: 850).frame(maxWidth: .infinity, maxHeight: .infinity)
+            .foregroundStyle(MatherTheme.ink).background(MatherTheme.background.ignoresSafeArea())
+            .onAppear { engine.speakPrompt() }
+    }
+    private var playableQuest: some View {
         ScrollViewReader { scroll in
         ScrollView {
             VStack(spacing: 20) {
@@ -28,22 +45,27 @@ struct LearningQuestView: View {
                         .padding(16).frame(maxWidth: .infinity).background(MatherTheme.softBlue.opacity(0.16), in: RoundedRectangle(cornerRadius: 18))
                 }
                 if !state.feedback.isEmpty { Text(state.feedback).font(.headline).foregroundStyle(MatherTheme.ink).multilineTextAlignment(.center).accessibilityIdentifier("quest-feedback") }
-                HStack(spacing: 16) {
-                    if state.step != .celebrate && !state.accepted {
-                        QuestButton(label: "Help", symbol: "hand.raised.fill", tint: MatherTheme.softBlue) { engine.help() }.accessibilityIdentifier("quest-help")
-                    }
-                    QuestButton(label: state.primaryLabel, symbol: state.step == .celebrate ? "checkmark.seal.fill" : "arrow.right.circle.fill", tint: MatherTheme.accent) { engine.submit() }
-                        .disabled(!state.canSubmit).opacity(state.canSubmit ? 1 : 0.5)
-                        .accessibilityIdentifier("quest-primary")
-                }
+
             }
             .padding(24).frame(maxWidth: 850).frame(maxWidth: .infinity).id("quest-top")
         }
         .onChange(of: state.step) { _, _ in scroll.scrollTo("quest-top", anchor: .top) }
+        .onChange(of: state.numberProbeIndex) { _, _ in scroll.scrollTo("quest-top", anchor: .top) }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) { actionBar }
         .background(MatherTheme.background.ignoresSafeArea())
-        .accessibilityIdentifier("learning-quest-\(state.questID.rawValue)")
         .onAppear { engine.speakPrompt() }
+    }
+    private var actionBar: some View {
+        HStack(spacing: 16) {
+            if state.step != .celebrate && !state.accepted {
+                QuestButton(label: "Help", symbol: "hand.raised.fill", tint: MatherTheme.softBlue) { engine.help() }
+                    .accessibilityIdentifier("quest-help")
+            }
+            QuestButton(label: state.primaryLabel, symbol: state.step == .celebrate ? "checkmark.seal.fill" : "arrow.right.circle.fill", tint: MatherTheme.accent) { engine.submit() }
+                .disabled(!state.canSubmit).opacity(state.canSubmit ? 1 : 0.5).accessibilityIdentifier("quest-primary")
+        }.padding(.horizontal, 24).padding(.vertical, 12).background(MatherTheme.background)
+            .accessibilityElement(children: .contain)
     }
     @ViewBuilder private var header: some View {
         if horizontalSizeClass == .compact {
@@ -57,7 +79,7 @@ struct LearningQuestView: View {
     }
     private var questTitle: some View {
         Text("\(state.questID.emoji) \(state.questID.title)")
-            .font(.title.bold()).foregroundStyle(MatherTheme.ink).multilineTextAlignment(.center)
+            .font(.title.bold()).foregroundStyle(MatherTheme.ink).multilineTextAlignment(.center).accessibilityIdentifier("learning-quest-\(state.questID.rawValue)")
     }
     private var saveButton: some View {
         QuestButton(label: "Save", symbol: "bookmark.fill", tint: MatherTheme.softBlue) { appModel.leaveLearningQuest() }
@@ -87,18 +109,30 @@ struct LearningQuestView: View {
                 Text("\(state.counterCount) + \(10-state.counterCount) = 10").font(.largeTitle.bold()).foregroundStyle(MatherTheme.ink)
                 HStack { QuestButton(label: "Move left", symbol: "arrow.left", tint: MatherTheme.warm) { engine.adjustCount(1) }.accessibilityIdentifier("quest-count-add"); QuestButton(label: "Move right", symbol: "arrow.right", tint: MatherTheme.accent) { engine.adjustCount(-1) }.accessibilityIdentifier("quest-count-remove") }
             } else {
-                let fixed = state.step == .challenge ? 3 : state.learnedLeftPart
-                let total = state.step == .challenge ? 8 : 10
-                HStack(spacing: 8) {
-                    ForEach(0..<total, id: \.self) { index in
-                        Circle().fill(index < fixed ? MatherTheme.warm : (index < fixed + state.counterCount && state.step != .remember ? MatherTheme.accent : Color.clear))
-                            .overlay(Circle().stroke(MatherTheme.accent, lineWidth: 2)).frame(maxWidth: 50).aspectRatio(1, contentMode: .fit)
-                    }
-                }.padding(12).accessibilityLabel("\(fixed) filled places in a whole of \(total)")
+                let fixed = state.numberKnownPart
+                let total = state.numberWhole
+                if state.step == .challenge {
+                    Text("New task \(min((state.numberProbeIndex ?? 0) + 1, state.numberProbeCount)) of \(state.numberProbeCount)")
+                        .font(.headline).foregroundStyle(MatherTheme.cardSubtitle).accessibilityIdentifier("quest-probe-progress")
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
+                        ForEach(0..<total, id: \.self) { index in
+                            Text(index < fixed || index < fixed + state.counterCount ? state.numberProbe.symbol : "○")
+                                .font(.system(size: 34)).frame(maxWidth: .infinity, minHeight: 48)
+                                .background((index < fixed ? MatherTheme.warm : MatherTheme.accent).opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    }.accessibilityElement(children: .ignore).accessibilityLabel("\(fixed) packed, \(state.counterCount) added, in a whole of \(total) \(state.numberProbe.objects)")
+                } else {
+                    HStack(spacing: 8) {
+                        ForEach(0..<total, id: \.self) { index in
+                            Circle().fill(index < fixed ? MatherTheme.warm : (index < fixed + state.counterCount && state.step != .remember ? MatherTheme.accent : Color.clear))
+                                .overlay(Circle().stroke(MatherTheme.accent, lineWidth: 2)).frame(maxWidth: 50).aspectRatio(1, contentMode: .fit)
+                        }
+                    }.padding(12).accessibilityLabel("\(fixed) filled places in a whole of \(total)")
+                }
                 if state.step != .remember {
                     Text("\(fixed) + \(state.counterCount) = \(fixed + state.counterCount)").font(.title.bold()).foregroundStyle(MatherTheme.ink)
                     if fixed + state.counterCount > total { Text("More than \(total). Count and compare.").font(.headline).foregroundStyle(MatherTheme.coral) }
-                    Text(String(repeating: state.step == .challenge ? "🍎" : "🌱", count: state.counterCount)).font(.system(size: 36)).frame(minHeight: 52)
+                    Text(String(repeating: state.step == .challenge ? state.numberProbe.symbol : "🌱", count: state.counterCount)).font(.system(size: 36)).frame(minHeight: 52)
                     HStack { QuestButton(label: "One less", symbol: "minus.circle.fill", tint: MatherTheme.warm) { engine.adjustCount(-1) }.accessibilityIdentifier("quest-count-remove"); Text("\(state.counterCount)").font(.system(size: 54, weight: .bold)).frame(minWidth: 80); QuestButton(label: "One more", symbol: "plus.circle.fill", tint: MatherTheme.accent) { engine.adjustCount(1) }.accessibilityIdentifier("quest-count-add") }
                 }
             }
@@ -140,9 +174,9 @@ struct LearningQuestView: View {
             }.frame(height: 300).padding(20).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 24))
         } else {
             VStack(spacing: 12) {
-                QuestShapePicture(kind: state.step == .challenge ? "rectangle" : state.step == .learn ? state.currentShape : "triangle")
-                    .fill(MatherTheme.coral).frame(width: 170, height: 170).rotationEffect(.degrees(Double(state.angleDegrees)))
-                    .padding(38).accessibilityLabel(state.step == .challenge ? "Rectangle-shaped door" : "\(state.content.shapeName(state.step == .learn ? state.currentShape : "triangle")), turned to a new direction")
+                QuestShapePicture(kind: state.step == .challenge ? state.shapeTransferKind : state.step == .learn ? state.currentShape : "triangle")
+                    .fill(MatherTheme.coral).frame(width: 170, height: 170).rotationEffect(.degrees(Double(state.step == .challenge && state.questID == .shapes ? state.shapeTransferRotation : state.angleDegrees)))
+                    .padding(38).accessibilityLabel(state.step == .challenge ? "A \(state.shapeTransferKind == "triangle" ? "sign" : "door") outline turned to a new direction" : state.step == .learn ? "\(state.content.shapeName(state.currentShape)), turned" : "Outline with three straight sides and three corners, turned")
                 if state.step == .learn {
                     Text(state.content.shapeFact(state.currentShape)).font(.headline).foregroundStyle(MatherTheme.ink).padding(.horizontal)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
@@ -161,9 +195,9 @@ struct LearningQuestView: View {
     private var waterBoard: some View {
         VStack(spacing: 16) {
             if state.step == .challenge {
-                QuestColdCupPicture(drops: state.accepted ? "outside" : "none")
+                QuestColdCupPicture(drops: state.accepted ? "outside" : "none", vessel: state.waterVessel)
                     .frame(width: 160, height: 180)
-                    .accessibilityLabel(state.accepted ? "Liquid drops appeared outside the cold cup" : "A cold cup in warm moist air; predict before observing")
+                    .accessibilityLabel(state.accepted ? "Liquid drops appeared outside the cold \(state.waterVessel)" : "A cold \(state.waterVessel) in warm moist air; predict before observing")
             } else {
             HStack(spacing: 20) {
                 Text(state.waterState == 0 ? "☀️" : state.waterState == 1 ? "⬆️" : "☁️💧").font(.system(size: 80)).accessibilityLabel(state.waterState == 0 ? "Sun above liquid water" : state.waterState == 1 ? "Arrows represent invisible water vapor" : "Tiny liquid drops in a cloud")
@@ -181,8 +215,9 @@ struct LearningQuestView: View {
     }
     private var circuitBoard: some View {
         VStack(spacing: 16) {
-            QuestCircuitPicture(connected: state.wireConnected, closed: state.switchClosed, secondClosed: state.step == .challenge ? state.secondSwitchClosed : nil)
-                .frame(height: 230).accessibilityLabel(circuitDescription)
+            QuestCircuitPicture(connected: state.wireConnected, closed: state.switchClosed, secondClosed: state.step == .challenge ? state.secondSwitchClosed : nil, concealLight: state.step == .challenge && !state.predictionMade)
+                .frame(height: 230).accessibilityElement(children: .ignore)
+                .accessibilityLabel(state.circuitAccessibilityDescription).accessibilityIdentifier("quest-circuit-state")
             if state.step == .learn || state.step == .play || (state.step == .challenge && state.predictionMade) {
                 HStack {
                     if state.step == .play { QuestButton(label: state.wireConnected ? "Open wire" : "Join wire", symbol: "link", tint: MatherTheme.softBlue) { engine.repairWire() }.accessibilityIdentifier("quest-wire-repair") }
@@ -192,7 +227,6 @@ struct LearningQuestView: View {
             }
         }.padding(24).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 24))
     }
-    private var circuitDescription: String { state.wireConnected && state.switchClosed && (state.step != .challenge || state.secondSwitchClosed) ? "Full pretend circuit. Bulb is lit." : "Pretend circuit has an open path. Bulb is off." }
     private var angleBoard: some View {
         VStack(spacing: 12) {
             ZStack {
@@ -230,12 +264,23 @@ struct LearningQuestView: View {
                     }.padding(16).frame(maxWidth: .infinity, minHeight: 150)
                         .background(state.selectedChoice == choice.id ? MatherTheme.accent.opacity(0.18) : MatherTheme.card, in: RoundedRectangle(cornerRadius: 20))
                         .overlay(RoundedRectangle(cornerRadius: 20).stroke(state.selectedChoice == choice.id ? MatherTheme.accent : Color.clear, lineWidth: 4))
-                }.buttonStyle(.plain).disabled(state.accepted).accessibilityLabel(choice.label).accessibilityIdentifier("quest-choice-\(choice.id)")
+                }.buttonStyle(.plain).disabled(state.accepted).accessibilityLabel(choiceAccessibilityLabel(choice)).accessibilityIdentifier("quest-choice-\(choice.id)")
             }
         }
     }
+    private func choiceAccessibilityLabel(_ choice: LearningQuestChoice) -> String {
+        switch state.questID {
+        case .shapes:
+            let description = choice.symbol == "circle" ? "round outline, no corners" : choice.symbol == "triangle" ? "three sides and three corners, turned" : choice.symbol == "square" ? "four equal sides and four square corners" : "four square corners, two longer and two shorter sides, turned"
+            return "\(choice.label). \(description)"
+        case .angles: return "\(choice.label). Turn of \(choice.id) degrees"
+        case .symmetry: return "\(choice.label). " + (choice.id == "match" ? "Flower opposite flower, leaf opposite leaf" : "Flower opposite leaf, leaf opposite flower")
+        case .circuitSpark where state.step == .remember: return "\(choice.label). " + (choice.id == "closed" ? "Joined path from battery through bulb and back" : "One open switch in the path")
+        default: return choice.label
+        }
+    }
     @ViewBuilder private func choicePicture(_ choice: LearningQuestChoice) -> some View {
-        if state.questID == .waterCycle && state.step == .challenge { QuestColdCupPicture(drops: choice.id).frame(width: 95, height: 92) }
+        if state.questID == .waterCycle && state.step == .challenge { QuestColdCupPicture(drops: choice.id, vessel: state.waterVessel).frame(width: 95, height: 92) }
         else if state.questID == .shapes { QuestShapePicture(kind: choice.symbol).fill(MatherTheme.coral).frame(width: 85, height: 85).rotationEffect(.degrees(choice.id == "triangle" ? 70 : choice.id == "rectangle" ? 35 : 0)) }
         else if state.questID == .angles { QuestAnglePicture(degrees: Int(choice.id) ?? 90).stroke(MatherTheme.coral, lineWidth: 6).frame(width: 95, height: 90) }
         else if state.questID == .circuitSpark && state.step == .remember { QuestCircuitPicture(connected: true, closed: choice.id == "closed", secondClosed: nil) }
@@ -246,7 +291,7 @@ struct LearningQuestView: View {
         VStack(spacing: 16) {
             Text("🌟🎉🌟").font(.system(size: 68)).accessibilityLabel("Quest celebration")
             Text("You kept trying!").font(.largeTitle.bold()).foregroundStyle(MatherTheme.accent)
-            Text("Your new idea can travel with you.").font(.title3).foregroundStyle(MatherTheme.ink)
+            Text(state.questID.offscreenPrompt).font(.title3).foregroundStyle(MatherTheme.ink).multilineTextAlignment(.center)
         }.padding(32).frame(maxWidth: .infinity).background(MatherTheme.card, in: RoundedRectangle(cornerRadius: 24))
     }
     private func stepSymbol(_ step: LearningQuestStep) -> String { switch step { case .learn: "hand.draw.fill"; case .remember: "brain.head.profile"; case .play: "gamecontroller.fill"; case .challenge: "sparkles"; case .celebrate: "star.fill" } }
@@ -299,6 +344,7 @@ private struct QuestCircuitPicture: View {
     let connected: Bool
     let closed: Bool
     let secondClosed: Bool?
+    var concealLight = false
     private var lit: Bool { connected && closed && (secondClosed ?? true) }
     var body: some View {
         GeometryReader { proxy in
@@ -307,7 +353,7 @@ private struct QuestCircuitPicture: View {
                 Path { p in p.move(to:.init(x:w*0.2,y:h*0.8));p.addLine(to:.init(x:w*0.2,y:h*0.2));p.addLine(to:.init(x:w*0.8,y:h*0.2));p.addLine(to:.init(x:w*0.8,y:h*0.8));p.addLine(to:.init(x:w*0.6,y:h*0.8)); if connected { p.addLine(to:.init(x:w*0.2,y:h*0.8)) } }
                     .stroke(lit ? MatherTheme.warm : MatherTheme.ink.opacity(0.5),lineWidth:7)
                 Text("🔋").font(.system(size:min(h*0.25,48))).position(x:w*0.2,y:h*0.5)
-                Text(lit ? "💡" : "⚫").font(.system(size:min(h*0.26,58))).position(x:w*0.8,y:h*0.5)
+                Text(concealLight ? "?" : lit ? "💡" : "⚫").font(.system(size:min(h*0.26,58))).position(x:w*0.8,y:h*0.5)
                 switchPicture(isClosed:closed).position(x:w*0.5,y:h*0.2)
                 if let secondClosed { switchPicture(isClosed:secondClosed).position(x:w*0.5,y:h*0.8) }
                 if !connected { Text("gap").font(.headline).foregroundStyle(MatherTheme.coral).position(x:w*0.4,y:h*0.8) }
@@ -320,14 +366,21 @@ private struct QuestCircuitPicture: View {
 
 private struct QuestColdCupPicture: View {
     let drops: String
+    var vessel = "cup"
     var body: some View {
         GeometryReader { proxy in
             let w = proxy.size.width, h = proxy.size.height
             ZStack {
                 Path { path in
+                    if vessel == "bottle" {
+                        path.move(to: CGPoint(x: w*0.42, y: h*0.13)); path.addLine(to: CGPoint(x: w*0.42, y: h*0.3)); path.addLine(to: CGPoint(x: w*0.27, y: h*0.4)); path.addLine(to: CGPoint(x: w*0.27, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.4)); path.addLine(to: CGPoint(x: w*0.58, y: h*0.3)); path.addLine(to: CGPoint(x: w*0.58, y: h*0.13)); path.closeSubpath(); return
+                    }
                     path.move(to: CGPoint(x: w*0.27, y: h*0.22)); path.addLine(to: CGPoint(x: w*0.34, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.66, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.22))
                 }.fill(MatherTheme.softBlue.opacity(0.18))
                 Path { path in
+                    if vessel == "bottle" {
+                        path.move(to: CGPoint(x: w*0.42, y: h*0.13)); path.addLine(to: CGPoint(x: w*0.42, y: h*0.3)); path.addLine(to: CGPoint(x: w*0.27, y: h*0.4)); path.addLine(to: CGPoint(x: w*0.27, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.4)); path.addLine(to: CGPoint(x: w*0.58, y: h*0.3)); path.addLine(to: CGPoint(x: w*0.58, y: h*0.13)); path.closeSubpath(); return
+                    }
                     path.move(to: CGPoint(x: w*0.27, y: h*0.22)); path.addLine(to: CGPoint(x: w*0.34, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.66, y: h*0.85)); path.addLine(to: CGPoint(x: w*0.73, y: h*0.22))
                 }.stroke(MatherTheme.ink, lineWidth: 4)
                 Image(systemName: "snowflake").font(.system(size: h*0.2)).foregroundStyle(MatherTheme.softBlue).position(x: w*0.5, y: h*0.17)
@@ -339,6 +392,6 @@ private struct QuestColdCupPicture: View {
                     }
                 }
             }
-        }.accessibilityLabel(drops == "outside" ? "Cold cup with drops outside" : drops == "inside" ? "Cold cup with drops inside" : "Cold cup without drops")
+        }.accessibilityLabel(drops == "outside" ? "Cold \(vessel) with drops outside" : drops == "inside" ? "Cold \(vessel) with drops inside" : "Cold \(vessel) without drops")
     }
 }

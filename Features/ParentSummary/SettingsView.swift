@@ -8,6 +8,10 @@ struct SettingsView: View {
     let gameSessions: [StoredGameSession]
 
     @State private var showingClearConfirmation = false
+    @State private var showingReportDeletion = false
+    @State private var showingQuestDeletion = false
+    @State private var reportStore = ParentOffscreenObservationStore()
+    @State private var resetProfileID: String?
     @State private var newProfileName = ""
     @State private var newProfileEmoji = KidProfileStore.emojiChoices[0]
 
@@ -96,13 +100,33 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .alert("Clear all session data?", isPresented: $showingClearConfirmation) {
+        .alert("Clear this child's learning data?", isPresented: $showingClearConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
-                appModel.clearActiveProfileLearningData()
+                if appModel.profileStore.activeProfileId == resetProfileID { appModel.clearActiveProfileLearningData() }
+                else { appModel.learningDataResetIssue = "The selected child changed. Choose the child again before clearing learning data." }
+                reportStore = ParentOffscreenObservationStore()
             }
         } message: {
-            Text("This removes summaries, learning attempts, saved quest steps, Explorer progress, and telemetry for the selected child. Other children keep their history.")
+            Text("This removes summaries, learning attempts, saved quest steps, Explorer and Angle progress, telemetry, parent reports and companion assignments for the selected child on this device. Other children keep their history. Anonymous consumed mission receipts remain.")
+        }
+        .alert("Delete all parent reports?", isPresented: $showingReportDeletion) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete all parent reports", role: .destructive) {
+                reportStore.clearAllProfiles()
+                appModel.learningDataResetIssue = nil
+            }
+        } message: {
+            Text("This deletes parent offscreen reports for every child on this device, including unreadable saved reports. App learning attempts remain. This cannot be undone.")
+        }
+        .alert("Delete all quest checkpoints?", isPresented: $showingQuestDeletion) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete all quest checkpoints", role: .destructive) {
+                appModel.questCheckpointStore.clearAllProfiles()
+                appModel.learningDataResetIssue = nil
+            }
+        } message: {
+            Text("This deletes saved guided quest steps and reviewed variant and probe history for every child on this device, including unreadable saved checkpoints. Learning attempts and parent reports remain. This cannot be undone.")
         }
     }
 
@@ -276,11 +300,12 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Data reset")
                     .font(.title2.weight(.bold))
-                Text("Clears this child's learning attempts, summaries, quest checkpoints, Explorer and Angle progress, and telemetry on this device.")
+                Text("Clears this child's learning attempts, summaries, quest checkpoints, Explorer and Angle progress, telemetry, parent reports and companion assignment on this device.")
                     .font(.subheadline)
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .fixedSize(horizontal: false, vertical: true)
                 Button(role: .destructive) {
+                    resetProfileID = appModel.profileStore.activeProfileId
                     showingClearConfirmation = true
                 } label: {
                     Label("Clear session history", systemImage: "trash")
@@ -288,6 +313,23 @@ struct SettingsView: View {
                 }
                 .buttonStyle(DestructiveOutlineButtonStyle())
                 .accessibilityIdentifier("settings-clear-history")
+                if let issue = appModel.learningDataResetIssue {
+                    Text(issue).foregroundStyle(.red).accessibilityIdentifier("settings-reset-issue")
+                }
+                if let issue = reportStore.storageIssue {
+                    Text(issue.message).foregroundStyle(.red)
+                    Button("Delete all parent reports", role: .destructive) { showingReportDeletion = true }
+                        .buttonStyle(DestructiveOutlineButtonStyle())
+                        .accessibilityIdentifier("settings-delete-all-parent-reports")
+                }
+                if let issue = appModel.questCheckpointStore.storageIssue {
+                    Text(issue.message).foregroundStyle(.red)
+                    if issue != .unsupportedPriorAttempts {
+                        Button("Delete all quest checkpoints", role: .destructive) { showingQuestDeletion = true }
+                            .buttonStyle(DestructiveOutlineButtonStyle())
+                            .accessibilityIdentifier("settings-delete-all-quest-checkpoints")
+                    }
+                }
             }
         }
     }

@@ -68,6 +68,8 @@ private extension MatherApp {
         let arguments = ProcessInfo.processInfo.arguments
         if let index = arguments.firstIndex(of: "-uiTest.clearQuestCheckpoints"), arguments.indices.contains(index+1), arguments[index+1] == "YES" {
             appModel.questCheckpointStore.clearAllProfiles()
+            ParentOffscreenObservationStore().clearAllProfiles()
+            LearningHandoffStore().resetAll()
             appModel.gameplayProgressStore.clearAllProfiles()
             appModel.labConceptSessionProgressStore.resetAllProfiles()
         }
