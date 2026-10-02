@@ -6,464 +6,395 @@ struct AngleArcadeTVView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.resetFocus) private var resetFocus
-    @Namespace private var primaryFocusScope
-    @State private var flightTask: Task<Void, Never>?
-    @State private var flightProgress = 0.0
-    @State private var isFlying = false
+    @Namespace private var actionFocusScope
+    @State private var engine = Self.makeEngine()
     @State private var narration = TVNarrationController()
-    @FocusState private var focusedAction: AngleArcadeAction?
-    @State private var angle: Double = AngleArcadeTarget.defaultTargets[0].recommendedAngle
-    @State private var power: Double = AngleArcadeTarget.defaultTargets[0].recommendedPower
-    @State private var targetIndex = 0
-    @State private var firedShot: AngleArcadeShot?
-    @State private var hitCount = 0
-
-    private let targets = AngleArcadeTarget.defaultTargets
-
-    private var target: AngleArcadeTarget {
-        targets[targetIndex]
-    }
-
-    private var prediction: AngleArcadeShot {
-        AngleArcadeModel.shot(angle: angle, power: power, target: target)
-    }
+    @State private var flightTask: Task<Void, Never>?
+    @State private var focusTask: Task<Void, Never>?
+    @State private var flightProgress = 0.0
+    @FocusState private var focusedAction: String?
+    var onExit: () -> Void = {}
 
     var body: some View {
         ZStack {
             MatherTVBackdrop()
-
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 24) {
                 header
-
-                AngleArcadeFieldView(
-                    target: target,
-                    prediction: prediction,
-                    firedShot: firedShot,
-                    flightProgress: flightProgress,
-                    isFlying: isFlying
-                )
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Target: \(target.title)")
-                .accessibilityValue(isFlying ? "Shot in flight" : firedShot.map(resultDescription) ?? "Aim preview: \(resultDescription(prediction))")
-                .frame(maxWidth: .infinity)
-                .frame(height: 520)
-                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(Color.white.opacity(0.14), lineWidth: 2)
-                )
-
-                controls
+                if engine.phase == .worldSelection {
+                    worldSelector
+                } else if engine.phase == .worldComplete {
+                    finale
+                } else {
+                    mission
+                }
             }
             .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, 90)
-            .padding(.vertical, 66)
+            .padding(.top, 90)
+            .padding(.bottom, 50)
         }
-        .onAppear {
-            focusedAction = .fire
-            narration.presentPrompt(targetPrompt)
+        .focusScope(actionFocusScope)
+        .onAppear { restoreFocus(); narration.presentPrompt(engine.prompt) }
+        .onChange(of: engine.phase) { _, phase in
+            if phase != .flying { restoreFocus() }
+            if phase == .result { announce(resultMessage) }
+            else if phase != .flying { narration.presentPrompt(engine.prompt) }
         }
-        .onMoveCommand(perform: handleMoveCommand)
         .onChange(of: focusedAction) { _, action in
-            narration.focus(action == nil ? nil : actionGuidance)
-        }
-        .onPlayPauseCommand {
-            narration.presentPrompt(isFlying ? actionGuidance : firedShot.map(feedbackMessage) ?? targetPrompt)
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                focusedAction = .fire
-                resetFocus(in: primaryFocusScope)
+            guard let action else { narration.focus(nil); return }
+            guard engine.phase == .worldSelection || engine.phase == .worldComplete else { return }
+            if let world = AngleArcadeWorld.allCases.first(where: { $0.id == action }) {
+                narration.focus("\(world.title). \(world.subtitle). Select to explore.")
             } else {
-                // tvOS can discard actual focus while the binding still says Fire.
-                focusedAction = nil
-                cancelFlight()
-                narration.stop()
+                narration.focus(action == "replay" ? "Replay this world." : "Choose another world.")
             }
         }
-        .onDisappear { cancelFlight(); narration.stop() }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Angle Arcade")
-        .accessibilityHint("Use left and right for angle, up and down for power, then press select to fire. Press Play Pause to repeat the instructions.")
+        .onMoveCommand(perform: move)
+        .onPlayPauseCommand { help() }
+        .onExitCommand {
+            stopTransientWork()
+            if engine.phase == .worldSelection { onExit() }
+            else { engine.showWorlds() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { stopTransientWork() }
+            else { restoreFocus() }
+        }
+        .onDisappear { stopTransientWork() }
+    }
+
+    private static func makeEngine() -> AngleArcadeEngine {
+        guard ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test"),
+              let defaults = UserDefaults(suiteName: "mather.angleArcade.tvUITests") else { return .init() }
+        if ProcessInfo.processInfo.arguments.contains("-angle-arcade-reset-progress") {
+            defaults.removePersistentDomain(forName: "mather.angleArcade.tvUITests")
+        }
+        return .init(store: .init(defaults: defaults, scope: "tv-ui-test"))
+    }
+
+    private var phaseName: String {
+        switch engine.phase {
+        case .worldSelection: "Choose a world"
+        case .aiming: "Aiming"
+        case .flying: "Flying"
+        case .result: "Result"
+        case .worldComplete: "World complete"
+        }
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 24) {
-            VStack(alignment: .leading, spacing: 10) {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Angle Arcade")
-                    .font(.system(size: 70, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-
-                Text(target.title)
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color(red: 0.55, green: 0.88, blue: 1.0))
+                    .font(.system(size: 58, weight: .heavy, design: .rounded))
+                Text(engine.phase == .worldSelection ? "Three worlds. Nine little adventures." : engine.currentWorld.title)
+                    .font(.system(size: 27, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.78))
+                    .accessibilityIdentifier("angle-arcade-phase")
+                    .accessibilityValue(phaseName)
             }
+            Spacer()
+            Label(engine.phase == .worldSelection ? "Menu · All games" : "Menu · Worlds", systemImage: "chevron.backward")
+                .font(.system(size: 23, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.70))
+                .padding(.top, 12)
+        }
+        .foregroundStyle(.white)
+    }
 
-            Spacer(minLength: 0)
-
-            HStack(spacing: 10) {
-                ForEach(targets.indices, id: \.self) { index in
-                    Circle()
-                        .fill(index == targetIndex ? Color(red: 1.0, green: 0.76, blue: 0.30) : Color.white.opacity(0.28))
-                        .frame(width: 20, height: 20)
-                        .accessibilityHidden(true)
+    private var worldSelector: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Label(allWorldsComplete ? "Every creation is ready! Pick a world to play again." : "Try next: \(suggestedLevel.world.title) · \(suggestedLevel.title)", systemImage: allWorldsComplete ? "checkmark.seal.fill" : "play.circle.fill")
+                .font(.system(size: 25, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color(red: 0.78, green: 0.94, blue: 0.66))
+            HStack(spacing: 32) {
+                ForEach(AngleArcadeWorld.allCases) { world in
+                    let count = engine.progress.completedCount(in: world)
+                    Button {
+                        flightProgress = 0
+                        engine.selectWorld(world)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 16) {
+                            AngleArcadeWorldArtwork(world: world, completedCount: count)
+                                .frame(height: 270)
+                            Label(world.title, systemImage: world.symbolName)
+                                .font(.system(size: 31, weight: .bold, design: .rounded))
+                            Text(world.subtitle)
+                                .font(.system(size: 23, weight: .semibold, design: .rounded))
+                                .lineLimit(2)
+                                .frame(height: 60, alignment: .topLeading)
+                            HStack(spacing: 12) {
+                                ForEach(0..<3) { index in
+                                    Image(systemName: index < count ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(index < count ? Color.green : Color.white.opacity(0.6))
+                                }
+                                Text("\(count) of 3 complete").font(.system(size: 21, weight: .semibold, design: .rounded))
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .padding(28)
+                        .frame(width: 475, height: 490, alignment: .topLeading)
+                        .background(.white.opacity(focusedAction == world.id ? 0.20 : 0.09), in: RoundedRectangle(cornerRadius: 28))
+                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(focusedAction == world.id ? Color.orange : .white.opacity(0.18), lineWidth: focusedAction == world.id ? 5 : 2))
+                    }
+                    .buttonStyle(.plain)
+                    .focused($focusedAction, equals: world.id)
+                    .prefersDefaultFocus(world == suggestedLevel.world, in: actionFocusScope)
+                    .accessibilityLabel("\(world.title). \(world.subtitle). \(count) of 3 missions complete")
+                    .accessibilityIdentifier("angle-world-\(world.id)")
                 }
             }
-            .padding(.top, 20)
+            Text("Swipe to choose  •  Select to explore  •  Play/Pause to hear help")
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.80))
+        }
+        .padding(.top, 18)
+    }
+
+    private var mission: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(engine.level.title)
+                        .font(.system(size: 31, weight: .bold, design: .rounded))
+                        .accessibilityIdentifier("angle-mission-\(engine.level.id)")
+                    Text(engine.level.prompt)
+                        .font(.system(size: 24, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.82))
+                }
+                Spacer()
+                Text("Mission \(missionNumber) of 3")
+                    .font(.system(size: 25, weight: .bold, design: .rounded))
+                    .accessibilityIdentifier("angle-arcade-target-progress")
+            }
+            .foregroundStyle(.white)
+
+            AngleArcadeScene(engine: engine, flightProgress: flightProgress)
+                .frame(height: 455)
+            HStack(spacing: 18) {
+                controlTile(title: engine.level.kind == .rotation ? (engine.level.id == "builder-quarter-turn" ? "Turn" : "Direction") : "Angle", value: angleValue, symbol: engine.level.allowsAngle ? "arrow.left.and.right" : "lock.fill", id: "angle-arcade-angle") { direction in
+                    changeAngle(direction == .increment ? 1 : -1)
+                }
+                if engine.level.allowsPower {
+                    controlTile(title: "Power", value: "\(Int(engine.power))", symbol: "arrow.up.and.down", id: "angle-arcade-power") { direction in
+                        changePower(direction == .increment ? 1 : -1)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(engine.phase == .result ? (engine.success ? "Great work!" : "Try a new aim") : engine.phase == .flying ? "Flying…" : "Ready")
+                        .font(.system(size: 27, weight: .bold, design: .rounded))
+                        .accessibilityIdentifier("angle-arcade-result")
+                    Text("\(engine.progress.completedCount(in: engine.currentWorld)) of 3 complete")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.76))
+                        .accessibilityIdentifier("angle-arcade-hit-count")
+                }
+                .foregroundStyle(.white)
+                .padding(20)
+                .frame(minWidth: 230, minHeight: 105, alignment: .leading)
+                .background(.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
+                Spacer()
+                Button(action: primaryAction) {
+                    Label(primaryLabel, systemImage: engine.phase == .result && engine.success ? "arrow.right" : engine.level.kind == .rotation ? "checkmark" : "paperplane.fill")
+                        .font(.system(size: 27, weight: .bold, design: .rounded))
+                        .frame(width: 240, height: 90)
+                }
+                .buttonStyle(.borderedProminent)
+                .focused($focusedAction, equals: "primary")
+                .prefersDefaultFocus(true, in: actionFocusScope)
+                .accessibilityIdentifier("angle-arcade-primary")
+                .accessibilityHint(engine.hint)
+            }
+            Text(engine.phase == .result ? resultMessage : controlHint)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.82))
+                .lineLimit(2)
         }
     }
 
-    private var controls: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 20) {
-                metricTile(title: "Angle", value: "\(Int(angle))°", symbolName: "arrow.left.and.right", identifier: "angle-arcade-angle") { direction in
-                    adjustAngle(direction == .increment ? 1 : -1)
+    private var finale: some View {
+        HStack(spacing: 60) {
+            AngleArcadeWorldArtwork(world: engine.currentWorld, completedCount: 3)
+                .frame(width: 530, height: 510)
+            VStack(alignment: .leading, spacing: 24) {
+                Text(rewardTitle)
+                    .font(.system(size: 49, weight: .heavy, design: .rounded))
+                Text("Three missions complete. You made this!")
+                    .font(.system(size: 29, weight: .semibold, design: .rounded))
+                HStack(spacing: 18) {
+                    Button {
+                        engine.showWorlds()
+                    } label: {
+                        Label("Other worlds", systemImage: "map.fill")
+                            .foregroundStyle(focusedAction == "worlds" ? Color(red: 0.10, green: 0.20, blue: 0.25) : .white)
+                            .frame(minWidth: 230, minHeight: 90)
+                    }
+                    .focused($focusedAction, equals: "worlds")
+                    .prefersDefaultFocus(true, in: actionFocusScope)
+                    .accessibilityIdentifier("angle-arcade-worlds")
+                    Button {
+                        flightProgress = 0
+                        engine.selectLevel(AngleArcadeCampaign.levels(in: engine.currentWorld)[0].id)
+                    } label: {
+                        Label("Play again", systemImage: "arrow.clockwise")
+                            .foregroundStyle(focusedAction == "replay" ? Color(red: 0.10, green: 0.20, blue: 0.25) : .white)
+                            .frame(minWidth: 230, minHeight: 90)
+                    }
+                    .focused($focusedAction, equals: "replay")
+                    .accessibilityIdentifier("angle-arcade-replay-world")
                 }
-                metricTile(title: "Power", value: "\(Int(power))", symbolName: "arrow.up.and.down", identifier: "angle-arcade-power") { direction in
-                    adjustPower(direction == .increment ? 1 : -1)
-                }
-                resultTile
-                Spacer(minLength: 0)
-                Button(action: primaryAction) {
-                    Label(primaryLabel, systemImage: primarySymbol)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .frame(width: 240, height: 92)
-                }
+                .font(.system(size: 25, weight: .bold, design: .rounded))
                 .buttonStyle(.borderedProminent)
-                .focused($focusedAction, equals: .fire)
-                .prefersDefaultFocus(true, in: primaryFocusScope)
-                .accessibilityIdentifier("angle-arcade-fire-replay-button")
-                .accessibilityLabel(primaryLabel)
-                .accessibilityHint(actionGuidance)
             }
-            Text(visibleGuidance)
-                .font(.system(size: 23, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.82))
+            .foregroundStyle(.white)
         }
-        .focusScope(primaryFocusScope)
+        .padding(.top, 35)
+    }
+
+    private var allWorldsComplete: Bool {
+        AngleArcadeWorld.allCases.allSatisfy { engine.progress.completedCount(in: $0) == 3 }
+    }
+
+    private var suggestedLevel: AngleArcadeLevel {
+        if let last = engine.progress.lastLevelID, !engine.progress.hasCompleted(last),
+           let level = AngleArcadeCampaign.level(id: last) { return level }
+        return AngleArcadeCampaign.level(id: engine.progress.nextSuggestedLevelID) ?? AngleArcadeCampaign.levels[0]
+    }
+
+    private var rewardTitle: String {
+        switch engine.currentWorld {
+        case .garden: "Your garden is blooming!"
+        case .builder: "Your clubhouse is ready!"
+        case .moon: "Your rocket is ready!"
+        }
+    }
+
+    private var missionNumber: Int {
+        (AngleArcadeCampaign.levels(in: engine.currentWorld).firstIndex(where: { $0.id == engine.level.id }) ?? 0) + 1
+    }
+
+    private var angleValue: String {
+        if engine.phase == .result && engine.success { return "\(Int(engine.angle))°" }
+        if engine.level.kind == .rotation { return "Turn" }
+        return engine.angle < 35 ? "Low" : engine.angle < 55 ? "Middle" : "Steep"
+    }
+
+    private var controlHint: String {
+        if engine.phase == .flying { return "Watch your delivery!" }
+        if !engine.level.allowsAngle && !engine.level.allowsPower { return "Your seed is ready!  •  Select → launch  •  Play/Pause → help" }
+        if !engine.level.allowsAngle { return "↑ ↓ Power  •  The angle stays fixed  •  Select → launch  •  Play/Pause → help" }
+        return engine.level.allowsPower
+            ? "← → Angle  •  ↑ ↓ Power  •  Select → launch  •  Play/Pause → help"
+            : "← → \(engine.level.kind == .rotation ? "Turn" : "Angle")  •  Select → \(engine.level.kind == .rotation ? "check" : "launch")  •  Play/Pause → help"
+    }
+
+    private var resultMessage: String {
+        engine.success ? engine.feedback : engine.feedback + " " + engine.hint
     }
 
     private var primaryLabel: String {
-        if isFlying { return "Flying…" }
-        guard let shot = firedShot else { return "Fire" }
-        return shot.hit ? "Next target" : "Try again"
+        if engine.phase == .flying { return "Flying…" }
+        if engine.phase == .result { return engine.success ? "Next mission" : "Try again" }
+        return engine.level.kind == .rotation ? "Check turn" : "Launch"
     }
 
-    private var primarySymbol: String {
-        if isFlying { return "paperplane.fill" }
-        guard let shot = firedShot else { return "paperplane.fill" }
-        return shot.hit ? "arrow.right" : "arrow.clockwise"
-    }
-
-    private var visibleGuidance: String {
-        if isFlying { return "Watch your shot!" }
-        if let shot = firedShot {
-            return shot.hit ? "Great aim! Select → next target" : "\(correction(for: shot))  •  Arrows → adjust  •  Select → try again"
+    private func controlTile(title: String, value: String, symbol: String, id: String, action: @escaping (AccessibilityAdjustmentDirection) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: symbol).font(.system(size: 21, weight: .semibold, design: .rounded))
+            Text(value).font(.system(size: 30, weight: .bold, design: .rounded))
         }
-        return "← → Angle   •   ↑ ↓ Power   •   Select → fire   •   Play/Pause → hear help"
-    }
-
-    private var resultTile: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("\(hitCount) \(hitCount == 1 ? "hit" : "hits")")
-                .accessibilityIdentifier("angle-arcade-hit-count")
-                .font(.system(size: 21, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.72))
-            Text(isFlying ? "Flying…" : firedShot.map(resultDescription) ?? "Ready")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundStyle(firedShot?.hit == false && !isFlying ? Color(red: 1.0, green: 0.68, blue: 0.44) : .white)
-                .accessibilityIdentifier("angle-arcade-result")
-            Text("Target \(targetIndex + 1) of \(targets.count)")
-                .font(.system(size: 21, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.72))
-                .accessibilityIdentifier("angle-arcade-target-progress")
-        }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 14)
-        .frame(width: 240, height: 122, alignment: .leading)
-        .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    private func metricTile(title: String, value: String, symbolName: String, identifier: String, adjustment: @escaping (AccessibilityAdjustmentDirection) -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: symbolName)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.72))
-            Text(value)
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-        }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 14)
-        .frame(width: 180, height: 122, alignment: .leading)
-        .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .foregroundStyle(.white)
+        .padding(20)
+        .frame(width: 185, height: 105, alignment: .leading)
+        .background(.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(identifier)
         .accessibilityLabel(title)
-        .accessibilityValue(value)
-        .accessibilityAdjustableAction(adjustment)
-    }
-
-    private var aimDescription: String {
-        "Angle \(Int(angle)) degrees. Power \(Int(power))."
-    }
-
-    private var targetPrompt: String {
-        "Aim for the \(target.title). Left and right change angle. Up and down change power. \(aimDescription) Select fires. Play Pause repeats help."
-    }
-
-    private var actionGuidance: String {
-        if isFlying { return "Watch your shot. Wait for it to land." }
-        guard let shot = firedShot else { return "Press select to launch. \(aimDescription)" }
-        return shot.hit ? "Press select for the next target." : "Use the arrows to adjust, or press select to aim again."
-    }
-
-    private func resultDescription(_ shot: AngleArcadeShot) -> String {
-        switch shot.outcome {
-        case .hit: "Great aim!"
-        case .short: "Too short"
-        case .above: "Too high"
-        case .below: "Too low"
-        }
-    }
-
-    private func correction(for shot: AngleArcadeShot) -> String {
-        if shot.hit { return "Great aim!" }
-        let lowerPower = shot.outcome == .above
-        if lowerPower && shot.power > AngleArcadeModel.powerRange.lowerBound {
-            return "Try less power ↓"
-        }
-        if !lowerPower && shot.power < AngleArcadeModel.powerRange.upperBound {
-            return "Try more power ↑"
-        }
-        // At a power limit, offer an angle change that reduces the miss instead.
-        let candidates = [-1, 1].filter {
-            AngleArcadeModel.adjustedAngle(shot.angle, direction: $0) != shot.angle
-        }
-        let direction = candidates.min { first, second in
-            missScore(AngleArcadeModel.shot(angle: AngleArcadeModel.adjustedAngle(shot.angle, direction: first), power: shot.power, target: shot.target))
-                < missScore(AngleArcadeModel.shot(angle: AngleArcadeModel.adjustedAngle(shot.angle, direction: second), power: shot.power, target: shot.target))
-        } ?? 1
-        return direction < 0 ? "Try a lower angle ←" : "Try a higher angle →"
-    }
-
-    private func missScore(_ shot: AngleArcadeShot) -> Double {
-        if shot.hit { return 0 }
-        return shot.outcome == .short ? hypot(shot.target.distance - shot.landingX, shot.target.height) : abs(shot.verticalDelta)
-    }
-
-    private func feedbackMessage(_ shot: AngleArcadeShot) -> String {
-        if shot.hit { return "You hit the \(target.title)! Press select for the next target." }
-        let hint = correction(for: shot)
-            .replacingOccurrences(of: " ↑", with: ". Press up.")
-            .replacingOccurrences(of: " ↓", with: ". Press down.")
-            .replacingOccurrences(of: " ←", with: ". Press left.")
-            .replacingOccurrences(of: " →", with: ". Press right.")
-        return "\(resultDescription(shot)). \(hint) Then select to fire."
+        .accessibilityValue(id == "angle-arcade-angle" ? "\(Int(engine.angle)) degrees" : value)
+        .accessibilityIdentifier(id)
+        .accessibilityHint(id == "angle-arcade-angle" && !engine.level.allowsAngle ? "The angle stays fixed in this mission." : "Use the arrows to adjust.")
+        .accessibilityAdjustableAction(action)
     }
 
     private func primaryAction() {
-        guard !isFlying else { return }
-        if let shot = firedShot {
-            if shot.hit {
-                targetIndex = AngleArcadeModel.nextTargetIndex(after: targetIndex, targetCount: targets.count)
-                angle = target.recommendedAngle
-                power = target.startingPower
-            }
-            firedShot = nil
+        if engine.phase == .result {
             flightProgress = 0
-            narration.presentPrompt(targetPrompt)
+            if engine.success { engine.nextMission() } else { engine.retry() }
             return
         }
-
-        let shot = prediction
-        firedShot = shot
-        flightProgress = 0
-        isFlying = true
+        guard engine.submit() else { return }
+        guard engine.phase == .flying else { return }
         narration.stop()
+        flightProgress = reduceMotion ? 1 : 0
+        let attempt = engine.attemptID
+        let reduced = reduceMotion
+        flightTask?.cancel()
         flightTask = Task { @MainActor in
-            // Reduce Motion presents a still trajectory before announcing the result.
-            let steps = reduceMotion ? 1 : 40
-            if reduceMotion { flightProgress = 1 }
+            let steps = reduced ? 1 : 40
             for step in 1...steps {
-                do { try await Task.sleep(for: .milliseconds(reduceMotion ? 300 : 30)) }
+                do { try await Task.sleep(for: .milliseconds(reduced ? 300 : 30)) }
                 catch { return }
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, engine.attemptID == attempt, engine.phase == .flying else { return }
                 flightProgress = Double(step) / Double(steps)
             }
-            isFlying = false
+            engine.finishFlight(expectedAttemptID: attempt)
             flightTask = nil
-            if shot.hit { hitCount += 1 }
-            let message = feedbackMessage(shot)
-            narration.announce(message)
-            if UIAccessibility.isVoiceOverRunning {
-                UIAccessibility.post(notification: .announcement, argument: message)
-            }
         }
     }
 
-    private func cancelFlight() {
-        flightTask?.cancel()
-        flightTask = nil
-        if isFlying { firedShot = nil; flightProgress = 0 }
-        isFlying = false
-    }
-
-    private func prepareAdjustment() -> Bool {
-        guard !isFlying, firedShot?.hit != true else { return false }
-        firedShot = nil
-        flightProgress = 0
-        return true
-    }
-
-    private func adjustAngle(_ direction: Int) {
-        guard prepareAdjustment() else { return }
-        angle = AngleArcadeModel.adjustedAngle(angle, direction: direction)
-        narration.focus(aimDescription)
-    }
-
-    private func adjustPower(_ direction: Int) {
-        guard prepareAdjustment() else { return }
-        power = AngleArcadeModel.adjustedPower(power, direction: direction)
-        narration.focus(aimDescription)
-    }
-
-    private func handleMoveCommand(_ direction: MoveCommandDirection) {
+    private func move(_ direction: MoveCommandDirection) {
+        guard engine.phase == .aiming || (engine.phase == .result && !engine.success) else { return }
         switch direction {
-        case .left: adjustAngle(-1)
-        case .right: adjustAngle(1)
-        case .up: adjustPower(1)
-        case .down: adjustPower(-1)
+        case .left: changeAngle(-1)
+        case .right: changeAngle(1)
+        case .up: changePower(1)
+        case .down: changePower(-1)
         @unknown default: return
         }
     }
 
-}
+    private func changeAngle(_ direction: Int) {
+        if engine.phase == .result && !engine.success { engine.retry(); flightProgress = 0 }
+        engine.adjustAngle(direction)
+        narration.focus(engine.hint)
+    }
 
-private enum AngleArcadeAction: Hashable {
-    case fire
-}
+    private func changePower(_ direction: Int) {
+        if engine.phase == .result && !engine.success { engine.retry(); flightProgress = 0 }
+        engine.adjustPower(direction)
+        narration.focus(engine.level.allowsPower ? engine.hint : "Use left and right to change the angle. Play Pause gives help.")
+    }
 
-private struct AngleArcadeFieldView: View {
-    let target: AngleArcadeTarget
-    let prediction: AngleArcadeShot
-    let firedShot: AngleArcadeShot?
-    let flightProgress: Double
-    let isFlying: Bool
+    private func help() {
+        guard engine.phase != .flying else { narration.announce("Watch the delivery fly."); return }
+        if engine.phase == .aiming || engine.phase == .result {
+            engine.requestHelp()
+            announce(engine.phase == .result ? resultMessage : engine.prompt + " " + engine.hint)
+        } else { narration.repeatPrompt() }
+    }
 
-    var body: some View {
-        Canvas { context, size in
-            let origin = CGPoint(x: size.width * 0.11, y: size.height * 0.83)
-            let scale = fieldScale(for: size)
+    private func announce(_ message: String) {
+        narration.presentPrompt(message)
+        if UIAccessibility.isVoiceOverRunning { UIAccessibility.post(notification: .announcement, argument: message) }
+    }
 
-            drawGround(context: context, size: size)
-            drawArc(prediction.path, origin: origin, scale: scale, size: size, context: context, color: Color(red: 1.0, green: 0.53, blue: 0.42), dashed: true)
-
-            if let firedShot {
-                drawArc(visiblePath(for: firedShot), origin: origin, scale: scale, size: size, context: context, color: !isFlying && firedShot.hit ? Color(red: 0.30, green: 0.92, blue: 0.70) : Color(red: 1.0, green: 0.76, blue: 0.30), dashed: false)
-            }
-
-            drawTarget(context: context, origin: origin, scale: scale, target: target)
-            drawCannon(context: context, origin: origin, angle: firedShot?.angle ?? prediction.angle)
-            drawProjectile(context: context, origin: origin, scale: scale, shot: firedShot)
+    private func restoreFocus() {
+        focusTask?.cancel()
+        focusTask = Task { @MainActor in
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+            guard !Task.isCancelled, scenePhase == .active else { return }
+            focusedAction = engine.phase == .worldSelection ? suggestedLevel.world.id : engine.phase == .worldComplete ? "worlds" : "primary"
+            resetFocus(in: actionFocusScope)
         }
     }
 
-    private func fieldScale(for size: CGSize) -> CGFloat {
-        let points = (firedShot ?? prediction).path
-        let width = max(680, points.map(\.x).max() ?? 680)
-        let height = max(230, points.map(\.y).max() ?? 230, target.height + target.radius)
-        return min((size.width * 0.76) / width, (size.height * 0.64) / height)
-    }
-
-    private func screenPoint(_ point: CGPoint, origin: CGPoint, scale: CGFloat) -> CGPoint {
-        CGPoint(x: origin.x + point.x * scale, y: origin.y - point.y * scale)
-    }
-
-    private func drawGround(context: GraphicsContext, size: CGSize) {
-        var ground = Path()
-        ground.move(to: CGPoint(x: 0, y: size.height * 0.83))
-        ground.addLine(to: CGPoint(x: size.width, y: size.height * 0.83))
-        context.stroke(ground, with: .color(.white.opacity(0.18)), lineWidth: 2)
-
-        let hill = CGRect(x: size.width * 0.58, y: size.height * 0.67, width: size.width * 0.34, height: size.height * 0.22)
-        context.fill(Ellipse().path(in: hill), with: .color(Color(red: 0.22, green: 0.56, blue: 0.50).opacity(0.18)))
-    }
-
-    private func drawArc(
-        _ points: [CGPoint],
-        origin: CGPoint,
-        scale: CGFloat,
-        size: CGSize,
-        context: GraphicsContext,
-        color: Color,
-        dashed: Bool
-    ) {
-        let mapped = points.map { screenPoint($0, origin: origin, scale: scale) }
-        guard mapped.count > 1 else { return }
-
-        var path = Path()
-        path.move(to: mapped[0])
-        for point in mapped.dropFirst() {
-            path.addLine(to: point)
-        }
-        context.stroke(
-            path,
-            with: .color(color.opacity(dashed ? 0.74 : 0.95)),
-            style: StrokeStyle(lineWidth: dashed ? 4 : 6, lineCap: .round, lineJoin: .round, dash: dashed ? [12, 10] : [])
-        )
-    }
-
-    private func drawTarget(context: GraphicsContext, origin: CGPoint, scale: CGFloat, target: AngleArcadeTarget) {
-        let center = screenPoint(CGPoint(x: target.distance, y: target.height), origin: origin, scale: scale)
-        let radius = max(24, CGFloat(target.radius) * scale)
-        let hit = firedShot?.hit == true && !isFlying
-        let outer = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
-        context.fill(Circle().path(in: outer.insetBy(dx: -10, dy: -10)), with: .color(Color(red: 1.0, green: 0.76, blue: 0.30).opacity(0.16)))
-        context.stroke(Circle().path(in: outer), with: .color(hit ? Color(red: 0.30, green: 0.92, blue: 0.70) : Color(red: 1.0, green: 0.76, blue: 0.30)), lineWidth: hit ? 8 : 5)
-        context.stroke(Circle().path(in: outer.insetBy(dx: radius * 0.38, dy: radius * 0.38)), with: .color(.white.opacity(0.74)), lineWidth: 3)
-
-        let label = context.resolve(Text(target.title).font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.86)))
-        context.draw(label, at: CGPoint(x: center.x, y: center.y - radius - 20), anchor: .center)
-    }
-
-    private func drawCannon(context: GraphicsContext, origin: CGPoint, angle: Double) {
-        let radians = angle * .pi / 180
-        let barrelLength: CGFloat = 58
-        let tip = CGPoint(
-            x: origin.x + barrelLength * CGFloat(cos(radians)),
-            y: origin.y - barrelLength * CGFloat(sin(radians))
-        )
-
-        var barrel = Path()
-        barrel.move(to: origin)
-        barrel.addLine(to: tip)
-        context.stroke(barrel, with: .color(.white.opacity(0.96)), style: StrokeStyle(lineWidth: 16, lineCap: .round))
-        context.stroke(barrel, with: .color(Color(red: 1.0, green: 0.53, blue: 0.42)), style: StrokeStyle(lineWidth: 8, lineCap: .round))
-
-        let body = CGRect(x: origin.x - 44, y: origin.y - 18, width: 82, height: 34)
-        context.fill(RoundedRectangle(cornerRadius: 15).path(in: body), with: .color(Color(red: 1.0, green: 0.76, blue: 0.30)))
-        context.fill(Circle().path(in: CGRect(x: origin.x - 36, y: origin.y + 4, width: 28, height: 28)), with: .color(Color(red: 0.05, green: 0.08, blue: 0.13)))
-        context.fill(Circle().path(in: CGRect(x: origin.x + 10, y: origin.y + 4, width: 28, height: 28)), with: .color(Color(red: 0.05, green: 0.08, blue: 0.13)))
-    }
-
-    private func visiblePath(for shot: AngleArcadeShot) -> [CGPoint] {
-        let count = max(1, Int(Double(shot.path.count - 1) * flightProgress) + 1)
-        return Array(shot.path.prefix(count))
-    }
-
-    private func drawProjectile(context: GraphicsContext, origin: CGPoint, scale: CGFloat, shot: AngleArcadeShot?) {
-        guard let shot, let last = visiblePath(for: shot).last else { return }
-        let point = screenPoint(last, origin: origin, scale: scale)
-        let rect = CGRect(x: point.x - 11, y: point.y - 11, width: 22, height: 22)
-        context.fill(Circle().path(in: rect), with: .color(!isFlying && shot.hit ? Color(red: 0.30, green: 0.92, blue: 0.70) : Color(red: 1.0, green: 0.76, blue: 0.30)))
-        context.stroke(Circle().path(in: rect.insetBy(dx: -5, dy: -5)), with: .color(.white.opacity(0.54)), lineWidth: 2)
-    }
-}
-
-#Preview {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        AngleArcadeTVView()
+    private func stopTransientWork() {
+        // tvOS can discard actual focus while the binding still names the old action.
+        focusedAction = nil
+        flightTask?.cancel(); flightTask = nil
+        focusTask?.cancel(); focusTask = nil
+        let wasFlying = engine.phase == .flying
+        engine.cancelFlight()
+        if wasFlying { flightProgress = 0 }
+        narration.stop()
     }
 }

@@ -169,6 +169,36 @@ class AppStoreConnectClient:
         return items
 
 
+class TagReferenceUnavailable(ReleaseError):
+    """Apple has not indexed the requested remote tag."""
+
+def find_release_reference(
+    client: AppStoreConnectClient, repository_id: str, tag: str,
+    expected_sha: str, *, allow_branch_fallback: bool = False,
+) -> str:
+    try:
+        return find_git_reference(client, repository_id, tag)
+    except TagReferenceUnavailable:
+        if not allow_branch_fallback:
+            raise
+    # Only explicit opt-in permits the main reference, and only when GitHub
+    # confirms it still points at the requested immutable release commit.
+    output = subprocess.check_output(
+        ["git", "ls-remote", "--exit-code", "origin", "refs/heads/main"], text=True
+    )
+    rows = [line.split() for line in output.splitlines()]
+    if len(rows) != 1 or rows[0] != [expected_sha, "refs/heads/main"]:
+        raise ReleaseError("Main no longer matches the requested release tag; refusing branch fallback")
+    path = f"/v1/scmRepositories/{repository_id}/gitReferences?fields[scmGitReferences]=name,canonicalName,isDeleted,kind&limit=200"
+    matches = [ref for ref in client.pages(path) if
+               ref.get("attributes", {}).get("kind") == "BRANCH"
+               and ref["attributes"].get("canonicalName") == "refs/heads/main"
+               and not ref["attributes"].get("isDeleted")]
+    if len(matches) != 1:
+        raise ReleaseError("Cannot resolve a unique indexed main branch for release fallback")
+    print("Apple has not indexed the release tag; using verified main at the exact release commit", flush=True)
+    return matches[0]["id"]
+
 def find_git_reference(
     client: AppStoreConnectClient, repository_id: str, tag: str,
     *, timeout_seconds: int = 180, poll_seconds: int = 15,
@@ -191,7 +221,7 @@ def find_git_reference(
                 return reference["id"]
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise ReleaseError(
+            raise TagReferenceUnavailable(
                 f"Xcode Cloud cannot see Git tag {tag!r} after {timeout_seconds}s. "
                 "Check the workflow repository connection and tag visibility."
             )
@@ -359,11 +389,26 @@ def find_existing_tag_build(
 
 def validate_resumed_tag_build(
     client: AppStoreConnectClient, *, build_run_id: str, workflow_id: str, tag: str,
+    expected_sha: str = "", allow_branch_fallback: bool = False,
 ) -> tuple[str, str]:
     response = client.request(
         f"/v1/ciBuildRuns/{build_run_id}?include=sourceBranchOrTag,workflow,pullRequest"
     )
     run = matching_tag_build(response, workflow_id=workflow_id, tag=tag)
+    if not run and allow_branch_fallback and expected_sha:
+        candidate = response.get("data", {})
+        relationships = candidate.get("relationships", {})
+        source = (candidate.get("attributes", {}).get("sourceCommit") or {}).get("commitSha", "")
+        reference = relationships.get("sourceBranchOrTag", {}).get("data") or {}
+        included = {(item["type"], item["id"]): item for item in response.get("included", [])}
+        attrs = included.get(("scmGitReferences", reference.get("id")), {}).get("attributes", {})
+        if (attrs.get("kind") == "BRANCH" and attrs.get("canonicalName") == "refs/heads/main"
+                and not attrs.get("isDeleted") and source.lower() == expected_sha.lower()
+                and (relationships.get("workflow", {}).get("data") or {}).get("id") == workflow_id
+                and not relationships.get("pullRequest", {}).get("data")
+                and not candidate.get("attributes", {}).get("isPullRequestBuild")
+                and candidate.get("attributes", {}).get("completionStatus") != "CANCELED"):
+            run = candidate
     if not run:
         raise ReleaseError("Requested build run does not match the release workflow and Git tag")
     return run["id"], str(run["attributes"]["number"])
@@ -918,6 +963,8 @@ def parse_args() -> argparse.Namespace:
         help="Platform to publish. The release workflow publishes all platforms.",
     )
     parser.add_argument("--build-run-id", default="")
+    parser.add_argument("--allow-branch-fallback", action="store_true",
+                        help="Allow indexed main only when it matches the immutable release tag SHA")
     parser.add_argument(
         "--force-new-build", action="store_true",
         help="Start a fresh exact-tag build instead of recovering a previous failed run.",
@@ -1063,6 +1110,39 @@ def publish_platform(
     )
 
 
+def resolve_release_tag_commit(tag: str) -> str:
+    """Resolve the immutable remote tag, including peeled annotated tags."""
+    if not re.fullmatch(r"v[0-9]+(?:\.[0-9]+){2}(?:[-+][A-Za-z0-9.-]+)?", tag):
+        raise ReleaseError("Release tag must be a version tag such as v2.8.1")
+    ref = f"refs/tags/{tag}"
+    try:
+        output = subprocess.check_output(
+            ["git", "ls-remote", "--exit-code", "origin", ref, f"{ref}^{{}}"],
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ReleaseError(f"Cannot resolve remote release tag {tag!r}") from exc
+    references = dict((name, sha) for sha, name in (line.split() for line in output.splitlines()))
+    sha = references.get(f"{ref}^{{}}") or references.get(ref, "")
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", sha):
+        raise ReleaseError(f"Cannot resolve commit for remote release tag {tag!r}")
+    return sha.lower()
+
+def verify_build_source(
+    client: AppStoreConnectClient, build_run_id: str, expected_sha: str,
+    expected_workflow_id: str, *, require_sha: bool = True,
+) -> None:
+    """Fail closed before publishing artifacts from a new or resumed build."""
+    run = client.request(f"/v1/ciBuildRuns/{build_run_id}?include=workflow")["data"]
+    observed = (run.get("attributes", {}).get("sourceCommit") or {}).get("commitSha", "")
+    workflow = (run.get("relationships", {}).get("workflow", {}).get("data") or {}).get("id")
+    if workflow != expected_workflow_id:
+        raise ReleaseError("Xcode Cloud build belongs to a different or unknown workflow")
+    if not observed and not require_sha:
+        return
+    if not observed or observed.lower() != expected_sha.lower():
+        raise ReleaseError("Xcode Cloud build source does not match the requested release tag")
+
 def release(args: argparse.Namespace) -> None:
     app_id = required_env("APP_STORE_CONNECT_APP_ID")
     issuer_id = os.environ.get("APP_STORE_CONNECT_ISSUER_ID", "").strip()
@@ -1108,19 +1188,26 @@ def release(args: argparse.Namespace) -> None:
     if args.build_run_id and args.force_new_build:
         raise ReleaseError("Choose a resumed build run or a fresh build, not both")
 
+    expected_sha = resolve_release_tag_commit(args.tag)
     build_runs: dict[str, tuple[str, str]] = {}
     if args.build_run_id:
         workflow_id = next(iter(workflows))
         build_runs[workflow_id] = validate_resumed_tag_build(
             client, build_run_id=args.build_run_id, workflow_id=workflow_id, tag=args.tag,
+            expected_sha=expected_sha, allow_branch_fallback=getattr(args, "allow_branch_fallback", False),
         )
+        verify_build_source(client, args.build_run_id, expected_sha, workflow_id, require_sha=False)
     else:
         for workflow_id, workflow_platforms in workflows.items():
             if args.force_new_build:
-                reference_id = find_git_reference(client, args.repository_id, args.tag)
+                reference_id = find_release_reference(
+                    client, args.repository_id, args.tag, expected_sha,
+                    allow_branch_fallback=getattr(args, "allow_branch_fallback", False),
+                )
                 build_run_id, build_number = start_build_run(
                     client, workflow_id=workflow_id, git_reference_id=reference_id,
                 )
+                verify_build_source(client, build_run_id, expected_sha, workflow_id, require_sha=False)
                 build_runs[workflow_id] = (build_run_id, build_number)
                 print(f"Started fresh Xcode Cloud build {build_number} ({build_run_id}) for {args.tag}", flush=True)
                 continue
@@ -1137,7 +1224,10 @@ def release(args: argparse.Namespace) -> None:
                     )
             if not existing:
                 try:
-                    reference_id = find_git_reference(client, args.repository_id, args.tag)
+                    reference_id = find_release_reference(
+                        client, args.repository_id, args.tag, expected_sha,
+                        allow_branch_fallback=getattr(args, "allow_branch_fallback", False),
+                    )
                 except ReleaseError:
                     existing = find_existing_tag_build(client, workflow_id=workflow_id, tag=args.tag)
                     if not existing:
@@ -1153,6 +1243,7 @@ def release(args: argparse.Namespace) -> None:
                     client, workflow_id=workflow_id, git_reference_id=reference_id,
                 )
                 action = "Started"
+            verify_build_source(client, build_run_id, expected_sha, workflow_id, require_sha=False)
             build_runs[workflow_id] = (build_run_id, build_number)
             labels = " and ".join(item.label for item in workflow_platforms)
             print(
@@ -1179,6 +1270,7 @@ def release(args: argparse.Namespace) -> None:
                     timeout_seconds=args.cloud_timeout_seconds,
                     poll_seconds=args.poll_seconds,
                 )
+                verify_build_source(client, build_run_id, expected_sha, workflow_id)
                 build_number = started_build_number or observed_build_number
                 publish_platform(
                     args=args,

@@ -102,6 +102,9 @@ struct RootView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
+        .onAppear {
+            if ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") { appModel.engine.showAngleCannon() }
+        }
         .background(MatherTheme.background.ignoresSafeArea())
         .sheet(isPresented: $appModel.showingProfilePicker) {
             ProfilePickerView(store: appModel.profileStore) {

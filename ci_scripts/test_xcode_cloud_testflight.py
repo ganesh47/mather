@@ -19,6 +19,10 @@ from ci_scripts.xcode_cloud_testflight import (
     ensure_internal_beta_group_access,
     find_build,
     find_git_reference,
+    find_release_reference,
+    TagReferenceUnavailable,
+    resolve_release_tag_commit,
+    verify_build_source,
     find_existing_tag_build,
     inspect_ipa,
     normalize_private_key,
@@ -35,6 +39,88 @@ from ci_scripts.xcode_cloud_testflight import (
 
 
 class XcodeCloudTestFlightTests(unittest.TestCase):
+    def test_release_tag_resolves_lightweight_and_annotated_remote_tags(self) -> None:
+        sha = "a" * 40
+        annotated = "b" * 40
+        for output in [f"{sha}\trefs/tags/v2.8.1\n", f"{annotated}\trefs/tags/v2.8.1\n{sha}\trefs/tags/v2.8.1^{{}}\n"]:
+            with patch("ci_scripts.xcode_cloud_testflight.subprocess.check_output", return_value=output):
+                self.assertEqual(resolve_release_tag_commit("v2.8.1"), sha)
+
+    def test_release_tag_rejects_missing_tag_and_invalid_name(self) -> None:
+        with self.assertRaisesRegex(ReleaseError, "version tag"):
+            resolve_release_tag_commit("main")
+        with patch("ci_scripts.xcode_cloud_testflight.subprocess.check_output", return_value=""):
+            with self.assertRaisesRegex(ReleaseError, "Cannot resolve commit"):
+                resolve_release_tag_commit("v2.8.1")
+
+    def test_new_or_resumed_build_must_match_tag_sha_and_workflow(self) -> None:
+        client = MagicMock()
+        sha = "a" * 40
+        for observed, workflow, valid in [(sha, "workflow", True), ("b" * 40, "workflow", False), ("", "workflow", False), (sha, "other", False), (sha, None, False)]:
+            client.request.return_value = {"data": {
+                "attributes": {"sourceCommit": {"commitSha": observed}},
+                "relationships": {"workflow": {"data": {"id": workflow}}},
+            }}
+            if valid:
+                verify_build_source(client, "run", sha, "workflow")
+            else:
+                with self.assertRaises(ReleaseError):
+                    verify_build_source(client, "run", sha, "workflow")
+
+    def test_wrong_source_blocks_upload_for_new_and_resumed_runs(self) -> None:
+        for resumed in ["", "existing-run"]:
+            args = MagicMock(tag="v2.8.1", platform="ios", workflow_id="workflow", repository_id="repo", build_run_id=resumed, output_dir=None, prepare_tag_trigger=False, force_new_build=not bool(resumed), allow_branch_fallback=False, restore_manual_tags=False)
+            client = MagicMock()
+            client.request.return_value = {"data": {
+                "attributes": {"sourceCommit": {"commitSha": "b" * 40}},
+                "relationships": {"workflow": {"data": {"id": "workflow"}}},
+            }}
+            with (
+                patch("ci_scripts.xcode_cloud_testflight.required_env", return_value="test-value"),
+                patch.dict("os.environ", {"APP_STORE_CONNECT_PRIVATE_KEY_PATH": ""}),
+                patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient", return_value=client),
+                patch("ci_scripts.xcode_cloud_testflight.resolve_release_tag_commit", return_value="a" * 40),
+                patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"workflow": [PLATFORMS["ios"]]}),
+                patch("ci_scripts.xcode_cloud_testflight.validate_resumed_tag_build", return_value=("existing-run", "123")),
+                patch("ci_scripts.xcode_cloud_testflight.find_git_reference", return_value="tag-id"),
+                patch("ci_scripts.xcode_cloud_testflight.start_build_run", return_value=("new-run", "123")),
+                patch("ci_scripts.xcode_cloud_testflight.wait_for_export", return_value=({}, "123")),
+                patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+                self.assertRaisesRegex(ReleaseError, "source does not match"),
+            ):
+                release(args)
+            publish.assert_not_called()
+
+    def test_branch_fallback_is_explicit_and_accepts_only_exact_main_commit(self):
+        client = MagicMock()
+        client.pages.return_value = [{"id": "main-ref", "attributes": {"kind": "BRANCH", "canonicalName": "refs/heads/main", "isDeleted": False}}]
+        sha = "a" * 40
+        with patch("ci_scripts.xcode_cloud_testflight.find_git_reference", side_effect=TagReferenceUnavailable("not indexed")):
+            with self.assertRaises(TagReferenceUnavailable):
+                find_release_reference(client, "repo", "v2.8.1", sha)
+            with patch("ci_scripts.xcode_cloud_testflight.subprocess.check_output", return_value=f"{sha}\trefs/heads/main\n"):
+                self.assertEqual(find_release_reference(client, "repo", "v2.8.1", sha, allow_branch_fallback=True), "main-ref")
+            with patch("ci_scripts.xcode_cloud_testflight.subprocess.check_output", return_value=f"{'b' * 40}\trefs/heads/main\n"):
+                with self.assertRaisesRegex(ReleaseError, "Main no longer matches"):
+                    find_release_reference(client, "repo", "v2.8.1", sha, allow_branch_fallback=True)
+
+    def test_branch_fallback_rejects_tag_or_deleted_main_reference(self):
+        client = MagicMock()
+        sha = "a" * 40
+        for kind, deleted in [("TAG", False), ("BRANCH", True)]:
+            client.pages.return_value = [{"id": "wrong", "attributes": {"kind": kind, "canonicalName": "refs/heads/main", "isDeleted": deleted}}]
+            with (patch("ci_scripts.xcode_cloud_testflight.find_git_reference", side_effect=TagReferenceUnavailable("not indexed")),
+                  patch("ci_scripts.xcode_cloud_testflight.subprocess.check_output", return_value=f"{sha}\trefs/heads/main\n"),
+                  self.assertRaisesRegex(ReleaseError, "unique indexed main")):
+                find_release_reference(client, "repo", "v2.8.1", sha, allow_branch_fallback=True)
+
+    def test_queued_source_can_wait_but_completed_source_must_be_known(self):
+        client = MagicMock()
+        client.request.return_value = {"data": {"attributes": {"sourceCommit": None}, "relationships": {"workflow": {"data": {"id": "workflow"}}}}}
+        verify_build_source(client, "run", "a" * 40, "workflow", require_sha=False)
+        with self.assertRaises(ReleaseError):
+            verify_build_source(client, "run", "a" * 40, "workflow")
+
     def test_unconstrained_matcher_normalizes_apple_null_and_empty_fields(self) -> None:
         condition = tag_start_condition("v2.9.0")
         observed = copy.deepcopy(condition)
@@ -252,6 +338,8 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             cloud_timeout_seconds=1800, poll_seconds=20,
         )
         with (
+            patch("ci_scripts.xcode_cloud_testflight.resolve_release_tag_commit", return_value="a" * 40),
+            patch("ci_scripts.xcode_cloud_testflight.verify_build_source"),
             patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
             patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient"),
             patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
@@ -273,6 +361,8 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             cloud_timeout_seconds=1800, poll_seconds=20,
         )
         with (
+            patch("ci_scripts.xcode_cloud_testflight.resolve_release_tag_commit", return_value="a" * 40),
+            patch("ci_scripts.xcode_cloud_testflight.verify_build_source"),
             patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
             patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient") as client,
             patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
@@ -295,6 +385,8 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
             cloud_timeout_seconds=1800, poll_seconds=20,
         )
         with (
+            patch("ci_scripts.xcode_cloud_testflight.resolve_release_tag_commit", return_value="a" * 40),
+            patch("ci_scripts.xcode_cloud_testflight.verify_build_source"),
             patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
             patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient"),
             patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
@@ -311,6 +403,44 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
         self.assertEqual(start.call_args.kwargs["git_reference_id"], "exact-tag")
         self.assertEqual(publish.call_count, 2)
 
+
+    def test_resuming_main_requires_opt_in_and_exact_release_sha(self) -> None:
+        client = MagicMock()
+        response = self.tag_run_response()
+        response["data"] = response["data"][0]
+        response["data"]["attributes"]["sourceCommit"] = {"commitSha": "a" * 40}
+        response["included"][0]["attributes"].update(kind="BRANCH", name="main", canonicalName="refs/heads/main")
+        client.request.return_value = response
+        with self.assertRaises(ReleaseError):
+            validate_resumed_tag_build(client, build_run_id="run-162", workflow_id="release", tag="v2.9.0", expected_sha="a" * 40)
+        self.assertEqual(validate_resumed_tag_build(client, build_run_id="run-162", workflow_id="release", tag="v2.9.0", expected_sha="a" * 40, allow_branch_fallback=True), ("run-162", "162"))
+        with self.assertRaises(ReleaseError):
+            validate_resumed_tag_build(client, build_run_id="run-162", workflow_id="release", tag="v2.9.0", expected_sha="b" * 40, allow_branch_fallback=True)
+
+    def test_recovered_automatic_tag_run_cannot_publish_a_different_sha(self) -> None:
+        args = argparse.Namespace(
+            tag="v2.9.0", platform="all", workflow_id="release", repository_id="repo",
+            prepare_tag_trigger=False, build_run_id="", output_dir=None, force_new_build=False,
+            cloud_timeout_seconds=1800, poll_seconds=20,
+        )
+        client = MagicMock()
+        client.request.return_value = {"data": {
+            "attributes": {"sourceCommit": {"commitSha": "b" * 40}},
+            "relationships": {"workflow": {"data": {"id": "release"}}},
+        }}
+        with (
+            patch.dict("os.environ", {"APP_STORE_CONNECT_APP_ID": "app", "APP_STORE_CONNECT_KEY_ID": "key", "APP_STORE_CONNECT_PRIVATE_KEY": "placeholder"}, clear=True),
+            patch("ci_scripts.xcode_cloud_testflight.AppStoreConnectClient", return_value=client),
+            patch("ci_scripts.xcode_cloud_testflight.resolve_release_tag_commit", return_value="a" * 40),
+            patch("ci_scripts.xcode_cloud_testflight.resolve_workflows", return_value={"release": list(PLATFORMS.values())}),
+            patch("ci_scripts.xcode_cloud_testflight.find_existing_tag_build", return_value=("auto-run", "162")),
+            patch("ci_scripts.xcode_cloud_testflight.start_build_run") as start,
+            patch("ci_scripts.xcode_cloud_testflight.publish_platform") as publish,
+            self.assertRaisesRegex(ReleaseError, "source does not match"),
+        ):
+            release(args)
+        start.assert_not_called()
+        publish.assert_not_called()
 
     def test_git_tag_waits_for_reference_sync(self) -> None:
         client = MagicMock()

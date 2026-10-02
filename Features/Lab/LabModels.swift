@@ -734,7 +734,7 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
         id: "geometry-angles-basic",
         laneID: .geometry,
         title: "Angle Lab",
-        subtitle: "Learn angle benchmarks, remember degrees, measure with two fingers, then blast targets in Angle Cannon.",
+        subtitle: "Learn angle benchmarks, remember degrees, measure with two fingers, then explore angles and turns in Angle Arcade.",
         estimatedLength: "7–9 min",
         masteryStateLabel: "Recommended next",
         recommendedNextActivity: "Two-Finger Protractor",
@@ -742,7 +742,7 @@ struct LabConceptSessionPlan: Identifiable, Equatable {
             LabSessionStagePlan(stage: .learn, title: "See angle turns", childCopy: "Open, close, and compare small, square, wide, and straight turns.", parentCopy: "Concept-first angle vocabulary before sensor play.", timerPolicy: .learnTrackedOnly, route: .twoFingerProtractor),
             LabSessionStagePlan(stage: .remember, title: "Remember degrees", childCopy: "Recall 90°, 180°, acute, and obtuse clues.", parentCopy: "Soft retrieval with no countdown.", timerPolicy: .calmNoCountdown, route: .labRememberStage(.geometryAnglesBasic)),
             LabSessionStagePlan(stage: .play, title: "Measure with fingers", childCopy: "Use two fingers like a protractor to feel the size of an angle.", parentCopy: "Existing Two-Finger Protractor remains directly playable and also serves this Play stage.", timerPolicy: .calmNoCountdown, route: .twoFingerProtractor),
-            LabSessionStagePlan(stage: .blast, title: "Angle Cannon", childCopy: "Aim at target angles when you are ready for a rocket round.", parentCopy: "Existing Angle Cannon becomes the Blast stage for Angle Lab.", timerPolicy: .readinessGatedBlast, route: .angleCannon),
+            LabSessionStagePlan(stage: .blast, title: "Angle Arcade", childCopy: "Launch deliveries and turn corners to build a world.", parentCopy: "Geometry-first missions share progress with the existing Angle Cannon route.", timerPolicy: .readinessGatedBlast, route: .angleCannon),
             LabSessionStagePlan(stage: .score, title: "Angle spark score", childCopy: "Celebrate the angles you measured and blasted.", parentCopy: "Score remains child-safe and pressure-free.", timerPolicy: .calmNoCountdown, route: nil),
         ]
     )
@@ -1144,9 +1144,9 @@ struct LabLaneDetailPresentation: Equatable {
 extension LabActivityID {
     var sensorNeeds: [LabSensorNeed] {
         switch self {
-        case .sumSprint, .rectangleFactory, .factoryCards, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .worldAnimalCards, .worldBirdCards, .fruitCards, .circuitSpark:
+        case .sumSprint, .rectangleFactory, .factoryCards, .angleCannon, .twoFingerProtractor, .shapeGeometry, .waterCycle, .soundVolume, .memoryMatch, .countryCards, .worldAnimalCards, .worldBirdCards, .fruitCards, .circuitSpark:
             return [.noSpecialSensor]
-        case .symmetryFold, .angleCannon, .gravityArtist:
+        case .symmetryFold, .gravityArtist:
             return [.motion]
         case .roomQuest:
             return [.cameraMarkerMode, .haptics]
@@ -1471,9 +1471,9 @@ struct CapabilityLane: Identifiable, Equatable {
                 LabActivity(
                     id: .angleCannon,
                     emoji: "💥",
-                    title: "Angle Cannon",
-                    tagline: "Tilt to aim — hit the target",
-                    modes: [.explore, .challenge, .timed]
+                    title: "Angle Arcade",
+                    tagline: "Launch, turn and build — touch or tilt",
+                    modes: [.explore, .challenge]
                 ),
                 LabActivity(
                     id: .twoFingerProtractor,

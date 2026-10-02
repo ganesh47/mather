@@ -81,6 +81,7 @@
 		477EEF0E16F958D51EA536E8 /* SymmetryFoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1857E5128E265D31F6032DC /* SymmetryFoldView.swift */; };
 		491AF46616C0ED52117B0F84 /* NumberStoryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383EE87126C22A00D3232A1E /* NumberStoryModels.swift */; };
 		49CEF0D52521692DEC2038F5 /* TransferCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CF08322D6BC0124F2FD4871 /* TransferCheckView.swift */; };
+		49D680E3CDBD63E25202567D /* AngleArcadeScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDCCC01B9444E475AA9FD83 /* AngleArcadeScene.swift */; };
 		4A80F74E4E9A12EEDED72118 /* CompareCampEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DFD1B65EE6EB5A4BC2BC18D /* CompareCampEngine.swift */; };
 		4ABC4A6418596E71AD701541 /* SumSprintSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7597E3916440E75B1DC72E66 /* SumSprintSummaryView.swift */; };
 		4ABC89BBFC466CD81CD122DC /* GravityArtistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF686A72FE9ECF34FB0DF13E /* GravityArtistView.swift */; };
@@ -93,11 +94,13 @@
 		547A424F8ABA1E591352CAA8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F5E1261557B57C9FD31842 /* SettingsView.swift */; };
 		54CBAF0A5868D81125A2E2FD /* TwoFingerProtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */; };
 		555A0D80EB93DAF706D08DCB /* PairingChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */; };
+		55A9150D972B03376700D13C /* AngleArcadeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */; };
 		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		5740442F29746383B2ADB113 /* CompareCampProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C672ED06F9F40FCA2BC5EC /* CompareCampProgressTests.swift */; };
 		5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */; };
 		5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01760190560F16DE73232743 /* SwiftDataStoreRecoveryTests.swift */; };
 		5CE1DFBF8D1C2A3B1BE945D7 /* FactoryCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA57A8B34A66D341922064FD /* FactoryCardsView.swift */; };
+		5E0F105B35CAE97F3B63BC23 /* AngleArcadeScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDCCC01B9444E475AA9FD83 /* AngleArcadeScene.swift */; };
 		6017B571AB347F8A34DE751D /* NumberStoryStageVocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */; };
 		6430BD262BFC404FD8D8F11B /* MemoryContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */; };
 		66765A2B68242976AE35A375 /* LessonPlayThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */; };
@@ -120,6 +123,7 @@
 		76018B4BC6FB47E7D0135B2F /* VS1SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45002CF11E285E8168354DEF /* VS1SharedUI.swift */; };
 		7612AD75CE6F5D18E40574F0 /* CountryGameplayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F524E9BE37DC9742658E9AAC /* CountryGameplayThreadTests.swift */; };
 		770A683D79CF3AD5930B96D5 /* LaneMasteryStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934BEC63B805B504B59413AB /* LaneMasteryStateTests.swift */; };
+		77DCF398DD7491EA04BC4921 /* AngleArcadeCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */; };
 		788C086623F5B8FA17E6BAE7 /* BondBlastStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099533155FF79CD98EB9419A /* BondBlastStageView.swift */; };
 		79905D531EBB4217D88EBAA0 /* GameplayThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ABD019864C46683CF30CA35 /* GameplayThreadView.swift */; };
 		7AFB5C436E9AA208870BEFE3 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861805C0710FA71543D194B7 /* HomeView.swift */; };
@@ -148,6 +152,7 @@
 		94C865AC9294057083B52F4C /* CompareCampPassportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7F4303A94026305057151C /* CompareCampPassportStore.swift */; };
 		976D26A688AB6340FA057293 /* GameplayThreadContent+Shapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFF09E7C4882057E1DFE232 /* GameplayThreadContent+Shapes.swift */; };
 		97BD7600CFB32D47B34275CD /* PairingChallenge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14219037741B83AFD98E37E7 /* PairingChallenge.swift */; };
+		97D632C39A36F44F356C203F /* AngleArcadeCampaignTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CF5B7A76FEF491A3C6C7D6 /* AngleArcadeCampaignTests.swift */; };
 		98BB43DEA132C4828CC6FC9B /* GameplayStageViewModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD32F97BA3A293DBCFAFCEC4 /* GameplayStageViewModelsTests.swift */; };
 		999475484BEF4CCF53D9BA27 /* LearningLoopViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7E1C15EE20D21F179D1E2 /* LearningLoopViews.swift */; };
 		9A3BDA4A91BB93BC52D7F2B0 /* GameplayThreadContent+WorldAnimals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */; };
@@ -155,6 +160,7 @@
 		9B49220ABF0BB1B188938DE6 /* SoundDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3E740DD832B432B8867661 /* SoundDetectionService.swift */; };
 		9C43CEBED09DE5598F9DAD9B /* ConcreteBuildViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FE96782037787E5D19BB7A /* ConcreteBuildViewTests.swift */; };
 		9CC9ABC2BA3661FD5266AC71 /* MemoryGalleryContentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4016B80628D3A384DD33D8 /* MemoryGalleryContentStore.swift */; };
+		9CCE630E27B777C4B151EEA6 /* AngleArcadeProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */; };
 		9DF96CD5B6E90C75C9EA628F /* WaterCycleLessonThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7F9C3F4DF6F9DD6219582 /* WaterCycleLessonThread.swift */; };
 		9E7894797953DB7F8FD106A1 /* BondMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4185B3C653FFC32C022CF655 /* BondMatchView.swift */; };
 		A1289C7C722DE12CC1720FCC /* GroupedNumberRepresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */; };
@@ -180,12 +186,14 @@
 		B397F21934091A1AA7529E73 /* GameplayThreadContent+WorldBirds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF01F4BE2F8CA4783F74177 /* GameplayThreadContent+WorldBirds.swift */; };
 		B444EF969211D7F2E985F31F /* StepCountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BDB51F823663A838C970D5C /* StepCountService.swift */; };
 		B5A2C8E0CB5A963AF6D58F98 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29E6D96B0A52FD1A63A2F2BB /* RootView.swift */; };
+		B7D8226F991C2302946311DE /* AngleArcadeCampaignUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D95B06E78CC53DBC9DE6C3 /* AngleArcadeCampaignUITests.swift */; };
 		B85E09E6B9F4BBF953A3FD49 /* CapabilityLane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 479CE24CCC2244CAA1135B24 /* CapabilityLane.swift */; };
 		B8BDA0C56AD75A007554942F /* SpotPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCD4C8917D5860736F0F192 /* SpotPromptView.swift */; };
 		B8C505B0ADB2C5A6FA25D6CB /* ConcreteBuildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564AB9C763C10252EE5A2846 /* ConcreteBuildView.swift */; };
 		B984FCE5483DCCB107FE5E07 /* CompareCampTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EF10163D07336252CEAE42B /* CompareCampTVView.swift */; };
 		B9E51CE352C2F2EE84050C32 /* FactRecordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0EA4CACF4806645904C6A6 /* FactRecordStore.swift */; };
 		BB913D05F7D884574BC05A04 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893845D3340A27F687CF2A30 /* SessionConfigView.swift */; };
+		BC4310F44E31D4A1B5BE57CC /* AngleArcadeProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */; };
 		BD615CEA7E05371830F03ECD /* SliceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B557BC960B2E1946C97F0B6A /* SliceModels.swift */; };
 		BD78239A7CA9E440E411C6D6 /* CapabilityLaneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3A14DB8CB30729E7702637 /* CapabilityLaneTests.swift */; };
 		C2CEAC5CF56F76DFB66704ED /* CompareCampRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B533279CD95BE6BC42D1F867 /* CompareCampRound.swift */; };
@@ -193,6 +201,7 @@
 		C83522C9248AECC33815B967 /* FeatureFlagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2763860DCF54A19D357794B7 /* FeatureFlagTests.swift */; };
 		CAFA8E6A2422FC42901D6C23 /* NumberStoryStageVocabularyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDAD3065F9042019DC1AA5A /* NumberStoryStageVocabularyTests.swift */; };
 		CAFBF2D37B7576AF9AF0600C /* MotionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 421C6A556A4AA81BB35602FB /* MotionServiceTests.swift */; };
+		CB311043CC65C7D6561DB37D /* AngleArcadeCampaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */; };
 		CB8A79541F268760FD4A0AC2 /* HapticsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E970DEFCF041ABB53657A27 /* HapticsServiceTests.swift */; };
 		CBBFBCFFEC6C0D8E2FBDB60A /* NumberStoryGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCDB830BCA71408B46E1A4F /* NumberStoryGenerator.swift */; };
 		CC3BD40B61FE7AA2A974E027 /* CompareCampProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7B68CC114B6084501C641 /* CompareCampProgress.swift */; };
@@ -212,6 +221,7 @@
 		DC2C0CD91CED290951B27D8A /* MemoryAskConversationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */; };
 		DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4672C3C1769CB0F788B925E2 /* SwiftDataStoreRecovery.swift */; };
 		DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */; };
+		E01695DD62E032ED9922E2F0 /* AngleArcadeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */; };
 		E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */; };
 		E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */; };
@@ -297,6 +307,7 @@
 		1E3146FD76B9EAED7C391AA0 /* SumSprintSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintSessionView.swift; sourceTree = "<group>"; };
 		1F451B67C2A515584DDB54A4 /* LabModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModelsTests.swift; sourceTree = "<group>"; };
 		1F89B7EA97FE105036E4EB5F /* CompassAnglesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassAnglesView.swift; sourceTree = "<group>"; };
+		25D95B06E78CC53DBC9DE6C3 /* AngleArcadeCampaignUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeCampaignUITests.swift; sourceTree = "<group>"; };
 		2763860DCF54A19D357794B7 /* FeatureFlagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagTests.swift; sourceTree = "<group>"; };
 		276931E73074353F80122384 /* RoomSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSetupView.swift; sourceTree = "<group>"; };
 		288594261DFE5DC67971E64C /* ThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTests.swift; sourceTree = "<group>"; };
@@ -307,6 +318,7 @@
 		2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeModel.swift; sourceTree = "<group>"; };
 		2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryViewTests.swift; sourceTree = "<group>"; };
 		2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeEngine.swift; sourceTree = "<group>"; };
 		2E8D900636FFCAF5EABA2774 /* RouteQuestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteQuestModels.swift; sourceTree = "<group>"; };
 		2E970DEFCF041ABB53657A27 /* HapticsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsServiceTests.swift; sourceTree = "<group>"; };
 		2F4016B80628D3A384DD33D8 /* MemoryGalleryContentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryContentStore.swift; sourceTree = "<group>"; };
@@ -340,6 +352,7 @@
 		47AA450BCDB84BB76988B30E /* CardReviewSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewSchedulerTests.swift; sourceTree = "<group>"; };
 		491C77FED7A9B2B0975A6934 /* MixMatchRecallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixMatchRecallView.swift; sourceTree = "<group>"; };
 		4973F8B722B80D7E9BBCB455 /* TimerChallengePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChallengePolicyTests.swift; sourceTree = "<group>"; };
+		49CF5B7A76FEF491A3C6C7D6 /* AngleArcadeCampaignTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeCampaignTests.swift; sourceTree = "<group>"; };
 		4BC459824FDDA52F8297317C /* GameplayStageSharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayStageSharedViews.swift; sourceTree = "<group>"; };
 		4BE99DB8FC85397C3E504E0B /* ProblemGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemGenerator.swift; sourceTree = "<group>"; };
 		4CA7F9C3F4DF6F9DD6219582 /* WaterCycleLessonThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleLessonThread.swift; sourceTree = "<group>"; };
@@ -357,6 +370,7 @@
 		5C398DF4D3007D587BC30FF3 /* GroupedNumberRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedNumberRepresentation.swift; sourceTree = "<group>"; };
 		5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTVRootView.swift; sourceTree = "<group>"; };
 		5CDAD3065F9042019DC1AA5A /* NumberStoryStageVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryStageVocabularyTests.swift; sourceTree = "<group>"; };
+		5CDCCC01B9444E475AA9FD83 /* AngleArcadeScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeScene.swift; sourceTree = "<group>"; };
 		616C29585296A089FD218C08 /* SpacedRepetitionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacedRepetitionModels.swift; sourceTree = "<group>"; };
 		6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleGameplayThreadTests.swift; sourceTree = "<group>"; };
 		62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayoutTests.swift; sourceTree = "<group>"; };
@@ -370,8 +384,10 @@
 		6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldAnimals.swift"; sourceTree = "<group>"; };
 		6E01EEE9604B8700E4F60EE2 /* MemoryAskConversationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicy.swift; sourceTree = "<group>"; };
 		704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestLiveScanner.swift; sourceTree = "<group>"; };
+		7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeCampaign.swift; sourceTree = "<group>"; };
 		718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElectronicsCircuitArtwork.swift; sourceTree = "<group>"; };
 		71E7E1C15EE20D21F179D1E2 /* LearningLoopViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningLoopViews.swift; sourceTree = "<group>"; };
+		744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeProgressStore.swift; sourceTree = "<group>"; };
 		7597E3916440E75B1DC72E66 /* SumSprintSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintSummaryView.swift; sourceTree = "<group>"; };
 		773A254BB7C08DB897DED232 /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSessionStore.swift; sourceTree = "<group>"; };
 		778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGalleryTVRoundTests.swift; sourceTree = "<group>"; };
@@ -494,6 +510,7 @@
 		02CA298DFF67A6C406B471FA /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				5CDCCC01B9444E475AA9FD83 /* AngleArcadeScene.swift */,
 				718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */,
 				3FD74E168EE297B4DF4194D5 /* FeatureFlags.swift */,
 				A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */,
@@ -536,6 +553,7 @@
 		13C13543035DCDDA54D258B6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				744C01E001618F000C8A9139 /* AngleArcadeProgressStore.swift */,
 				BF7F4303A94026305057151C /* CompareCampPassportStore.swift */,
 				F7B5305570771ED55816AC6B /* GameplayProgressStore.swift */,
 				3B3F29980CE5E67E05A4F30F /* HapticsService.swift */,
@@ -603,6 +621,7 @@
 		25FB5EFDA536B37D6A1D2832 /* MatherTests */ = {
 			isa = PBXGroup;
 			children = (
+				49CF5B7A76FEF491A3C6C7D6 /* AngleArcadeCampaignTests.swift */,
 				3849D3285D292421CEA3A1A3 /* AngleArcadeModelTests.swift */,
 				D69ADFE340625CE2247C439C /* AngleCannonTests.swift */,
 				E63765A2998A3C2FD04B62AC /* ArrayPreludeModelsTests.swift */,
@@ -718,6 +737,8 @@
 		4356714DEE880CBB965F848D /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */,
+				2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */,
 				2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */,
 				B6B469EA6DCDB375AF9BC3CD /* ArrayPreludeModels.swift */,
 				479CE24CCC2244CAA1135B24 /* CapabilityLane.swift */,
@@ -787,6 +808,7 @@
 		4BB5E1AFDA402737D8419523 /* MatherUITests */ = {
 			isa = PBXGroup;
 			children = (
+				25D95B06E78CC53DBC9DE6C3 /* AngleArcadeCampaignUITests.swift */,
 				DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */,
 				9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */,
 				D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */,
@@ -1128,7 +1150,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77DCF398DD7491EA04BC4921 /* AngleArcadeCampaign.swift in Sources */,
+				55A9150D972B03376700D13C /* AngleArcadeEngine.swift in Sources */,
 				12978B14FA3C86099A34FC4F /* AngleArcadeModel.swift in Sources */,
+				9CCE630E27B777C4B151EEA6 /* AngleArcadeProgressStore.swift in Sources */,
+				5E0F105B35CAE97F3B63BC23 /* AngleArcadeScene.swift in Sources */,
 				ED8BB99A44A3C701068F03D6 /* AngleArcadeTVView.swift in Sources */,
 				32389C80F18E523B2CB947B5 /* CompareCampContent.swift in Sources */,
 				4A80F74E4E9A12EEDED72118 /* CompareCampEngine.swift in Sources */,
@@ -1156,6 +1182,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97D632C39A36F44F356C203F /* AngleArcadeCampaignTests.swift in Sources */,
 				1A7B774DEC63CE5479722F6D /* AngleArcadeModelTests.swift in Sources */,
 				FCCD21AF414D3FAFDA10A9A4 /* AngleCannonTests.swift in Sources */,
 				08341A75D0D385BC7222C172 /* ArrayPreludeModelsTests.swift in Sources */,
@@ -1235,6 +1262,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B7D8226F991C2302946311DE /* AngleArcadeCampaignUITests.swift in Sources */,
 				17BE88060C10E1B1E35E439F /* CompactLayoutTests.swift in Sources */,
 				DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */,
 				E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */,
@@ -1255,7 +1283,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB311043CC65C7D6561DB37D /* AngleArcadeCampaign.swift in Sources */,
+				E01695DD62E032ED9922E2F0 /* AngleArcadeEngine.swift in Sources */,
 				6FCBEF02AFFDFDA13749BB83 /* AngleArcadeModel.swift in Sources */,
+				BC4310F44E31D4A1B5BE57CC /* AngleArcadeProgressStore.swift in Sources */,
+				49D680E3CDBD63E25202567D /* AngleArcadeScene.swift in Sources */,
 				0A87802FC06B98D73B797D40 /* AngleCannonView.swift in Sources */,
 				A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */,
 				067AD3849B44423F0AB55906 /* ArrayPreludeModels.swift in Sources */,

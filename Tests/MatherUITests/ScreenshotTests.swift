@@ -403,7 +403,7 @@ final class ScreenshotTests: XCTestCase {
             ("symmetryFold", "Symmetry Fold", "symmetry fold"),
             ("rectangleFactory", "Rectangle Factory", "rectangle factory"),
             ("factoryCards", "Packing Cards", "factory cards"),
-            ("angleCannon", "Angle Cannon", "angle cannon"),
+            ("angleCannon", "Angle Arcade", "angle arcade"),
             ("twoFingerProtractor", "Two-Finger Protractor", "two-finger protractor"),
             ("gravityArtist", "Gravity Quest", "gravity artist"),
             ("compassAngles", "Compass Walk", "compass walk"),
