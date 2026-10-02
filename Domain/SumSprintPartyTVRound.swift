@@ -1,6 +1,6 @@
 import Foundation
 
-struct SumSprintPartyTVFact: Identifiable, Equatable, Hashable {
+struct SumSprintPartyTVFact: Identifiable, Codable, Equatable, Hashable {
     let addendA: Int
     let addendB: Int
 
@@ -10,7 +10,7 @@ struct SumSprintPartyTVFact: Identifiable, Equatable, Hashable {
     var spokenPrompt: String { "What is \(addendA) plus \(addendB)?" }
 }
 
-struct SumSprintPartyTVRound: Equatable {
+struct SumSprintPartyTVRound: Codable, Equatable {
     let index: Int
     let fact: SumSprintPartyTVFact
     let answerChoices: [Int]
@@ -46,6 +46,26 @@ struct SumSprintPartyTVRound: Equatable {
         let distractors = distractors(for: fact)
         let orderedChoices = [fact.sum] + distractors
         return rotate(orderedChoices, by: rotationOffset(for: fact))
+    }
+
+    /// Reviewed learning ranges include smaller totals; legacy round APIs stay intact.
+    static func facts(through maximum: Int) -> [SumSprintPartyTVFact] {
+        guard [5, 10, 20].contains(maximum) else { return [] }
+        return (2...maximum).flatMap { sum in
+            (1...(sum / 2)).map { SumSprintPartyTVFact(addendA: $0, addendB: sum - $0) }
+        }
+    }
+
+    static func answerChoices(for fact: SumSprintPartyTVFact, through maximum: Int) -> [Int] {
+        guard [5, 10, 20].contains(maximum), (2...maximum).contains(fact.sum) else { return [] }
+        let range = 1...maximum
+        var distractors: [Int] = []
+        for delta in [1, -1, 2, -2, 3, -3, 4, -4] {
+            let candidate = fact.sum + delta
+            if range.contains(candidate), !distractors.contains(candidate) { distractors.append(candidate) }
+        }
+        let choices = [fact.sum] + distractors.prefix(choiceCount - 1)
+        return rotate(Array(choices), by: rotationOffset(for: fact))
     }
 
     static func isCorrect(selection: Int?, for round: SumSprintPartyTVRound) -> Bool {
