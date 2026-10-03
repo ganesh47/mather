@@ -17,6 +17,7 @@ final class AngleArcadeEngine {
     private(set) var success = false
     private(set) var misses = 0
     private(set) var progress: AngleArcadeProgress
+    private(set) var pauseMessage: String?
     private(set) var feedback = ""
     private(set) var attemptID = 0
     private(set) var sessionStartedAt = Date.now
@@ -26,7 +27,8 @@ final class AngleArcadeEngine {
 
     init(store: AngleArcadeProgressStore = .init(scope: "tv")) {
         self.store = store
-        progress = store.load()
+        progress = store.load() ?? AngleArcadeProgress()
+        pauseMessage = store.storageIssueMessage
         angle = AngleArcadeCampaign.levels[0].startingAngle
         power = AngleArcadeCampaign.levels[0].startingPower
     }
@@ -38,7 +40,8 @@ final class AngleArcadeEngine {
         level.guided || level.id == "garden-raised" || level.id == "moon-earth" || helpRequested
     }
     var prompt: String {
-        switch phase {
+        if let pauseMessage { return pauseMessage }
+        return switch phase {
         case .worldSelection: "Choose a world. Each world has three missions."
         case .aiming: level.prompt
         case .flying: "Watch your shot!"
@@ -64,19 +67,25 @@ final class AngleArcadeEngine {
     }
 
     func beginSession() {
+        guard storageReady() else { return }
         sessionStartedAt = .now
         sessionCompletionCount = 0
         showWorlds()
     }
 
     func selectWorld(_ world: AngleArcadeWorld) {
+        guard storageReady() else { return }
         let levels = AngleArcadeCampaign.levels(in: world)
         guard let next = levels.first(where: { !progress.hasCompleted($0.id) }) ?? levels.first else { return }
         selectLevel(next.id)
     }
 
     func selectLevel(_ id: String) {
-        guard let selected = AngleArcadeCampaign.level(id: id) else { return }
+        guard storageReady(), let selected = AngleArcadeCampaign.level(id: id) else { return }
+        var nextProgress = progress
+        nextProgress.lastLevelID = id
+        guard store.save(nextProgress) else { pauseForStorage(); return }
+        progress = nextProgress
         attemptID &+= 1
         level = selected
         angle = selected.startingAngle
@@ -90,11 +99,10 @@ final class AngleArcadeEngine {
         misses = 0
         feedback = ""
         helpRequested = false
-        progress.lastLevelID = id
-        store.save(progress)
     }
 
     func startSuggested() {
+        guard storageReady() else { return }
         if let last = progress.lastLevelID, !progress.hasCompleted(last) {
             selectLevel(last)
         } else {
@@ -110,7 +118,7 @@ final class AngleArcadeEngine {
     /// Both buttons and tilt use this method, keeping orientation separate from
     /// the fixed 90-degree internal corner in builder missions.
     func setAngle(_ value: Double) {
-        guard value.isFinite, level.allowsAngle, phase == .aiming else { return }
+        guard pauseMessage == nil, value.isFinite, level.allowsAngle, phase == .aiming else { return }
         let clamped = min(max(value, level.angleRange.lowerBound), level.angleRange.upperBound)
         let snapped = (clamped / level.angleStep).rounded() * level.angleStep
         angle = min(max(snapped, level.angleRange.lowerBound), level.angleRange.upperBound)
@@ -123,10 +131,12 @@ final class AngleArcadeEngine {
 
     @discardableResult
     func submit() -> Bool {
-        guard phase == .aiming else { return false }
+        guard storageReady(), phase == .aiming else { return false }
+        var nextProgress = progress
+        nextProgress.attemptCounts[level.id, default: 0] += 1
+        guard store.save(nextProgress) else { pauseForStorage(); return false }
+        progress = nextProgress
         attemptID &+= 1
-        progress.attemptCounts[level.id, default: 0] += 1
-        store.save(progress)
         if level.kind == .rotation {
             completeAttempt(success: level.succeeds(angle: angle, power: power))
         } else if let launch = preview {
@@ -135,11 +145,11 @@ final class AngleArcadeEngine {
         } else {
             return false
         }
-        return true
+        return pauseMessage == nil
     }
 
     func finishFlight(expectedAttemptID: Int? = nil) {
-        guard phase == .flying, expectedAttemptID == nil || expectedAttemptID == attemptID, let shot else { return }
+        guard storageReady(), phase == .flying, expectedAttemptID == nil || expectedAttemptID == attemptID, let shot else { return }
         completeAttempt(success: shot.hit)
     }
 
@@ -153,7 +163,7 @@ final class AngleArcadeEngine {
     }
 
     func retry() {
-        guard phase == .result, !success else { return }
+        guard pauseMessage == nil, phase == .result, !success else { return }
         if level.comparisonGravity == nil { previousShot = shot }
         shot = nil
         feedback = ""
@@ -161,7 +171,7 @@ final class AngleArcadeEngine {
     }
 
     func nextMission() {
-        guard phase == .result, success else { return }
+        guard storageReady(), phase == .result, success else { return }
         let levels = AngleArcadeCampaign.levels(in: level.world)
         guard let index = levels.firstIndex(where: { $0.id == level.id }) else { return }
         if index + 1 < levels.count {
@@ -182,20 +192,28 @@ final class AngleArcadeEngine {
     }
 
     func requestHelp() {
-        guard phase == .aiming || phase == .result, !success else { return }
+        guard storageReady(), phase == .aiming || phase == .result, !success else { return }
         if !helpRequested {
-            progress.helpCounts[level.id, default: 0] += 1
-            store.save(progress)
+            var nextProgress = progress
+            nextProgress.helpCounts[level.id, default: 0] += 1
+            guard store.save(nextProgress) else { pauseForStorage(); return }
+            progress = nextProgress
         }
         helpRequested = true
     }
 
     private func prepareAdjustment() -> Bool {
+        guard pauseMessage == nil else { return false }
         if phase == .result && !success { retry() }
         return phase == .aiming
     }
 
     private func completeAttempt(success won: Bool) {
+        guard storageReady() else { return }
+        let oldProgress = progress
+        let oldCompletionCount = sessionCompletionCount
+        let oldMisses = misses
+        let oldHelpRequested = helpRequested
         success = won
         phase = .result
         if won {
@@ -222,7 +240,36 @@ final class AngleArcadeEngine {
             }
             if misses >= 2 { requestHelp() }
         }
-        store.save(progress)
+        guard store.save(progress) else {
+            progress = oldProgress
+            sessionCompletionCount = oldCompletionCount
+            misses = oldMisses
+            helpRequested = oldHelpRequested
+            pauseForStorage()
+            return
+        }
+    }
+
+    /// The caller must obtain the parent's explicit confirmation first.
+    func clearProgressAfterParentConfirmation() {
+        store.clear()
+        progress = store.load() ?? AngleArcadeProgress()
+        pauseMessage = store.storageIssueMessage
+        sessionCompletionCount = 0
+        helpRequested = false
+        misses = 0
+        showWorlds()
+    }
+
+    private func storageReady() -> Bool {
+        guard pauseMessage == nil else { return false }
+        guard store.load() != nil else { pauseForStorage(); return false }
+        return true
+    }
+
+    private func pauseForStorage() {
+        pauseMessage = store.storageIssueMessage ?? "Angle progress could not be saved. Ask a parent to restore it or choose to clear Angle progress."
+        showWorlds()
     }
 
     private func nearestWinningAim() -> AngleArcadeAim? {

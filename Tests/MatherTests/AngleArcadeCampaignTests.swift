@@ -219,7 +219,7 @@ struct AngleArcadeEngineTests {
 
 @MainActor
 struct AngleArcadeProgressStoreTests {
-    @Test func separateScopesPersistAndSanitizeUnknownIDs() {
+    @Test func separateScopesPersistAndSanitizeUnknownIDs() throws {
         let defaults = UserDefaults(suiteName: "angle-progress-tests-\(UUID())")!
         let first = AngleArcadeProgressStore(defaults: defaults, scope: "first-child")
         let second = AngleArcadeProgressStore(defaults: defaults, scope: "second-child")
@@ -229,7 +229,7 @@ struct AngleArcadeProgressStoreTests {
         value.attemptCounts = ["builder-corner": 3, "obsolete-mission": 9, "moon-earth": -4]
         value.lastLevelID = "obsolete-mission"
         first.save(value)
-        let loaded = first.load()
+        let loaded = try #require(first.load())
         #expect(loaded.completions.count == 1)
         #expect(loaded.completion(for: "builder-corner")?.independent == true)
         #expect(loaded.attemptCounts == ["builder-corner": 3])
@@ -237,16 +237,100 @@ struct AngleArcadeProgressStoreTests {
         #expect(second.load() == AngleArcadeProgress())
     }
 
-    @Test func corruptedAndUnsupportedPayloadsFallBackToEmptyProgress() throws {
-        let defaults = UserDefaults(suiteName: "angle-progress-version-tests-\(UUID())")!
+    @Test(arguments: ["corrupt", "future-schema", "future-field", "future-completion-field", "invalid-counter", "wrong-type"])
+    func unreadableProgressSurvivesSaveAndEnteringWorld(_ fixture: String) throws {
+        let suite = "angle-progress-version-tests-\(UUID())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
         let key = "mather.angle-arcade.progress.v1.test"
         let store = AngleArcadeProgressStore(defaults: defaults, scope: "test")
-        defaults.set(Data("invalid json".utf8), forKey: key)
-        #expect(store.load() == AngleArcadeProgress())
+        var root = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(AngleArcadeProgress())) as? [String: Any])
+        switch fixture {
+        case "future-schema": root["schemaVersion"] = 2
+        case "future-field": root["futureCheckpoint"] = ["keep": "opaque"]
+        case "future-completion-field": root["completions"] = ["builder-corner": ["assisted": true, "independent": false, "futureEvidence": "keep"]]
+        case "invalid-counter": root["attemptCounts"] = ["builder-corner": -1]
+        default: break
+        }
+        let raw: Data
+        if fixture == "corrupt" { raw = Data("invalid json".utf8) }
+        else { raw = try JSONSerialization.data(withJSONObject: root) }
+        if fixture == "wrong-type" { defaults.set("retained non-Data payload", forKey: key) }
+        else { defaults.set(raw, forKey: key) }
+        #expect(store.load() == nil)
+        #expect(store.storageState == .unsupported)
+        #expect(!store.save(AngleArcadeProgress()))
+        let engine = AngleArcadeEngine(store: store)
+        #expect(engine.pauseMessage != nil)
+        engine.beginSession()
+        engine.selectWorld(.builder)
+        engine.selectLevel("builder-corner")
+        engine.startSuggested()
+        engine.requestHelp()
+        #expect(!engine.submit())
+        #expect(engine.phase == .worldSelection)
+        #expect(engine.attemptID == 0)
+        #expect(engine.sessionCompletionCount == 0)
+        if fixture == "wrong-type" { #expect(defaults.string(forKey: key) == "retained non-Data payload") }
+        else { #expect(defaults.data(forKey: key) == raw) }
+    }
+
+    @Test func aFuturePayloadRestoredWhilePlayingBlocksSubmissionAndCompletion() throws {
+        let suite = "angle-progress-inflight-tests-\(UUID())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let key = "mather.angle-arcade.progress.v1.test"
+        let store = AngleArcadeProgressStore(defaults: defaults, scope: "test")
         var future = AngleArcadeProgress()
         future.schemaVersion = 2
-        future.completions["builder-corner"] = .init(assisted: false, independent: true)
-        defaults.set(try JSONEncoder().encode(future), forKey: key)
-        #expect(store.load() == AngleArcadeProgress())
+        let raw = try JSONEncoder().encode(future)
+        let aiming = AngleArcadeEngine(store: store)
+        aiming.selectWorld(.garden)
+        defaults.set(raw, forKey: key)
+        #expect(!aiming.submit())
+        #expect(aiming.pauseMessage != nil)
+        #expect(aiming.progress.attemptCounts.isEmpty)
+        #expect(defaults.data(forKey: key) == raw)
+
+        store.clear()
+        let flying = AngleArcadeEngine(store: store)
+        flying.selectWorld(.garden)
+        #expect(flying.submit())
+        #expect(flying.phase == .flying)
+        let attempt = flying.attemptID
+        defaults.set(raw, forKey: key)
+        flying.finishFlight(expectedAttemptID: attempt)
+        #expect(flying.pauseMessage != nil)
+        #expect(!flying.success)
+        #expect(flying.sessionCompletionCount == 0)
+        #expect(flying.progress.completions.isEmpty)
+        #expect(defaults.data(forKey: key) == raw)
+    }
+
+    @Test func explicitParentResetClearsOnlyTheChosenScopeAndAllowsPlay() throws {
+        let suite = "angle-progress-reset-tests-\(UUID())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let selected = AngleArcadeProgressStore(defaults: defaults, scope: "selected")
+        let other = AngleArcadeProgressStore(defaults: defaults, scope: "other")
+        var saved = AngleArcadeProgress()
+        saved.completions["builder-corner"] = .init(assisted: true)
+        #expect(other.save(saved))
+        let otherKey = "mather.angle-arcade.progress.v1.other"
+        let otherBytes = defaults.data(forKey: otherKey)
+        let selectedKey = "mather.angle-arcade.progress.v1.selected"
+        defaults.set(Data("retain until confirmation".utf8), forKey: selectedKey)
+        let engine = AngleArcadeEngine(store: selected)
+        #expect(engine.pauseMessage != nil)
+        engine.clearProgressAfterParentConfirmation()
+        #expect(defaults.object(forKey: selectedKey) == nil)
+        #expect(selected.storageState == .missing)
+        #expect(engine.pauseMessage == nil)
+        #expect(engine.progress.completions.isEmpty)
+        #expect(defaults.data(forKey: otherKey) == otherBytes)
+        engine.selectWorld(.builder)
+        #expect(engine.phase == .aiming)
+        #expect(selected.load()?.lastLevelID == "builder-corner")
+        #expect(other.load()?.hasCompleted("builder-corner") == true)
     }
 }

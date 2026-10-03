@@ -260,10 +260,22 @@ struct LearningQuestTests {
         firstStore.save(saved); secondStore.save(saved)
         model.prepareAngleArcadeProfile()
         #expect(model.angleArcadeEngine.progress.hasCompleted(levelID))
+        let firstKey = "mather.angle-arcade.progress.v1.ipad-\(first)"
+        let firstBytes = UserDefaults.standard.data(forKey: firstKey)
+        let secondKey = "mather.angle-arcade.progress.v1.ipad-\(second)"
+        var future = saved
+        future.schemaVersion = 2
+        let retained = try JSONEncoder().encode(future)
+        UserDefaults.standard.set(retained, forKey: secondKey)
+        model.angleArcadeEngine.beginSession()
+        #expect(model.angleArcadeEngine.pauseMessage != nil)
+        #expect(UserDefaults.standard.data(forKey: secondKey) == retained)
         model.clearActiveProfileLearningData()
+        #expect(model.angleArcadeEngine.pauseMessage == nil)
         #expect(model.angleArcadeEngine.progress.completions.isEmpty)
-        #expect(secondStore.load().completions.isEmpty)
-        #expect(firstStore.load().hasCompleted(levelID))
+        #expect(secondStore.load()?.completions.isEmpty == true)
+        #expect(firstStore.load()?.hasCompleted(levelID) == true)
+        #expect(UserDefaults.standard.data(forKey: firstKey) == firstBytes)
         model.profileStore.setActiveProfile(id: first)
         model.prepareAngleArcadeProfile()
         #expect(model.angleArcadeEngine.progress.hasCompleted(levelID))

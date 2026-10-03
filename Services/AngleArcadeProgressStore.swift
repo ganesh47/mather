@@ -24,25 +24,68 @@ struct AngleArcadeProgress: Codable, Equatable {
 
 @MainActor
 final class AngleArcadeProgressStore {
+    enum StorageState: Equatable { case missing, loaded, unsupported }
+
     private let defaults: UserDefaults
     let scope: String
+    private(set) var storageState: StorageState = .missing
     private var key: String { "mather.angle-arcade.progress.v1.\(scope)" }
+
+    var storageIssueMessage: String? {
+        storageState == .unsupported
+            ? "Angle progress cannot be read by this version. It has been kept unchanged. Ask a parent to restore it or choose to clear Angle progress."
+            : nil
+    }
 
     init(defaults: UserDefaults = .standard, scope: String = "tv") {
         self.defaults = defaults
         self.scope = scope
     }
 
-    func load() -> AngleArcadeProgress {
-        guard let data = defaults.data(forKey: key),
+    func load() -> AngleArcadeProgress? {
+        guard let object = defaults.object(forKey: key) else {
+            storageState = .missing
+            return AngleArcadeProgress()
+        }
+        guard let data = object as? Data,
+              hasOnlyKnownFields(data),
               let value = try? JSONDecoder().decode(AngleArcadeProgress.self, from: data),
-              value.schemaVersion == 1 else { return AngleArcadeProgress() }
-        return validated(value)
+              value.schemaVersion == 1,
+              validated(value) == value else {
+            storageState = .unsupported
+            return nil
+        }
+        storageState = .loaded
+        return value
     }
 
-    func save(_ progress: AngleArcadeProgress) {
-        guard progress.schemaVersion == 1, let data = try? JSONEncoder().encode(validated(progress)) else { return }
+    @discardableResult
+    func save(_ progress: AngleArcadeProgress) -> Bool {
+        // Re-read before every write, including from an already running engine.
+        // A different store instance may have restored a newer payload meanwhile.
+        guard load() != nil, progress.schemaVersion == 1,
+              let data = try? JSONEncoder().encode(validated(progress)) else { return false }
         defaults.set(data, forKey: key)
+        storageState = .loaded
+        return true
+    }
+
+    /// Call only from an explicit parent-confirmed reset. No other scope is cleared.
+    func clear() {
+        defaults.removeObject(forKey: key)
+        storageState = .missing
+    }
+
+    private func hasOnlyKnownFields(_ data: Data) -> Bool {
+        guard let object = try? JSONSerialization.jsonObject(with: data),
+              let root = object as? [String: Any],
+              Set(root.keys).isSubset(of: ["schemaVersion", "completions", "attemptCounts", "helpCounts", "lastLevelID"]),
+              let completions = root["completions"] as? [String: Any] else { return false }
+        for object in completions.values {
+            guard let completion = object as? [String: Any],
+                  Set(completion.keys).isSubset(of: ["assisted", "independent"]) else { return false }
+        }
+        return true
     }
 
     private func validated(_ value: AngleArcadeProgress) -> AngleArcadeProgress {

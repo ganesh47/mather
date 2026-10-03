@@ -141,12 +141,69 @@ final class AngleArcadeUITests: XCTestCase {
         screenshot("Reduced Motion guided Garden success")
     }
 
+    func testUnsupportedProgressPausesUntilExplicitParentReset() {
+        var app = XCUIApplication()
+        app.launchArguments = ["-angle-arcade-ui-test", "-angle-arcade-reset-progress", "-angle-arcade-unsupported-progress"]
+        app.launch()
+        waitPhase(app, "Paused")
+        XCTAssertTrue(app.staticTexts["angle-progress-paused"].exists)
+        XCTAssertFalse(app.buttons["angle-world-garden"].exists)
+        let exit = app.buttons["angle-progress-exit"]
+        let focusedExit = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: exit)
+        wait(for: [focusedExit], timeout: 10)
+        screenshot("Unsupported Angle progress retained, no playable world controls")
+        XCUIRemote.shared.press(.right)
+        XCUIRemote.shared.press(.right)
+        let clear = app.buttons["angle-progress-clear"]
+        let focusedClear = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: clear)
+        wait(for: [focusedClear], timeout: 10)
+        XCUIRemote.shared.press(.select)
+        XCTAssertTrue(app.alerts["Clear Angle progress on this TV?"].waitForExistence(timeout: 5))
+        chooseAlert(app, label: "Cancel")
+        XCTAssertTrue(app.staticTexts["angle-progress-paused"].exists)
+        app.terminate()
+        app = XCUIApplication()
+        app.launchArguments = ["-angle-arcade-ui-test"]
+        app.launch()
+        waitPhase(app, "Paused")
+        XCUIRemote.shared.press(.right)
+        XCUIRemote.shared.press(.right)
+        let resetFocus = expectation(for: NSPredicate(format: "hasFocus == true"), evaluatedWith: app.buttons["angle-progress-clear"])
+        wait(for: [resetFocus], timeout: 10)
+        XCUIRemote.shared.press(.select)
+        XCTAssertTrue(app.alerts["Clear Angle progress on this TV?"].waitForExistence(timeout: 5))
+        chooseAlert(app, label: "Clear Angle progress")
+        waitPhase(app, "worldSelection")
+        XCTAssertFalse(app.staticTexts["angle-progress-paused"].exists)
+        screenshot("Parent-confirmed Angle-only reset returns to world selector")
+        openWorld("garden", app: app)
+        XCTAssertEqual(app.staticTexts["angle-arcade-hit-count"].label, "0 of 3 complete")
+    }
+
     private func launch(reset: Bool, reducedMotion: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-angle-arcade-ui-test"] + (reset ? ["-angle-arcade-reset-progress"] : []) + (reducedMotion ? ["-angle-arcade-reduce-motion"] : [])
         app.launch()
         waitPhase(app, "worldSelection")
         return app
+    }
+
+    private func chooseAlert(_ app: XCUIApplication, label: String) {
+        let matches = app.alerts.buttons.matching(identifier: label)
+        guard matches.firstMatch.waitForExistence(timeout: 5) else { XCTFail("Missing alert action \(label)"); return }
+        for _ in 0..<12 {
+            if matches.allElementsBoundByIndex.contains(where: { $0.hasFocus }) {
+                XCUIRemote.shared.press(.select)
+                return
+            }
+            let current = app.buttons.matching(NSPredicate(format: "hasFocus == true")).firstMatch
+            guard current.waitForExistence(timeout: 5) else { XCTFail("Alert has no focused control"); return }
+            let target = matches.firstMatch
+            let dx = target.frame.midX - current.frame.midX
+            let dy = target.frame.midY - current.frame.midY
+            XCUIRemote.shared.press(abs(dy) > 40 ? (dy > 0 ? .down : .up) : (dx > 0 ? .right : .left))
+        }
+        XCTFail("Could not focus alert action \(label): \(app.debugDescription)")
     }
 
     private func openWorld(_ id: String, app: XCUIApplication) {

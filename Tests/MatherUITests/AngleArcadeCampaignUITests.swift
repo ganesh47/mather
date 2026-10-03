@@ -88,6 +88,23 @@ final class AngleArcadeCampaignUITests: XCTestCase {
         screenshot("Touch flight recovered after foregrounding")
     }
 
+    func testUnreadableProgressShowsPausedGuidanceAndDoneWithoutPlayControls() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-angle-arcade-ui-test", "-mather.angle-arcade.progress.v1.ipad-ui-test", "retained-unsupported-fixture"]
+        app.launch()
+        let paused = app.staticTexts["angle-progress-paused"]
+        XCTAssertTrue(paused.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["angle-arcade-continue"].exists)
+        XCTAssertFalse(app.buttons["angle-world-garden"].exists)
+        XCTAssertFalse(app.buttons["angle-arcade-primary"].exists)
+        screenshot("Unreadable selected-child Angle progress retained with Settings recovery guidance")
+        let done = app.buttons["angle-cannon-done-button"]
+        XCTAssertTrue(done.isHittable)
+        done.tap()
+        let departed = expectation(for: NSPredicate { _, _ in !paused.exists }, evaluatedWith: nil)
+        wait(for: [departed], timeout: 10)
+    }
+
     private func launch(reset: Bool) -> XCUIApplication {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()

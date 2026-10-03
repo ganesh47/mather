@@ -34,7 +34,20 @@ struct AngleCannonView: View {
         GeometryReader { geometry in
             VStack(spacing: 12) {
                 header.padding(.horizontal, 18)
-                if engine.phase == .worldSelection {
+                if let message = engine.pauseMessage {
+                    VStack(spacing: 18) {
+                        Text("Angle Arcade is paused").font(.title2.bold())
+                            .accessibilityIdentifier("angle-progress-paused")
+                        Text(message).multilineTextAlignment(.center)
+                        Text("A parent can use Settings → Clear this child's learning data to remove this child's Angle progress. Other children keep their data.")
+                            .multilineTextAlignment(.center).font(.subheadline)
+                        Button { narrate() } label: { Text("Listen").frame(minHeight: 80) }
+                            .buttonStyle(.bordered)
+                        Spacer()
+                    }
+                    .padding(24)
+                    .foregroundStyle(MatherTheme.ink)
+                } else if engine.phase == .worldSelection {
                     ScrollView { worldPicker.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
                         .disabled(!isActiveProfile)
@@ -90,6 +103,11 @@ struct AngleCannonView: View {
             flightProgress = 0
             narrate()
         }
+        .onChange(of: engine.pauseMessage) { _, _ in
+            cancelFlight()
+            stopTilt()
+            narrate()
+        }
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
             guard isActiveProfile, tiltEnabled, engine.phase == .aiming,
                   engine.level.kind == .launch, engine.level.allowsAngle else { return }
@@ -120,7 +138,7 @@ struct AngleCannonView: View {
             appModel.speechService.stop()
             guard isActiveProfile else { return }
             saveEvidenceResult()
-            if engine.sessionCompletionCount > 0 {
+            if engine.pauseMessage == nil, engine.sessionCompletionCount > 0 {
                 appModel.gameSessionStore.save(
                     gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
                     scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
@@ -140,7 +158,8 @@ struct AngleCannonView: View {
     }
 
     private var phaseName: String {
-        switch engine.phase {
+        if engine.pauseMessage != nil { return "Paused" }
+        return switch engine.phase {
         case .worldSelection: "Choose a world"
         case .aiming: "Aiming"
         case .flying: "Flying"
@@ -383,6 +402,7 @@ struct AngleCannonView: View {
     private func requestHelp() {
         guard isActiveProfile, engine.phase == .aiming || engine.phase == .result, !engine.success else { return }
         engine.requestHelp()
+        guard engine.pauseMessage == nil else { narrate(); return }
         if helpedMissionIDs.insert(engine.level.id).inserted {
             record(ItemAttempt(
                 activityID: LabActivityID.angleCannon.rawValue,
@@ -397,7 +417,7 @@ struct AngleCannonView: View {
     }
 
     private func recordCompletedAttempt() {
-        guard isActiveProfile, engine.phase == .result,
+        guard isActiveProfile, engine.pauseMessage == nil, engine.phase == .result,
               pendingAttemptID == engine.attemptID, let pendingAttempt else { return }
         let outcome = engine.success ? pendingAttempt.outcome : .incorrect
         record(pendingAttempt.withOutcome(outcome))
@@ -465,6 +485,7 @@ struct AngleCannonView: View {
 
     private func narrate() {
         guard isActiveProfile else { return }
+        if let message = engine.pauseMessage { speak(message); return }
         switch engine.phase {
         case .worldSelection: speak("Choose Garden deliveries, Builder bay, or Moon parcels. Every world is open. Touch a picture to play.")
         case .worldComplete: speak("You built it! Three discoveries made a wonderful creation. Play again or choose another world.")
