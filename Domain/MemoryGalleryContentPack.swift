@@ -21,6 +21,14 @@ struct MemoryGalleryContentPack: Codable, Equatable {
 
     enum ValidationError: Error { case invalidPack(String) }
 
+    /// Schema-one catalogs shipped these 36 pictures as app-bundled artwork.
+    /// Refreshing their cards does not remove the original image sets from the app.
+    static var retainedLegacyBundledAssetNames: Set<String> {
+        Set(["A", "B"].flatMap { sheet in
+            (1...18).map { "MemoryBird" + sheet + String(format: "%02d", $0) }
+        })
+    }
+
     func validate() throws {
         try validate(requiredKinds: Set(MemoryGalleryTVCategory.allCases.map(\.deckKind)))
     }
@@ -52,7 +60,7 @@ struct MemoryGalleryContentPack: Codable, Equatable {
         try require(totalBytes <= 100_000_000, "Pack artwork exceeds 100 MB")
         let bundledAssets = Set(MemoryDeck.allDeckAnimals.compactMap(\.imageAssetName)
             + MemoryDeck.allDeckAnimals.flatMap(\.learningArtwork).map(\.assetName))
-        let knownAssets = bundledAssets.union(assets.map(\.id))
+        let knownAssets = bundledAssets.union(assets.map(\.id)).union(Self.retainedLegacyBundledAssetNames)
         var cardIDs = Set<String>()
         for deck in decks {
             try require((4...250).contains(deck.cards.count), "Deck needs 4–250 cards")

@@ -27,7 +27,7 @@ struct IOSLearningContentSmoke {
         guard restored.catalog == store.catalog else { throw Failure.check("Offline cache differs") }
         await restored.refresh(from: feed)
         guard restored.catalog == store.catalog, restored.lastRefreshError != nil else { throw Failure.check("Offline fallback failed") }
-        print("PASS: external iOS catalog v\(store.catalog.contentVersion), 11 decks, 7 topics, \(store.catalog.assets.count) verified images; deferred activation and offline restore")
+        print("PASS: public iOS feed validated; active catalog v\(store.catalog.contentVersion), 11 decks, 7 topics, \(store.catalog.assets.count) verified images; deferred activation and offline restore")
 
         if CommandLine.arguments.count > 2 {
             let input = URL(fileURLWithPath: CommandLine.arguments[2])

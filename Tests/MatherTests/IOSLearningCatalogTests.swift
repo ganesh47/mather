@@ -51,6 +51,65 @@ struct IOSLearningCatalogTests {
         try legacy.validate()
     }
 
+    @Test @MainActor func actualPublishedV2CatalogRemainsValidWithoutReplacingNewBundle() async throws {
+        // Exact public schema-one v2 bytes from mather-content a629242e.
+        let fixture = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Fixtures/ios-catalog-v2.json")
+        let bytes = try Data(contentsOf: fixture)
+        let previous = try JSONDecoder().decode(IOSLearningCatalog.self, from: bytes)
+        #expect(previous.schemaVersion == 1 && previous.contentVersion == 2)
+        try previous.validate() // Includes shared deck validation before topic validation.
+        let birds = try #require(previous.decks.first { $0.kind == .birds })
+        #expect(Set(birds.cards.compactMap(\.imageAssetName)) == MemoryGalleryContentPack.retainedLegacyBundledAssetNames)
+        let repository = fixture.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        for name in MemoryGalleryContentPack.retainedLegacyBundledAssetNames {
+            #expect(FileManager.default.fileExists(atPath: repository
+                .appendingPathComponent("App/Assets.xcassets/\(name).imageset/\(name).png").path))
+        }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = IOSLearningContentStore(root: root, fetch: { url, _ in
+            guard url.pathExtension == "json" else { throw URLError(.resourceUnavailable) }
+            return bytes
+        })
+        await store.refresh(from: URL(string: "https://example.com/ios/catalog.json")!)
+        #expect(store.lastRefreshError == nil)
+        #expect(store.catalog == .bundled)
+        #expect(store.assetURLs.isEmpty)
+    }
+
+    @Test @MainActor func actualPublishedV2ActiveCachePreservesArtworkWhileNewBundleWins() async throws {
+        let fixture = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Fixtures/ios-catalog-v2.json")
+        let bytes = try Data(contentsOf: fixture)
+        let previous = try JSONDecoder().decode(IOSLearningCatalog.self, from: bytes)
+        let repository = fixture.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let directory = root.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try bytes.write(to: directory.appendingPathComponent("pack.json"))
+        for asset in previous.assets {
+            let source = repository.appendingPathComponent("App/Assets.xcassets/\(asset.id).imageset/\(asset.file)")
+            let artwork = try Data(contentsOf: source)
+            try IOSLearningContentStore.validateArtwork(artwork, asset: asset)
+            try artwork.write(to: directory.appendingPathComponent(asset.file))
+        }
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("active"))
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("pending"))
+        let restored = IOSLearningContentStore(root: root, fetch: { _, _ in throw URLError(.notConnectedToInternet) })
+        #expect(restored.catalog == .bundled)
+        #expect(restored.assetURLs.isEmpty)
+        restored.activatePending()
+        await restored.refresh(from: URL(string: "https://example.com/ios/catalog.json")!)
+        #expect(restored.catalog == .bundled)
+        #expect(restored.lastRefreshError != nil)
+        #expect(try Data(contentsOf: directory.appendingPathComponent("pack.json")) == bytes)
+        for asset in previous.assets {
+            try IOSLearningContentStore.validateArtwork(Data(contentsOf: directory.appendingPathComponent(asset.file)), asset: asset)
+        }
+    }
+
     @Test @MainActor func activeSessionDefersUpdateAndVerifiedCacheWorksOffline() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

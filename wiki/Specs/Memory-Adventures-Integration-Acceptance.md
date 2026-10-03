@@ -53,6 +53,16 @@ Both bundles use content version 3. Older valid caches/feeds cannot override the
 refreshed bundle; newer complete verified packs still activate between sessions.
 Old iOS artwork directories remain available for paused session snapshots.
 
+The 36 original bird PNGs remain explicitly recognized in both shared deck and
+iOS topic validation. Tests use the exact published schema-one v2 catalog and
+restore its complete active cache of 98 verified PNGs. The newer bundle wins
+without deleting those old bytes. Unrecognized artwork, paths, and hashes still
+fail validation.
+
+Production-loader smoke checks verify every candidate PNG, deferred iOS
+activation, and offline restore. Unchanged released v2.11 reader source also
+downloads, validates, and restores the complete schema-one v3 TV and iOS feeds.
+
 ## Validation gates
 
 - All source/art hashes and provenance match preserved or documented derivatives.
