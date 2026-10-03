@@ -19,7 +19,7 @@ enum MemoryGalleryTVCategory: String, CaseIterable, Identifiable, Equatable {
 
     var subtitle: String {
         switch self {
-        case .animals: return "Farm favorites"
+        case .animals: return "Real animal photographs"
         case .vehicles: return "Machines and how they work"
         case .planets: return "Solar system"
         case .flags: return "Flags, money & landmarks"

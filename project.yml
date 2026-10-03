@@ -64,6 +64,9 @@ targets:
       - path: Domain/MemoryAdventure.swift
       - path: Domain/MemoryPairingEngine.swift
       - path: Domain/TVFriendlyChallengeClock.swift
+      - path: Domain/AnimalExplorerCatalog.swift
+      - path: Domain/AnimalExplorerLearningEvent.swift
+      - path: Services/AnimalExplorerEvidenceRecorder.swift
       - path: Domain/MemoryGalleryTVRound.swift
       - path: Domain/MemoryGalleryContentPack.swift
       - path: Services/MemoryGalleryContentStore.swift

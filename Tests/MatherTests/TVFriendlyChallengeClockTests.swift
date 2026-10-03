@@ -101,4 +101,24 @@ struct TVFriendlyChallengeClockTests {
         clock.refresh()
         #expect(clock.remainingSeconds == 10)
     }
+
+    @Test func moreTimeKeepsOtherInterruptionsPaused() {
+        let source = TimeSource()
+        let clock = TVFriendlyChallengeClock(now: { source.time })
+        clock.configure(seconds: 2)
+        clock.start()
+        source.time += 2
+        clock.refresh()
+        clock.pause(.background)
+        clock.pause(.options)
+        clock.addMoreTime(seconds: 60)
+        source.time += 100
+        clock.resume(.options)
+        clock.refresh()
+        #expect(clock.isPaused && clock.remainingSeconds == 60 && !clock.isExpired)
+        clock.resume(.background)
+        source.time += 1
+        clock.refresh()
+        #expect(clock.remainingSeconds == 59)
+    }
 }
