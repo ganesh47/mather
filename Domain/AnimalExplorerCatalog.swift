@@ -105,7 +105,7 @@ enum AnimalExplorerCatalog {
             group: "Mammal", asset: "AnimalPhotoIndianLeopard", collections: ["all-animals", "india-wildlife"],
             description: "A spotted animal walking through dry grass.", hint: "Look at the dark spots across its coat.",
             attribution: AnimalPhotoAttribution(
-                author: "Thomas Fuhrmann", creditLine: "Thomas Fuhrmann",
+                author: "Thomas Fuhrmann", creditLine: "Thomas Fuhrmann, snowman@snowmanstudios.de",
                 licenseName: "CC BY-SA 4.0 International", licenseURL: "https://creativecommons.org/licenses/by-sa/4.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:Indian_Leopard_(Panthera_pardus_ssp._fusca),_Ranthambore_National_Park.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Indian_Leopard_(Panthera_pardus_ssp._fusca)%2C_Ranthambore_National_Park.jpg",
@@ -141,7 +141,7 @@ enum AnimalExplorerCatalog {
             group: "Mammal", asset: "AnimalPhotoIndianRhinoceros", collections: ["all-animals", "india-wildlife"],
             description: "A large grey animal with folded skin and one horn, standing on a path.", hint: "Look at the single horn above its nose.",
             attribution: AnimalPhotoAttribution(
-                author: "Joydeep Chakraborty", creditLine: "Joydeep Chakraborty",
+                author: "Joydeep Chakraborty", creditLine: "Photo: Joydeep Chakraborty / Wikimedia Commons / CC BY-SA 4.0",
                 licenseName: "CC BY-SA 4.0 International", licenseURL: "https://creativecommons.org/licenses/by-sa/4.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:An_Indian_rhinoceros_(Rhinoceros_unicornis),_also_known_as_the_greater_one-horned_rhinoceros,_at_Kaziranga_National_Park,_Assam,_India_2.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/c/c4/An_Indian_rhinoceros_(Rhinoceros_unicornis)%2C_also_known_as_the_greater_one-horned_rhinoceros%2C_at_Kaziranga_National_Park%2C_Assam%2C_India_2.jpg",
@@ -159,7 +159,7 @@ enum AnimalExplorerCatalog {
             group: "Mammal", asset: "AnimalPhotoSlothBear", collections: ["all-animals", "india-wildlife"],
             description: "A shaggy dark animal walking with its nose close to the ground.", hint: "Look at its long dark fur and pale muzzle.",
             attribution: AnimalPhotoAttribution(
-                author: "Mike Prince", creditLine: "Mike Prince",
+                author: "Mike Prince", creditLine: "© Mike Prince",
                 licenseName: "CC BY 2.0 Generic", licenseURL: "https://creativecommons.org/licenses/by/2.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:Sloth_bear_(Melursus_ursinus)_is_a_terrestrial_mammal_in_Pilibhit_tiger_reserve.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/d/d6/Sloth_bear_(Melursus_ursinus)_is_a_terrestrial_mammal_in_Pilibhit_tiger_reserve.jpg",
@@ -285,7 +285,7 @@ enum AnimalExplorerCatalog {
             group: "Bird", asset: "AnimalPhotoGreatHornbill", collections: ["all-animals", "india-wildlife", "birds"],
             description: "A black and yellow bird with a large curved beak perched high in a tree.", hint: "Look at the raised yellow shape above its beak.",
             attribution: AnimalPhotoAttribution(
-                author: "Mike Prince", creditLine: "Mike Prince",
+                author: "Mike Prince", creditLine: "© Mike Prince",
                 licenseName: "CC BY 2.0 Generic", licenseURL: "https://creativecommons.org/licenses/by/2.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:Great_Hornbill_(50900986492).jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Great_Hornbill_(50900986492).jpg",
@@ -321,7 +321,7 @@ enum AnimalExplorerCatalog {
             group: "Bird", asset: "AnimalPhotoSpottedOwlet", collections: ["all-animals", "india-wildlife", "birds"],
             description: "A small spotted bird with round yellow eyes perched on a branch.", hint: "Look at its two round yellow eyes.",
             attribution: AnimalPhotoAttribution(
-                author: "Giles Laurent", creditLine: "Giles Laurent",
+                author: "Giles Laurent", creditLine: "© Giles Laurent, gileslaurent.com, License CC BY-SA",
                 licenseName: "CC BY-SA 4.0 International", licenseURL: "https://creativecommons.org/licenses/by-sa/4.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:044_Spotted_owlet_in_Keoladeo_National_Park_Photo_by_Giles_Laurent.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/0/0f/044_Spotted_owlet_in_Keoladeo_National_Park_Photo_by_Giles_Laurent.jpg",
@@ -411,7 +411,7 @@ enum AnimalExplorerCatalog {
             group: "Reptile", asset: "AnimalPhotoIndianChameleon", collections: ["all-animals", "india-wildlife", "reptiles"],
             description: "A green scaly animal on a branch with a curled tail.", hint: "Look at its tail curled into a spiral.",
             attribution: AnimalPhotoAttribution(
-                author: "arian.suresh (A.N. Suresh Kumar)", creditLine: "arian.suresh (A.N. Suresh Kumar)",
+                author: "arian.suresh (A.N. Suresh Kumar)", creditLine: "A.N.Suresh Kumar (arian.suresh@gmail.com), https://www.flickr.com/photos/ansk/",
                 licenseName: "CC BY 2.0 Generic", licenseURL: "https://creativecommons.org/licenses/by/2.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:An_Indian_chameleon_wildlife_in_Andhra_Pradesh_India_2016.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/c/c6/An_Indian_chameleon_wildlife_in_Andhra_Pradesh_India_2016.jpg",
@@ -573,7 +573,7 @@ enum AnimalExplorerCatalog {
             group: "Mammal", asset: "AnimalPhotoRhesusMacaque", collections: ["all-animals", "india-wildlife"],
             description: "A grey-brown animal with a pale face sitting on grass.", hint: "Look at its hands, feet and pale face.",
             attribution: AnimalPhotoAttribution(
-                author: "Yann Forget", creditLine: "Yann Forget",
+                author: "Yann Forget", creditLine: "© Yann Forget / Wikimedia Commons / CC-BY-SA",
                 licenseName: "CC BY-SA 4.0 International", licenseURL: "https://creativecommons.org/licenses/by-sa/4.0/",
                 sourceURL: "https://commons.wikimedia.org/wiki/File:Rhesus_Macaque,_Agra,_India.jpg",
                 originalURL: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Rhesus_Macaque%2C_Agra%2C_India.jpg",
