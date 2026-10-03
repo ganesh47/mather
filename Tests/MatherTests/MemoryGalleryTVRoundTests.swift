@@ -301,3 +301,66 @@ struct MemoryGalleryTVGameTests {
         #expect(game.correctCount == 0)
     }
 }
+
+@Suite("Memory Gallery session variety")
+struct MemoryGallerySessionVarietyTests {
+    @Test func seededSessionsHaveStableOrderAndValidChoices() {
+        var first = MemoryGalleryTVGame()
+        var second = MemoryGalleryTVGame()
+        first.start(category: .animals, seed: 42)
+        second.start(category: .animals, seed: 42)
+        #expect(first.sessionDeck == second.sessionDeck)
+        var prompted = Set<String>()
+        for _ in 0..<first.roundGoal {
+            guard let round = first.round else { Issue.record("Missing round"); return }
+            #expect(round == second.round)
+            #expect(round.answerChoices.count == 4)
+            #expect(Set(round.answerChoices.map(\.id)).count == 4)
+            #expect(round.answerChoices.contains { $0.id == round.correctAnswerID })
+            #expect(prompted.insert(round.correctAnswerID).inserted)
+            first.select(answerID: round.correctAnswerID)
+            second.select(answerID: round.correctAnswerID)
+            first.advance(); second.advance()
+        }
+    }
+
+    @Test func everyPlanetCanBecomeASessionPrompt() {
+        var seen = Set<String>()
+        for seed in 0..<40 {
+            var game = MemoryGalleryTVGame()
+            game.start(category: .planets, seed: UInt64(seed))
+            for _ in 0..<game.roundGoal {
+                guard let round = game.round else { return }
+                seen.insert(round.correctAnswerID)
+                game.select(answerID: round.correctAnswerID)
+                game.advance()
+            }
+        }
+        #expect(seen == Set(MemoryGalleryTVCategory.planets.deck.map(\.id)))
+    }
+}
+
+@Suite("Memory Adventure quiz length")
+struct MemoryAdventureQuizLengthTests {
+    @Test func rescueQuizCoversFiveUniquePromptsAndPreservesLimitOnReplay() {
+        let cards = MemoryAdventure.rescueCrew.cards
+        #expect(cards.count == 5)
+        var game = MemoryGalleryTVGame()
+        game.start(category: .vehicles, deck: cards, seed: 12, roundLimit: min(6, cards.count))
+        #expect(game.roundGoal == 5)
+        var prompts = Set<String>()
+        for _ in 0..<game.roundGoal {
+            guard let round = game.round else { Issue.record("Missing rescue round"); return }
+            #expect(prompts.insert(round.correctAnswerID).inserted)
+            game.select(answerID: round.correctAnswerID)
+            game.advance()
+        }
+        #expect(game.phase == .completed)
+        #expect(game.correctCount == 5)
+        #expect(prompts == Set(cards.map(\.id)))
+        game.replay()
+        #expect(game.roundGoal == 5)
+        #expect(game.progressText == "Picture 1 of 5")
+        #expect(game.phase == .playing)
+    }
+}

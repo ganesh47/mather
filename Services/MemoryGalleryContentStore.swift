@@ -131,8 +131,11 @@ final class MemoryGalleryContentStore {
     private func restore() {
         do {
             let cached = try readStoredPack(pointer: "active")
-            pack = cached.pack
-            activeDirectory = cached.directory
+            // A newer app bundle must not restore older artwork from a previous feed.
+            if cached.pack.contentVersion >= MemoryGalleryContentPack.bundled.contentVersion {
+                pack = cached.pack
+                activeDirectory = cached.directory
+            }
         } catch {
             // Missing, purged, or invalid cache always falls back to bundled content.
         }

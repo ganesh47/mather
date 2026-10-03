@@ -29,6 +29,7 @@ let names = Set(decks.flatMap(\.cards).compactMap(\.imageAssetName)
     + threads.flatMap(\.entities).flatMap(\.properties).compactMap(\.visualAssetName)).sorted()
 try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 var assets: [MemoryGalleryContentPack.Asset] = []
+var resizedNames = Set<String>()
 for name in names {
     // Code-shipped vector illustrations remain bundled. Publishers can later
     // override the same ID with a verified PNG without changing the app.
@@ -37,7 +38,7 @@ for name in names {
     let external = input.deletingLastPathComponent().appendingPathComponent("\(name).png")
     let source = FileManager.default.fileExists(atPath: external.path) ? external
         : repo.appendingPathComponent("App/Assets.xcassets/\(name).imageset/\(name).png")
-    let data = try Data(contentsOf: source)
+    var data = try Data(contentsOf: source)
     guard data.starts(with: [137, 80, 78, 71, 13, 10, 26, 10]),
           let image = CGImageSourceCreateWithData(data as CFData, nil),
           let properties = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [CFString: Any],
@@ -45,6 +46,25 @@ for name in names {
           let height = properties[kCGImagePropertyPixelHeight] as? Int,
           (1...4096).contains(width), (1...4096).contains(height),
           CGImageSourceCreateImageAtIndex(image, 0, nil) != nil else { fatalError("Invalid PNG: \(source.path)") }
+    // The reviewed full-resolution source stays in the app's asset catalog.
+    // Compact downloadable derivatives keep the complete catalog within the
+    // installed clients' existing 100 MB limit, without changing card content.
+    if max(width, height) > 1024 {
+        let options = [kCGImageSourceCreateThumbnailFromImageAlways: true,
+                       kCGImageSourceCreateThumbnailWithTransform: true,
+                       kCGImageSourceThumbnailMaxPixelSize: 1024] as CFDictionary
+        guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(image, 0, options) else {
+            fatalError("Cannot make downloadable derivative: \(name)")
+        }
+        let encoded = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(encoded, "public.png" as CFString, 1, nil) else {
+            fatalError("Cannot encode downloadable derivative: \(name)")
+        }
+        CGImageDestinationAddImage(destination, thumbnail, nil)
+        guard CGImageDestinationFinalize(destination) else { fatalError("PNG encoding failed: \(name)") }
+        data = encoded as Data
+        resizedNames.insert(name)
+    }
     try data.write(to: output.appendingPathComponent("\(name).png"), options: .atomic)
     assets.append(.init(id: name, file: "\(name).png", byteCount: data.count,
                         sha256: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()))
@@ -54,15 +74,24 @@ try pack.validate()
 let encoder = JSONEncoder()
 encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
 try encoder.encode(pack).write(to: output.appendingPathComponent("catalog.json"), options: .atomic)
-let suppliedCreditsURL = input.deletingLastPathComponent().appendingPathComponent("attribution.json")
-let suppliedCredits = FileManager.default.fileExists(atPath: suppliedCreditsURL.path)
-    ? try JSONDecoder().decode([MemoryImageAssetProvenance].self, from: Data(contentsOf: suppliedCreditsURL)) : []
-let suppliedNames = Set(suppliedCredits.map(\.assetName))
+// This command exports the refreshed bundle; its reviewed source provenance is
+// authoritative, rather than credits from a previous independently edited feed.
+let suppliedCredits: [MemoryImageAssetProvenance] = []
+let suppliedNames = Set<String>()
 let exportedNames = Set(assets.map(\.id))
 let credits = (suppliedCredits + MemoryDeck.imageAssetProvenance.filter { !suppliedNames.contains($0.assetName) })
     .filter { exportedNames.contains($0.assetName) }
 guard Set(credits.map(\.assetName)) == exportedNames else { fatalError("Missing image provenance: \(exportedNames.subtracting(credits.map(\.assetName)).sorted())") }
-try encoder.encode(credits).write(to: output.appendingPathComponent("attribution.json"), options: .atomic)
+var portableCredits = try JSONSerialization.jsonObject(with: encoder.encode(credits)) as! [[String: Any]]
+let assetHashes = Dictionary(uniqueKeysWithValues: assets.map { ($0.id, $0.sha256) })
+for index in portableCredits.indices {
+    guard let name = portableCredits[index]["assetName"] as? String, resizedNames.contains(name) else { continue }
+    portableCredits[index]["derivativeSha256"] = assetHashes[name]
+    let previous = portableCredits[index]["derivativeChanges"] as? String ?? ""
+    portableCredits[index]["derivativeChanges"] = previous + " Downloadable iOS PNG resized with ImageIO to at most 1024 pixels per dimension; full-resolution bundled source retained unchanged."
+}
+let creditData = try JSONSerialization.data(withJSONObject: portableCredits, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
+try creditData.write(to: output.appendingPathComponent("attribution.json"), options: .atomic)
 print("Exported version \(version): \(decks.reduce(0) { $0 + $1.cards.count }) cards and \(assets.count) images to \(output.path)")
 SWIFT
 source "$repo_root/scripts/ios_learning_sources.sh"

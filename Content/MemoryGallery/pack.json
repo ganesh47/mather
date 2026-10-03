@@ -1,6 +1,114 @@
 {
   "assets" : [
     {
+      "byteCount" : 1418928,
+      "file" : "CompareCampSheep.png",
+      "id" : "CompareCampSheep",
+      "sha256" : "2eb5f97ab00331a1325be4ca300b6a7232b0b7949f2cf83fd9115d6574031c75"
+    },
+    {
+      "byteCount" : 1280295,
+      "file" : "MemoryAnimalCamel.png",
+      "id" : "MemoryAnimalCamel",
+      "sha256" : "0779372146a0fa254de89ed383ba96a216aa6bd99acba7f7156f155ffcb1489f"
+    },
+    {
+      "byteCount" : 1501468,
+      "file" : "MemoryAnimalCat.png",
+      "id" : "MemoryAnimalCat",
+      "sha256" : "50d27b0d1ac50dcf58520316151e6f142f381a5272fc39e0a33ebc6329053284"
+    },
+    {
+      "byteCount" : 1433545,
+      "file" : "MemoryAnimalCow.png",
+      "id" : "MemoryAnimalCow",
+      "sha256" : "234495b4597689f4b17d36e719b969c94a20b5ba62471b68c2977b661115b12b"
+    },
+    {
+      "byteCount" : 1513457,
+      "file" : "MemoryAnimalDog.png",
+      "id" : "MemoryAnimalDog",
+      "sha256" : "5dbc1d590ccb0bf2ac5164611b8043c6922d98ffd9856313a9655a6923b6b3c4"
+    },
+    {
+      "byteCount" : 131069,
+      "file" : "MemoryAnimalDonkey.png",
+      "id" : "MemoryAnimalDonkey",
+      "sha256" : "a339fd2973ee1f8eb732212ef117ee3ee291043bdc5775fc058ff881fdc30629"
+    },
+    {
+      "byteCount" : 1132367,
+      "file" : "MemoryAnimalDuck.png",
+      "id" : "MemoryAnimalDuck",
+      "sha256" : "6ec95d57ac0af705d9984b4ae0f52d824432b174ca398d053de15b0e3864a4c4"
+    },
+    {
+      "byteCount" : 1631281,
+      "file" : "MemoryAnimalFrog.png",
+      "id" : "MemoryAnimalFrog",
+      "sha256" : "dd300a2d9b50afba6783da4ab5805ba67aaa8329aef706d0eaef07bd31193c9d"
+    },
+    {
+      "byteCount" : 1371464,
+      "file" : "MemoryAnimalGoat.png",
+      "id" : "MemoryAnimalGoat",
+      "sha256" : "9045fa037196e961a9650de3020bc6cd0633cf691bfc8d2a4e07f55adb79c823"
+    },
+    {
+      "byteCount" : 1401849,
+      "file" : "MemoryAnimalGoldfish.png",
+      "id" : "MemoryAnimalGoldfish",
+      "sha256" : "6569f92a7348fd3e78120df44f7421bcba02e424835f9d5d947e71ad71da5303"
+    },
+    {
+      "byteCount" : 1239161,
+      "file" : "MemoryAnimalHorse.png",
+      "id" : "MemoryAnimalHorse",
+      "sha256" : "395262823051df90711aa5045dbdd5e4f2c53b2130e9c69a1f52ff4df8ebc204"
+    },
+    {
+      "byteCount" : 1057553,
+      "file" : "MemoryAnimalLlama.png",
+      "id" : "MemoryAnimalLlama",
+      "sha256" : "9cb4e3c7c791a933881ac08c96f541af89cfd8af31d02e9f745a0cb1b5050e1e"
+    },
+    {
+      "byteCount" : 1307412,
+      "file" : "MemoryAnimalMouse.png",
+      "id" : "MemoryAnimalMouse",
+      "sha256" : "de07fe2add60fe9db92c7b125202b73ca733e27c13898b3f5a35f0efbfc9910a"
+    },
+    {
+      "byteCount" : 1553874,
+      "file" : "MemoryAnimalOx.png",
+      "id" : "MemoryAnimalOx",
+      "sha256" : "4202f6e19f7905a04d27af7167e13b6493fa8b2e8b3c7e1a707d1132824104a5"
+    },
+    {
+      "byteCount" : 1386470,
+      "file" : "MemoryAnimalPig.png",
+      "id" : "MemoryAnimalPig",
+      "sha256" : "c8ecfee28b29b8df6345df513fd7d86db9fa48e8408cc261ec0a93aa609054fa"
+    },
+    {
+      "byteCount" : 1021110,
+      "file" : "MemoryAnimalRabbit.png",
+      "id" : "MemoryAnimalRabbit",
+      "sha256" : "4130ff0a46764cb2d9c7604b146f9c6e962f12f1577e0a4e45656bef14fa0f73"
+    },
+    {
+      "byteCount" : 1439939,
+      "file" : "MemoryAnimalRooster.png",
+      "id" : "MemoryAnimalRooster",
+      "sha256" : "61c4a0ad38d80943ca80f146846092501fd5fc212fffde3cb7f93099b81b9da7"
+    },
+    {
+      "byteCount" : 1513401,
+      "file" : "MemoryAnimalTurkey.png",
+      "id" : "MemoryAnimalTurkey",
+      "sha256" : "f76a05a39c0d5cbd883be113443601459dbbf19a22ba5dd8f33b5ab54edd6650"
+    },
+    {
       "byteCount" : 13667,
       "file" : "MemoryCurrencyAustralia.png",
       "id" : "MemoryCurrencyAustralia",
@@ -493,7 +601,7 @@
       "sha256" : "b902cb50b6a1ced2477e866d3f1c9edd044949cae1c0c9368a3e711d86db0c49"
     }
   ],
-  "contentVersion" : 2,
+  "contentVersion" : 3,
   "decks" : [
     {
       "cards" : [
@@ -510,7 +618,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -521,23 +629,31 @@
                 "value" : "walks on four sturdy legs"
               },
               {
+                "title" : "Colors",
+                "value" : "black and white"
+              },
+              {
                 "title" : "Sound",
                 "value" : "gentle moo"
               },
               {
-                "title" : "Colors",
-                "value" : "black and white"
+                "title" : "Look closely",
+                "value" : "Find the cow’s broad nose and sturdy legs."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Say a gentle moo. Can you make a slow cow walk with your fingers?"
               }
             ],
             "habitat" : "farms and grassy fields",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks on four sturdy legs",
             "sound" : "gentle moo"
           },
           "name" : "Cow",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐄"
+            "kind" : "asset",
+            "value" : "MemoryAnimalCow"
           }
         },
         {
@@ -553,7 +669,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -564,23 +680,31 @@
                 "value" : "runs and plays quickly"
               },
               {
+                "title" : "Colors",
+                "value" : "many coat colors"
+              },
+              {
                 "title" : "Sound",
                 "value" : "happy bark"
               },
               {
-                "title" : "Colors",
-                "value" : "many coat colors"
+                "title" : "Look closely",
+                "value" : "Look at the dog’s ears, paws, and tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Give a happy pretend bark and wag an imaginary tail."
               }
             ],
             "habitat" : "homes, parks, and farms",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "runs and plays quickly",
             "sound" : "happy bark"
           },
           "name" : "Dog",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐕"
+            "kind" : "asset",
+            "value" : "MemoryAnimalDog"
           }
         },
         {
@@ -596,7 +720,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -607,23 +731,31 @@
                 "value" : "tiptoes and pounces"
               },
               {
+                "title" : "Colors",
+                "value" : "many fur colors"
+              },
+              {
                 "title" : "Sound",
                 "value" : "soft meow"
               },
               {
-                "title" : "Colors",
-                "value" : "many fur colors"
+                "title" : "Look closely",
+                "value" : "Find the cat’s whiskers and pointed ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Stretch like a cat, then tiptoe quietly in place."
               }
             ],
             "habitat" : "homes and gardens",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "tiptoes and pounces",
             "sound" : "soft meow"
           },
           "name" : "Cat",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐈"
+            "kind" : "asset",
+            "value" : "MemoryAnimalCat"
           }
         },
         {
@@ -639,7 +771,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -650,23 +782,31 @@
                 "value" : "walks together in flocks"
               },
               {
+                "title" : "Colors",
+                "value" : "white and cream"
+              },
+              {
                 "title" : "Sound",
                 "value" : "gentle baa"
               },
               {
-                "title" : "Colors",
-                "value" : "white and cream"
+                "title" : "Look closely",
+                "value" : "Look for the sheep’s fluffy fleece."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Pretend your arms are fluffy wool. Say a gentle baa."
               }
             ],
             "habitat" : "farms and open pastures",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks together in flocks",
             "sound" : "gentle baa"
           },
           "name" : "Sheep",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐑"
+            "kind" : "asset",
+            "value" : "CompareCampSheep"
           }
         },
         {
@@ -682,7 +822,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -693,23 +833,31 @@
                 "value" : "trots and roots around"
               },
               {
+                "title" : "Colors",
+                "value" : "pink, brown, or black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "snort and oink"
               },
               {
-                "title" : "Colors",
-                "value" : "pink, brown, or black"
+                "title" : "Look closely",
+                "value" : "Find the pig’s round snout and curly tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a funny oink, then draw a curly tail in the air."
               }
             ],
             "habitat" : "barnyards and farms",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "trots and roots around",
             "sound" : "snort and oink"
           },
           "name" : "Pig",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐖"
+            "kind" : "asset",
+            "value" : "MemoryAnimalPig"
           }
         },
         {
@@ -725,7 +873,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -736,23 +884,31 @@
                 "value" : "gallops fast"
               },
               {
+                "title" : "Colors",
+                "value" : "brown, black, white, or chestnut"
+              },
+              {
                 "title" : "Sound",
                 "value" : "neigh"
               },
               {
-                "title" : "Colors",
-                "value" : "brown, black, white, or chestnut"
+                "title" : "Look closely",
+                "value" : "Find the horse’s mane and long legs."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Tap your fingers like hooves: clip-clop, clip-clop!"
               }
             ],
             "habitat" : "stables, ranches, and fields",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "gallops fast",
             "sound" : "neigh"
           },
           "name" : "Horse",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐎"
+            "kind" : "asset",
+            "value" : "MemoryAnimalHorse"
           }
         },
         {
@@ -768,7 +924,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -779,23 +935,31 @@
                 "value" : "hops with long back legs"
               },
               {
+                "title" : "Colors",
+                "value" : "white, brown, gray"
+              },
+              {
                 "title" : "Sound",
                 "value" : "quiet squeaks"
               },
               {
-                "title" : "Colors",
-                "value" : "white, brown, gray"
+                "title" : "Look closely",
+                "value" : "Find the rabbit’s long ears and little tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make two rabbit ears with your fingers."
               }
             ],
             "habitat" : "gardens, meadows, and homes",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "hops with long back legs",
             "sound" : "quiet squeaks"
           },
           "name" : "Rabbit",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐇"
+            "kind" : "asset",
+            "value" : "MemoryAnimalRabbit"
           }
         },
         {
@@ -811,7 +975,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -822,23 +986,31 @@
                 "value" : "waddles, swims, and flies short distances"
               },
               {
+                "title" : "Colors",
+                "value" : "white, brown, or green"
+              },
+              {
                 "title" : "Sound",
                 "value" : "quack"
               },
               {
-                "title" : "Colors",
-                "value" : "white, brown, or green"
+                "title" : "Look closely",
+                "value" : "Look at the duck’s flat bill and webbed feet."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Waddle your fingers and make a quiet quack."
               }
             ],
             "habitat" : "ponds, lakes, and farms",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "waddles, swims, and flies short distances",
             "sound" : "quack"
           },
           "name" : "Duck",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🦆"
+            "kind" : "asset",
+            "value" : "MemoryAnimalDuck"
           }
         },
         {
@@ -854,7 +1026,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -865,23 +1037,31 @@
                 "value" : "struts and flaps"
               },
               {
+                "title" : "Colors",
+                "value" : "red, gold, green"
+              },
+              {
                 "title" : "Sound",
                 "value" : "cock-a-doodle-doo"
               },
               {
-                "title" : "Colors",
-                "value" : "red, gold, green"
+                "title" : "Look closely",
+                "value" : "Find the rooster’s red comb and curved tail feathers."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Stretch tall and greet the morning with a rooster call."
               }
             ],
             "habitat" : "farmyards",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "struts and flaps",
             "sound" : "cock-a-doodle-doo"
           },
           "name" : "Rooster",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐓"
+            "kind" : "asset",
+            "value" : "MemoryAnimalRooster"
           }
         },
         {
@@ -897,7 +1077,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -908,23 +1088,31 @@
                 "value" : "climbs and balances well"
               },
               {
+                "title" : "Colors",
+                "value" : "white, brown, black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "maa"
               },
               {
-                "title" : "Colors",
-                "value" : "white, brown, black"
+                "title" : "Look closely",
+                "value" : "Look for the goat’s horns and little beard."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Balance like a goat with both feet safely on the floor."
               }
             ],
             "habitat" : "farms and rocky hills",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "climbs and balances well",
             "sound" : "maa"
           },
           "name" : "Goat",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐐"
+            "kind" : "asset",
+            "value" : "MemoryAnimalGoat"
           }
         },
         {
@@ -940,7 +1128,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -951,23 +1139,31 @@
                 "value" : "walks with strong legs"
               },
               {
+                "title" : "Colors",
+                "value" : "brown, bronze, black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "gobble"
               },
               {
-                "title" : "Colors",
-                "value" : "brown, bronze, black"
+                "title" : "Look closely",
+                "value" : "Find the turkey’s fan-shaped tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Spread your fingers like a feather fan and gobble softly."
               }
             ],
             "habitat" : "farms and woodlands",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks with strong legs",
             "sound" : "gobble"
           },
           "name" : "Turkey",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🦃"
+            "kind" : "asset",
+            "value" : "MemoryAnimalTurkey"
           }
         },
         {
@@ -983,7 +1179,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -996,16 +1192,24 @@
               {
                 "title" : "Colors",
                 "value" : "orange and gold"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for the goldfish’s flowing fins and tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Wave one hand like a swishy fish tail."
               }
             ],
             "habitat" : "ponds and aquariums",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "swims with a swishy tail"
           },
           "name" : "Goldfish",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐟"
+            "kind" : "asset",
+            "value" : "MemoryAnimalGoldfish"
           }
         },
         {
@@ -1021,7 +1225,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1032,23 +1236,31 @@
                 "value" : "scurries fast"
               },
               {
+                "title" : "Colors",
+                "value" : "gray, brown, white"
+              },
+              {
                 "title" : "Sound",
                 "value" : "tiny squeak"
               },
               {
-                "title" : "Colors",
-                "value" : "gray, brown, white"
+                "title" : "Look closely",
+                "value" : "Find the mouse’s rounded ears and long tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Scurry two fingers across your palm."
               }
             ],
             "habitat" : "fields, barns, and homes",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "scurries fast",
             "sound" : "tiny squeak"
           },
           "name" : "Mouse",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐁"
+            "kind" : "asset",
+            "value" : "MemoryAnimalMouse"
           }
         },
         {
@@ -1064,7 +1276,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1075,23 +1287,31 @@
                 "value" : "jumps and swims"
               },
               {
+                "title" : "Colors",
+                "value" : "green and brown"
+              },
+              {
                 "title" : "Sound",
                 "value" : "ribbit"
               },
               {
-                "title" : "Colors",
-                "value" : "green and brown"
+                "title" : "Look closely",
+                "value" : "Look for the frog’s big back legs."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a tiny frog hop with your hand."
               }
             ],
             "habitat" : "ponds, streams, and wet grass",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "jumps and swims",
             "sound" : "ribbit"
           },
           "name" : "Frog",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐸"
+            "kind" : "asset",
+            "value" : "MemoryAnimalFrog"
           }
         },
         {
@@ -1107,7 +1327,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1118,23 +1338,31 @@
                 "value" : "walks far on long legs"
               },
               {
+                "title" : "Colors",
+                "value" : "sand and tan"
+              },
+              {
                 "title" : "Sound",
                 "value" : "grumbly groan"
               },
               {
-                "title" : "Colors",
-                "value" : "sand and tan"
+                "title" : "Look closely",
+                "value" : "Find the camel’s hump and long legs."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Walk your fingers slowly across a pretend desert."
               }
             ],
             "habitat" : "deserts and dry plains",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks far on long legs",
             "sound" : "grumbly groan"
           },
           "name" : "Camel",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐪"
+            "kind" : "asset",
+            "value" : "MemoryAnimalCamel"
           }
         },
         {
@@ -1150,7 +1378,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1161,23 +1389,31 @@
                 "value" : "walks sure-footedly"
               },
               {
+                "title" : "Colors",
+                "value" : "white, brown, black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "soft hum"
               },
               {
-                "title" : "Colors",
-                "value" : "white, brown, black"
+                "title" : "Look closely",
+                "value" : "Find the llama’s long neck and tall ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Stretch your neck tall and make a soft humming sound."
               }
             ],
             "habitat" : "mountain farms and grasslands",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks sure-footedly",
             "sound" : "soft hum"
           },
           "name" : "Llama",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🦙"
+            "kind" : "asset",
+            "value" : "MemoryAnimalLlama"
           }
         },
         {
@@ -1193,7 +1429,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1204,23 +1440,31 @@
                 "value" : "walks steadily and carries loads"
               },
               {
+                "title" : "Colors",
+                "value" : "gray or brown"
+              },
+              {
                 "title" : "Sound",
                 "value" : "hee-haw"
               },
               {
-                "title" : "Colors",
-                "value" : "gray or brown"
+                "title" : "Look closely",
+                "value" : "Look at the donkey’s long ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make donkey ears with your hands and say hee-haw."
               }
             ],
             "habitat" : "farms and dry grasslands",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "walks steadily and carries loads",
             "sound" : "hee-haw"
           },
           "name" : "Donkey",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🫏"
+            "kind" : "asset",
+            "value" : "MemoryAnimalDonkey"
           }
         },
         {
@@ -1236,7 +1480,7 @@
             "factCards" : [
               {
                 "title" : "Kind",
-                "value" : "domestic animal"
+                "value" : "animal"
               },
               {
                 "title" : "Home",
@@ -1247,23 +1491,31 @@
                 "value" : "pulls and plods with strength"
               },
               {
+                "title" : "Colors",
+                "value" : "brown, black, white"
+              },
+              {
                 "title" : "Sound",
                 "value" : "deep moo"
               },
               {
-                "title" : "Colors",
-                "value" : "brown, black, white"
+                "title" : "Look closely",
+                "value" : "Find the ox’s horns and strong shoulders."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Pretend to pull a tiny cart with your fingers."
               }
             ],
             "habitat" : "farms and fields",
-            "kind" : "domestic animal",
+            "kind" : "animal",
             "movement" : "pulls and plods with strength",
             "sound" : "deep moo"
           },
           "name" : "Ox",
           "picture" : {
-            "kind" : "emoji",
-            "value" : "🐂"
+            "kind" : "asset",
+            "value" : "MemoryAnimalOx"
           }
         }
       ],
@@ -1295,12 +1547,20 @@
                 "value" : "rolls on four wheels"
               },
               {
+                "title" : "Colors",
+                "value" : "many bright paint colors"
+              },
+              {
                 "title" : "Sound",
                 "value" : "vroom"
               },
               {
-                "title" : "Colors",
-                "value" : "many bright paint colors"
+                "title" : "Look closely",
+                "value" : "Find the many bright paint colors colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend car journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1338,12 +1598,20 @@
                 "value" : "drives on roads with many seats"
               },
               {
+                "title" : "Colors",
+                "value" : "yellow, red, blue, green"
+              },
+              {
                 "title" : "Sound",
                 "value" : "rumbling engine"
               },
               {
-                "title" : "Colors",
-                "value" : "yellow, red, blue, green"
+                "title" : "Look closely",
+                "value" : "Find the yellow, red, blue, green colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend bus journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1381,12 +1649,20 @@
                 "value" : "rolls on rails"
               },
               {
+                "title" : "Colors",
+                "value" : "black, silver, red, blue"
+              },
+              {
                 "title" : "Sound",
                 "value" : "choo-choo"
               },
               {
-                "title" : "Colors",
-                "value" : "black, silver, red, blue"
+                "title" : "Look closely",
+                "value" : "Find the black, silver, red, blue colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend train journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1424,12 +1700,20 @@
                 "value" : "zooms with wings"
               },
               {
+                "title" : "Colors",
+                "value" : "white, blue, silver"
+              },
+              {
                 "title" : "Sound",
                 "value" : "whooshing jet sound"
               },
               {
-                "title" : "Colors",
-                "value" : "white, blue, silver"
+                "title" : "Look closely",
+                "value" : "Find the white, blue, silver colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend plane journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1467,12 +1751,20 @@
                 "value" : "floats and glides"
               },
               {
+                "title" : "Colors",
+                "value" : "white, blue, red"
+              },
+              {
                 "title" : "Sound",
                 "value" : "splashing water"
               },
               {
-                "title" : "Colors",
-                "value" : "white, blue, red"
+                "title" : "Look closely",
+                "value" : "Find the white, blue, red colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend boat journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1510,12 +1802,20 @@
                 "value" : "rolls on two wheels"
               },
               {
+                "title" : "Colors",
+                "value" : "red, blue, green, black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "spinning wheels"
               },
               {
-                "title" : "Colors",
-                "value" : "red, blue, green, black"
+                "title" : "Look closely",
+                "value" : "Find the red, blue, green, black colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend bike journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1553,12 +1853,20 @@
                 "value" : "drives with a strong engine"
               },
               {
+                "title" : "Colors",
+                "value" : "white, blue, red"
+              },
+              {
                 "title" : "Sound",
                 "value" : "deep engine rumble"
               },
               {
-                "title" : "Colors",
-                "value" : "white, blue, red"
+                "title" : "Look closely",
+                "value" : "Find the white, blue, red colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend truck journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1596,12 +1904,20 @@
                 "value" : "rumbles over dirt with big tires"
               },
               {
+                "title" : "Colors",
+                "value" : "green, red, yellow"
+              },
+              {
                 "title" : "Sound",
                 "value" : "put-put engine"
               },
               {
-                "title" : "Colors",
-                "value" : "green, red, yellow"
+                "title" : "Look closely",
+                "value" : "Find the green, red, yellow colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend tractor journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1639,12 +1955,20 @@
                 "value" : "lifts with spinning blades"
               },
               {
+                "title" : "Colors",
+                "value" : "red, blue, white"
+              },
+              {
                 "title" : "Sound",
                 "value" : "whup-whup"
               },
               {
-                "title" : "Colors",
-                "value" : "red, blue, white"
+                "title" : "Look closely",
+                "value" : "Find the red, blue, white colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend copter journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1682,12 +2006,20 @@
                 "value" : "launches straight up fast"
               },
               {
+                "title" : "Colors",
+                "value" : "silver, white, red"
+              },
+              {
                 "title" : "Sound",
                 "value" : "roaring blast"
               },
               {
-                "title" : "Colors",
-                "value" : "silver, white, red"
+                "title" : "Look closely",
+                "value" : "Find the silver, white, red colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend rocket journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1725,12 +2057,20 @@
                 "value" : "rolls on two small wheels"
               },
               {
+                "title" : "Colors",
+                "value" : "red, teal, yellow"
+              },
+              {
                 "title" : "Sound",
                 "value" : "buzzy motor"
               },
               {
-                "title" : "Colors",
-                "value" : "red, teal, yellow"
+                "title" : "Look closely",
+                "value" : "Find the red, teal, yellow colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend scooter journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -1768,12 +2108,20 @@
                 "value" : "drives on busy roads"
               },
               {
+                "title" : "Colors",
+                "value" : "yellow and black"
+              },
+              {
                 "title" : "Sound",
                 "value" : "honk honk"
               },
               {
-                "title" : "Colors",
-                "value" : "yellow and black"
+                "title" : "Look closely",
+                "value" : "Find the yellow and black colors and the parts that help it move."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a pretend taxi journey with your hands. Where will you go?"
               }
             ],
             "kind" : "vehicle",
@@ -2072,6 +2420,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "The load must stay within the crane's lifting limit"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the telescoping boom and outriggers. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "crane",
@@ -2117,6 +2473,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "A clear swing area keeps people away from the moving boom"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the lattice boom and wide crawler tracks. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "crane",
@@ -2162,6 +2526,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "The bucket stays low while travelling for better balance"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the large front bucket. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "loader",
@@ -2207,6 +2579,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "The safety bar helps protect the operator"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the lift arms with changeable attachments. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "loader",
@@ -2252,6 +2632,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Only one digging end works at a time"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the front bucket and rear backhoe. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "loader",
@@ -2297,6 +2685,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "It unloads only on firm, level ground"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the tilting cargo bed. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "truck",
@@ -2342,6 +2738,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Workers keep clear of the turning drum and chute"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the rotating mixing drum. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "truck",
@@ -2387,6 +2791,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Flashing lights warn others when the truck stops often"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the lifting hopper and compactor. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "truck",
@@ -2432,6 +2844,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Warning lights help drivers see the stopped tow truck"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the wheel lift or flatbed. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "truck",
@@ -2477,6 +2897,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Smaller vehicles stay where the driver can see them"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the giant tires and reinforced dump body. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "mining vehicle",
@@ -2522,6 +2950,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "People stay outside its wide swing area"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the boom, stick, bucket, and rotating cab. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "earthmover",
@@ -2567,6 +3003,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "The driver checks the ground before working near an edge"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the wide front blade and crawler tracks. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "earthmover",
@@ -2612,6 +3056,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Sirens and flashing lights ask traffic to make a safe path"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the water pump and hose connections. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "emergency vehicle",
@@ -2657,6 +3109,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Seat belts hold everyone safely during the ride"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the stretcher and medical equipment. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "emergency vehicle",
@@ -2702,6 +3162,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Drivers slow down and make space when it approaches"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the radio, lights, and siren. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "emergency vehicle",
@@ -2747,6 +3215,14 @@
               {
                 "title" : "Safety Fact",
                 "value" : "Loose objects must stay far from the powerful rotor wind"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the main rotor and rescue winch. It helps this machine do its job."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Use your hands to show how this machine moves. Stay in your play space."
               }
             ],
             "kind" : "emergency aircraft",
@@ -2794,6 +3270,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "A year lasts 88 days"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for gray on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -2837,6 +3321,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It spins very slowly"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for creamy white and pale tan on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -2880,6 +3372,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It has one moon"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for blue, green, white on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -2923,6 +3423,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It has two small moons"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for rusty red on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -2966,6 +3474,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It is the biggest planet"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for brown, cream, orange on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -3009,6 +3525,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It is famous for bright rings"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for gold and tan on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -3052,6 +3576,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It rotates on its side"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for icy blue on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",
@@ -3095,6 +3627,14 @@
               {
                 "title" : "Fun Fact",
                 "value" : "It has very fast winds"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for deep blue on this planet picture."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Draw a big loop in the air, like a planet going around the Sun."
               }
             ],
             "habitat" : "our solar system",

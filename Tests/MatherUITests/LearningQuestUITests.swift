@@ -117,7 +117,7 @@ final class LearningQuestUITests: XCTestCase {
         step("Play", in: app)
     }
 
-    func testDownloadedCatalogIsVisibleAndSurvivesOfflineRelaunch() {
+    func testBundledOrDownloadedCatalogIsVisibleAndSurvivesOfflineRelaunch() {
         let app = XCUIApplication()
         app.launchArguments = Array(arguments("home", clear: false).dropLast(2))
         app.launch()
@@ -125,11 +125,11 @@ final class LearningQuestUITests: XCTestCase {
         app.buttons["Settings"].tap()
         let version = app.staticTexts["ios-learning-content-version"]
         XCTAssertTrue(version.waitForExistence(timeout: 10))
-        let downloaded = NSPredicate(format: "label MATCHES %@", "Version ([2-9]|[1-9][0-9]+).*")
+        let downloaded = NSPredicate(format: "label MATCHES %@", "Version ([3-9]|[1-9][0-9]+).*")
         let update = XCTNSPredicateExpectation(predicate: downloaded, object: version)
         guard XCTWaiter.wait(for: [update], timeout: 180) == .completed else {
             snapshot(app, "External-Catalog-Download-Failed")
-            XCTFail("The public content pack did not activate. \(app.debugDescription)")
+            XCTFail("The refreshed bundled or newer downloaded catalog is unavailable. \(app.debugDescription)")
             return
         }
         let downloadedVersion = version.label

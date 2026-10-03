@@ -313,12 +313,20 @@ final class CompactLayoutTests: XCTestCase {
     }
 
     func testMemoryCompactHeaderKeepsControlsReachableWithoutCrowding() {
-        let app = launch(startRoute: "memory")
-        _ = app.staticTexts["Memory Match"].waitForExistence(timeout: 10)
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-feature.audioEnabled", "NO", "-feature.hapticsEnabled", "NO",
+            "-feature.testModeEnabled", "YES", "-feature.skipProfilePicker", "YES",
+            "-uiTest.startRoute", "memory"
+        ]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Memory Match"].waitForExistence(timeout: 10))
 
         let deckMenu = app.buttons["memory-deck-menu"]
         let difficultyMenu = app.buttons["memory-difficulty-menu"]
         XCTAssertTrue(deckMenu.waitForExistence(timeout: 5))
+        app.buttons["memory-play-options"].tap()
         XCTAssertTrue(difficultyMenu.waitForExistence(timeout: 5))
         XCTAssertTrue(deckMenu.isHittable, "Expected Memory deck control to remain reachable on compact layouts")
         XCTAssertTrue(difficultyMenu.isHittable, "Expected Memory difficulty control to remain reachable on compact layouts")

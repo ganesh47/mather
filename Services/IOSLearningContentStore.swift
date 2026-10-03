@@ -141,8 +141,13 @@ final class IOSLearningContentStore {
     private func restore() {
         do {
             let cached = try readStoredPack(pointer: "active")
-            pack = cached.pack
-            activeDirectory = cached.directory
+            // Refreshed bundled cards take precedence over a previous release's
+            // valid but older downloaded catalog. Keep its files for frozen
+            // activity snapshots that still reference that artwork.
+            if cached.pack.contentVersion >= IOSLearningCatalog.bundled.contentVersion {
+                pack = cached.pack
+                activeDirectory = cached.directory
+            }
         } catch {
             // Missing, purged, or invalid cache always falls back to bundled content.
         }

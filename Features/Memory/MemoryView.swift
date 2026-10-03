@@ -8,7 +8,15 @@ struct MemoryCard: Identifiable {
         case label(MemoryAnimal)
     }
 
-    let id = UUID()
+    let id: UUID
+
+    init(id: UUID = UUID(), pairId: String, content: Content, isMatched: Bool = false, isSelected: Bool = false) {
+        self.id = id
+        self.pairId = pairId
+        self.content = content
+        self.isMatched = isMatched
+        self.isSelected = isSelected
+    }
     let pairId: String
     let content: Content
     var isMatched: Bool = false
@@ -111,19 +119,21 @@ enum MemoryDifficulty: CaseIterable {
 
 struct MemoryView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var appModel: AppModel
     var contentCatalog: IOSLearningCatalog = .bundled
 
     @State private var deck: [MemoryAnimal] = MemoryDeck.domesticAnimals
     @State private var difficulty: MemoryDifficulty = .easy
-    @State private var cards: [MemoryCard] = []
-    @State private var firstSelected: MemoryCard? = nil
-    @State private var matchedPairs: Int = 0
+    @State private var pairing = MemoryPairingEngine()
+    @State private var pairingMode: MemoryPairingEngine.Mode = .pictures
+    @State private var adventure: MemoryAdventure?
+    @State private var showDeckChooser = false
+    @State private var optionsExpanded = false
+    @State private var exploreCardID: UUID?
     @State private var roundsPlayed: Int = 0
     @State private var sessionStart: Date = .now
-    @State private var mismatchIds: Set<UUID> = []
-    @State private var isProcessingMismatch = false
     @State private var showRoundComplete = false
     @State private var deckSelection: DeckSelection = .domestic
     @State private var directEntryKind: MemoryDeckKind? = nil
@@ -133,8 +143,6 @@ struct MemoryView: View {
     @State private var latestAskResponse: MemoryAskResponse? = nil
     @State private var descriptionTask: Task<Void, Never>? = nil
     @State private var countryClueKind: CountryMemoryClueKind = .flag
-    @State private var boardFeedbackTask: Task<Void, Never>?
-    @State private var boardToken = UUID()
     @State private var evidenceSessionID = UUID().uuidString
     @State private var evidenceProfileID: String
     @State private var attempts: [ItemAttempt] = []
@@ -236,7 +244,33 @@ struct MemoryView: View {
         }
     }
 
-    private var totalPairs: Int { difficulty.pairCount }
+    private var cards: [MemoryCard] {
+        pairing.cards.map { card in
+            MemoryCard(id: card.id, pairId: card.pairID,
+                       content: card.isLabel ? .label(card.animal) : .picture(card.animal),
+                       isMatched: card.isMatched, isSelected: card.isSelected)
+        }
+    }
+    private var matchedPairs: Int { pairing.matchedPairs }
+    private var totalPairs: Int { pairing.totalPairs }
+    private var targetPairCount: Int { min(difficulty.pairCount, deck.count) }
+    private var supportsPicturePairs: Bool {
+        ![DeckSelection.countries, .countryFlags, .indiaStates, .numberBondsTo10].contains(deckSelection)
+    }
+    private var roundPrompt: String {
+        let instruction: String
+        switch deckSelection {
+        case .countryFlags: instruction = countryClueKind.prompt
+        case .countries, .indiaStates: instruction = "Match each place to its capital."
+        case .numberBondsTo10: instruction = "Match each sum to its answer."
+        default:
+            instruction = pairingMode == .pictures
+                ? "Find two pictures that are the same." : "Match each picture to its name."
+        }
+        let visibility = difficulty.faceDown ? "Select a card to turn it over." : "The pictures are ready to explore."
+        let introduction = adventure?.introduction ?? "\(deckSelection.menuLabel)."
+        return "\(introduction) \(instruction) \(visibility)"
+    }
     private var isDirectStagedEntry: Bool { directEntryKind != nil }
 
     var body: some View {
@@ -264,14 +298,37 @@ struct MemoryView: View {
         }) { content in
             learningSheet(for: content)
         }
+        .sheet(isPresented: $showDeckChooser) {
+            MemoryDeckChooserView(selectedAdventure: adventure, selectedDeck: deckSelection) { selectedAdventure, selectedDeck in
+                optionsExpanded = false
+                adventure = selectedAdventure
+                deckSelection = selectedDeck
+                let catalogCards = contentCatalog.cards(for: selectedDeck.kind)
+                deck = selectedAdventure?.cards(from: catalogCards) ?? catalogCards
+                recentPairHistory = []
+                directEntryKind = nil
+                showDeckChooser = false
+                dealRound()
+            }
+        }
+        .onChange(of: pairing.matchedPairs) { oldValue, newValue in
+            guard newValue > oldValue else { return }
+            appModel.hapticsService.stageSuccess(enabled: appModel.featureFlags.hapticsEnabled)
+            if pairing.isComplete {
+                roundsPlayed += 1
+                if reduceMotion { showRoundComplete = true }
+                else { withAnimation { showRoundComplete = true } }
+                speak(adventure?.celebration ?? ["Wonderful exploring! All the pairs are together.", "You found every pair!", "What a brilliant adventure!"][roundsPlayed % 3])
+            }
+        }
         .onAppear {
             sessionStart = .now
             dealRound()
         }
         .onDisappear {
+            pairing.cancelPendingFeedback()
+            appModel.speechService.stop()
             descriptionTask?.cancel()
-            boardFeedbackTask?.cancel()
-            boardToken = UUID()
             if !attempts.isEmpty {
                 appModel.gameplayProgressStore.saveActivityResult(ActivityResult(id: evidenceSessionID, activityID: LabActivityID.memoryMatch.rawValue, title: "Memory Match", startedAt: sessionStart, attempts: attempts, completedStageIDs: roundsPlayed > 0 ? ["match"] : [], profileID: evidenceProfileID, contentVersion: contentCatalog.contentVersion))
             }
@@ -301,10 +358,13 @@ struct MemoryView: View {
             }
 
             CardSurface {
-                if isDirectStagedEntry {
-                    directStagedEntryStatus
-                } else {
-                    deckAndDifficultyChooser
+                VStack(alignment: .leading, spacing: 14) {
+                    if isDirectStagedEntry {
+                        directStagedEntryStatus
+                    } else {
+                        deckAndDifficultyChooser
+                    }
+                    roundControls
                 }
             }
         }
@@ -346,49 +406,121 @@ struct MemoryView: View {
 
     private var deckAndDifficultyChooser: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Choose a deck and level")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-
-            VStack(spacing: 10) {
-                Menu {
-                    ForEach(DeckSelection.allCases, id: \.label) { selectedDeck in
-                        Button(selectedDeck.label) {
-                            deckSelection = selectedDeck
-                            deck = contentCatalog.cards(for: selectedDeck.kind)
-                            recentPairHistory = []
-                            dealRound()
-                        }
-                    }
-                } label: {
-                    controlLabel(title: "Deck", value: deckSelection.menuLabel, tint: MatherTheme.accent)
+            if horizontalSizeClass == .regular {
+                HStack(spacing: 14) {
+                    deckSelector
+                    playOptionsButton.frame(width: 200)
                 }
-                .accessibilityIdentifier("memory-deck-menu")
-
-                Menu {
-                    ForEach(MemoryDifficulty.allCases, id: \.label) { selectedDifficulty in
-                        Button(selectedDifficulty.label) {
-                            difficulty = selectedDifficulty
-                            dealRound()
-                        }
-                    }
-                } label: {
-                    controlLabel(title: "Difficulty", value: difficulty.menuLabel, tint: MatherTheme.warm)
-                }
-                .accessibilityIdentifier("memory-difficulty-menu")
+            } else {
+                deckSelector
+                playOptionsButton
             }
-
-            Text(Self.deckSummaryText(for: deckSelection))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MatherTheme.cardSubtitle)
-                .accessibilityIdentifier("memory-deck-card-count")
-
+            if optionsExpanded { expandedPlayOptions }
             if deckSelection == .countryFlags {
                 Label(countryClueKind.prompt, systemImage: countryClueKind.symbolName)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(MatherTheme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("memory-country-clue-prompt")
+            }
+        }
+    }
+
+    private var expandedPlayOptions: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Menu {
+                ForEach(MemoryDifficulty.allCases, id: \.label) { selectedDifficulty in
+                    Button(selectedDifficulty.label) {
+                        difficulty = selectedDifficulty
+                        optionsExpanded = false
+                        dealRound()
+                    }
+                }
+            } label: {
+                controlLabel(title: "Difficulty", value: difficulty.menuLabel, tint: MatherTheme.warm)
+            }
+            .accessibilityIdentifier("memory-difficulty-menu")
+
+            if supportsPicturePairs {
+                HStack(spacing: 12) {
+                    ForEach(MemoryPairingEngine.Mode.allCases) { mode in
+                        Button {
+                            pairingMode = mode
+                            optionsExpanded = false
+                            dealRound()
+                        } label: {
+                            Label(mode == .pictures ? "Picture pairs" : "Pictures & names", systemImage: mode == .pictures ? "photo.on.rectangle" : "textformat.abc")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                                .background(pairingMode == mode ? MatherTheme.accent.opacity(0.22) : MatherTheme.background, in: RoundedRectangle(cornerRadius: 18))
+                        }
+                        .accessibilityIdentifier("memory-mode-\(mode.rawValue)")
+                    }
+                }
+            }
+            Text("\(deck.count) cards to explore")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MatherTheme.cardSubtitle)
+                .accessibilityIdentifier("memory-deck-card-count")
+        }
+    }
+
+    private var deckSelector: some View {
+        Button { showDeckChooser = true } label: {
+            HStack(spacing: 12) {
+                if let adventure {
+                    Image(adventure.sceneAssetName).resizable().scaledToFit()
+                        .frame(width: 76, height: 64).accessibilityHidden(true)
+                } else if let first = deck.first {
+                    pictureView(for: first, emojiSize: 48)
+                        .frame(width: 76, height: 64).accessibilityHidden(true)
+                }
+                controlLabel(title: "Explore", value: adventure?.title ?? deckSelection.menuLabel, tint: MatherTheme.accent)
+            }
+            .frame(minHeight: 80)
+        }
+        .accessibilityIdentifier("memory-deck-menu")
+    }
+
+    private var playOptionsButton: some View {
+        Button { optionsExpanded.toggle() } label: {
+            Label("Play options", systemImage: optionsExpanded ? "chevron.up" : "slider.horizontal.3")
+                .font(.headline.bold())
+                .frame(maxWidth: .infinity, minHeight: 80)
+                .background(MatherTheme.background, in: RoundedRectangle(cornerRadius: 18))
+        }
+        .accessibilityValue(optionsExpanded ? "Expanded" : "Collapsed")
+        .accessibilityIdentifier("memory-play-options")
+    }
+
+    private var roundControls: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Button {
+                    guard appModel.profileStore.activeProfileId == evidenceProfileID else { return }
+                    pairing.hint()
+                    for card in pairing.cards where pairing.hintIDs.contains(card.id) && !card.isLabel {
+                        supportedAnimalIDs.insert(card.animal.id)
+                        recordMemoryAttempt(for: card.animal, outcome: .help, response: "hint")
+                    }
+                    speak("Look for the two glowing cards.")
+                } label: {
+                    Label("Hint", systemImage: "sparkles").frame(maxWidth: .infinity, minHeight: 80)
+                }
+                .disabled(pairing.isProcessing || pairing.isComplete)
+                .accessibilityIdentifier("memory-hint")
+                Button { speak(roundPrompt) } label: {
+                    Label("Listen", systemImage: "speaker.wave.2.fill").frame(maxWidth: .infinity, minHeight: 80)
+                }
+                .accessibilityIdentifier("memory-repeat")
+            }
+            if let card = cards.first(where: { $0.id == exploreCardID }),
+               Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) {
+                Button { handleDoubleTap(card) } label: {
+                    Label("Explore \(Self.accessibilityLabel(for: card))", systemImage: "magnifyingglass")
+                        .frame(maxWidth: .infinity, minHeight: 80)
+                }
+                .accessibilityIdentifier("memory-explore")
             }
         }
     }
@@ -430,22 +562,26 @@ struct MemoryView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
         .background(MatherTheme.background.opacity(colorScheme == .dark ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var cardGrid: some View {
-        let columns = [GridItem(.adaptive(minimum: ResponsiveLayout.memoryCardMinimumWidth(for: difficulty)), spacing: 14)]
+        let minimumWidth = horizontalSizeClass == .regular
+            ? (difficulty == .easy ? CGFloat(220) : CGFloat(160))
+            : ResponsiveLayout.memoryCardMinimumWidth(for: difficulty)
+        let columns = [GridItem(.adaptive(minimum: minimumWidth), spacing: 14)]
         return LazyVGrid(columns: columns, spacing: 14) {
             ForEach(cards) { card in
+                let displayedCard = Self.displayedCard(card, hinted: pairing.hintIDs.contains(card.id))
                 let canLearn = Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete)
                 VStack(spacing: 8) {
                     cardView(card)
                     .aspectRatio(ResponsiveLayout.memoryCardAspectRatio(for: difficulty), contentMode: .fit)
                     .accessibilityIdentifier(Self.accessibilityIdentifier(for: card))
-                    .accessibilityLabel(Self.accessibilityLabel(for: card, difficulty: difficulty))
-                    .accessibilityHint(Self.accessibilityHint(for: card, difficulty: difficulty))
+                    .accessibilityLabel(Self.accessibilityLabel(for: displayedCard, difficulty: difficulty))
+                    .accessibilityHint(Self.accessibilityHint(for: displayedCard, difficulty: difficulty))
                     .onTapGesture(count: 2) { handleDoubleTap(card) }
                     .onTapGesture { handleTap(card) }
                     .modifier(MemoryLearnMoreAccessibilityModifier(
@@ -470,7 +606,18 @@ struct MemoryView: View {
 
     @ViewBuilder
     private func cardView(_ card: MemoryCard) -> some View {
-        LearningCardView(model: Self.learningCardModel(for: card, difficulty: difficulty, isIncorrect: mismatchIds.contains(card.id)))
+        let hinted = pairing.hintIDs.contains(card.id)
+        let displayedCard = Self.displayedCard(card, hinted: hinted)
+        LearningCardView(model: Self.learningCardModel(for: displayedCard, difficulty: difficulty, isIncorrect: pairing.mismatchIDs.contains(card.id)))
+            .overlay {
+                if hinted { RoundedRectangle(cornerRadius: 20).stroke(MatherTheme.warm, lineWidth: 5).accessibilityHidden(true) }
+            }
+            .transaction { transaction in
+                if reduceMotion {
+                    transaction.animation = nil
+                    transaction.disablesAnimations = true
+                }
+            }
     }
 
     @ViewBuilder
@@ -678,20 +825,31 @@ struct MemoryView: View {
             Spacer()
 
             VStack(spacing: 14) {
+                if let adventure {
+                    Image(adventure.sceneAssetName).resizable().scaledToFit().frame(height: 130).accessibilityHidden(true)
+                }
                 Text("🎉 All matched!")
                     .font(.title2.weight(.black))
                     .foregroundStyle(MatherTheme.ink)
 
-                Text(Self.roundCompleteMessage(for: deckSelection, roundsPlayed: roundsPlayed))
+                Text(adventure?.celebration ?? Self.roundCompleteMessage(for: deckSelection, roundsPlayed: roundsPlayed))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MatherTheme.cardSubtitle)
                     .multilineTextAlignment(.center)
 
-                Button("Next Round") {
+                if let adventure {
+                    Button { speak(adventure.tryIt) } label: {
+                        Label("Try it!", systemImage: "figure.play").frame(maxWidth: .infinity, minHeight: 80)
+                    }
+                    .accessibilityIdentifier("memory-adventure-try-it")
+                }
+                Button {
                     nextRound()
+                } label: {
+                    Text("Next Round").frame(minHeight: 80)
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
-                .frame(maxWidth: 240)
+                .frame(maxWidth: 240, minHeight: 80)
             }
             .padding(24)
             .frame(maxWidth: .infinity)
@@ -699,18 +857,20 @@ struct MemoryView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
     }
 
     static func preferredRoundAnimals(from deck: [MemoryAnimal], pairCount: Int, recentPairHistory: [String]) -> [MemoryAnimal] {
+        guard pairCount > 0 else { return [] }
         let recentSet = Set(recentPairHistory)
-        let freshPool = deck.filter { !recentSet.contains($0.id) }
-        let primaryPool = freshPool.count >= pairCount ? freshPool : deck
-
-        var chosen = Array(primaryPool.shuffled().prefix(pairCount))
-        if chosen.count < pairCount {
-            let chosenIds = Set(chosen.map(\.id))
-            chosen.append(contentsOf: deck.filter { !chosenIds.contains($0.id) }.shuffled().prefix(pairCount - chosen.count))
+        let ordered = deck.filter { !recentSet.contains($0.id) }.shuffled()
+            + deck.filter { recentSet.contains($0.id) }.shuffled()
+        var seenNames: Set<String> = []
+        var chosen: [MemoryAnimal] = []
+        for animal in ordered {
+            guard seenNames.insert(animal.canonicalName.lowercased()).inserted else { continue }
+            chosen.append(animal)
+            if chosen.count == pairCount { break }
         }
         return chosen
     }
@@ -801,6 +961,7 @@ struct MemoryView: View {
     }
 
     private func handleDoubleTap(_ card: MemoryCard) {
+        guard appModel.profileStore.activeProfileId == evidenceProfileID else { return }
         guard Self.canOpenLearningDetails(for: card, deckSelection: deckSelection, difficulty: difficulty, showRoundComplete: showRoundComplete) else { return }
         let cardAnimal = animal(for: card)
         let selectedAnimal = Self.originalCountryAnimal(for: cardAnimal)
@@ -869,7 +1030,7 @@ struct MemoryView: View {
                     } label: {
                         Label("Read Aloud", systemImage: "speaker.wave.2.fill")
                             .font(.headline.weight(.bold))
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, minHeight: 80)
                     }
                     .buttonStyle(PrimaryActionButtonStyle())
                     .accessibilityIdentifier("memory-learning-read-aloud")
@@ -969,16 +1130,18 @@ struct MemoryView: View {
             .background(MatherTheme.background.ignoresSafeArea())
             .navigationTitle("Learn")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        descriptionTask?.cancel()
-                        learningContent = nil
-                        askSession = nil
-                        latestAskResponse = nil
-                    }
-                        .accessibilityIdentifier("memory-learning-done")
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    descriptionTask?.cancel()
+                    learningContent = nil
+                    askSession = nil
+                    latestAskResponse = nil
+                } label: {
+                    Text("Done").font(.headline.bold()).frame(maxWidth: .infinity, minHeight: 80)
                 }
+                .background(MatherTheme.card)
+                .padding(.horizontal, 20)
+                .accessibilityIdentifier("memory-learning-done")
             }
         }
         .presentationDetents([.medium, .large])
@@ -986,88 +1149,54 @@ struct MemoryView: View {
 
     private func dealRound() {
         descriptionTask?.cancel()
-        boardFeedbackTask?.cancel()
-        boardToken = UUID()
         let roundAnimals: [MemoryAnimal]
         if deckSelection == .countryFlags {
             countryClueKind = Self.countryClueKind(forRound: roundsPlayed)
-            roundAnimals = Self.preferredCountryClueAnimals(
-                from: deck,
-                pairCount: totalPairs,
-                clueKind: countryClueKind,
-                recentPairHistory: recentPairHistory
-            )
+            roundAnimals = Self.preferredCountryClueAnimals(from: deck, pairCount: targetPairCount, clueKind: countryClueKind, recentPairHistory: recentPairHistory)
         } else {
-            roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: totalPairs, recentPairHistory: recentPairHistory)
+            roundAnimals = Self.preferredRoundAnimals(from: deck, pairCount: targetPairCount, recentPairHistory: recentPairHistory)
         }
-        recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: totalPairs, deckCount: deck.count)
-        if deckSelection == .countryFlags {
-            cards = Self.buildCountryClueCards(for: roundAnimals, clueKind: countryClueKind).shuffled()
-        } else {
-            cards = Self.buildCards(for: roundAnimals).shuffled()
-        }
+        recentPairHistory = Self.updatedRecentPairHistory(previous: recentPairHistory, newRoundAnimals: roundAnimals, pairCount: targetPairCount, deckCount: deck.count)
+        let animals = deckSelection == .countryFlags
+            ? roundAnimals.map { Self.countryClueAnimal(for: $0, clueKind: countryClueKind) } : roundAnimals
+        pairing.deal(animals: animals, mode: supportsPicturePairs ? pairingMode : .names, faceDown: difficulty.faceDown)
         learningContent = nil
         askSession = nil
         latestAskResponse = nil
-        firstSelected = nil
-        matchedPairs = 0
-        mismatchIds = []
-        isProcessingMismatch = false
+        exploreCardID = nil
         showRoundComplete = false
+        speak(roundPrompt)
     }
 
     private func handleTap(_ card: MemoryCard) {
         guard appModel.profileStore.activeProfileId == evidenceProfileID else { return }
-        guard !card.isMatched, !isProcessingMismatch, !card.isSelected else { return }
-
-        if let idx = cards.firstIndex(where: { $0.id == card.id }) {
-            cards[idx].isSelected = true
+        guard !card.isMatched, !pairing.isProcessing, !card.isSelected else {
+            if card.isMatched { exploreCardID = card.id }
+            return
         }
+        let selection = pairing.select(card.id)
+        exploreCardID = card.id
         appModel.hapticsService.counterSettle(enabled: appModel.featureFlags.hapticsEnabled)
-        if !difficulty.faceDown {
-            if case .picture(let animal) = card.content, appModel.featureFlags.audioEnabled {
+        if let selected = cards.first(where: { $0.id == card.id }),
+           let text = Self.selectionSpeech(for: selected, difficulty: difficulty) {
+            if appModel.featureFlags.audioEnabled && !UIAccessibility.isVoiceOverRunning,
+               case .picture(let animal) = selected.content {
                 switch animal.picture {
-                case .text: break // Read the prompt without revealing a missing answer.
+                case .text: break
                 case .asset, .emoji:
                     supportedAnimalIDs.insert(animal.id)
                     recordMemoryAttempt(for: animal, outcome: .help, response: "heard name")
                 }
             }
-            appModel.speechService.speak(Self.spokenTapPrompt(for: card), enabled: appModel.featureFlags.audioEnabled)
+            speak(text)
         }
-
-        guard let first = firstSelected else {
-            firstSelected = card
-            return
-        }
-
-        firstSelected = nil
-
-        let token = boardToken
-        isProcessingMismatch = true
-        let promptAnimal: MemoryAnimal
-        if case .picture(let animal) = first.content { promptAnimal = animal } else { promptAnimal = animal(for: card) }
-        if Self.cardsFormValidMatch(first, card) {
-            recordMemoryAttempt(for: promptAnimal, outcome: supportedAnimalIDs.contains(promptAnimal.id) ? .supportedCorrect : .independentCorrect, response: animal(for: first).name + " ↔ " + animal(for: card).name)
-            boardFeedbackTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(300))
-                guard !Task.isCancelled, boardToken == token else { return }
-                markMatched(ids: [first.id, card.id])
-                isProcessingMismatch = false
-            }
-        } else {
-            supportedAnimalIDs.insert(promptAnimal.id)
-            recordMemoryAttempt(for: promptAnimal, outcome: .incorrect, response: animal(for: first).name + " ↔ " + animal(for: card).name)
-            isProcessingMismatch = true
-            mismatchIds = [first.id, card.id]
-            boardFeedbackTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(600))
-                guard !Task.isCancelled, boardToken == token else { return }
-                deselect(id: first.id)
-                deselect(id: card.id)
-                mismatchIds = []
-                isProcessingMismatch = false
-            }
+        if case .pair(let first, let second, let matches) = selection {
+            let prompt = first.isLabel ? second.animal : first.animal
+            let outcome: ItemAttemptOutcome = matches
+                ? (supportedAnimalIDs.contains(prompt.id) ? .supportedCorrect : .independentCorrect) : .incorrect
+            if !matches { supportedAnimalIDs.insert(prompt.id) }
+            recordMemoryAttempt(for: prompt, outcome: outcome,
+                                response: first.animal.name + " ↔ " + second.animal.name)
         }
     }
 
@@ -1094,27 +1223,9 @@ struct MemoryView: View {
         }
     }
 
-    private func markMatched(ids: Set<UUID>) {
-        for idx in cards.indices where ids.contains(cards[idx].id) {
-            cards[idx].isMatched = true
-            cards[idx].isSelected = false
-        }
-        matchedPairs += 1
-        appModel.hapticsService.stageSuccess(enabled: appModel.featureFlags.hapticsEnabled)
-
-        if matchedPairs == totalPairs {
-            roundsPlayed += 1
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                showRoundComplete = true
-            }
-            appModel.speechService.speak("Amazing! All matched!", enabled: appModel.featureFlags.audioEnabled)
-        }
-    }
-
-    private func deselect(id: UUID) {
-        if let idx = cards.firstIndex(where: { $0.id == id }) {
-            cards[idx].isSelected = false
-        }
+    private func speak(_ text: String) {
+        guard !UIAccessibility.isVoiceOverRunning else { return }
+        appModel.speechService.speak(text, enabled: appModel.featureFlags.audioEnabled)
     }
 
     private func nextRound() {
@@ -1122,18 +1233,26 @@ struct MemoryView: View {
         if isDirectStagedEntry {
             difficulty = Self.nextDirectStageDifficulty(after: difficulty)
         }
-        withAnimation(.easeOut(duration: 0.2)) {
-            showRoundComplete = false
-        }
-        boardFeedbackTask?.cancel()
-        let token = boardToken
-        boardFeedbackTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            guard !Task.isCancelled, boardToken == token else { return }
-            dealRound()
-        }
+        if reduceMotion { dealRound() }
+        else { withAnimation(.easeOut(duration: 0.2)) { dealRound() } }
     }
 
+
+    static func displayedCard(_ card: MemoryCard, hinted: Bool) -> MemoryCard {
+        MemoryCard(id: card.id, pairId: card.pairId, content: card.content,
+                   isMatched: card.isMatched, isSelected: card.isSelected || hinted)
+    }
+
+    static func selectionSpeech(for card: MemoryCard, difficulty: MemoryDifficulty) -> String? {
+        guard !difficulty.faceDown || card.isSelected || card.isMatched else { return nil }
+        switch card.content {
+        case .label(let animal): return animal.name
+        case .picture(let animal):
+            if countryClueKind(for: animal) != nil { return accessibilityLabel(for: card) }
+            if case .text(let text) = animal.picture { return text }
+            return animal.canonicalName
+        }
+    }
 
     static func accessibilityIdentifier(for card: MemoryCard) -> String {
         let kind: String
@@ -1161,6 +1280,7 @@ struct MemoryView: View {
             if animal.metadata.deck == .countryFlags {
                 return "Flag of \(animal.canonicalName)"
             }
+            if case .text(let text) = animal.picture { return text }
             return animal.canonicalName
         case .label(let animal):
             return animal.name

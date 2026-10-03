@@ -455,8 +455,19 @@ final class MemoryCardDescribeService {
         default:
             factLimit = 4
         }
-        return animal.detailCards
-            .filter { $0.title != "Name" }
+        let facts = animal.detailCards.filter { $0.title != "Name" }
+        let orderedFacts: [MemoryFactCard]
+        switch animal.metadata.deck {
+        case .domesticAnimals, .birds, .vehicles, .planets, .fishes, .waterCycle, .fruits:
+            let priorityTitles = ["Look closely", "Try it", "Fun Fact"]
+            let priorityKeys = Set(priorityTitles.map { $0.lowercased() })
+            orderedFacts = priorityTitles.flatMap { title in
+                facts.filter { $0.title.lowercased() == title.lowercased() }
+            } + facts.filter { !priorityKeys.contains($0.title.lowercased()) }
+        case .countries, .countryFlags, .indiaStates, .numberBondsTo10:
+            orderedFacts = facts
+        }
+        return orderedFacts
             .prefix(factLimit)
             .map { MemoryFactChip(title: $0.title, value: $0.value) }
     }

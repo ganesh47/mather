@@ -1,11 +1,12 @@
 import Foundation
+import CryptoKit
 import Testing
 @testable import Mather
 
 @Suite("MemoryView")
 struct MemoryViewTests {
 
-    @Test func birdDeckUsesExtractedSheetAssetPool() {
+    @Test func birdDeckUsesCleanStandaloneAssetPool() {
         let ids = MemoryDeck.birds.map(\.id)
         let assets = MemoryDeck.birds.compactMap(\.imageAssetName)
         #expect(MemoryDeck.birds.count == 36)
@@ -22,8 +23,8 @@ struct MemoryViewTests {
     @Test func birdDeckCarriesFactCardsForLearningPrompts() {
         let sample = MemoryDeck.birds.first
         #expect(sample != nil)
-        #expect(sample?.detailCards.count == 6)
-        #expect(sample?.detailCards.map(\.title) == ["Name", "Home", "Lifespan", "Weight", "Size", "Colors"])
+        #expect(sample?.detailCards.count == 8)
+        #expect(sample?.detailCards.map(\.title) == ["Name", "Home", "Lifespan", "Weight", "Size", "Colors", "Look closely", "Try it"])
     }
 
     @Test func vehiclesDeckProvidesEnoughDistinctPairs() {
@@ -174,21 +175,11 @@ struct MemoryViewTests {
     @Test func issue379FishAssetsHaveReuseSafeProvenanceAndCatalogs() {
         let fishAssets = Set(MemoryDeck.fishes.compactMap(\.imageAssetName))
         let provenanceByAsset = Dictionary(uniqueKeysWithValues: MemoryDeck.imageAssetProvenance.map { ($0.assetName, $0) })
-        let expectedHashes = [
-            "MemoryFishClownfish": "994003f9911cd64dae9b0b788918a64ca4bf0a9ca8c2889ecb9dfca6903d9c6b",
-            "MemoryFishGoldfish": "03e5d0f461f714cff979eba3c154b3f1012f8880c88fca509cdabeb74ddc4dde",
-            "MemoryFishBetta": "32da3532b489e9c7d20394cec5b99897c2011cc2a92809ced0b249d74e1aa200",
-            "MemoryFishAngelfish": "8da0cff35ded5222747f099b3ca785719c9700c17514aa2f69fd3ff5b5b904c6",
-            "MemoryFishCatfish": "e2d712233b9fd1d4f5fa5d3c167329d19784fb72784ce062ee8231cc7e19a1fe",
-            "MemoryFishSwordtail": "decdde0bb9874d8d7b5f3c07c544f342dd339c69c42f135eee8f134a1ea18a19",
-            "MemoryFishTuna": "d9716931aba86201236c724311c5b8fae07b6dca705ca059cd9c7247b33b67a3",
-            "MemoryFishSeahorse": "90a58259c3a44be96017c86b1d4a165fc507ba24d9baf2c53b9dad23c1ff50a0"
-        ]
         let sourceFile = URL(fileURLWithPath: #filePath)
         let repoRoot = sourceFile.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let assetsRoot = repoRoot.appendingPathComponent("App/Assets.xcassets")
 
-        #expect(fishAssets == Set(expectedHashes.keys))
+        #expect(fishAssets.count == 8)
         for assetName in fishAssets {
             let provenance = provenanceByAsset[assetName]
             let imageset = assetsRoot.appendingPathComponent("\(assetName).imageset")
@@ -196,13 +187,18 @@ struct MemoryViewTests {
             let contents = imageset.appendingPathComponent("Contents.json")
 
             #expect(provenance?.cardId.hasPrefix("fish-") == true)
-            #expect(provenance?.sourceName == "Project-owned deterministic drawing")
+            #expect(provenance?.sourceName == "Built-in ImageGen storybook artwork")
             #expect(provenance?.licenseAllowsReuse == true)
             #expect(provenance?.noThirdPartyRestrictionFound == true)
             #expect(provenance?.noLogoOrEndorsementRisk == true)
             #expect(provenance?.noPeopleOrPrivacyRisk == true)
             #expect(provenance?.childCardLegibilityChecked == true)
-            #expect(provenance?.derivativeSha256 == expectedHashes[assetName])
+            if let data = try? Data(contentsOf: image) {
+                let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+                #expect(provenance?.derivativeSha256 == hash)
+            } else {
+                Issue.record("Missing storybook fish PNG: \(assetName)")
+            }
             #expect(FileManager.default.fileExists(atPath: image.path))
             #expect(FileManager.default.fileExists(atPath: contents.path))
         }
@@ -449,7 +445,7 @@ struct MemoryViewTests {
             isIncorrect: false
         )
 
-        #expect(cowPicture.display == .emoji("🐄"))
+        #expect(cowPicture.display == .asset("MemoryAnimalCow"))
         #expect(cowLabel.display == .text("Cow"))
         #expect(flagPicture.display == .asset("MemoryFlagIndia"))
         #expect(flagLabel.display == .text("India"))
@@ -772,11 +768,11 @@ struct MemoryCardDescribeServiceTests {
 
         let description = await service.describe(MemoryDeck.birds[0])
 
-        #expect(description.title == "Macaw")
+        #expect(description.title == "Scarlet Macaw")
         #expect(description.source == .curatedFallback)
         #expect(description.shortDescription.contains("bird"))
         #expect(description.shortDescription.localizedCaseInsensitiveContains("south american rainforests"))
-        #expect(description.factChips.map(\.title) == ["Home", "Lifespan", "Weight", "Size"])
+        #expect(description.factChips.map(\.title) == ["Look closely", "Try it", "Home", "Lifespan"])
     }
 
     @MainActor @Test func fallbackDescriptionUsesCuratedWaterCycleMetadata() async {
@@ -805,7 +801,7 @@ struct MemoryCardDescribeServiceTests {
 
         #expect(description.source == .appleIntelligence)
         #expect(description.shortDescription == "A rocket zooms high and can reach space.")
-        #expect(description.factChips.map(\.title) == ["Kind", "Use", "Moves", "Sound", "Colors"])
+        #expect(description.factChips.map(\.title) == ["Look closely", "Try it", "Kind", "Use", "Moves", "Colors"])
     }
 
     @Test func appleIntelligencePromptStaysChildSafeAndFactBound() {

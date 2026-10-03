@@ -9,7 +9,7 @@ struct IOSLearningCatalog: Codable, Equatable {
     let assets: [MemoryGalleryContentPack.Asset]
 
     static var bundled: Self {
-        Self(schemaVersion: 1, contentVersion: 1,
+        Self(schemaVersion: 1, contentVersion: 3,
              decks: MemoryDeckKind.allCases.map { .init(kind: $0, cards: MemoryDeck.animals(for: $0)) },
              threads: GameplayThreadID.allCases.map { GameplayThreadCatalog.thread(for: $0) }, assets: [])
     }
@@ -42,6 +42,7 @@ struct IOSLearningCatalog: Codable, Equatable {
             + bundledEntities.compactMap(\.visualAssetName)
             + bundledEntities.flatMap(\.properties).compactMap(\.visualAssetName))
         let knownAssets = bundledAssets.union(assets.map(\.id))
+            .union(MemoryGalleryContentPack.retainedLegacyBundledAssetNames)
         let shapeKeys = Set(CountryGameplayThread.thread.entities.compactMap(\.visualShapeKey)
             + CountryGameplayThread.thread.entities.flatMap(\.properties).compactMap(\.visualShapeKey))
         func validateVisual(asset: String?, shape: String?, visual: String?) throws {

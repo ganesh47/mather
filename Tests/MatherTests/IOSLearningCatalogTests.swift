@@ -38,20 +38,92 @@ struct IOSLearningCatalogTests {
         }
     }
 
+    @Test func previousReleaseBundledBirdArtworkRemainsAValidSchemaOneReference() throws {
+        let bundled = IOSLearningCatalog.bundled
+        let source = try #require(bundled.threads.first { $0.id == "world-birds" })
+        let bird = try #require(source.entities.first)
+        let legacyBird = GameplayEntity(id: bird.id, name: bird.name, summary: bird.summary,
+            visualAssetName: "MemoryBirdA01", properties: bird.properties)
+        let legacyThread = GameplayThreadDefinition(id: source.id, title: source.title, category: source.category,
+            propertyTypes: source.propertyTypes, entities: [legacyBird] + source.entities.dropFirst(), stages: source.stages)
+        let legacy = IOSLearningCatalog(schemaVersion: 1, contentVersion: 2, decks: bundled.decks,
+            threads: bundled.threads.map { $0.id == source.id ? legacyThread : $0 }, assets: [])
+        try legacy.validate()
+    }
+
+    @Test @MainActor func actualPublishedV2CatalogRemainsValidWithoutReplacingNewBundle() async throws {
+        // Exact public schema-one v2 bytes from mather-content a629242e.
+        let fixture = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Fixtures/ios-catalog-v2.json")
+        let bytes = try Data(contentsOf: fixture)
+        let previous = try JSONDecoder().decode(IOSLearningCatalog.self, from: bytes)
+        #expect(previous.schemaVersion == 1 && previous.contentVersion == 2)
+        try previous.validate() // Includes shared deck validation before topic validation.
+        let birds = try #require(previous.decks.first { $0.kind == .birds })
+        #expect(Set(birds.cards.compactMap(\.imageAssetName)) == MemoryGalleryContentPack.retainedLegacyBundledAssetNames)
+        let repository = fixture.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        for name in MemoryGalleryContentPack.retainedLegacyBundledAssetNames {
+            #expect(FileManager.default.fileExists(atPath: repository
+                .appendingPathComponent("App/Assets.xcassets/\(name).imageset/\(name).png").path))
+        }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = IOSLearningContentStore(root: root, fetch: { url, _ in
+            guard url.pathExtension == "json" else { throw URLError(.resourceUnavailable) }
+            return bytes
+        })
+        await store.refresh(from: URL(string: "https://example.com/ios/catalog.json")!)
+        #expect(store.lastRefreshError == nil)
+        #expect(store.catalog == .bundled)
+        #expect(store.assetURLs.isEmpty)
+    }
+
+    @Test @MainActor func actualPublishedV2ActiveCachePreservesArtworkWhileNewBundleWins() async throws {
+        let fixture = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Fixtures/ios-catalog-v2.json")
+        let bytes = try Data(contentsOf: fixture)
+        let previous = try JSONDecoder().decode(IOSLearningCatalog.self, from: bytes)
+        let repository = fixture.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let directory = root.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try bytes.write(to: directory.appendingPathComponent("pack.json"))
+        for asset in previous.assets {
+            let source = repository.appendingPathComponent("App/Assets.xcassets/\(asset.id).imageset/\(asset.file)")
+            let artwork = try Data(contentsOf: source)
+            try IOSLearningContentStore.validateArtwork(artwork, asset: asset)
+            try artwork.write(to: directory.appendingPathComponent(asset.file))
+        }
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("active"))
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("pending"))
+        let restored = IOSLearningContentStore(root: root, fetch: { _, _ in throw URLError(.notConnectedToInternet) })
+        #expect(restored.catalog == .bundled)
+        #expect(restored.assetURLs.isEmpty)
+        restored.activatePending()
+        await restored.refresh(from: URL(string: "https://example.com/ios/catalog.json")!)
+        #expect(restored.catalog == .bundled)
+        #expect(restored.lastRefreshError != nil)
+        #expect(try Data(contentsOf: directory.appendingPathComponent("pack.json")) == bytes)
+        for asset in previous.assets {
+            try IOSLearningContentStore.validateArtwork(Data(contentsOf: directory.appendingPathComponent(asset.file)), asset: asset)
+        }
+    }
+
     @Test @MainActor func activeSessionDefersUpdateAndVerifiedCacheWorksOffline() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let bundled = IOSLearningCatalog.bundled
-        let update = IOSLearningCatalog(schemaVersion: 1, contentVersion: 2, decks: bundled.decks, threads: bundled.threads, assets: [])
+        let update = IOSLearningCatalog(schemaVersion: 1, contentVersion: bundled.contentVersion + 1, decks: bundled.decks, threads: bundled.threads, assets: [])
         let manifest = try JSONEncoder().encode(update)
         let store = IOSLearningContentStore(root: root, fetch: { _, _ in manifest })
         let sessionSnapshot = store.catalog
         await store.refresh(from: URL(string: "https://example.com/ios/catalog.json")!, canActivate: { false })
-        #expect(store.catalog.contentVersion == 1)
+        #expect(store.catalog.contentVersion == bundled.contentVersion)
         #expect(sessionSnapshot == bundled)
         store.activatePending()
         #expect(store.catalog == update)
-        #expect(sessionSnapshot.contentVersion == 1)
+        #expect(sessionSnapshot.contentVersion == bundled.contentVersion)
         let offline = IOSLearningContentStore(root: root, fetch: { _, _ in throw URLError(.notConnectedToInternet) })
         #expect(offline.catalog == update)
         await offline.refresh(from: URL(string: "https://example.com/ios/catalog.json")!)
@@ -72,7 +144,7 @@ struct IOSLearningCatalogTests {
         await store.refresh(from: url)
         #expect(store.catalog == bundled)
         let asset = MemoryGalleryContentPack.Asset(id: "new-image", file: "new-image.png", byteCount: 20, sha256: String(repeating: "a", count: 64))
-        response = try JSONEncoder().encode(IOSLearningCatalog(schemaVersion: 1, contentVersion: 2,
+        response = try JSONEncoder().encode(IOSLearningCatalog(schemaVersion: 1, contentVersion: bundled.contentVersion + 1,
             decks: bundled.decks, threads: bundled.threads, assets: [asset]))
         await store.refresh(from: url)
         #expect(store.catalog == bundled)
@@ -86,18 +158,18 @@ struct IOSLearningCatalogTests {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let bundled = IOSLearningCatalog.bundled
-        var version = 5
+        var version = bundled.contentVersion + 2
         let store = IOSLearningContentStore(root: root, fetch: { _, _ in
             try JSONEncoder().encode(IOSLearningCatalog(schemaVersion: 1, contentVersion: version,
                 decks: bundled.decks, threads: bundled.threads, assets: []))
         })
         let url = URL(string: "https://example.com/ios/catalog.json")!
         await store.refresh(from: url, canActivate: { false })
-        version = 3
+        version = bundled.contentVersion + 1
         await store.refresh(from: url, canActivate: { false })
-        #expect(store.catalog.contentVersion == 1)
+        #expect(store.catalog.contentVersion == bundled.contentVersion)
         store.activatePending()
-        #expect(store.catalog.contentVersion == 5)
+        #expect(store.catalog.contentVersion == bundled.contentVersion + 2)
     }
 
     @Test @MainActor func replacingCatalogKeepsPausedSessionArtworkAvailable() async throws {
@@ -114,22 +186,41 @@ struct IOSLearningCatalogTests {
         let asset = MemoryGalleryContentPack.Asset(id: "paused-image", file: "paused-image.png", byteCount: artwork.count,
             sha256: SHA256.hash(data: artwork).map { String(format: "%02x", $0) }.joined())
         let bundled = IOSLearningCatalog.bundled
-        var version = 2
+        var version = bundled.contentVersion + 1
         let store = IOSLearningContentStore(root: root, fetch: { url, _ in
             if url.pathExtension == "png" { return artwork }
             return try JSONEncoder().encode(IOSLearningCatalog(schemaVersion: 1, contentVersion: version,
-                decks: bundled.decks, threads: bundled.threads, assets: version == 2 ? [asset] : []))
+                decks: bundled.decks, threads: bundled.threads, assets: version == bundled.contentVersion + 1 ? [asset] : []))
         })
         let url = URL(string: "https://example.com/ios/catalog.json")!
         await store.refresh(from: url)
         let pausedImage = try #require(store.assetURL(named: asset.id))
-        version = 3
+        version = bundled.contentVersion + 2
         await store.refresh(from: url)
-        #expect(store.catalog.contentVersion == 3)
+        #expect(store.catalog.contentVersion == bundled.contentVersion + 2)
         #expect(store.assetURL(named: asset.id) == nil)
         try IOSLearningContentStore.validateArtwork(Data(contentsOf: pausedImage), asset: asset)
         let restored = IOSLearningContentStore(root: root)
-        #expect(restored.catalog.contentVersion == 3)
+        #expect(restored.catalog.contentVersion == bundled.contentVersion + 2)
         #expect(FileManager.default.fileExists(atPath: pausedImage.path))
+    }
+
+    @Test @MainActor func previousReleaseCatalogDoesNotOverrideNewBundledMemory() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let directory = root.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let bundled = IOSLearningCatalog.bundled
+        let older = IOSLearningCatalog(schemaVersion: 1, contentVersion: 2,
+            decks: bundled.decks, threads: bundled.threads, assets: [])
+        let encoded = try JSONEncoder().encode(older)
+        try encoded.write(to: directory.appendingPathComponent("pack.json"))
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("active"))
+        try Data(directory.lastPathComponent.utf8).write(to: root.appendingPathComponent("pending"))
+        let restored = IOSLearningContentStore(root: root)
+        #expect(restored.catalog == bundled)
+        #expect(restored.assetURLs.isEmpty)
+        #expect(try Data(contentsOf: directory.appendingPathComponent("pack.json")) == encoded)
+        #expect(restored.catalog.cards(for: .birds).contains { $0.imageAssetName == "MemoryBirdCleanA02" })
     }
 }

@@ -274,7 +274,8 @@ struct WorldCreatureGameplayThreadTests {
         #expect(animalThread.entities.map(\.name) == MemoryDeck.domesticAnimals.prefix(12).map(\.name))
         #expect(birdThread.entities.map(\.name) == MemoryDeck.birds.prefix(12).map(\.name))
         #expect(birdThread.entities.allSatisfy { $0.visualAssetName?.isEmpty == false })
-        #expect(animalThread.entities.allSatisfy { $0.visualKey?.isEmpty == false })
+        #expect(animalThread.entities.allSatisfy { $0.visualKey?.isEmpty == false || $0.visualAssetName?.isEmpty == false })
+        #expect(animalThread.entities.map(\.visualAssetName) == MemoryDeck.domesticAnimals.prefix(12).map(\.imageAssetName))
     }
 
     @Test

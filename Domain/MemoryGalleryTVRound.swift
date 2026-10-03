@@ -156,7 +156,10 @@ struct MemoryGalleryTVRound: Equatable {
                 && $0.title.localizedCaseInsensitiveCompare("Name") != .orderedSame
         }
         let availableFacts = informativeFacts.isEmpty ? promptCard.detailCards : informativeFacts
-        guard category == .flags else { return Array(availableFacts.prefix(2)) }
+        guard category == .flags else {
+            let playful = availableFacts.filter { ["fun fact", "try this", "try it", "look closely", "sound", "remember"].contains($0.title.lowercased()) }
+            return Array((playful + availableFacts.filter { !playful.contains($0) }).prefix(2))
+        }
 
         // The country reveal is a tiny post-answer passport. Keep one fact from
         // each child-friendly theme so the expanded deck teaches more than a flag.
@@ -188,7 +191,7 @@ struct MemoryGalleryTVRound: Equatable {
 
     static let choiceCount = 4
 
-    static func make(category: MemoryGalleryTVCategory, index: Int, deck suppliedDeck: [MemoryAnimal]? = nil) -> MemoryGalleryTVRound {
+    static func make(category: MemoryGalleryTVCategory, index: Int, deck suppliedDeck: [MemoryAnimal]? = nil, roundLimit: Int? = nil) -> MemoryGalleryTVRound {
         let deck = suppliedDeck ?? category.deck
         precondition(deck.count >= choiceCount, "Memory Gallery TV categories need at least \(choiceCount) cards.")
 
@@ -197,7 +200,8 @@ struct MemoryGalleryTVRound: Equatable {
         let promptIndex = promptDeckIndex(
             for: category,
             roundIndex: normalizedIndex,
-            deckCount: deck.count
+            deckCount: deck.count,
+            roundGoal: roundLimit ?? MemoryGalleryTVGame.roundGoal(for: category)
         )
         let prompt = deck[promptIndex]
         let forwardChoices = answerChoices(
@@ -227,7 +231,8 @@ struct MemoryGalleryTVRound: Equatable {
     private static func promptDeckIndex(
         for category: MemoryGalleryTVCategory,
         roundIndex: Int,
-        deckCount: Int
+        deckCount: Int,
+        roundGoal: Int
     ) -> Int {
         guard category == .vehicles || category == .flags else { return positiveModulo(roundIndex, deckCount) }
 
@@ -238,7 +243,7 @@ struct MemoryGalleryTVRound: Equatable {
         }
 
         // Spread the shorter vehicle session across its complete expanded deck.
-        let spreadIndex = roundIndex * deckCount / MemoryGalleryTVGame.roundGoal(for: category)
+        let spreadIndex = roundIndex * deckCount / max(1, roundGoal)
         return positiveModulo(spreadIndex, deckCount)
     }
 
@@ -337,10 +342,15 @@ struct MemoryGalleryTVGame: Equatable {
     private(set) var selectedAnswerID: String?
     private(set) var lastAnswerWasCorrect: Bool?
     private(set) var sessionDeck: [MemoryAnimal]?
+    private(set) var sessionSeed: UInt64 = 0
+    private(set) var sessionGoal: Int?
 
     var round: MemoryGalleryTVRound? {
         guard let category, phase == .playing else { return nil }
-        return MemoryGalleryTVRound.make(category: category, index: roundIndex, deck: sessionDeck)
+        let base = MemoryGalleryTVRound.make(category: category, index: roundIndex, deck: sessionDeck, roundLimit: roundGoal)
+        var generator = MemoryGalleryRandom(seed: sessionSeed &+ UInt64(roundIndex))
+        return MemoryGalleryTVRound(category: base.category, index: base.index, promptCard: base.promptCard,
+                                    answerChoices: base.answerChoices.shuffled(using: &generator))
     }
 
     var hasAnsweredCurrentRound: Bool {
@@ -348,7 +358,7 @@ struct MemoryGalleryTVGame: Equatable {
     }
 
     var roundGoal: Int {
-        category.map(Self.roundGoal(for:)) ?? Self.standardRoundGoal
+        sessionGoal ?? category.map(Self.roundGoal(for:)) ?? Self.standardRoundGoal
     }
 
     private var progressNoun: String {
@@ -367,8 +377,11 @@ struct MemoryGalleryTVGame: Equatable {
         }
     }
 
-    mutating func start(category: MemoryGalleryTVCategory, deck: [MemoryAnimal]? = nil) {
-        sessionDeck = deck
+    mutating func start(category: MemoryGalleryTVCategory, deck: [MemoryAnimal]? = nil, seed: UInt64? = nil, roundLimit: Int? = nil) {
+        sessionGoal = roundLimit.map { min(max(1, $0), (deck ?? category.deck).count) }
+        sessionSeed = seed ?? UInt64.random(in: 0...UInt64.max)
+        var generator = MemoryGalleryRandom(seed: sessionSeed)
+        sessionDeck = (deck ?? category.deck).shuffled(using: &generator)
         self.category = category
         phase = .playing
         roundIndex = 0
@@ -426,10 +439,23 @@ struct MemoryGalleryTVGame: Equatable {
             chooseAnotherCategory()
             return
         }
-        start(category: category, deck: sessionDeck)
+        start(category: category, deck: sessionDeck, roundLimit: sessionGoal)
     }
 
     mutating func chooseAnotherCategory() {
         self = MemoryGalleryTVGame()
+    }
+}
+
+/// Reproducible session variety without depending on platform RNG details.
+private struct MemoryGalleryRandom: RandomNumberGenerator {
+    var state: UInt64
+    init(seed: UInt64) { state = seed }
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var value = state
+        value = (value ^ (value >> 30)) &* 0xBF58476D1CE4E5B9
+        value = (value ^ (value >> 27)) &* 0x94D049BB133111EB
+        return value ^ (value >> 31)
     }
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MemoryGalleryTVView: View {
+    @FocusState private var focusedAdventureID: String?
     @FocusState private var focusedCategory: MemoryGalleryTVCategory.ID?
     @FocusState private var focusedAnswerID: String?
     @FocusState private var nextButtonFocused: Bool
@@ -9,6 +10,8 @@ struct MemoryGalleryTVView: View {
     @State private var game = MemoryGalleryTVGame()
     @State private var narration = TVNarrationController()
     @State private var contentStore = MemoryGalleryContentStore()
+    @State private var selectedAdventure: MemoryAdventure?
+    @State private var activeAdventure: MemoryAdventure?
 
     var body: some View {
         ZStack {
@@ -26,13 +29,23 @@ struct MemoryGalleryTVView: View {
             }
         }
         .environment(contentStore)
+        .fullScreenCover(item: $selectedAdventure) { adventure in
+            MemoryPairsTVView(adventure: adventure, quiz: { cards in
+                selectedAdventure = nil
+                activeAdventure = adventure
+                game.start(category: adventure.deckKind == .planets ? .planets : .vehicles, deck: cards, roundLimit: min(6, cards.count))
+                presentRoundPrompt()
+                focusFirstAnswer()
+            })
+            .environment(contentStore)
+        }
         .task {
             guard let value = Bundle.main.object(forInfoDictionaryKey: "MemoryGalleryContentURL") as? String,
                   let url = URL(string: value) else { return }
-            await contentStore.refresh(from: url) { game.phase == .choosingCategory }
+            await contentStore.refresh(from: url) { game.phase == .choosingCategory && selectedAdventure == nil }
         }
         .onChange(of: game.phase) { _, phase in
-            if phase == .choosingCategory { contentStore.activatePending() }
+            if phase == .choosingCategory && selectedAdventure == nil { contentStore.activatePending() }
         }
         .onAppear {
             presentCategoryPrompt()
@@ -40,6 +53,18 @@ struct MemoryGalleryTVView: View {
         }
         .onDisappear { narration.stop() }
         .onPlayPauseCommand { narration.repeatPrompt() }
+        .onChange(of: focusedAdventureID) { _, id in
+            guard game.phase == .choosingCategory,
+                  let adventure = MemoryAdventure.allCases.first(where: { $0.id == id }) else { return }
+            narration.focus("\(adventure.title). \(adventure.introduction) Press select for picture pairs or a quiz.")
+        }
+        .onChange(of: selectedAdventure) { _, adventure in
+            if adventure == nil && game.phase == .choosingCategory {
+                contentStore.activatePending()
+                presentCategoryPrompt()
+                focusFirstCategory()
+            }
+        }
         .onChange(of: focusedNarration) { _, text in
             narration.focus(text)
         }
@@ -68,7 +93,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private var categoryChooser: some View {
-        VStack(alignment: .leading, spacing: 46) {
+        VStack(alignment: .leading, spacing: 30) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Memory Gallery")
                     .font(.system(size: 70, weight: .bold, design: .rounded))
@@ -84,6 +109,25 @@ struct MemoryGalleryTVView: View {
             .accessibilityLabel("Memory Gallery. Match big pictures with no timer. The Countries gallery has 30 questions with money and landmarks.")
 
             categoryShelf
+
+            HStack(spacing: 22) {
+                ForEach(MemoryAdventure.allCases) { adventure in
+                    Button { narration.stop(); selectedAdventure = adventure } label: {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Image(adventure.sceneAssetName).resizable().scaledToFit()
+                                .frame(width: 420, height: 150).clipped()
+                            Text(adventure.title).font(.system(size: 28, weight: .black, design: .rounded))
+                            Text("Picture pairs or a picture quiz").font(.system(size: 18, weight: .semibold))
+                        }
+                        .padding(18)
+                        .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 24))
+                    }
+                    .buttonStyle(.card)
+                    .focused($focusedAdventureID, equals: adventure.id)
+                    .accessibilityLabel("\(adventure.title). Picture pairs or a picture quiz.")
+                    .accessibilityIdentifier("tv-memory-adventure-\(adventure.id)")
+                }
+            }
 
             Label("Swipe to choose a gallery, then press select.", systemImage: "hand.tap.fill")
                 .font(.system(size: 24, weight: .semibold, design: .rounded))
@@ -137,7 +181,7 @@ struct MemoryGalleryTVView: View {
                 .background(.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(round.category.title)
+                Text(activeAdventure?.title ?? round.category.title)
                     .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                 Text(game.progressText)
@@ -235,7 +279,6 @@ struct MemoryGalleryTVView: View {
     @ViewBuilder
     private func promptArtwork(round: MemoryGalleryTVRound) -> some View {
         if game.hasAnsweredCurrentRound,
-           round.category == .flags,
            !round.promptCard.learningArtwork.isEmpty {
             HStack(spacing: 16) {
                 ForEach(Array(round.promptCard.learningArtwork.prefix(2)), id: \.self) { artwork in
@@ -428,6 +471,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private var completionSummary: String {
+        if let activeAdventure { return activeAdventure.tryIt }
         if game.category == .flags {
             return "You explored 30 country questions with money, landmarks, flags, capitals, and languages."
         }
@@ -435,6 +479,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private var celebrationCopy: String {
+        if activeAdventure != nil && game.streak < 2 { return "Great exploring!" }
         switch game.streak {
         case 3...: return "\(game.streak) in a row!"
         case 2: return "Two in a row!"
@@ -448,6 +493,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private var completionTitle: String {
+        if let activeAdventure { return "\(activeAdventure.title) explored!" }
         if game.correctCount == game.roundGoal { return "Perfect gallery!" }
         if game.correctCount >= max(4, game.roundGoal * 2 / 3) { return "Gallery star!" }
         return "Gallery explored!"
@@ -458,6 +504,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private func start(_ category: MemoryGalleryTVCategory) {
+        activeAdventure = nil
         game.start(category: category, deck: contentStore.cards(for: category))
         presentRoundPrompt()
         focusFirstAnswer()
@@ -507,6 +554,7 @@ struct MemoryGalleryTVView: View {
     }
 
     private func chooseAnotherGallery() {
+        activeAdventure = nil
         game.chooseAnotherCategory()
         presentCategoryPrompt()
         focusedCompletionAction = nil
