@@ -58,16 +58,22 @@ final class MemoryGalleryContentUITests: XCTestCase {
         try focusByDirection(hint, app: app)
         XCUIRemote.shared.press(.select)
         attachScreenshot("Adventure hint glows")
-        for _ in 0..<3 {
-            let remaining = cards.allElementsBoundByIndex.filter { !$0.label.contains("Matched.") }
+        for found in 1...3 {
+            let remaining = cards.allElementsBoundByIndex
             let first = try XCTUnwrap(remaining.first)
             let partner = try XCTUnwrap(remaining.first { $0.identifier != first.identifier && $0.label == first.label })
             try focusByDirection(first, app: app)
             XCUIRemote.shared.press(.select)
             try focusByDirection(partner, app: app)
             XCUIRemote.shared.press(.select)
-            let matched = expectation(for: NSPredicate(format: "label CONTAINS %@", "Matched."), evaluatedWith: first)
-            wait(for: [matched], timeout: 5)
+            let collected = expectation(for: NSPredicate { _, _ in cards.count == 6 - found * 2 }, evaluatedWith: nil)
+            wait(for: [collected], timeout: 5)
+            XCTAssertEqual(app.staticTexts["tv-memory-pairs-progress"].label, "\(found) of 3 pairs")
+            XCTAssertEqual(app.descendants(matching: .any)["tv-memory-pairs-collection"].value as? String, "\(found) of 3")
+            let focusRestored = expectation(for: NSPredicate { _, _ in
+                app.buttons.allElementsBoundByIndex.contains { $0.hasFocus }
+            }, evaluatedWith: nil)
+            wait(for: [focusRestored], timeout: 5)
         }
         let again = app.buttons["tv-memory-adventure-again"]
         XCTAssertTrue(again.waitForExistence(timeout: 10))
