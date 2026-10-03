@@ -221,6 +221,7 @@
 		A732110EC5FC0A752C762C67 /* CompareCampUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B2BA2869FAA0D0EF7112D2 /* CompareCampUITests.swift */; };
 		A779844753DA571C970996A5 /* RectangleFactoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C46ED7E65F16A1DF70CB677 /* RectangleFactoryView.swift */; };
 		AAE7CF51B1F49E35BD60B8AE /* CountryGameplayThread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562AF40D141D963EFC3CD914 /* CountryGameplayThread.swift */; };
+		ABDFA535D4E76E885DACD829 /* AnimalExplorerEvidenceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAAC34456DF0A074F2F1FA8F /* AnimalExplorerEvidenceUITests.swift */; };
 		ACFCA4BFA985FE6B075F78CD /* LaneRecallReviewEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E990090E82249BFB590CB421 /* LaneRecallReviewEngine.swift */; };
 		AD176DB0009A353EDC5E60DD /* LearningQuestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD6DFC46CBBB3E4C4DB075D /* LearningQuestView.swift */; };
 		AD23681094CEC90B58309E61 /* LaneMasteryState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3532C8409F42C5B9DB67FE2B /* LaneMasteryState.swift */; };
@@ -588,6 +589,7 @@
 		D975A775D04EF8BAE9404DBC /* TVFamilyLearningUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVFamilyLearningUITests.swift; sourceTree = "<group>"; };
 		D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryStageVocabulary.swift; sourceTree = "<group>"; };
 		D9E6A4D2C61679954D59F25A /* MemoryContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryContentTests.swift; sourceTree = "<group>"; };
+		DAAC34456DF0A074F2F1FA8F /* AnimalExplorerEvidenceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimalExplorerEvidenceUITests.swift; sourceTree = "<group>"; };
 		DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLayoutTests.swift; sourceTree = "<group>"; };
 		DBDE340757D1657A76B2F5C5 /* EquationResolveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquationResolveView.swift; sourceTree = "<group>"; };
 		DDD6DFC46CBBB3E4C4DB075D /* LearningQuestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningQuestView.swift; sourceTree = "<group>"; };
@@ -1000,6 +1002,7 @@
 			children = (
 				7C8EA6F17A605E6529A7136F /* AngleArcadeTVVisualsUITests.swift */,
 				D889AFE67A562678257A0491 /* AngleArcadeUITests.swift */,
+				DAAC34456DF0A074F2F1FA8F /* AnimalExplorerEvidenceUITests.swift */,
 				6E05B9B2843B36BAC3B41B0A /* AnimalExplorerUITests.swift */,
 				B4B2BA2869FAA0D0EF7112D2 /* CompareCampUITests.swift */,
 				028559322E9A969FEDF61096 /* MemoryGalleryContentUITests.swift */,
@@ -1508,6 +1511,7 @@
 			files = (
 				4C03E73AE595588B45C0DE2A /* AngleArcadeTVVisualsUITests.swift in Sources */,
 				0E6E768F57FD0C978BB0040D /* AngleArcadeUITests.swift in Sources */,
+				ABDFA535D4E76E885DACD829 /* AnimalExplorerEvidenceUITests.swift in Sources */,
 				BE5C11B43473D6C763F7CBB3 /* AnimalExplorerUITests.swift in Sources */,
 				A732110EC5FC0A752C762C67 /* CompareCampUITests.swift in Sources */,
 				709D0F92DC98441A419DC068 /* MemoryGalleryContentUITests.swift in Sources */,
