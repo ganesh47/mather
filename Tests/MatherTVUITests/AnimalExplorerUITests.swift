@@ -9,7 +9,10 @@ final class AnimalExplorerUITests: XCTestCase {
     func testIndiaPhotoBrowsingShowsFactsAndOfflineCreditsAndReturnsToGallery() throws {
         let app = launchExplorer()
         XCTAssertTrue(app.descendants(matching: .any)["tv-animal-photo-bank-v1"].exists)
-        XCTAssertTrue(app.descendants(matching: .any)["tv-animal-collection-description"].label.contains("Species found in India"))
+        let indiaDescription = app.staticTexts.matching(identifier: "tv-animal-collection-description")
+            .matching(NSPredicate(format: "label CONTAINS %@", "Species found in India")).firstMatch
+        XCTAssertTrue(indiaDescription.exists)
+        XCTAssertTrue(indiaDescription.label.contains("Species found in India"))
         attach("India animal photo browser")
         choose(app, app.buttons["tv-animal-collection-all-animals"])
         XCTAssertTrue(app.buttons["tv-animal-collection-all-animals"].label.contains("31 animal photos"))
@@ -17,7 +20,8 @@ final class AnimalExplorerUITests: XCTestCase {
         let first = try XCTUnwrap(photos.allElementsBoundByIndex.first)
         choose(app, first)
         XCTAssertTrue(app.staticTexts["tv-animal-detail-title"].waitForExistence(timeout: 5))
-        let credits = app.descendants(matching: .any)["tv-animal-photo-credits"]
+        let credits = app.descendants(matching: .any).matching(identifier: "tv-animal-photo-credits")
+            .matching(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "License:", "Source:")).firstMatch
         XCTAssertTrue(credits.exists)
         XCTAssertTrue(credits.label.contains("License:"))
         XCTAssertTrue(credits.label.contains("Source:"))
@@ -53,7 +57,7 @@ final class AnimalExplorerUITests: XCTestCase {
         let correct = feedback.label.hasPrefix("Correct.")
         XCTAssertTrue(correct || feedback.label.hasPrefix("Not a match."))
         if correct { XCTAssertTrue(feedback.label.contains(selectedName)) }
-        let matched = app.descendants(matching: .any)["tv-animal-stat-matched"]
+        let matched = app.staticTexts["tv-animal-stat-matched"]
         XCTAssertTrue(matched.label.contains(correct ? "1 Matched" : "0 Matched"))
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
         XCTAssertTrue(answers.allElementsBoundByIndex.allSatisfy { !$0.isEnabled }, "Answered choices must reject a duplicate answer")
@@ -92,7 +96,7 @@ final class AnimalExplorerUITests: XCTestCase {
         let originalIDs = Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier))
         XCTAssertTrue(app.staticTexts["tv-animal-time-expired"].waitForExistence(timeout: 12))
         waitForFocus(app.buttons["tv-animal-more-time"])
-        XCTAssertTrue(app.descendants(matching: .any)["tv-animal-stat-matched"].label.contains("0 Matched"))
+        XCTAssertTrue(app.staticTexts["tv-animal-stat-matched"].label.contains("0 Matched"))
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
         XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
         attach("Gentle timer expiry offers another breath")
@@ -157,7 +161,7 @@ final class AnimalExplorerUITests: XCTestCase {
         attach("Animal photo quiz completed")
         XCUIRemote.shared.press(.select)
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
-        XCTAssertTrue(app.descendants(matching: .any)["tv-animal-stat-matched"].label.contains("0 Matched"))
+        XCTAssertTrue(app.staticTexts["tv-animal-stat-matched"].label.contains("0 Matched"))
         XCTAssertFalse(app.staticTexts["tv-animal-answer-feedback"].exists)
         attach("Animal photo quiz replay")
     }
@@ -187,7 +191,7 @@ final class AnimalExplorerUITests: XCTestCase {
     }
 
     private func timerSeconds(_ app: XCUIApplication) throws -> Int {
-        let label = app.descendants(matching: .any)["tv-animal-timer"].label
+        let label = app.staticTexts["tv-animal-timer"].label
         let expression = try NSRegularExpression(pattern: "[0-9]+:[0-9]{2}")
         let match = try XCTUnwrap(expression.firstMatch(in: label, range: NSRange(label.startIndex..., in: label)))
         let range = try XCTUnwrap(Range(match.range, in: label))
