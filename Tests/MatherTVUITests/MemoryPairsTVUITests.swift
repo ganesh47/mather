@@ -107,8 +107,13 @@ final class MemoryPairsTVUITests: XCTestCase {
         try start(app, waitForCardFocus: false)
         let identities = Set(cards(app).allElementsBoundByIndex.map(\.identifier))
         let more = app.buttons["tv-memory-adventure-more-time"]
+        let untimed = app.buttons["tv-memory-adventure-untimed"]
+        XCTAssertTrue(app.staticTexts["tv-memory-pairs-expired"].waitForExistence(timeout: 10))
         XCTAssertTrue(more.waitForExistence(timeout: 10))
         waitFocus(more)
+        XCTAssertEqual(more.identifier, "tv-memory-adventure-more-time")
+        XCTAssertEqual(untimed.identifier, "tv-memory-adventure-untimed")
+        XCTAssertEqual(app.buttons.matching(identifier: "tv-memory-pairs-expired").count, 0)
         XCTAssertEqual(progress(app), "0 of 3 pairs")
         screenshot("Gentle timer expiry preserves all six cards")
         XCUIRemote.shared.press(.select)
@@ -123,7 +128,8 @@ final class MemoryPairsTVUITests: XCTestCase {
         try focus(app.buttons["tv-memory-adventure-resume"], app: app)
         XCUIRemote.shared.press(.select)
         XCTAssertTrue(more.waitForExistence(timeout: 10))
-        try focus(app.buttons["tv-memory-adventure-untimed"], app: app)
+        XCTAssertTrue(app.staticTexts["tv-memory-pairs-expired"].exists)
+        try focus(untimed, app: app)
         XCUIRemote.shared.press(.select)
         XCTAssertFalse(more.exists)
         XCTAssertEqual(Set(cards(app).allElementsBoundByIndex.map(\.identifier)), identities)

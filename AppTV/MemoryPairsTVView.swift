@@ -311,6 +311,7 @@ struct MemoryPairsTVView: View {
         HStack(spacing: 22) {
             Text("Take a breath. Your pairs are safe.")
                 .font(.system(size: 25, weight: .semibold, design: .rounded))
+                .accessibilityIdentifier("tv-memory-pairs-expired")
             action("More time", id: "more-time") {
                 clock.addMoreTime(seconds: 60)
                 present("One more minute. Keep matching.")
@@ -323,7 +324,6 @@ struct MemoryPairsTVView: View {
                 restoreFocus(to: nextCardID)
             }
         }
-        .accessibilityIdentifier("tv-memory-pairs-expired")
     }
 
     private var timerDuration: Int {
