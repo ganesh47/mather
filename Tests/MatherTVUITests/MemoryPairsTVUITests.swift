@@ -186,6 +186,32 @@ final class MemoryPairsTVUITests: XCTestCase {
             XCTAssertEqual(cards(app).count, 6)
             XCTAssertGreaterThan(cards(app).firstMatch.frame.height, 250)
             screenshot("\(adventure) large full pictures")
+            if adventure == "rescueCrew" {
+                try focus(app.buttons["tv-memory-adventure-options"], app: app)
+                XCUIRemote.shared.press(.select)
+                try start(app, id: "hidden", count: 10)
+                let hiddenCards = cards(app).allElementsBoundByIndex
+                XCTAssertEqual(progress(app), "0 of 5 pairs")
+                XCTAssertEqual(hiddenCards.count, 10)
+                XCTAssertTrue(hiddenCards.allSatisfy { $0.label.hasPrefix("Hidden card") })
+                XCTAssertEqual(hiddenCards[0].frame.midY, hiddenCards[4].frame.midY, accuracy: 2)
+                XCTAssertEqual(hiddenCards[5].frame.midY, hiddenCards[9].frame.midY, accuracy: 2)
+                XCTAssertGreaterThan(hiddenCards[5].frame.midY, hiddenCards[0].frame.midY)
+                try focus(hiddenCards[9], app: app)
+                XCTAssertTrue(hiddenCards[9].hasFocus)
+                screenshot("Rescue requested six pairs uses five actual pairs in two balanced rows")
+                let hint = app.buttons["tv-memory-adventure-hint"]
+                try focus(hint, app: app)
+                XCTAssertTrue(hint.hasFocus)
+                XCUIRemote.shared.press(.select)
+                let revealed = expectation(for: NSPredicate { _, _ in
+                    self.cards(app).allElementsBoundByIndex.filter { !$0.label.hasPrefix("Hidden card") }.count == 2
+                }, evaluatedWith: nil)
+                wait(for: [revealed], timeout: 5)
+                XCTAssertEqual(progress(app), "0 of 5 pairs")
+                XCTAssertEqual(cards(app).count, 10)
+                screenshot("Rescue five-pair board keeps remote hint reachable")
+            }
             XCUIRemote.shared.press(.menu)
             XCTAssertTrue(app.buttons["tv-memory-category-animals"].waitForExistence(timeout: 10))
             app.terminate()

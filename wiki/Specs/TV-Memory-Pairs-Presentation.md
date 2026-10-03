@@ -4,7 +4,7 @@ Scope: Busy Builders, Rescue Crew and Space Trip picture-pairs presentation. The
 
 ## Pictures and stable layout
 
-- Default: three visible pairs in three columns and two complete rows. Four visible pairs use four columns and two rows. Hide and seek preserves up to six pairs, with four columns and up to three rows; Rescue Crew correctly uses its actual five-pair pool.
+- Default: three visible pairs in three columns and two complete rows. Four visible pairs use four columns and two rows. Hide and seek preserves up to six pairs, with four columns and up to three rows; Rescue Crew uses its actual five-pair pool in five columns and two complete rows.
 - The grid fills the available safe area. Each picture uses full aspect fit with 12pt inset, with no cropping or image distortion. Existing 512×512 bundled artwork is not described as high resolution.
 - Each round retains its original card slots. Collection replaces the two matched buttons with quiet, noninteractive placeholders; remaining cards do not move or change identity. Collected pairs appear as one thumbnail per actual picture identity in the status tray.
 - Focus uses a clear outline and a restrained 1.018 scale. Reduce Motion removes focus scale, collection transition and final badge motion.
@@ -36,6 +36,6 @@ Expiry freezes the clock without altering cards or score. More time adds 60 seco
 3. Gentle timer expiry, More time and Untimed recovery with identical cards and counts.
 4. Reduce Motion four-pair layout, six-pair hidden mode, temporary hint visibility, and Menu exit.
 5. Muted narration option state, accepted pairing and options Resume.
-6. Rescue Crew and Space Trip large full-picture screenshots.
+6. Rescue Crew and Space Trip large full-picture screenshots; Rescue requested-six mode uses ten hidden cards / five actual pairs in two balanced rows, with last-card focus and hint access.
 
 The existing `MemoryGalleryContentUITests.testAdventureStartsWithThreeVisiblePairsAndOffersHint` checks collection instead of retained matched buttons. Coordinator native builds, test runs and post-change screenshot inspection remain required before declaring the presentation verified. VoiceOver audio and focus behavior also require a manual accessibility pass.

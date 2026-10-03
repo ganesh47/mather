@@ -227,7 +227,7 @@ struct MemoryPairsTVView: View {
 
     private var cardGrid: some View {
         GeometryReader { geometry in
-            let columns = engine.totalPairs <= 3 ? 3 : 4
+            let columns = gridColumns
             let rows = max(1, (engine.cards.count + columns - 1) / columns)
             let gap: CGFloat = 22
             let width = (geometry.size.width - CGFloat(columns - 1) * gap) / CGFloat(columns)
@@ -330,10 +330,11 @@ struct MemoryPairsTVView: View {
         testMode && ProcessInfo.processInfo.arguments.contains("-memory-pairs-short-timer") ? 2 : 120
     }
     private var resumeID: String { engine.totalPairs > 0 ? "resume" : "start" }
+    private var gridColumns: Int { engine.totalPairs == 5 ? 5 : engine.totalPairs <= 3 ? 3 : 4 }
     private var nextCardID: String? {
         let remaining = engine.cards.indices.filter { !engine.cards[$0].isMatched && !session.collectedIDs.contains(engine.cards[$0].id) }
         guard let origin = lastCardIndex else { return remaining.first.map { engine.cards[$0].id.uuidString } }
-        let columns = engine.totalPairs <= 3 ? 3 : 4
+        let columns = gridColumns
         let closest = remaining.min { first, second in
             let firstDistance = abs(first / columns - origin / columns) + abs(first % columns - origin % columns)
             let secondDistance = abs(second / columns - origin / columns) + abs(second % columns - origin % columns)
