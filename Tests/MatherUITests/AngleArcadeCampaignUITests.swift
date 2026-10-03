@@ -103,12 +103,18 @@ final class AngleArcadeCampaignUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         let listen = app.buttons["angle-progress-listen"]
         let scroll = app.scrollViews["angle-progress-scroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 10))
         for _ in 0..<3 {
-            if listen.isHittable { break }
+            let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 1, dy: 1)
+            if listen.isHittable && viewport.contains(listen.frame) { break }
             scroll.swipeUp()
         }
         XCTAssertTrue(listen.isHittable)
-        screenshot("Compact landscape paused Angle recovery keeps Listen and Done reachable")
+        let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 1, dy: 1)
+        XCTAssertTrue(viewport.contains(listen.frame), "The complete Listen control must be visible after bounded scrolling")
+        guard listen.isHittable && viewport.contains(listen.frame) else { return }
+        listen.tap()
+        screenshot("Compact landscape paused Angle recovery with full Listen control after scrolling")
         let done = app.buttons["angle-cannon-done-button"]
         XCTAssertTrue(done.isHittable)
         done.tap()
