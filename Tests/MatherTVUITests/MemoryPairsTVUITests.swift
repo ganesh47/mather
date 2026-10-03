@@ -102,7 +102,9 @@ final class MemoryPairsTVUITests: XCTestCase {
         let app = try launchAdventure(extra: ["-memory-pairs-short-timer"])
         try focus(app.buttons["tv-memory-adventure-timer"], app: app)
         XCUIRemote.shared.press(.select)
-        try start(app)
+        // Accessibility polling can take longer than the intentional two-second expiry.
+        // This case expects recovery focus, rather than transient initial card focus.
+        try start(app, waitForCardFocus: false)
         let identities = Set(cards(app).allElementsBoundByIndex.map(\.identifier))
         let more = app.buttons["tv-memory-adventure-more-time"]
         XCTAssertTrue(more.waitForExistence(timeout: 10))
@@ -202,10 +204,11 @@ final class MemoryPairsTVUITests: XCTestCase {
         waitFocus(app.buttons["tv-memory-adventure-start"])
         return app
     }
-    private func start(_ app: XCUIApplication, id: String = "start", count: Int = 6) throws {
+    private func start(_ app: XCUIApplication, id: String = "start", count: Int = 6, waitForCardFocus: Bool = true) throws {
         try focus(app.buttons["tv-memory-adventure-\(id)"], app: app)
         XCUIRemote.shared.press(.select)
         waitCount(count, app: app)
+        guard waitForCardFocus else { return }
         let focused = expectation(for: NSPredicate { _, _ in
             self.cards(app).allElementsBoundByIndex.contains { $0.hasFocus }
         }, evaluatedWith: nil)
