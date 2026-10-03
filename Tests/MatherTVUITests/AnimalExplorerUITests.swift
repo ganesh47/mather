@@ -191,7 +191,11 @@ final class AnimalExplorerUITests: XCTestCase {
     }
 
     private func timerSeconds(_ app: XCUIApplication) throws -> Int {
-        let label = app.staticTexts["tv-animal-timer"].label
+        // The shared timer intentionally exposes one node and hides its children.
+        let timer = app.descendants(matching: .any)["tv-animal-timer"]
+        XCTAssertTrue(timer.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "tv-animal-timer").count, 1)
+        let label = timer.label
         let expression = try NSRegularExpression(pattern: "[0-9]+:[0-9]{2}")
         let match = try XCTUnwrap(expression.firstMatch(in: label, range: NSRange(label.startIndex..., in: label)))
         let range = try XCTUnwrap(Range(match.range, in: label))
