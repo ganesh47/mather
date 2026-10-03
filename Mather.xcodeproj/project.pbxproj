@@ -52,6 +52,7 @@
 		253202E8F4E31EA54B1F3FF7 /* CompareCampEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DFD1B65EE6EB5A4BC2BC18D /* CompareCampEngine.swift */; };
 		260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */; };
 		26BFA6B9296DBF35F4F64F52 /* NumberStoryGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1509AE201C856C72003B229E /* NumberStoryGeneratorTests.swift */; };
+		27151C84B3C5EFF0B08AA12A /* TVFriendlyTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C69E67FEFFF7E2EC709A6B /* TVFriendlyTimerView.swift */; };
 		27A9C7A5A1C6C36674F9F8E4 /* SliceTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E1666C2BD5A8EE21A76C6D /* SliceTheme.swift */; };
 		2A15E2F3F8A237089C550986 /* LaneRecallReviewEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */; };
 		2A20A209CFEF1017A574D767 /* TVNarrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */; };
@@ -111,6 +112,7 @@
 		555A0D80EB93DAF706D08DCB /* PairingChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */; };
 		557BD6880507336DD0D2659A /* ActivityLearningEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */; };
 		55A9150D972B03376700D13C /* AngleArcadeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4BA399B9D8FF2330517D01 /* AngleArcadeEngine.swift */; };
+		55F1D5CD765A2D6DF629D8D1 /* TVFriendlyChallengeClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF24FBDDD32C566004F15A5B /* TVFriendlyChallengeClock.swift */; };
 		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		573F44DA8976FD3F1862F7EB /* IOSLearningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */; };
 		5740442F29746383B2ADB113 /* CompareCampProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C672ED06F9F40FCA2BC5EC /* CompareCampProgressTests.swift */; };
@@ -133,6 +135,7 @@
 		6A7A05890727E70C65FBA182 /* GameplayThreadCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D5588291CDA598046BCB6 /* GameplayThreadCatalog.swift */; };
 		6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */; };
 		6B5797CBD77659572D80A51F /* MemorySelectionSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14156569E93433F8C6BB2F9 /* MemorySelectionSafetyTests.swift */; };
+		6C7182822A8488AC482DADFA /* TVFriendlyChallengeClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1623E848545171E77E9DA41A /* TVFriendlyChallengeClockTests.swift */; };
 		6D1D0FF96EBD4238CCF37EB4 /* RectangleFactoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AD35E38E6ACEE1DF4AB812F /* RectangleFactoryTests.swift */; };
 		6E8014E6E81A7ECC088456D5 /* MultipleChoiceStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925AC0A00DB8E032BFB696BB /* MultipleChoiceStageView.swift */; };
 		6EF0C5C2A7F0FFD50254907C /* GravitySplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892C73ABB87A9BFDC46D9896 /* GravitySplitView.swift */; };
@@ -200,6 +203,7 @@
 		A3E583B00B7BE54D5F3E0535 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4C11FE8A80968AE7EA69CC /* AppModel.swift */; };
 		A4B5AFA2FA430D40BDBDD100 /* ExplorerLabMasteryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FCE7B3840A8A5977FF70D9 /* ExplorerLabMasteryStoreTests.swift */; };
 		A580D6F96249197C9148D59D /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B3F29980CE5E67E05A4F30F /* HapticsService.swift */; };
+		A5B0F295091A36EFEFE8EC77 /* TVFriendlyChallengeClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF24FBDDD32C566004F15A5B /* TVFriendlyChallengeClock.swift */; };
 		A5F7844025B41514A7161DE1 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FD74E168EE297B4DF4194D5 /* FeatureFlags.swift */; };
 		A655FC3DE8DABF5035BB37ED /* LearningQuestUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060914B145E337A317F542AD /* LearningQuestUITests.swift */; };
 		A6891D078FBDD42E246E32C9 /* ProfilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03EDAEC986A0BA1487A577C5 /* ProfilePickerView.swift */; };
@@ -350,6 +354,7 @@
 		14219037741B83AFD98E37E7 /* PairingChallenge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingChallenge.swift; sourceTree = "<group>"; };
 		1509AE201C856C72003B229E /* NumberStoryGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryGeneratorTests.swift; sourceTree = "<group>"; };
 		157718747997491EAA58488C /* SensorCapabilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorCapabilityService.swift; sourceTree = "<group>"; };
+		1623E848545171E77E9DA41A /* TVFriendlyChallengeClockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVFriendlyChallengeClockTests.swift; sourceTree = "<group>"; };
 		16C7DA238533101CF6E05398 /* ParentSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentSummaryView.swift; sourceTree = "<group>"; };
 		18232D2ACD86E5BDABB2BB23 /* SumSprintPartyTVSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVSessionTests.swift; sourceTree = "<group>"; };
 		1846B5A411083D259E3D510B /* GravitySplitStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GravitySplitStateTests.swift; sourceTree = "<group>"; };
@@ -522,6 +527,7 @@
 		BABB78440A095FF50E46066E /* LaneRecallReviewEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRecallReviewEngineTests.swift; sourceTree = "<group>"; };
 		BD8A34215EE8D8788E7185EB /* MatherTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatherTheme.swift; sourceTree = "<group>"; };
 		BD8B24DCB64263D42E8CC280 /* QuestPriorEvidenceReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestPriorEvidenceReader.swift; sourceTree = "<group>"; };
+		BF24FBDDD32C566004F15A5B /* TVFriendlyChallengeClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVFriendlyChallengeClock.swift; sourceTree = "<group>"; };
 		BF7F4303A94026305057151C /* CompareCampPassportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampPassportStore.swift; sourceTree = "<group>"; };
 		C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRound.swift; sourceTree = "<group>"; };
 		C5C0EC27EA8E30BDA854CE9E /* RoomQuestEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestEngineTests.swift; sourceTree = "<group>"; };
@@ -542,6 +548,7 @@
 		CFCDB830BCA71408B46E1A4F /* NumberStoryGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberStoryGenerator.swift; sourceTree = "<group>"; };
 		D178918B74AE2850A3F8EB4A /* AngleCannonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleCannonView.swift; sourceTree = "<group>"; };
 		D29BA55590AB9BAD7D586B7D /* SumSprintGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintGenerator.swift; sourceTree = "<group>"; };
+		D2C69E67FEFFF7E2EC709A6B /* TVFriendlyTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVFriendlyTimerView.swift; sourceTree = "<group>"; };
 		D3CED0505611B19CEE635DE7 /* WaterCycleLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleLabView.swift; sourceTree = "<group>"; };
 		D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHandoff.swift; sourceTree = "<group>"; };
 		D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
@@ -692,6 +699,7 @@
 				69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */,
 				D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */,
 				69F7DA87B8FFDEBE7FC53859 /* TVFamilyLearningView.swift */,
+				D2C69E67FEFFF7E2EC709A6B /* TVFriendlyTimerView.swift */,
 			);
 			path = AppTV;
 			sourceTree = "<group>";
@@ -801,6 +809,7 @@
 				4973F8B722B80D7E9BBCB455 /* TimerChallengePolicyTests.swift */,
 				C967C3358A30DF062153D794 /* TransferExactRebuildTests.swift */,
 				CD670E85B31C24247FA80EA7 /* TransferIntentTests.swift */,
+				1623E848545171E77E9DA41A /* TVFriendlyChallengeClockTests.swift */,
 				A3A273DB769B7A8C65772013 /* TVLearningStoreTests.swift */,
 				0075A9691682816D7BEEB4FE /* TVNarrationControllerTests.swift */,
 				E0DE2E6D7D0A282D3DB930BC /* TwoFingerProtractorTests.swift */,
@@ -907,6 +916,7 @@
 				C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */,
 				1C85EF6A532AA92F5B697AA3 /* SumSprintPartyTVSession.swift */,
 				B049757C9324E4EA88DAB861 /* TimerChallengePolicy.swift */,
+				BF24FBDDD32C566004F15A5B /* TVFriendlyChallengeClock.swift */,
 				AEC179A2D9FE9BB537E4CCD7 /* VehicleSpec.swift */,
 				9435179B05EDA7984881930C /* VehicleTheme.swift */,
 				1B034901F29C5DAD58D7C310 /* VerticalSliceEngine.swift */,
@@ -1334,6 +1344,8 @@
 				5C18E2451463D33137B62B47 /* SumSprintPartyTVSession.swift in Sources */,
 				3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */,
 				DDB864DB1EFBC961C2035A32 /* TVFamilyLearningView.swift in Sources */,
+				55F1D5CD765A2D6DF629D8D1 /* TVFriendlyChallengeClock.swift in Sources */,
+				27151C84B3C5EFF0B08AA12A /* TVFriendlyTimerView.swift in Sources */,
 				D0FB6CDA1DB35904D2AD564A /* TVLearningStore.swift in Sources */,
 				2A20A209CFEF1017A574D767 /* TVNarrationController.swift in Sources */,
 			);
@@ -1418,6 +1430,7 @@
 				98C04D40515235C2224F4067 /* SumSprintPartyTVSessionTests.swift in Sources */,
 				5C75510CC0980CAE5178DA62 /* SwiftDataStoreRecoveryTests.swift in Sources */,
 				E426438A88308DA0F76D1197 /* SymmetryFoldTests.swift in Sources */,
+				6C7182822A8488AC482DADFA /* TVFriendlyChallengeClockTests.swift in Sources */,
 				635D36CF05D9E04D41A72179 /* TVLearningStoreTests.swift in Sources */,
 				ECB54B0B0D69875B207B7B2D /* TVNarrationControllerTests.swift in Sources */,
 				0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */,
@@ -1605,6 +1618,7 @@
 				4ABC4A6418596E71AD701541 /* SumSprintSummaryView.swift in Sources */,
 				DCFB2717CCB80A298F9A2D36 /* SwiftDataStoreRecovery.swift in Sources */,
 				477EEF0E16F958D51EA536E8 /* SymmetryFoldView.swift in Sources */,
+				A5B0F295091A36EFEFE8EC77 /* TVFriendlyChallengeClock.swift in Sources */,
 				3498B4244746BFC2DA3CFFE3 /* TVLearningStore.swift in Sources */,
 				3F84DA28B40137198D36DD00 /* TVNarrationController.swift in Sources */,
 				1CAB4FE9FAA2F4CD4CF15811 /* TelemetryWriter.swift in Sources */,
