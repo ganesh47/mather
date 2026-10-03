@@ -4,7 +4,7 @@
 
 Current games:
 
-- Memory Gallery — picture and name matching
+- Memory Gallery — narrated picture quizzes and illustrated picture-pair adventures
 - Angle Arcade — predict and launch with angles
 - Sum Sprint Party — calm addition practice
 - Compare Camp — 24 themed camps with building, counting, comparison and number signs
@@ -50,3 +50,12 @@ Compare Camp:
 - Play/Pause repeats the current task, chosen options, scaffold or solved explanation. Menu returns to all games. Reentry starts at the camp chooser.
 - Completed trails earn a device-local passport sticker. Replay and later completed-camp visits vary the groups. Exploration is celebrated without a timer or accuracy score.
 - The printable companion is `output/pdf/compare-camp-family-play-kit.pdf`; its builder and the content manifest exporter live in `scripts/`.
+
+Memory Adventures:
+
+- Busy Builders, Rescue Crew, and Space Trip offer picture pairs or the existing narrated quiz.
+- Start with three visible pairs, try four, or choose hidden pairs (up to six; Rescue Crew has five). Hints briefly reveal a matching pair.
+- Matched cards remain reachable with the remote. Explore speaks a short observation and optional pretend-play activity. Play/Pause repeats the current guidance; Menu returns to the gallery.
+- Adventure quizzes choose distinct prompts; Rescue Crew finishes after its five vehicles. Replay changes the order.
+- Bundled content v3 protects refreshed artwork from older downloaded packs. Newer packs activate at a gallery boundary.
+- The reviewed art manifest and source credits are in `wiki/Specs/Memory-Adventures-Art-Provenance.json`; content decisions and factual sources are in `wiki/Specs/Memory-Adventures-Content.md`.

@@ -9,7 +9,7 @@ struct IOSLearningCatalog: Codable, Equatable {
     let assets: [MemoryGalleryContentPack.Asset]
 
     static var bundled: Self {
-        Self(schemaVersion: 1, contentVersion: 1,
+        Self(schemaVersion: 1, contentVersion: 3,
              decks: MemoryDeckKind.allCases.map { .init(kind: $0, cards: MemoryDeck.animals(for: $0)) },
              threads: GameplayThreadID.allCases.map { GameplayThreadCatalog.thread(for: $0) }, assets: [])
     }
@@ -41,7 +41,12 @@ struct IOSLearningCatalog: Codable, Equatable {
             + MemoryDeck.allDeckAnimals.flatMap(\.learningArtwork).map(\.assetName)
             + bundledEntities.compactMap(\.visualAssetName)
             + bundledEntities.flatMap(\.properties).compactMap(\.visualAssetName))
-        let knownAssets = bundledAssets.union(assets.map(\.id))
+        // Earlier schema-1 feeds reference the 36 original bird illustrations.
+        // They remain bundled, even after refreshed cards use the reviewed art.
+        let legacyBirdAssets = Set(["A", "B"].flatMap { sheet in
+            (1...18).map { "MemoryBird" + sheet + String(format: "%02d", $0) }
+        })
+        let knownAssets = bundledAssets.union(assets.map(\.id)).union(legacyBirdAssets)
         let shapeKeys = Set(CountryGameplayThread.thread.entities.compactMap(\.visualShapeKey)
             + CountryGameplayThread.thread.entities.flatMap(\.properties).compactMap(\.visualShapeKey))
         func validateVisual(asset: String?, shape: String?, visual: String?) throws {

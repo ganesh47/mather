@@ -10,4 +10,4 @@ swiftc -swift-version 6 -parse-as-library -target "$(uname -m)-apple-macosx14.0"
     "$repo_root/Services/MemoryGalleryContentStore.swift" \
     "$repo_root/scripts/MemoryGalleryContentSmoke.swift" \
     -o "$task_dir/smoke"
-"$task_dir/smoke"
+"$task_dir/smoke" "$@"

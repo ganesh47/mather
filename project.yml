@@ -61,6 +61,8 @@ targets:
         includes:
           - "**/*.swift"
       - path: Domain/MemoryContent.swift
+      - path: Domain/MemoryAdventure.swift
+      - path: Domain/MemoryPairingEngine.swift
       - path: Domain/MemoryGalleryTVRound.swift
       - path: Domain/MemoryGalleryContentPack.swift
       - path: Services/MemoryGalleryContentStore.swift

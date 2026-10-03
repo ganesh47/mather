@@ -15,6 +15,7 @@ Lightweight records of significant technical decisions made for Mather.
 | [ADR-0007](ADR-0007-on-device-memory-card-rewriting.md) | On-device Memory card rewriting | Accepted | 2026-08-08 |
 | [ADR-0008](ADR-0008-downloadable-memory-gallery-content.md) | Downloadable Memory Gallery content | Proposed | 2026-10-01 |
 | [ADR-0009](https://github.com/ganesh47/mather/wiki/ADRs-ADR-0009-compare-camp-adventures) | Compare Camp adventures and local exploration passport | Accepted | 2026-10-02 |
+| [ADR-0012](ADR-0012-memory-adventures.md) | Shared Memory adventures and pairing feedback | Accepted | 2026-10-02 |
 
 ---
 

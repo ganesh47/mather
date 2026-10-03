@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		015E9211F8AACA52D2E560DF /* LearningHandoffStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C861DA75B25B50743409CF /* LearningHandoffStore.swift */; };
+		016B6DF6BF73ADFB15D63841 /* MemoryPairingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B60FB00647A27C912B77EEC /* MemoryPairingEngine.swift */; };
 		01BA7E85C10B874F9C3BE7F3 /* RoomQuestEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B9AA9EA4CE0C8465C1D7E4 /* RoomQuestEngine.swift */; };
 		0226754603BAAA93415D4111 /* RectangleFactoryOnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD37E9E79CB13908866EFD5 /* RectangleFactoryOnboardingTests.swift */; };
 		0273449B7D7D14C7F3BBA46E /* CounterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D6E69F5C9EE94CF34F415F /* CounterView.swift */; };
@@ -20,6 +21,7 @@
 		0BAF4BD055D053021F23B5DA /* SumSprintDifficultyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78C3729BD6D6038D63EA71D /* SumSprintDifficultyView.swift */; };
 		0D0A34DB7759B11FEB4B6D94 /* LearningCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFA05754CC31E013A31DED6 /* LearningCard.swift */; };
 		0D7D0578848D8B3EFCE786DF /* FeedbackBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192FA715F1CF0C4BCFA0DA53 /* FeedbackBannerView.swift */; };
+		0DA878CAC0069D50692EC2EA /* MemoryPairsTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA1F4A1584E2E0787A44EBF /* MemoryPairsTVView.swift */; };
 		0E6E768F57FD0C978BB0040D /* AngleArcadeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D889AFE67A562678257A0491 /* AngleArcadeUITests.swift */; };
 		0F6FA7E841C46BF9E7897795 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288594261DFE5DC67971E64C /* ThemeTests.swift */; };
 		0F799699251E181629E1C3F8 /* GameActivityCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D6D0061948133C7AB57A02 /* GameActivityCard.swift */; };
@@ -73,6 +75,7 @@
 		38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */; };
 		395D817F47A5B09C52F7B6D3 /* TVFamilyLearningUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D975A775D04EF8BAE9404DBC /* TVFamilyLearningUITests.swift */; };
 		3A2191B9DC40AAD1D0915808 /* SensorCapabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157718747997491EAA58488C /* SensorCapabilityService.swift */; };
+		3CF73CF431E3799DE1DBB3A5 /* MemoryPairingEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 506B9E83DE2934F92A66654E /* MemoryPairingEngineTests.swift */; };
 		3D43E7A118690E1610686ED2 /* RoomQuestStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3FA86EA00E9865ECE7DC64 /* RoomQuestStationStore.swift */; };
 		3DB94C6E2105D6F2729BDF16 /* SumSprintPartyTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */; };
 		3E59F97481BC7A8C37F81395 /* SumSprintEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37DCF6B189D5EC4C0B6099AA /* SumSprintEngine.swift */; };
@@ -80,6 +83,7 @@
 		3F7CA345284169CF6C6F9796 /* ElectronicsCircuitArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718F5CC2C2AE96EAA9331421 /* ElectronicsCircuitArtwork.swift */; };
 		3F84DA28B40137198D36DD00 /* TVNarrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6964E1FEAD0E9B4551B8F00 /* TVNarrationController.swift */; };
 		406C3FEA95214CE100610901 /* GravityArtistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B095D79E7B14DFBAAEDC223 /* GravityArtistTests.swift */; };
+		412D7D55DCB97043CFA75FED /* MemoryPairingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B60FB00647A27C912B77EEC /* MemoryPairingEngine.swift */; };
 		41FD5B9D4053A753EE382469 /* FlipMemoryStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */; };
 		4253E6E9E560AF591454D385 /* MotionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A166DB67AC6450C763D8DC1 /* MotionService.swift */; };
 		4290CA784B52558F26FB9DF5 /* IOSLearningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8DEAF1A6BC799FB9E48158E /* IOSLearningCatalog.swift */; };
@@ -98,6 +102,7 @@
 		4B8129BB96967266F154C641 /* SmartPlayProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E363A70879171C60CF6B0BCA /* SmartPlayProviderTests.swift */; };
 		4CB8E6289BE2BD95813E3B9A /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D8CC8DF5EFFD5DA3DAA8E60 /* LocationService.swift */; };
 		4D1AA6EA86EADDD1EBCD1F2C /* GameplayStageViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F76B8BE6B3409EDE0B4CBF /* GameplayStageViewModelTests.swift */; };
+		4F36FE93814372DCA9786F65 /* MemoryDeckChooserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE02CC4C36015B157BE8F7D /* MemoryDeckChooserView.swift */; };
 		5032EE3DF5732E53D7FE3B3A /* LearningLoopModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7991456D37C3C6C4B262BDE /* LearningLoopModels.swift */; };
 		521C2782BA0163B3216ACD9B /* SumSprintPartyTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D6A8BEC102AC062724068D /* SumSprintPartyTVRound.swift */; };
 		53EB2EBB27E37A71B6205534 /* GameplayStageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 788A6A49D5B41AEFB50725EA /* GameplayStageModels.swift */; };
@@ -109,6 +114,7 @@
 		56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */; };
 		573F44DA8976FD3F1862F7EB /* IOSLearningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A6EC175DBA26D837FAA4 /* IOSLearningCatalogTests.swift */; };
 		5740442F29746383B2ADB113 /* CompareCampProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C672ED06F9F40FCA2BC5EC /* CompareCampProgressTests.swift */; };
+		5919F4E88868A3B023E93ACE /* MemoryAdventureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFF3784D8EC065959929C14E /* MemoryAdventureUITests.swift */; };
 		5A545D0F35C92DAEFBCFB14D /* ParentOffscreenObservationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */; };
 		5A9B729A6A30CB897709C192 /* IOSLearningContentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCCBD61D67FBF25000338A6 /* IOSLearningContentStore.swift */; };
 		5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */; };
@@ -126,6 +132,7 @@
 		6974E510C5A23F54AF9103C5 /* ShapeDetectiveTVSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD5F675BC6397940EC69C25 /* ShapeDetectiveTVSessionStore.swift */; };
 		6A7A05890727E70C65FBA182 /* GameplayThreadCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3D5588291CDA598046BCB6 /* GameplayThreadCatalog.swift */; };
 		6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */; };
+		6B5797CBD77659572D80A51F /* MemorySelectionSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14156569E93433F8C6BB2F9 /* MemorySelectionSafetyTests.swift */; };
 		6D1D0FF96EBD4238CCF37EB4 /* RectangleFactoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AD35E38E6ACEE1DF4AB812F /* RectangleFactoryTests.swift */; };
 		6E8014E6E81A7ECC088456D5 /* MultipleChoiceStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925AC0A00DB8E032BFB696BB /* MultipleChoiceStageView.swift */; };
 		6EF0C5C2A7F0FFD50254907C /* GravitySplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892C73ABB87A9BFDC46D9896 /* GravitySplitView.swift */; };
@@ -149,6 +156,7 @@
 		7AFB5C436E9AA208870BEFE3 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 861805C0710FA71543D194B7 /* HomeView.swift */; };
 		7B95DE9FB34D4A152F5553FB /* VerticalSliceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */; };
 		7D0CBF090E04696122DC9AC6 /* GravitySplitStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1846B5A411083D259E3D510B /* GravitySplitStateTests.swift */; };
+		7DB7F9BE6D5C94375B2559F9 /* MemoryAdventure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630194FB1D71BC44020EF0A5 /* MemoryAdventure.swift */; };
 		7E0E98FBA46C7A3525FA661F /* MatherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 461DA0E92F5D70F6B81654B2 /* MatherApp.swift */; };
 		7FADE96576249148AC8B2014 /* LearningHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42E3ABB7B6E49B34DD62DCE /* LearningHandoff.swift */; };
 		7FB62143D1E1F6D0C83A28F2 /* SumSprintPartyTVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C85EF6A532AA92F5B697AA3 /* SumSprintPartyTVSession.swift */; };
@@ -244,7 +252,9 @@
 		D2F4940226141CE989EBDF64 /* LabRouteRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12757B691EB1421D33AAADD3 /* LabRouteRegressionTests.swift */; };
 		D3FB55BF4C63F6A4E57F3430 /* CompareCampRoundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAA8053C3D08C6A425800E8F /* CompareCampRoundTests.swift */; };
 		D4B429F154A0C75454821970 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128EAA2ABCC936C76AD253C9 /* Assets.xcassets */; };
+		D502C00C006E5132354F3F4D /* MemoryAdventureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA94E36266DEDF6F6547A22 /* MemoryAdventureTests.swift */; };
 		D6B77D0E1066EF25C62E070A /* VehicleSpecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0833BD6044A10DF3735ABE7 /* VehicleSpecTests.swift */; };
+		D75D3561F08E5FE86CF820D0 /* MemoryAdventure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630194FB1D71BC44020EF0A5 /* MemoryAdventure.swift */; };
 		DA45F6891A71F34545469DA0 /* MemoryVarietyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */; };
 		DACF12D2FE3533F43646C074 /* QuestCheckpointStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A9FACA018FA5AFC87671931 /* QuestCheckpointStore.swift */; };
 		DB3C8F8C5DBDACE7D281EEEA /* GameplayProgressStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067B4B0E57BDFFB7B51B4C6D /* GameplayProgressStoreTests.swift */; };
@@ -348,6 +358,7 @@
 		1B095D79E7B14DFBAAEDC223 /* GravityArtistTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GravityArtistTests.swift; sourceTree = "<group>"; };
 		1C85EF6A532AA92F5B697AA3 /* SumSprintPartyTVSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVSession.swift; sourceTree = "<group>"; };
 		1C8860EA72978DA67542C17D /* FactRecordStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactRecordStoreTests.swift; sourceTree = "<group>"; };
+		1DA94E36266DEDF6F6547A22 /* MemoryAdventureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAdventureTests.swift; sourceTree = "<group>"; };
 		1DBF689FCFE4D506002AB78E /* SessionHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryStore.swift; sourceTree = "<group>"; };
 		1E3146FD76B9EAED7C391AA0 /* SumSprintSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintSessionView.swift; sourceTree = "<group>"; };
 		1F451B67C2A515584DDB54A4 /* LabModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModelsTests.swift; sourceTree = "<group>"; };
@@ -360,6 +371,7 @@
 		29E6D96B0A52FD1A63A2F2BB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicyTests.swift; sourceTree = "<group>"; };
 		2B263A7CB3EDD62F58160FDF /* PairingChallengeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingChallengeTests.swift; sourceTree = "<group>"; };
+		2B60FB00647A27C912B77EEC /* MemoryPairingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPairingEngine.swift; sourceTree = "<group>"; };
 		2BA0898F456D9EF08C10E16A /* SmartPlayProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartPlayProvider.swift; sourceTree = "<group>"; };
 		2C3E9C534B6CF90AFEFC7A23 /* AngleArcadeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeModel.swift; sourceTree = "<group>"; };
 		2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryViewTests.swift; sourceTree = "<group>"; };
@@ -407,6 +419,7 @@
 		4CA7F9C3F4DF6F9DD6219582 /* WaterCycleLessonThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleLessonThread.swift; sourceTree = "<group>"; };
 		4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonPlayThreadTests.swift; sourceTree = "<group>"; };
 		4EADCE17D35CAE2DE5B7C4BA /* GameplaySampleThreads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplaySampleThreads.swift; sourceTree = "<group>"; };
+		506B9E83DE2934F92A66654E /* MemoryPairingEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPairingEngineTests.swift; sourceTree = "<group>"; };
 		5116EC9E8413634D723C411E /* SoundDetectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundDetectionServiceTests.swift; sourceTree = "<group>"; };
 		547B4F588C6009F6C7BED5BD /* LabModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModels.swift; sourceTree = "<group>"; };
 		562AF40D141D963EFC3CD914 /* CountryGameplayThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryGameplayThread.swift; sourceTree = "<group>"; };
@@ -425,6 +438,7 @@
 		6172681B765DD94AE4AAF47B /* WaterCycleGameplayThreadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterCycleGameplayThreadTests.swift; sourceTree = "<group>"; };
 		619E50D1AF2E7B164510BC41 /* ShapeDetectiveTVSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeDetectiveTVSessionTests.swift; sourceTree = "<group>"; };
 		62C9FAF248AB426DF0FD1555 /* ResponsiveLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayoutTests.swift; sourceTree = "<group>"; };
+		630194FB1D71BC44020EF0A5 /* MemoryAdventure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAdventure.swift; sourceTree = "<group>"; };
 		6312C329D7FA010DA974C358 /* VerticalSliceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalSliceEngineTests.swift; sourceTree = "<group>"; };
 		69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeDetectiveTVView.swift; sourceTree = "<group>"; };
 		69F7DA87B8FFDEBE7FC53859 /* TVFamilyLearningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVFamilyLearningView.swift; sourceTree = "<group>"; };
@@ -436,6 +450,7 @@
 		6BD6D8FEA3EFC13D0DFD9433 /* ActivityLearningEvidence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLearningEvidence.swift; sourceTree = "<group>"; };
 		6CF9E6CF1A500140B3337C9E /* GameplayThreadContent+WorldAnimals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+WorldAnimals.swift"; sourceTree = "<group>"; };
 		6E01EEE9604B8700E4F60EE2 /* MemoryAskConversationPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAskConversationPolicy.swift; sourceTree = "<group>"; };
+		6EE02CC4C36015B157BE8F7D /* MemoryDeckChooserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDeckChooserView.swift; sourceTree = "<group>"; };
 		704C4B449E2AF16B6AE7330A /* RoomQuestLiveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomQuestLiveScanner.swift; sourceTree = "<group>"; };
 		70C861DA75B25B50743409CF /* LearningHandoffStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningHandoffStore.swift; sourceTree = "<group>"; };
 		7162D00BB4A5B7082F33F545 /* AngleArcadeCampaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleArcadeCampaign.swift; sourceTree = "<group>"; };
@@ -560,10 +575,12 @@
 		E990090E82249BFB590CB421 /* LaneRecallReviewEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRecallReviewEngine.swift; sourceTree = "<group>"; };
 		EAA8053C3D08C6A425800E8F /* CompareCampRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareCampRoundTests.swift; sourceTree = "<group>"; };
 		EB3E740DD832B432B8867661 /* SoundDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundDetectionService.swift; sourceTree = "<group>"; };
+		EBA1F4A1584E2E0787A44EBF /* MemoryPairsTVView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPairsTVView.swift; sourceTree = "<group>"; };
 		ECFA05754CC31E013A31DED6 /* LearningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningCard.swift; sourceTree = "<group>"; };
 		ECFF09E7C4882057E1DFE232 /* GameplayThreadContent+Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameplayThreadContent+Shapes.swift"; sourceTree = "<group>"; };
 		EE940A6EB3DB9430E0432F62 /* ParentOffscreenObservationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentOffscreenObservationTests.swift; sourceTree = "<group>"; };
 		EF0EF97B257AB73DD5B1F273 /* FlipMemoryStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipMemoryStageView.swift; sourceTree = "<group>"; };
+		F14156569E93433F8C6BB2F9 /* MemorySelectionSafetyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySelectionSafetyTests.swift; sourceTree = "<group>"; };
 		F1A4D019E0AB8DA7749332EA /* SumSprintPartyTVRoundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SumSprintPartyTVRoundTests.swift; sourceTree = "<group>"; };
 		F2094D8B8C58010318C8DEB6 /* FactoryCardsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryCardsViewTests.swift; sourceTree = "<group>"; };
 		F24A213AAF0604928B164968 /* FlashcardStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashcardStageView.swift; sourceTree = "<group>"; };
@@ -578,6 +595,7 @@
 		FD5607C48DD7F2F1EFDB0BE8 /* CompassAnglesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassAnglesTests.swift; sourceTree = "<group>"; };
 		FDCA407405915133AEE9E7FA /* ShapeDetectiveTVSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeDetectiveTVSession.swift; sourceTree = "<group>"; };
 		FF16532EBA54CB39C1397E00 /* SymmetryFoldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymmetryFoldTests.swift; sourceTree = "<group>"; };
+		FFF3784D8EC065959929C14E /* MemoryAdventureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAdventureUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -670,6 +688,7 @@
 				CE5FA612478F9C2A6066CB46 /* MatherTVApp.swift */,
 				5C4A94DB04A905680599FB7C /* MatherTVRootView.swift */,
 				F27EF90A13CB6C3832CF3D58 /* MemoryGalleryTVView.swift */,
+				EBA1F4A1584E2E0787A44EBF /* MemoryPairsTVView.swift */,
 				69645D0691A07EE2E17DC70C /* ShapeDetectiveTVView.swift */,
 				D5BF76EBB16876D2F9CA900B /* SumSprintPartyTVView.swift */,
 				69F7DA87B8FFDEBE7FC53859 /* TVFamilyLearningView.swift */,
@@ -741,11 +760,14 @@
 				6AEF903C0449A30A678CFAE0 /* LearningLoopTests.swift */,
 				05A077338DEFE216483C0A99 /* LearningQuestTests.swift */,
 				4CBEF0B950B71173D0A1F06A /* LessonPlayThreadTests.swift */,
+				1DA94E36266DEDF6F6547A22 /* MemoryAdventureTests.swift */,
 				F63A1076A1793340A1C5D287 /* MemoryArtStyleTests.swift */,
 				2AACE02B6A0FE6EC8AC6D1A0 /* MemoryAskConversationPolicyTests.swift */,
 				D9E6A4D2C61679954D59F25A /* MemoryContentTests.swift */,
 				844F100CEAAE2CCA4E9BF7E8 /* MemoryGalleryContentPackTests.swift */,
 				778D14CAED9677C6F12D3617 /* MemoryGalleryTVRoundTests.swift */,
+				506B9E83DE2934F92A66654E /* MemoryPairingEngineTests.swift */,
+				F14156569E93433F8C6BB2F9 /* MemorySelectionSafetyTests.swift */,
 				F93F48B9AA19EB14F5BD76FF /* MemoryTextFitTests.swift */,
 				D712A5CFB9DF5D02473835DD /* MemoryVarietyTests.swift */,
 				2D4426E080AAAFB9A2BE2164 /* MemoryViewTests.swift */,
@@ -861,9 +883,11 @@
 				AD4152C45A64FDB0FF6272C6 /* LearningQuestEngine.swift */,
 				81907A58A02016D7B031B93B /* LearningQuestModels.swift */,
 				E7B8C8F2DD6ACE01E7130B78 /* LessonPlayThread.swift */,
+				630194FB1D71BC44020EF0A5 /* MemoryAdventure.swift */,
 				3AD7C916626C1EDE3808C9E0 /* MemoryContent.swift */,
 				47213D8ACC4E1AE37D8AA7AF /* MemoryGalleryContentPack.swift */,
 				B49175492BA0F44226723EBD /* MemoryGalleryTVRound.swift */,
+				2B60FB00647A27C912B77EEC /* MemoryPairingEngine.swift */,
 				CFCDB830BCA71408B46E1A4F /* NumberStoryGenerator.swift */,
 				383EE87126C22A00D3232A1E /* NumberStoryModels.swift */,
 				D9B1E5A35013B8C3C3E62687 /* NumberStoryStageVocabulary.swift */,
@@ -912,6 +936,7 @@
 				25D95B06E78CC53DBC9DE6C3 /* AngleArcadeCampaignUITests.swift */,
 				DB2A42C7C5F0F36C9CBAA103 /* CompactLayoutTests.swift */,
 				060914B145E337A317F542AD /* LearningQuestUITests.swift */,
+				FFF3784D8EC065959929C14E /* MemoryAdventureUITests.swift */,
 				9AD734CE95344EBD7CBD06B0 /* RoomQuestUITests.swift */,
 				D4A94D78A7FFDA0ABF19F5CF /* ScreenshotTests.swift */,
 			);
@@ -1085,6 +1110,7 @@
 			isa = PBXGroup;
 			children = (
 				6E01EEE9604B8700E4F60EE2 /* MemoryAskConversationPolicy.swift */,
+				6EE02CC4C36015B157BE8F7D /* MemoryDeckChooserView.swift */,
 				D5A56FCB9103BAE6E2941CA3 /* MemoryView.swift */,
 			);
 			path = Memory;
@@ -1292,11 +1318,14 @@
 				FD41BDBB7EB6A82168932B48 /* LearningHandoffStore.swift in Sources */,
 				E2B69F661245B146169C0F71 /* MatherTVApp.swift in Sources */,
 				38B62455FD9BBCFF0114106C /* MatherTVRootView.swift in Sources */,
+				7DB7F9BE6D5C94375B2559F9 /* MemoryAdventure.swift in Sources */,
 				D1E040DCC6D9CF2985A53CE1 /* MemoryContent.swift in Sources */,
 				E5EF60B12DB66C2E809178DB /* MemoryGalleryContentPack.swift in Sources */,
 				32A49A7C6F79ACBA7336DF4C /* MemoryGalleryContentStore.swift in Sources */,
 				E0DFF8477AF3DDFAE66A6CA7 /* MemoryGalleryTVRound.swift in Sources */,
 				B11B601A2020C7CEE086EB4E /* MemoryGalleryTVView.swift in Sources */,
+				016B6DF6BF73ADFB15D63841 /* MemoryPairingEngine.swift in Sources */,
+				0DA878CAC0069D50692EC2EA /* MemoryPairsTVView.swift in Sources */,
 				F923DB4F4C743145651425E1 /* ShapeDetectiveTVSession.swift in Sources */,
 				6974E510C5A23F54AF9103C5 /* ShapeDetectiveTVSessionStore.swift in Sources */,
 				6B1E9AD348CA22624F683F5C /* ShapeDetectiveTVView.swift in Sources */,
@@ -1352,11 +1381,14 @@
 				2E80D1B4BA2B8B8C1BADADE6 /* LearningLoopTests.swift in Sources */,
 				E31F85269F83609EBCA828F8 /* LearningQuestTests.swift in Sources */,
 				260AC187AC3ABB54EA647C7A /* LessonPlayThreadTests.swift in Sources */,
+				D502C00C006E5132354F3F4D /* MemoryAdventureTests.swift in Sources */,
 				1676C6C5EF99E76129ACB09B /* MemoryArtStyleTests.swift in Sources */,
 				DC2C0CD91CED290951B27D8A /* MemoryAskConversationPolicyTests.swift in Sources */,
 				8B9A40A248A28C090985C01B /* MemoryContentTests.swift in Sources */,
 				1BEF803DB2C8FF13CD6E35EC /* MemoryGalleryContentPackTests.swift in Sources */,
 				329C9965E6D9AD988934EB70 /* MemoryGalleryTVRoundTests.swift in Sources */,
+				3CF73CF431E3799DE1DBB3A5 /* MemoryPairingEngineTests.swift in Sources */,
+				6B5797CBD77659572D80A51F /* MemorySelectionSafetyTests.swift in Sources */,
 				5AF19E70D30DE722E4A0521F /* MemoryTextFitTests.swift in Sources */,
 				DA45F6891A71F34545469DA0 /* MemoryVarietyTests.swift in Sources */,
 				B0308880F0715867E50261B2 /* MemoryViewTests.swift in Sources */,
@@ -1407,6 +1439,7 @@
 				B7D8226F991C2302946311DE /* AngleArcadeCampaignUITests.swift in Sources */,
 				17BE88060C10E1B1E35E439F /* CompactLayoutTests.swift in Sources */,
 				A655FC3DE8DABF5035BB37ED /* LearningQuestUITests.swift in Sources */,
+				5919F4E88868A3B023E93ACE /* MemoryAdventureUITests.swift in Sources */,
 				DD84C3A2666DDFAF90B20F38 /* RoomQuestUITests.swift in Sources */,
 				E0AB3CE8889132DFB4E3CBEC /* ScreenshotTests.swift in Sources */,
 			);
@@ -1507,11 +1540,14 @@
 				4CB8E6289BE2BD95813E3B9A /* LocationService.swift in Sources */,
 				7E0E98FBA46C7A3525FA661F /* MatherApp.swift in Sources */,
 				E3179A83922DC2E5F2E1796F /* MatherTheme.swift in Sources */,
+				D75D3561F08E5FE86CF820D0 /* MemoryAdventure.swift in Sources */,
 				22A0CD7284D1F688A690C8D2 /* MemoryAskConversationPolicy.swift in Sources */,
 				6430BD262BFC404FD8D8F11B /* MemoryContent.swift in Sources */,
+				4F36FE93814372DCA9786F65 /* MemoryDeckChooserView.swift in Sources */,
 				36341A5EB97246C5DF02FD14 /* MemoryGalleryContentPack.swift in Sources */,
 				9CC9ABC2BA3661FD5266AC71 /* MemoryGalleryContentStore.swift in Sources */,
 				56C27213E7F5835B19EC7B17 /* MemoryGalleryTVRound.swift in Sources */,
+				412D7D55DCB97043CFA75FED /* MemoryPairingEngine.swift in Sources */,
 				7490086270DAF9207569780C /* MemoryStageView.swift in Sources */,
 				14DE12583C593EE688E0C1E6 /* MemoryView.swift in Sources */,
 				CC97AD66C0B0801D7DA15C40 /* MixMatchRecallView.swift in Sources */,

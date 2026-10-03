@@ -4,3 +4,6 @@ xcuserdata/
 *.xcuserstate
 product-os.md
 .artifacts/
+
+# Generated Memory artwork review and simulator evidence
+output/memory-adventures/

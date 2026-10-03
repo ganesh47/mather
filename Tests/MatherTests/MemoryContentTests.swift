@@ -84,7 +84,7 @@ struct MemoryContentTests {
         for id in requiredAdvancedVehicles {
             let vehicle = try #require(vehiclesById[id])
             #expect(vehicle.metadata.deck == .vehicles)
-            #expect(vehicle.detailCards.map(\.title) == ["Vehicle", "Group", "Job", "Key Part", "How It Works", "Safety Fact"])
+            #expect(vehicle.detailCards.map(\.title) == ["Vehicle", "Group", "Job", "Key Part", "How It Works", "Safety Fact", "Look closely", "Try it"])
             #expect(vehicle.detailCards.allSatisfy { !$0.value.isEmpty })
         }
     }
@@ -116,7 +116,55 @@ struct MemoryContentTests {
 
             #expect(FileManager.default.fileExists(atPath: imageset.path), "Missing imageset for \(assetName)")
             #expect(FileManager.default.fileExists(atPath: contents.path), "Missing Contents.json for \(assetName)")
+            if let data = try? Data(contentsOf: contents),
+               let catalog = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let images = catalog["images"] as? [[String: Any]] {
+                let filenames = images.compactMap { $0["filename"] as? String }
+                #expect(!filenames.isEmpty, "No image payload for \(assetName)")
+                for filename in filenames {
+                    #expect(FileManager.default.fileExists(atPath: imageset.appendingPathComponent(filename).path), "Missing image payload for \(assetName)")
+                }
+            } else {
+                Issue.record("Invalid catalog contents for \(assetName)")
+            }
         }
+    }
+
+    @Test func storybookDecksHaveStandaloneArtAndSpokenDiscoveries() {
+        let decks = [MemoryDeck.domesticAnimals, MemoryDeck.birds, MemoryDeck.fruits, MemoryDeck.fishes]
+        for deck in decks {
+            #expect(deck.allSatisfy { $0.imageAssetName != nil })
+            #expect(Set(deck.map(\.name)).count == deck.count, "Visible answer names must be distinct")
+            for card in deck {
+                #expect((1...12).contains(card.detailCards.count))
+                #expect(Set(card.detailCards.map(\.title)).isSuperset(of: ["Look closely", "Try it"]))
+            }
+        }
+        #expect(MemoryDeck.birds.allSatisfy { !($0.imageAssetName ?? "").hasPrefix("MemoryBirdA") && !($0.imageAssetName ?? "").hasPrefix("MemoryBirdB") })
+        #expect(MemoryDeck.domesticAnimals.first?.imageAssetName == "MemoryAnimalCow")
+        #expect(MemoryDeck.fruits.first?.imageAssetName == "CompareCampApple")
+        #expect(MemoryDeck.fishes.allSatisfy { $0.imageAssetName?.hasSuffix("Storybook") == true })
+    }
+
+    @Test func similarBirdIllustrationsShareCanonicalIdentity() throws {
+        for ids in [["bird-a05", "bird-b01"], ["bird-a03", "bird-b07"], ["bird-a11", "bird-b17"], ["bird-a18", "bird-b13"], ["bird-a15", "bird-b12"]] {
+            let left = try #require(MemoryDeck.allAnimalsById[ids[0]])
+            let right = try #require(MemoryDeck.allAnimalsById[ids[1]])
+            #expect(left.canonicalName == right.canonicalName)
+            #expect(left.name != right.name)
+        }
+        let golden = try #require(MemoryDeck.allAnimalsById["bird-b09"])
+        #expect(golden.name == "Storybook Golden Bird")
+        #expect(golden.detailCards.contains { $0.title == "Story" && $0.value.contains("make-believe") })
+    }
+
+    @Test func publicDomainDonkeyRetainsItsActualAuthorAndLicense() throws {
+        let donkey = try #require(MemoryDeck.imageAssetProvenance.first { $0.assetName == "MemoryAnimalDonkey" })
+        #expect(donkey.creator == "LadyofHats")
+        #expect(donkey.license.hasPrefix("Public domain"))
+        #expect(donkey.sourceUrl == "https://commons.wikimedia.org/wiki/File:Donkey_cartoon_04.svg")
+        #expect(donkey.originalSha256 == donkey.derivativeSha256)
+        #expect(donkey.childCardLegibilityChecked)
     }
 
     @Test func assetPlansAndProvenancePointAtKnownCardsAndAssets() {

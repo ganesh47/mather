@@ -17,16 +17,16 @@ struct MemoryGalleryContentPackTests {
     @Test func rejectsUnsupportedSchemaIncompleteDecksAndDuplicateCards() throws {
         let baseline = MemoryGalleryContentPack.bundled
         #expect(throws: (any Error).self) {
-            try MemoryGalleryContentPack(schemaVersion: 99, contentVersion: 2, decks: baseline.decks, assets: []).validate()
+            try MemoryGalleryContentPack(schemaVersion: 99, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: baseline.decks, assets: []).validate()
         }
         #expect(throws: (any Error).self) {
-            try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: Array(baseline.decks.dropLast()), assets: []).validate()
+            try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: Array(baseline.decks.dropLast()), assets: []).validate()
         }
         var decks = baseline.decks
         let first = decks[0]
         decks[0] = .init(kind: first.kind, cards: first.cards + [first.cards[0]])
         #expect(throws: (any Error).self) {
-            try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: decks, assets: []).validate()
+            try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: decks, assets: []).validate()
         }
     }
 
@@ -36,7 +36,7 @@ struct MemoryGalleryContentPackTests {
             .init(id: "new", file: "new.png", byteCount: 10_000_001, sha256: String(repeating: "a", count: 64))
         ] {
             #expect(throws: (any Error).self) {
-                try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: MemoryGalleryContentPack.bundled.decks, assets: [asset]).validate()
+                try MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: MemoryGalleryContentPack.bundled.decks, assets: [asset]).validate()
             }
         }
     }
@@ -53,8 +53,30 @@ struct MemoryGalleryContentPackTests {
         }
         #expect(game.phase == .completed)
         game.replay()
-        #expect(game.sessionDeck == deck)
-        #expect(game.round?.promptCard == deck[0])
+        #expect(game.sessionDeck?.sorted { $0.id < $1.id } == deck.sorted { $0.id < $1.id })
+        #expect(game.round.map { deck.contains($0.promptCard) } == true)
+    }
+
+    @Test @MainActor func olderCachedPackAndFeedCannotReplaceFreshBundledArtwork() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let baseline = MemoryGalleryContentPack.bundled
+        let older = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: baseline.decks, assets: [])
+        let id = UUID().uuidString
+        let directory = root.appendingPathComponent(id)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(older)
+        try data.write(to: directory.appendingPathComponent("pack.json"))
+        try Data(id.utf8).write(to: root.appendingPathComponent("active"))
+        try Data(id.utf8).write(to: root.appendingPathComponent("pending"))
+        let store = MemoryGalleryContentStore(root: root, fetch: { _, _ in data })
+        #expect(store.pack == baseline)
+        #expect(store.assetURL(named: "MemoryAnimalCow") == nil)
+        await store.refresh(from: URL(string: "https://example.com/pack.json")!)
+        #expect(store.pack == baseline)
+        #expect(store.lastRefreshError == nil)
+        store.activatePending()
+        #expect(store.pack == baseline)
     }
 
     @Test @MainActor func corruptCacheAndInvalidFeedKeepBundledContent() async throws {
@@ -73,7 +95,7 @@ struct MemoryGalleryContentPackTests {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let baseline = MemoryGalleryContentPack.bundled
-        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: baseline.decks, assets: [])
+        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: baseline.decks, assets: [])
         var response = try JSONEncoder().encode(replacement)
         let store = MemoryGalleryContentStore(root: root, fetch: { _, _ in response })
         let url = URL(string: "https://example.com/pack.json")!
@@ -92,7 +114,7 @@ struct MemoryGalleryContentPackTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let baseline = MemoryGalleryContentPack.bundled
         let missing = MemoryGalleryContentPack.Asset(id: "new", file: "new.png", byteCount: 10, sha256: String(repeating: "a", count: 64))
-        var response = try JSONEncoder().encode(MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: baseline.decks, assets: [missing]))
+        var response = try JSONEncoder().encode(MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: baseline.decks, assets: [missing]))
         let store = MemoryGalleryContentStore(root: root, fetch: { url, _ in
             if url.pathExtension == "png" { throw MemoryGalleryContentStore.StoreError.invalidDownload }
             return response
@@ -101,20 +123,20 @@ struct MemoryGalleryContentPackTests {
         await store.refresh(from: url)
         #expect(store.pack == baseline)
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("active").path))
-        response = try JSONEncoder().encode(MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: baseline.decks, assets: []))
+        response = try JSONEncoder().encode(MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: baseline.decks, assets: []))
         await store.refresh(from: url, canActivate: { false })
         #expect(store.pack == baseline)
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("active").path))
         #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("pending").path))
         store.activatePending()
-        #expect(store.pack.contentVersion == 2)
+        #expect(store.pack.contentVersion == MemoryGalleryContentPack.bundled.contentVersion + 1)
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("pending").path))
     }
 
     @Test @MainActor func stagedUpdateSurvivesRelaunchWithoutReplacingAnActiveSession() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
-        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: MemoryGalleryContentPack.bundled.decks, assets: [])
+        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: MemoryGalleryContentPack.bundled.decks, assets: [])
         let data = try JSONEncoder().encode(replacement)
         let store = MemoryGalleryContentStore(root: root, fetch: { _, _ in data })
         await store.refresh(from: URL(string: "https://example.com/pack.json")!, canActivate: { false })
@@ -129,7 +151,7 @@ struct MemoryGalleryContentPackTests {
         let image = try Data(contentsOf: repo.appendingPathComponent("App/Assets.xcassets/MemoryFlagIndia.imageset/MemoryFlagIndia.png"))
         let asset = MemoryGalleryContentPack.Asset(id: "MemoryFlagIndia", file: "MemoryFlagIndia.png", byteCount: image.count,
             sha256: SHA256.hash(data: image).map { String(format: "%02x", $0) }.joined())
-        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: MemoryGalleryContentPack.bundled.decks, assets: [asset])
+        let replacement = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: MemoryGalleryContentPack.bundled.contentVersion + 1, decks: MemoryGalleryContentPack.bundled.decks, assets: [asset])
         let manifest = try JSONEncoder().encode(replacement)
         let store = MemoryGalleryContentStore(root: root, fetch: { url, _ in url.pathExtension == "png" ? image : manifest })
         await store.refresh(from: URL(string: "https://example.com/pack.json")!)

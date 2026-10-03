@@ -32,6 +32,25 @@ struct MemoryVarietyTests {
 
         #expect(round.count == 6)
         #expect(Set(round.map(\.id)).count == 6)
+        #expect(Set(round.map { $0.canonicalName.lowercased() }).count == 6)
+    }
+
+    @MainActor @Test func variantsCannotCrowdOutDistinctMatchesAndSmallPoolsComplete() {
+        let metadata = MemoryDeck.birds[0].metadata
+        let deck = [
+            MemoryAnimal(id: "macaw-a", name: "Red Macaw", canonicalName: "Macaw", picture: .text("red bird"), metadata: metadata),
+            MemoryAnimal(id: "macaw-b", name: "Blue Macaw", canonicalName: "MACAW", picture: .text("blue bird"), metadata: metadata),
+            MemoryAnimal(id: "owl", name: "Owl", picture: .text("owl"), metadata: metadata)
+        ]
+        let round = MemoryView.preferredRoundAnimals(from: deck, pairCount: 6, recentPairHistory: ["macaw-a"])
+        #expect(round.count == 2)
+        #expect(Set(round.map { $0.canonicalName.lowercased() }) == ["macaw", "owl"])
+        #expect(round.contains { $0.id == "macaw-b" })
+        #expect(!round.contains { $0.id == "macaw-a" })
+        let engine = MemoryPairingEngine()
+        engine.deal(animals: round, mode: .pictures, faceDown: true)
+        #expect(engine.totalPairs == 2)
+        #expect(engine.cards.count == 4)
     }
 
     @MainActor @Test func buildCardsCreatesExactPictureAndLabelPairs() {

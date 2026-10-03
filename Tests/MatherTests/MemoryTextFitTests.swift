@@ -27,8 +27,8 @@ struct MemoryTextFitTests {
     @Test func birdLabelsStayWithinReasonableFallbackRange() {
         let labels = (MemoryDeck.domesticAnimals + MemoryDeck.birds + MemoryDeck.vehicles + MemoryDeck.planets + MemoryDeck.fishes + MemoryDeck.countries + MemoryDeck.countryFlags + MemoryDeck.indiaStates + MemoryDeck.waterCycle).map(\.name)
         let longestLabel = labels.max { $0.count < $1.count }
-        #expect(longestLabel == "Thiruvananthapuram")
-        #expect(longestLabel?.count == 18)
+        #expect(longestLabel != nil)
+        #expect((longestLabel?.count ?? 0) <= 28)
         #expect(MemoryDeck.waterCycle.map(\.name).contains("Condensation"))
         #expect(MemoryDeck.waterCycle.map(\.name).contains("Precipitation"))
         #expect(MemoryView.labelMinimumScaleFactor(for: .hard) >= 0.58)
@@ -37,7 +37,9 @@ struct MemoryTextFitTests {
             .flatMap(\.detailCards)
             .map(\.value)
             .max { $0.count < $1.count }
-        #expect(longestBirdFact == "Gardens and woodlands in Africa and Asia")
-        #expect(longestBirdFact?.count == 40)
+        // Discovery prompts wrap in the expandable learning sheet. Bound their
+        // length instead of pinning the previous catalog's longest fact.
+        #expect(longestBirdFact != nil)
+        #expect((longestBirdFact?.count ?? 0) <= 100)
     }
 }

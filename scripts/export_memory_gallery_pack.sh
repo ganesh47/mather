@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Export a starting pack, then edit pack.json independently of the app source.
-# Usage: scripts/export_memory_gallery_pack.sh OUTPUT_DIRECTORY CONTENT_VERSION [SOURCE_PACK_JSON]
+# Usage: scripts/export_memory_gallery_pack.sh OUTPUT_DIRECTORY CONTENT_VERSION [SOURCE_PACK_JSON|--bundled]
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 task_dir=$(mktemp -d)
 trap 'rm -rf "$task_dir"' EXIT
@@ -17,8 +17,15 @@ guard CommandLine.arguments.count == 5,
 }
 let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 let repo = URL(fileURLWithPath: CommandLine.arguments[3], isDirectory: true)
-let input = URL(fileURLWithPath: CommandLine.arguments[4])
-let sourcePack = try JSONDecoder().decode(MemoryGalleryContentPack.self, from: Data(contentsOf: input))
+let useBundled = CommandLine.arguments[4] == "--bundled"
+let input = useBundled ? repo.appendingPathComponent("Content/MemoryGallery/pack.json")
+    : URL(fileURLWithPath: CommandLine.arguments[4])
+let sourcePack: MemoryGalleryContentPack
+if useBundled {
+    sourcePack = .bundled
+} else {
+    sourcePack = try JSONDecoder().decode(MemoryGalleryContentPack.self, from: Data(contentsOf: input))
+}
 try sourcePack.validate()
 let decks = sourcePack.decks
 let names = Set(decks.flatMap(\.cards).compactMap(\.imageAssetName)
@@ -47,7 +54,7 @@ let encoder = JSONEncoder()
 encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
 try encoder.encode(pack).write(to: output.appendingPathComponent("pack.json"), options: .atomic)
 let suppliedCreditsURL = input.deletingLastPathComponent().appendingPathComponent("attribution.json")
-let suppliedCredits = FileManager.default.fileExists(atPath: suppliedCreditsURL.path)
+let suppliedCredits = !useBundled && FileManager.default.fileExists(atPath: suppliedCreditsURL.path)
     ? try JSONDecoder().decode([MemoryImageAssetProvenance].self, from: Data(contentsOf: suppliedCreditsURL)) : []
 let suppliedNames = Set(suppliedCredits.map(\.assetName))
 let credits = (suppliedCredits + MemoryDeck.imageAssetProvenance.filter { !suppliedNames.contains($0.assetName) })
