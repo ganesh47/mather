@@ -89,6 +89,7 @@ final class AngleArcadeCampaignUITests: XCTestCase {
     }
 
     func testUnreadableProgressShowsPausedGuidanceAndDoneWithoutPlayControls() {
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments = ["-angle-arcade-ui-test", "-mather.angle-arcade.progress.v1.ipad-ui-test", "retained-unsupported-fixture"]
         app.launch()
@@ -97,7 +98,17 @@ final class AngleArcadeCampaignUITests: XCTestCase {
         XCTAssertFalse(app.buttons["angle-arcade-continue"].exists)
         XCTAssertFalse(app.buttons["angle-world-garden"].exists)
         XCTAssertFalse(app.buttons["angle-arcade-primary"].exists)
+        XCTAssertTrue(app.staticTexts["angle-progress-guidance"].label.contains("Data reset → Clear session history"))
         screenshot("Unreadable selected-child Angle progress retained with Settings recovery guidance")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let listen = app.buttons["angle-progress-listen"]
+        let scroll = app.scrollViews["angle-progress-scroll"]
+        for _ in 0..<3 {
+            if listen.isHittable { break }
+            scroll.swipeUp()
+        }
+        XCTAssertTrue(listen.isHittable)
+        screenshot("Compact landscape paused Angle recovery keeps Listen and Done reachable")
         let done = app.buttons["angle-cannon-done-button"]
         XCTAssertTrue(done.isHittable)
         done.tap()

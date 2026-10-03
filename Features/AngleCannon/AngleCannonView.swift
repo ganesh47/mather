@@ -35,18 +35,22 @@ struct AngleCannonView: View {
             VStack(spacing: 12) {
                 header.padding(.horizontal, 18)
                 if let message = engine.pauseMessage {
+                    ScrollView {
                     VStack(spacing: 18) {
                         Text("Angle Arcade is paused").font(.title2.bold())
                             .accessibilityIdentifier("angle-progress-paused")
                         Text(message).multilineTextAlignment(.center)
-                        Text("A parent can use Settings → Clear this child's learning data to remove this child's Angle progress. Other children keep their data.")
+                        Text("A parent can open Settings → Data reset → Clear session history, then confirm the selected child's learning reset. This also removes that child's other learning data. Other children keep their data.")
                             .multilineTextAlignment(.center).font(.subheadline)
+                            .accessibilityIdentifier("angle-progress-guidance")
                         Button { narrate() } label: { Text("Listen").frame(minHeight: 80) }
                             .buttonStyle(.bordered)
-                        Spacer()
+                            .accessibilityIdentifier("angle-progress-listen")
                     }
                     .padding(24)
                     .foregroundStyle(MatherTheme.ink)
+                    }
+                    .accessibilityIdentifier("angle-progress-scroll")
                 } else if engine.phase == .worldSelection {
                     ScrollView { worldPicker.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")

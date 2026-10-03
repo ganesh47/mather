@@ -8,7 +8,7 @@ This follow-up changes only storage handling, engine persistence guards, recover
 
 The engine pauses before starting or entering a world, recording help, submitting, or completing a flight when storage cannot be read. Paused views hide world controls and completion counts rather than presenting an empty passport as known history. A payload restored while an engine is open is checked before the next write. A rejected completion cannot publish success or add session completion credit.
 
-On iOS, the existing parent-confirmed Settings action for clearing the selected child's learning now calls the explicit scoped Angle clear instead of a normal save. Other children's Angle scopes remain intact. The paused activity provides Listen and Done, plus directions to Settings.
+On iOS, the existing parent-confirmed Settings → Data reset → Clear session history action now calls the explicit scoped Angle clear instead of a normal save. Other children's Angle scopes remain intact. The paused activity provides Listen and Done, plus exact Settings directions and a disclosure that the selected-child reset also removes other learning data. Its content scrolls on compact landscape screens.
 
 TV Angle progress remains shared device activity with unknown learner ownership. Its paused screen has All games, Listen and a parent action whose confirmation explicitly says it clears only Angle progress for everyone on this TV. Cancel, leaving the activity, or relaunching retain the opaque data. The Family guide's selected-learner and all-learning reset behavior is unchanged; those actions do not claim to clear earlier device activity.
 
