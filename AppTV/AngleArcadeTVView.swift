@@ -171,7 +171,7 @@ struct AngleArcadeTVView: View {
             }
             .foregroundStyle(.white)
 
-            AngleArcadeScene(engine: engine, flightProgress: flightProgress)
+            AngleArcadeTVScene(engine: engine, flightProgress: flightProgress, reduceMotion: motionReduced)
                 .frame(height: 455)
             HStack(spacing: 18) {
                 controlTile(title: engine.level.kind == .rotation ? (engine.level.id == "builder-quarter-turn" ? "Turn" : "Direction") : "Angle", value: angleValue, symbol: engine.level.allowsAngle ? "arrow.left.and.right" : "lock.fill", id: "angle-arcade-angle") { direction in
