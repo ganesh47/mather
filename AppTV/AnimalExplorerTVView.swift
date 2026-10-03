@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The photo bank is captured on entry; browsing never swaps the current quiz's content.
 @MainActor
@@ -32,6 +33,8 @@ struct AnimalExplorerTVView: View {
     @State private var didComplete = false
     @State private var isVisible = false
     @State private var focusGeneration = 0
+    @State private var focusTask: Task<Void, Never>?
+    @State private var lastFocusID: String?
 
     private enum Phase: Equatable { case browsing, detail, quiz, completed }
 
@@ -83,23 +86,31 @@ struct AnimalExplorerTVView: View {
         .onChange(of: scenePhase) { _, value in
             if value == .active {
                 clock.resume(.background)
+                restoreFocus()
             } else {
-                focusGeneration += 1
+                cancelFocus()
                 clock.pause(.background)
                 narration.stop()
             }
         }
         .onChange(of: focusedID) { _, id in
+            if let id { lastFocusID = id }
             narration.focus(focusNarration(id))
         }
+        .onChange(of: clock.isExpired) { _, expired in
+            guard expired, phase == .quiz, !game.hasAnsweredCurrentRound,
+                  !showsOptions, !showsHint, scenePhase == .active else { return }
+            present("Take a breath. Your answer and score have not changed. Choose More time, Play untimed, or keep choosing an animal name.")
+            focus("tv-animal-more-time")
+        }
         .onPlayPauseCommand {
-            if phase == .quiz, !game.hasAnsweredCurrentRound, !showsOptions { openHint() }
-            else { narration.repeatPrompt() }
+            if phase == .quiz, !game.hasAnsweredCurrentRound, !showsOptions, !showsHint { openHint() }
+            else if let prompt = narration.currentPrompt { present(prompt) }
         }
         .onExitCommand(perform: exit)
         .onDisappear {
             isVisible = false
-            focusGeneration += 1
+            cancelFocus()
             clock.stop()
             narration.stop()
         }
@@ -273,7 +284,7 @@ struct AnimalExplorerTVView: View {
                 .padding(28).frame(width: 766).frame(minHeight: 590, alignment: .topLeading)
                 .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 28))
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(game.hasAnsweredCurrentRound ? "Picture prompt. \(entry.card.name). \(entry.neutralPhotoDescription)" : "Picture prompt. \(entry.neutralPhotoDescription) Choose the matching animal name.")
+                .accessibilityLabel(quizPictureDescription(round, entry: entry))
                 .accessibilityIdentifier("tv-memory-picture-prompt")
 
                 VStack(alignment: .leading, spacing: 24) {
@@ -441,7 +452,8 @@ struct AnimalExplorerTVView: View {
 
     private func chooseCollection(_ item: AnimalExplorerCollection) {
         collectionID = item.id
-        present("\(item.title). \(item.spokenDescription) \(collectionEntries.count) animal photographs. Choose a photo or start a photo name quiz.")
+        let actionPrompt = collectionEntries.count >= 4 ? "Choose a photo or start a photo name quiz." : "Choose a photo to explore. A name quiz needs four different animals."
+        present("\(item.title). \(item.spokenDescription) \(collectionEntries.count) animal photographs. \(actionPrompt)")
     }
 
     private func openDetail(_ entry: AnimalExplorerEntry) {
@@ -476,20 +488,22 @@ struct AnimalExplorerTVView: View {
     }
 
     private func select(_ answer: MemoryAnimal, round: MemoryGalleryTVRound) {
-        guard phase == .quiz, !showsHint, !showsOptions, !game.hasAnsweredCurrentRound,
+        guard isVisible, scenePhase == .active, phase == .quiz, !showsHint, !showsOptions, !game.hasAnsweredCurrentRound,
               round.index == game.round?.index, let entry = promptEntry else { return }
         let correct = game.select(answerID: answer.id)
         clock.pause(.feedback)
         emit(.answer, entry: entry, roundIndex: game.roundIndex, responseID: answer.id, correct: correct,
              appHintUsed: hintedRounds.contains(game.roundIndex), wasExplored: viewedVariants.contains(variantID(entry)))
-        present(correct ? "Matched! You found \(entry.card.name). Select to continue." : "Good try. This is \(entry.card.name). Select to continue.")
+        let fact = round.learningFacts.first.map { "\($0.title). \($0.value)." } ?? ""
+        let feedback = correct ? "Matched! You found \(entry.card.name)." : "Good try. This is \(entry.card.name)."
+        present("\(feedback) \(fact) Select to continue.")
         focus(nextFocusID)
     }
 
     private var nextFocusID: String { game.completedRoundCount == game.roundGoal ? "tv-memory-see-results" : "tv-memory-next-picture" }
 
     private func advance() {
-        guard game.hasAnsweredCurrentRound else { return }
+        guard isVisible, scenePhase == .active, game.hasAnsweredCurrentRound else { return }
         game.advance()
         if game.phase == .completed {
             clock.stop()
@@ -525,7 +539,7 @@ struct AnimalExplorerTVView: View {
     private func closeOptions() {
         showsOptions = false
         clock.resume(.options)
-        focus(returnFocusID ?? "tv-animal-options")
+        focus(phase == .quiz && !game.hasAnsweredCurrentRound && clock.isExpired ? "tv-animal-more-time" : (returnFocusID ?? "tv-animal-options"))
     }
 
     private func openHint() {
@@ -541,7 +555,7 @@ struct AnimalExplorerTVView: View {
     private func closeHint() {
         showsHint = false
         clock.resume(.hint)
-        focus(returnFocusID ?? game.round?.answerChoices.first.map { "tv-memory-answer-\($0.id)" })
+        focus(clock.isExpired ? "tv-animal-more-time" : (returnFocusID ?? game.round?.answerChoices.first.map { "tv-memory-answer-\($0.id)" }))
     }
 
     private func exit() {
@@ -569,15 +583,59 @@ struct AnimalExplorerTVView: View {
     private func entryCount(for id: String) -> Int { Set(entries.filter { $0.collectionIDs.contains(id) }.map(\.speciesID)).count }
     private func focusFirstAnswer() { focus(game.round?.answerChoices.first.map { "tv-memory-answer-\($0.id)" }) }
     private func focus(_ id: String?) {
-        focusGeneration += 1
+        cancelFocus()
         let generation = focusGeneration
-        Task { @MainActor in
+        focusTask = Task { @MainActor in
             await Task.yield()
-            guard isVisible, scenePhase == .active, focusGeneration == generation else { return }
+            guard !Task.isCancelled, isVisible, scenePhase == .active, focusGeneration == generation else { return }
             focusedID = id
+            focusTask = nil
         }
     }
-    private func present(_ text: String) { narration.presentPrompt(text) }
+
+    private func cancelFocus() {
+        focusGeneration += 1
+        focusTask?.cancel()
+        focusTask = nil
+    }
+
+    private func restoreFocus() {
+        guard isVisible else { return }
+        if showsOptions {
+            focus(lastFocusID?.hasPrefix("tv-animal-option") == true ? lastFocusID : "tv-animal-option-no-timer")
+        } else if showsHint {
+            focus("tv-animal-hint-back")
+        } else {
+            switch phase {
+            case .browsing:
+                let validIDs = Set(collectionEntries.map(cardFocusID)
+                    + collections.map { "tv-animal-collection-\($0.id)" }
+                    + ["tv-animal-start-quiz", "tv-animal-options", "tv-animal-classic-quiz"])
+                focus(lastFocusID.flatMap { validIDs.contains($0) ? $0 : nil } ?? "tv-animal-start-quiz")
+            case .detail: focus("tv-animal-detail-back")
+            case .quiz:
+                if game.hasAnsweredCurrentRound { focus(nextFocusID) }
+                else if clock.isExpired { focus("tv-animal-more-time") }
+                else { focusFirstAnswer() }
+            case .completed: focus("tv-memory-replay")
+            }
+        }
+    }
+
+    private func present(_ text: String) {
+        narration.presentPrompt(text)
+        if isVisible, scenePhase == .active, UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .announcement, argument: text)
+        }
+    }
+
+    private func quizPictureDescription(_ round: MemoryGalleryTVRound, entry: AnimalExplorerEntry) -> String {
+        guard game.hasAnsweredCurrentRound else {
+            return "Picture prompt. \(entry.neutralPhotoDescription) Choose the matching animal name."
+        }
+        let fact = round.learningFacts.first.map { "\($0.title). \($0.value)." } ?? ""
+        return "Picture prompt. \(entry.card.name). \(entry.neutralPhotoDescription) \(fact)"
+    }
 
     private func focusNarration(_ id: String?) -> String? {
         guard let id else { return nil }
@@ -585,7 +643,7 @@ struct AnimalExplorerTVView: View {
         if let entry = collectionEntries.first(where: { cardFocusID($0) == id }) { return "\(entry.card.name). Select to explore this photograph." }
         if let collection = collections.first(where: { "tv-animal-collection-\($0.id)" == id }) { return "\(collection.title). \(collection.spokenDescription)" }
         switch id {
-        case "tv-animal-start-quiz", "tv-animal-detail-quiz": return "Photo name quiz. Match six animal photographs with their names."
+        case "tv-animal-start-quiz", "tv-animal-detail-quiz": return "Photo name quiz. Match \(min(6, collectionEntries.count)) animal photographs with their names."
         case "tv-animal-options", "tv-animal-quiz-options": return "Options. Choose a timer or change sound."
         case "tv-animal-hint": return "Look closely hint. The timer pauses while you look."
         case "tv-animal-detail-back": return "Back to the animal photographs."
@@ -593,6 +651,17 @@ struct AnimalExplorerTVView: View {
             $0.card.detailCards.prefix(3).map { "\($0.title). \($0.value)." }.joined(separator: " ")
         }
         case "tv-animal-classic-quiz": return "Illustrated animal quiz. Play the original picture name quiz."
+        case "tv-animal-option-no-timer": return "No timer. Take your time."
+        case "tv-animal-option-friendly-timer": return "Friendly timer. Two minutes. Hints pause it and more time is always available."
+        case "tv-animal-option-sound": return isMuted ? nil : "Sound is on. Select to mute."
+        case "tv-animal-options-back": return "Back. Return to your animal photos or current quiz."
+        case "tv-animal-hint-back": return "Back to choices. Continue the same photograph."
+        case "tv-animal-more-time": return "More time. Add one minute for the same photograph."
+        case "tv-animal-untimed": return "Play untimed. Keep the same photograph and turn off the timer."
+        case "tv-memory-next-picture": return "Next picture. Select to continue."
+        case "tv-memory-see-results": return "See results."
+        case "tv-memory-replay": return "Play this gallery again."
+        case "tv-memory-choose-gallery": return "Back to the animal photographs."
         default: return nil
         }
     }

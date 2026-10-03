@@ -57,14 +57,19 @@ remain separate. No shared pair-matching mechanics change.
 - Menu closes options/hint first, detail returns to its previous photo, quiz or
   completion returns to the photo browser, and browser returns to the gallery.
 - Leaving Explorer stops timer and narration. Background pauses the timer and
-  narration; returning clears only the background pause.
+  narration and cancels pending focus work; returning clears only the background
+  pause and restores focus to the active hint/options/detail/quiz screen.
+- VoiceOver receives explicit prompt, fact and outcome announcements even while
+  automatic custom narration is suppressed. Expiry announces once and focuses
+  More time while leaving every unanswered choice available.
 
 ## Native verification
 
 `AnimalExplorerUITests` covers India browsing, the complete photo bank, detail
 credits, gallery focus restoration, four unique answers, safe picture labels,
 actual score/feedback, duplicate-answer rejection, paused hints/options, mute,
-Reduce Motion, timer expiry/recovery, completion/replay and the original quiz.
+Reduce Motion, timer expiry/recovery, background return from nested hints/options,
+completion/replay and the original quiz.
 
 Coordinator should run these tests on the reserved 1080p tvOS simulator and
 inspect retained screenshots for photo legibility, clipping, credits and remote

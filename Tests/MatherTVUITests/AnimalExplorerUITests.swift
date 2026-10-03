@@ -91,6 +91,7 @@ final class AnimalExplorerUITests: XCTestCase {
         choose(app, app.buttons["tv-animal-start-quiz"])
         let originalIDs = Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier))
         XCTAssertTrue(app.staticTexts["tv-animal-time-expired"].waitForExistence(timeout: 12))
+        waitForFocus(app.buttons["tv-animal-more-time"])
         XCTAssertTrue(app.descendants(matching: .any)["tv-animal-stat-matched"].label.contains("0 Matched"))
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
         XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
@@ -108,6 +109,38 @@ final class AnimalExplorerUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
         XCTAssertFalse(app.staticTexts["tv-animal-answer-feedback"].exists)
         attach("Same unanswered photograph after choosing untimed")
+    }
+
+    func testBackgroundFromHintAndOptionsRestoresPausedScreenAndSameQuestion() throws {
+        let app = launchExplorer()
+        choose(app, app.buttons["tv-animal-options"])
+        choose(app, app.buttons["tv-animal-option-friendly-timer"])
+        choose(app, app.buttons["tv-animal-options-back"])
+        choose(app, app.buttons["tv-animal-start-quiz"])
+        let originalIDs = Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier))
+        let beforeHint = try timerSeconds(app)
+        choose(app, app.buttons["tv-animal-hint"])
+        XCUIRemote.shared.press(.home)
+        Thread.sleep(forTimeInterval: 2)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["tv-animal-hint-copy"].waitForExistence(timeout: 10))
+        waitForFocus(app.buttons["tv-animal-hint-back"])
+        XCUIRemote.shared.press(.menu)
+        XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
+        XCTAssertGreaterThanOrEqual(try timerSeconds(app), beforeHint - 3)
+        let beforeOptions = try timerSeconds(app)
+        choose(app, app.buttons["tv-animal-quiz-options"])
+        XCUIRemote.shared.press(.home)
+        Thread.sleep(forTimeInterval: 2)
+        app.activate()
+        XCTAssertTrue(app.staticTexts["tv-animal-options-title"].waitForExistence(timeout: 10))
+        waitForFocus(app.buttons["tv-animal-option-no-timer"])
+        XCUIRemote.shared.press(.menu)
+        XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
+        XCTAssertGreaterThanOrEqual(try timerSeconds(app), beforeOptions - 3)
+        XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
+        XCTAssertFalse(app.staticTexts["tv-animal-answer-feedback"].exists)
+        attach("Background hint and options preserve the same paused question")
     }
 
     func testPhotoQuizCompletesAndReplayStartsAFreshSession() {
@@ -151,6 +184,17 @@ final class AnimalExplorerUITests: XCTestCase {
 
     private func answerButtons(_ app: XCUIApplication) -> XCUIElementQuery {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tv-memory-answer-"))
+    }
+
+    private func timerSeconds(_ app: XCUIApplication) throws -> Int {
+        let label = app.descendants(matching: .any)["tv-animal-timer"].label
+        let expression = try NSRegularExpression(pattern: "[0-9]+:[0-9]{2}")
+        let match = try XCTUnwrap(expression.firstMatch(in: label, range: NSRange(label.startIndex..., in: label)))
+        let range = try XCTUnwrap(Range(match.range, in: label))
+        let parts = label[range].split(separator: ":")
+        let minutes = try XCTUnwrap(Int(parts[0]))
+        let seconds = try XCTUnwrap(Int(parts[1]))
+        return minutes * 60 + seconds
     }
 
     private func choose(_ app: XCUIApplication, _ target: XCUIElement) {
