@@ -223,7 +223,7 @@ enum AnimalExplorerCatalog {
                 derivativeSHA256: "98b57ad40ed01f0240bd55ca0961c5bd0ffeb43a5c8af6149ad6c9f0302cd497",
                 derivativeWidth: 1280, derivativeHeight: 994,
                 modificationDescription: "Aspect-preserving downscale only when the downloaded long edge exceeds 1600 pixels; JPEG recompression at quality 78. No upscaling, crop, retouching, or generated detail.",
-                grantNote: "Commons records the explicit CC BY-SA 2.5 India grant and full required Naseer attribution, with Wikimedia VRT permission ticket 2013082110009341. Stale EXIF for blackbuck is not the grant relied upon."
+                grantNote: "Commons records the explicit CC BY-SA 2.5 India grant for this peafowl photograph and full required Naseer attribution, with Wikimedia VRT permission ticket 2013082110009341."
             )
         ),
         entry(
