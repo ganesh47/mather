@@ -7,6 +7,7 @@ struct TVFriendlyTimerView: View {
         Label(label, systemImage: clock.isEnabled ? "clock" : "leaf")
             .font(.system(size: 22, weight: .semibold, design: .rounded))
             .foregroundStyle(.white.opacity(0.86))
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel(label)
             .accessibilityIdentifier("tv-friendly-timer")
             .task(id: clock.isRunning) {
