@@ -30,27 +30,12 @@ struct AngleCannonView: View {
     private var engine: AngleArcadeEngine { sessionEngine ?? appModel.angleArcadeEngine }
     private var isActiveProfile: Bool { appModel.profileStore.activeProfileId == evidenceProfileID }
 
-    var body: some View {
+    private var layout: some View {
         GeometryReader { geometry in
             VStack(spacing: 12) {
                 header.padding(.horizontal, 18)
                 if let message = engine.pauseMessage {
-                    ScrollView {
-                    VStack(spacing: 18) {
-                        Text("Angle Arcade is paused").font(.title2.bold())
-                            .accessibilityIdentifier("angle-progress-paused")
-                        Text(message).multilineTextAlignment(.center)
-                        Text("A parent can open Settings → Data reset → Clear session history, then confirm the selected child's learning reset. This also removes that child's other learning data. Other children keep their data.")
-                            .multilineTextAlignment(.center).font(.subheadline)
-                            .accessibilityIdentifier("angle-progress-guidance")
-                        Button { narrate() } label: { Text("Listen").frame(minHeight: 80) }
-                            .buttonStyle(.bordered)
-                            .accessibilityIdentifier("angle-progress-listen")
-                    }
-                    .padding(24)
-                    .foregroundStyle(MatherTheme.ink)
-                    }
-                    .accessibilityIdentifier("angle-progress-scroll")
+                    pausedProgress(message: message)
                 } else if engine.phase == .worldSelection {
                     ScrollView { worldPicker.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
@@ -87,6 +72,10 @@ struct AngleCannonView: View {
             .frame(maxWidth: .infinity)
             .background(MatherTheme.background.ignoresSafeArea())
         }
+    }
+
+    var body: some View {
+        layout
         .onAppear {
             guard sessionEngine == nil, isActiveProfile else { return }
             appModel.prepareAngleArcadeProfile()
@@ -150,6 +139,25 @@ struct AngleCannonView: View {
                 )
             }
         }
+    }
+
+    private func pausedProgress(message: String) -> some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                Text("Angle Arcade is paused").font(.title2.bold())
+                    .accessibilityIdentifier("angle-progress-paused")
+                Text(message).multilineTextAlignment(.center)
+                Text("A parent can open Settings → Data reset → Clear session history, then confirm the selected child's learning reset. This also removes that child's other learning data. Other children keep their data.")
+                    .multilineTextAlignment(.center).font(.subheadline)
+                    .accessibilityIdentifier("angle-progress-guidance")
+                Button { narrate() } label: { Text("Listen").frame(minHeight: 80) }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("angle-progress-listen")
+            }
+            .padding(24)
+            .foregroundStyle(MatherTheme.ink)
+        }
+        .accessibilityIdentifier("angle-progress-scroll")
     }
 
     private var missionScene: some View {
