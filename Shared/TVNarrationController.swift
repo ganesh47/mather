@@ -8,6 +8,7 @@ import UIKit
 @Observable
 final class TVNarrationController {
     private(set) var currentPrompt: String?
+    private(set) var audioEnabled = true
     @ObservationIgnored private let speakText: (String) -> Void
     @ObservationIgnored private let stopPlayback: () -> Void
     @ObservationIgnored private let isSpeaking: () -> Bool
@@ -74,7 +75,7 @@ final class TVNarrationController {
     func announce(_ text: String) {
         cancelFocus()
         protectsAnnouncement = true
-        guard applicationActive, !voiceOverRunning(), !text.isEmpty else {
+        guard applicationActive, audioEnabled, !voiceOverRunning(), !text.isEmpty else {
             stopPlayback()
             return
         }
@@ -83,7 +84,7 @@ final class TVNarrationController {
 
     func focus(_ text: String?) {
         cancelFocus()
-        guard applicationActive, let text, !text.isEmpty, !voiceOverRunning() else { return }
+        guard applicationActive, audioEnabled, let text, !text.isEmpty, !voiceOverRunning() else { return }
         let generation = focusGeneration
         focusTask = Task { @MainActor [weak self, delay] in
             do {
@@ -95,7 +96,7 @@ final class TVNarrationController {
                     try await delay(.milliseconds(100))
                 }
                 guard let self, !Task.isCancelled, self.focusGeneration == generation else { return }
-                guard self.applicationActive, !self.voiceOverRunning() else { self.voiceOverStatusChanged(); return }
+                guard self.applicationActive, self.audioEnabled, !self.voiceOverRunning() else { self.voiceOverStatusChanged(); return }
                 self.protectsAnnouncement = false
                 self.speakText(text)
             } catch {
@@ -107,6 +108,12 @@ final class TVNarrationController {
     func repeatPrompt() {
         guard let currentPrompt else { return }
         announce(currentPrompt)
+    }
+
+    /// Activity-local mute preserves the repeatable prompt and accessibility announcements.
+    func setAudioEnabled(_ enabled: Bool) {
+        audioEnabled = enabled
+        if !enabled { stop() }
     }
 
     func stop() {

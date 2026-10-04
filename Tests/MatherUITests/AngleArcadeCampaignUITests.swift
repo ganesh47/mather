@@ -88,6 +88,40 @@ final class AngleArcadeCampaignUITests: XCTestCase {
         screenshot("Touch flight recovered after foregrounding")
     }
 
+    func testUnreadableProgressShowsPausedGuidanceAndDoneWithoutPlayControls() {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = ["-angle-arcade-ui-test", "-mather.angle-arcade.progress.v1.ipad-ui-test", "retained-unsupported-fixture"]
+        app.launch()
+        let paused = app.staticTexts["angle-progress-paused"]
+        XCTAssertTrue(paused.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["angle-arcade-continue"].exists)
+        XCTAssertFalse(app.buttons["angle-world-garden"].exists)
+        XCTAssertFalse(app.buttons["angle-arcade-primary"].exists)
+        XCTAssertTrue(app.staticTexts["angle-progress-guidance"].label.contains("Data reset → Clear session history"))
+        screenshot("Unreadable selected-child Angle progress retained with Settings recovery guidance")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let listen = app.buttons["angle-progress-listen"]
+        let scroll = app.scrollViews["angle-progress-scroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 10))
+        for _ in 0..<3 {
+            let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 1, dy: 1)
+            if listen.isHittable && viewport.contains(listen.frame) { break }
+            scroll.swipeUp()
+        }
+        XCTAssertTrue(listen.isHittable)
+        let viewport = scroll.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 1, dy: 1)
+        XCTAssertTrue(viewport.contains(listen.frame), "The complete Listen control must be visible after bounded scrolling")
+        guard listen.isHittable && viewport.contains(listen.frame) else { return }
+        listen.tap()
+        screenshot("Compact landscape paused Angle recovery with full Listen control after scrolling")
+        let done = app.buttons["angle-cannon-done-button"]
+        XCTAssertTrue(done.isHittable)
+        done.tap()
+        let departed = expectation(for: NSPredicate { _, _ in !paused.exists }, evaluatedWith: nil)
+        wait(for: [departed], timeout: 10)
+    }
+
     private func launch(reset: Bool) -> XCUIApplication {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()

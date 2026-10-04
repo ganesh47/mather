@@ -174,7 +174,7 @@ final class AppModel {
         explorerLabMasteryStore.reset(); explorerLabMasteryProfile = explorerLabMasteryStore.load()
         angleArcadeEngine.cancelFlight()
         let angleStore = Self.angleArcadeStore(scope: Self.angleArcadeScope(profileID: profileStore.activeProfileId))
-        angleStore.save(AngleArcadeProgress())
+        angleStore.clear()
         angleArcadeProfileScope = angleStore.scope
         angleArcadeEngine = AngleArcadeEngine(store: angleStore)
         learningDataResetIssue = issues.isEmpty ? nil : issues.joined(separator: "\n\n")

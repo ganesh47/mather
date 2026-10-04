@@ -137,9 +137,12 @@ struct MatherTVRootView: View {
 
     @ViewBuilder
     private func gameView(for action: MatherTVAction) -> some View {
+        let context = learningStore.context
         switch action {
         case .memory:
-            MemoryGalleryTVView()
+            MemoryGalleryTVView(onAnimalLearningEvent: {
+                _ = AnimalExplorerEvidenceRecorder.record($0, context: context, ledger: learningStore)
+            })
         case .angle:
             AngleArcadeTVView(onExit: { exitGame(.angle) })
         case .sprint:
@@ -154,7 +157,7 @@ struct MatherTVRootView: View {
     }
 
     private func openGame(_ action: MatherTVAction) {
-        if (action == .sprint || action == .shapes), learningStore.storageMessage != nil {
+        if (action == .memory || action == .sprint || action == .shapes), learningStore.storageMessage != nil {
             showsFamilyGuide = true
             return
         }

@@ -103,14 +103,14 @@ struct TVFamilyLearningView: View {
             Text("Adult assistance is unknown. A correct choice or completed game is not proof of independent mastery.")
                 .font(.system(size: 23)).foregroundStyle(.white.opacity(0.75))
             if attempts.isEmpty {
-                Text("Start a short Sum Sprint or Shape Detective journey to collect actual choices and attempts.")
+                Text("Explore animal photos or start a short Sum Sprint or Shape Detective journey to collect actual choices and attempts.")
                     .font(.system(size: 26))
             } else {
                 Text(nextAction(attempts)).font(.system(size: 26, weight: .semibold))
                     .accessibilityIdentifier("tv-family-next")
             }
-            Button(attempts.last?.activityID.lowercased().contains("shape") == true ? "Next: explore a new shape" : "Next: build number parts") {
-                onStartJourney(attempts.last?.activityID.lowercased().contains("shape") == true ? .shapes : .sprint)
+            Button(nextJourneyTitle(attempts)) {
+                onStartJourney(nextJourney(attempts))
             }.disabled(store.storageMessage != nil)
                 .accessibilityIdentifier("tv-family-next-journey")
             ForEach(store.results(for: store.context.profileID).prefix(4)) { result in
@@ -130,10 +130,26 @@ struct TVFamilyLearningView: View {
     private func nextAction(_ attempts: [ItemAttempt]) -> String {
         guard let last = attempts.last else { return "Next: try one short journey." }
         let needsSupport = last.outcome == .help || last.outcome == .incorrect || last.outcome == .supportedCorrect
+        if last.activityID == AnimalExplorerEvidenceRecorder.activityID {
+            return needsSupport ? "Next: notice the animal's markings together, then try another photo. Naming after browsing or a hint counts as supported practice." : "Next: describe an animal's markings before naming it, then compare another photograph. This photo bank is practice; adult help is unknown."
+        }
         if last.activityID.lowercased().contains("shape") {
             return needsSupport ? "Next: trace the sides and corners of a real box together, then try a new shape." : "Next: find a rectangle in the room. Turn it and explain which properties stay the same."
         }
         return needsSupport ? "Next: count two small groups together, join them, and try the through-5 journey." : "Next: split five real objects into two groups. Ask how many altogether, then change the split."
+    }
+
+    private func nextJourney(_ attempts: [ItemAttempt]) -> MatherTVAction {
+        if attempts.last?.activityID == AnimalExplorerEvidenceRecorder.activityID { return .memory }
+        return attempts.last?.activityID.lowercased().contains("shape") == true ? .shapes : .sprint
+    }
+
+    private func nextJourneyTitle(_ attempts: [ItemAttempt]) -> String {
+        switch nextJourney(attempts) {
+        case .memory: "Next: explore animal photos"
+        case .shapes: "Next: explore a new shape"
+        default: "Next: build number parts"
+        }
     }
 }
 

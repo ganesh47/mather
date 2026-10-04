@@ -1,0 +1,23 @@
+# Animal Explorer offline photographs
+
+The TV Animals name quiz and explorer receive a separate frozen bank of 31 real animal photographs. The existing picture-pairs adventures and published content packs keep their own identities and pictures. `AnimalExplorerCatalog.contentVersion` is 1; photo cards have stable `animal-photo-*` IDs, distinct bundled `AnimalPhoto*` assets and explicit collection membership.
+
+The bank includes mammals, eight birds, five reptiles and one amphibian. “Wildlife of India” means the species is found in India; it does not claim a photograph was taken in India or in the wild. Sheep is labelled generically and belongs only to the farm collection: the source shows a Sardinian sheep photographed in Italy. The camel photograph has a saddle covering its hump, so its clue describes the visible long neck. Facts contain the taxonomic group, supplied scientific name and individually inspected visible features; no habitat, lifespan or weight is guessed from a photo filename.
+
+Each individual source page was checked for its stated CC or CC0 license. Full Naseer credit instructions are retained for peafowl and blackbuck. The sloth bear grant includes the Commons Flickr review; the blackbuck grant includes the Commons VRT permission record. Those explicit grants, rather than stale EXIF copyright text, support reuse. Photo derivatives retain their respective photo licenses, including share-alike terms; these photo licenses do not describe the app's source code. Credits, exact source/license URLs, modifications and source/derivative hashes are compiled into the offline catalog and recorded independently in `wiki/Research/Animal-Photo-Provenance.json`.
+
+Original download requests encountered HTTP 429. Six original photographs were downloaded and hashed. For the remaining included files, the import used Commons' explicitly recommended 1280-pixel thumbnail URLs with sequential, conservatively paced requests. The ledger records `originalSHA256: null` for these files and hashes the exact downloaded thumbnail bytes separately. Included JPEGs are recompressed at quality 78, with aspect-preserving downscaling only when their long edge exceeds 1600 pixels. No photo is upscaled, cropped by the app, retouched or generated. The 31 JPEGs total 14,905,286 bytes before asset-catalog compilation.
+
+The olive ridley source remains omitted. Its top area contains a distant person, and the requested top crop did not change output pixels or dimensions with the native Mac tool. No turtle asset is bundled. Original/source-page snapshots remain locally in the isolated import workspace, while page revision IDs, page hashes and individual grant notes are committed in the provenance ledger. The goat source contains partial background human figures with no identifiable faces; the animal remains fully visible.
+
+`entries(for:)` preserves a supplied card snapshot verbatim. It supplies reviewed photo metadata only when the entire card equals an owned reviewed photo entry. Unknown or changed cards receive no speculative India membership, hint or photo credit. This avoids crediting a replacement picture to the wrong creator.
+
+`AnimalExplorerLearningEvent` is an immutable observation DTO. It freezes event UUID, session dates, catalog version, species/card/photo variant/round/response identity and whether the app supplied a hint or the photo had already been explored. It performs no persistence or mastery calculation. The profile-owned coordinator deduplicates actual exposures, help, selected answers and completion; timer speed and animation cannot add credit.
+
+## Acceptance
+
+- All 31 final JPEGs were individually opened with `view_image` and inspected for correct animal identity, visible-feature descriptions, no gore and no identifiable faces. All maintain their authored aspect ratios.
+- Import integrity checks compare the final file SHA-256 and dimensions with the independent ledger and assert no upscaling. All asset catalogs have one universal JPEG.
+- The targeted catalog tests cover offline asset resolution, distinct species/variants, preservation of replacement/unknown cards, explicit sheep/camel/location/attribution cautions and byte-to-ledger-to-compiled-credit parity.
+- The coordinator must run the catalog tests in the integrated app and inspect native TV browse, detail, credits and quiz screens at 1080p/4K. Images must use aspect-fit, have neutral quiz accessibility descriptions and readable focus treatment. License credits must remain reachable without a network connection.
+- No content-feed, project, root/profile, evidence-store or shared Memory source was edited by this asset slice. No publication, push or release was performed.

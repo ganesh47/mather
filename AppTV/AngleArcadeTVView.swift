@@ -12,6 +12,7 @@ struct AngleArcadeTVView: View {
     @State private var flightTask: Task<Void, Never>?
     @State private var focusTask: Task<Void, Never>?
     @State private var flightProgress = 0.0
+    @State private var showsProgressDeletion = false
     @FocusState private var focusedAction: String?
     var onExit: () -> Void = {}
 
@@ -20,7 +21,9 @@ struct AngleArcadeTVView: View {
             MatherTVBackdrop()
             VStack(alignment: .leading, spacing: 24) {
                 header
-                if engine.phase == .worldSelection {
+                if let message = engine.pauseMessage {
+                    storageRecovery(message)
+                } else if engine.phase == .worldSelection {
                     worldSelector
                 } else if engine.phase == .worldComplete {
                     finale
@@ -40,8 +43,14 @@ struct AngleArcadeTVView: View {
             if phase == .result { announce(resultMessage) }
             else if phase != .flying { narration.presentPrompt(engine.prompt) }
         }
+        .onChange(of: engine.pauseMessage) { _, _ in
+            stopTransientWork()
+            restoreFocus()
+            narration.presentPrompt(engine.prompt)
+        }
         .onChange(of: focusedAction) { _, action in
             guard let action else { narration.focus(nil); return }
+            guard engine.pauseMessage == nil else { narration.focus(nil); return }
             guard engine.phase == .worldSelection || engine.phase == .worldComplete else { return }
             if let world = AngleArcadeWorld.allCases.first(where: { $0.id == action }) {
                 narration.focus("\(world.title). \(world.subtitle). Select to explore.")
@@ -53,7 +62,7 @@ struct AngleArcadeTVView: View {
         .onPlayPauseCommand { help() }
         .onExitCommand {
             stopTransientWork()
-            if engine.phase == .worldSelection { onExit() }
+            if engine.pauseMessage != nil || engine.phase == .worldSelection { onExit() }
             else { engine.showWorlds() }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -61,16 +70,36 @@ struct AngleArcadeTVView: View {
             else { restoreFocus() }
         }
         .onDisappear { stopTransientWork() }
+        .alert("Clear Angle progress on this TV?", isPresented: $showsProgressDeletion) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear Angle progress", role: .destructive) {
+                engine.clearProgressAfterParentConfirmation()
+            }
+        } message: {
+            Text("This removes only Angle Arcade mission completions, attempts, help counts and last mission on this TV, for everyone who uses it. It does not clear the learning ledger or other games. The retained Angle data cannot be restored after clearing.")
+        }
     }
 
     private static func makeEngine() -> AngleArcadeEngine {
-        guard ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test"),
-              let defaults = UserDefaults(suiteName: "mather.angleArcade.tvUITests") else { return .init() }
-        if ProcessInfo.processInfo.arguments.contains("-angle-arcade-reset-progress") {
+        guard ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") else { return .init() }
+        return .init(store: .init(defaults: uiTestDefaults, scope: "tv-ui-test"))
+    }
+
+    private static let uiTestDefaults: UserDefaults = {
+        let arguments = ProcessInfo.processInfo.arguments
+        let defaults = UserDefaults(suiteName: "mather.angleArcade.tvUITests")!
+        if arguments.contains("-angle-arcade-reset-progress") {
             defaults.removePersistentDomain(forName: "mather.angleArcade.tvUITests")
         }
-        return .init(store: .init(defaults: defaults, scope: "tv-ui-test"))
-    }
+        if arguments.contains("-angle-arcade-unsupported-progress") {
+            var future = AngleArcadeProgress()
+            future.schemaVersion = 2
+            if let data = try? JSONEncoder().encode(future) {
+                defaults.set(data, forKey: "mather.angle-arcade.progress.v1.tv-ui-test")
+            }
+        }
+        return defaults
+    }()
 
     private var motionReduced: Bool {
         reduceMotion || (ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") &&
@@ -78,7 +107,8 @@ struct AngleArcadeTVView: View {
     }
 
     private var phaseName: String {
-        switch engine.phase {
+        if engine.pauseMessage != nil { return "Paused" }
+        return switch engine.phase {
         case .worldSelection: "Choose a world"
         case .aiming: "Aiming"
         case .flying: "Flying"
@@ -92,7 +122,7 @@ struct AngleArcadeTVView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Angle Arcade")
                     .font(.system(size: 58, weight: .heavy, design: .rounded))
-                Text(engine.phase == .worldSelection ? "Three worlds. Nine little adventures." : engine.currentWorld.title)
+                Text(engine.pauseMessage != nil ? "Progress kept on this TV" : engine.phase == .worldSelection ? "Three worlds. Nine little adventures." : engine.currentWorld.title)
                     .font(.system(size: 27, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.78))
                     .accessibilityIdentifier("angle-arcade-phase")
@@ -105,6 +135,27 @@ struct AngleArcadeTVView: View {
                 .padding(.top, 12)
         }
         .foregroundStyle(.white)
+    }
+
+    private func storageRecovery(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Text("Angle Arcade is paused").font(.system(size: 42, weight: .bold, design: .rounded))
+                .accessibilityIdentifier("angle-progress-paused")
+            Text(message).font(.system(size: 27)).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 24) {
+                Button("All games", action: onExit)
+                    .focused($focusedAction, equals: "storage-exit")
+                    .prefersDefaultFocus(true, in: actionFocusScope)
+                    .accessibilityIdentifier("angle-progress-exit")
+                Button("Listen") { narration.repeatPrompt() }
+                    .accessibilityIdentifier("angle-progress-listen")
+                Button("Parent: clear Angle progress") { showsProgressDeletion = true }
+                    .accessibilityIdentifier("angle-progress-clear")
+            }
+            .buttonStyle(TVFamilyButtonStyle())
+        }
+        .foregroundStyle(.white)
+        .padding(.top, 36)
     }
 
     private var worldSelector: some View {
@@ -171,7 +222,7 @@ struct AngleArcadeTVView: View {
             }
             .foregroundStyle(.white)
 
-            AngleArcadeScene(engine: engine, flightProgress: flightProgress)
+            AngleArcadeTVScene(engine: engine, flightProgress: flightProgress, reduceMotion: motionReduced)
                 .frame(height: 455)
             HStack(spacing: 18) {
                 controlTile(title: engine.level.kind == .rotation ? (engine.level.id == "builder-quarter-turn" ? "Turn" : "Direction") : "Angle", value: angleValue, symbol: engine.level.allowsAngle ? "arrow.left.and.right" : "lock.fill", id: "angle-arcade-angle") { direction in
@@ -367,6 +418,7 @@ struct AngleArcadeTVView: View {
     }
 
     private func help() {
+        guard engine.pauseMessage == nil else { narration.repeatPrompt(); return }
         guard engine.phase != .flying else { narration.announce("Watch the delivery fly."); return }
         if engine.phase == .aiming || engine.phase == .result {
             engine.requestHelp()
@@ -384,7 +436,7 @@ struct AngleArcadeTVView: View {
         focusTask = Task { @MainActor in
             do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
             guard !Task.isCancelled, scenePhase == .active else { return }
-            focusedAction = engine.phase == .worldSelection ? suggestedLevel.world.id : engine.phase == .worldComplete ? "worlds" : "primary"
+            focusedAction = engine.pauseMessage != nil ? "storage-exit" : engine.phase == .worldSelection ? suggestedLevel.world.id : engine.phase == .worldComplete ? "worlds" : "primary"
             resetFocus(in: actionFocusScope)
         }
     }

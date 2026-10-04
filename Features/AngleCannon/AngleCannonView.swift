@@ -30,11 +30,13 @@ struct AngleCannonView: View {
     private var engine: AngleArcadeEngine { sessionEngine ?? appModel.angleArcadeEngine }
     private var isActiveProfile: Bool { appModel.profileStore.activeProfileId == evidenceProfileID }
 
-    var body: some View {
+    private var layout: some View {
         GeometryReader { geometry in
             VStack(spacing: 12) {
                 header.padding(.horizontal, 18)
-                if engine.phase == .worldSelection {
+                if let message = engine.pauseMessage {
+                    pausedProgress(message: message)
+                } else if engine.phase == .worldSelection {
                     ScrollView { worldPicker.padding(18) }
                         .accessibilityIdentifier("angle-arcade-scroll")
                         .disabled(!isActiveProfile)
@@ -70,6 +72,10 @@ struct AngleCannonView: View {
             .frame(maxWidth: .infinity)
             .background(MatherTheme.background.ignoresSafeArea())
         }
+    }
+
+    private var engineLifecycleLayout: some View {
+        layout
         .onAppear {
             guard sessionEngine == nil, isActiveProfile else { return }
             appModel.prepareAngleArcadeProfile()
@@ -90,6 +96,15 @@ struct AngleCannonView: View {
             flightProgress = 0
             narrate()
         }
+        .onChange(of: engine.pauseMessage) { _, _ in
+            cancelFlight()
+            stopTilt()
+            narrate()
+        }
+    }
+
+    private var inputLifecycleLayout: some View {
+        engineLifecycleLayout
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
             guard isActiveProfile, tiltEnabled, engine.phase == .aiming,
                   engine.level.kind == .launch, engine.level.allowsAngle else { return }
@@ -113,21 +128,45 @@ struct AngleCannonView: View {
             stopTilt()
             appModel.speechService.stop()
         }
-        .onDisappear {
-            recordCompletedAttempt()
-            cancelFlight()
-            stopTilt()
-            appModel.speechService.stop()
-            guard isActiveProfile else { return }
-            saveEvidenceResult()
-            if engine.sessionCompletionCount > 0 {
-                appModel.gameSessionStore.save(
-                    gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
-                    scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
-                    detail: "This play: \(attempts.filter { $0.outcome == .supportedCorrect }.count) missions completed with support; \(attempts.filter { $0.outcome == .independentCorrect }.count) independently. Completion records exploration, not mastery."
-                )
-            }
+    }
+
+    var body: some View {
+        inputLifecycleLayout.onDisappear { recordDisappearance() }
+    }
+
+    private func recordDisappearance() {
+        recordCompletedAttempt()
+        cancelFlight()
+        stopTilt()
+        appModel.speechService.stop()
+        guard isActiveProfile else { return }
+        saveEvidenceResult()
+        if engine.pauseMessage == nil, engine.sessionCompletionCount > 0 {
+            appModel.gameSessionStore.save(
+                gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
+                scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
+                detail: "This play: \(attempts.filter { $0.outcome == .supportedCorrect }.count) missions completed with support; \(attempts.filter { $0.outcome == .independentCorrect }.count) independently. Completion records exploration, not mastery."
+            )
         }
+    }
+
+    private func pausedProgress(message: String) -> some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                Text("Angle Arcade is paused").font(.title2.bold())
+                    .accessibilityIdentifier("angle-progress-paused")
+                Text(message).multilineTextAlignment(.center)
+                Text("A parent can open Settings → Data reset → Clear session history, then confirm the selected child's learning reset. This also removes that child's other learning data. Other children keep their data.")
+                    .multilineTextAlignment(.center).font(.subheadline)
+                    .accessibilityIdentifier("angle-progress-guidance")
+                Button { narrate() } label: { Text("Listen").frame(minHeight: 80) }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("angle-progress-listen")
+            }
+            .padding(24)
+            .foregroundStyle(MatherTheme.ink)
+        }
+        .accessibilityIdentifier("angle-progress-scroll")
     }
 
     private var missionScene: some View {
@@ -140,7 +179,8 @@ struct AngleCannonView: View {
     }
 
     private var phaseName: String {
-        switch engine.phase {
+        if engine.pauseMessage != nil { return "Paused" }
+        return switch engine.phase {
         case .worldSelection: "Choose a world"
         case .aiming: "Aiming"
         case .flying: "Flying"
@@ -383,6 +423,7 @@ struct AngleCannonView: View {
     private func requestHelp() {
         guard isActiveProfile, engine.phase == .aiming || engine.phase == .result, !engine.success else { return }
         engine.requestHelp()
+        guard engine.pauseMessage == nil else { narrate(); return }
         if helpedMissionIDs.insert(engine.level.id).inserted {
             record(ItemAttempt(
                 activityID: LabActivityID.angleCannon.rawValue,
@@ -397,7 +438,7 @@ struct AngleCannonView: View {
     }
 
     private func recordCompletedAttempt() {
-        guard isActiveProfile, engine.phase == .result,
+        guard isActiveProfile, engine.pauseMessage == nil, engine.phase == .result,
               pendingAttemptID == engine.attemptID, let pendingAttempt else { return }
         let outcome = engine.success ? pendingAttempt.outcome : .incorrect
         record(pendingAttempt.withOutcome(outcome))
@@ -465,6 +506,7 @@ struct AngleCannonView: View {
 
     private func narrate() {
         guard isActiveProfile else { return }
+        if let message = engine.pauseMessage { speak(message); return }
         switch engine.phase {
         case .worldSelection: speak("Choose Garden deliveries, Builder bay, or Moon parcels. Every world is open. Touch a picture to play.")
         case .worldComplete: speak("You built it! Three discoveries made a wonderful creation. Play again or choose another world.")

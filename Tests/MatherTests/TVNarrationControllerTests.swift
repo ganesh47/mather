@@ -121,4 +121,22 @@ struct TVNarrationControllerTests {
         narration.stop()
     }
 
+    @Test func muteStopsPendingSpeechAndRetainsPromptForExplicitUnmute() async {
+        let playback = Playback()
+        let narration = playback.makeController()
+        narration.presentPrompt("Find a pair.")
+        narration.focus("Bulldozer")
+        await playback.settle()
+        narration.setAudioEnabled(false)
+        narration.announce("A pair!")
+        narration.repeatPrompt()
+        narration.focus("Crane")
+        await playback.releaseWaits()
+        #expect(playback.spoken == ["Find a pair."])
+        #expect(!narration.audioEnabled && narration.currentPrompt == "Find a pair.")
+        narration.setAudioEnabled(true)
+        narration.repeatPrompt()
+        #expect(playback.spoken == ["Find a pair.", "Find a pair."])
+        narration.stop()
+    }
 }

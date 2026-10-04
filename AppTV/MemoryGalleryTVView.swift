@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MemoryGalleryTVView: View {
+    var onAnimalLearningEvent: (AnimalExplorerLearningEvent) -> Void = { _ in }
     @FocusState private var focusedAdventureID: String?
     @FocusState private var focusedCategory: MemoryGalleryTVCategory.ID?
     @FocusState private var focusedAnswerID: String?
@@ -12,6 +13,7 @@ struct MemoryGalleryTVView: View {
     @State private var contentStore = MemoryGalleryContentStore()
     @State private var selectedAdventure: MemoryAdventure?
     @State private var activeAdventure: MemoryAdventure?
+    @State private var animalExplorerSnapshot: AnimalExplorerSnapshot?
 
     var body: some View {
         ZStack {
@@ -29,6 +31,20 @@ struct MemoryGalleryTVView: View {
             }
         }
         .environment(contentStore)
+        .fullScreenCover(item: $animalExplorerSnapshot) { snapshot in
+            AnimalExplorerTVView(
+                entries: snapshot.entries,
+                collections: snapshot.collections,
+                contentVersion: snapshot.contentVersion,
+                onClose: { animalExplorerSnapshot = nil },
+                onClassicQuiz: {
+                    animalExplorerSnapshot = nil
+                    startClassicAnimals()
+                },
+                onLearningEvent: onAnimalLearningEvent
+            )
+            .environment(contentStore)
+        }
         .fullScreenCover(item: $selectedAdventure) { adventure in
             MemoryPairsTVView(adventure: adventure, quiz: { cards in
                 selectedAdventure = nil
@@ -42,14 +58,20 @@ struct MemoryGalleryTVView: View {
         .task {
             guard let value = Bundle.main.object(forInfoDictionaryKey: "MemoryGalleryContentURL") as? String,
                   let url = URL(string: value) else { return }
-            await contentStore.refresh(from: url) { game.phase == .choosingCategory && selectedAdventure == nil }
+            await contentStore.refresh(from: url) {
+                game.phase == .choosingCategory && selectedAdventure == nil && animalExplorerSnapshot == nil
+            }
         }
         .onChange(of: game.phase) { _, phase in
-            if phase == .choosingCategory && selectedAdventure == nil { contentStore.activatePending() }
+            if phase == .choosingCategory && selectedAdventure == nil && animalExplorerSnapshot == nil {
+                contentStore.activatePending()
+            }
         }
         .onAppear {
-            presentCategoryPrompt()
-            focusFirstCategory()
+            if game.phase == .choosingCategory && selectedAdventure == nil && animalExplorerSnapshot == nil {
+                presentCategoryPrompt()
+                focusFirstCategory()
+            }
         }
         .onDisappear { narration.stop() }
         .onPlayPauseCommand { narration.repeatPrompt() }
@@ -59,11 +81,17 @@ struct MemoryGalleryTVView: View {
             narration.focus("\(adventure.title). \(adventure.introduction) Press select for picture pairs or a quiz.")
         }
         .onChange(of: selectedAdventure) { _, adventure in
-            if adventure == nil && game.phase == .choosingCategory {
+            if adventure == nil && game.phase == .choosingCategory && animalExplorerSnapshot == nil {
                 contentStore.activatePending()
                 presentCategoryPrompt()
                 focusFirstCategory()
             }
+        }
+        .onChange(of: animalExplorerSnapshot?.id) { _, id in
+            guard id == nil, game.phase == .choosingCategory else { return }
+            contentStore.activatePending()
+            presentCategoryPrompt()
+            Task { @MainActor in focusedCategory = MemoryGalleryTVCategory.animals.id }
         }
         .onChange(of: focusedNarration) { _, text in
             narration.focus(text)
@@ -74,7 +102,9 @@ struct MemoryGalleryTVView: View {
         switch game.phase {
         case .choosingCategory:
             return MemoryGalleryTVCategory.allCases.first { $0.id == focusedCategory }.map {
-                "\($0.title). \($0.subtitle). Press select to play."
+                $0 == .animals
+                    ? "Animals. Explore real photographs of species found in India, or play a name quiz."
+                    : "\($0.title). \($0.subtitle). Press select to play."
             }
         case .playing:
             if game.hasAnsweredCurrentRound {
@@ -100,13 +130,13 @@ struct MemoryGalleryTVView: View {
                     .foregroundStyle(.white)
                     .accessibilityIdentifier("tv-memory-gallery-title")
 
-                Text("Match big pictures with no timer. Countries has 30 questions packed with money and landmarks.")
+                Text("Explore real photos of animals found in India, or match pictures in another gallery.")
                     .font(.system(size: 30, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.74))
                     .accessibilityIdentifier("tv-memory-gallery-prompt")
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Memory Gallery. Match big pictures with no timer. The Countries gallery has 30 questions with money and landmarks.")
+            .accessibilityLabel("Memory Gallery. Animals has real photos, browsing and name quizzes. Countries has 30 questions with money and landmarks.")
 
             categoryShelf
 
@@ -152,7 +182,7 @@ struct MemoryGalleryTVView: View {
                 }
                 .buttonStyle(.plain)
                 .focused($focusedCategory, equals: category.id)
-                .accessibilityLabel("\(category.title), \(category.subtitle)")
+                .accessibilityLabel(category == .animals ? "Animals. Real photographs, India and more." : "\(category.title), \(category.subtitle)")
                 .accessibilityHint(categoryAccessibilityHint(category))
                 .accessibilityIdentifier("tv-memory-category-\(category.id)")
             }
@@ -464,6 +494,9 @@ struct MemoryGalleryTVView: View {
     }
 
     private func categoryAccessibilityHint(_ category: MemoryGalleryTVCategory) -> String {
+        if category == .animals {
+            return "Explore real animal photographs, including species found in India, then choose a name quiz."
+        }
         if category == .flags {
             return "Starts a 30-question Countries game with landmarks, money, flags, capitals, and languages."
         }
@@ -504,8 +537,24 @@ struct MemoryGalleryTVView: View {
     }
 
     private func start(_ category: MemoryGalleryTVCategory) {
+        if category == .animals {
+            narration.stop()
+            animalExplorerSnapshot = AnimalExplorerSnapshot(
+                entries: AnimalExplorerCatalog.photoEntries,
+                collections: AnimalExplorerCatalog.collections,
+                contentVersion: AnimalExplorerCatalog.contentVersion
+            )
+            return
+        }
         activeAdventure = nil
         game.start(category: category, deck: contentStore.cards(for: category))
+        presentRoundPrompt()
+        focusFirstAnswer()
+    }
+
+    private func startClassicAnimals() {
+        activeAdventure = nil
+        game.start(category: .animals, deck: contentStore.cards(for: .animals))
         presentRoundPrompt()
         focusFirstAnswer()
     }
@@ -652,6 +701,13 @@ struct MemoryGalleryTVView: View {
     }
 }
 
+private struct AnimalExplorerSnapshot: Identifiable {
+    let id = UUID()
+    let entries: [AnimalExplorerEntry]
+    let collections: [AnimalExplorerCollection]
+    let contentVersion: Int
+}
+
 private struct MemoryGalleryCategoryTile: View {
     let category: MemoryGalleryTVCategory
     let isFocused: Bool
@@ -670,7 +726,7 @@ private struct MemoryGalleryCategoryTile: View {
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(isFocused ? Color(red: 0.08, green: 0.12, blue: 0.18) : .white)
 
-                Text(category.subtitle)
+                Text(category == .animals ? "Real photos · India & more" : category.subtitle)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(isFocused ? Color(red: 0.18, green: 0.24, blue: 0.32) : .white.opacity(0.62))
             }
