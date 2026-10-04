@@ -2,6 +2,8 @@ import XCTest
 
 @MainActor
 final class MemoryGalleryContentUITests: XCTestCase {
+    override func setUpWithError() throws { continueAfterFailure = false }
+
     func testPublicPackActivatesPlaysAndSurvivesRelaunch() throws {
         let feed = URL(string: "https://raw.githubusercontent.com/ganesh47/mather-content/main/memory-gallery/pack.json")!
         let manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: feed)) as? [String: Any])
@@ -100,8 +102,7 @@ final class MemoryGalleryContentUITests: XCTestCase {
         let quiz = app.buttons["tv-memory-adventure-quiz"]
         XCTAssertTrue(quiz.waitForExistence(timeout: 10))
         waitForFocus(app.buttons["tv-memory-adventure-start"])
-        XCUIRemote.shared.press(.down)
-        waitForFocus(quiz)
+        try focusByDirection(quiz, app: app)
         XCUIRemote.shared.press(.select)
         for index in 0..<6 {
             let answers = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tv-memory-answer-"))

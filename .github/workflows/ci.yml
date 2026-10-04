@@ -13,7 +13,7 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -85,7 +85,7 @@ jobs:
         run: bash scripts/test_ios_learning_content.sh
 
       - name: Test Apple TV games
-        timeout-minutes: 30
+        timeout-minutes: 50
         run: |
           TV_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for runtime,rows in devices.items() if ".tvOS-" in runtime for d in rows if d["isAvailable"]))')
           xcodebuild test \

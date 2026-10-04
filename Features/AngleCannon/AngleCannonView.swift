@@ -74,7 +74,7 @@ struct AngleCannonView: View {
         }
     }
 
-    var body: some View {
+    private var engineLifecycleLayout: some View {
         layout
         .onAppear {
             guard sessionEngine == nil, isActiveProfile else { return }
@@ -101,6 +101,10 @@ struct AngleCannonView: View {
             stopTilt()
             narrate()
         }
+    }
+
+    private var inputLifecycleLayout: some View {
+        engineLifecycleLayout
         .onChange(of: appModel.motionService.tiltRoll) { _, roll in
             guard isActiveProfile, tiltEnabled, engine.phase == .aiming,
                   engine.level.kind == .launch, engine.level.allowsAngle else { return }
@@ -124,20 +128,25 @@ struct AngleCannonView: View {
             stopTilt()
             appModel.speechService.stop()
         }
-        .onDisappear {
-            recordCompletedAttempt()
-            cancelFlight()
-            stopTilt()
-            appModel.speechService.stop()
-            guard isActiveProfile else { return }
-            saveEvidenceResult()
-            if engine.pauseMessage == nil, engine.sessionCompletionCount > 0 {
-                appModel.gameSessionStore.save(
-                    gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
-                    scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
-                    detail: "This play: \(attempts.filter { $0.outcome == .supportedCorrect }.count) missions completed with support; \(attempts.filter { $0.outcome == .independentCorrect }.count) independently. Completion records exploration, not mastery."
-                )
-            }
+    }
+
+    var body: some View {
+        inputLifecycleLayout.onDisappear { recordDisappearance() }
+    }
+
+    private func recordDisappearance() {
+        recordCompletedAttempt()
+        cancelFlight()
+        stopTilt()
+        appModel.speechService.stop()
+        guard isActiveProfile else { return }
+        saveEvidenceResult()
+        if engine.pauseMessage == nil, engine.sessionCompletionCount > 0 {
+            appModel.gameSessionStore.save(
+                gameName: "Angle Cannon", startedAt: engine.sessionStartedAt,
+                scoreValue: engine.sessionCompletionCount, scoreLabel: "missions explored",
+                detail: "This play: \(attempts.filter { $0.outcome == .supportedCorrect }.count) missions completed with support; \(attempts.filter { $0.outcome == .independentCorrect }.count) independently. Completion records exploration, not mastery."
+            )
         }
     }
 

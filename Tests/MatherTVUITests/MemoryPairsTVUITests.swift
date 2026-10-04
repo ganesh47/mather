@@ -287,7 +287,20 @@ final class MemoryPairsTVUITests: XCTestCase {
                 if horizontal && abs(dy) > 40 { XCUIRemote.shared.press(dy > 0 ? .down : .up) }
                 else if !horizontal && abs(dx) > 40 { XCUIRemote.shared.press(dx > 0 ? .right : .left) }
             }
+            if focused.hasFocus,
+               focused.identifier.hasPrefix("tv-memory-pair-"),
+               target.identifier.hasPrefix("tv-memory-pair-") {
+                // Collected cards keep empty slots. Two diagonal survivors may need
+                // the action row instead of repeatedly swiping into those holes.
+                XCUIRemote.shared.press(.down)
+                screenshot("Remote focus detour around collected card slots")
+            }
         }
+        screenshot("Unreachable remote focus \(target.identifier)")
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Unreachable remote focus hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
         XCTFail("Remote focus could not reach \(target.identifier)")
     }
     private func screenshot(_ name: String) {

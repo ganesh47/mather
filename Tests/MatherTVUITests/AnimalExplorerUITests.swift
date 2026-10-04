@@ -123,28 +123,50 @@ final class AnimalExplorerUITests: XCTestCase {
         choose(app, app.buttons["tv-animal-start-quiz"])
         let originalIDs = Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier))
         let beforeHint = try timerSeconds(app)
+        let hintNavigationStarted = ProcessInfo.processInfo.systemUptime
         choose(app, app.buttons["tv-animal-hint"])
+        let hintPauseConfirmed = ProcessInfo.processInfo.systemUptime
         XCUIRemote.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
         app.activate()
         XCTAssertTrue(app.staticTexts["tv-animal-hint-copy"].waitForExistence(timeout: 10))
         waitForFocus(app.buttons["tv-animal-hint-back"])
+        let hintResumeRequested = ProcessInfo.processInfo.systemUptime
         XCUIRemote.shared.press(.menu)
         XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
-        XCTAssertGreaterThanOrEqual(try timerSeconds(app), beforeHint - 3)
+        let afterHint = try timerSeconds(app)
+        assertTimerPreserved(before: beforeHint, after: afterHint,
+            navigationStarted: hintNavigationStarted, pauseConfirmed: hintPauseConfirmed,
+            resumeRequested: hintResumeRequested, timerReadAt: ProcessInfo.processInfo.systemUptime)
         let beforeOptions = try timerSeconds(app)
+        let optionsNavigationStarted = ProcessInfo.processInfo.systemUptime
         choose(app, app.buttons["tv-animal-quiz-options"])
+        let optionsPauseConfirmed = ProcessInfo.processInfo.systemUptime
         XCUIRemote.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
         app.activate()
         XCTAssertTrue(app.staticTexts["tv-animal-options-title"].waitForExistence(timeout: 10))
         waitForFocus(app.buttons["tv-animal-option-no-timer"])
+        let optionsResumeRequested = ProcessInfo.processInfo.systemUptime
         XCUIRemote.shared.press(.menu)
         XCTAssertEqual(Set(answerButtons(app).allElementsBoundByIndex.map(\.identifier)), originalIDs)
-        XCTAssertGreaterThanOrEqual(try timerSeconds(app), beforeOptions - 3)
+        let afterOptions = try timerSeconds(app)
+        assertTimerPreserved(before: beforeOptions, after: afterOptions,
+            navigationStarted: optionsNavigationStarted, pauseConfirmed: optionsPauseConfirmed,
+            resumeRequested: optionsResumeRequested, timerReadAt: ProcessInfo.processInfo.systemUptime)
         XCTAssertEqual(app.staticTexts["tv-animal-quiz-progress"].label, "Picture 1 of 6")
         XCTAssertFalse(app.staticTexts["tv-animal-answer-feedback"].exists)
         attach("Background hint and options preserve the same paused question")
+    }
+
+    private func assertTimerPreserved(before: Int, after: Int, navigationStarted: TimeInterval,
+        pauseConfirmed: TimeInterval, resumeRequested: TimeInterval, timerReadAt: TimeInterval,
+        file: StaticString = #filePath, line: UInt = #line) {
+        let activeSeconds = (pauseConfirmed - navigationStarted) + (timerReadAt - resumeRequested)
+        let allowedDrop = Int(ceil(activeSeconds)) + 1
+        XCTAssertGreaterThanOrEqual(after, before - allowedDrop,
+            "Timer must exclude the \(resumeRequested - pauseConfirmed)s paused interval; active navigation took \(activeSeconds)s (allowing integer display rounding)",
+            file: file, line: line)
     }
 
     func testPhotoQuizCompletesAndReplayStartsAFreshSession() {
