@@ -1,0 +1,4 @@
+{
+  "ios": "Please test the guided Numbers, Shapes, Water and Circuit quests, resuming a paused quest, and the Parent Summary. Check the Memory matching and gallery activities and Angle Arcade. Parent resets should affect only the selected child. Please report unclear instructions, unreachable controls, or progress that does not resume as expected.",
+  "tvos": "Please test remote navigation through Memory matching, the animal photo browser and quiz, Sum Sprint, Shape Detective, Compare Camp and all three Angle Arcade worlds. Try leaving and resuming an activity, supported retries, and untimed matching. Please report unreadable focus states, unreachable controls, misleading geometry, or progress that does not resume as expected. Angle Arcade progress is shared on this TV."
+}

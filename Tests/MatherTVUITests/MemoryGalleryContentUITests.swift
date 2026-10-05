@@ -122,7 +122,12 @@ final class MemoryGalleryContentUITests: XCTestCase {
     }
 
     private func focusByDirection(_ target: XCUIElement, app: XCUIApplication) throws {
-        for _ in 0..<12 {
+        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        let availableFocus = expectation(for: NSPredicate { _, _ in
+            app.buttons.allElementsBoundByIndex.contains { $0.hasFocus }
+        }, evaluatedWith: nil)
+        wait(for: [availableFocus], timeout: 10)
+        for _ in 0..<20 {
             if target.hasFocus { return }
             let focused = try XCTUnwrap(app.buttons.allElementsBoundByIndex.first { $0.hasFocus })
             let dx = target.frame.midX - focused.frame.midX
@@ -130,12 +135,40 @@ final class MemoryGalleryContentUITests: XCTestCase {
             let horizontal = abs(dx) > max(target.frame.width, focused.frame.width) / 2
             if horizontal { XCUIRemote.shared.press(dx > 0 ? .right : .left) }
             else { XCUIRemote.shared.press(dy > 0 ? .down : .up) }
+            waitForFocusChange(from: focused, to: target)
             if focused.hasFocus {
-                if horizontal && abs(dy) > 40 { XCUIRemote.shared.press(dy > 0 ? .down : .up) }
-                else if !horizontal && abs(dx) > 40 { XCUIRemote.shared.press(dx > 0 ? .right : .left) }
+                if horizontal && abs(dy) > 40 {
+                    XCUIRemote.shared.press(dy > 0 ? .down : .up)
+                    waitForFocusChange(from: focused, to: target)
+                } else if !horizontal && abs(dx) > 40 {
+                    XCUIRemote.shared.press(dx > 0 ? .right : .left)
+                    waitForFocusChange(from: focused, to: target)
+                }
+            }
+            if focused.hasFocus,
+               focused.identifier.hasPrefix("tv-memory-pair-"),
+               target.identifier.hasPrefix("tv-memory-pair-") {
+                // Collected cards keep empty slots. Reach diagonal survivors
+                // through the action row when both direct directions are blocked.
+                XCUIRemote.shared.press(.down)
+                waitForFocusChange(from: focused, to: target)
+                attachScreenshot("Remote focus detour around collected card slots")
             }
         }
+        if target.hasFocus { return }
+        attachScreenshot("Unreachable remote focus \(target.identifier)")
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Unreachable remote focus hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
         XCTFail("Remote focus could not reach \(target.identifier)")
+    }
+
+    private func waitForFocusChange(from focused: XCUIElement, to target: XCUIElement) {
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            target.hasFocus || !focused.hasFocus
+        }, object: nil)
+        _ = XCTWaiter.wait(for: [changed], timeout: 1)
     }
 
     private func enterGallery(_ app: XCUIApplication) {

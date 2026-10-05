@@ -22,6 +22,11 @@ on:
         required: false
         type: string
 
+      existing_external_only:
+        description: Assign this exact successful run to existing external groups and submit beta review (no build/upload)
+        type: boolean
+        default: false
+
       diagnostics_only:
         description: Inspect Xcode Cloud repository references without starting a build
         type: boolean
@@ -49,7 +54,7 @@ permissions:
 jobs:
   github-release:
     name: Create GitHub Release
-    if: ${{ !inputs.diagnostics_only && !inputs.prepare_tag_only }}
+    if: ${{ !inputs.diagnostics_only && !inputs.prepare_tag_only && !inputs.existing_external_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: testflight-release
@@ -94,6 +99,7 @@ jobs:
 
   apple-testflight:
     name: Publish iOS and tvOS to TestFlight
+    if: ${{ !inputs.existing_external_only }}
     # API-only preparation/diagnostics do not need Xcode or a scarce Mac runner.
     runs-on: ${{ (inputs.prepare_tag_only || inputs.diagnostics_only) && 'ubuntu-latest' || 'macos-15' }}
     timeout-minutes: 80
@@ -147,3 +153,25 @@ jobs:
             args+=(--build-run-id "${RESUME_BUILD_RUN_ID}")
           fi
           .venv-testflight/bin/python ci_scripts/xcode_cloud_testflight.py "${args[@]}"
+
+  existing-external:
+    name: Distribute to existing external TestFlight groups
+    if: ${{ inputs.existing_external_only && !inputs.diagnostics_only && !inputs.prepare_tag_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: testflight-release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install App Store Connect client dependencies
+        run: |
+          python3 -m venv .venv-testflight
+          .venv-testflight/bin/pip install -r ci_scripts/testflight-feedback-requirements.txt
+      - name: Verify exact released builds and existing external distribution
+        env:
+          APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RESUME_BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        run: .venv-testflight/bin/python ci_scripts/testflight_existing_external.py

@@ -161,11 +161,16 @@ final class ScreenshotTests: XCTestCase {
         let clearButton = app.buttons["Clear session history"]
         requireExists(clearButton, timeout: 5)
         clearButton.tap()
-        requireExists(app.alerts["Clear all session data?"], timeout: 5)
+        let clearAlert = app.alerts["Clear this child's learning data?"]
+        requireExists(clearAlert, timeout: 5)
+        XCTAssertTrue(clearAlert.staticTexts.matching(NSPredicate(
+            format: "label CONTAINS %@", "Other children keep their history."
+        )).firstMatch.exists)
         snapshot(app, "Settings-ClearConfirmDialog")
 
         // Dismiss with Cancel
-        app.alerts["Clear all session data?"].buttons["Cancel"].tap()
+        clearAlert.buttons["Cancel"].tap()
+        XCTAssertTrue(clearAlert.waitForNonExistence(timeout: 5))
         snapshot(app, "Settings-AfterCancelClear")
     }
 
@@ -318,6 +323,7 @@ final class ScreenshotTests: XCTestCase {
             // advancing to the Bond Blast finale.
             expectedSumSprintPairs: 3,
             bondPairs: [(1, 5), (2, 4), (3, 3)],
+            nextProblemNumber: 2,
             snapshotPrefix: "Issue222-Target6"
         )
 
@@ -332,6 +338,7 @@ final class ScreenshotTests: XCTestCase {
             // Sum Sprint cards, not three.
             expectedSumSprintPairs: 2,
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
+            nextProblemNumber: 3,
             snapshotPrefix: "Issue222-Target9",
             skipInitialConcreteSnapshot: true
         )
@@ -345,6 +352,7 @@ final class ScreenshotTests: XCTestCase {
             // Target 4 with decomposition (1,3) yields two Sum Sprint cards: "1+3" and "3+1"
             expectedSumSprintPairs: 2,
             bondPairs: [(1, 3), (2, 2)],
+            nextProblemNumber: 4,
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
         )
@@ -357,6 +365,7 @@ final class ScreenshotTests: XCTestCase {
             rightPanCount: 7,
             expectedSumSprintPairs: 3,
             bondPairs: [(1, 11), (2, 10), (3, 9), (4, 8), (5, 7), (6, 6)],
+            nextProblemNumber: 5,
             snapshotPrefix: "Issue222-Target12",
             skipInitialConcreteSnapshot: true
         )
@@ -741,6 +750,7 @@ final class ScreenshotTests: XCTestCase {
         rightPanCount: Int,
         expectedSumSprintPairs: Int,
         bondPairs: [(Int, Int)],
+        nextProblemNumber: Int,
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
@@ -760,42 +770,51 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(gravityTitle.waitForExistence(timeout: 15), "Expected Gravity Split after concrete target \(target)")
         snapshot(app, "\(snapshotPrefix)-GravitySplit")
 
-        let gravityGoButton = app.buttons["gravity-go-button"]
-        if gravityGoButton.waitForExistence(timeout: 3) {
-            gravityGoButton.tap()
-        }
-
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
-        var reachedSumSprintAfterCompleteSplit = false
-        if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
-           !sumSprintTitle.exists {
-            completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            reachedSumSprintAfterCompleteSplit = sumSprintTitle.waitForExistence(timeout: 3)
-        }
-
-        if !reachedSumSprintAfterCompleteSplit && !sumSprintTitle.exists {
-            for _ in 0..<leftPanCount {
-                if sumSprintTitle.exists { break }
-                tapGravityIncrement(
-                    in: app,
-                    identifiers: ["gravity-left-add-button", "gravity-left-plus"],
-                    zoneIdentifier: "gravity-left-zone",
-                    fallbackSide: .left,
-                    failureMessage: "Expected a left gravity increment control or zone"
-                )
+        if app.launchArguments.contains("-uiTest.autoCompleteGravitySplit") {
+            // This fixture already completes the split after two seconds. A
+            // second coordinate tap can re-query the disappearing control after
+            // the automatic transition. Wait for the configured fixture instead.
+            guard sumSprintTitle.waitForExistence(timeout: 15) else {
+                XCTFail("Expected automatic Gravity Split completion for target \(target)")
+                return
             }
-            for _ in 0..<rightPanCount {
-                if sumSprintTitle.exists { break }
-                tapGravityIncrement(
-                    in: app,
-                    identifiers: ["gravity-right-add-button", "gravity-right-plus"],
-                    zoneIdentifier: "gravity-right-zone",
-                    fallbackSide: .right,
-                    failureMessage: "Expected a right gravity increment control or zone"
-                )
+        } else {
+            let gravityGoButton = app.buttons["gravity-go-button"]
+            if gravityGoButton.waitForExistence(timeout: 3) {
+                gravityGoButton.tap()
+            }
+
+            var reachedSumSprintAfterCompleteSplit = false
+            if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
+               !sumSprintTitle.exists {
+                completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                reachedSumSprintAfterCompleteSplit = sumSprintTitle.waitForExistence(timeout: 3)
+            }
+
+            if !reachedSumSprintAfterCompleteSplit && !sumSprintTitle.exists {
+                for _ in 0..<leftPanCount {
+                    if sumSprintTitle.exists { break }
+                    tapGravityIncrement(
+                        in: app,
+                        identifiers: ["gravity-left-add-button", "gravity-left-plus"],
+                        zoneIdentifier: "gravity-left-zone",
+                        fallbackSide: .left,
+                        failureMessage: "Expected a left gravity increment control or zone"
+                    )
+                }
+                for _ in 0..<rightPanCount {
+                    if sumSprintTitle.exists { break }
+                    tapGravityIncrement(
+                        in: app,
+                        identifiers: ["gravity-right-add-button", "gravity-right-plus"],
+                        zoneIdentifier: "gravity-right-zone",
+                        fallbackSide: .right,
+                        failureMessage: "Expected a right gravity increment control or zone"
+                    )
+                }
             }
         }
-
         XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
         snapshot(app, "\(snapshotPrefix)-SumSprint")
 
@@ -804,18 +823,86 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(waitForBondBlast(in: app, timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
         snapshot(app, "\(snapshotPrefix)-BondBlast")
 
-        for (left, right) in bondPairs {
+        let nextProblem = app.staticTexts["Problem \(nextProblemNumber) / 6"]
+        for (index, pair) in bondPairs.enumerated() {
+            let (left, right) = pair
             let leftCard = app.buttons["bond-left-\(left)"]
             let rightCard = app.buttons["bond-right-\(right)"]
             XCTAssertTrue(leftCard.waitForExistence(timeout: 5), "Missing left Bond Blast card \(left) for target \(target)")
             XCTAssertTrue(rightCard.waitForExistence(timeout: 5), "Missing right Bond Blast card \(right) for target \(target)")
+            guard makeBondCardVisible(leftCard, in: app) else { return }
             leftCard.tap()
             let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "selected"), object: leftCard)
             XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 3), .completed, "Left card must be selected before tapping its match")
+            guard makeBondCardVisible(rightCard, in: app) else { return }
+            XCTAssertTrue(leftCard.label.contains("selected"), "Scrolling to the match must preserve the selected left card")
             rightCard.tap()
-            let matched = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "matched"), object: leftCard)
+            let isLastPair = index == bondPairs.count - 1
+            let matched = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                // The last match advances after a 1.5-second celebration. A
+                // busy host can observe the exact next problem before the
+                // transient matched card. Earlier pairs must still be matched.
+                (leftCard.exists && leftCard.label.contains("matched"))
+                    || (isLastPair && nextProblem.exists)
+            }, object: app)
             XCTAssertEqual(XCTWaiter.wait(for: [matched], timeout: 3), .completed, "Wait for the matched state before starting another pair")
         }
+        XCTAssertTrue(nextProblem.waitForExistence(timeout: 10), "Every Bond Blast pair must complete before advancing from target \(target)")
+        snapshot(app, "\(snapshotPrefix)-Completed")
+    }
+
+    private func makeBondCardVisible(_ card: XCUIElement, in app: XCUIApplication) -> Bool {
+        let identifier = card.identifier
+        var scrolled = false
+        for attempt in 0...8 {
+            guard card.exists else { break }
+            // Bond Blast has an inner scrolling grid on compact screens. An
+            // offscreen descendant can report hittable while its tap point is
+            // below that grid, so require containment in the actual viewport.
+            let containers = app.scrollViews.containing(.button, identifier: identifier).allElementsBoundByIndex
+            let innermost = containers.filter {
+                $0.scrollViews.containing(.button, identifier: identifier).count == 0
+            }
+            guard innermost.count == 1, let grid = innermost.first else { break }
+            let viewport = containers.reduce(app.frame) { visible, ancestor in
+                visible.intersection(ancestor.frame)
+            }
+            guard !viewport.isNull, viewport.width > 0, viewport.height > 0 else { break }
+            let cardFrame = card.frame
+            guard cardFrame.width > 0, cardFrame.height > 0,
+                  cardFrame.minX.isFinite, cardFrame.minY.isFinite,
+                  cardFrame.maxX.isFinite, cardFrame.maxY.isFinite else { break }
+            if viewport.insetBy(dx: -1, dy: -1).contains(cardFrame), card.isHittable {
+                if scrolled {
+                    snapshot(app, "Bond-visible-\(identifier)")
+                    let geometry = XCTAttachment(string: "\(identifier): ancestors=\(containers.count), viewport=\(viewport), card=\(cardFrame)")
+                    geometry.name = "Bond-visible-\(identifier) viewport"
+                    geometry.lifetime = .keepAlways
+                    add(geometry)
+                }
+                return true
+            }
+            guard attempt < 8 else { break }
+            let above = cardFrame.midY < viewport.midY
+            // The centre lies between the columns. Starting on a left card
+            // would invoke its drag-to-match gesture while scrolling.
+            let gridFrame = grid.frame
+            guard gridFrame.width > 0, gridFrame.height > 0,
+                  gridFrame.midX > viewport.minX, gridFrame.midX < viewport.maxX else { break }
+            let startY = viewport.minY + viewport.height * (above ? 0.25 : 0.75)
+            let endY = viewport.minY + viewport.height * (above ? 0.75 : 0.25)
+            let start = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: (startY - gridFrame.minY) / gridFrame.height))
+            let end = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: (endY - gridFrame.minY) / gridFrame.height))
+            start.press(forDuration: 0.05, thenDragTo: end)
+            scrolled = true
+        }
+        snapshot(app, "Bond-unreachable-\(identifier)")
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Unreachable Bond card hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        XCTFail("Bond Blast card \(identifier) must be fully visible and hittable before tapping")
+        return false
     }
 
     private func waitForLoopV2ConcreteStage(

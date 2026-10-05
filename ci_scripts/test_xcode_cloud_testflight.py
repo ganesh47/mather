@@ -924,5 +924,98 @@ class XcodeCloudTestFlightTests(unittest.TestCase):
                 )
 
 
+class DistributionDiagnosticsTests(unittest.TestCase):
+    def client(self):
+        client = MagicMock()
+        self.groups = [
+            {"id": "internal", "attributes": {"name": "Family", "isInternalGroup": True}},
+            {"id": "external", "attributes": {"name": "Existing beta", "isInternalGroup": False}},
+        ]
+        self.builds = {
+            "ios-version": [
+                {"id": "ios-old", "attributes": {"version": "166", "uploadedDate": "2026-10-03"}},
+                {"id": "ios-current", "attributes": {"version": "167", "uploadedDate": "2026-10-04", "expired": False, "processingState": "VALID"}},
+            ],
+            "tv-version": [{"id": "tv-current", "attributes": {"version": "167", "uploadedDate": "2026-10-04", "expired": False, "processingState": "VALID"}}],
+        }
+        self.member_ids = {"internal": ["ios-current", "tv-current"], "external": ["ios-current", "tv-current"]}
+        self.detail = {"internalBuildState": "IN_BETA_TESTING", "externalBuildState": "WAITING_FOR_BETA_REVIEW"}
+
+        def pages(path):
+            if "/apps/app/betaGroups" in path:
+                return self.groups
+            if "/betaBuildLocalizations" in path:
+                return [{"id": "notes", "attributes": {"locale": "en-US", "whatsNew": "Existing test notes"}}]
+            if "/apps/app/betaAppLocalizations" in path:
+                return [{"id": "description", "attributes": {"locale": "en-US", "description": "Existing description",
+                                                              "feedbackEmail": "private@example.test"}}]
+            if path.startswith("/v1/preReleaseVersions?"):
+                return [{"id": "ios-version", "attributes": {"platform": "IOS"}},
+                        {"id": "tv-version", "attributes": {"platform": "TV_OS"}}]
+            for key, builds in self.builds.items():
+                if f"/preReleaseVersions/{key}/builds" in path:
+                    return builds
+            for key, ids in self.member_ids.items():
+                if f"/betaGroups/{key}/builds" in path:
+                    return [{"id": item} for item in ids]
+            self.fail(f"Unexpected diagnostics read: {path}")
+
+        def request(path, **kwargs):
+            self.assertEqual(kwargs.get("method", "GET"), "GET")
+            self.assertNotIn("payload", kwargs)
+            if "/apps/app/betaAppReviewDetail" in path:
+                return {"data": {"id": "contact", "attributes": {"contactFirstName": "Private", "contactLastName": "Name",
+                                                                  "contactPhone": "+1234567890", "contactEmail": "private@example.test",
+                                                                  "demoAccountRequired": False}}}
+            if path == "/v1/ciBuildRuns/existing-run":
+                return {"data": {"attributes": {"number": 167, "completionStatus": "SUCCEEDED", "sourceCommit": {"commitSha": "a" * 40}},
+                                 "relationships": {"workflow": {"data": {"id": "workflow"}}}}}
+            if "/builds/" in path and "/buildBetaDetail" in path:
+                return {"data": {"attributes": self.detail}}
+            self.fail(f"Unexpected diagnostics read: {path}")
+
+        client.pages.side_effect = pages
+        client.request.side_effect = request
+        return client
+
+    def test_reports_both_platforms_existing_groups_and_pending_external_review_read_only(self):
+        from ci_scripts.xcode_cloud_diagnostics import distribution_report
+        client = self.client()
+        result = distribution_report(client, app_id="app", tag="v2.13.0", build_run_id="existing-run")
+        self.assertEqual(result["cloud_run"]["sourceCommit"]["commitSha"], "a" * 40)
+        self.assertEqual(result["platforms"]["ios"]["build_id"], "ios-current")
+        self.assertEqual(result["platforms"]["tvos"]["build_id"], "tv-current")
+        for platform in result["platforms"].values():
+            self.assertEqual(platform["marketing_version"], "2.13.0")
+            self.assertTrue(platform["groups"][0]["available"])
+            self.assertFalse(platform["groups"][1]["available"])
+            self.assertEqual(platform["groups"][1]["build_state"], "WAITING_FOR_BETA_REVIEW")
+        self.assertNotIn("private@example.test", str(result))
+        self.assertNotIn("+1234567890", str(result))
+        self.assertNotIn("Existing description", str(result))
+        self.assertTrue(all(result["review_contact"]["provided"].values()))
+        self.assertFalse(result["review_contact"]["demoAccountRequired"])
+
+    def test_expired_unknown_processing_or_missing_membership_never_reports_available(self):
+        from ci_scripts.xcode_cloud_diagnostics import distribution_report
+        for expired, processing, ids in [(True, "VALID", ["ios-current"]), (None, "VALID", ["ios-current"]),
+                                         (False, "PROCESSING", ["ios-current"]), (False, "VALID", [])]:
+            client = self.client()
+            self.builds["ios-version"][-1]["attributes"].update(expired=expired, processingState=processing)
+            self.member_ids["internal"] = ids
+            result = distribution_report(client, app_id="app", tag="v2.13.0")
+            self.assertFalse(result["platforms"]["ios"]["groups"][0]["available"])
+
+    def test_missing_platform_build_and_unknown_group_kind_are_explicit(self):
+        from ci_scripts.xcode_cloud_diagnostics import distribution_report
+        client = self.client()
+        self.builds["tv-version"] = []
+        self.groups[0]["attributes"].pop("isInternalGroup")
+        result = distribution_report(client, app_id="app", tag="v2.13.0")
+        self.assertIsNone(result["platforms"]["tvos"]["build"])
+        self.assertIn("No build found", result["platforms"]["tvos"]["issue"])
+        self.assertFalse(result["platforms"]["ios"]["groups"][0]["available"])
+
+
 if __name__ == "__main__":
     unittest.main()
