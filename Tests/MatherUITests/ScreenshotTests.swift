@@ -161,11 +161,16 @@ final class ScreenshotTests: XCTestCase {
         let clearButton = app.buttons["Clear session history"]
         requireExists(clearButton, timeout: 5)
         clearButton.tap()
-        requireExists(app.alerts["Clear all session data?"], timeout: 5)
+        let clearAlert = app.alerts["Clear this child's learning data?"]
+        requireExists(clearAlert, timeout: 5)
+        XCTAssertTrue(clearAlert.staticTexts.matching(NSPredicate(
+            format: "label CONTAINS %@", "Other children keep their history."
+        )).firstMatch.exists)
         snapshot(app, "Settings-ClearConfirmDialog")
 
         // Dismiss with Cancel
-        app.alerts["Clear all session data?"].buttons["Cancel"].tap()
+        clearAlert.buttons["Cancel"].tap()
+        XCTAssertTrue(clearAlert.waitForNonExistence(timeout: 5))
         snapshot(app, "Settings-AfterCancelClear")
     }
 
@@ -760,42 +765,51 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(gravityTitle.waitForExistence(timeout: 15), "Expected Gravity Split after concrete target \(target)")
         snapshot(app, "\(snapshotPrefix)-GravitySplit")
 
-        let gravityGoButton = app.buttons["gravity-go-button"]
-        if gravityGoButton.waitForExistence(timeout: 3) {
-            gravityGoButton.tap()
-        }
-
         let sumSprintTitle = app.staticTexts["Sum Sprint"]
-        var reachedSumSprintAfterCompleteSplit = false
-        if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
-           !sumSprintTitle.exists {
-            completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            reachedSumSprintAfterCompleteSplit = sumSprintTitle.waitForExistence(timeout: 3)
-        }
-
-        if !reachedSumSprintAfterCompleteSplit && !sumSprintTitle.exists {
-            for _ in 0..<leftPanCount {
-                if sumSprintTitle.exists { break }
-                tapGravityIncrement(
-                    in: app,
-                    identifiers: ["gravity-left-add-button", "gravity-left-plus"],
-                    zoneIdentifier: "gravity-left-zone",
-                    fallbackSide: .left,
-                    failureMessage: "Expected a left gravity increment control or zone"
-                )
+        if app.launchArguments.contains("-uiTest.autoCompleteGravitySplit") {
+            // This fixture already completes the split after two seconds. A
+            // second coordinate tap can re-query the disappearing control after
+            // the automatic transition. Wait for the configured fixture instead.
+            guard sumSprintTitle.waitForExistence(timeout: 15) else {
+                XCTFail("Expected automatic Gravity Split completion for target \(target)")
+                return
             }
-            for _ in 0..<rightPanCount {
-                if sumSprintTitle.exists { break }
-                tapGravityIncrement(
-                    in: app,
-                    identifiers: ["gravity-right-add-button", "gravity-right-plus"],
-                    zoneIdentifier: "gravity-right-zone",
-                    fallbackSide: .right,
-                    failureMessage: "Expected a right gravity increment control or zone"
-                )
+        } else {
+            let gravityGoButton = app.buttons["gravity-go-button"]
+            if gravityGoButton.waitForExistence(timeout: 3) {
+                gravityGoButton.tap()
+            }
+
+            var reachedSumSprintAfterCompleteSplit = false
+            if let completeSplit = firstExistingControl(in: app, identifiers: ["gravity-complete-split-button"], timeout: 3),
+               !sumSprintTitle.exists {
+                completeSplit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                reachedSumSprintAfterCompleteSplit = sumSprintTitle.waitForExistence(timeout: 3)
+            }
+
+            if !reachedSumSprintAfterCompleteSplit && !sumSprintTitle.exists {
+                for _ in 0..<leftPanCount {
+                    if sumSprintTitle.exists { break }
+                    tapGravityIncrement(
+                        in: app,
+                        identifiers: ["gravity-left-add-button", "gravity-left-plus"],
+                        zoneIdentifier: "gravity-left-zone",
+                        fallbackSide: .left,
+                        failureMessage: "Expected a left gravity increment control or zone"
+                    )
+                }
+                for _ in 0..<rightPanCount {
+                    if sumSprintTitle.exists { break }
+                    tapGravityIncrement(
+                        in: app,
+                        identifiers: ["gravity-right-add-button", "gravity-right-plus"],
+                        zoneIdentifier: "gravity-right-zone",
+                        fallbackSide: .right,
+                        failureMessage: "Expected a right gravity increment control or zone"
+                    )
+                }
             }
         }
-
         XCTAssertTrue(sumSprintTitle.waitForExistence(timeout: 15), "Expected Sum Sprint after Gravity Split target \(target)")
         snapshot(app, "\(snapshotPrefix)-SumSprint")
 
