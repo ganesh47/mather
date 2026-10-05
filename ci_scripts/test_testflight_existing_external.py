@@ -159,6 +159,29 @@ class ExistingExternalTests(unittest.TestCase):
             with self.assertRaisesRegex(ReleaseError,"Apple rejected"):distribute_plan(client,plan)
             self.assertEqual(len([c for c in mocked.call_args_list if c.args[0]=="/v1/betaAppReviewSubmissions"]),1)
 
+    def test_receipt_rejects_build_that_expires_or_is_invalidated_during_writes(self):
+        for change in [{"expired":True}, {"processingState":"INVALID"}]:
+            client=FakeASC();plan=self.plan(client);original=client.request
+            def request(path,**kwargs):
+                response=original(path,**kwargs)
+                if path=="/v1/betaAppReviewSubmissions":
+                    client.builds["ios"]["attributes"].update(change)
+                    client.details["ios"]["attributes"]["externalBuildState"]="IN_BETA_TESTING"
+                return response
+            with patch.object(client,"request",side_effect=request):
+                with self.assertRaisesRegex(ReleaseError,"after distribution"):
+                    distribute_plan(client,plan)
+
+    def test_available_receipt_requires_fresh_unexpired_build_and_group_membership(self):
+        client=FakeASC()
+        for key in client.details:
+            client.details[key]["attributes"].update(externalBuildState="IN_BETA_TESTING",autoNotifyEnabled=True)
+            client.members.add(key)
+            client.reviews[key]=[{"attributes":{"betaReviewState":"APPROVED"}}]
+        results=distribute_plan(client,self.plan(client))
+        self.assertTrue(all(r["groups"][0]["available"] and r["expired"] is False for r in results))
+        self.assertFalse(any(path=="/v1/betaAppReviewSubmissions" for path,_,_ in client.writes))
+
 
 if __name__ == "__main__":
     unittest.main()

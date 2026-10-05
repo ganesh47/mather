@@ -161,16 +161,22 @@ def distribute_plan(client, plan):
             client.request("/v1/betaAppReviewSubmissions", method="POST", payload={"data": {
                 "type": "betaAppReviewSubmissions", "relationships": {"build": {"data": {"type": "builds", "id": build_id}}}}})
         observed = beta_detail(client, build_id)["attributes"]
+        current_build = client.request(f"/v1/builds/{build_id}"
+                                       "?fields[builds]=version,processingState,expired,expirationDate,buildAudienceType")["data"]
+        if (current_build.get("id") != build_id or not valid_external_build(current_build)
+                or current_build["attributes"]["version"] != item["build"]["attributes"]["version"]):
+            raise ReleaseError("Exact build eligibility changed after distribution; availability cannot be confirmed")
         groups = []
         for group in item["groups"]:
             members = client.pages(f"/v1/betaGroups/{group['id']}/builds?fields[builds]=version&limit=200")
             assigned = any(b["id"] == build_id for b in members)
             groups.append({"id": group["id"], "name": group["attributes"].get("name"), "assigned": assigned,
-                           "available": assigned and observed.get("externalBuildState") == "IN_BETA_TESTING"})
+                           "available": valid_external_build(current_build) and assigned
+                           and observed.get("externalBuildState") == "IN_BETA_TESTING"})
         results.append({"platform": item["platform"], "build_id": build_id,
-                        "build_number": build["attributes"]["version"],
-                        "expired": build["attributes"]["expired"],
-                        "expirationDate": build["attributes"]["expirationDate"], **observed,
+                        "build_number": current_build["attributes"]["version"],
+                        "expired": current_build["attributes"]["expired"],
+                        "expirationDate": current_build["attributes"]["expirationDate"], **observed,
                         "groups": groups, "review": review_submissions(client, build_id)})
     return results
 
