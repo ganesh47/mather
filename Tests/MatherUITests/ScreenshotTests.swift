@@ -830,9 +830,12 @@ final class ScreenshotTests: XCTestCase {
             let rightCard = app.buttons["bond-right-\(right)"]
             XCTAssertTrue(leftCard.waitForExistence(timeout: 5), "Missing left Bond Blast card \(left) for target \(target)")
             XCTAssertTrue(rightCard.waitForExistence(timeout: 5), "Missing right Bond Blast card \(right) for target \(target)")
+            guard makeBondCardVisible(leftCard, in: app) else { return }
             leftCard.tap()
             let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "selected"), object: leftCard)
             XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 3), .completed, "Left card must be selected before tapping its match")
+            guard makeBondCardVisible(rightCard, in: app) else { return }
+            XCTAssertTrue(leftCard.label.contains("selected"), "Scrolling to the match must preserve the selected left card")
             rightCard.tap()
             let isLastPair = index == bondPairs.count - 1
             let matched = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
@@ -846,6 +849,60 @@ final class ScreenshotTests: XCTestCase {
         }
         XCTAssertTrue(nextProblem.waitForExistence(timeout: 10), "Every Bond Blast pair must complete before advancing from target \(target)")
         snapshot(app, "\(snapshotPrefix)-Completed")
+    }
+
+    private func makeBondCardVisible(_ card: XCUIElement, in app: XCUIApplication) -> Bool {
+        let identifier = card.identifier
+        var scrolled = false
+        for attempt in 0...8 {
+            guard card.exists else { break }
+            // Bond Blast has an inner scrolling grid on compact screens. An
+            // offscreen descendant can report hittable while its tap point is
+            // below that grid, so require containment in the actual viewport.
+            let containers = app.scrollViews.containing(.button, identifier: identifier).allElementsBoundByIndex
+            let innermost = containers.filter {
+                $0.scrollViews.containing(.button, identifier: identifier).count == 0
+            }
+            guard innermost.count == 1, let grid = innermost.first else { break }
+            let viewport = containers.reduce(app.frame) { visible, ancestor in
+                visible.intersection(ancestor.frame)
+            }
+            guard !viewport.isNull, viewport.width > 0, viewport.height > 0 else { break }
+            let cardFrame = card.frame
+            guard cardFrame.width > 0, cardFrame.height > 0,
+                  cardFrame.minX.isFinite, cardFrame.minY.isFinite,
+                  cardFrame.maxX.isFinite, cardFrame.maxY.isFinite else { break }
+            if viewport.insetBy(dx: -1, dy: -1).contains(cardFrame), card.isHittable {
+                if scrolled {
+                    snapshot(app, "Bond-visible-\(identifier)")
+                    let geometry = XCTAttachment(string: "\(identifier): ancestors=\(containers.count), viewport=\(viewport), card=\(cardFrame)")
+                    geometry.name = "Bond-visible-\(identifier) viewport"
+                    geometry.lifetime = .keepAlways
+                    add(geometry)
+                }
+                return true
+            }
+            guard attempt < 8 else { break }
+            let above = cardFrame.midY < viewport.midY
+            // The centre lies between the columns. Starting on a left card
+            // would invoke its drag-to-match gesture while scrolling.
+            let gridFrame = grid.frame
+            guard gridFrame.width > 0, gridFrame.height > 0,
+                  gridFrame.midX > viewport.minX, gridFrame.midX < viewport.maxX else { break }
+            let startY = viewport.minY + viewport.height * (above ? 0.25 : 0.75)
+            let endY = viewport.minY + viewport.height * (above ? 0.75 : 0.25)
+            let start = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: (startY - gridFrame.minY) / gridFrame.height))
+            let end = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: (endY - gridFrame.minY) / gridFrame.height))
+            start.press(forDuration: 0.05, thenDragTo: end)
+            scrolled = true
+        }
+        snapshot(app, "Bond-unreachable-\(identifier)")
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Unreachable Bond card hierarchy"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        XCTFail("Bond Blast card \(identifier) must be fully visible and hittable before tapping")
+        return false
     }
 
     private func waitForLoopV2ConcreteStage(
