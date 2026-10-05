@@ -323,6 +323,7 @@ final class ScreenshotTests: XCTestCase {
             // advancing to the Bond Blast finale.
             expectedSumSprintPairs: 3,
             bondPairs: [(1, 5), (2, 4), (3, 3)],
+            nextProblemNumber: 2,
             snapshotPrefix: "Issue222-Target6"
         )
 
@@ -337,6 +338,7 @@ final class ScreenshotTests: XCTestCase {
             // Sum Sprint cards, not three.
             expectedSumSprintPairs: 2,
             bondPairs: [(1, 8), (2, 7), (3, 6), (4, 5)],
+            nextProblemNumber: 3,
             snapshotPrefix: "Issue222-Target9",
             skipInitialConcreteSnapshot: true
         )
@@ -350,6 +352,7 @@ final class ScreenshotTests: XCTestCase {
             // Target 4 with decomposition (1,3) yields two Sum Sprint cards: "1+3" and "3+1"
             expectedSumSprintPairs: 2,
             bondPairs: [(1, 3), (2, 2)],
+            nextProblemNumber: 4,
             snapshotPrefix: "Issue222-Target4",
             skipInitialConcreteSnapshot: true
         )
@@ -362,6 +365,7 @@ final class ScreenshotTests: XCTestCase {
             rightPanCount: 7,
             expectedSumSprintPairs: 3,
             bondPairs: [(1, 11), (2, 10), (3, 9), (4, 8), (5, 7), (6, 6)],
+            nextProblemNumber: 5,
             snapshotPrefix: "Issue222-Target12",
             skipInitialConcreteSnapshot: true
         )
@@ -746,6 +750,7 @@ final class ScreenshotTests: XCTestCase {
         rightPanCount: Int,
         expectedSumSprintPairs: Int,
         bondPairs: [(Int, Int)],
+        nextProblemNumber: Int,
         snapshotPrefix: String,
         skipInitialConcreteSnapshot: Bool = false
     ) {
@@ -818,7 +823,9 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(waitForBondBlast(in: app, timeout: 15), "Expected Bond Blast after Sum Sprint target \(target)")
         snapshot(app, "\(snapshotPrefix)-BondBlast")
 
-        for (left, right) in bondPairs {
+        let nextProblem = app.staticTexts["Problem \(nextProblemNumber) / 6"]
+        for (index, pair) in bondPairs.enumerated() {
+            let (left, right) = pair
             let leftCard = app.buttons["bond-left-\(left)"]
             let rightCard = app.buttons["bond-right-\(right)"]
             XCTAssertTrue(leftCard.waitForExistence(timeout: 5), "Missing left Bond Blast card \(left) for target \(target)")
@@ -827,9 +834,18 @@ final class ScreenshotTests: XCTestCase {
             let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "selected"), object: leftCard)
             XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 3), .completed, "Left card must be selected before tapping its match")
             rightCard.tap()
-            let matched = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "matched"), object: leftCard)
+            let isLastPair = index == bondPairs.count - 1
+            let matched = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                // The last match advances after a 1.5-second celebration. A
+                // busy host can observe the exact next problem before the
+                // transient matched card. Earlier pairs must still be matched.
+                (leftCard.exists && leftCard.label.contains("matched"))
+                    || (isLastPair && nextProblem.exists)
+            }, object: app)
             XCTAssertEqual(XCTWaiter.wait(for: [matched], timeout: 3), .completed, "Wait for the matched state before starting another pair")
         }
+        XCTAssertTrue(nextProblem.waitForExistence(timeout: 10), "Every Bond Blast pair must complete before advancing from target \(target)")
+        snapshot(app, "\(snapshotPrefix)-Completed")
     }
 
     private func waitForLoopV2ConcreteStage(
