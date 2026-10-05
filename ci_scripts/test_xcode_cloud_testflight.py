@@ -944,6 +944,11 @@ class DistributionDiagnosticsTests(unittest.TestCase):
         def pages(path):
             if "/apps/app/betaGroups" in path:
                 return self.groups
+            if "/betaBuildLocalizations" in path:
+                return [{"id": "notes", "attributes": {"locale": "en-US", "whatsNew": "Existing test notes"}}]
+            if "/apps/app/betaAppLocalizations" in path:
+                return [{"id": "description", "attributes": {"locale": "en-US", "description": "Existing description",
+                                                              "feedbackEmail": "private@example.test"}}]
             if path.startswith("/v1/preReleaseVersions?"):
                 return [{"id": "ios-version", "attributes": {"platform": "IOS"}},
                         {"id": "tv-version", "attributes": {"platform": "TV_OS"}}]
@@ -958,6 +963,10 @@ class DistributionDiagnosticsTests(unittest.TestCase):
         def request(path, **kwargs):
             self.assertEqual(kwargs.get("method", "GET"), "GET")
             self.assertNotIn("payload", kwargs)
+            if "/apps/app/betaAppReviewDetail" in path:
+                return {"data": {"id": "contact", "attributes": {"contactFirstName": "Private", "contactLastName": "Name",
+                                                                  "contactPhone": "+1234567890", "contactEmail": "private@example.test",
+                                                                  "demoAccountRequired": False}}}
             if path == "/v1/ciBuildRuns/existing-run":
                 return {"data": {"attributes": {"number": 167, "completionStatus": "SUCCEEDED", "sourceCommit": {"commitSha": "a" * 40}},
                                  "relationships": {"workflow": {"data": {"id": "workflow"}}}}}
@@ -981,6 +990,11 @@ class DistributionDiagnosticsTests(unittest.TestCase):
             self.assertTrue(platform["groups"][0]["available"])
             self.assertFalse(platform["groups"][1]["available"])
             self.assertEqual(platform["groups"][1]["build_state"], "WAITING_FOR_BETA_REVIEW")
+        self.assertNotIn("private@example.test", str(result))
+        self.assertNotIn("+1234567890", str(result))
+        self.assertNotIn("Existing description", str(result))
+        self.assertTrue(all(result["review_contact"]["provided"].values()))
+        self.assertFalse(result["review_contact"]["demoAccountRequired"])
 
     def test_expired_unknown_processing_or_missing_membership_never_reports_available(self):
         from ci_scripts.xcode_cloud_diagnostics import distribution_report

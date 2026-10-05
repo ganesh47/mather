@@ -47,6 +47,28 @@ def distribution_report(client, *, app_id, tag, build_run_id=""):
                                   and attrs.get("processingState") == "VALID" and state == "IN_BETA_TESTING"})
         report["platforms"][key] = {"marketing_version": version, "platform": platform.app_store_platform,
                                      "build_id": build["id"], **attrs, **detail, "groups": group_results}
+        localizations = client.pages(f"/v1/builds/{build['id']}/betaBuildLocalizations"
+                                     "?fields[betaBuildLocalizations]=locale,whatsNew&limit=200")
+        report["platforms"][key]["test_notes"] = [
+            {"id": item["id"], "locale": item.get("attributes", {}).get("locale"),
+             "provided": bool((item.get("attributes", {}).get("whatsNew") or "").strip())}
+            for item in localizations
+        ]
+    review = client.request(f"/v1/apps/{app_id}/betaAppReviewDetail"
+                            "?fields[betaAppReviewDetails]=contactFirstName,contactLastName,contactPhone,contactEmail,demoAccountRequired")["data"]
+    report["review_contact"] = {
+        "id": review["id"], "demoAccountRequired": review.get("attributes", {}).get("demoAccountRequired"),
+        "provided": {name: bool((review.get("attributes", {}).get(name) or "").strip())
+                     for name in ["contactFirstName", "contactLastName", "contactPhone", "contactEmail"]}
+    }
+    app_localizations = client.pages(f"/v1/apps/{app_id}/betaAppLocalizations"
+                                     "?fields[betaAppLocalizations]=locale,description,feedbackEmail,privacyPolicyUrl&limit=200")
+    report["app_localizations"] = [
+        {"id": item["id"], "locale": item.get("attributes", {}).get("locale"),
+         "provided": {name: bool((item.get("attributes", {}).get(name) or "").strip())
+                      for name in ["description", "feedbackEmail", "privacyPolicyUrl"]}}
+        for item in app_localizations
+    ]
     if build_run_id:
         run = client.request(f"/v1/ciBuildRuns/{build_run_id}")["data"]
         attrs = run.get("attributes", {})
