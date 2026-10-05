@@ -151,8 +151,10 @@ final class MemoryPairsTVUITests: XCTestCase {
         XCTAssertTrue(cards(app).allElementsBoundByIndex.allSatisfy { $0.label.hasPrefix("Hidden card") })
         try focus(app.buttons["tv-memory-adventure-hint"], app: app)
         XCUIRemote.shared.press(.select)
+        // Read one accessibility snapshot; twelve individual label reads can
+        // straddle the 1.5-second hint expiry and miss the revealed partner.
         let hinted = expectation(for: NSPredicate { _, _ in
-            self.cards(app).allElementsBoundByIndex.filter { !$0.label.hasPrefix("Hidden card") }.count == 2
+            self.cards(app).matching(NSPredicate(format: "NOT (label BEGINSWITH %@)", "Hidden card")).count == 2
         }, evaluatedWith: nil)
         wait(for: [hinted], timeout: 5)
         XCTAssertEqual(progress(app), "0 of 6 pairs")
@@ -211,7 +213,7 @@ final class MemoryPairsTVUITests: XCTestCase {
                 XCTAssertTrue(hint.hasFocus)
                 XCUIRemote.shared.press(.select)
                 let revealed = expectation(for: NSPredicate { _, _ in
-                    self.cards(app).allElementsBoundByIndex.filter { !$0.label.hasPrefix("Hidden card") }.count == 2
+                    self.cards(app).matching(NSPredicate(format: "NOT (label BEGINSWITH %@)", "Hidden card")).count == 2
                 }, evaluatedWith: nil)
                 wait(for: [revealed], timeout: 5)
                 XCTAssertEqual(progress(app), "0 of 5 pairs")
