@@ -49,7 +49,7 @@ struct MemoryGalleryTVView: View {
             MemoryPairsTVView(adventure: adventure, quiz: { cards in
                 selectedAdventure = nil
                 activeAdventure = adventure
-                game.start(category: adventure.deckKind == .planets ? .planets : .vehicles, deck: cards, roundLimit: min(6, cards.count))
+                game.start(category: adventure.galleryCategory, deck: cards, roundLimit: min(6, cards.count))
                 presentRoundPrompt()
                 focusFirstAnswer()
             })
@@ -145,7 +145,7 @@ struct MemoryGalleryTVView: View {
                     Button { narration.stop(); selectedAdventure = adventure } label: {
                         VStack(alignment: .leading, spacing: 8) {
                             Image(adventure.sceneAssetName).resizable().scaledToFit()
-                                .frame(width: 420, height: 150).clipped()
+                                .frame(width: 360, height: 150).clipped()
                             Text(adventure.title).font(.system(size: 28, weight: .black, design: .rounded))
                             Text("Picture pairs or a picture quiz").font(.system(size: 18, weight: .semibold))
                         }

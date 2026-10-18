@@ -40,8 +40,8 @@ def expected_art(source: str) -> dict[str, str]:
             if asset in result:
                 raise ValueError(f"Repeated refreshed asset {asset}; provenance requires one representative card")
             result[asset] = card
-    if len(result) != 70:
-        raise ValueError(f"Expected 70 refreshed illustrations, found {len(result)}")
+    if len(result) != 78:
+        raise ValueError(f"Expected 78 refreshed illustrations, found {len(result)}")
     return result
 
 

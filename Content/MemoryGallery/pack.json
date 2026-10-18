@@ -43,10 +43,28 @@
       "sha256" : "6ec95d57ac0af705d9984b4ae0f52d824432b174ca398d053de15b0e3864a4c4"
     },
     {
+      "byteCount" : 1997747,
+      "file" : "MemoryAnimalElephant.png",
+      "id" : "MemoryAnimalElephant",
+      "sha256" : "6130a9be33829d01b93a5c2fab87f3dab54d71a96f3630144cb34f459c5ab0f5"
+    },
+    {
       "byteCount" : 1631281,
       "file" : "MemoryAnimalFrog.png",
       "id" : "MemoryAnimalFrog",
       "sha256" : "dd300a2d9b50afba6783da4ab5805ba67aaa8329aef706d0eaef07bd31193c9d"
+    },
+    {
+      "byteCount" : 2081062,
+      "file" : "MemoryAnimalGiantPanda.png",
+      "id" : "MemoryAnimalGiantPanda",
+      "sha256" : "a65173d5d3e28c5d8c77b483347ecd8f8a57be0f36a3c3b643548f979f706935"
+    },
+    {
+      "byteCount" : 1330827,
+      "file" : "MemoryAnimalGiraffe.png",
+      "id" : "MemoryAnimalGiraffe",
+      "sha256" : "671e99d8faac1fd25366be212675f2332753d4054e524b9acd9b82283015d5b8"
     },
     {
       "byteCount" : 1371464,
@@ -61,10 +79,28 @@
       "sha256" : "6569f92a7348fd3e78120df44f7421bcba02e424835f9d5d947e71ad71da5303"
     },
     {
+      "byteCount" : 1826294,
+      "file" : "MemoryAnimalHippopotamus.png",
+      "id" : "MemoryAnimalHippopotamus",
+      "sha256" : "1485f7db1b2040dff42f8fa58009a84874d8613a63836a7bf7c93ab4f412f61a"
+    },
+    {
       "byteCount" : 1239161,
       "file" : "MemoryAnimalHorse.png",
       "id" : "MemoryAnimalHorse",
       "sha256" : "395262823051df90711aa5045dbdd5e4f2c53b2130e9c69a1f52ff4df8ebc204"
+    },
+    {
+      "byteCount" : 1639941,
+      "file" : "MemoryAnimalKangaroo.png",
+      "id" : "MemoryAnimalKangaroo",
+      "sha256" : "0bebd41c5950a7088cce2cc21a958b167e96fe4538d5cd41e80265d703f92c83"
+    },
+    {
+      "byteCount" : 1982400,
+      "file" : "MemoryAnimalLion.png",
+      "id" : "MemoryAnimalLion",
+      "sha256" : "0cbda0498fc47fca12fbd8a14512a23ad097c510adee50e6f40b12d99c290983"
     },
     {
       "byteCount" : 1057553,
@@ -103,10 +139,22 @@
       "sha256" : "61c4a0ad38d80943ca80f146846092501fd5fc212fffde3cb7f93099b81b9da7"
     },
     {
+      "byteCount" : 2069757,
+      "file" : "MemoryAnimalTiger.png",
+      "id" : "MemoryAnimalTiger",
+      "sha256" : "31de635bc3d827e4fccbf5080d7bc695ddb85df330fdcfff2006b85e96aa4588"
+    },
+    {
       "byteCount" : 1513401,
       "file" : "MemoryAnimalTurkey.png",
       "id" : "MemoryAnimalTurkey",
       "sha256" : "f76a05a39c0d5cbd883be113443601459dbbf19a22ba5dd8f33b5ab54edd6650"
+    },
+    {
+      "byteCount" : 1844093,
+      "file" : "MemoryAnimalZebra.png",
+      "id" : "MemoryAnimalZebra",
+      "sha256" : "add64fcf51a32d6592dbf7c56c9a41d1a77400d2293e221d878bca739d5af573"
     },
     {
       "byteCount" : 13667,
@@ -601,7 +649,7 @@
       "sha256" : "b902cb50b6a1ced2477e866d3f1c9edd044949cae1c0c9368a3e711d86db0c49"
     }
   ],
-  "contentVersion" : 3,
+  "contentVersion" : 4,
   "decks" : [
     {
       "cards" : [
@@ -1516,6 +1564,404 @@
           "picture" : {
             "kind" : "asset",
             "value" : "MemoryAnimalOx"
+          }
+        },
+        {
+          "canonicalName" : "Lion",
+          "id" : "lion",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "golden brown with a darker mane on many males",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "grasslands and open woodlands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks on padded paws and runs in short bursts"
+              },
+              {
+                "title" : "Colors",
+                "value" : "golden brown with a darker mane on many males"
+              },
+              {
+                "title" : "Sound",
+                "value" : "roar"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the lion’s fluffy mane and the tuft on its tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a gentle pretend roar and spread your fingers like a mane."
+              }
+            ],
+            "habitat" : "grasslands and open woodlands",
+            "kind" : "animal",
+            "movement" : "walks on padded paws and runs in short bursts",
+            "sound" : "roar"
+          },
+          "name" : "Lion",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalLion"
+          }
+        },
+        {
+          "canonicalName" : "Tiger",
+          "id" : "tiger",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "orange, black, and white",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "Asian forests and grasslands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "stalks quietly and swims well"
+              },
+              {
+                "title" : "Colors",
+                "value" : "orange, black, and white"
+              },
+              {
+                "title" : "Sound",
+                "value" : "roar and chuff"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for the tiger’s dark stripes and long striped tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Trace tiger stripes in the air with one finger."
+              }
+            ],
+            "habitat" : "Asian forests and grasslands",
+            "kind" : "animal",
+            "movement" : "stalks quietly and swims well",
+            "sound" : "roar and chuff"
+          },
+          "name" : "Tiger",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalTiger"
+          }
+        },
+        {
+          "canonicalName" : "Elephant",
+          "id" : "elephant",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "gray",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "African grasslands and woodlands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks on four strong legs"
+              },
+              {
+                "title" : "Colors",
+                "value" : "gray"
+              },
+              {
+                "title" : "Sound",
+                "value" : "trumpet and rumble"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the elephant’s long trunk and wide ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Curl your arm like a trunk and pretend to lift a leaf."
+              }
+            ],
+            "habitat" : "African grasslands and woodlands",
+            "kind" : "animal",
+            "movement" : "walks on four strong legs",
+            "sound" : "trumpet and rumble"
+          },
+          "name" : "Elephant",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalElephant"
+          }
+        },
+        {
+          "canonicalName" : "Giraffe",
+          "id" : "giraffe",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "tan with brown patches",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "African savannas and open woodlands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks and runs on very long legs"
+              },
+              {
+                "title" : "Colors",
+                "value" : "tan with brown patches"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Look for the giraffe’s long neck and patchy coat."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Stretch one arm up like a giraffe reaching for leaves."
+              }
+            ],
+            "habitat" : "African savannas and open woodlands",
+            "kind" : "animal",
+            "movement" : "walks and runs on very long legs"
+          },
+          "name" : "Giraffe",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalGiraffe"
+          }
+        },
+        {
+          "canonicalName" : "Zebra",
+          "id" : "zebra",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "black and white stripes",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "African grasslands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks and gallops on hooves"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black and white stripes"
+              },
+              {
+                "title" : "Sound",
+                "value" : "bark and bray"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the zebra’s stripes and short upright mane."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Tap your fingers like zebra hooves walking together."
+              }
+            ],
+            "habitat" : "African grasslands",
+            "kind" : "animal",
+            "movement" : "walks and gallops on hooves",
+            "sound" : "bark and bray"
+          },
+          "name" : "Zebra",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalZebra"
+          }
+        },
+        {
+          "canonicalName" : "Giant Panda",
+          "id" : "giant-panda",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "black and white",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "mountain forests with bamboo in China"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks on four paws and climbs trees"
+              },
+              {
+                "title" : "Colors",
+                "value" : "black and white"
+              },
+              {
+                "title" : "Sound",
+                "value" : "bleat and chirp"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the panda’s black eye patches and round ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make round panda ears with your hands."
+              }
+            ],
+            "habitat" : "mountain forests with bamboo in China",
+            "kind" : "animal",
+            "movement" : "walks on four paws and climbs trees",
+            "sound" : "bleat and chirp"
+          },
+          "name" : "Giant Panda",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalGiantPanda"
+          }
+        },
+        {
+          "canonicalName" : "Kangaroo",
+          "id" : "kangaroo",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "reddish brown or gray",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "Australian grasslands and open woodlands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "hops on strong back legs with its tail for balance"
+              },
+              {
+                "title" : "Colors",
+                "value" : "reddish brown or gray"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the kangaroo’s large back feet and long tail."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make two fingers hop gently across your palm."
+              }
+            ],
+            "habitat" : "Australian grasslands and open woodlands",
+            "kind" : "animal",
+            "movement" : "hops on strong back legs with its tail for balance"
+          },
+          "name" : "Kangaroo",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalKangaroo"
+          }
+        },
+        {
+          "canonicalName" : "Hippopotamus",
+          "id" : "hippopotamus",
+          "learningArtwork" : [
+
+          ],
+          "metadata" : {
+            "category" : "animal",
+            "colors" : "gray to brown",
+            "deck" : "domesticAnimals",
+            "factCards" : [
+              {
+                "title" : "Kind",
+                "value" : "animal"
+              },
+              {
+                "title" : "Home",
+                "value" : "African rivers and lakes near grasslands"
+              },
+              {
+                "title" : "Moves",
+                "value" : "walks on land and pushes along river bottoms"
+              },
+              {
+                "title" : "Colors",
+                "value" : "gray to brown"
+              },
+              {
+                "title" : "Sound",
+                "value" : "grunt and honk"
+              },
+              {
+                "title" : "Look closely",
+                "value" : "Find the hippo’s broad nose and small ears."
+              },
+              {
+                "title" : "Try it",
+                "value" : "Make a quiet hippo grunt and wiggle your fingers like little ears."
+              }
+            ],
+            "habitat" : "African rivers and lakes near grasslands",
+            "kind" : "animal",
+            "movement" : "walks on land and pushes along river bottoms",
+            "sound" : "grunt and honk"
+          },
+          "name" : "Hippopotamus",
+          "picture" : {
+            "kind" : "asset",
+            "value" : "MemoryAnimalHippopotamus"
           }
         }
       ],

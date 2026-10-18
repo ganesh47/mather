@@ -89,7 +89,7 @@ struct MemoryGalleryContentPack: Codable, Equatable {
     }
 
     static var bundled: Self {
-        Self(schemaVersion: 1, contentVersion: 3,
+        Self(schemaVersion: 1, contentVersion: 4,
              decks: MemoryGalleryTVCategory.allCases.map { Deck(kind: $0.deckKind, cards: $0.deck) },
              assets: [])
     }

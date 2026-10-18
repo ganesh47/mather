@@ -38,8 +38,7 @@ struct MemoryPairsTVView: View {
     }
     private var availableCards: [MemoryAnimal] {
         if testMode { return adventure.cards }
-        let category: MemoryGalleryTVCategory = adventure.deckKind == .planets ? .planets : .vehicles
-        let downloaded = contentStore.cards(for: category).filter { adventure.cardIDs.contains($0.id) }
+        let downloaded = adventure.cards(from: contentStore.cards(for: adventure.galleryCategory))
         return downloaded.count >= 4 ? downloaded : adventure.cards
     }
 

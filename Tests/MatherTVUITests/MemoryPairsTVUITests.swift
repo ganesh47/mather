@@ -4,6 +4,42 @@ import XCTest
 final class MemoryPairsTVUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testWildAnimalsAreReachableAndPlayWithProductionContent() throws {
+        let app = try launchAdventure(adventure: "wildAnimals", productionCatalog: true)
+        XCTAssertEqual(app.staticTexts["tv-memory-pairs-title"].label, "Wild Animals")
+        try start(app)
+        let names = ["Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Giant Panda", "Kangaroo", "Hippopotamus"]
+        for card in cards(app).allElementsBoundByIndex {
+            XCTAssertTrue(names.contains { card.label.hasPrefix($0) }, card.label)
+        }
+        screenshot("Wild Animals with six full pictures from the production catalog")
+        for _ in 0..<3 {
+            let pair = try pairToMatch(app)
+            try focus(pair.0, app: app)
+            XCUIRemote.shared.press(.select)
+            try focus(pair.1, app: app)
+            XCUIRemote.shared.press(.select)
+        }
+        waitFocus(app.buttons["tv-memory-adventure-again"])
+        XCTAssertEqual(progress(app), "3 of 3 pairs")
+        screenshot("Wild Animals matching completed")
+        XCUIRemote.shared.press(.menu)
+        let adventure = app.buttons["tv-memory-adventure-wildAnimals"]
+        XCTAssertTrue(adventure.waitForExistence(timeout: 10))
+        try focus(adventure, app: app)
+        screenshot("All four adventures fit and Wild Animals has remote focus")
+        XCUIRemote.shared.press(.select)
+        try focus(app.buttons["tv-memory-adventure-quiz"], app: app)
+        XCUIRemote.shared.press(.select)
+        let answers = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tv-memory-answer-"))
+        XCTAssertTrue(answers.firstMatch.waitForExistence(timeout: 10))
+        let ids = Set(["lion", "tiger", "elephant", "giraffe", "zebra", "giant-panda", "kangaroo", "hippopotamus"])
+        for answer in answers.allElementsBoundByIndex {
+            XCTAssertTrue(ids.contains(String(answer.identifier.dropFirst("tv-memory-answer-".count))))
+        }
+        screenshot("Wild Animals picture quiz uses animal answers")
+    }
+
     func testBigBalancedPicturesCollectInStableSlotsAndReplay() throws {
         let app = try launchAdventure()
         try start(app)
@@ -226,9 +262,9 @@ final class MemoryPairsTVUITests: XCTestCase {
         }
     }
 
-    private func launchAdventure(adventure: String = "busyBuilders", extra: [String] = []) throws -> XCUIApplication {
+    private func launchAdventure(adventure: String = "busyBuilders", extra: [String] = [], productionCatalog: Bool = false) throws -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-memory-pairs-ui-test"] + extra
+        app.launchArguments = (productionCatalog ? [] : ["-memory-pairs-ui-test"]) + extra
         app.launch()
         waitFocus(app.buttons["tv-mode-memory"])
         XCUIRemote.shared.press(.select)

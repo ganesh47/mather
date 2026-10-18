@@ -58,7 +58,17 @@ Run `python3 scripts/finalize_memory_adventure_art.py output/memory-adventures/g
 
 Visual-review flags default to false. Set individual record `reviewed: true`, list individually reviewed reused assets in `reviewedReused`, or pass `--reviewed` only after inspecting every included asset. `--check` verifies that the checked-in Swift provenance matches the same manifest and review options without changing files.
 
-The generated manifest may also supply three decorative `scenes` records for Builders, Rescue, and Space. The finalizer verifies their actual PNGs and emits all seventy card illustrations plus three scenes into `Memory-Adventures-Art-Provenance.json`, with source filenames and hashes rather than private absolute source paths. Scenes are decorative illustrations, not planet-scale diagrams or counting evidence.
+The generated manifest may also supply three decorative `scenes` records for Builders, Rescue, and Space. The finalizer verifies their actual PNGs and emits all 78 card illustrations plus three scenes into `Memory-Adventures-Art-Provenance.json`, with source filenames and hashes rather than private absolute source paths. Scenes are decorative illustrations, not planet-scale diagrams or counting evidence.
+
+## Wild Animals expansion — October 2026
+
+The Animals memory deck grows from 18 to 26 cards. Wild Animals offers the eight new illustrations as picture pairs or a six-question spoken quiz on tvOS and in the shared iOS adventure chooser. Existing animal IDs and their order remain stable. Lion artwork also identifies the new adventure on the chooser. Four adventure tiles fit within the TV gallery width.
+
+Each new card has habitat, movement, colors, a sound where appropriate, and short `Look closely` / `Try it` discoveries. The elephant illustration and habitat describe an African elephant; the panda is a giant panda. Movements invite finger or arm play in place. Habitats and recognition cues were checked against San Diego Zoo Wildlife Alliance's [lion](https://animals.sandiegozoo.org/animals/lion), [tiger](https://animals.sandiegozoo.org/animals/tiger), [elephant](https://animals.sandiegozoo.org/animals/elephant), [giraffe](https://animals.sandiegozoo.org/animals/giraffe), [zebra](https://animals.sandiegozoo.org/animals/zebra), [giant panda](https://animals.sandiegozoo.org/animals/giant-panda), [kangaroo](https://animals.sandiegozoo.org/animals/kangaroo-and-wallaby), and [hippo](https://animals.sandiegozoo.org/animals/hippo) accounts.
+
+The eight standalone square PNGs were generated with the built-in ImageGen tool and individually reviewed for recognition, full-body framing, clean backgrounds, and absence of labels. Original PNG bytes are copied unchanged into `App/Assets.xcassets/MemoryAnimal*.imageset/`. Exact generation prompts, source filenames, and SHA-256 hashes are recorded in `Memory-Adventures-Art-Provenance.json`.
+
+Bundled content version 4 includes the new cards and prevents older v3 caches or feeds from replacing them. The remote animal-photo explorer remains a separate collection. The production-catalog TV UI test reaches Wild Animals with the remote, completes matching, returns to the chooser, and starts an animal quiz.
 
 ## Public-domain donkey illustration
 
