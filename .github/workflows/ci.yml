@@ -87,6 +87,18 @@ jobs:
       - name: Validate offline World Quest map
         run: python3 scripts/test_world_quest_content.py
 
+      # Exercise the new remote-focus flow first for quick failure feedback.
+      - name: Test World Quest remote flow
+        timeout-minutes: 10
+        run: |
+          TV_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for runtime,rows in devices.items() if ".tvOS-" in runtime for d in rows if d["isAvailable"]))')
+          xcodebuild test \
+            -project Mather.xcodeproj -scheme MatherTV \
+            -destination "platform=tvOS Simulator,id=$TV_ID" \
+            -only-testing:MatherTVUITests/WorldQuestUITests \
+            -resultBundlePath WorldQuestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Test Apple TV games
         timeout-minutes: 50
         run: |
@@ -94,6 +106,7 @@ jobs:
           xcodebuild test \
             -project Mather.xcodeproj -scheme MatherTV \
             -destination "platform=tvOS Simulator,id=$TV_ID" \
+            -skip-testing:MatherTVUITests/WorldQuestUITests \
             -resultBundlePath TVContentResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
@@ -179,6 +192,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tv-content-results-${{ github.run_number }}
-          path: TVContentResults.xcresult
+          path: |
+            TVContentResults.xcresult
+            WorldQuestResults.xcresult
           if-no-files-found: ignore
           retention-days: 30

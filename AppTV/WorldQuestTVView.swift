@@ -4,6 +4,8 @@ import UIKit
 
 @MainActor
 struct WorldQuestTVView: View {
+    @Environment(\.resetFocus) private var resetFocus
+    @Namespace private var actionFocusScope
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var engine: WorldQuestEngine?
@@ -19,6 +21,7 @@ struct WorldQuestTVView: View {
     @State private var zoom: WorldQuestZoom = .world
     @State private var exploreDetail: String?
     @State private var showInformation = false
+    @State private var focusTask: Task<Void, Never>?
     @State private var promptTask: Task<Void, Never>?
     @State private var waitingForVoiceOverStart = false
     @FocusState private var focusedControl: Control?
@@ -39,6 +42,7 @@ struct WorldQuestTVView: View {
                     else if engine.phase == .completed { results(engine) }
                     else { game(engine, geometry: geometry) }
                 }
+                .focusScope(actionFocusScope)
                 .frame(maxWidth: 1680, maxHeight: .infinity, alignment: .topLeading)
                 .padding(.horizontal, 90)
                 .padding(.top, 85)
@@ -90,7 +94,9 @@ struct WorldQuestTVView: View {
         .onChange(of: engine?.questionIndex) { _, _ in presentQuestion() }
         .onChange(of: focusedControl) { _, control in
             if let control, control != .map { narration.focus(controlGuidance(control)) }
-            if control == .map { mapNavigationActive = true }
+            if control == .map, engine?.phase == .answering || engine?.phase == .exploring {
+                mapNavigationActive = true
+            }
             else if mapNavigationActive, control == nil {
                 Task { @MainActor in
                     await Task.yield()
@@ -107,6 +113,7 @@ struct WorldQuestTVView: View {
         .onPlayPauseCommand { repeatGuidance() }
         .onDisappear {
             promptTask?.cancel()
+            focusTask?.cancel()
             narration.stop()
             engine?.suspend(.interruption)
         }
@@ -181,6 +188,7 @@ struct WorldQuestTVView: View {
             HStack(spacing: 24) {
                 Button("Start exploring", systemImage: "globe") { start(engine) }
                     .focused($focusedControl, equals: .start)
+                    .prefersDefaultFocus(true, in: actionFocusScope)
                     .accessibilityIdentifier("world-quest-start")
                 Button("Map information", systemImage: "info.circle") { showInformation = true }
                     .focused($focusedControl, equals: .info)
@@ -236,6 +244,7 @@ struct WorldQuestTVView: View {
             .buttonStyle(WorldQuestMapButtonStyle())
             .focusEffectDisabled()
             .focused($focusedControl, equals: .map)
+            .disabled(engine.phase == .feedback)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .accessibilityLabel(mapAccessibilityLabel(engine))
             .accessibilityValue(engine.isSuspended ? "Listening or paused" : "Ready")
@@ -281,6 +290,7 @@ struct WorldQuestTVView: View {
             } else if engine.phase == .feedback {
                 Button(engine.questionIndex + 1 == engine.questions.count ? "See passport" : "Next country") { engine.advance() }
                     .focused($focusedControl, equals: .next)
+                    .prefersDefaultFocus(true, in: actionFocusScope)
                     .accessibilityIdentifier("world-quest-next")
             } else if engine.phase == .answering {
                 Button("Hint") {
@@ -324,10 +334,10 @@ struct WorldQuestTVView: View {
             HStack(spacing: 26) {
                 Button("Another adventure") {
                     engine.returnToSetup()
-                    focusedControl = .start
                     narration.presentPrompt("Choose a pack and a way to play, then start exploring.")
                 }
                 .focused($focusedControl, equals: .replay)
+                .prefersDefaultFocus(true, in: actionFocusScope)
                 .accessibilityIdentifier("world-quest-replay")
                 Button("Map information") { showInformation = true }
             }
@@ -364,7 +374,7 @@ struct WorldQuestTVView: View {
             guard !Task.isCancelled else { return }
             geometry = WorldMapGeometry(catalog: catalog)
             engine = WorldQuestEngine(catalog: catalog)
-            focusedControl = .start
+            restoreFocus(to: .start)
             narration.presentPrompt("Welcome to World Quest. Choose countries and a way to play, then start exploring. Practice has no timer. Timed gives you twenty seconds for each country.")
         } catch {
             loadFailed = true
@@ -395,18 +405,34 @@ struct WorldQuestTVView: View {
             waitingForVoiceOverStart = false
             focusedCountryID = engine.target?.id
             mapNavigationActive = false
-            focusedControl = .next
+            restoreFocus(to: .next)
             narration.presentPrompt(statusText(engine) + " Press Select to continue.")
         } else if phase == .completed, let session = engine.completion {
             progress.record(session)
             mapNavigationActive = false
-            focusedControl = .replay
+            restoreFocus(to: .replay)
             narration.presentPrompt("Your world is growing! You found \(session.independentCount) countries independently and \(session.assistedCount) with help. You discovered \(session.revealedCount) more places.")
+        } else if phase == .setup {
+            mapNavigationActive = false
+            restoreFocus(to: .start)
+        }
+    }
+
+    private func restoreFocus(to control: Control) {
+        focusTask?.cancel()
+        focusedControl = nil
+        focusTask = Task { @MainActor in
+            // Newly inserted controls must join the native focus tree first.
+            do { try await Task.sleep(for: .milliseconds(180)) } catch { return }
+            guard !Task.isCancelled, scenePhase == .active else { return }
+            focusedControl = control
+            resetFocus(in: actionFocusScope)
         }
     }
 
     private func presentQuestion() {
         guard let engine, engine.phase == .answering else { return }
+        focusTask?.cancel()
         // Each question begins at the same neutral location, independent of its answer.
         focusedCountryID = navigation?.initialID
         mapNavigationActive = true
@@ -443,6 +469,7 @@ struct WorldQuestTVView: View {
     }
 
     private func suspendForInterruption() {
+        focusTask?.cancel()
         mapNavigationActive = false
         engine?.suspend(.interruption)
         narration.stop()
