@@ -84,6 +84,9 @@ jobs:
         timeout-minutes: 10
         run: bash scripts/test_ios_learning_content.sh
 
+      - name: Validate offline World Quest map
+        run: python3 scripts/test_world_quest_content.py
+
       - name: Test Apple TV games
         timeout-minutes: 50
         run: |

@@ -32,6 +32,7 @@ targets:
         includes:
           - "**/*.swift"
       - path: Shared
+      - path: Content/WorldQuest/world-quest-map.json
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.Mather
@@ -79,6 +80,11 @@ targets:
       - path: Domain/LearningHandoff.swift
       - path: Services/LearningHandoffStore.swift
       - path: Features/LearningCompanion/LearningCompanionView.swift
+      - path: Domain/WorldQuestModels.swift
+      - path: Domain/WorldQuestEngine.swift
+      - path: Domain/WorldQuestNavigation.swift
+      - path: Services/WorldQuestProgressStore.swift
+      - path: Content/WorldQuest/world-quest-map.json
       - path: Domain/AngleArcadeModel.swift
       - path: Domain/CompareCampContent.swift
       - path: Domain/CompareCampRound.swift
@@ -104,7 +110,21 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: MatherTVAppIcon
     scheme:
       testTargets:
+        - MatherTVTests
         - MatherTVUITests
+  MatherTVTests:
+    type: bundle.unit-test
+    platform: tvOS
+    sources:
+      - path: Tests/MatherTests/WorldQuestTests.swift
+    dependencies:
+      - target: MatherTV
+    settings:
+      base:
+        PRODUCT_NAME: MatherTVTests
+        PRODUCT_MODULE_NAME: MatherTVTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganesh47.MatherTVTests
+        GENERATE_INFOPLIST_FILE: YES
   MatherTVUITests:
     type: bundle.ui-testing
     platform: tvOS

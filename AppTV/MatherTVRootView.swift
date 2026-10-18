@@ -8,7 +8,10 @@ struct MatherTVRootView: View {
     @State private var activeGame: MatherTVAction? = ProcessInfo.processInfo.arguments.contains("-angle-arcade-ui-test") ? .angle : nil
     @State private var lastFocusedAction = MatherTVAction.memory
 
-    private let actions = MatherTVAction.allCases
+    @AppStorage("feature.worldQuestEnabled") private var worldQuestEnabled = true
+    private var actions: [MatherTVAction] {
+        MatherTVAction.allCases.filter { $0 != .worldQuest || worldQuestEnabled }
+    }
     private let columns = Array(repeating: GridItem(.fixed(520), spacing: 28), count: 3)
 
     var body: some View {
@@ -118,14 +121,14 @@ struct MatherTVRootView: View {
                     .font(.system(size: 64, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("Five calm, big-screen games for curious minds.")
+                Text("\(actions.count) calm, big-screen games for curious minds.")
                     .font(.system(size: 27, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.78))
             }
 
             Spacer()
 
-            Label("5 games", systemImage: "sparkles")
+            Label("\(actions.count) games", systemImage: "sparkles")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(Color(red: 0.78, green: 0.94, blue: 0.66))
                 .padding(.horizontal, 20)
@@ -139,6 +142,8 @@ struct MatherTVRootView: View {
     private func gameView(for action: MatherTVAction) -> some View {
         let context = learningStore.context
         switch action {
+        case .worldQuest:
+            WorldQuestTVView()
         case .memory:
             MemoryGalleryTVView(onAnimalLearningEvent: {
                 _ = AnimalExplorerEvidenceRecorder.record($0, context: context, ledger: learningStore)
@@ -282,6 +287,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
     case sprint
     case compare
     case shapes
+    case worldQuest
 
     var id: String { rawValue }
 
@@ -291,6 +297,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: "Angle Arcade"
         case .sprint: "Sum Sprint Party"
         case .compare: "Compare Camp"
+        case .worldQuest: "World Quest"
         case .shapes: "Shape Detective"
         }
     }
@@ -301,6 +308,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: "Predict, aim, launch"
         case .sprint: "Build parts, try a new puzzle"
         case .compare: "Explore 24 learning camps"
+        case .worldQuest: "Find countries on the map"
         case .shapes: "Trace properties, explore shapes"
         }
     }
@@ -311,6 +319,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: "Angles"
         case .sprint: "Addition"
         case .compare: "Build, compare & discover"
+        case .worldQuest: "Geography"
         case .shapes: "Geometry"
         }
     }
@@ -321,6 +330,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: "scope"
         case .sprint: "plus.forwardslash.minus"
         case .compare: "scale.3d"
+        case .worldQuest: "globe.europe.africa.fill"
         case .shapes: "square.on.circle.fill"
         }
     }
@@ -331,6 +341,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: Color(red: 1.0, green: 0.66, blue: 0.40)
         case .sprint: Color(red: 0.78, green: 0.94, blue: 0.66)
         case .compare: Color(red: 0.98, green: 0.78, blue: 0.36)
+        case .worldQuest: Color(red: 0.36, green: 0.90, blue: 0.78)
         case .shapes: Color(red: 0.86, green: 0.67, blue: 1.0)
         }
     }
@@ -341,6 +352,7 @@ enum MatherTVAction: String, CaseIterable, Identifiable {
         case .angle: "Opens the Angle Arcade aiming game."
         case .sprint: "Opens the Sum Sprint Party addition game."
         case .compare: "Opens 24 Compare Camp adventures with counting, matching, and number signs."
+        case .worldQuest: "Opens World Quest country exploration, practice, and timed map games."
         case .shapes: "Opens the Shape Detective geometry game."
         }
     }
