@@ -80,12 +80,22 @@ struct WorldQuestMapView: View, Equatable {
     }
 
     private func draw(context: GraphicsContext, size: CGSize, viewport: CGRect, inset: Bool) {
-        let scale = min((size.width - 24) / (viewport.width * geometry.catalog.aspectRatio),
-                        (size.height - 24) / viewport.height)
-        let sx = scale * geometry.catalog.aspectRatio
-        let sy = scale
-        let origin = CGPoint(x: (size.width-viewport.width*sx)/2 - viewport.minX*sx,
-                             y: (size.height-viewport.height*sy)/2 - viewport.minY*sy)
+        // Keep viewport arithmetic in CGFloat: older Swift compilers otherwise
+        // explore mixed Double/CGFloat overloads until type checking times out.
+        let aspectRatio = CGFloat(geometry.catalog.aspectRatio)
+        let projectedWidth: CGFloat = viewport.width * aspectRatio
+        let horizontalScale: CGFloat = (size.width - 24) / projectedWidth
+        let verticalScale: CGFloat = (size.height - 24) / viewport.height
+        let scale: CGFloat = min(horizontalScale, verticalScale)
+        let sx: CGFloat = scale * aspectRatio
+        let sy: CGFloat = scale
+        let drawnWidth: CGFloat = viewport.width * sx
+        let drawnHeight: CGFloat = viewport.height * sy
+        let horizontalPadding: CGFloat = (size.width - drawnWidth) / 2
+        let verticalPadding: CGFloat = (size.height - drawnHeight) / 2
+        let originX: CGFloat = horizontalPadding - viewport.minX * sx
+        let originY: CGFloat = verticalPadding - viewport.minY * sy
+        let origin = CGPoint(x: originX, y: originY)
         var mapContext = context
         mapContext.clip(to: Path(CGRect(origin: .zero, size: size)))
         mapContext.translateBy(x: origin.x, y: origin.y)
@@ -109,7 +119,7 @@ struct WorldQuestMapView: View, Equatable {
             let focus = country.id == focusedID
             let reveal = country.id == revealedID
             guard country.area < 2 || focus || reveal else { continue }
-            let center = CGPoint(x: origin.x + country.anchor.x*sx, y: origin.y + country.anchor.y*sy)
+            let center = CGPoint(x: origin.x + CGFloat(country.anchor.x)*sx, y: origin.y + CGFloat(country.anchor.y)*sy)
             guard CGRect(origin: .zero, size: size).insetBy(dx: 4, dy: 4).contains(center) else { continue }
             let radius: CGFloat = inset ? (focus || reveal ? 3 : 1.5) : (focus || reveal ? 10 : 3)
             let marker = Path(ellipseIn: CGRect(x: center.x-radius, y: center.y-radius, width: radius*2, height: radius*2))
