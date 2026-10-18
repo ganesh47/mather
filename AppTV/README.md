@@ -53,9 +53,10 @@ Compare Camp:
 
 Memory Adventures:
 
-- Busy Builders, Rescue Crew, and Space Trip offer picture pairs or the existing narrated quiz.
+- Busy Builders, Rescue Crew, Space Trip, and Wild Animals offer picture pairs or the existing narrated quiz.
+- Wild Animals adds lion, tiger, elephant, giraffe, zebra, giant panda, kangaroo, and hippopotamus illustrations, with spoken observations and pretend play. The Animals memory deck now contains 26 cards.
 - Start with three visible pairs, try four, or choose hidden pairs (up to six; Rescue Crew has five). Hints briefly reveal a matching pair.
 - Matched cards remain reachable with the remote. Explore speaks a short observation and optional pretend-play activity. Play/Pause repeats the current guidance; Menu returns to the gallery.
 - Adventure quizzes choose distinct prompts; Rescue Crew finishes after its five vehicles. Replay changes the order.
-- Bundled content v3 protects refreshed artwork from older downloaded packs. Newer packs activate at a gallery boundary.
+- Bundled content v4 protects the expanded animal deck from older downloaded packs. Newer packs activate at a gallery boundary.
 - The reviewed art manifest and source credits are in `wiki/Specs/Memory-Adventures-Art-Provenance.json`; content decisions and factual sources are in `wiki/Specs/Memory-Adventures-Content.md`.

@@ -61,7 +61,9 @@ struct MemoryGalleryContentPackTests {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let baseline = MemoryGalleryContentPack.bundled
-        let older = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: 2, decks: baseline.decks, assets: [])
+        let older = MemoryGalleryContentPack(schemaVersion: 1, contentVersion: baseline.contentVersion - 1, decks: baseline.decks.map {
+            .init(kind: $0.kind, cards: $0.cards.filter { !MemoryAdventure.wildAnimals.cardIDs.contains($0.id) })
+        }, assets: [])
         let id = UUID().uuidString
         let directory = root.appendingPathComponent(id)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

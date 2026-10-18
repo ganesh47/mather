@@ -5,7 +5,7 @@ import Testing
 struct MemoryVarietyTests {
 
     @Test func memoryDecksCoverExpandedCategoryPools() {
-        #expect(MemoryDeck.domesticAnimals.count >= 18)
+        #expect(MemoryDeck.domesticAnimals.count >= 26)
         #expect(MemoryDeck.birds.count == 36)
         #expect(MemoryDeck.planets.count >= 8)
         #expect(MemoryDeck.fishes.count >= 8)

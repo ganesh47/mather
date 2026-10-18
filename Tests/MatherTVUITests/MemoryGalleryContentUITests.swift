@@ -7,7 +7,7 @@ final class MemoryGalleryContentUITests: XCTestCase {
     func testPublicPackActivatesPlaysAndSurvivesRelaunch() throws {
         let feed = URL(string: "https://raw.githubusercontent.com/ganesh47/mather-content/main/memory-gallery/pack.json")!
         let manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: feed)) as? [String: Any])
-        let version = max(3, try XCTUnwrap(manifest["contentVersion"] as? Int))
+        let version = max(4, try XCTUnwrap(manifest["contentVersion"] as? Int))
         let decks = try XCTUnwrap(manifest["decks"] as? [[String: Any]])
         let vehicleDeck = try XCTUnwrap(decks.first { $0["kind"] as? String == "vehicles" })
         let cards = try XCTUnwrap(vehicleDeck["cards"] as? [[String: Any]])
