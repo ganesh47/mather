@@ -13,12 +13,13 @@ final class MemoryPairsTVUITests: XCTestCase {
             XCTAssertTrue(names.contains { card.label.hasPrefix($0) }, card.label)
         }
         screenshot("Wild Animals with six full pictures from the production catalog")
-        for _ in 0..<3 {
+        for count in 1...3 {
             let pair = try pairToMatch(app)
             try focus(pair.0, app: app)
             XCUIRemote.shared.press(.select)
             try focus(pair.1, app: app)
             XCUIRemote.shared.press(.select)
+            waitCount(6 - count * 2, app: app)
         }
         waitFocus(app.buttons["tv-memory-adventure-again"])
         XCTAssertEqual(progress(app), "3 of 3 pairs")
