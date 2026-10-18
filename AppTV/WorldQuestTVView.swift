@@ -351,7 +351,7 @@ struct WorldQuestTVView: View {
             Text("Made with Natural Earth · Public domain · Source tag v5.1.2")
             Text("Boundary viewpoint: India. Borders follow this source’s India viewpoint; viewpoints differ in disputed areas. This is an educational map, not survey data.")
             Text("195 quiz countries: 193 UN members, Palestine, and Vatican City for the Holy See. Other territories appear for geographic context. Small dots indicate locations, not country size.")
-            Text("Your passport is saved only on this Apple TV. Stamps celebrate exploration, not mastery.")
+            Text("The World Quest passport is shared on this Apple TV. Stamps celebrate exploration, not mastery.")
             Button("Back to adventure") { showInformation = false }
         }
         .font(.system(size: 28)).padding(80)

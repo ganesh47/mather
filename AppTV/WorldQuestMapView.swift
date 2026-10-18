@@ -95,8 +95,12 @@ struct WorldQuestMapView: View, Equatable {
             let isFocused = id == focusedID
             let isPlayable = selectableIDs.contains(id)
             let isHint = hintContinent != nil && geometry.countries[id]?.continent == hintContinent
-            let color: Color = isRevealed ? .green : isFocused ? .yellow : isHint ? Color(red: 0.34, green: 0.66, blue: 0.76) :
-                isPlayable ? Color(red: 0.40, green: 0.58, blue: 0.57) : Color(red: 0.19, green: 0.30, blue: 0.34)
+            let color: Color
+            if isRevealed { color = .green }
+            else if isFocused { color = .yellow }
+            else if isHint { color = Color(red: 0.34, green: 0.66, blue: 0.76) }
+            else if isPlayable { color = Color(red: 0.40, green: 0.58, blue: 0.57) }
+            else { color = Color(red: 0.19, green: 0.30, blue: 0.34) }
             mapContext.fill(path, with: .color(color), style: FillStyle(eoFill: true))
             mapContext.stroke(path, with: .color(.white.opacity(0.48)), lineWidth: (inset ? 0.3 : 0.75)/sx)
         }
