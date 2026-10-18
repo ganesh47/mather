@@ -67,6 +67,9 @@ final class TVNarrationController {
         }
     }
 
+    /// Timed games exclude narration from the answer clock.
+    var isNarrating: Bool { audioEnabled && isSpeaking() && !voiceOverRunning() }
+
     func presentPrompt(_ text: String) {
         currentPrompt = text
         announce(text)

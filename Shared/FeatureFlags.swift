@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class FeatureFlagService {
     private enum Keys {
+        static let worldQuestEnabled = "feature.worldQuestEnabled"
         static let verticalSlice1Enabled = "feature.verticalSlice1Enabled"
         // Place-matching thresholds (tunable from Settings)
         static let placeMatchGPSMatch     = "placeMatch.gpsMatchMetres"
@@ -28,6 +29,11 @@ final class FeatureFlagService {
         static let routeQuestEnabled = "feature.routeQuestEnabled"
         static let memoryCardAppleIntelligenceEnabled = "feature.memoryCardAppleIntelligenceEnabled"
         static let skipProfilePicker = "feature.skipProfilePicker"
+    }
+
+    /// Shared rollout preference; the tvOS launcher reads the same key.
+    var worldQuestEnabled: Bool {
+        didSet { defaults.set(worldQuestEnabled, forKey: Keys.worldQuestEnabled) }
     }
 
     var verticalSlice1Enabled: Bool {
@@ -170,6 +176,7 @@ final class FeatureFlagService {
         // "YES"/"NO"/"1"/"0" string values injected via -key value launch arguments,
         // which object(forKey:) as? Bool does not.
         defaults.register(defaults: [
+            Keys.worldQuestEnabled: true,
             Keys.verticalSlice1Enabled: true,
             Keys.testModeEnabled: false,
             Keys.audioEnabled: true,
@@ -193,6 +200,7 @@ final class FeatureFlagService {
             Keys.placeMatchVisionClose: Double(PlaceMatchThresholds.default.visionCloseDistance),
         ])
         Self.migrateSoundReactionPreferenceIfNeeded(defaults: defaults)
+        worldQuestEnabled = defaults.bool(forKey: Keys.worldQuestEnabled)
         verticalSlice1Enabled = defaults.bool(forKey: Keys.verticalSlice1Enabled)
         testModeEnabled = defaults.bool(forKey: Keys.testModeEnabled)
         audioEnabled = defaults.bool(forKey: Keys.audioEnabled)

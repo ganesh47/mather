@@ -9,6 +9,7 @@ Current games:
 - Sum Sprint Party — calm addition practice
 - Compare Camp — 24 themed camps with building, counting, comparison and number signs
 - Shape Detective — solve geometry clues
+- World Quest — explore countries and find them on an accurate offline map
 
 Generation and build checks:
 
@@ -59,3 +60,13 @@ Memory Adventures:
 - Adventure quizzes choose distinct prompts; Rescue Crew finishes after its five vehicles. Replay changes the order.
 - Bundled content v3 protects refreshed artwork from older downloaded packs. Newer packs activate at a gallery boundary.
 - The reviewed art manifest and source credits are in `wiki/Specs/Memory-Adventures-Art-Provenance.json`; content decisions and factual sources are in `wiki/Specs/Memory-Adventures-Content.md`.
+
+World Quest:
+
+- Offline geographic exploration, untimed practice, and a 20-second-per-country challenge. Starter has 12 countries; six continent packs and Whole World cover 195 quiz countries.
+- The rollout flag `feature.worldQuestEnabled` defaults to true for the family TestFlight pilot. Disable through the MatherTV scheme's launch arguments with `-feature.worldQuestEnabled NO` if rollback is needed. A deterministic QA shuffle is available with `-worldQuest.seed 42`.
+- Directional presses move the yellow highlight between country locations. Select checks a location. Up at the northern edge reaches World / Region / Closer zoom, Hint, and Reveal; Down returns to the map. Green marks the answer. Small dots show locations without enlarging country borders.
+- Explore reads country names. Practice and Timed show/speak the requested name but conceal candidate names, including from VoiceOver. Play/Pause repeats the prompt and suspends the timer during speech. VoiceOver uses an explicit Start country action after its prompt. Menu returns to All games.
+- System interruptions preserve the countdown; returning requires Resume. Each solved/revealed question waits for Select to advance. Completed sessions store a local passport; abandoned games do not.
+- Natural Earth v5.1.2, 1:10m India-viewpoint boundaries, Equal Earth projection. The parent Map information screen explains the convention and public-domain source. Rebuild with Python 3.10+, `pip install -r scripts/world_quest_requirements.txt`, then `python scripts/generate_world_quest_map.py`; `--check` verifies reproducibility. `python3 scripts/test_world_quest_content.py` checks bundled content offline.
+- World Quest shared unit tests run in both MatherTests and MatherTVTests; remote UI tests run in MatherTVUITests. During physical-device acceptance, review Siri Remote behavior, small-country markers at couch distance, VoiceOver, Reduce Motion, and rendering performance on Apple TV HD.
